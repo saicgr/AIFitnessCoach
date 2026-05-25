@@ -94,7 +94,7 @@ class EnhancedEmptyState extends StatelessWidget {
 
           // Suggestion chips section
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: Text(
               AppLocalizations.of(context).enhancedEmptyStateTryAsking,
               style: TextStyle(
@@ -249,7 +249,7 @@ class _SuggestionsSheet extends StatelessWidget {
                     child: Row(
                       children: [
                         Text(
-                          'Try asking ${coach.name}',
+                          AppLocalizations.of(context)!.enhancedEmptyStateTryAsking2(coach.name),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,

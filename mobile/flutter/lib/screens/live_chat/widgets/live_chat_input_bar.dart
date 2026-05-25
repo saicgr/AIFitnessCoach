@@ -180,8 +180,8 @@ class _SendButton extends StatelessWidget {
         gradient: enabled
             ? LinearGradient(
                 colors: [AppColors.cyan, AppColors.teal],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
               )
             : null,
         color: enabled ? null : AppColors.glassSurface,

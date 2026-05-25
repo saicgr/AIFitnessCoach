@@ -47,7 +47,7 @@ class PRDetailsSheet extends StatelessWidget {
 
     final isMultiplePRs = prs.length > 1;
     final headerText =
-        isMultiplePRs ? 'ON FIRE! ${prs.length} PRs!' : 'NEW PERSONAL RECORD!';
+        isMultiplePRs ? AppLocalizations.of(context)!.prDetailsSheetOnFirePrs(prs.length) : 'NEW PERSONAL RECORD!';
 
     return Column(
         mainAxisSize: MainAxisSize.min,
@@ -69,8 +69,8 @@ class PRDetailsSheet extends StatelessWidget {
                               const Color(0xFFFFD93D),
                             ]
                           : [orange, orange.withValues(alpha: 0.7)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -330,7 +330,7 @@ class _PRDetailCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        '+${pr.improvementPercent.toStringAsFixed(1)}%',
+                        AppLocalizations.of(context)!.prDetailsSheetValue(pr.improvementPercent.toStringAsFixed(1)),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -366,7 +366,7 @@ class _PRDetailCard extends StatelessWidget {
           // Set details
           const SizedBox(height: 12),
           Text(
-            '${pr.weight.toStringAsFixed(1)}kg x ${pr.reps} reps',
+            AppLocalizations.of(context)!.prDetailsSheetKgXReps(pr.weight.toStringAsFixed(1), pr.reps),
             style: TextStyle(
               fontSize: 13,
               color: textMuted,

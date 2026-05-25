@@ -67,7 +67,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${Branding.appName} sends your fitness profile, chats, food photos, and form videos to models that generate personalized guidance. Here is exactly what happens.',
+                    AppLocalizations.of(context)!.aiDataUsageScreenSendsYourFitnessProfile(Branding.appName),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,

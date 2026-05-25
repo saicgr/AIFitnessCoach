@@ -38,12 +38,12 @@ class PreSetCoachingBanner extends StatelessWidget {
     final textColor = isDark ? Colors.white : AppColors.pureBlack;
 
     return Semantics(
-      label: 'Coaching insight. $message.',
+      label: AppLocalizations.of(context)!.preSetCoachingBannerCoachingInsight(message),
       container: true,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
         child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 4, 10),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(12),
@@ -53,7 +53,7 @@ class PreSetCoachingBanner extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 2, right: 10),
+                padding: const EdgeInsetsDirectional.only(top: 2, end: 10),
                 child: Icon(
                   Icons.auto_awesome, // ✨ sparkle
                   size: 16,

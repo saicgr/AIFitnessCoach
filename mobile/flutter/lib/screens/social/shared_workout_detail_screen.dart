@@ -123,7 +123,7 @@ class _SharedWorkoutDetailScreenState
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '$_actionVerb by ${widget.posterName}',
+                      AppLocalizations.of(context)!.sharedWorkoutDetailScreenBy(_actionVerb, widget.posterName),
                       style: TextStyle(
                         fontSize: 14,
                         color: textMuted,
@@ -142,14 +142,14 @@ class _SharedWorkoutDetailScreenState
                     if (_duration > 0)
                       _StatChip(
                         icon: Icons.timer_rounded,
-                        label: '$_duration min',
+                        label: AppLocalizations.of(context)!.sharedWorkoutDetailScreenMin(_duration),
                         isDark: isDark,
                       ),
                     if (_exerciseCount > 0 || _exercises.isNotEmpty)
                       _StatChip(
                         icon: Icons.fitness_center_rounded,
                         label:
-                            '${_exercises.isNotEmpty ? _exercises.length : _exerciseCount} exercises',
+                            AppLocalizations.of(context)!.sharedWorkoutDetailScreenExercises(_exercises.isNotEmpty ? _exercises.length : _exerciseCount),
                         isDark: isDark,
                       ),
                     if (totalVolume != null)

@@ -87,7 +87,7 @@ class _AllSplitsScreenState extends ConsumerState<AllSplitsScreen> {
                 children: _categories.entries.map((entry) {
                   final isSelected = _selectedCategory == entry.key;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsetsDirectional.only(end: 8),
                     child: GestureDetector(
                       onTap: () {
                         HapticService.light();

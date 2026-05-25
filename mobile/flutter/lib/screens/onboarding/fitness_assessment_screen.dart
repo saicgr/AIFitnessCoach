@@ -268,7 +268,7 @@ class _FitnessAssessmentScreenState
 
   Widget _buildHeaderOverlay(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+      padding: const EdgeInsetsDirectional.only(start: 16, end: 16, top: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -613,8 +613,8 @@ class _FitnessAssessmentScreenState
                               accentColor,
                               accentColor.withValues(alpha: 0.8)
                             ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                           )
                         : null,
                     color: isSelected

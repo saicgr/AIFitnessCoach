@@ -286,7 +286,7 @@ class _PRSummaryCardState extends ConsumerState<PRSummaryCard> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '+${pr.improvementPercent!.toStringAsFixed(1)}%',
+                    AppLocalizations.of(context)!.prSummaryCardValue(pr.improvementPercent!.toStringAsFixed(1)),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,

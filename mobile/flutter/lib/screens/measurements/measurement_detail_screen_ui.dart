@@ -40,7 +40,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
     return TrendChart(
       accent: cyan,
       primary: TrendChartSeries(
-        label: '${_type.displayName} Trend',
+        label: AppLocalizations.of(context)!.measurementDetailScreenUiTrend(_type.displayName),
         unit: unit,
         points: points,
         smoothingAlpha: alpha,
@@ -198,8 +198,8 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [contextColor.withOpacity(0.15), contextColor.withOpacity(0.05)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: contextColor.withOpacity(0.3)),
@@ -212,7 +212,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
           Text(subtitle, style: TextStyle(fontSize: 14, color: contextColor, fontWeight: FontWeight.w600)),
           if (source.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text('Source: $source guideline', style: TextStyle(fontSize: 11, color: textMuted)),
+            Text(AppLocalizations.of(context)!.measurementDetailScreenUiSourceGuideline(source), style: TextStyle(fontSize: 11, color: textMuted)),
           ],
         ],
       ),
@@ -371,8 +371,8 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
               key: Key(entry.id),
               direction: DismissDirection.endToStart,
               background: Container(
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 20),
+                alignment: AlignmentDirectional.centerEnd,
+                padding: const EdgeInsetsDirectional.only(end: 20),
                 decoration: BoxDecoration(
                   color: AppColors.error,
                   borderRadius: BorderRadius.circular(12),

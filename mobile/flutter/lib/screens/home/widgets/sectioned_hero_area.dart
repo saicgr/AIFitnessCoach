@@ -286,7 +286,7 @@ class _HeroTabPills extends ConsumerWidget {
           ..._tabs.map((focus) {
             final isActive = focus == currentFocus;
             return Padding(
-              padding: const EdgeInsets.only(right: 24),
+              padding: const EdgeInsetsDirectional.only(end: 24),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => onTabSelected(focus),

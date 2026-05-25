@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/timeline_entry.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 class TimelineEntryTile extends StatelessWidget {
   final TimelineEntry entry;
@@ -121,7 +122,7 @@ class TimelineEntryTile extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        '💬 ${entry.coachNote}',
+                        AppLocalizations.of(context)!.timelineEntryTileValue(entry.coachNote ?? ''),
                         style: TextStyle(
                             color: textSecondary,
                             fontSize: 11,
@@ -161,7 +162,7 @@ class TimelineEntryTile extends StatelessWidget {
             if (entry.attachments.isNotEmpty &&
                 entry.attachments.first['url'] != null)
               Padding(
-                padding: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsetsDirectional.only(start: 8),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(

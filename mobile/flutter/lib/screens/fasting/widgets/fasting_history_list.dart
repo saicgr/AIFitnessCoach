@@ -146,7 +146,7 @@ class FastingHistoryCard extends StatelessWidget {
                     Text(
                       completedGoal
                           ? AppLocalizations.of(context).progressionStepCardCompleted
-                          : '${completionPercent.toStringAsFixed(0)}%',
+                          : AppLocalizations.of(context)!.fastingHistoryListValue(completionPercent.toStringAsFixed(0)),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

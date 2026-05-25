@@ -571,7 +571,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
                         ),
                       ),
                       Text(
-                        '${entry.value.toStringAsFixed(0)} kg',
+                        AppLocalizations.of(context)!.progressChartsScreenKg(entry.value.toStringAsFixed(0)),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: colorScheme.primary,

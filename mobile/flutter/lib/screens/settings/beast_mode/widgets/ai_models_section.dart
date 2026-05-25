@@ -165,7 +165,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                       ref.read(modelDownloadProvider.notifier).deleteModel(),
                   icon: const Icon(Icons.delete_outline, size: 16),
                   label: Text(
-                    'Delete Model (Free ${downloadState.model?.formattedSize ?? ""})',
+                    AppLocalizations.of(context)!.aiModelsSectionDeleteModelFree(downloadState.model?.formattedSize ?? ""),
                     style: const TextStyle(fontSize: 12),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -186,7 +186,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                       .startDownload(),
                   icon: const Icon(Icons.download_rounded, size: 16),
                   label: Text(
-                    'Download ${downloadState.model!.displayName}',
+                    AppLocalizations.of(context)!.aiModelsSectionDownload(downloadState.model!.displayName),
                     style: const TextStyle(fontSize: 12),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -250,7 +250,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                     Row(
                       children: [
                         Text(
-                          'Device: ${cap.displayName}',
+                          AppLocalizations.of(context)!.aiModelsSectionDevice(cap.displayName),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -260,7 +260,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                         const SizedBox(width: 8),
                         ramAsync.when(
                           data: (ram) => Text(
-                            '${ram.toStringAsFixed(1)} GB RAM',
+                            AppLocalizations.of(context)!.aiModelsSectionGbRam(ram.toStringAsFixed(1)),
                             style: TextStyle(fontSize: 11, color: t.textMuted),
                           ),
                           loading: () => const SizedBox.shrink(),
@@ -410,7 +410,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                         Icon(Icons.memory_rounded, size: 10, color: t.textMuted),
                         const SizedBox(width: 3),
                         Text(
-                          '${info.minRamGB == info.minRamGB.roundToDouble() ? info.minRamGB.toInt() : info.minRamGB.toStringAsFixed(1)} GB RAM',
+                          AppLocalizations.of(context)!.aiModelsSectionGbRam2(info.minRamGB == info.minRamGB.roundToDouble() ? info.minRamGB.toInt() : info.minRamGB.toStringAsFixed(1)),
                           style: TextStyle(fontSize: 10, color: t.textMuted),
                         ),
                       ],

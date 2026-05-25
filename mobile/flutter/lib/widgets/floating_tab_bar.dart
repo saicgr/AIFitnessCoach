@@ -166,12 +166,11 @@ class FloatingTabBar extends StatelessWidget {
                 ),
               ),
               // Specular highlight band along the top half.
-              Positioned(
-                left: 1,
-                right: 1,
+              PositionedDirectional(start: 1,
+                end: 1,
                 top: 1,
                 height: kFloatingTabBarHeight * 0.55,
-                child: IgnorePointer(
+                       child: IgnorePointer(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.only(

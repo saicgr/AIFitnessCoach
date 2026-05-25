@@ -167,7 +167,7 @@ class CustomExerciseCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            '${exercise.componentCount} exercises',
+                            AppLocalizations.of(context)!.customExerciseCardExercises(exercise.componentCount),
                             style: TextStyle(
                               fontSize: 12,
                               color: textSecondary,
@@ -259,7 +259,7 @@ class CustomExerciseCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Used ${exercise.usageCount} times',
+                      AppLocalizations.of(context)!.customExerciseCardUsedTimes(exercise.usageCount),
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,

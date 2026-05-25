@@ -173,7 +173,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
                 ExerciseOptionTile(
                   icon: Icons.link,
                   title: AppLocalizations.of(context).exerciseManagementMixinPairWithNextExercise,
-                  subtitle: 'Create superset with ${exercises[index + 1].name}',
+                  subtitle: AppLocalizations.of(context)!.exerciseManagementMixinCreateSupersetWith(exercises[index + 1].name),
                   color: AppColors.purple,
                   onTap: () async {
                     Navigator.pop(context);

@@ -121,7 +121,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textPrimary),
                         ),
                         Text(
-                          '$foodSummary$extraCount · ${widget.totalCalories} kcal',
+                          AppLocalizations.of(context)!.postMealReviewSheetKcal(foodSummary, extraCount, widget.totalCalories),
                           style: TextStyle(fontSize: 12, color: textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

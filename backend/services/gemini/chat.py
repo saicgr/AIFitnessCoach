@@ -53,11 +53,37 @@ _CHAT_SAFETY_SETTINGS = [
 class ChatMixin:
     """Mixin providing chat and extraction methods for GeminiService."""
 
+    @staticmethod
+    def _build_locale_prefix(locale: str) -> str:
+        """Return the locale-awareness system-prompt prefix for Gemini.
+
+        Injected at the very top of every system prompt so the instruction is
+        never buried below coach-persona text. Returns an empty string when the
+        locale is 'en' (no extra instruction needed — the model defaults to
+        English already).
+
+        Kept as a static method so the streaming and buffered chat paths share
+        identical behaviour without code duplication.
+        """
+        if not locale or locale == "en":
+            return ""
+        from core.locale import LOCALE_NATIVE_NAMES
+        native_name = LOCALE_NATIVE_NAMES.get(locale, locale)
+        return (
+            f"The user's preferred language is {native_name} ({locale}).\n"
+            f"ALWAYS respond in {native_name}, regardless of which language the user\n"
+            f"writes in. Match their tone but use {native_name}. Exceptions: keep\n"
+            "technical fitness acronyms (RPE, 1RM, AMRAP, EMOM, PR, BMR, TDEE, HRV) and\n"
+            "brand names (Zealova, Strava, Fitbod, MyFitnessPal) in Latin script even\n"
+            "when responding in non-Latin-script languages.\n\n"
+        )
+
     async def chat(
         self,
         user_message: str,
         system_prompt: Optional[str] = None,
         conversation_history: Optional[List[Dict[str, str]]] = None,
+        locale: str = "en",
     ) -> str:
         """
         Send a chat message to Gemini and get a response.
@@ -66,10 +92,19 @@ class ChatMixin:
             user_message: The user's message
             system_prompt: Optional system prompt for context
             conversation_history: List of previous messages
+            locale: ISO 639-1 locale code for the user's preferred language.
+                    Defaults to 'en' for backwards compatibility.
 
         Returns:
             AI response string
         """
+        # Prepend locale instruction so the model always responds in the user's
+        # preferred language, regardless of what language they write in.
+        locale_prefix = self._build_locale_prefix(locale)
+        effective_system_prompt = (
+            locale_prefix + (system_prompt or "") if locale_prefix else system_prompt
+        )
+
         contents = []
 
         # Add conversation history
@@ -85,7 +120,7 @@ class ChatMixin:
             model=self.model,
             contents=contents,
             config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
+                system_instruction=effective_system_prompt,
                 max_output_tokens=settings.gemini_max_tokens,
                 temperature=settings.gemini_temperature,
                 safety_settings=_CHAT_SAFETY_SETTINGS,
@@ -102,6 +137,7 @@ class ChatMixin:
         system_prompt: Optional[str] = None,
         conversation_history: Optional[List[Dict[str, str]]] = None,
         user_id: Optional[str] = None,
+        locale: str = "en",
     ):
         """
         Streaming variant of `chat()` — yields the assistant reply token-by-token
@@ -134,6 +170,12 @@ class ChatMixin:
               `async for` is GC'd / `aclose()`d and the semaphore is released —
               no leak.
         """
+        # Prepend locale instruction (mirrors buffered chat() path).
+        locale_prefix = self._build_locale_prefix(locale)
+        effective_system_prompt = (
+            locale_prefix + (system_prompt or "") if locale_prefix else system_prompt
+        )
+
         contents = []
 
         if conversation_history:
@@ -144,7 +186,7 @@ class ChatMixin:
         contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
 
         config = types.GenerateContentConfig(
-            system_instruction=system_prompt,
+            system_instruction=effective_system_prompt,
             max_output_tokens=settings.gemini_max_tokens,
             temperature=settings.gemini_temperature,
             safety_settings=_CHAT_SAFETY_SETTINGS,

@@ -63,8 +63,8 @@ class _TrophyCard extends StatelessWidget {
                 gradient: isEarned
                     ? LinearGradient(
                         colors: tier.gradientColors,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                       )
                     : null,
                 color: isEarned
@@ -167,7 +167,7 @@ class _TrophyCard extends StatelessWidget {
                       // Progress indicator
                       if (!isEarned)
                         Text(
-                          '${trophyProgress.progressPercentage.round()}%',
+                          AppLocalizations.of(context)!.trophyRoomScreenPartTrophyCardValue(trophyProgress.progressPercentage.round()),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -394,7 +394,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${trophyProgress.progressPercentage.round()}% complete',
+                              AppLocalizations.of(context)!.trophyRoomScreenPartTrophyCardComplete(trophyProgress.progressPercentage.round()),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: textMuted,

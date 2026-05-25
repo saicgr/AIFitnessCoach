@@ -373,7 +373,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'How much do you want to $directionLabel?',
+                AppLocalizations.of(context)!.quizBodyMetricsHowMuchDoYou(directionLabel),
                 style: TextStyle(
                   fontSize: 13,
                   color: textSecondary,
@@ -484,8 +484,8 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     const orange = Color(0xFFF97316);
     const orangeGradient = LinearGradient(
       colors: [orange, Color(0xFFEA580C)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
+      begin: AlignmentDirectional.topStart,
+      end: AlignmentDirectional.bottomEnd,
     );
 
     return Container(
@@ -761,7 +761,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
         backgroundColor: isDark ? AppColors.elevated : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'Enter amount to $directionLabel',
+          AppLocalizations.of(context)!.quizBodyMetricsEnterAmountTo(directionLabel),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -803,7 +803,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter a value between 1-${dialogMax.round()} $unit',
+              AppLocalizations.of(context)!.quizBodyMetricsEnterAValueBetween(dialogMax.round(), unit),
               style: TextStyle(
                 fontSize: 12,
                 color: textSecondary,

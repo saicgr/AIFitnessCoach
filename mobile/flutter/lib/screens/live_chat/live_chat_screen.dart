@@ -453,12 +453,12 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Align(
                     alignment: isFromAgent
-                        ? Alignment.centerLeft
-                        : Alignment.centerRight,
+                        ? AlignmentDirectional.centerStart
+                        : AlignmentDirectional.centerEnd,
                     child: FractionallySizedBox(
                       alignment: isFromAgent
-                          ? Alignment.centerLeft
-                          : Alignment.centerRight,
+                          ? AlignmentDirectional.centerStart
+                          : AlignmentDirectional.centerEnd,
                       widthFactor: widthFraction,
                       child: SkeletonCard(
                         showLeading: isFromAgent,

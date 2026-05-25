@@ -67,7 +67,7 @@ class DurationSlider extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${duration.round()} min',
+                  AppLocalizations.of(context)!.durationSliderMin(duration.round()),
                   style: TextStyle(
                     color: sliderColor,
                     fontWeight: FontWeight.bold,
@@ -101,11 +101,11 @@ class DurationSlider extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${minDuration.toInt()} min',
+                  AppLocalizations.of(context)!.durationSliderMin2(minDuration.toInt()),
                   style: TextStyle(fontSize: 12, color: colors.textMuted),
                 ),
                 Text(
-                  '${maxDuration.toInt()} min',
+                  AppLocalizations.of(context)!.durationSliderMin3(maxDuration.toInt()),
                   style: TextStyle(fontSize: 12, color: colors.textMuted),
                 ),
               ],

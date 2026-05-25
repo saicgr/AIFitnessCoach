@@ -101,7 +101,7 @@ class QuizWeightRateChips extends StatelessWidget {
           final isLast = rate == rates.last;
           return Expanded(
             child: Padding(
-              padding: EdgeInsets.only(right: isLast ? 0 : 6),
+              padding: EdgeInsetsDirectional.only(end: isLast ? 0 : 6),
               child: _buildChip(rate, isDark, textPrimary, textSecondary, cardBg, cardBorder),
             ),
           );
@@ -149,8 +149,8 @@ class QuizWeightRateChips extends StatelessWidget {
           gradient: isSelected
               ? LinearGradient(
                   colors: [AppColors.orange, AppColors.orange.withOpacity(0.85)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                 )
               : null,
           color: isSelected ? null : cardBg,

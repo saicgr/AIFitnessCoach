@@ -229,6 +229,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
 
               // Complete Set button
               GlowButton.complete(
+                context: context,
                 onTap: () {
                   HapticFeedback.heavyImpact();
                   widget.onComplete();

@@ -250,7 +250,7 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
                               ),
                             const SizedBox(height: 8),
                             Text(
-                              '$percentage%',
+                              AppLocalizations.of(context)!.workoutLoadingScreenValue(percentage),
                               style: TextStyle(
                                 fontSize: 48,
                                 fontWeight: FontWeight.w800,

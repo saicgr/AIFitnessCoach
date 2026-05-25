@@ -160,7 +160,7 @@ class _FoodSearchBarState extends ConsumerState<FoodSearchBar> {
               children: [
                 // Search icon or loading indicator
                 Padding(
-                  padding: const EdgeInsets.only(left: 16),
+                  padding: const EdgeInsetsDirectional.only(start: 16),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: isLoading
@@ -401,7 +401,7 @@ class _FoodSearchBarCompactState extends ConsumerState<FoodSearchBarCompact> {
       child: Row(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 12),
+            padding: const EdgeInsetsDirectional.only(start: 12),
             child: isLoading
                 ? SizedBox(
                     width: 18,

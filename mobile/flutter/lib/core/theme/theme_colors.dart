@@ -103,8 +103,8 @@ class ThemeColors {
         colors: [baseColor, HSLColor.fromColor(baseColor).withLightness(
           (HSLColor.fromColor(baseColor).lightness * 0.85).clamp(0.0, 1.0)
         ).toColor()],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        begin: AlignmentDirectional.topStart,
+        end: AlignmentDirectional.bottomEnd,
       );
     }
     return isDark ? AppColors.accentGradient : AppColorsLight.accentGradient;

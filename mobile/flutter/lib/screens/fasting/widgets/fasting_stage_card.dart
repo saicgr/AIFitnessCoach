@@ -42,8 +42,8 @@ class FastingStageCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             stageColor.withValues(alpha: colors.isDark ? 0.22 : 0.14),
             stageColor.withValues(alpha: colors.isDark ? 0.08 : 0.05),
@@ -144,7 +144,7 @@ class FastingStageCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Next: ${next.name}',
+                    AppLocalizations.of(context)!.fastingStageCardNext(next.name),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

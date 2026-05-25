@@ -335,7 +335,7 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '${state.restSecondsRemaining}s',
+                  AppLocalizations.of(context)!.workoutMiniPlayerS(state.restSecondsRemaining),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w500,

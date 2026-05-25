@@ -66,7 +66,7 @@ class _RecipeShareSheetState extends ConsumerState<RecipeShareSheet> {
           const SizedBox(height: 4),
           Text(
             _link != null
-                ? 'Anyone with the link can view. Saves to libraries: ${_link!.saveCount} · Views: ${_link!.viewCount}'
+                ? AppLocalizations.of(context)!.recipeShareSheetAnyoneWithTheLink(_link!.saveCount, _link!.viewCount)
                 : 'Generate a link anyone can open. They can save a copy to their library.',
             style: TextStyle(color: muted, fontSize: 12, height: 1.4),
             textAlign: TextAlign.center,

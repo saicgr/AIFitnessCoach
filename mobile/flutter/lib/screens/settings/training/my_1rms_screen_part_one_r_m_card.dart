@@ -156,7 +156,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '$linkedCount linked',
+                                    AppLocalizations.of(context)!.my1rmsScreenPartOneRMCardLinked(linkedCount),
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w500,
@@ -266,7 +266,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context).my1rmsScreenRemoveLink),
-        content: Text('Remove ${link.linkedExerciseName} from linked exercises?'),
+        content: Text(AppLocalizations.of(context)!.my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(link.linkedExerciseName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -327,7 +327,7 @@ class _LinkedExerciseRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${link.multiplierDisplay} = $derivedWeight kg • ${link.relationshipDisplay}',
+                  AppLocalizations.of(context)!.my1rmsScreenPartOneRMCardKg(link.multiplierDisplay, derivedWeight, link.relationshipDisplay),
                   style: TextStyle(
                     fontSize: 11,
                     color: textMuted,
@@ -396,7 +396,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Linked ${_exerciseController.text.trim()} to ${widget.primaryExerciseName}'),
+          content: Text(AppLocalizations.of(context)!.my1rmsScreenPartOneRMCardLinkedTo(_exerciseController.text.trim(), widget.primaryExerciseName)),
           backgroundColor: Colors.green,
         ),
       );
@@ -426,9 +426,8 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
         color: elevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
+      padding: EdgeInsetsDirectional.only(start: 16,
+        end: 16,
         top: 16,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
@@ -464,7 +463,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                'Link to ${widget.primaryExerciseName}',
+                AppLocalizations.of(context)!.my1rmsScreenPartOneRMCardLinkTo(widget.primaryExerciseName),
                 style: TextStyle(fontSize: 14, color: textMuted),
               ),
             ),
@@ -528,7 +527,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Derived 1RM: $derivedWeight kg',
+              AppLocalizations.of(context)!.my1rmsScreenPartOneRMCardDerivedRmKg(derivedWeight),
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.cyan,
@@ -725,9 +724,8 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
         color: elevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
+      padding: EdgeInsetsDirectional.only(start: 16,
+        end: 16,
         top: 16,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),

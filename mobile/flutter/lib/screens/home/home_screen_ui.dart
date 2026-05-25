@@ -519,7 +519,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Restore the original ${Branding.appName} layout',
+                                AppLocalizations.of(context)!.homeScreenUiRestoreTheOriginalLayout(Branding.appName),
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: textSecondary,

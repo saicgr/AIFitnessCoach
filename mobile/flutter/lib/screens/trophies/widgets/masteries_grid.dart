@@ -106,7 +106,7 @@ class _MasteryCell extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              'Lv.${entry.level}',
+              AppLocalizations.of(context)!.masteriesGridLv(entry.level),
               style: TextStyle(
                 color: isDark ? Colors.white : AppColorsLight.textPrimary,
                 fontSize: 10,

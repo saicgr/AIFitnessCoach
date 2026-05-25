@@ -36,8 +36,8 @@ class OverallScoreHero extends StatelessWidget {
           color: scoreColor.withOpacity(0.3),
         ),
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             scoreColor.withOpacity(0.08),
             Colors.transparent,

@@ -77,14 +77,14 @@ class FlexibilityScoreCard extends StatelessWidget {
                       _buildRatingBadge(summary.overallRating, theme),
                       const SizedBox(height: 8),
                       Text(
-                        '${summary.testsCompleted} tests completed',
+                        AppLocalizations.of(context)!.flexibilityScoreCardTestsCompleted(summary.testsCompleted),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.7),
                         ),
                       ),
                       if (summary.totalAssessments > summary.testsCompleted)
                         Text(
-                          '${summary.totalAssessments} total assessments',
+                          AppLocalizations.of(context)!.flexibilityScoreCardTotalAssessments(summary.totalAssessments),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.5),
                           ),

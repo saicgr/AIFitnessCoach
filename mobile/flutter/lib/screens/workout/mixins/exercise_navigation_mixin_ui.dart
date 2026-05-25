@@ -92,7 +92,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
 
     ScaffoldMessenger.of(_ctx).showSnackBar(
       SnackBar(
-        content: Text('${removedExercise.name} removed'),
+        content: Text(AppLocalizations.of(context)!.exerciseNavigationMixinUiRemoved(removedExercise.name)),
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(

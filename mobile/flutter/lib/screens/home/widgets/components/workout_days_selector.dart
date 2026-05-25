@@ -61,7 +61,7 @@ class WorkoutDaysSelector extends StatelessWidget {
               icon: Icons.calendar_month,
               title: AppLocalizations.of(context).workoutSettingsWorkoutDays,
               iconColor: colors.cyan,
-              badge: '${selectedDays.length} days/week',
+              badge: AppLocalizations.of(context)!.workoutDaysSelectorDaysWeek(selectedDays.length),
             ),
           ],
         ),

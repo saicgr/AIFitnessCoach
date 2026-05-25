@@ -18,8 +18,8 @@ class BeastHeaderCard extends StatelessWidget {
             AppColors.orange.withValues(alpha: isDark ? 0.25 : 0.15),
             AppColors.orange.withValues(alpha: isDark ? 0.10 : 0.05),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         border: Border.all(
           color: AppColors.orange.withValues(alpha: 0.3),

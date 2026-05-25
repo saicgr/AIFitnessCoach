@@ -82,8 +82,8 @@ class _CollapsibleIntroCardState extends State<CollapsibleIntroCard> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                       colors: [
                         accent.withValues(alpha: dark ? 0.32 : 0.20),
                         accent.withValues(alpha: dark ? 0.10 : 0.06),
@@ -152,7 +152,7 @@ class _CollapsibleIntroCardState extends State<CollapsibleIntroCard> {
                       ),
                       if (widget.isCaution)
                         Padding(
-                          padding: const EdgeInsets.only(right: 6),
+                          padding: const EdgeInsetsDirectional.only(end: 6),
                           child: Icon(Icons.priority_high_rounded,
                               size: 20, color: accent),
                         ),

@@ -110,8 +110,8 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                         colors.accent.withOpacity(0.2),
                         colors.accent.withOpacity(0.05),
                       ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                     ),
                   ),
                   child: Icon(

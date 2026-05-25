@@ -400,7 +400,7 @@ class _FoodLoggingRulesScreenState
           borderRadius: BorderRadius.circular(14),
           onTap: () => _openEditor(colors, ruleId: id, initial: text),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 8, 10),
             child: Row(
               children: [
                 Expanded(
@@ -444,7 +444,7 @@ class _FoodLoggingRulesScreenState
         backgroundColor: colors.elevated,
         title: Text(AppLocalizations.of(context).foodLoggingRulesDeleteRule,
             style: TextStyle(color: colors.textPrimary)),
-        content: Text('"$text"',
+        content: Text(AppLocalizations.of(context)!.foodLoggingRulesScreenValue(text),
             style: TextStyle(color: colors.textSecondary)),
         actions: [
           TextButton(
@@ -476,9 +476,8 @@ class _FoodLoggingRulesScreenState
         return GlassSheet(
           opaque: true,
           child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
+          padding: EdgeInsetsDirectional.only(start: 20,
+            end: 20,
             top: 20,
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
           ),

@@ -136,7 +136,7 @@ class ManagedGymCard extends ConsumerWidget {
                       if (profileCount > 1) ...[
                         const SizedBox(height: 4),
                         Text(
-                          '$profileCount gym profiles · tap to switch',
+                          AppLocalizations.of(context)!.managedGymCardGymProfilesTapTo(profileCount),
                           style: TextStyle(
                             fontSize: 11,
                             color: textSecondary.withValues(alpha: 0.7),

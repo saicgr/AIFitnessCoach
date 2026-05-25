@@ -129,7 +129,7 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Environment "$name" saved'),
+                content: Text(AppLocalizations.of(context)!.environmentListScreenEnvironmentSaved(name)),
                 behavior: SnackBarBehavior.floating,
                 backgroundColor: AppColors.success,
               ),
@@ -272,7 +272,7 @@ class _EnvironmentCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '${currentEquipment.length} equipment items',
+                      AppLocalizations.of(context)!.environmentListScreenEquipmentItems(currentEquipment.length),
                       style: TextStyle(
                         fontSize: 13,
                         color: textMuted,
@@ -328,7 +328,7 @@ class _EnvironmentCard extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        '+${currentEquipment.length - 5} more',
+                        AppLocalizations.of(context)!.environmentListScreenMore(currentEquipment.length - 5),
                         style: TextStyle(
                           fontSize: 11,
                           color: textMuted,

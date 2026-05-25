@@ -60,8 +60,8 @@ class QuizContinueButton extends StatelessWidget {
                       gradient: canProceed
                           ? LinearGradient(
                               colors: t.buttonGradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             )
                           : null,
                       color: canProceed ? null : t.cardFill,

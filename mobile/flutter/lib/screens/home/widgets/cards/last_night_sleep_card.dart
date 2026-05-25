@@ -123,7 +123,7 @@ class LastNightSleepCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${hours}h',
+                    AppLocalizations.of(context)!.lastNightSleepCardH(hours),
                     style: TextStyle(
                       fontSize: 38,
                       fontWeight: FontWeight.w800,
@@ -134,7 +134,7 @@ class LastNightSleepCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${minutes}m',
+                    AppLocalizations.of(context)!.lastNightSleepCardM(minutes),
                     style: TextStyle(
                       fontSize: 38,
                       fontWeight: FontWeight.w800,
@@ -147,7 +147,7 @@ class LastNightSleepCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${fmt.format(bedtime)} – ${fmt.format(wake)}',
+                AppLocalizations.of(context)!.lastNightSleepCardValue(fmt.format(bedtime), fmt.format(wake)),
                 style: TextStyle(
                   fontSize: 12,
                   color: textMuted,

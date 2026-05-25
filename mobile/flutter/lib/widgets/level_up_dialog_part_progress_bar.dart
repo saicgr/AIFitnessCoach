@@ -40,8 +40,7 @@ class _ProgressBar extends StatelessWidget {
             ),
             // Blue marker at the edge
             if (progress > 0.02 && progress < 0.98)
-              Positioned(
-                left: (progress * (barWidth - 4)).clamp(0.0, barWidth - 4),
+              PositionedDirectional(start: (progress * (barWidth - 4)).clamp(0.0, barWidth - 4),
                 top: 0,
                 bottom: 0,
                 child: Container(
@@ -61,8 +60,7 @@ class _ProgressBar extends StatelessWidget {
             if (progress > 0.1)
               ...List.generate(
                 (progress * 8).floor().clamp(0, 6),
-                (i) => Positioned(
-                  left: (i + 1) * (barWidth / 8),
+                (i) => PositionedDirectional(start: (i + 1) * (barWidth / 8),
                   top: 2,
                   bottom: 2,
                   child: Icon(

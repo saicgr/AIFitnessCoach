@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Animated human body silhouette that fills with water based on hydration percentage
 class BodyHydrationAnimation extends StatefulWidget {
@@ -116,7 +117,7 @@ class _BodyHydrationAnimationState extends State<BodyHydrationAnimation>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '$percentage%',
+                      AppLocalizations.of(context)!.bodyHydrationAnimationValue(percentage),
                       style: TextStyle(
                         fontSize: widget.size * 0.15,
                         fontWeight: FontWeight.bold,

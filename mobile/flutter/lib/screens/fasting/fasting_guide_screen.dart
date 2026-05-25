@@ -165,7 +165,7 @@ class _CompactHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 16, 8),
       child: Row(
         children: [
           const GlassBackButton(),
@@ -436,7 +436,7 @@ class _Faq extends StatelessWidget {
                   ),
                   children: [
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: Text(
                         f.$2,
                         style: TextStyle(

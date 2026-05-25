@@ -503,7 +503,7 @@ void showTargetEditSheet({
               ),
               const SizedBox(height: 20),
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: Text(AppLocalizations.of(context).setTrackingSheetsTargetRir,
                   style: TextStyle(
                     fontWeight: FontWeight.w500,

@@ -111,8 +111,8 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                       AppColors.purple.withOpacity(0.15),
                       AppColors.cyan.withOpacity(0.1),
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(

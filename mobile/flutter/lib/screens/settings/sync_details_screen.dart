@@ -342,7 +342,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                 if (_deadLetterItems.isNotEmpty) ...[
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Latest: ${_formatDate(_deadLetterItems.first.createdAt)}',
+                                    AppLocalizations.of(context)!.syncDetailsScreenLatest(_formatDate(_deadLetterItems.first.createdAt)),
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: textMuted,
@@ -467,7 +467,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                               ),
                                               const SizedBox(width: 12),
                                               Text(
-                                                '${item.retryCount} retries',
+                                                AppLocalizations.of(context)!.syncDetailsScreenRetries(item.retryCount),
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   color: textMuted,

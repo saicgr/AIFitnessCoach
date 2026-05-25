@@ -112,7 +112,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                             child: StatTile(
                               title: AppLocalizations.of(context).muscleDetailMaxWeight,
                               value: item.maxWeight != null
-                                  ? '${item.maxWeight!.toStringAsFixed(1)} kg'
+                                  ? AppLocalizations.of(context)!.exerciseStatsSheetKg(item.maxWeight!.toStringAsFixed(1))
                                   : '-',
                               icon: Icons.monitor_weight_outlined,
                               color: cyan,
@@ -127,7 +127,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                             child: StatTile(
                               title: AppLocalizations.of(context).exerciseStatsWidgetsEst1rm,
                               value: item.estimated1rm != null
-                                  ? '${item.estimated1rm!.toStringAsFixed(1)} kg'
+                                  ? AppLocalizations.of(context)!.exerciseStatsSheetKg2(item.estimated1rm!.toStringAsFixed(1))
                                   : '-',
                               icon: Icons.emoji_events_outlined,
                               color: success,

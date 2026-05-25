@@ -207,7 +207,7 @@ class _RenewalBannerContentState extends ConsumerState<_RenewalBannerContent>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Renews on ${renewal.formattedRenewalDate}',
+                            AppLocalizations.of(context)!.renewalReminderBannerRenewsOn(renewal.formattedRenewalDate),
                             style: TextStyle(
                               fontSize: 12,
                               color: textSecondary,

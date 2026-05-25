@@ -225,7 +225,7 @@ class DayCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${entry.coordinationNotes.length} note(s)',
+                        AppLocalizations.of(context)!.dayCardNoteS(entry.coordinationNotes.length),
                         style: const TextStyle(
                           color: Colors.orange,
                           fontSize: 12,

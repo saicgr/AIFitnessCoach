@@ -35,8 +35,8 @@ class LibraryQuickAccessCard extends StatelessWidget {
               color: AppColors.purple.withOpacity(0.3),
             ),
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: [
                 elevatedColor,
                 AppColors.purple.withOpacity(0.05),

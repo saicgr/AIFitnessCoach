@@ -314,7 +314,7 @@ class _ExerciseRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${pct.toStringAsFixed(1)}%',
+                AppLocalizations.of(context)!.muscleScoreBreakdownSheetValue(pct.toStringAsFixed(1)),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -335,7 +335,7 @@ class _ExerciseRow extends StatelessWidget {
           if (e1rm != null) ...[
             const SizedBox(height: 2),
             Text(
-              'Estimated 1RM ${e1rm.toStringAsFixed(1)} kg',
+              AppLocalizations.of(context)!.muscleScoreBreakdownSheetEstimatedRmKg(e1rm.toStringAsFixed(1)),
               style: TextStyle(
                 fontSize: 11,
                 color: textSecondary,

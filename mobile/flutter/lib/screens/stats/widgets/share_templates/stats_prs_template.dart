@@ -101,7 +101,7 @@ class StatsPRsTemplate extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '$totalPRCount PRs',
+                        AppLocalizations.of(context)!.statsPrsTemplatePrs(totalPRCount),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,

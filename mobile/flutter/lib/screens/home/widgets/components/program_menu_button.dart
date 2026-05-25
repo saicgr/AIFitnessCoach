@@ -590,7 +590,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Generated $generatedCount fresh workouts!',
+                      AppLocalizations.of(context)!.programMenuButtonGeneratedFreshWorkouts(generatedCount),
                     ),
                   ),
                 ],

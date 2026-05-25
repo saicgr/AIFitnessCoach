@@ -369,7 +369,7 @@ class _NotConnectedCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Connect $healthName to see steps, calories & more',
+                      AppLocalizations.of(context)!.dailyActivityCardConnectToSeeSteps(healthName),
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,

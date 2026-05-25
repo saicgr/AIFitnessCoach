@@ -24,7 +24,7 @@ class FilterChipWidget extends StatelessWidget {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsetsDirectional.only(end: 8),
       child: GestureDetector(
         onTap: onTap,
         child: Container(

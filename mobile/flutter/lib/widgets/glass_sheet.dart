@@ -226,8 +226,7 @@ class GlassSheetHandle extends StatelessWidget {
             ),
           ),
           // Close button on the right
-          Positioned(
-            right: 8,
+          PositionedDirectional(end: 8,
             child: GestureDetector(
               onTap: () => Navigator.of(context).pop(),
               behavior: HitTestBehavior.opaque,

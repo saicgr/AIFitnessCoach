@@ -153,7 +153,7 @@ class _RecoveryPill extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '${scorePct.round()}%',
+            AppLocalizations.of(context)!.recoveryPillsRowValue(scorePct.round()),
             style: TextStyle(
               fontSize: 12,
               color: textPrimary.withOpacity(0.7),

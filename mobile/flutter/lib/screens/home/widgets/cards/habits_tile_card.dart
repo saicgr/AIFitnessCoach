@@ -334,7 +334,7 @@ class HabitsTileCard extends ConsumerWidget {
             child: Row(
               children: [
                 Text(
-                  '+$remainingCount more',
+                  AppLocalizations.of(context)!.habitsTileCardMore(remainingCount),
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.success,

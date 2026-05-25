@@ -77,8 +77,8 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                   AppColors.purple.withOpacity(0.05),
                   Colors.transparent,
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
               ),
             ),
             child: Column(
@@ -211,7 +211,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          "You're ${roi.strengthIncreaseText} since you started!",
+                          AppLocalizations.of(context)!.roiSummaryCardYouReSinceYou(roi.strengthIncreaseText),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

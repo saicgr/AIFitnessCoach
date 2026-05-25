@@ -215,8 +215,8 @@ class _ChoiceButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: primary
               ? const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                   colors: [Color(0xFFFFB366), AppColors.orange],
                 )
               : null,

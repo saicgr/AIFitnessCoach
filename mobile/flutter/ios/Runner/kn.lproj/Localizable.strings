@@ -1,0 +1,10 @@
+"CFBundleDisplayName" = "Zealova";
+"WIDGET_TITLE_TODAY" = "Today's Workout";
+"WIDGET_BODY_REST_DAY" = "Rest day — recover well";
+"LIVE_ACTIVITY_WORKOUT_ACTIVE" = "Workout in progress";
+"LIVE_ACTIVITY_REST_TIMER" = "Rest timer: {time}";
+"LIVE_ACTIVITY_DONE" = "Done";
+"NOTIF_REMINDER_TITLE" = "Time to train";
+"NOTIF_REMINDER_BODY" = "Your workout is waiting";
+"WIDGET_STREAK_LABEL" = "Day streak";
+"WIDGET_CALORIES_LABEL" = "Calories";

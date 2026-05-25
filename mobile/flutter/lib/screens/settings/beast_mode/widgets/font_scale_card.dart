@@ -39,7 +39,7 @@ class FontScaleCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${scale.toStringAsFixed(2)}x',
+                  AppLocalizations.of(context)!.fontScaleCardX(scale.toStringAsFixed(2)),
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.cyan),
                 ),
               ),

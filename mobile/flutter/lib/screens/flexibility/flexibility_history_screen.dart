@@ -91,7 +91,7 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
                   const SizedBox(width: 8),
                   ...testTypes.map((type) {
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsetsDirectional.only(end: 8),
                       child: FilterChip(
                         label: Text(_formatTestType(type)),
                         selected: _selectedTestType == type,

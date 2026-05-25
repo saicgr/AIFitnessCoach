@@ -94,7 +94,7 @@ class MyStatsTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${history.length} exercises tracked  •  $totalSets total sets',
+                      AppLocalizations.of(context)!.myStatsTabExercisesTrackedTotalSets(history.length, totalSets),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: textMuted,
                           ),

@@ -103,7 +103,7 @@ class _CustomizeRingsSheet extends ConsumerWidget {
       );
 
   Widget _header(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 8, 12),
+        padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 8, 12),
         child: Row(
           children: [
             Expanded(
@@ -228,7 +228,7 @@ class _ShowingTile extends StatelessWidget {
             ),
             if (kind.isCore)
               Padding(
-                padding: EdgeInsets.only(right: 8),
+                padding: EdgeInsetsDirectional.only(end: 8),
                 child: Text(
                   AppLocalizations.of(context).quizMuscleFocusCore,
                   style: TextStyle(
@@ -276,7 +276,7 @@ class _HiddenTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 8, 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),

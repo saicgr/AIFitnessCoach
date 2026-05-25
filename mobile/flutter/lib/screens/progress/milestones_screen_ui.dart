@@ -34,7 +34,7 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
-                  'Achieved (${state.totalAchieved})',
+                  AppLocalizations.of(context)!.milestonesScreenUiAchieved(state.totalAchieved),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -164,7 +164,7 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
               '${roi.totalWorkoutTimeHours.toStringAsFixed(1)} hours',
               Icons.schedule,
               AppColors.orange,
-              subtitle: 'Average: ${roi.averageWorkoutDurationMinutes} min/workout',
+              subtitle: AppLocalizations.of(context)!.milestonesScreenUiAverageMinWorkout(roi.averageWorkoutDurationMinutes),
             ),
             const SizedBox(height: 12),
             _buildROIMetricCard(
@@ -173,7 +173,7 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
               roi.formattedWeightLifted,
               Icons.fitness_center,
               AppColors.purple,
-              subtitle: '${roi.totalWeightLiftedKg.toStringAsFixed(0)} kg',
+              subtitle: AppLocalizations.of(context)!.milestonesScreenUiKg(roi.totalWeightLiftedKg.toStringAsFixed(0)),
             ),
             const SizedBox(height: 12),
             _buildROIMetricCard(

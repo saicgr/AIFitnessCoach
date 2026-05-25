@@ -169,7 +169,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
           child: Row(
             children: [
               ...pills.map((action) => Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsetsDirectional.only(end: 8),
                 child: _ChatPill(
                   action: action,
                   isDark: isDark,
@@ -401,7 +401,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 8, 0),
                 child: Row(
                   children: [
                     Expanded(
@@ -469,7 +469,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 8, 0),
               child: Row(
                 children: [
                   Expanded(
@@ -582,7 +582,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                           Container(
                             width: 24,
                             height: 24,
-                            margin: const EdgeInsets.only(right: 12),
+                            margin: const EdgeInsetsDirectional.only(end: 12),
                             decoration: BoxDecoration(
                               color: action.color,
                               borderRadius: BorderRadius.circular(12),

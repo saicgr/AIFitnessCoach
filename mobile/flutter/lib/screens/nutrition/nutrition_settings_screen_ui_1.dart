@@ -507,7 +507,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 8, 8),
             child: Row(
               children: [
                 Text(
@@ -964,7 +964,7 @@ class _GoalPill extends StatelessWidget {
       onTap: onEdit,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+        padding: const EdgeInsetsDirectional.fromSTEB(10, 8, 8, 8),
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
@@ -1019,7 +1019,7 @@ class _GoalPill extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '+${secondary.length}',
+                  AppLocalizations.of(context)!.nutritionSettingsScreenUi1Value(secondary.length),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,

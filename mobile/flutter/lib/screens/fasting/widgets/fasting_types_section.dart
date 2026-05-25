@@ -254,8 +254,8 @@ class _FastingTypeCardState extends State<_FastingTypeCard> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                       colors: [
                         accent.withValues(alpha: dark ? 0.30 : 0.18),
                         accent.withValues(alpha: dark ? 0.09 : 0.05),
@@ -324,7 +324,7 @@ class _FastingTypeCardState extends State<_FastingTypeCard> {
                       const SizedBox(width: 8),
                       if (t.isCaution)
                         Padding(
-                          padding: const EdgeInsets.only(right: 4),
+                          padding: const EdgeInsetsDirectional.only(end: 4),
                           child: Icon(Icons.priority_high_rounded,
                               size: 18, color: accent),
                         ),
@@ -548,7 +548,7 @@ class _IntensityMeter extends StatelessWidget {
       children: [
         for (var i = 1; i <= 4; i++)
           Padding(
-            padding: const EdgeInsets.only(left: 3),
+            padding: const EdgeInsetsDirectional.only(start: 3),
             child: Container(
               width: 6,
               height: 6,

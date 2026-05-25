@@ -204,8 +204,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
               elevatedColor,
               elevatedColor.withValues(alpha: 0.9),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: accentColor.withValues(alpha: 0.3)),
@@ -522,8 +522,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                         itemBuilder: (context, index) {
                           if (index < visible) {
                             return Padding(
-                              padding: EdgeInsets.only(
-                                right: index == visible - 1 && remaining == 0
+                              padding: EdgeInsetsDirectional.only(end: index == visible - 1 && remaining == 0
                                     ? 0
                                     : gap,
                               ),
@@ -566,7 +565,7 @@ class _MoreBadge extends StatelessWidget {
         border: Border.all(color: AppColors.cardBorder),
       ),
       child: Text(
-        '+$count',
+        AppLocalizations.of(context)!.nextWorkoutCardValue(count),
         style: TextStyle(
           fontSize: size * 0.32,
           fontWeight: FontWeight.w700,

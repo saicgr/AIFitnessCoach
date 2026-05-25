@@ -64,8 +64,8 @@ class ProgramsIntroSheet extends StatelessWidget {
                               accentColor.withValues(alpha: 0.25),
                               accentColor.withValues(alpha: 0.1),
                             ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
@@ -199,8 +199,8 @@ class ProgramsIntroSheet extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                                begin: AlignmentDirectional.topStart,
+                                end: AlignmentDirectional.bottomEnd,
                                 colors: [
                                   accentColor.withValues(alpha: 0.8),
                                   accentColor.withValues(alpha: 0.6),

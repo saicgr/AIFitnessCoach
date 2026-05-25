@@ -98,7 +98,7 @@ class _SupersetGroupContainer extends StatelessWidget {
           Container(
             width: 18,
             height: 18,
-            margin: const EdgeInsets.only(right: 4),
+            margin: const EdgeInsetsDirectional.only(end: 4),
             decoration: BoxDecoration(
               color: Colors.purple,
               borderRadius: BorderRadius.circular(4),
@@ -773,7 +773,7 @@ class _ExerciseThumbnailState extends ConsumerState<_ExerciseThumbnail>
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
       child: Padding(
-        padding: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsetsDirectional.only(end: 6),
         child: thumbnailContent,
       ),
     );
@@ -830,7 +830,7 @@ class _AddExerciseButton extends StatelessWidget {
       child: Container(
         width: 44,
         height: 56,
-        margin: const EdgeInsets.only(left: 4),
+        margin: const EdgeInsetsDirectional.only(start: 4),
         decoration: BoxDecoration(
           color: isDark ? WorkoutDesign.surface : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(6),

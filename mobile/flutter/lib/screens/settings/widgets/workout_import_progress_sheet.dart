@@ -188,7 +188,7 @@ class _ProgressSheetBodyState extends State<_ProgressSheetBody>
             ),
             const SizedBox(height: 8),
             Text(
-              'Job ID: ${widget.jobId}',
+              AppLocalizations.of(context)!.workoutImportProgressSheetJobId(widget.jobId),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelSmall?.copyWith(

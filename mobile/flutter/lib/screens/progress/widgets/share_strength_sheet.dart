@@ -662,7 +662,7 @@ class _MuscleSummaryTemplate extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${scores.muscleScores.length} muscle groups',
+                      AppLocalizations.of(context)!.shareStrengthSheetMuscleGroups(scores.muscleScores.length),
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white.withValues(alpha: 0.5),

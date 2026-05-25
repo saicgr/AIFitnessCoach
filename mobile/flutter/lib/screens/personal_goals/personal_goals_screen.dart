@@ -152,7 +152,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(AppLocalizations.of(context).personalGoalsDeleteGoal),
-        content: Text('Permanently delete "$exerciseName"? This cannot be undone.'),
+        content: Text(AppLocalizations.of(context)!.personalGoalsScreenPermanentlyDeleteThisCannot(exerciseName)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).buttonCancel)),
           TextButton(
@@ -169,7 +169,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
       await _goalsService.deleteGoal(userId: _userId!, goalId: goalId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"$exerciseName" deleted')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.personalGoalsScreenDeleted(exerciseName))),
         );
         _loadData();
       }
@@ -496,7 +496,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
                       SnackBar(content: Text(AppLocalizations.of(context).personalGoalsFullRecordsViewComing)),
                     );
                   },
-                  child: Text('View all ${records.length} records'),
+                  child: Text(AppLocalizations.of(context)!.personalGoalsScreenViewAllRecords(records.length)),
                 ),
             ],
 
@@ -520,8 +520,8 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
             AppColors.cyan.withValues(alpha: 0.15),
             AppColors.purple.withValues(alpha: 0.1),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),

@@ -647,7 +647,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                 });
               },
               child: Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsetsDirectional.only(end: 8),
                 child: Icon(
                   Icons.close_rounded,
                   color: textMuted,
@@ -681,7 +681,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
               }
             },
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: Container(
                 width: 32,
                 height: 32,
@@ -714,9 +714,8 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       context: context,
       builder: (context) => GlassSheet(
         child: Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
+          padding: EdgeInsetsDirectional.only(start: 24,
+            end: 24,
             bottom: MediaQuery.of(context).viewInsets.bottom + 24,
           ),
           child: Column(

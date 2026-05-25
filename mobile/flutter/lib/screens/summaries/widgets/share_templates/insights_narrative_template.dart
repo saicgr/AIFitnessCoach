@@ -67,7 +67,7 @@ class InsightsNarrativeTemplate extends StatelessWidget {
                               size: 12, color: Color(0xFF67E8F9)),
                           const SizedBox(width: 4),
                           Text(
-                            '$periodName AI',
+                            AppLocalizations.of(context)!.insightsNarrativeTemplateAi(periodName),
                             style: const TextStyle(
                               color: Color(0xFF67E8F9),
                               fontSize: 10,

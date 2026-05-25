@@ -35,7 +35,7 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
               ),
               const SizedBox(height: 4),
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: Text(
                   l.quickWorkoutDiscoverSubtitle,
                   style: TextStyle(fontSize: 13, color: textSecondary),

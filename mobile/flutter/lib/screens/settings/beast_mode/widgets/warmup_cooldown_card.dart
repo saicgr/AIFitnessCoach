@@ -27,7 +27,7 @@ class WarmupCooldownCard extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Warmup slider
-          _sectionLabel('Warmup Duration', '${warmupState.warmupDurationMinutes} min'),
+          _sectionLabel('Warmup Duration', AppLocalizations.of(context)!.warmupCooldownCardMin(warmupState.warmupDurationMinutes)),
           const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(

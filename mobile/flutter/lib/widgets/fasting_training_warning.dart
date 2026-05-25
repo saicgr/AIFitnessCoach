@@ -230,7 +230,7 @@ class FastingTrainingWarning extends ConsumerWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${hoursFasted}h fasted',
+                          AppLocalizations.of(context)!.fastingTrainingWarningHFasted(hoursFasted),
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -356,7 +356,7 @@ class FastingTrainingWarning extends ConsumerWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              '${hoursFasted}h',
+              AppLocalizations.of(context)!.fastingTrainingWarningH(hoursFasted),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

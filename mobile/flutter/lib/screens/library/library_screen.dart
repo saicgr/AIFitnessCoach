@@ -120,7 +120,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 // between the header row and the search bar is deterministic
                 // across iOS and Android (no overlap with a floating button).
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+                  padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 16, 0),
                   child: Row(
                     children: [
                       GlassBackButton(
@@ -205,8 +205,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     children: List.generate(_tabLabels.length, (index) {
                       final isSelected = _tabController.index == index;
                       return Padding(
-                        padding: EdgeInsets.only(
-                          right: index < _tabLabels.length - 1 ? 8 : 0,
+                        padding: EdgeInsetsDirectional.only(end: index < _tabLabels.length - 1 ? 8 : 0,
                         ),
                         child: GestureDetector(
                           onTap: () {

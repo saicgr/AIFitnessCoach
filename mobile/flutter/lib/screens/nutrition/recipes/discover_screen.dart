@@ -109,7 +109,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         children: [
           // Header row
           Padding(
-            padding: EdgeInsets.fromLTRB(8, topPad + 8, 16, 4),
+            padding: EdgeInsetsDirectional.fromSTEB(8, topPad + 8, 16, 4),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -302,7 +302,7 @@ class _CategoryAndSortRow extends StatelessWidget {
               children: [
                 for (final c in cats)
                   Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsetsDirectional.only(end: 8),
                     child: _Chip(
                       label: c.$2,
                       selected: selectedCategory == c.$1,

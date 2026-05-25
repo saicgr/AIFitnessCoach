@@ -178,7 +178,7 @@ class _EquipmentChip extends StatelessWidget {
                 onTap: onTuneTap,
                 behavior: HitTestBehavior.opaque,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 2),
+                  padding: const EdgeInsetsDirectional.only(start: 2),
                   child: Icon(
                     Icons.tune,
                     size: 14,

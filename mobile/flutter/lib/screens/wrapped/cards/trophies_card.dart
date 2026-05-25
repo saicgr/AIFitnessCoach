@@ -96,7 +96,7 @@ class WrappedTrophiesCard extends ConsumerWidget {
                   ? AppLocalizations.of(context).trophiesCardNoNewBadgesThis
                   : inPeriod.length == 1
                       ? '1 new badge this period'
-                      : '${inPeriod.length} new badges this period',
+                      : AppLocalizations.of(context)!.trophiesCardNewBadgesThisPeriod(inPeriod.length),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 26,
@@ -111,11 +111,11 @@ class WrappedTrophiesCard extends ConsumerWidget {
                   : _WrappedTrophiesStack(trophies: inPeriod.take(6).toList()),
             ),
             if (showWatermark)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.only(top: 12),
                   child: Text(
-                    '${Branding.appName} Wrapped',
+                    AppLocalizations.of(context)!.trophiesCardWrapped(Branding.appName),
                     style: TextStyle(
                       color: Colors.white54,
                       fontSize: 12,

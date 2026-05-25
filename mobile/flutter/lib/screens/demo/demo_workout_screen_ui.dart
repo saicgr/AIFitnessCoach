@@ -88,8 +88,8 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: isPersonalized
               ? [
                   AppColors.purple.withOpacity(0.15),

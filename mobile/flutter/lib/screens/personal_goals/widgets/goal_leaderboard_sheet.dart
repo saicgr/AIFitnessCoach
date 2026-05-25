@@ -329,7 +329,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            '${response.userProgressPercentage.toStringAsFixed(0)}%',
+            AppLocalizations.of(context)!.goalLeaderboardSheetValue(response.userProgressPercentage.toStringAsFixed(0)),
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

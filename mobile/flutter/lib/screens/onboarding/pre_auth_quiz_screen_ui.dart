@@ -28,8 +28,8 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                       gradient: _canProceed
                           ? LinearGradient(
                               colors: t.buttonGradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             )
                           : null,
                       color: _canProceed ? null : t.cardFill,

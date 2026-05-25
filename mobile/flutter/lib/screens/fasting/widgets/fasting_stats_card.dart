@@ -517,7 +517,7 @@ class _WeightStat extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '${value.toStringAsFixed(1)} kg',
+            AppLocalizations.of(context)!.fastingStatsCardKg(value.toStringAsFixed(1)),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,

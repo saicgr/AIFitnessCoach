@@ -193,7 +193,7 @@ class _CompletionRing extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '$pct%',
+                AppLocalizations.of(context)!.weeklyRecapTemplateValue(pct),
                 style: TextStyle(
                   color: color,
                   fontSize: 36,

@@ -126,8 +126,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   colors: isPremium
                       ? [const Color(0xFFFFD700), const Color(0xFFFF8C00)]
                       : [const Color(0xFF4CAF50), const Color(0xFF2E7D32)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -677,8 +677,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             boostColor.withValues(alpha: 0.35),
             boostColor.withValues(alpha: 0.12),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: boostColor.withValues(alpha: 0.6), width: 1.5),
@@ -757,7 +757,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   ),
                 ),
                 child: Text(
-                  '${hours}h ${minutes}m',
+                  AppLocalizations.of(context)!.inventoryScreenHM(hours, minutes),
                   style: const TextStyle(
                     color: boostHighlight,
                     fontSize: 13,
@@ -783,7 +783,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${hours}h ${minutes}m remaining',
+                AppLocalizations.of(context)!.inventoryScreenHMRemaining(hours, minutes),
                 style: TextStyle(
                   color: textColor.withValues(alpha: 0.75),
                   fontSize: 11,
@@ -848,8 +848,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               accentColor.withValues(alpha: 0.2),
               accentColor.withValues(alpha: 0.08),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -896,7 +896,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '$pendingCount to claim',
+                            AppLocalizations.of(context)!.inventoryScreenToClaim(pendingCount),
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,

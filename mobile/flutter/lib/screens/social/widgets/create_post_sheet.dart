@@ -863,7 +863,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             final isLast = visibility == PostVisibilityOption.values.last;
             return Expanded(
               child: Padding(
-                padding: EdgeInsets.only(right: isLast ? 0 : 8),
+                padding: EdgeInsetsDirectional.only(end: isLast ? 0 : 8),
                 child: GestureDetector(
                   onTap: () {
                     HapticFeedback.selectionClick();

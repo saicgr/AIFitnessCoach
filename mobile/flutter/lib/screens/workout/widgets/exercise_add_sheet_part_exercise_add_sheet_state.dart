@@ -313,7 +313,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         Navigator.pop(context, updatedWorkout);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added $exerciseName'),
+            content: Text(AppLocalizations.of(context)!.exerciseAddSheetPartExerciseAddSheetStateAdded(exerciseName)),
             backgroundColor: AppColors.success,
           ),
         );
@@ -347,12 +347,11 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           textSecondary: textSecondary,
           textMuted: textMuted,
         ),
-        Positioned(
-          right: 16,
+        PositionedDirectional(end: 16,
           bottom: 16,
           child: FloatingActionButton.extended(
             heroTag: 'add_snap_fab',
-            backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,
             icon: const Icon(Icons.camera_alt, color: Colors.black),
             label: const Text(
               'Snap equipment',
@@ -713,7 +712,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.only(right: 14),
+        padding: const EdgeInsetsDirectional.only(end: 14),
         child: SizedBox(
           width: 64,
           child: Column(

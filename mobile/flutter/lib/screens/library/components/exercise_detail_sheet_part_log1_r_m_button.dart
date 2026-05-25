@@ -390,7 +390,7 @@ class _DownloadVideoButton extends ConsumerWidget {
           ),
         ),
         content: Text(
-          'Remove the offline video for "$exerciseName"? You can re-download it anytime.',
+          AppLocalizations.of(context)!.exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(exerciseName),
           style: TextStyle(
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),

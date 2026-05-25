@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/discover_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Workstream 5: Weekly Percentile Hero for the Insights screen.
 ///
@@ -43,8 +44,8 @@ class WeeklyPercentileHero extends ConsumerWidget {
                     accent.withValues(alpha: 0.22),
                     accent.withValues(alpha: 0.04),
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: accent.withValues(alpha: 0.3)),
@@ -74,7 +75,7 @@ class WeeklyPercentileHero extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Top $topPct% this week',
+                          AppLocalizations.of(context)!.weeklyPercentileHeroTopThisWeek(topPct),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
@@ -83,7 +84,7 @@ class WeeklyPercentileHero extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '#${s.yourRank} of ${s.totalActive} active users · tap for Discover',
+                          AppLocalizations.of(context)!.weeklyPercentileHeroOfActiveUsersTap(s.yourRank, s.totalActive),
                           style: TextStyle(fontSize: 12, color: textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

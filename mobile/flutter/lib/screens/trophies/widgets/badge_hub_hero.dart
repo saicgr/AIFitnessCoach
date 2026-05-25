@@ -26,8 +26,8 @@ class BadgeHubHero extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
           gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+            begin: AlignmentDirectional.centerStart,
+            end: AlignmentDirectional.centerEnd,
             colors: [
               Color(0xFF14B8A6), // teal-500
               Color(0xFF22D3EE), // cyan-400
@@ -47,13 +47,12 @@ class BadgeHubHero extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             // Decorative badge emojis spilling out
-            Positioned(
-              right: -6,
+            PositionedDirectional(end: -6,
               top: 24,
               child: Opacity(
                 opacity: 0.9,
                 child: Row(
-                  children: const [
+                        children: const [
                     _HeroBadge(emoji: '🏆', size: 46, rotation: -0.22),
                     SizedBox(width: 2),
                     _HeroBadge(emoji: '🎖️', size: 52, rotation: 0.06),
@@ -66,7 +65,7 @@ class BadgeHubHero extends StatelessWidget {
 
             // Copy
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 150, 18),
+              padding: const EdgeInsetsDirectional.fromSTEB(20, 18, 150, 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

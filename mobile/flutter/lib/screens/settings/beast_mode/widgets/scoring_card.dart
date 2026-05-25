@@ -66,12 +66,12 @@ class ScoringCard extends ConsumerWidget {
                   return Expanded(
                     flex: max((e.value * 100).round(), 1),
                     child: Tooltip(
-                      message: '${e.key}: $pct%',
+                      message: AppLocalizations.of(context)!.scoringCardValue(e.key, pct),
                       child: Container(
                         color: color,
                         alignment: Alignment.center,
                         child: pct >= 10
-                            ? Text('$pct%',
+                            ? Text(AppLocalizations.of(context)!.scoringCardValue2(pct),
                                 style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white))
                             : null,
                       ),
@@ -85,7 +85,7 @@ class ScoringCard extends ConsumerWidget {
           // Total indicator
           Row(
             children: [
-              Text('Total: $totalPct%',
+              Text(AppLocalizations.of(context)!.scoringCardTotal(totalPct),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,

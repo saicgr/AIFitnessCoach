@@ -251,7 +251,7 @@ class FatigueAlertModal extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header with severity indicator
-          _buildHeader(severityColor, textPrimary, isSmallScreen),
+          _buildHeader(context, severityColor, textPrimary, isSmallScreen),
 
           Padding(
             padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
@@ -281,6 +281,7 @@ class FatigueAlertModal extends ConsumerWidget {
 
                 // Weight suggestion
                 _buildWeightSuggestion(
+                  context,
                   ref,
                   isDark,
                   textPrimary,
@@ -305,7 +306,7 @@ class FatigueAlertModal extends ConsumerWidget {
         .scale(begin: const Offset(0.9, 0.9), end: const Offset(1.0, 1.0));
   }
 
-  Widget _buildHeader(Color severityColor, Color textPrimary, bool isSmallScreen) {
+  Widget _buildHeader(BuildContext context, Color severityColor, Color textPrimary, bool isSmallScreen) {
     return Container(
       padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
       decoration: BoxDecoration(
@@ -314,8 +315,8 @@ class FatigueAlertModal extends ConsumerWidget {
             severityColor.withValues(alpha: 0.3),
             severityColor.withValues(alpha: 0.1),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -356,7 +357,7 @@ class FatigueAlertModal extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${alertData.severityLabel} Alert',
+                  AppLocalizations.of(context)!.fatigueAlertModalAlert(alertData.severityLabel),
                   style: TextStyle(
                     fontSize: isSmallScreen ? 18 : 20,
                     fontWeight: FontWeight.bold,
@@ -486,6 +487,7 @@ class FatigueAlertModal extends ConsumerWidget {
   }
 
   Widget _buildWeightSuggestion(
+    BuildContext context,
     WidgetRef ref,
     bool isDark,
     Color textPrimary,
@@ -498,7 +500,7 @@ class FatigueAlertModal extends ConsumerWidget {
     // render a rep-target reduction card instead so the modal stays useful.
     if (alertData.suggestedWeight == null || alertData.repTargetReduction != null) {
       return _buildRepTargetSuggestion(
-        isDark, textPrimary, textSecondary, textMuted, severityColor, isSmallScreen,
+        context, isDark, textPrimary, textSecondary, textMuted, severityColor, isSmallScreen,
       );
     }
 
@@ -632,9 +634,9 @@ class FatigueAlertModal extends ConsumerWidget {
           SizedBox(height: isSmallScreen ? 8 : 12),
           Text(
             truePercent > 0
-                ? '$truePercent% lighter'
+                ? AppLocalizations.of(context)!.fatigueAlertModalLighter(truePercent)
                 : truePercent < 0
-                    ? '${truePercent.abs()}% heavier'
+                    ? AppLocalizations.of(context)!.fatigueAlertModalHeavier(truePercent.abs())
                     : 'Hold weight',
             style: TextStyle(
               fontSize: isSmallScreen ? 12 : 13,
@@ -656,6 +658,7 @@ class FatigueAlertModal extends ConsumerWidget {
   /// Bodyweight variant of the suggestion card — recommends reducing the
   /// rep target instead of the weight (edge case 57).
   Widget _buildRepTargetSuggestion(
+    BuildContext context,
     bool isDark,
     Color textPrimary,
     Color textSecondary,
@@ -695,7 +698,7 @@ class FatigueAlertModal extends ConsumerWidget {
           ),
           SizedBox(height: isSmallScreen ? 12 : 16),
           Text(
-            newReps != null ? '$newReps reps' : '—',
+            newReps != null ? AppLocalizations.of(context)!.fatigueAlertModalReps(newReps) : '—',
             style: TextStyle(
               fontSize: isSmallScreen ? 28 : 32,
               fontWeight: FontWeight.bold,

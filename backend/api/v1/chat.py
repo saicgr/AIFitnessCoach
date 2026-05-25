@@ -51,6 +51,8 @@ from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.config import get_settings
+from core.locale import get_user_locale_from_request, persist_user_locale
+from core.db import get_supabase_db as _get_supabase_db_for_locale
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -530,11 +532,17 @@ async def send_message(
             await check_premium_gate(chat_request.user_id, "text_to_calories", _chat_tz)
             _chat_gate_feature = "text_to_calories"
 
+    # ── Locale resolution ────────────────────────────────────────────────────
+    # Extract from Accept-Language header; falls back to 'en' if absent or
+    # unrecognised. Persisted to users.preferred_locale as a background task
+    # so subsequent cron notifications can use the correct language.
+    _chat_locale = get_user_locale_from_request(request)
+
     # Track response time for analytics
     start_time = time.time()
 
     try:
-        response = await coach.process_message(chat_request, user_tz=_chat_tz)
+        response = await coach.process_message(chat_request, user_tz=_chat_tz, locale=_chat_locale)
         response_time_ms = int((time.time() - start_time) * 1000)
         # 🎯 Stable assistant_message_id generated up-front so the persisted
         # row PK matches what we hand back to the client. Mirrors the SSE
@@ -542,6 +550,18 @@ async def send_message(
         # twice (once via the /send return + once via Realtime/loadHistory).
         assistant_message_id = str(uuid.uuid4())
         logger.info(f"✅ Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms, message_id={assistant_message_id}")
+
+        # Persist locale in the background (non-blocking). Only writes when
+        # the locale differs from the DB default ('en') or when the user
+        # changed language — persist_user_locale skips invalid codes.
+        if _chat_locale and _chat_locale != "en":
+            _locale_db = _get_supabase_db_for_locale()
+            background_tasks.add_task(
+                persist_user_locale,
+                str(chat_request.user_id),
+                _chat_locale,
+                _locale_db,
+            )
 
         # Track premium gate usage after successful processing
         background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _chat_tz)
@@ -949,6 +969,9 @@ async def send_message_stream(
             await check_premium_gate(chat_request.user_id, "text_to_calories", _stream_tz)
             _stream_gate_feature = "text_to_calories"
 
+    # ── Locale resolution (stream path) ─────────────────────────────────────
+    _stream_locale = get_user_locale_from_request(request)
+
     from starlette.responses import StreamingResponse
 
     async def _stream_response():
@@ -970,7 +993,7 @@ async def send_message_stream(
             # `async for` is closed by Starlette → the underlying Gemini stream
             # generator is `aclose()`d → the inflight call is cancelled and the
             # semaphore released. No leak.
-            async for evt in coach.process_message_stream(chat_request, user_tz=_stream_tz):
+            async for evt in coach.process_message_stream(chat_request, user_tz=_stream_tz, locale=_stream_locale):
                 # Bail out early if the client has gone away — stops the run
                 # and avoids burning Gemini tokens nobody will receive.
                 if await request.is_disconnected():
@@ -1028,10 +1051,20 @@ async def send_message_stream(
             }
             yield f"data: {json.dumps(done_evt)}\n\n"
 
-            # ── Background work — usage tracking, push, persistence ───────
+            # ── Background work — usage tracking, locale persist, push, persistence ─
             background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _stream_tz)
             if _stream_gate_feature:
                 background_tasks.add_task(track_premium_usage, chat_request.user_id, _stream_gate_feature, _stream_tz)
+
+            # Persist locale preference (non-blocking; skip for 'en' default).
+            if _stream_locale and _stream_locale != "en":
+                _locale_db_s = _get_supabase_db_for_locale()
+                background_tasks.add_task(
+                    persist_user_locale,
+                    str(chat_request.user_id),
+                    _stream_locale,
+                    _locale_db_s,
+                )
 
             # Push notification for the coach reply. Scheduled BEFORE the
             # DB-save task so a mid-stream client cancel still fires the push

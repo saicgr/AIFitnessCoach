@@ -28,8 +28,8 @@ class HabitProgressHeader extends StatelessWidget {
           colors: isComplete
               ? [Colors.green.shade400, Colors.green.shade600]
               : [AppColors.teal, AppColors.teal.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -76,7 +76,7 @@ class HabitProgressHeader extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'of $total',
+                      AppLocalizations.of(context)!.habitProgressHeaderOf(total),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 12,
@@ -125,7 +125,7 @@ class HabitProgressHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${percentage.round()}% complete',
+                  AppLocalizations.of(context)!.habitProgressHeaderComplete(percentage.round()),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 12,

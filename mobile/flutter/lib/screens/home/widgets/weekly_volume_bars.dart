@@ -140,7 +140,7 @@ class _WeeklyVolumeBarsState extends ConsumerState<WeeklyVolumeBars> {
             width: 56,
             child: Text(
               e.capSets != null ? '${e.weeklySets}/${e.capSets}' : '${e.weeklySets}',
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.end,
               style: TextStyle(fontSize: 11, color: muted),
             ),
           ),

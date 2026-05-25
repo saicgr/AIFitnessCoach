@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// A single `(t_seconds, value)` sample.
 class MetricSample {
@@ -53,7 +54,7 @@ class WorkoutMetricChart extends StatelessWidget {
     final gridColor = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04);
 
     if (samples.length < 2) {
-      return _buildEmpty(textMuted);
+      return _buildEmpty(context, textMuted);
     }
 
     final spots = samples.map((s) => FlSpot(s.t, s.v)).toList();
@@ -190,12 +191,12 @@ class WorkoutMetricChart extends StatelessWidget {
     );
   }
 
-  Widget _buildEmpty(Color textMuted) {
+  Widget _buildEmpty(BuildContext context, Color textMuted) {
     return SizedBox(
       height: height,
       child: Center(
         child: Text(
-          'Not enough $label data to chart.',
+          AppLocalizations.of(context)!.workoutMetricChartNotEnoughDataTo(label),
           style: TextStyle(fontSize: 12, color: textMuted),
         ),
       ),

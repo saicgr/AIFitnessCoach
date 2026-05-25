@@ -200,7 +200,7 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 160),
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       curve: Curves.easeOut,
       child: _editing
           ? _buildEditor(accent, elevated, textPrimary)
@@ -238,7 +238,7 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
       final aligned = isUp == _positiveIsGood;
       final color = aligned ? AppColors.success : AppColors.error;
       trendArrow = Padding(
-        padding: const EdgeInsets.only(left: 2),
+        padding: const EdgeInsetsDirectional.only(start: 2),
         child: Icon(
           isUp ? Icons.north_rounded : Icons.south_rounded,
           size: 10,
@@ -260,7 +260,7 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
     // the user's mental model — "tap the number to change it, tap the
     // chevron to dig deeper".
     return Container(
-      padding: const EdgeInsets.fromLTRB(6, 2, 2, 2),
+      padding: const EdgeInsetsDirectional.fromSTEB(6, 2, 2, 2),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(999),
@@ -359,7 +359,7 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
       // Tap-outside-to-cancel: covers the "clicked anywhere off the pill".
       onTapOutside: (_) => _cancel(),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(6, 3, 3, 3),
+        padding: const EdgeInsetsDirectional.fromSTEB(6, 3, 3, 3),
         decoration: BoxDecoration(
           color: elevated,
           borderRadius: BorderRadius.circular(999),

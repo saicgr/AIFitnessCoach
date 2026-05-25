@@ -320,7 +320,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '$label: ',
+            AppLocalizations.of(context)!.demoWorkoutScreenValue(label),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,

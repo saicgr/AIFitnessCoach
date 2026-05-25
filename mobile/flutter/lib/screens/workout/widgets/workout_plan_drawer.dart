@@ -365,8 +365,8 @@ class _ExerciseRow extends StatelessWidget {
         return false; // We handle deletion ourselves
       },
       background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
+        alignment: AlignmentDirectional.centerEnd,
+        padding: const EdgeInsetsDirectional.only(end: 24),
         margin: EdgeInsets.symmetric(horizontal: isCompact ? 8 : 16, vertical: 4),
         decoration: BoxDecoration(
           color: AppColors.error,
@@ -397,7 +397,7 @@ class _ExerciseRow extends StatelessWidget {
               ReorderableDragStartListener(
                 index: index,
                 child: Padding(
-                  padding: EdgeInsets.only(right: isCompact ? 8 : 12),
+                  padding: EdgeInsetsDirectional.only(end: isCompact ? 8 : 12),
                   child: Icon(
                     Icons.drag_handle_rounded,
                     size: isCompact ? 20 : 24,

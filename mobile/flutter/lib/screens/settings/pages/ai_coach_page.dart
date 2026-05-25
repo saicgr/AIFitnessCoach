@@ -138,7 +138,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
           child: Text(
             AppLocalizations.of(context).aiCoachCoachNotifications,
             style: TextStyle(
@@ -236,7 +236,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
           child: Text(
             AppLocalizations.of(context).aiCoachOtherNotifications,
             style: TextStyle(
@@ -368,7 +368,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                   const SizedBox(height: 2),
                   Text(
                     coach != null
-                        ? '${coach.tagline} · Tap to change'
+                        ? AppLocalizations.of(context)!.aiCoachPageTapToChange(coach.tagline)
                         : 'Change AI voice and style',
                     style: TextStyle(
                       fontSize: 13,

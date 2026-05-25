@@ -228,9 +228,8 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
           opaque: true,
           child: StatefulBuilder(
           builder: (context, setSheetState) => Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
+            padding: EdgeInsetsDirectional.only(start: 20,
+              end: 20,
               top: 20,
               bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
             ),

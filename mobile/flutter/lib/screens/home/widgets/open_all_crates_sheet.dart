@@ -611,12 +611,11 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                   ),
                   // Checkmark overlay
                   if (selected)
-                    Positioned(
-                      top: 6,
-                      right: 6,
+                    PositionedDirectional(top: 6,
+                      end: 6,
                       child: Container(
                         width: 22,
-                        height: 22,
+                                      height: 22,
                         decoration: BoxDecoration(
                           color: option.typeColor,
                           shape: BoxShape.circle,

@@ -20,8 +20,8 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             cyan.withOpacity(0.15),
             cyan.withOpacity(0.05),
@@ -364,8 +364,8 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             currentValue.color.withOpacity(0.12),
             currentValue.color.withOpacity(0.04),

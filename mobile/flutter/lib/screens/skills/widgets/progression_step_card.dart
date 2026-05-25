@@ -184,7 +184,7 @@ class ProgressionStepCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Goal: ${step.unlockCriteriaText}',
+                        AppLocalizations.of(context)!.progressionStepCardGoal(step.unlockCriteriaText),
                         style: TextStyle(
                           color: textSecondary,
                           fontSize: 13,
@@ -272,7 +272,7 @@ class _DifficultyBadge extends StatelessWidget {
             return Container(
               width: 6,
               height: 6,
-              margin: EdgeInsets.only(right: index < 4 ? 2 : 6),
+              margin: EdgeInsetsDirectional.only(end: index < 4 ? 2 : 6),
               decoration: BoxDecoration(
                 color: filled ? color : color.withOpacity(0.3),
                 shape: BoxShape.circle,

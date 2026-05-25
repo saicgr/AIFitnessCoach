@@ -52,8 +52,23 @@ from core.config import get_settings
 from core.logger import get_logger
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
+from core.i18n import get_template as _get_i18n_template
 from services.notification_service import get_notification_service
 from services.notification_suppression import should_suppress_notification
+
+# Map internal nudge_type → i18n template key base (title/body pairs).
+# Nudge types not listed here fall through to the existing template pool.
+_NUDGE_TYPE_TO_I18N_KEY: Dict[str, str] = {
+    "morning_workout": "workout_reminder",
+    "streak_at_risk": "streak_at_risk",
+    "weekly_checkin": "weekly_wrapped",
+    "morning_recovery": "morning_recovery_nudge",
+    "post_workout_nutrition": "post_workout_nutrition",
+    "rest_day_tip": "rest_day_tip",
+    "habit_streak_reward": "habit_streak_reward",
+    "progress_milestone": "new_pr_celebration",
+    "coach_insight": "ai_coach_insight",
+}
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -250,7 +265,7 @@ def _fetch_nudge_eligible_users(supabase) -> List[dict]:
             .select(
                 "id, name, email, fcm_token, timezone, notification_preferences, created_at, "
                 "in_vacation_mode, vacation_start_date, vacation_end_date, "
-                "in_comeback_mode, comeback_week"
+                "in_comeback_mode, comeback_week, preferred_locale"
             ) \
             .not_.is_("fcm_token", "null") \
             .execute()
@@ -364,6 +379,11 @@ async def _send_nudge(
         intensity = "balanced"
     use_ai = prefs.get("ai_personalized_nudges", True)
 
+    # ── Resolve user's preferred locale for localized push title/body ────────
+    # preferred_locale is populated by the chat endpoint from Accept-Language.
+    # Defaults to 'en' when absent (migration 2103 default).
+    user_locale = user.get("preferred_locale") or "en"
+
     # 4. Generate message
     message = await notif_svc.generate_accountability_message(
         nudge_type=nudge_type,
@@ -376,6 +396,25 @@ async def _send_nudge(
         accountability_intensity=intensity,
         use_ai=use_ai,
     )
+
+    # ── Build localized push title/body (non-English users only) ─────────────
+    # When the user has a non-English locale AND the nudge_type maps to an i18n
+    # key, override the push notification title and body with the localized
+    # template. The chat message body stays as-is (English or AI-generated) —
+    # push text and chat text are independent.
+    # NOTE: All locales currently return English (translations TODO — see i18n.py).
+    _localized_title: Optional[str] = None
+    _localized_body: Optional[str] = None
+    if user_locale != "en":
+        i18n_key_base = _NUDGE_TYPE_TO_I18N_KEY.get(nudge_type)
+        if i18n_key_base:
+            _fmt_vars = {
+                "name": user.get("name") or "",
+                "coach_name": coach_name,
+                **{k: v for k, v in context_dict.items() if isinstance(v, (str, int, float))},
+            }
+            _localized_title = _get_i18n_template(user_locale, f"{i18n_key_base}_title", **_fmt_vars)
+            _localized_body = _get_i18n_template(user_locale, f"{i18n_key_base}_body", **_fmt_vars)
 
     # 5. Save to chat_history (AI-initiated, proactive)
     chat_message_id = None
@@ -417,12 +456,21 @@ async def _send_nudge(
         return False
 
     context_dict["chat_message_id"] = str(chat_message_id) if chat_message_id else ""
+    # If we built a localized title/body, override context_dict so that
+    # send_accountability_nudge picks them up via the template pool. The
+    # `_localized_title` becomes the FCM notification title and
+    # `_localized_body` becomes the push body text.
+    if _localized_title:
+        context_dict["_override_title"] = _localized_title
+    if _localized_body:
+        context_dict["_override_body"] = _localized_body
+
     success, _ = await notif_svc.send_accountability_nudge(
         fcm_token=fcm_token,
         nudge_type=nudge_type,
         context_dict=context_dict,
         user_name=user.get("name"),
-        coach_name=coach_name,
+        coach_name=_localized_title or coach_name,  # Localized title as FCM notification title
         coaching_style=coaching_style,
         communication_tone=communication_tone,
         use_emojis=use_emojis,
@@ -431,7 +479,7 @@ async def _send_nudge(
     )
 
     if success:
-        logger.info(f"✅ [Nudge] {nudge_type} sent to {user_id} ({coach_name})")
+        logger.info(f"✅ [Nudge] {nudge_type} sent to {user_id} ({coach_name}) locale={user_locale}")
     return success
 
 

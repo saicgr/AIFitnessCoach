@@ -118,7 +118,7 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
                               ),
                               // Goal tags
                               ...pattern.goalTags.map((tag) => Container(
-                                margin: const EdgeInsets.only(left: 6),
+                                margin: const EdgeInsetsDirectional.only(start: 6),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
                                   vertical: 3,
@@ -199,7 +199,7 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
                                 Icon(Icons.timer_outlined, size: 14, color: textMuted),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Rest: ${pattern.restDisplayHint}',
+                                  AppLocalizations.of(context)!.trainingMethodsScreenRest(pattern.restDisplayHint),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: textMuted,

@@ -37,8 +37,8 @@ class CoachProfileCard extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                   colors: [
                     coach.primaryColor.withValues(alpha: 0.15),
                     coach.accentColor.withValues(alpha: 0.1),
@@ -102,8 +102,8 @@ class CoachProfileCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             coach.primaryColor.withValues(alpha: 0.8),
             coach.accentColor.withValues(alpha: 0.9),
@@ -210,12 +210,11 @@ class CoachProfileCard extends StatelessWidget {
           final delay = baseDelay + (index * stagger);
 
           return Align(
-            alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: isUser ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
             child: Container(
-              margin: EdgeInsets.only(
-                bottom: 4,
-                left: isUser ? 48 : 0,
-                right: isUser ? 0 : 48,
+              margin: EdgeInsetsDirectional.only(bottom: 4,
+                start: isUser ? 48 : 0,
+                end: isUser ? 0 : 48,
               ),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -249,9 +248,9 @@ class CoachProfileCard extends StatelessWidget {
         }),
         // Typing indicator — appears after all messages
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: Container(
-            margin: const EdgeInsets.only(right: 48),
+            margin: const EdgeInsetsDirectional.only(end: 48),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: coach.primaryColor.withValues(alpha: 0.12),

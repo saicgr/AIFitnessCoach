@@ -132,7 +132,7 @@ class _DateStripState extends ConsumerState<DateStrip> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 4, 4),
       child: SizedBox(
         height: 64,
         child: Row(

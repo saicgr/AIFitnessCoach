@@ -276,12 +276,11 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
         ),
 
         // Floating FAB - quick add measurement
-        Positioned(
-          right: 16,
+        PositionedDirectional(end: 16,
           bottom: 16,
           child: FloatingActionButton(
             heroTag: 'measurements_quick_add_fab',
-            onPressed: () => _showQuickAddSheet(context, ref, cyan, _selectedType),
+              onPressed: () => _showQuickAddSheet(context, ref, cyan, _selectedType),
             backgroundColor: cyan,
             child: Icon(Icons.add, color: isDark ? AppColors.pureBlack : Colors.white),
           ),
@@ -339,7 +338,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Log ${selectedType.displayName}',
+                  Text(AppLocalizations.of(context)!.measurementsTabLog(selectedType.displayName),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -407,7 +406,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                           if (sheetContext.mounted) {
                             ScaffoldMessenger.of(sheetContext).showSnackBar(
                               SnackBar(
-                                content: Text("Couldn't save ${selectedType.displayName.toLowerCase()}. Try again."),
+                                content: Text(AppLocalizations.of(context)!.measurementsTabCouldnTSaveTry(selectedType.displayName.toLowerCase())),
                                 backgroundColor: AppColors.error,
                               ),
                             );
@@ -498,8 +497,8 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
             const SizedBox(height: 8),
             Text(
               hasOlderData
-                  ? 'No ${_selectedType.displayName.toLowerCase()} logs in last $periodLabel'
-                  : 'Log ${_selectedType.displayName.toLowerCase()} to see trends',
+                  ? AppLocalizations.of(context)!.measurementsTabNoLogsInLast(_selectedType.displayName.toLowerCase(), periodLabel)
+                  : AppLocalizations.of(context)!.measurementsTabLogToSeeTrends(_selectedType.displayName.toLowerCase()),
               textAlign: TextAlign.center,
               style: TextStyle(color: textMuted),
             ),
@@ -698,7 +697,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     if (pills.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(left: 48, right: 16, bottom: 8, top: 2),
+      padding: const EdgeInsetsDirectional.only(start: 48, end: 16, bottom: 8, top: 2),
       child: Wrap(
         spacing: 6,
         runSpacing: 4,
@@ -803,7 +802,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                           ),
                         )
                       : Text(
-                          '— $unit',
+                          AppLocalizations.of(context)!.measurementsTabValue(unit),
                           style: TextStyle(fontSize: 14, color: textMuted.withValues(alpha: 0.5)),
                         ),
                   const SizedBox(width: 4),
@@ -855,8 +854,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
           for (int gi = 0; gi < _measurementGroups.length; gi++) ...[
             // Group header
             Padding(
-              padding: EdgeInsets.only(
-                left: 16, right: 16,
+              padding: EdgeInsetsDirectional.only(start: 16, end: 16,
                 top: gi == 0 ? 16 : 20,
                 bottom: 4,
               ),

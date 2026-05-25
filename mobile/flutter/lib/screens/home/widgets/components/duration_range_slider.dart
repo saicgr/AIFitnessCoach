@@ -117,11 +117,11 @@ class DurationRangeSlider extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${minDuration.toInt()} min',
+                  AppLocalizations.of(context)!.durationRangeSliderMin(minDuration.toInt()),
                   style: TextStyle(fontSize: 12, color: colors.textMuted),
                 ),
                 Text(
-                  '${maxDuration.toInt()} min',
+                  AppLocalizations.of(context)!.durationRangeSliderMin2(maxDuration.toInt()),
                   style: TextStyle(fontSize: 12, color: colors.textMuted),
                 ),
               ],

@@ -364,9 +364,8 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
             }
 
             return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
+              padding: EdgeInsetsDirectional.only(start: 20,
+                end: 20,
                 top: 20,
                 bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
               ),
@@ -397,7 +396,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'Saved as your default for $muscle',
+                        AppLocalizations.of(context)!.exerciseSetTrackerSavedAsYourDefault(muscle),
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textMuted.withAlpha(200),
@@ -839,7 +838,7 @@ class _EditableCellState extends State<_EditableCell> {
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        margin: const EdgeInsets.only(right: 8),
+        margin: const EdgeInsetsDirectional.only(end: 8),
         decoration: BoxDecoration(
           color: widget.isCompleted ? Colors.transparent : AppColors.elevated,
           borderRadius: BorderRadius.circular(6),
@@ -944,7 +943,7 @@ class _RestPresetChip extends StatelessWidget {
           ),
         ),
         child: Text(
-          seconds < 60 ? '${seconds}s' : '${seconds ~/ 60}min',
+          seconds < 60 ? AppLocalizations.of(context)!.exerciseSetTrackerS(seconds) : '${seconds ~/ 60}min',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,

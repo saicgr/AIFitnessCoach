@@ -607,8 +607,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
             final label = gender[0].toUpperCase() + gender.substring(1);
             return Expanded(
               child: Padding(
-                padding: EdgeInsets.only(
-                  right: gender == _genderOptions.last ? 0 : 8,
+                padding: EdgeInsetsDirectional.only(end: gender == _genderOptions.last ? 0 : 8,
                 ),
                 child: GestureDetector(
                   onTap: _isSaving
@@ -624,8 +623,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                       gradient: isSelected
                           ? LinearGradient(
                               colors: [cyan, cyan.withValues(alpha: 0.8)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             )
                           : null,
                       color: isSelected ? null : elevatedColor,
@@ -763,8 +762,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                             cyan.withValues(alpha: 0.22),
                             cyan.withValues(alpha: 0.10),
                           ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                          begin: AlignmentDirectional.topStart,
+                          end: AlignmentDirectional.bottomEnd,
                         )
                       : null,
                   color: isSelected ? null : elevatedColor,

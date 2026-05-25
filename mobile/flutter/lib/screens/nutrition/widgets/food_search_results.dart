@@ -618,7 +618,7 @@ class _ResultCard extends StatelessWidget {
                           if (result.protein != null) ...[
                             const SizedBox(width: 8),
                             _NutrientPill(
-                              label: '${result.protein!.toStringAsFixed(0)}g',
+                              label: AppLocalizations.of(context)!.foodSearchResultsG(result.protein!.toStringAsFixed(0)),
                               unit: 'protein',
                               color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                               isDark: isDark,
@@ -745,7 +745,7 @@ class _NoResultsState extends StatelessWidget {
           EmptyState(
             icon: Icons.search_off_rounded,
             title: AppLocalizations.of(context).foodSearchResultsNoFoodsFound,
-            subtitle: 'No saved foods match "$query".',
+            subtitle: AppLocalizations.of(context)!.foodSearchResultsNoSavedFoodsMatch(query),
             iconColor: AppColors.textMuted,
             useLottie: false,
           ),
@@ -770,7 +770,7 @@ class _NoResultsState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'AI will estimate nutrition for "$query"',
+              AppLocalizations.of(context)!.foodSearchResultsAiWillEstimateNutrition(query),
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

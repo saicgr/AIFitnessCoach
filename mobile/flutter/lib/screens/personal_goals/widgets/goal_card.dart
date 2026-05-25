@@ -81,7 +81,7 @@ class GoalCard extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: Colors.red),
                   title: Text(AppLocalizations.of(context).goalCardDeleteGoal, style: TextStyle(color: textPrimary)),
-                  subtitle: Text('Permanently remove "$exerciseName"', style: TextStyle(color: textMuted, fontSize: 12)),
+                  subtitle: Text(AppLocalizations.of(context)!.goalCardPermanentlyRemove(exerciseName), style: TextStyle(color: textMuted, fontSize: 12)),
                   onTap: () {
                     Navigator.pop(ctx);
                     onDelete!();
@@ -301,7 +301,7 @@ class GoalCard extends StatelessWidget {
                   Text(
                     daysRemaining == 1
                         ? AppLocalizations.of(context).trialProgress1DayLeft
-                        : '$daysRemaining days left',
+                        : AppLocalizations.of(context)!.goalCardDaysLeft(daysRemaining),
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
                 ],

@@ -232,7 +232,7 @@ class _SuggestionChip extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              '$pct% · ${suggestion.source}',
+              AppLocalizations.of(context)!.unresolvedExercisesSheetValue(pct, suggestion.source),
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

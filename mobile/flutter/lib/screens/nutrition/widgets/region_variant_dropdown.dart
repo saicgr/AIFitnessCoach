@@ -182,7 +182,7 @@ class _RegionVariantDropdownState extends ConsumerState<RegionVariantDropdown> {
                                   if (v.caloriesPer100g != null) ...[
                                     const SizedBox(width: 8),
                                     Text(
-                                      '${v.caloriesPer100g!.toStringAsFixed(0)} kcal/100g',
+                                      AppLocalizations.of(context)!.regionVariantDropdownKcalG(v.caloriesPer100g!.toStringAsFixed(0)),
                                       style: TextStyle(
                                         fontSize: 11, color: muted,
                                       ),

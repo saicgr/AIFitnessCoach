@@ -126,8 +126,7 @@ class QuizDaysSelector extends StatelessWidget {
             // would otherwise crop anything outside its rounded rect.
             return Expanded(
               child: Padding(
-                padding: EdgeInsets.only(
-                  right: index < _durationOptions.length - 1 ? 6 : 0,
+                padding: EdgeInsetsDirectional.only(end: index < _durationOptions.length - 1 ? 6 : 0,
                 ),
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -153,8 +152,8 @@ class QuizDaysSelector extends StatelessWidget {
                                 gradient: isSelected
                                     ? LinearGradient(
                                         colors: t.cardSelectedGradient,
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
+                                        begin: AlignmentDirectional.topStart,
+                                        end: AlignmentDirectional.bottomEnd,
                                       )
                                     : null,
                                 color: isSelected ? null : t.cardFill,
@@ -332,8 +331,8 @@ class QuizDaysSelector extends StatelessWidget {
                       gradient: isSelected
                           ? LinearGradient(
                               colors: t.cardSelectedGradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             )
                           : null,
                       color: isSelected ? null : t.cardFill,
@@ -446,8 +445,8 @@ class QuizDaysSelector extends StatelessWidget {
                       gradient: isSelected
                           ? LinearGradient(
                               colors: t.cardSelectedGradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             )
                           : null,
                       color: isSelected
@@ -528,8 +527,8 @@ class QuizDaysSelector extends StatelessWidget {
               gradient: isComplete
                   ? LinearGradient(
                       colors: t.cardSelectedGradient,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                     )
                   : null,
               color: isComplete ? null : t.cardFill,

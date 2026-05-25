@@ -135,7 +135,7 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                   const SizedBox(height: 4),
                   // Back affordance — pops to /intro.
                   Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     child: IconButton(
                       onPressed: _back,
                       visualDensity: VisualDensity.compact,

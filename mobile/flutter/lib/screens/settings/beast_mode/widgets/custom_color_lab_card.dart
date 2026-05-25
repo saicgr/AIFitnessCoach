@@ -134,8 +134,7 @@ class _HSVColorPickerState extends State<_HSVColorPicker> {
                       size: Size(constraints.maxWidth, constraints.maxHeight),
                       painter: _SaturationBrightnessPainter(hue: _hue),
                     ),
-                    Positioned(
-                      left: _saturation * constraints.maxWidth - 12,
+                    PositionedDirectional(start: _saturation * constraints.maxWidth - 12,
                       top: (1 - _brightness) * constraints.maxHeight - 12,
                       child: Container(
                         width: 24,
@@ -205,8 +204,7 @@ class _HSVColorPickerState extends State<_HSVColorPicker> {
                             size: Size(constraints.maxWidth, 32),
                             painter: _HueGradientPainter(),
                           ),
-                          Positioned(
-                            left: (_hue / 360) * constraints.maxWidth - 8,
+                          PositionedDirectional(start: (_hue / 360) * constraints.maxWidth - 8,
                             top: 0,
                             bottom: 0,
                             child: Center(
@@ -240,7 +238,7 @@ class _HSVColorPickerState extends State<_HSVColorPicker> {
 
         if (_matchedPreset != null)
           Text(
-            'Matched: ${_matchedPreset!.displayName}',
+            AppLocalizations.of(context)!.customColorLabCardMatched(_matchedPreset!.displayName),
             style: TextStyle(
               fontSize: 12,
               color: textMuted,
@@ -281,8 +279,8 @@ class _SaturationBrightnessPainter extends CustomPainter {
     final baseColor = HSVColor.fromAHSV(1.0, hue, 1.0, 1.0).toColor();
 
     final saturationGradient = LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
+      begin: AlignmentDirectional.centerStart,
+      end: AlignmentDirectional.centerEnd,
       colors: [Colors.white, baseColor],
     );
 

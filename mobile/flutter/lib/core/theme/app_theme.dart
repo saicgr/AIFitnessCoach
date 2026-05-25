@@ -287,7 +287,7 @@ class AppTheme {
         ),
         behavior: SnackBarBehavior.floating,
         // Clear the floating nav bar (52px + bottom safe area + gap)
-        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 80, top: 8),
+        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 80, top: 8), // rtl-keep: SnackBarThemeData.insetPadding requires EdgeInsets
       ),
 
       // Dialog

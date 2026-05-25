@@ -185,8 +185,29 @@ def format_day_context_block(state: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def get_nutrition_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
-    """Build the full system prompt with personality customization."""
+def _locale_system_prefix(locale: str) -> str:
+    """Return the locale-awareness prefix to prepend to agent system prompts."""
+    if not locale or locale == "en":
+        return ""
+    from core.locale import LOCALE_NATIVE_NAMES
+    native = LOCALE_NATIVE_NAMES.get(locale, locale)
+    return (
+        f"The user's preferred language is {native} ({locale}).\n"
+        f"ALWAYS respond in {native}, regardless of which language the user\n"
+        f"writes in. Match their tone but use {native}. Exceptions: keep\n"
+        "technical fitness acronyms (RPE, 1RM, AMRAP, EMOM, PR, BMR, TDEE, HRV) and\n"
+        "brand names (Zealova, Strava, Fitbod, MyFitnessPal) in Latin script even\n"
+        "when responding in non-Latin-script languages.\n\n"
+    )
+
+
+def get_nutrition_system_prompt(ai_settings: Dict[str, Any] = None, locale: str = "en") -> str:
+    """Build the full system prompt with personality customization.
+
+    Args:
+        ai_settings: User's AI personality settings dict.
+        locale: ISO 639-1 locale code. Defaults to 'en'.
+    """
     # Convert dict to AISettings if provided
     settings_obj = AISettings(**ai_settings) if ai_settings else None
 
@@ -201,7 +222,7 @@ def get_nutrition_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
         agent_name="Nutri",  # Fallback agent name if coach_name not set
         agent_specialty="nutrition and dietary coaching"
     )
-    return f"{base_prompt}\n\n{personality}"
+    return f"{_locale_system_prefix(locale)}{base_prompt}\n\n{personality}"
 
 
 def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:
@@ -278,7 +299,7 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
 
     # Get personalized system prompt
     ai_settings = state.get("ai_settings")
-    base_system_prompt = get_nutrition_system_prompt(ai_settings)
+    base_system_prompt = get_nutrition_system_prompt(ai_settings, locale=state.get("locale") or "en")
 
     # Build context
     context_parts = []
@@ -500,7 +521,7 @@ async def nutrition_response_node(state: NutritionAgentState) -> Dict[str, Any]:
 
     # Get personalized system prompt
     ai_settings = state.get("ai_settings")
-    base_system_prompt = get_nutrition_system_prompt(ai_settings)
+    base_system_prompt = get_nutrition_system_prompt(ai_settings, locale=state.get("locale") or "en")
 
     # Build context from tool results
     context_parts = []
@@ -584,7 +605,7 @@ async def nutrition_autonomous_node(state: NutritionAgentState) -> Dict[str, Any
 
     # Get personalized system prompt
     ai_settings = state.get("ai_settings")
-    base_system_prompt = get_nutrition_system_prompt(ai_settings)
+    base_system_prompt = get_nutrition_system_prompt(ai_settings, locale=state.get("locale") or "en")
 
     # Build context
     context_parts = []

@@ -843,7 +843,7 @@ class _MuscleStatusBadge extends ConsumerWidget {
           ),
           const Spacer(),
           Text(
-            '${muscleData.weeklySets} sets/wk',
+            AppLocalizations.of(context)!.muscleDetailScreenSetsWk(muscleData.weeklySets),
             style: TextStyle(
               fontSize: 13,
               color: theme.colorScheme.onSurfaceVariant,

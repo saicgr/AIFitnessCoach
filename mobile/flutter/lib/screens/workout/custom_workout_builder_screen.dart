@@ -97,7 +97,7 @@ class _CustomWorkoutBuilderScreenState
     if (_selectedExercises.any((e) => e['name'] == exercise.name)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${exercise.name} is already in your workout'),
+          content: Text(AppLocalizations.of(context)!.customWorkoutBuilderScreenIsAlreadyInYour(exercise.name)),
           backgroundColor: AppColors.warning,
         ),
       );
@@ -465,7 +465,7 @@ class _CustomWorkoutBuilderScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Exercises (${_selectedExercises.length})',
+                AppLocalizations.of(context)!.customWorkoutBuilderScreenExercises(_selectedExercises.length),
                 style: TextStyle(
                   color: textPrimary,
                   fontSize: 18,
@@ -858,7 +858,7 @@ class _CustomWorkoutBuilderScreenState
               final isSelected = _selectedCategory == category ||
                   (category == 'All' && _selectedCategory == null);
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsetsDirectional.only(end: 8),
                 child: FilterChip(
                   label: Text(category),
                   selected: isSelected,

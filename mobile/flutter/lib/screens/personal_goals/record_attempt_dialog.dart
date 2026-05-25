@@ -115,7 +115,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                       Text(
                         widget.isMaxAttempt
                             ? AppLocalizations.of(context).recordAttemptRecordAttempt
-                            : 'Add ${_capitalize(widget.unit.fullLabel)}',
+                            : AppLocalizations.of(context)!.recordAttemptDialogAdd(_capitalize(widget.unit.fullLabel)),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -196,8 +196,8 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
             // Value input
             Text(
               widget.isMaxAttempt
-                  ? '${_capitalize(widget.unit.fullLabel)} Completed'
-                  : '${_capitalize(widget.unit.fullLabel)} to Add',
+                  ? AppLocalizations.of(context)!.recordAttemptDialogCompleted(_capitalize(widget.unit.fullLabel))
+                  : AppLocalizations.of(context)!.recordAttemptDialogToAdd(_capitalize(widget.unit.fullLabel)),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -313,7 +313,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                         : Text(
                             widget.isMaxAttempt
                                 ? 'Record'
-                                : 'Add ${_capitalize(widget.unit.label)}',
+                                : AppLocalizations.of(context)!.recordAttemptDialogAdd2(_capitalize(widget.unit.label)),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

@@ -79,7 +79,7 @@ class LeaderboardLockedState extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     Text(
-                      '$workoutsCompleted / 10 workouts',
+                      AppLocalizations.of(context)!.leaderboardLockedStateWorkouts(workoutsCompleted),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.orange,
                             fontWeight: FontWeight.bold,

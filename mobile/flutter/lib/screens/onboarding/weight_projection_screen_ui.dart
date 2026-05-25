@@ -16,9 +16,9 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
     final unit = useMetric ? 'kg' : 'lbs';
 
     final maintainBackButton = Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+      padding: const EdgeInsetsDirectional.only(start: 16, end: 16, top: 8),
       child: Align(
-        alignment: Alignment.centerLeft,
+        alignment: AlignmentDirectional.centerStart,
         child: GlassBackButton(
           onTap: () {
             HapticFeedback.lightImpact();
@@ -91,8 +91,8 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                         height: 100,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                             colors: [
                               AppColors.green.withValues(alpha: 0.2),
                               AppColors.orange.withValues(alpha: 0.2),
@@ -235,8 +235,8 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [AppColors.orange, Color(0xFFEA580C)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [

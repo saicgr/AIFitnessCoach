@@ -92,8 +92,8 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
             AppColors.cyan.withOpacity(0.15),
             AppColors.teal.withOpacity(0.1),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
@@ -171,7 +171,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
 
     return ExpansionTile(
       tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      childrenPadding: const EdgeInsets.only(left: 14, right: 14, bottom: 14),
+      childrenPadding: const EdgeInsetsDirectional.only(start: 14, end: 14, bottom: 14),
       leading: Container(
         width: 44,
         height: 44,

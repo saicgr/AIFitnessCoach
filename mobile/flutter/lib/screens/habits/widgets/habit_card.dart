@@ -29,8 +29,8 @@ class HabitCard extends StatelessWidget {
       key: Key(habit.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
+        alignment: AlignmentDirectional.centerEnd,
+        padding: const EdgeInsetsDirectional.only(end: 16),
         decoration: BoxDecoration(
           color: Colors.red.shade100,
           borderRadius: BorderRadius.circular(16),
@@ -161,7 +161,7 @@ class HabitCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              '${habit.completionRate7d.round()}%',
+                              AppLocalizations.of(context)!.habitCardValue(habit.completionRate7d.round()),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,

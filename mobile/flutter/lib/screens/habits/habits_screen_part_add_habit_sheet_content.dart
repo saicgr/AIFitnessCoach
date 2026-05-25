@@ -377,7 +377,7 @@ class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
   Widget _buildCategoryChip(HabitCategory? category, String label) {
     final isSelected = _selectedCategory == category;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsetsDirectional.only(end: 8),
       child: GestureDetector(
         onTap: () {
           HapticService.selection();

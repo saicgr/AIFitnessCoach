@@ -29,8 +29,8 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: borderColor),
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
                 colors: [
                   AppColors.purple.withOpacity(0.08),
                   Colors.transparent,

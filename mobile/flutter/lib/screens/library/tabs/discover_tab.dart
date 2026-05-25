@@ -80,8 +80,8 @@ class _AiHeroCard extends StatelessWidget {
                 purple.withOpacity(0.25),
                 cyan.withOpacity(0.15),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(

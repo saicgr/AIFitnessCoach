@@ -21,7 +21,7 @@ class ActiveFilterChip extends StatelessWidget {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsetsDirectional.only(end: 8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
@@ -132,7 +132,7 @@ class ActiveFilterChipsList extends ConsumerWidget {
               )),
           // Avoid chips
           ...selectedAvoid.map((avoid) => ActiveFilterChip(
-                label: 'Avoid: $avoid',
+                label: AppLocalizations.of(context)!.activeFilterChipsAvoid(avoid),
                 onRemove: () {
                   final newSet = Set<String>.from(selectedAvoid)
                     ..remove(avoid);
@@ -142,7 +142,7 @@ class ActiveFilterChipsList extends ConsumerWidget {
           // Clear all button
           if (activeFilters > 1)
             Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsetsDirectional.only(start: 4),
               child: GestureDetector(
                 onTap: () => clearAllFilters(ref),
                 child: Container(

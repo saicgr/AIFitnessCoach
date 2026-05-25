@@ -31,7 +31,7 @@ class QuizProgressBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(3),
             ),
             child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               widthFactor: value,
               child: Container(
                 decoration: BoxDecoration(
@@ -46,8 +46,8 @@ class QuizProgressBar extends StatelessWidget {
                       Color(0xFFFF6B00), // deep orange
                     ],
                     stops: [0.0, 0.55, 1.0],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+                    begin: AlignmentDirectional.centerStart,
+                    end: AlignmentDirectional.centerEnd,
                   ),
                   borderRadius: BorderRadius.circular(3),
                   boxShadow: [

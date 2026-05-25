@@ -256,7 +256,7 @@ class _CardContent extends StatelessWidget {
                 final isActive = i + 1 == currentStep;
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.only(right: 5),
+                  margin: const EdgeInsetsDirectional.only(end: 5),
                   width: isActive ? 18 : 6,
                   height: 6,
                   decoration: BoxDecoration(

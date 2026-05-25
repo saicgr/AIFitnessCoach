@@ -426,7 +426,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'You\'ve been fasting for ${elapsedHours}h ${elapsedMins}m.',
+              AppLocalizations.of(context)!.logMealSheetYouVeBeenFasting(elapsedHours, elapsedMins),
               style: TextStyle(color: textPrimary, fontSize: 16),
             ),
             const SizedBox(height: 12),
@@ -930,7 +930,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Nutrition for $servingsLabel',
+                      Text(AppLocalizations.of(context)!.logMealSheetNutritionFor(servingsLabel),
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -938,34 +938,34 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       const SizedBox(height: 6),
                       NutritionInfoRow(
                         label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
-                        value: '$totalCalories kcal',
+                        value: AppLocalizations.of(context)!.logMealSheetKcal(totalCalories),
                         isDark: isDark,
                       ),
                       NutritionInfoRow(
                         label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
-                        value: '${totalProtein.toStringAsFixed(1)}g',
+                        value: AppLocalizations.of(context)!.logMealSheetG(totalProtein.toStringAsFixed(1)),
                         isDark: isDark,
                       ),
                       NutritionInfoRow(
                         label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
-                        value: '${totalCarbs.toStringAsFixed(1)}g',
+                        value: AppLocalizations.of(context)!.logMealSheetG2(totalCarbs.toStringAsFixed(1)),
                         isDark: isDark,
                       ),
                       NutritionInfoRow(
                         label: AppLocalizations.of(context).weeklyCheckinSheetFat,
-                        value: '${totalFat.toStringAsFixed(1)}g',
+                        value: AppLocalizations.of(context)!.logMealSheetG3(totalFat.toStringAsFixed(1)),
                         isDark: isDark,
                       ),
                       if (product.fiberPer100g > 0)
                         NutritionInfoRow(
                           label: AppLocalizations.of(context).recipeBuilderSheetFiber,
-                          value: '${totalFiber.toStringAsFixed(1)}g',
+                          value: AppLocalizations.of(context)!.logMealSheetG4(totalFiber.toStringAsFixed(1)),
                           isDark: isDark,
                         ),
                       if (product.sugarPer100g > 0)
                         NutritionInfoRow(
                           label: AppLocalizations.of(context).logMealSugar,
-                          value: '${totalSugar.toStringAsFixed(1)}g',
+                          value: AppLocalizations.of(context)!.logMealSheetG5(totalSugar.toStringAsFixed(1)),
                           isDark: isDark,
                         ),
                     ],
@@ -1302,28 +1302,28 @@ class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSec
     final rows = <Widget>[];
 
     if (p.vitaminA100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminA, value: '${p.vitaminA100g.toStringAsFixed(1)} µg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminA, value: AppLocalizations.of(context)!.logMealSheetG6(p.vitaminA100g.toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.vitaminC100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminC, value: '${p.vitaminC100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminC, value: AppLocalizations.of(context)!.logMealSheetMg(p.vitaminC100g.toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.vitaminD100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminD, value: '${p.vitaminD100g.toStringAsFixed(2)} µg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminD, value: AppLocalizations.of(context)!.logMealSheetG7(p.vitaminD100g.toStringAsFixed(2)), isDark: widget.isDark));
     }
     if (p.calcium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealCalcium, value: '${p.calcium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealCalcium, value: AppLocalizations.of(context)!.logMealSheetMg2(p.calcium100g.toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.iron100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealIron, value: '${p.iron100g.toStringAsFixed(2)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealIron, value: AppLocalizations.of(context)!.logMealSheetMg3(p.iron100g.toStringAsFixed(2)), isDark: widget.isDark));
     }
     if (p.potassium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: '${p.potassium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: AppLocalizations.of(context)!.logMealSheetMg4(p.potassium100g.toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.magnesium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: '${p.magnesium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: AppLocalizations.of(context)!.logMealSheetMg5(p.magnesium100g.toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.zinc100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealZinc, value: '${p.zinc100g.toStringAsFixed(2)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealZinc, value: AppLocalizations.of(context)!.logMealSheetMg6(p.zinc100g.toStringAsFixed(2)), isDark: widget.isDark));
     }
 
     return rows;
@@ -1566,7 +1566,7 @@ class _ServingsStepperState extends State<_ServingsStepper> {
         const SizedBox(width: 10),
         Flexible(
           child: Text(
-            '× ${widget.servingLabel}',
+            AppLocalizations.of(context)!.logMealSheetValue(widget.servingLabel),
             style: TextStyle(fontSize: 12, color: textMuted),
             overflow: TextOverflow.ellipsis,
           ),

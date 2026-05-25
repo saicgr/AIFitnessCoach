@@ -142,7 +142,7 @@ class _BreathPromptWidgetState extends State<BreathPromptWidget>
         child: Column(
           children: [
             Align(
-              alignment: Alignment.topRight,
+              alignment: AlignmentDirectional.topEnd,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextButton(
@@ -218,7 +218,7 @@ class _BreathPromptWidgetState extends State<BreathPromptWidget>
             Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: Text(
-                'Starts in ${_sessionSecondsLeft}s',
+                AppLocalizations.of(context)!.breathPromptWidgetStartsInS(_sessionSecondsLeft),
                 style: TextStyle(fontSize: 13, color: textMuted),
               ),
             ),

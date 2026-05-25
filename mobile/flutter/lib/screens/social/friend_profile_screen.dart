@@ -534,7 +534,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          padding: const EdgeInsetsDirectional.only(start: 4, bottom: 12),
           child: Text(
             AppLocalizations.of(context).friendProfileMemberInfo,
             style: TextStyle(

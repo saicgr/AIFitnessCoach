@@ -182,7 +182,7 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Set ${widget.setNumber} of ${widget.totalSets}',
+                AppLocalizations.of(context)!.timedExerciseTimerSetOf(widget.setNumber, widget.totalSets),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

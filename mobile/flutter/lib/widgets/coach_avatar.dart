@@ -55,8 +55,8 @@ class CoachAvatar extends StatelessWidget {
         gradient: showBorder
             ? LinearGradient(
                 colors: [coach.primaryColor, coach.accentColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
               )
             : null,
         boxShadow: showShadow
@@ -111,8 +111,8 @@ class CoachAvatar extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: LinearGradient(
           colors: [coach.primaryColor, coach.accentColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
       ),
       child: Center(
@@ -162,8 +162,8 @@ class CoachAvatar extends StatelessWidget {
                       coach.primaryColor.withOpacity(0.15),
                       coach.accentColor.withOpacity(0.08),
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   ),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(24),
@@ -181,8 +181,8 @@ class CoachAvatar extends StatelessWidget {
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [coach.primaryColor, coach.accentColor],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -353,8 +353,8 @@ void showCoachAvatarDialog(BuildContext context, CoachPersona coach) {
                     coach.primaryColor.withOpacity(0.15),
                     coach.accentColor.withOpacity(0.08),
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                 ),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
@@ -370,8 +370,8 @@ void showCoachAvatarDialog(BuildContext context, CoachPersona coach) {
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: [coach.primaryColor, coach.accentColor],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                       ),
                       boxShadow: [
                         BoxShadow(

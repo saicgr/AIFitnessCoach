@@ -92,8 +92,8 @@ class _ShimmerTextState extends State<ShimmerText>
               blendMode: BlendMode.srcIn,
               shaderCallback: (bounds) {
                 return LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+                  begin: AlignmentDirectional.centerStart,
+                  end: AlignmentDirectional.centerEnd,
                   colors: [
                     widget.shimmerColor.withValues(alpha: 0),
                     widget.shimmerColor.withValues(alpha: 0.6),

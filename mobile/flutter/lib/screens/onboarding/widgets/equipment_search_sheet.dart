@@ -251,13 +251,13 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [AppColors.onboardingAccent, AppColors.onboardingAccent.withOpacity(0.8)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                           ),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          '${_selected.length} selected',
+                          AppLocalizations.of(context)!.equipmentSearchSheetSelected(_selected.length),
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -360,7 +360,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                           },
                           icon: const Icon(Icons.add_circle_outline, color: AppColors.onboardingAccent),
                           label: Text(
-                            'Add "$_searchQuery"',
+                            AppLocalizations.of(context)!.equipmentSearchSheetAdd(_searchQuery),
                             style: const TextStyle(color: AppColors.onboardingAccent),
                           ),
                         ),
@@ -512,8 +512,8 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
             gradient: isSelected
                 ? LinearGradient(
                     colors: [AppColors.onboardingAccent, AppColors.onboardingAccent.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   )
                 : null,
             color: isSelected

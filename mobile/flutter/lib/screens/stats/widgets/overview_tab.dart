@@ -859,7 +859,7 @@ class PRListWidget extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${pr.liftDescription}  •  $dateStr',
+                        AppLocalizations.of(context)!.overviewTabValue(pr.liftDescription, dateStr),
                         style: TextStyle(fontSize: 13, color: textMuted),
                       ),
                     ],
@@ -873,7 +873,7 @@ class PRListWidget extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '+${pr.improvementPercent!.toStringAsFixed(1)}%',
+                      AppLocalizations.of(context)!.overviewTabValue2(pr.improvementPercent!.toStringAsFixed(1)),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

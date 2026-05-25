@@ -537,7 +537,7 @@ class _IngredientsSectionState extends State<_IngredientsSection> {
                   Text(
                     _expanded
                         ? AppLocalizations.of(context).quickWorkoutSheetShowLess
-                        : 'Show ${sortedIngredients.length - 6} more',
+                        : AppLocalizations.of(context)!.inflammationAnalysisWidgetShowMore(sortedIngredients.length - 6),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,

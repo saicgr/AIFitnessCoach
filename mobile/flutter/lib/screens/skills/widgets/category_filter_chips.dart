@@ -42,7 +42,7 @@ class CategoryFilterChips extends StatelessWidget {
           ...categories.map((category) {
             final isSelected = selectedCategory == category;
             return Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: _FilterChip(
                 label: _formatCategory(category),
                 isSelected: isSelected,

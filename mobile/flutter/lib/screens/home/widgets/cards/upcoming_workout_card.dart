@@ -107,7 +107,7 @@ class UpcomingWorkoutCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${workout.durationMinutes ?? 45}m - ${workout.exerciseCount} exercises',
+                        AppLocalizations.of(context)!.upcomingWorkoutCardMExercises(workout.durationMinutes ?? 45, workout.exerciseCount),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

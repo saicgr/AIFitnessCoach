@@ -81,7 +81,7 @@ class _StreamingBubble extends StatelessWidget {
               // resume/retry affordance here.
               if (streaming.dropped)
                 Padding(
-                  padding: const EdgeInsets.only(top: 6, left: 36),
+                  padding: const EdgeInsetsDirectional.only(top: 6, start: 36),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -127,7 +127,7 @@ class _StreamingBubble extends StatelessWidget {
                 // Still streaming — a subtle "typing" caret cue under the
                 // bubble so the user knows more text is coming.
                 Padding(
-                  padding: const EdgeInsets.only(top: 4, left: 36),
+                  padding: const EdgeInsetsDirectional.only(top: 4, start: 36),
                   child: Text(
                     AppLocalizations.of(context).chatScreenUiTyping,
                     style: TextStyle(

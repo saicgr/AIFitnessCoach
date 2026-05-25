@@ -455,7 +455,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
                   ),
                 ),
                 Text(
-                  level.value == 0 ? 'Failure' : '${level.value} left',
+                  level.value == 0 ? 'Failure' : AppLocalizations.of(context)!.setRowPartRpeRirSelectorStateLeft(level.value),
                   style: TextStyle(
                     fontSize: 10,
                     color: mutedColor,

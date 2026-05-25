@@ -396,7 +396,7 @@ class _PreviewExpandableState extends State<_PreviewExpandable> {
                 style: TextStyle(fontSize: 12, color: muted),
               ),
             ),
-            Text('$before  →  $after',
+            Text(AppLocalizations.of(context)!.retuneProposalSheetValue(before, after),
                 style: TextStyle(
                   fontSize: 12,
                   color: primary,

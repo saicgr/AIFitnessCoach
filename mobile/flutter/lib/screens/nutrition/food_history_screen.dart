@@ -300,7 +300,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Re-logged ${food.name} as $mealType'),
+          content: Text(AppLocalizations.of(context)!.foodHistoryScreenReLoggedAs(food.name, mealType)),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -310,7 +310,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to re-log ${food.name}'),
+          content: Text(AppLocalizations.of(context)!.foodHistoryScreenFailedToReLog(food.name)),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -328,7 +328,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
           : log.mealType;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Re-logged $foodName as $mealType'),
+          content: Text(AppLocalizations.of(context)!.foodHistoryScreenReLoggedAs2(foodName, mealType)),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -356,7 +356,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
           : log.mealType;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Deleted $foodName'),
+          content: Text(AppLocalizations.of(context)!.foodHistoryScreenDeleted(foodName)),
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
             label: AppLocalizations.of(context).workoutUiBuildersUndo,

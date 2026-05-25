@@ -88,8 +88,8 @@ class _DemoDayBannerState extends ConsumerState<DemoDayBanner>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [
               const Color(0xFF6366F1), // Indigo
               const Color(0xFF8B5CF6), // Purple
@@ -116,8 +116,8 @@ class _DemoDayBannerState extends ConsumerState<DemoDayBanner>
                     return ShaderMask(
                       shaderCallback: (bounds) {
                         return LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                          begin: AlignmentDirectional.topStart,
+                          end: AlignmentDirectional.bottomEnd,
                           colors: [
                             Colors.white.withOpacity(0),
                             Colors.white.withOpacity(0.2),

@@ -637,7 +637,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                       ),
                     ),
                     Text(
-                      '${inputAmount.toStringAsFixed(1)}g',
+                      AppLocalizations.of(context)!.cookingConverterSheetG(inputAmount.toStringAsFixed(1)),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

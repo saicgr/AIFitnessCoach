@@ -255,7 +255,7 @@ class SetRowVisuals {
     if (widgets.isEmpty) return null;
     return FittedBox(
       fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Row(mainAxisSize: MainAxisSize.min, children: widgets),
     );
   }

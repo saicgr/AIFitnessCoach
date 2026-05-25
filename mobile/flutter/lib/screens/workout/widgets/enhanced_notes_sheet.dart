@@ -778,9 +778,8 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
                     fit: BoxFit.cover,
                   ),
                 ),
-                Positioned(
-                  top: 4,
-                  right: 4,
+                PositionedDirectional(top: 4,
+                  end: 4,
                   child: GestureDetector(
                     onTap: () => _removePhoto(index),
                     child: Container(

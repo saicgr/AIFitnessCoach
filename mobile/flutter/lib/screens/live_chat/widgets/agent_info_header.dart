@@ -35,8 +35,8 @@ class AgentInfoHeader extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [AppColors.cyan, AppColors.teal],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                 ),
               ),
               child: avatarUrl != null
@@ -51,9 +51,8 @@ class AgentInfoHeader extends StatelessWidget {
             ),
 
             // Online status indicator
-            Positioned(
-              bottom: 0,
-              right: 0,
+            PositionedDirectional(bottom: 0,
+              end: 0,
               child: _OnlineIndicator(isOnline: isOnline),
             ),
           ],
@@ -263,8 +262,8 @@ class AgentInfoCard extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [AppColors.cyan, AppColors.teal],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
               ),
             ),
             child: Center(
@@ -301,7 +300,7 @@ class AgentInfoCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${Branding.appName} Support Agent',
+                  AppLocalizations.of(context)!.agentInfoHeaderSupportAgent(Branding.appName),
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,

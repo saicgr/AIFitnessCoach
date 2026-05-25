@@ -74,3 +74,8 @@ class FitnessCoachState(TypedDict):
     # agent in full and to the nutrition/workout agents as phase + summary only.
     cycle_phase: Optional[str]
     cycle_context: Optional[Dict[str, Any]]
+
+    # i18n — ISO 639-1 locale code resolved from Accept-Language header and
+    # persisted to users.preferred_locale. Defaults to 'en'. Injected into
+    # every agent's system prompt so Gemini responds in the user's language.
+    locale: Optional[str]

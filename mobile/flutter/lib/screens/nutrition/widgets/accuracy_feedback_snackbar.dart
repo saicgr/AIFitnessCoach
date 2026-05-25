@@ -34,7 +34,7 @@ void showAccuracyFeedbackSnackbar(
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '$displayName — $calories cal',
+              AppLocalizations.of(context)!.accuracyFeedbackSnackbarCal(displayName, calories),
               style: TextStyle(
                 color: textColor,
                 fontSize: 14,
@@ -74,9 +74,8 @@ void showAccuracyFeedbackSnackbar(
       duration: const Duration(seconds: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 8,
-      margin: EdgeInsets.only(
-        left: 16,
-        right: 16,
+      margin: EdgeInsetsDirectional.only(start: 16,
+        end: 16,
         bottom: bottomPadding + 100,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

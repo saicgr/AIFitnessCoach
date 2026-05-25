@@ -71,7 +71,7 @@ class _PlanSheet extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+            padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 12, 4),
             child: Row(children: [
               Text(AppLocalizations.of(context).planTodaySPlan,
                   style: TextStyle(

@@ -462,8 +462,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             widget.onSetDeleted?.call(-1);
           },
           background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
+            alignment: AlignmentDirectional.centerEnd,
+            padding: const EdgeInsetsDirectional.only(end: 20),
             color: WorkoutDesign.accentBlue,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Inline number input with +/- buttons
 class InlineNumberInput extends StatefulWidget {
@@ -766,7 +767,7 @@ class RepsPresetButtons extends StatelessWidget {
         // Target button (primary)
         Flexible(
           child: _PresetButton(
-            label: 'Target ($targetReps)',
+            label: AppLocalizations.of(context)!.numberInputWidgetsTarget(targetReps),
             color: color,
             isPrimary: true,
             onTap: () => _setReps(targetReps),
@@ -905,7 +906,7 @@ class CompletedRepsDisplay extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              '$accuracyPercent%',
+              AppLocalizations.of(context)!.numberInputWidgetsValue(accuracyPercent),
               style: TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.bold,
@@ -917,7 +918,7 @@ class CompletedRepsDisplay extends StatelessWidget {
         // Edit indicator
         if (isEdited)
           Padding(
-            padding: const EdgeInsets.only(left: 2),
+            padding: const EdgeInsetsDirectional.only(start: 2),
             child: Icon(
               Icons.edit,
               size: 10,
@@ -957,7 +958,7 @@ class TargetRepsLabel extends StatelessWidget {
         ),
       ),
       child: Text(
-        'Target: $targetReps',
+        AppLocalizations.of(context)!.numberInputWidgetsTarget2(targetReps),
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w600,

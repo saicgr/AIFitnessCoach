@@ -310,8 +310,8 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
                         _setTypeColor.withOpacity(0.3),
                         _setTypeColor.withOpacity(0.1),
                       ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                     ),
                     border: Border.all(color: _setTypeColor, width: 2),
                     boxShadow: [
@@ -395,6 +395,7 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
 
           // Complete Set button - full width, prominent
           GlowButton.complete(
+            context: context,
             onTap: () {
               HapticFeedback.heavyImpact();
               widget.onComplete();
@@ -439,7 +440,7 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '$actualPercent%',
+            AppLocalizations.of(context)!.setRowPartWeightIncrementsValue(actualPercent),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,

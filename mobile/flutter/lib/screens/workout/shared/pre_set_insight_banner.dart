@@ -182,7 +182,7 @@ class _BannerBody extends StatelessWidget {
           Text('✨', style: TextStyle(fontSize: fontSize + 1)),
           const SizedBox(width: 6),
           Text(
-            '$label · ',
+            AppLocalizations.of(context)!.preSetInsightBannerValue(label),
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.w700,

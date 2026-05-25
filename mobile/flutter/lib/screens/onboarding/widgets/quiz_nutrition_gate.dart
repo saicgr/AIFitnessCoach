@@ -184,8 +184,8 @@ class QuizNutritionGate extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: t.buttonGradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(

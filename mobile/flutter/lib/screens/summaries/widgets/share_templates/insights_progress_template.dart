@@ -81,7 +81,7 @@ class InsightsProgressTemplate extends StatelessWidget {
     rows.add(_MetricRow(
       icon: Icons.local_fire_department_rounded,
       label: AppLocalizations.of(context).insightsReportCardMaxStreak,
-      value: '$maxStreak days',
+      value: AppLocalizations.of(context)!.insightsProgressTemplateDays(maxStreak),
       color: const Color(0xFFF97316),
       showDirection: false,
     ));

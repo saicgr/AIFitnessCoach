@@ -212,7 +212,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
             if (state.unassessedTests.length > 3)
               TextButton(
                 onPressed: () => _tabController.animateTo(1),
-                child: Text('View all ${state.unassessedTests.length} tests'),
+                child: Text(AppLocalizations.of(context)!.flexibilityAssessmentScreenViewAllTests(state.unassessedTests.length)),
               ),
           ],
 
@@ -357,7 +357,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
         ),
         title: Text(plan.testName),
         subtitle: Text(
-          'Current Rating: ${plan.rating.toUpperCase()}',
+          AppLocalizations.of(context)!.flexibilityAssessmentScreenCurrentRating(plan.rating.toUpperCase()),
           style: TextStyle(color: ratingColor),
         ),
         children: [

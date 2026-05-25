@@ -298,7 +298,7 @@ class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
                       children: [
                         Text(AppLocalizations.of(context).workoutSummaryGeneralDuration, style: TextStyle(fontSize: 13, color: textPrimary)),
                         Text(
-                          '$_customHours hours',
+                          AppLocalizations.of(context)!.protocolSelectorSheetHours(_customHours),
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: accentColor),
                         ),
                       ],
@@ -426,9 +426,8 @@ class _ProtocolChip extends StatelessWidget {
             ),
           ),
           if (showBadge)
-            Positioned(
-              top: -4,
-              right: -4,
+            PositionedDirectional(top: -4,
+              end: -4,
               child: LastUsedBadge.static(colorOverride: chipAccent, size: 12),
             ),
         ],

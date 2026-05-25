@@ -837,8 +837,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
       height: 440,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [Color(0xFF1A1000), Color(0xFF2E1D00), Color(0xFF1A0F00)],
         ),
         borderRadius: BorderRadius.circular(24),
@@ -875,7 +875,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
                 levelsToGo > 0
-                    ? 'Unlocks at Level 75 · $levelsToGo levels to go'
+                    ? AppLocalizations.of(context)!.shareStatsSheetUnlocksAtLevelLevels(levelsToGo)
                     : 'Unlocked at Level 75 — open your Cosmetics',
                 textAlign: TextAlign.center,
                 style: TextStyle(

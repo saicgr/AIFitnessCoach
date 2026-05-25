@@ -275,7 +275,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
 
               // Workout details
               Text(
-                "You missed ${workout.dayPossessive} ${workout.name}",
+                AppLocalizations.of(context)!.missedWorkoutBannerYouMissed(workout.dayPossessive, workout.name),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -296,13 +296,13 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                   const SizedBox(width: 8),
                   _InfoChip(
                     icon: Icons.timer_outlined,
-                    label: '${workout.durationMinutes} min',
+                    label: AppLocalizations.of(context)!.missedWorkoutBannerMin(workout.durationMinutes),
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
                   _InfoChip(
                     icon: Icons.format_list_numbered,
-                    label: '${workout.exercisesCount} exercises',
+                    label: AppLocalizations.of(context)!.missedWorkoutBannerExercises(workout.exercisesCount),
                     isDark: isDark,
                   ),
                 ],
@@ -384,7 +384,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                     const SizedBox(height: 12),
                     Center(
                       child: Text(
-                        '+${missedList.length - 1} more missed workouts',
+                        AppLocalizations.of(context)!.missedWorkoutBannerMoreMissedWorkouts(missedList.length - 1),
                         style: TextStyle(
                           fontSize: 12,
                           color: textSecondary,

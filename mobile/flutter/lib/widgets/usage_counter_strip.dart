@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
 import '../core/providers/usage_tracking_provider.dart';
+import '../l10n/generated/app_localizations.dart';
 
 /// Horizontal row of pill-shaped counters showing remaining free uses.
 ///
@@ -87,7 +88,7 @@ class _UsagePill extends StatelessWidget {
             const SizedBox(width: 4),
             Flexible(
               child: Text(
-                '$displayCount left',
+                AppLocalizations.of(context)!.usageCounterStripLeft(displayCount),
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12,

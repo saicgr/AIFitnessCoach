@@ -457,7 +457,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Challenge $userName',
+                AppLocalizations.of(context)!.leaderboardTabChallenge(userName),
                 style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

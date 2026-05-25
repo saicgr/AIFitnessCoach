@@ -122,7 +122,7 @@ class DownloadedVideosScreen extends ConsumerWidget {
     ref.read(videoCacheProvider.notifier).deleteVideo(video.exerciseId);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Deleted "${video.exerciseName}"'),
+        content: Text(AppLocalizations.of(context)!.downloadedVideosScreenDeleted(video.exerciseName)),
         backgroundColor: AppColors.success,
       ),
     );
@@ -185,7 +185,7 @@ class _StorageInfoCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${cacheState.formattedCacheSize} / 500 MB',
+                      AppLocalizations.of(context)!.downloadedVideosScreenMb(cacheState.formattedCacheSize),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -202,7 +202,7 @@ class _StorageInfoCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${cacheState.cachedVideoCount} videos',
+                  AppLocalizations.of(context)!.downloadedVideosScreenVideos(cacheState.cachedVideoCount),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

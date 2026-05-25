@@ -188,7 +188,7 @@ extension __ProgressScreenStateExt on _ProgressScreenState {
                                   ),
                                   const Spacer(),
                                   Text(
-                                    '${muscleData.weeklySets} sets/wk',
+                                    AppLocalizations.of(context)!.progressScreenExtSetsWk(muscleData.weeklySets),
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: colorScheme.onSurfaceVariant,

@@ -85,7 +85,7 @@ class WorkoutStatsStrip extends ConsumerWidget {
           Expanded(
             child: _StatColumn(
               label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
-              value: '$calories kcal',
+              value: AppLocalizations.of(context)!.workoutStatsStripKcal(calories),
               textPrimary: textPrimary,
               textMuted: textMuted,
             ),

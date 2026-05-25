@@ -392,7 +392,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 12, 8),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 12, 8),
             child: Row(
               children: [
                 if (_phase != _Phase.chooseInput && _phase != _Phase.working)
@@ -477,7 +477,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
           icon: Icons.photo_library_rounded,
           tint: const Color(0xFF0EA5E9),
           label: 'Take photos of your gym',
-          description: 'Up to $_kMaxPhotos photos — equipment walls, racks, machine tags',
+          description: AppLocalizations.of(context)!.importEquipmentSheetUpToPhotosEquipment(_kMaxPhotos),
           onTap: _pickPhotos,
         ),
         const SizedBox(height: 12),

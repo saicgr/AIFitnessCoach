@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/accent_color_provider.dart';
 import 'set_rail.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 class OverflowRow extends StatelessWidget {
   final RailSetSummary summary;
@@ -46,7 +47,7 @@ class OverflowRow extends StatelessWidget {
                   Text(
                     summary.status == RailSetStatus.warmup
                         ? 'Warm-up'
-                        : 'Set ${summary.displayIndex}',
+                        : AppLocalizations.of(context)!.setRailOverflowRowSet(summary.displayIndex),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,

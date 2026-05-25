@@ -242,7 +242,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
                 if (preset.tiles.length > 6) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '+${preset.tiles.length - 6} more tiles',
+                    AppLocalizations.of(context)!.homeScreenUi1MoreTiles(preset.tiles.length - 6),
                     style: TextStyle(
                       fontSize: 11,
                       color: textSecondary,
@@ -737,7 +737,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
                 SliverToBoxAdapter(
                   child: SectionHeader(
                     title: AppLocalizations.of(context).homeScreenUiUpcoming,
-                    subtitle: '${upcomingWorkouts.length} workouts',
+                    subtitle: AppLocalizations.of(context)!.homeScreenUi1Workouts(upcomingWorkouts.length),
                     actionText: 'View All',
                     onAction: () {
                       HapticService.light();
@@ -947,9 +947,8 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
                 children: halfTiles.map((t) {
                   return Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(
-                        right: halfTiles.length > 1 && t == halfTiles.first ? 8 : 0,
-                        left: halfTiles.length > 1 && t == halfTiles.last ? 8 : 0,
+                      padding: EdgeInsetsDirectional.only(end: halfTiles.length > 1 && t == halfTiles.first ? 8 : 0,
+                        start: halfTiles.length > 1 && t == halfTiles.last ? 8 : 0,
                       ),
                       child: TileFactory.buildTile(context, ref, t, isDark: isDark),
                     ),

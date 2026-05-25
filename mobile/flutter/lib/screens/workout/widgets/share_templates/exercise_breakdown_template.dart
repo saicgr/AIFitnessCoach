@@ -106,7 +106,7 @@ class ExerciseBreakdownTemplate extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '${ex.sets} × ${ex.reps}',
+                            AppLocalizations.of(context)!.exerciseBreakdownTemplateValue(ex.sets, ex.reps),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,

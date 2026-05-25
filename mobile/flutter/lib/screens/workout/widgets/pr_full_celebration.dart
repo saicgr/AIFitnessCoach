@@ -157,7 +157,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
               children: [
                 // Close button
                 Align(
-                  alignment: Alignment.topRight,
+                  alignment: AlignmentDirectional.topEnd,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: IconButton(
@@ -335,8 +335,8 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
             height: 140,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
                 colors: [
                   Color(0xFFFFD700),
                   Color(0xFFFFA500),
@@ -423,7 +423,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
 
           // Reps
           Text(
-            '${widget.pr.reps} reps',
+            AppLocalizations.of(context)!.prFullCelebrationReps(widget.pr.reps),
             style: const TextStyle(
               fontSize: 18,
               color: Colors.white70,
@@ -459,7 +459,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '(+${widget.pr.improvementPercent.toStringAsFixed(1)}%)',
+                    AppLocalizations.of(context)!.prFullCelebrationValue(widget.pr.improvementPercent.toStringAsFixed(1)),
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.success.withOpacity(0.8),
@@ -559,7 +559,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
               children: [
                 // Close button
                 Align(
-                  alignment: Alignment.topRight,
+                  alignment: AlignmentDirectional.topEnd,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: IconButton(
@@ -624,7 +624,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
                 const SizedBox(height: 8),
 
                 Text(
-                  '${widget.prs.length} Personal Records!',
+                  AppLocalizations.of(context)!.prFullCelebrationPersonalRecords(widget.prs.length),
                   style: const TextStyle(
                     fontSize: 18,
                     color: Colors.white70,

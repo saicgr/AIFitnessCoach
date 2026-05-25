@@ -82,8 +82,8 @@ class _InsightShell extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             accent.withValues(alpha: colors.isDark ? 0.18 : 0.11),
             accent.withValues(alpha: colors.isDark ? 0.06 : 0.04),

@@ -22,7 +22,7 @@ class ExerciseTimeRangeSelector extends StatelessWidget {
         children: ExerciseHistoryTimeRange.values.map((range) {
           final isSelected = range == selected;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsetsDirectional.only(end: 8),
             child: FilterChip(
               label: Text(range.displayName),
               selected: isSelected,
@@ -55,7 +55,7 @@ class ExerciseChartTypeSelector extends StatelessWidget {
       children: options.map((option) {
         final isSelected = option == selected;
         return Padding(
-          padding: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsetsDirectional.only(end: 8),
           child: ChoiceChip(
             label: Text(labels[option]!),
             selected: isSelected,
@@ -123,7 +123,7 @@ class ExerciseSummaryCard extends StatelessWidget {
             if (summary.avgFrequencyPerWeek != null) ...[
               const Divider(height: 24),
               Text(
-                'Training frequency: ${summary.formattedFrequency}',
+                AppLocalizations.of(context)!.exerciseStatsWidgetsTrainingFrequency(summary.formattedFrequency),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -420,7 +420,7 @@ class ExercisePRCard extends StatelessWidget {
           child: const Icon(Icons.emoji_events, color: Colors.amber),
         ),
         title: Text(record.prTypeDisplayName),
-        subtitle: Text('Achieved ${record.formattedAchievedDate}'),
+        subtitle: Text(AppLocalizations.of(context)!.exerciseStatsWidgetsAchieved(record.formattedAchievedDate)),
         trailing: Text(
           record.formattedValue,
           style: theme.textTheme.titleLarge?.copyWith(

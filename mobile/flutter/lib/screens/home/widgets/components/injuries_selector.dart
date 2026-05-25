@@ -95,7 +95,7 @@ class InjuriesSelector extends StatelessWidget {
               const Spacer(),
               if (selectedCount > 0)
                 Text(
-                  '$selectedCount selected',
+                  AppLocalizations.of(context)!.injuriesSelectorSelected(selectedCount),
                   style: TextStyle(color: colors.error, fontSize: 12),
                 ),
             ],

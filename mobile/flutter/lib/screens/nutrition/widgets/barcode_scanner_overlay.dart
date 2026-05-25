@@ -47,7 +47,7 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
         children: [
           // Header with close button
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 8, 8),
             child: Row(
               children: [
                 Icon(Icons.qr_code_scanner, color: teal, size: 22),

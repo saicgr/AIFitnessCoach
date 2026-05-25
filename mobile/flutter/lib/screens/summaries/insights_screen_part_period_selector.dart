@@ -35,7 +35,7 @@ class _PeriodSelector extends StatelessWidget {
     Widget buildPresetPill(InsightsPeriod period) {
       final isSelected = !isCustomActive && period == selected;
       return Padding(
-        padding: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsetsDirectional.only(end: 8),
         child: GestureDetector(
           onTap: () => onSelect(period),
           child: AnimatedContainer(
@@ -65,7 +65,7 @@ class _PeriodSelector extends StatelessWidget {
 
     Widget buildCustomPill() {
       return Padding(
-        padding: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsetsDirectional.only(end: 8),
         child: GestureDetector(
           onTap: onPickCustom,
           child: AnimatedContainer(
@@ -344,8 +344,8 @@ class _OverviewCard extends StatelessWidget {
             purple.withOpacity(0.15),
             cyan.withOpacity(0.1),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: purple.withOpacity(0.3)),
@@ -423,7 +423,7 @@ class _OverviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${totals.completionRate.toStringAsFixed(0)}% completion rate',
+            AppLocalizations.of(context)!.insightsScreenPartPeriodSelectorCompletionRate(totals.completionRate.toStringAsFixed(0)),
             style: TextStyle(fontSize: 12, color: textMuted),
           ),
 
@@ -583,8 +583,8 @@ class _NutritionCard extends StatelessWidget {
             success.withOpacity(0.15),
             success.withOpacity(0.05),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: success.withOpacity(0.3)),
@@ -621,7 +621,7 @@ class _NutritionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${adherence.toStringAsFixed(0)}%',
+                  AppLocalizations.of(context)!.insightsScreenPartPeriodSelectorValue(adherence.toStringAsFixed(0)),
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w800,
@@ -711,8 +711,8 @@ class _RecoveryCard extends StatelessWidget {
             orange.withOpacity(0.15),
             orange.withOpacity(0.05),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: orange.withOpacity(0.3)),

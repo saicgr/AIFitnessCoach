@@ -178,7 +178,7 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: Text(
                 _sort.isEmpty
                     ? AppLocalizations.of(context).sortOptionsTapAFieldTo

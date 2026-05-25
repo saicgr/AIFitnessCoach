@@ -109,6 +109,7 @@ class NutritionScoreCard extends StatelessWidget {
           // Breakdown items
           if (score != null) ...[
             _buildAdherenceItem(
+              context,
               'Logging Adherence',
               score!.loggingAdherencePercent,
               '${score!.daysLogged}/7 days',
@@ -116,6 +117,7 @@ class NutritionScoreCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _buildAdherenceItem(
+              context,
               'Calorie Adherence',
               (score!.calorieAdherencePercent * 100).round(),
               null,
@@ -123,6 +125,7 @@ class NutritionScoreCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _buildAdherenceItem(
+              context,
               'Protein Adherence',
               (score!.proteinAdherencePercent * 100).round(),
               null,
@@ -131,6 +134,7 @@ class NutritionScoreCard extends StatelessWidget {
             if (score!.avgHealthScore > 0) ...[
               const SizedBox(height: 12),
               _buildAdherenceItem(
+                context,
                 'Avg Health Score',
                 (score!.avgHealthScore * 10).round(), // Convert 0-10 to 0-100
                 null,
@@ -151,6 +155,7 @@ class NutritionScoreCard extends StatelessWidget {
   }
 
   Widget _buildAdherenceItem(
+    BuildContext context,
     String label,
     int percent,
     String? detail,
@@ -182,7 +187,7 @@ class NutritionScoreCard extends StatelessWidget {
               ),
             const SizedBox(width: 8),
             Text(
-              '$percent%',
+              AppLocalizations.of(context)!.nutritionScoreCardValue(percent),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,

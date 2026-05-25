@@ -126,7 +126,7 @@ class _NotificationPrimeScreenState
                         ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
                         const SizedBox(height: 12),
                         Text(
-                          'Turn on notifications so ${Branding.appName} can coach you when it matters most.',
+                          AppLocalizations.of(context)!.notificationPrimeScreenTurnOnNotificationsSo(Branding.appName),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 15,
@@ -250,8 +250,8 @@ class _Illustration extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [accent.withOpacity(0.18), accent.withOpacity(0.04)],
         ),
       ),

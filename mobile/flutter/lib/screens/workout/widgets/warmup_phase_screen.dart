@@ -462,7 +462,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                     color: AppColors.orange.withOpacity(0.3))
           else
             Text(
-              '${exercise.duration} sec',
+              AppLocalizations.of(context)!.warmupPhaseScreenSec(exercise.duration),
               style: TextStyle(
                 fontSize: 24,
                 color: textSecondary,
@@ -704,7 +704,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
               final exercise =
                   widget.exercises[_currentExerciseIndex + 1 + index];
               return Container(
-                margin: const EdgeInsets.only(right: 6),
+                margin: const EdgeInsetsDirectional.only(end: 6),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(

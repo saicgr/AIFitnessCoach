@@ -135,8 +135,8 @@ class _StreakSavedDialogState extends ConsumerState<StreakSavedDialog>
                     height: 90,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                         colors: [Color(0xFF2196F3), Color(0xFF1565C0)],
                       ),
                       shape: BoxShape.circle,
@@ -168,7 +168,7 @@ class _StreakSavedDialogState extends ConsumerState<StreakSavedDialog>
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
                     widget.savedStreakCount > 0
-                        ? "We used 1 Streak Shield to keep your ${widget.savedStreakCount}-day streak alive."
+                        ? AppLocalizations.of(context)!.streakSavedDialogWeUsedStreakShield(widget.savedStreakCount)
                         : "We used 1 Streak Shield to protect your streak.",
                     textAlign: TextAlign.center,
                     style: TextStyle(

@@ -84,7 +84,7 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                   ),
                 ],
               ] else
-                Text('— $unit', style: TextStyle(fontSize: 16, color: textMuted)),
+                Text(AppLocalizations.of(context)!.measurementsTabUiValue(unit), style: TextStyle(fontSize: 16, color: textMuted)),
             ],
           ),
           const SizedBox(height: 12),

@@ -90,7 +90,7 @@ class ReceiptTemplate extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'ORDER: ${workoutName.toUpperCase()}',
+              AppLocalizations.of(context)!.receiptTemplateOrder(workoutName.toUpperCase()),
               style: const TextStyle(
                 fontFamily: fontFamily,
                 fontSize: 11,
@@ -129,7 +129,7 @@ class ReceiptTemplate extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${ex.sets}x${ex.reps}',
+                          AppLocalizations.of(context)!.receiptTemplateX(ex.sets, ex.reps),
                           style: const TextStyle(
                             fontFamily: fontFamily,
                             fontSize: 11,

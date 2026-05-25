@@ -137,8 +137,8 @@ class SeniorWorkoutCard extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             AppColors.cyan.withOpacity(0.2),
             AppColors.purple.withOpacity(0.1),
@@ -190,7 +190,7 @@ class SeniorWorkoutCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '$exerciseCount exercises  •  $durationMinutes min',
+            AppLocalizations.of(context)!.seniorCardExercisesMin(exerciseCount, durationMinutes),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w400,

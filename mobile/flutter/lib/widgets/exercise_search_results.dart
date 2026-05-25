@@ -89,7 +89,7 @@ class _SearchResultsList extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '"${response.exerciseName}" - ${response.totalResults} workouts found',
+                  AppLocalizations.of(context)!.exerciseSearchResultsWorkoutsFound(response.exerciseName, response.totalResults),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
@@ -117,7 +117,7 @@ class _SearchResultsList extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Center(
               child: Text(
-                '+${response.results.length - 10} more workouts',
+                AppLocalizations.of(context)!.exerciseSearchResultsMoreWorkouts(response.results.length - 10),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -193,7 +193,7 @@ class _ResultCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${result.setsCompleted} sets',
+                        AppLocalizations.of(context)!.exerciseSearchResultsSets(result.setsCompleted),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w500,
                             ),
@@ -205,7 +205,7 @@ class _ResultCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Best: ${result.bestSetDisplay}',
+                        AppLocalizations.of(context)!.exerciseSearchResultsBest(result.bestSetDisplay),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -291,7 +291,7 @@ class _NoResults extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'No workouts containing "$exerciseName" in selected time range',
+            AppLocalizations.of(context)!.exerciseSearchResultsNoWorkoutsContainingIn(exerciseName),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textMuted,
                 ),

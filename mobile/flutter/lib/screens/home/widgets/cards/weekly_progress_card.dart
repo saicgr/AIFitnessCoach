@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/providers/week_start_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/utils/safe_num.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// A card showing weekly workout progress with a progress bar and day indicators
 class WeeklyProgressCard extends ConsumerWidget {
@@ -79,7 +80,7 @@ class WeeklyProgressCard extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$completed of $total workouts',
+                AppLocalizations.of(context)!.weeklyProgressCardOfWorkouts(completed, total),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               // Large percentage number with animation

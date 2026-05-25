@@ -82,8 +82,8 @@ class _AnimatedCalorieChipState extends State<AnimatedCalorieChip>
               return ShaderMask(
                 shaderCallback: (bounds) {
                   return LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                     colors: [
                       widget.color,
                       widget.color.withValues(alpha: 0.5),
@@ -199,7 +199,7 @@ class CompactGoalScore extends StatelessWidget {
         border: Border.all(color: scoreColor.withValues(alpha: 0.4), width: 1.5),
       ),
       child: Text(
-        '$score/10',
+        AppLocalizations.of(context)!.mealScoreWidgetsValue(score),
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,

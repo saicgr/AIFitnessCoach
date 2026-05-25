@@ -502,7 +502,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Total: ${volume.toStringAsFixed(0)} kg lifted',
+                  AppLocalizations.of(context)!.workoutSummaryScreenTotalKgLifted(volume.toStringAsFixed(0)),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -708,7 +708,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Manually marked as done at $formatted',
+              AppLocalizations.of(context)!.workoutSummaryScreenManuallyMarkedAsDone(formatted),
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? AppColors.textSecondary : Colors.grey.shade700,
@@ -1065,7 +1065,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                   ),
                 ),
                 Text(
-                  '$totalReps reps across $totalSets sets',
+                  AppLocalizations.of(context)!.workoutSummaryScreenRepsAcrossSets(totalReps, totalSets),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark

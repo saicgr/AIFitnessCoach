@@ -398,7 +398,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
           future: PackageInfo.fromPlatform(),
           builder: (context, snapshot) {
             final version = snapshot.hasData
-                ? 'Version ${snapshot.data!.version} (${snapshot.data!.buildNumber})'
+                ? AppLocalizations.of(context)!.settingsScreenExtVersion(snapshot.data!.version, snapshot.data!.buildNumber)
                 : 'Loading version...';
             return Column(
               mainAxisSize: MainAxisSize.min,
@@ -478,7 +478,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                                 ),
                               ),
                               Text(
-                                'Why I built ${Branding.appName}',
+                                AppLocalizations.of(context)!.settingsScreenExtWhyIBuilt(Branding.appName),
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: isDark

@@ -90,7 +90,7 @@ Future<SaunaDialogResult?> showSaunaDialog({
                             ),
                           ),
                           child: Text(
-                            '${minutes}min',
+                            AppLocalizations.of(context)!.saunaDialogMin(minutes),
                             style: TextStyle(
                               color: isSelected ? accentColor : textMuted,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -165,7 +165,7 @@ Future<SaunaDialogResult?> showSaunaDialog({
                         ),
                       ),
                       child: Text(
-                        'Log ${selectedMinutes}min Sauna',
+                        AppLocalizations.of(context)!.saunaDialogLogMinSauna(selectedMinutes),
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ),

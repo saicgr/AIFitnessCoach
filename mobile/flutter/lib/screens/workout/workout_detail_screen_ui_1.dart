@@ -964,7 +964,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
           ],
         ),
         content: Text(
-          '"${exercise1.name}" and "${exercise2.name}" are already in different supersets.\n\nBreak the existing supersets first to create a new pairing.',
+          AppLocalizations.of(context)!.workoutDetailScreenUi1AndAreAlreadyIn(exercise1.name, exercise2.name),
           style: TextStyle(color: textPrimary.withValues(alpha: 0.8)),
         ),
         actions: [
@@ -1024,7 +1024,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
           ],
         ),
         content: Text(
-          'Add "${newExercise.name}" to create a $newSetType?',
+          AppLocalizations.of(context)!.workoutDetailScreenUi1AddToCreateA(newExercise.name, newSetType),
           style: TextStyle(color: textPrimary.withValues(alpha: 0.8)),
         ),
         actions: [
@@ -1091,7 +1091,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$setType created!'),
+        content: Text(AppLocalizations.of(context)!.workoutDetailScreenUi1Created(setType)),
         duration: const Duration(seconds: 2),
       ),
     );

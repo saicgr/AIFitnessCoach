@@ -192,9 +192,8 @@ class _WorkoutSummaryScreenV2State
         ),
 
         // Floating back button (only for General/Advanced — Detail has its own)
-        Positioned(
-          top: topPadding + 8,
-          left: 16,
+        PositionedDirectional(top: topPadding + 8,
+          start: 16,
           child: const GlassBackButton(),
         ),
 

@@ -532,7 +532,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
               const SizedBox(height: 16),
               // RIR selection
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: Text(
                   AppLocalizations.of(context).setLoggingMixinRirRepsInReserve,
                   style: TextStyle(

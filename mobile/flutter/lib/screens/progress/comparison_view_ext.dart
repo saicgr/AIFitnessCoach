@@ -30,8 +30,8 @@ extension __ComparisonViewStateExt on _ComparisonViewState {
               const SizedBox(width: 8),
               Text(
                 isVariable
-                    ? '${_selectedPhotos.length} selected (${_selectedLayout.minPhotos}-${_selectedLayout.maxPhotos} photos)'
-                    : '${_selectedPhotos.length} / ${_selectedLayout.photoCount} selected',
+                    ? AppLocalizations.of(context)!.comparisonViewExtSelectedPhotos(_selectedPhotos.length, _selectedLayout.minPhotos, _selectedLayout.maxPhotos)
+                    : AppLocalizations.of(context)!.comparisonViewExtSelected(_selectedPhotos.length, _selectedLayout.photoCount),
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
               ),
               const Spacer(),

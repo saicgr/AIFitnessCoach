@@ -533,7 +533,7 @@ class _LogEntry extends StatelessWidget {
                             ),
                             const SizedBox(width: 3),
                             Text(
-                              'via ${sourceMeta.label}',
+                              AppLocalizations.of(context)!.hydrationTabPartStatItemVia(sourceMeta.label),
                               style: TextStyle(
                                 fontSize: 10,
                                 color: textMuted,

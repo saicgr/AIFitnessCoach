@@ -178,7 +178,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Control what emails you receive from ${Branding.appName}',
+                    AppLocalizations.of(context)!.emailPreferencesSectionControlWhatEmailsYou(Branding.appName),
                     style: TextStyle(
                       fontSize: 13,
                       color: textSecondary,
@@ -441,7 +441,7 @@ class _UnsubscribeConfirmDialog extends StatelessWidget {
 
   Widget _buildBulletPoint(String text, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 4),
+      padding: const EdgeInsetsDirectional.only(start: 8, bottom: 4),
       child: Row(
         children: [
           Container(

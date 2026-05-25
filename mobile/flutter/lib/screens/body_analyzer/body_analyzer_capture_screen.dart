@@ -251,7 +251,7 @@ class _BodyAnalyzerCaptureScreenState
         ),
         const SizedBox(height: 8),
         if (photos.isEmpty)
-          Text('No $label photos yet — capture one from Progress.',
+          Text(AppLocalizations.of(context)!.bodyAnalyzerCaptureScreenNoPhotosYetCapture(label),
               style: TextStyle(color: muted, fontSize: 12)),
         if (photos.isNotEmpty)
           SizedBox(
@@ -288,7 +288,7 @@ class _BodyAnalyzerCaptureScreenState
                     ),
                     child: selected
                         ? Align(
-                            alignment: Alignment.topRight,
+                            alignment: AlignmentDirectional.topEnd,
                             child: Container(
                               margin: const EdgeInsets.all(4),
                               padding: const EdgeInsets.all(3),

@@ -206,8 +206,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                     ),
 
                     // Samsung-style swap button on hinge
-                    Positioned(
-                      left: hingeLeft + (hingeWidth / 2) - 20,
+                    PositionedDirectional(start: hingeLeft + (hingeWidth / 2) - 20,
                       top: 0,
                       bottom: 0,
                       child: Center(
@@ -388,7 +387,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                       color: AppColors.orange.withOpacity(0.3))
             else
               Text(
-                '${exercise.duration} sec',
+                AppLocalizations.of(context)!.foldableWarmupLayoutSec(exercise.duration),
                 style: TextStyle(
                   fontSize: 22,
                   color: textSecondary,
@@ -605,7 +604,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                           ),
                         ),
                         Text(
-                          '${upcomingExercise.duration}s',
+                          AppLocalizations.of(context)!.foldableWarmupLayoutS(upcomingExercise.duration),
                           style: TextStyle(
                             color: textSecondary,
                             fontSize: 13,

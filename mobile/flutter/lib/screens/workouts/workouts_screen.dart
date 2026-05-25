@@ -265,9 +265,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // Floating options bar — docked above MainShell's bottom nav,
             // mirroring the Nutrition / Discover / You tabs. Pills jump the
             // scroll view to the matching section.
-            Positioned(
-              left: 0,
-              right: 0,
+            PositionedDirectional(start: 0,
+              end: 0,
               bottom: MediaQuery.of(context).viewPadding.bottom + 68,
               child: Center(
                 child: WorkoutsFloatingOptionsBar(
@@ -311,17 +310,16 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   ) {
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
+    return PositionedDirectional(top: 0,
+      start: 0,
+      end: 0,
       // Three stacked BackdropFilter blurs in the header would otherwise
-      // re-rasterize on every scroll pixel of the content below. Isolating
+      // re-rastze on every scroll pixel of the content below. Isolating
       // the header in its own painting layer pays the blur cost once per
       // header change instead of once per scrolled pixel.
       child: RepaintBoundary(
         child: Container(
-        padding: EdgeInsets.only(top: topPadding + 8, left: 16, right: 16, bottom: 8),
+        padding: EdgeInsetsDirectional.only(top: topPadding + 8, start: 16, end: 16, bottom: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -421,12 +419,12 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         // tune icon sits inline on its right instead of wasting its own
         // line. The week strip then sits directly beneath, no gap.
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 12, 2),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 12, 2),
           child: Row(
             children: [
               const Expanded(
                 child: Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: GymProfileSwitcher(),
                 ),
               ),
@@ -1037,12 +1035,11 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
         ),
         child: Stack(
           children: [
-            Positioned(
-              right: -10,
+            PositionedDirectional(end: -10,
               bottom: -14,
               child: IgnorePointer(
                 child: Transform.rotate(
-                  angle: -0.21,
+                        angle: -0.21,
                   child: Icon(
                     kind.icon,
                     size: 96,
@@ -1397,7 +1394,7 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Bring your past workouts and PRs into ${Branding.appName} so the AI can pick the right weights from day one.',
+                AppLocalizations.of(context)!.workoutsScreenBringYourPastWorkouts(Branding.appName),
                 style: TextStyle(
                   fontSize: 13,
                   color: textMuted,

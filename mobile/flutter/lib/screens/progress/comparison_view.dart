@@ -515,7 +515,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(8)),
-                  child: Text('${weight.toStringAsFixed(1)} kg', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600)),
+                  child: Text(AppLocalizations.of(context)!.comparisonViewKg(weight.toStringAsFixed(1)), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600)),
                 ),
               ),
             ),
@@ -995,7 +995,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
       if (widget.existingComparison != null) {
         await notifier.updateComparison(comparisonId: widget.existingComparison!.id, layout: _selectedLayout.value, settingsJson: finalSettings.toJson(), aiSummary: _aiSummary, photosJson: photosJsonList);
       } else {
-        final created = await notifier.createComparison(beforePhotoId: _selectedPhotos.first.id, afterPhotoId: _selectedPhotos.last.id, title: '${_selectedLayout.displayName} Comparison');
+        final created = await notifier.createComparison(beforePhotoId: _selectedPhotos.first.id, afterPhotoId: _selectedPhotos.last.id, title: AppLocalizations.of(context)!.comparisonViewComparison(_selectedLayout.displayName));
         if (created == null) throw Exception('Failed to create comparison');
         await notifier.updateComparison(comparisonId: created.id, layout: _selectedLayout.value, settingsJson: finalSettings.toJson(), aiSummary: _aiSummary, photosJson: photosJsonList);
       }
@@ -1258,7 +1258,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
                 color: colorScheme.primary.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text('${ProgressTemplateKind.values.length} viral',
+              child: Text(AppLocalizations.of(context)!.comparisonViewViral(ProgressTemplateKind.values.length),
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: colorScheme.primary, letterSpacing: 0.5),
               ),
             ),
@@ -1354,7 +1354,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(Icons.apps_rounded, size: 22, color: colorScheme.primary),
             const SizedBox(height: 4),
-            Text('+${ProgressTemplateKind.values.length - 5}',
+            Text(AppLocalizations.of(context)!.comparisonViewValue(ProgressTemplateKind.values.length - 5),
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: colorScheme.primary),
             ),
           ]),

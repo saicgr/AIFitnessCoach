@@ -152,7 +152,7 @@ class _TierCard extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: '$title mode',
+      label: AppLocalizations.of(context)!.workoutUiModeSheetMode(title),
       hint: description,
       child: Material(
         color: Colors.transparent,

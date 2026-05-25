@@ -466,8 +466,8 @@ class _QuizFastingState extends State<QuizFasting> {
                                   gradient: isSelected
                                       ? LinearGradient(
                                           colors: t.cardSelectedGradient,
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
+                                          begin: AlignmentDirectional.topStart,
+                                          end: AlignmentDirectional.bottomEnd,
                                         )
                                       : null,
                                   color: isSelected ? null : t.cardFill,
@@ -708,7 +708,7 @@ class _QuizFastingState extends State<QuizFasting> {
                             Expanded(
                               child: Center(
                                 child: Text(
-                                  '$_customFastingHours h',
+                                  AppLocalizations.of(context)!.quizFastingH(_customFastingHours),
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -760,7 +760,7 @@ class _QuizFastingState extends State<QuizFasting> {
                             Expanded(
                               child: Center(
                                 child: Text(
-                                  '$_customEatingHours h',
+                                  AppLocalizations.of(context)!.quizFastingH2(_customEatingHours),
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -812,7 +812,7 @@ class _QuizFastingState extends State<QuizFasting> {
                     Expanded(
                       child: Text(
                         (_customFastingHours + _customEatingHours == 24)
-                            ? 'Custom $_customFastingHours:$_customEatingHours protocol'
+                            ? AppLocalizations.of(context)!.quizFastingCustomProtocol(_customFastingHours, _customEatingHours)
                             : 'Total should equal 24h (currently ${_customFastingHours + _customEatingHours}h)',
                         style: TextStyle(
                           fontSize: 12,
@@ -848,8 +848,8 @@ class _QuizFastingState extends State<QuizFasting> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: t.buttonGradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             ),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: t.buttonBorder),

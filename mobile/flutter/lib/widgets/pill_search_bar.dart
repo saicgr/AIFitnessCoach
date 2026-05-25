@@ -82,7 +82,7 @@ class PillSearchBar extends StatelessWidget {
                 onClear?.call();
               },
               child: Padding(
-                padding: const EdgeInsets.only(left: 4, right: 4),
+                padding: const EdgeInsetsDirectional.only(start: 4, end: 4),
                 child: Icon(Icons.close_rounded, color: textMuted, size: 20),
               ),
             ),
@@ -94,7 +94,7 @@ class PillSearchBar extends StatelessWidget {
                 onMicTap!();
               },
               child: Padding(
-                padding: const EdgeInsets.only(left: 4, right: 2),
+                padding: const EdgeInsetsDirectional.only(start: 4, end: 2),
                 child: Icon(Icons.mic_none_rounded, color: textMuted, size: 22),
               ),
             ),

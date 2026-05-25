@@ -80,8 +80,7 @@ class ProgramCarouselSection extends StatelessWidget {
             itemBuilder: (context, index) {
               final program = programs[index];
               return Padding(
-                padding: EdgeInsets.only(
-                  right: index < programs.length - 1 ? 10 : 0,
+                padding: EdgeInsetsDirectional.only(end: index < programs.length - 1 ? 10 : 0,
                 ),
                 child: ProgramCarouselCard(
                   program: program,

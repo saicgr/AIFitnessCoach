@@ -351,7 +351,7 @@ class _MoreDerivedDropdown extends StatelessWidget {
         _showSheet(context);
       },
       child: Container(
-        padding: const EdgeInsets.fromLTRB(8, 2, 6, 2),
+        padding: const EdgeInsetsDirectional.fromSTEB(8, 2, 6, 2),
         decoration: BoxDecoration(
           color: elevated,
           borderRadius: BorderRadius.circular(999),
@@ -361,7 +361,7 @@ class _MoreDerivedDropdown extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '+${overflow.length} More',
+              AppLocalizations.of(context)!.measurementBodyViewMore(overflow.length),
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
@@ -488,7 +488,7 @@ class _DerivedMetricPill extends ConsumerWidget {
         context.push('/measurements/derived/${type.name}');
       },
       child: Container(
-        padding: const EdgeInsets.fromLTRB(6, 2, 2, 2),
+        padding: const EdgeInsetsDirectional.fromSTEB(6, 2, 2, 2),
         decoration: BoxDecoration(
           color: elevated,
           borderRadius: BorderRadius.circular(999),

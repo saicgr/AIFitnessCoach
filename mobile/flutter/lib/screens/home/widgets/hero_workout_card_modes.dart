@@ -414,9 +414,9 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
     HapticService.selection();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$which variant coming with the backend variant generator'),
+        content: Text(AppLocalizations.of(context)!.heroWorkoutCardModesVariantComingWithThe(which)),
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.only(bottom: 120, left: 16, right: 16),
+        margin: const EdgeInsetsDirectional.only(bottom: 120, start: 16, end: 16),
       ),
     );
   }
@@ -427,7 +427,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
       SnackBar(
         content: Text(AppLocalizations.of(context).heroWorkoutCardMarkedAsARest),
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(bottom: 120, left: 16, right: 16),
+        margin: EdgeInsetsDirectional.only(bottom: 120, start: 16, end: 16),
       ),
     );
   }

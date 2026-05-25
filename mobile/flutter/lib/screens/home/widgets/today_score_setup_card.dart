@@ -80,7 +80,7 @@ class TodayScoreSetupCard extends ConsumerWidget {
           Row(
             children: [
               Text(
-                'GET STARTED · $completedCount/${steps.length}',
+                AppLocalizations.of(context)!.todayScoreSetupCardGetStarted(completedCount, steps.length),
                 style: TextStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w800,
@@ -123,7 +123,7 @@ class TodayScoreSetupCard extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                child: Text('Continue: ${steps[firstIncomplete].label}'),
+                child: Text(AppLocalizations.of(context)!.todayScoreSetupCardContinue(steps[firstIncomplete].label)),
               ),
             ),
           ],

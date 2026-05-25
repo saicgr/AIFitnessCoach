@@ -124,8 +124,8 @@ class _MotivationCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                         colors: t.cardSelectedGradient,
                       )
                     : null,
@@ -148,8 +148,8 @@ class _MotivationCard extends StatelessWidget {
                           colors: isSelected
                               ? t.iconContainerSelectedGradient(color)
                               : t.iconContainerGradient(color),
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                          begin: AlignmentDirectional.topStart,
+                          end: AlignmentDirectional.bottomEnd,
                         ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(

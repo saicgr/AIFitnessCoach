@@ -1152,7 +1152,7 @@ class _LastUsedRegenBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 8, 10),
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(12),

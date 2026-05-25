@@ -4,6 +4,7 @@
 // so that focal_stepper.dart stays ≤ 250 lines per the project convention.
 
 import 'package:flutter/material.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Big ± button used on either side of the focal stepper number.
 class FocalStepperButton extends StatelessWidget {
@@ -98,7 +99,7 @@ class FocalStepperDisplay extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Edit $unit value, currently $_display',
+      label: AppLocalizations.of(context)!.focalStepperInternalsEditValueCurrently(unit, _display),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

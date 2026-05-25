@@ -85,7 +85,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      '@${Branding.appName} · Body Analyzer',
+                      AppLocalizations.of(context)!.shareBodyAnalyzerSheetBodyAnalyzer(Branding.appName),
                       style: TextStyle(
                         color: isDark
                             ? AppColors.textMuted

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting_impact.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Card showing a single fasting impact metric comparison
 class FastingImpactCard extends StatelessWidget {
@@ -115,7 +116,7 @@ class FastingImpactCard extends StatelessWidget {
           if (correlation != null) ...[
             const SizedBox(height: 8),
             Text(
-              'Correlation: ${correlation!.displayName}',
+              AppLocalizations.of(context)!.fastingImpactCardCorrelation(correlation!.displayName),
               style: TextStyle(
                 fontSize: 12,
                 color: correlation!.isPositive

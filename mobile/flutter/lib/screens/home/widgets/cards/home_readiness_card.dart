@@ -223,8 +223,8 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
               color: accentColor.withOpacity(0.3),
             ),
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: [
                 accentColor.withOpacity(0.05),
                 Colors.transparent,
@@ -263,7 +263,7 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
                     const SizedBox(height: 2),
                     Text(
                       hasObjectiveData
-                          ? 'Estimated: ${recovery.label}'
+                          ? AppLocalizations.of(context)!.homeReadinessCardEstimated(recovery.label)
                           : 'Check in to optimize your workout',
                       style: TextStyle(
                         fontSize: 12,

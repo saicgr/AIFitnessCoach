@@ -123,7 +123,7 @@ class TemplatePickerSheet extends ConsumerWidget {
                     final defaultTemplate = HomeLayoutTemplate(
                       id: 'default',
                       name: 'Default Layout',
-                      description: 'The original ${Branding.appName} home screen experience',
+                      description: AppLocalizations.of(context)!.templatePickerSheetTheOriginalHomeScreen(Branding.appName),
                       tiles: createDefaultTiles(),
                       icon: 'dashboard',
                       category: 'default',

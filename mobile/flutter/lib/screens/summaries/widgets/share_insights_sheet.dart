@@ -56,8 +56,8 @@ class ShareInsightsSheet {
     await ShareTemplateSheet.show(
       context: context,
       title: AppLocalizations.of(context).shareInsightsShareReport,
-      caption: 'My ${Branding.appName} ${periodName.toLowerCase()} report',
-      subject: 'My ${Branding.appName} Report',
+      caption: AppLocalizations.of(context)!.shareInsightsSheetMyReport(Branding.appName, periodName.toLowerCase()),
+      subject: AppLocalizations.of(context)!.shareInsightsSheetMyReport2(Branding.appName),
       templatesBuilder: (showWatermark) => [
         ShareTemplateDef(
           name: 'Report',

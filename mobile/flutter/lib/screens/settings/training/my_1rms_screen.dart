@@ -305,7 +305,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context).my1rmsDelete1rm),
-        content: Text('Remove ${oneRM.exerciseName} from your saved 1RMs?'),
+        content: Text(AppLocalizations.of(context)!.my1rmsScreenRemoveFromYourSaved(oneRM.exerciseName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

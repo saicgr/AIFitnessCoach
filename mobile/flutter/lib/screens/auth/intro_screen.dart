@@ -130,7 +130,7 @@ class _IntroScreenState extends State<IntroScreen>
                             if (_appVersion.isNotEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
-                                'v$_appVersion',
+                                AppLocalizations.of(context)!.introScreenV(_appVersion),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
@@ -286,8 +286,8 @@ class _IntroScreenState extends State<IntroScreen>
                     height: 60,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                         colors: [
                           Color(0xFFFFB366), // orangeLight
                           AppColors.orange,  // brand orange — clean warm gradient

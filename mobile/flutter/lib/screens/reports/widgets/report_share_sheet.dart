@@ -308,7 +308,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
                   icon: const Icon(Icons.close_rounded),
                 ),
                 Text(
-                  'Share ${widget.data.title}',
+                  AppLocalizations.of(context)!.reportShareSheetShare(widget.data.title),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(

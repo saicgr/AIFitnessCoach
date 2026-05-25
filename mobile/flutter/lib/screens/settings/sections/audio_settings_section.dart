@@ -291,7 +291,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
                 ],
               ),
             ),
-            Text('$displayPct%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+            Text(AppLocalizations.of(context)!.audioSettingsSectionValue(displayPct), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
           ],
         ),
         const SizedBox(height: 4),

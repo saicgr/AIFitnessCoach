@@ -83,7 +83,7 @@ class AppSnackBar {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          margin: EdgeInsets.only(left: 16, right: 16, bottom: bottomMargin, top: 8),
+          margin: EdgeInsetsDirectional.only(start: 16, end: 16, bottom: bottomMargin, top: 8),
           duration: duration,
           dismissDirection: DismissDirection.horizontal,
         ),

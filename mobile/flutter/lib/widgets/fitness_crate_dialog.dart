@@ -363,7 +363,7 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
             colors: [crateColor, crateColor.withValues(alpha: 0.7), crateColor],
           ).createShader(bounds),
           child: Text(
-            '${widget.tier.displayName.toUpperCase()} CRATE',
+            AppLocalizations.of(context)!.fitnessCrateDialogCrate(widget.tier.displayName.toUpperCase()),
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,

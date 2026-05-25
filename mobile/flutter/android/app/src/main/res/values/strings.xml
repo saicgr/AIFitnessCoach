@@ -74,4 +74,15 @@
     <string name="input_photo">Photo</string>
     <string name="input_barcode">Scan</string>
     <string name="input_saved">Saved</string>
+
+    <!-- Phase 7.5 — i18n baseline keys (widget + notification + Live Activity) -->
+    <string name="widget_title_today">Today\'s Workout</string>
+    <string name="widget_body_rest_day">Rest day — recover well</string>
+    <string name="live_activity_workout_active">Workout in progress</string>
+    <string name="live_activity_rest_timer">Rest timer: %s</string>
+    <string name="live_activity_done">Done</string>
+    <string name="notif_reminder_title">Time to train</string>
+    <string name="notif_reminder_body">Your workout is waiting</string>
+    <string name="widget_streak_label">Day streak</string>
+    <string name="widget_calories_label">Calories</string>
 </resources>

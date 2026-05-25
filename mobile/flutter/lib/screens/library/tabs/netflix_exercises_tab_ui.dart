@@ -207,7 +207,7 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: Text(
-                'All ${sortedExercises.length} exercises loaded',
+                AppLocalizations.of(context)!.netflixExercisesTabUiAllExercisesLoaded(sortedExercises.length),
                 style: TextStyle(
                   fontSize: 13,
                   color: textMuted,
@@ -252,7 +252,7 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
           height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(left: 16, right: 40), // Right padding for peek effect
+            padding: const EdgeInsetsDirectional.only(start: 16, end: 40), // Right padding for peek effect
             itemCount: aiSplitPresets.length,
             itemBuilder: (context, index) {
               final preset = aiSplitPresets[index];

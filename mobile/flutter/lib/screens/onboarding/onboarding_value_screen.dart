@@ -370,7 +370,7 @@ class _ZealovaCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '$priceLabel/mo',
+                AppLocalizations.of(context)!.onboardingValueScreenMo(priceLabel),
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,

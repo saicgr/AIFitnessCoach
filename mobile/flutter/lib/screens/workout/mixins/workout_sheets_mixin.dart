@@ -156,8 +156,8 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(success
-                  ? '${result.amountMl}ml ${result.drinkType.label} logged'
-                  : '${result.drinkType.label} logged locally (sync failed)'),
+                  ? AppLocalizations.of(context)!.workoutSheetsMixinMlLogged(result.amountMl, result.drinkType.label)
+                  : AppLocalizations.of(context)!.workoutSheetsMixinLoggedLocallySyncFailed(result.drinkType.label)),
               duration: const Duration(seconds: 2),
               backgroundColor: success ? AppColors.success : AppColors.orange,
             ),
@@ -168,7 +168,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${result.amountMl}ml ${result.drinkType.label} logged'),
+              content: Text(AppLocalizations.of(context)!.workoutSheetsMixinMlLogged2(result.amountMl, result.drinkType.label)),
               duration: const Duration(seconds: 2),
             ),
           );

@@ -322,7 +322,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
 
   Widget _buildHeader(SheetColors colors) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
+      padding: const EdgeInsetsDirectional.fromSTEB(20, 12, 12, 12),
       child: Column(
         children: [
           // Handle bar
@@ -482,7 +482,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
                         size: 12, color: colors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
-                      '${_currentWorkout.exerciseCount} exercises',
+                      AppLocalizations.of(context)!.workoutReviewSheetExercises(_currentWorkout.exerciseCount),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

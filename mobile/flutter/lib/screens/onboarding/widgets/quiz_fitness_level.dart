@@ -140,8 +140,8 @@ class QuizFitnessLevel extends StatelessWidget {
                   gradient: isSelected
                       ? LinearGradient(
                           colors: t.cardSelectedGradient,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                          begin: AlignmentDirectional.topStart,
+                          end: AlignmentDirectional.bottomEnd,
                         )
                       : null,
                   color: isSelected ? null : t.cardFill,

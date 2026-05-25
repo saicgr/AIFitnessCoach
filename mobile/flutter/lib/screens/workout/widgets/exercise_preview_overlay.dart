@@ -267,7 +267,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  'Target: $muscles',
+                  AppLocalizations.of(context)!.exercisePreviewOverlayTarget(muscles),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -333,7 +333,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   widthFactor: 1 - _progressController.value,
                   child: Container(
                     decoration: BoxDecoration(
@@ -355,7 +355,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
 
           // Countdown text
           Text(
-            '${_remainingSeconds}s',
+            AppLocalizations.of(context)!.exercisePreviewOverlayS(_remainingSeconds),
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,

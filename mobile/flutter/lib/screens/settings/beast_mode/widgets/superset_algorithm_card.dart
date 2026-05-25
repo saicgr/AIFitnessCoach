@@ -329,7 +329,7 @@ class _FavoritePairsSection extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              '${pairs.length} saved',
+              AppLocalizations.of(context)!.supersetAlgorithmCardSaved(pairs.length),
               style: TextStyle(fontSize: 10, color: theme.textMuted),
             ),
           ],
@@ -532,9 +532,8 @@ class _AddFavoritePairSheetState extends State<_AddFavoritePairSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
+      padding: EdgeInsetsDirectional.only(start: 16,
+        end: 16,
         top: 16,
         bottom: 16 + bottomInset,
       ),

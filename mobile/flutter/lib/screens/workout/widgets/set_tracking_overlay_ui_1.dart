@@ -59,7 +59,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                     runSpacing: 4,
                     children: [
                       Text(
-                        '${widget.viewingExerciseIndex + 1} of ${widget.totalExercises}',
+                        AppLocalizations.of(context)!.setTrackingOverlayUi1Of(widget.viewingExerciseIndex + 1, widget.totalExercises),
                         style: TextStyle(
                           fontSize: 12,
                           color: textMuted,
@@ -601,7 +601,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
               Expanded(
                 flex: 3,
                 child: Text(
-                  warmupWeight > 0 ? '${warmupWeight.toStringAsFixed(0)} × $warmupReps' : '—',
+                  warmupWeight > 0 ? AppLocalizations.of(context)!.setTrackingOverlayUi1Value(warmupWeight.toStringAsFixed(0), warmupReps) : '—',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

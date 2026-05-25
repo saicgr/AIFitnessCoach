@@ -65,7 +65,7 @@ class ReportReceiptTemplate extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'REPORT RECEIPT · ${data.periodLabel}',
+                      AppLocalizations.of(context)!.reportReceiptTemplateReportReceipt(data.periodLabel),
                       style: const TextStyle(
                         fontFamily: 'Courier',
                         fontSize: 10,
@@ -94,7 +94,7 @@ class ReportReceiptTemplate extends StatelessWidget {
                     const _DashedDivider(),
                     const SizedBox(height: 8),
                     _ReceiptRow(
-                      label: 'TOTAL ${unit.toUpperCase()}',
+                      label: AppLocalizations.of(context)!.reportReceiptTemplateTotal(unit.toUpperCase()),
                       value: hero,
                       bold: true,
                     ),

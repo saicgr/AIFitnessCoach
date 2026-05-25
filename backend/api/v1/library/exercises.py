@@ -16,11 +16,12 @@ from core.db import get_supabase_db
 
 import difflib
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Header, HTTPException, Query, Response
 
 from core.logger import get_logger
 from core.exceptions import safe_internal_error
 from core.redis_cache import RedisCache
+from core.locale import parse_accept_language, overlay_exercise_i18n
 
 # Filter options + body-parts/equipment/types are reference data that only
 # changes when the underlying exercise tables change (rare, gated by the MV
@@ -526,18 +527,28 @@ async def get_exercises_grouped(
 
 
 @router.get("/exercises/{exercise_id}", response_model=LibraryExercise)
-async def get_exercise(exercise_id: str):
+async def get_exercise(
+    exercise_id: str,
+    accept_language: Optional[str] = Header(default=None, alias="Accept-Language"),
+):
     """Get a single exercise by ID with full details.
     Tries cleaned view first, falls back to base table.
+
+    Accepts an Accept-Language header (e.g. "fr", "hi-IN,en;q=0.8") to return
+    translated name and instructions from exercise_library_i18n when available.
+    COALESCES to English ('en') when no row exists for the requested locale.
     """
     try:
         db = get_supabase_db()
+        locale = parse_accept_language(accept_language or "en")
 
         # Try cleaned view first (has deduplicated exercises)
         result = db.client.table("exercise_library_cleaned").select("*").eq("id", exercise_id).execute()
 
         if result.data:
-            return row_to_library_exercise(result.data[0], from_cleaned_view=True)
+            row = dict(result.data[0])
+            overlay_exercise_i18n(row, db, locale)
+            return row_to_library_exercise(row, from_cleaned_view=True)
 
         # Fall back to base table (for exercises not in cleaned view)
         result = db.client.table("exercise_library").select("*").eq("id", exercise_id).execute()
@@ -545,7 +556,9 @@ async def get_exercise(exercise_id: str):
         if not result.data:
             raise HTTPException(status_code=404, detail="Exercise not found")
 
-        return row_to_library_exercise(result.data[0], from_cleaned_view=False)
+        row = dict(result.data[0])
+        overlay_exercise_i18n(row, db, locale)
+        return row_to_library_exercise(row, from_cleaned_view=False)
 
     except HTTPException:
         raise

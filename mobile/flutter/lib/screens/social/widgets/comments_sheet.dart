@@ -285,9 +285,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
 
               // Input area
               Container(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 8,
+                padding: EdgeInsetsDirectional.only(start: 16,
+                  end: 8,
                   top: 12,
                   bottom: bottomInset > 0 ? 12 : MediaQuery.of(context).padding.bottom + 12,
                 ),

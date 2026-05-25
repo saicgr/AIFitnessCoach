@@ -74,7 +74,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
         children: [
           // Header
           Padding(
-            padding: EdgeInsets.fromLTRB(8, topPad + 8, 16, 4),
+            padding: EdgeInsetsDirectional.fromSTEB(8, topPad + 8, 16, 4),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [

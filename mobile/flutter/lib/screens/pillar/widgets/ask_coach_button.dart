@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Valid `source` query-parameter values the chat screen and backend coach
 /// agent recognise. Adding to this list MUST be paired with a matching `case`
@@ -101,7 +102,7 @@ class _AskCoachButtonState extends State<AskCoachButton> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
     return Semantics(
-      label: widget.semanticLabel ?? 'Ask coach about ${widget.contextLabel}',
+      label: widget.semanticLabel ?? AppLocalizations.of(context)!.askCoachButtonAskCoachAbout(widget.contextLabel),
       button: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

@@ -254,7 +254,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : Colors.white,
         title: Text(
-          'Edit ${exercise.name}',
+          AppLocalizations.of(context)!.aiInputPreviewSheetEdit(exercise.name),
           style: TextStyle(
             color: isDark ? AppColors.textPrimary : Colors.black87,
           ),
@@ -803,7 +803,7 @@ class _SetPreviewTile extends StatelessWidget {
                       ),
                       if (set.originalInput.isNotEmpty)
                         Text(
-                          'From: "${set.originalInput}"',
+                          AppLocalizations.of(context)!.aiInputPreviewSheetFrom(set.originalInput),
                           style: TextStyle(
                             color: textMuted,
                             fontSize: 11,

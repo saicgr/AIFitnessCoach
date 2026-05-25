@@ -406,7 +406,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Group "$name" created')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.socialScreenPartMessagesScreenGroupCreated(name))),
         );
       }
     } catch (e) {
@@ -469,7 +469,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
             child: Row(
               children: [
                 Text(
-                  'Select members (${_selectedMemberIds.length} selected)',
+                  AppLocalizations.of(context)!.socialScreenPartMessagesScreenSelectMembersSelected(_selectedMemberIds.length),
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

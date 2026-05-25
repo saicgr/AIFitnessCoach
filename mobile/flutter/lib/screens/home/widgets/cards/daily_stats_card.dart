@@ -376,7 +376,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
                   color: textMuted.withValues(alpha: 0.2),
                 ),
                 child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   widthFactor: stepsProgress,
                   child: Container(
                     decoration: BoxDecoration(
@@ -396,7 +396,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
               Icon(Icons.local_fire_department, size: 16, color: accentColor),
               const SizedBox(width: 6),
               Text(
-                '${caloriesBurned.round()} cal burned from exercise',
+                AppLocalizations.of(context)!.dailyStatsCardCalBurnedFromExercise(caloriesBurned.round()),
                 style: TextStyle(
                   fontSize: 12,
                   color: textMuted,

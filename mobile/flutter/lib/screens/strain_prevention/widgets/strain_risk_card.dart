@@ -64,7 +64,7 @@ class StrainRiskCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${risk.currentVolumeKg.toStringAsFixed(0)} kg',
+                  AppLocalizations.of(context)!.strainRiskCardKg(risk.currentVolumeKg.toStringAsFixed(0)),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -72,7 +72,7 @@ class StrainRiskCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'of ${risk.volumeCapKg.toStringAsFixed(0)} kg cap',
+                  AppLocalizations.of(context)!.strainRiskCardOfKgCap(risk.volumeCapKg.toStringAsFixed(0)),
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,

@@ -63,7 +63,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
           // Advanced section
           const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
             child: Text(
               l.progressionSelectorAdvanced,
               style: TextStyle(
@@ -169,7 +169,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
                   ),
                   // Goal tags
                   ...pattern.goalTags.map((tag) => Container(
-                        margin: const EdgeInsets.only(left: 4),
+                        margin: const EdgeInsetsDirectional.only(start: 4),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
@@ -212,7 +212,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
               const SizedBox(height: 6),
               // Description
               Padding(
-                padding: const EdgeInsets.only(left: 32),
+                padding: const EdgeInsetsDirectional.only(start: 32),
                 child: Text(
                   pattern.description,
                   style: TextStyle(fontSize: 13, color: textSecondary),
@@ -220,7 +220,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
               ),
               // Preview string
               Padding(
-                padding: const EdgeInsets.only(left: 32, top: 4),
+                padding: const EdgeInsetsDirectional.only(start: 32, top: 4),
                 child: Text(
                   preview,
                   style: TextStyle(
@@ -232,7 +232,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
               ),
               // Rest hint
               Padding(
-                padding: const EdgeInsets.only(left: 32, top: 2),
+                padding: const EdgeInsetsDirectional.only(start: 32, top: 2),
                 child: Row(
                   children: [
                     Icon(Icons.timer_outlined, size: 12, color: textSecondary),
@@ -248,7 +248,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
               if (isExpanded) ...[
                 const SizedBox(height: 10),
                 Container(
-                  margin: const EdgeInsets.only(left: 32),
+                  margin: const EdgeInsetsDirectional.only(start: 32),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: widget.isDark

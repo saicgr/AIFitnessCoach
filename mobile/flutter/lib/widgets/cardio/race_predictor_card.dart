@@ -123,7 +123,7 @@ class _ErrorBody extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Text(
-        'Could not load predictions.\n$message',
+        AppLocalizations.of(context)!.racePredictorCardCouldNotLoadPredictions(message),
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.error,
         ),
@@ -151,7 +151,7 @@ class _EmptyBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: FilledButton.tonalIcon(
             onPressed: () {
               // Cardio logging entry point — log_cardio_screen.dart route.
@@ -196,7 +196,7 @@ class _LoadedBody extends StatelessWidget {
             children: [
               for (final entry in predictions.entries)
                 Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsetsDirectional.only(end: 8),
                   child: _PredictionChip(
                     label: _labelFor(entry.key),
                     prediction: entry.value,

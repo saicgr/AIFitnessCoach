@@ -98,9 +98,8 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
+          padding: EdgeInsetsDirectional.only(start: 24,
+            end: 24,
             top: 16,
             bottom: MediaQuery.of(context).viewInsets.bottom + 24,
           ),
@@ -202,7 +201,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 children: GoalUnit.values.map((unit) {
                   final isSelected = _selectedUnit == unit;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsetsDirectional.only(end: 8),
                     child: ChoiceChip(
                       label: Text(unit.label),
                       selected: isSelected,
@@ -296,8 +295,8 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             // Target value
             Text(
               _selectedType == PersonalGoalType.singleMax
-                  ? 'Target ${_selectedUnit.fullLabel} (best in one session)'
-                  : 'Target ${_selectedUnit.fullLabel} (total this week)',
+                  ? AppLocalizations.of(context)!.createGoalSheetTargetBestInOne(_selectedUnit.fullLabel)
+                  : AppLocalizations.of(context)!.createGoalSheetTargetTotalThisWeek(_selectedUnit.fullLabel),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

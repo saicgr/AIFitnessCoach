@@ -209,8 +209,8 @@ class _HeroCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             accent.withValues(alpha: isDark ? 0.18 : 0.12),
             accent.withValues(alpha: isDark ? 0.06 : 0.04),

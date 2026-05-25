@@ -66,3 +66,6 @@ class WorkoutAgentState(TypedDict):
 
     # Error handling
     error: Optional[str]
+
+    # i18n — ISO 639-1 locale code. Injected into system prompt.
+    locale: Optional[str]

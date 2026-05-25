@@ -107,8 +107,7 @@ class _ColorScalePickerState extends State<_ColorScalePicker> {
                       ),
                     ),
                   ),
-                  Positioned(
-                    left: (_hue / 360 * barWidth - 12).clamp(0.0, barWidth - 24),
+                  PositionedDirectional(start: (_hue / 360 * barWidth - 12).clamp(0.0, barWidth - 24),
                     top: 0,
                     child: Container(
                       width: 24,
@@ -156,8 +155,7 @@ class _ColorScalePickerState extends State<_ColorScalePicker> {
                       ),
                     ),
                   ),
-                  Positioned(
-                    left: (_brightness * barWidth - 10).clamp(0.0, barWidth - 20),
+                  PositionedDirectional(start: (_brightness * barWidth - 10).clamp(0.0, barWidth - 20),
                     top: 0,
                     child: Container(
                       width: 20,
@@ -203,7 +201,7 @@ class _ColorScalePickerState extends State<_ColorScalePicker> {
               ),
               const SizedBox(width: 10),
               Text(
-                '#${currentColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
+                AppLocalizations.of(context)!.addGymProfileSheetPartEquipmentFollowUpValue(currentColor.toARGB32().toRadixString(16).substring(2).toUpperCase()),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,

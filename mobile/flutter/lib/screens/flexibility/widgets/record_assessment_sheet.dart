@@ -388,7 +388,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
                 if (response.assessment.percentile != null) ...[
                   const SizedBox(width: 8),
                   Text(
-                    'Top ${100 - response.assessment.percentile!}%',
+                    AppLocalizations.of(context)!.recordAssessmentSheetTop(100 - response.assessment.percentile!),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.white70,
                     ),

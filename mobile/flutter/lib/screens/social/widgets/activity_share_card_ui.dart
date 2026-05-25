@@ -6,7 +6,7 @@ extension _ActivityShareCardExt on ActivityShareCard {
   // ═══════════════════════════════════════════════════════════════
   // TEMPLATE 1: Dark Minimal
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildDarkMinimal() {
+  Widget _buildDarkMinimal(BuildContext context) {
     final accent = _accent;
     final isCompact = aspectRatio == ShareAspectRatio.square;
 
@@ -55,10 +55,10 @@ extension _ActivityShareCardExt on ActivityShareCard {
                 SizedBox(height: isCompact ? 12 : 20),
                 _buildHeadlineText(accent, Colors.white),
                 SizedBox(height: isCompact ? 8 : 16),
-                if (!isCompact) Expanded(child: _buildContentCard(accent)),
-                if (isCompact) _buildContentCard(accent),
+                if (!isCompact) Expanded(child: _buildContentCard(context, accent)),
+                if (isCompact) _buildContentCard(context, accent),
                 if (!isCompact) const Spacer(),
-                _buildFooter(Colors.white),
+                _buildFooter(context, Colors.white),
                 if (showWatermark) ...[
                   SizedBox(height: isCompact ? 4 : 8),
                   const AppWatermark(),
@@ -76,7 +76,7 @@ extension _ActivityShareCardExt on ActivityShareCard {
   // ═══════════════════════════════════════════════════════════════
   // TEMPLATE 3: Neon Glow
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildNeonGlow() {
+  Widget _buildNeonGlow(BuildContext context) {
     final accent = _accent;
     final isCompact = aspectRatio == ShareAspectRatio.square;
     final neonColor = accent;
@@ -171,11 +171,11 @@ extension _ActivityShareCardExt on ActivityShareCard {
                 SizedBox(height: isCompact ? 8 : 16),
                 if (!isCompact)
                   Expanded(
-                    child: _buildContentCard(neonColor, neonBorder: true),
+                    child: _buildContentCard(context, neonColor, neonBorder: true),
                   ),
-                if (isCompact) _buildContentCard(neonColor, neonBorder: true),
+                if (isCompact) _buildContentCard(context, neonColor, neonBorder: true),
                 if (!isCompact) const Spacer(),
-                _buildFooter(Colors.white),
+                _buildFooter(context, Colors.white),
                 if (showWatermark) ...[
                   SizedBox(height: isCompact ? 4 : 8),
                   const AppWatermark(),
@@ -193,7 +193,7 @@ extension _ActivityShareCardExt on ActivityShareCard {
   // ═══════════════════════════════════════════════════════════════
   // TEMPLATE 5: Glass Morphism
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildGlassMorphism() {
+  Widget _buildGlassMorphism(BuildContext context) {
     final accent = _accent;
     final isCompact = aspectRatio == ShareAspectRatio.square;
 
@@ -288,14 +288,15 @@ extension _ActivityShareCardExt on ActivityShareCard {
                 if (!isCompact)
                   Expanded(
                     child: _buildContentCard(
+                      context,
                       accent,
                       glassBg: true,
                     ),
                   ),
                 if (isCompact)
-                  _buildContentCard(accent, glassBg: true),
+                  _buildContentCard(context, accent, glassBg: true),
                 if (!isCompact) const Spacer(),
-                _buildFooter(Colors.white),
+                _buildFooter(context, Colors.white),
                 if (showWatermark) ...[
                   SizedBox(height: isCompact ? 4 : 8),
                   const AppWatermark(),
@@ -311,6 +312,7 @@ extension _ActivityShareCardExt on ActivityShareCard {
 
 
   Widget _buildContentCard(
+    BuildContext context,
     Color accent, {
     bool lightBg = false,
     bool neonBorder = false,
@@ -355,6 +357,7 @@ extension _ActivityShareCardExt on ActivityShareCard {
         );
       case 'weight_milestone':
         return _buildWeightCard(
+          context,
           accent,
           textColor: textColor,
           cardBg: cardBg,

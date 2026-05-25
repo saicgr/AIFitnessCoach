@@ -103,7 +103,7 @@ class MoodWeeklyChart extends ConsumerWidget {
               textSecondary: textSecondary,
             ),
             _StatItem(
-              value: '${data.daysWithCheckins.length}/7',
+              value: AppLocalizations.of(context)!.moodWeeklyChartValue(data.daysWithCheckins.length),
               label: l10n.moodWeeklyChartDaysActive,
               color: textPrimary,
               textSecondary: textSecondary,

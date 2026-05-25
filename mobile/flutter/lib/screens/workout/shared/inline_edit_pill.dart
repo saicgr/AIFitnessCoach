@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import 'inline_edit_pill_editor.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 class InlineEditPill extends StatefulWidget {
   final double weight;
@@ -147,7 +148,7 @@ class _CollapsedPill extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: label ?? 'Edit set, $_weightText $unit by $reps reps',
+      label: label ?? AppLocalizations.of(context)!.inlineEditPillEditSetByReps(_weightText, unit, reps),
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
@@ -174,7 +175,7 @@ class _CollapsedPill extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               Text(
-                '$_weightText $unit × $reps',
+                AppLocalizations.of(context)!.inlineEditPillValue(_weightText, unit, reps),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

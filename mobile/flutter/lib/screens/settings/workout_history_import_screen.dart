@@ -587,8 +587,8 @@ class _FileImportSection extends StatelessWidget {
             accent.withValues(alpha: 0.18),
             accent.withValues(alpha: 0.06),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         border: Border.all(color: accent.withValues(alpha: 0.35)),
       ),
@@ -811,7 +811,7 @@ class _StrengthSummaryTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '${summary.lastWeightKg.toStringAsFixed(1)} kg',
+              AppLocalizations.of(context)!.workoutHistoryImportScreenKg(summary.lastWeightKg.toStringAsFixed(1)),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -848,7 +848,7 @@ class _HistoryRecordTile extends StatelessWidget {
       child: ListTile(
         title: Text(record.exerciseName),
         subtitle: Text(
-          '${record.sets} sets × ${record.reps} reps @ ${record.weightKg.toStringAsFixed(1)} kg',
+          AppLocalizations.of(context)!.workoutHistoryImportScreenSetsRepsKg(record.sets, record.reps, record.weightKg.toStringAsFixed(1)),
         ),
         trailing: IconButton(
           icon: Icon(

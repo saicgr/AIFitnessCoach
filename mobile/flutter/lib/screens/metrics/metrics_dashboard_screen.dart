@@ -182,7 +182,7 @@ class _MetricsDashboardScreenState
                       final metric = metrics[index];
                       final isSelected = _selectedMetric == metric['value'];
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsetsDirectional.only(end: 8),
                         child: GestureDetector(
                           onTap: () => setState(() => _selectedMetric = metric['value'] as String),
                           child: Container(

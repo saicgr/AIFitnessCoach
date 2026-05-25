@@ -139,7 +139,7 @@ class SkeletonText extends StatelessWidget {
           // Shorten the last line of a multi-line block via FractionallySized.
           child: (isLast && lines > 1)
               ? FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   widthFactor: lastLineFraction.clamp(0.1, 1.0),
                   child: line,
                 )

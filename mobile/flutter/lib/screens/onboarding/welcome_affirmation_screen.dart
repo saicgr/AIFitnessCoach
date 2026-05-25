@@ -114,8 +114,8 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
                       height: 48,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                          begin: AlignmentDirectional.topStart,
+                          end: AlignmentDirectional.bottomEnd,
                           colors: [
                             Color(0xFFFFB366), // orangeLight
                             AppColors.orange,  // brand orange
@@ -206,8 +206,8 @@ class _ContinueButton extends StatelessWidget {
         height: 58,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [
               Color(0xFFFFB366), // orangeLight
               AppColors.orange,  // brand orange — clean warm gradient

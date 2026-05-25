@@ -200,7 +200,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
           // BETA chip
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            margin: const EdgeInsets.only(right: 8),
+            margin: const EdgeInsetsDirectional.only(end: 8),
             decoration: BoxDecoration(
               color: AppColors.orange.withOpacity(0.15),
               borderRadius: BorderRadius.circular(4),
@@ -225,7 +225,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               border: Border.all(color: scoreColor.withOpacity(0.3)),
             ),
             child: Text(
-              '${score.toStringAsFixed(1)}/10',
+              AppLocalizations.of(context)!.formCheckResultCardValue(score.toStringAsFixed(1)),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -246,7 +246,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
           Icon(Icons.repeat, size: 14, color: colors.textMuted),
           const SizedBox(width: 6),
           Text(
-            '~$repCount estimated reps',
+            AppLocalizations.of(context)!.formCheckResultCardEstimatedReps(repCount),
             style: TextStyle(
               fontSize: 12,
               color: colors.textSecondary,
@@ -374,7 +374,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 4, bottom: 4),
                 child: Text(
-                  'Show ${improvements.length - _collapsedItemCount} more...',
+                  AppLocalizations.of(context)!.formCheckResultCardShowMore(improvements.length - _collapsedItemCount),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -407,7 +407,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
           Container(
             width: 4,
             height: 4,
-            margin: const EdgeInsets.only(top: 6, right: 8),
+            margin: const EdgeInsetsDirectional.only(top: 6, end: 8),
             decoration: BoxDecoration(
               color: severityColor,
               shape: BoxShape.circle,
@@ -468,7 +468,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
           if (pattern.isNotEmpty && pattern.toLowerCase() != 'not observable') ...[
             const SizedBox(height: 4),
             Text(
-              'Observed: $pattern',
+              AppLocalizations.of(context)!.formCheckResultCardObserved(pattern),
               style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.4),
             ),
           ],
@@ -539,7 +539,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
           if (observed.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              'Observed: $observed',
+              AppLocalizations.of(context)!.formCheckResultCardObserved2(observed),
               style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.4),
             ),
           ],

@@ -78,7 +78,7 @@ class MyProgramSummaryCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '$workoutDays  •  $experience  •  $goal',
+                      AppLocalizations.of(context)!.myProgramSummaryCardValue(workoutDays, experience, goal),
                       style: TextStyle(
                         fontSize: 11,
                         color: textSecondary,

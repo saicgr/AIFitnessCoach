@@ -340,8 +340,7 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
               ),
             ),
             // Tooltip card — absorbs taps so they don't advance the tour
-            Positioned(
-              left: tooltipLeft,
+            PositionedDirectional(start: tooltipLeft,
               top: tooltipTop,
               child: GestureDetector(
                 onTap: () {},

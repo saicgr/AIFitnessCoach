@@ -173,7 +173,7 @@ class _StageRow extends StatelessWidget {
           width: 48,
           child: Text(
             _fmtDur(minutes),
-            textAlign: TextAlign.right,
+            textAlign: TextAlign.end,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,

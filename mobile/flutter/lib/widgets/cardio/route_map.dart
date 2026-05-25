@@ -138,12 +138,11 @@ class RouteMap extends StatelessWidget {
             // Required OSM attribution. Pinned to bottom-right with a
             // semi-transparent pill so it stays legible over both light and
             // dark map tiles.
-            Positioned(
-              right: 6,
+            PositionedDirectional(end: 6,
               bottom: 6,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Padding(

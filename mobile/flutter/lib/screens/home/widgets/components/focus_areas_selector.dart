@@ -99,7 +99,7 @@ class FocusAreasSelector extends StatelessWidget {
               const Spacer(),
               if (selectedCount > 0)
                 Text(
-                  '$selectedCount selected',
+                  AppLocalizations.of(context)!.focusAreasSelectorSelected(selectedCount),
                   style: TextStyle(color: colors.purple, fontSize: 12),
                 ),
             ],

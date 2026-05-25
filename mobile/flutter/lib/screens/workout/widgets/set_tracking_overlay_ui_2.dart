@@ -147,7 +147,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
     if (setTypeLabel != null && setTypeLabelColor != null && isCurrent) {
       setTypeLabelWidget = Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        margin: const EdgeInsets.only(left: 44, bottom: 4, top: 4),
+        margin: const EdgeInsetsDirectional.only(start: 44, bottom: 4, top: 4),
         decoration: BoxDecoration(
           color: setTypeLabelColor.withOpacity(0.15),
           borderRadius: BorderRadius.circular(4),
@@ -556,8 +556,8 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
         // Left swipe background (Edit) - only for completed sets
         background: isCompleted
             ? Container(
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.only(left: 24),
+                alignment: AlignmentDirectional.centerStart,
+                padding: const EdgeInsetsDirectional.only(start: 24),
                 color: AppColors.electricBlue.withOpacity(0.15),
                 child: Row(
                   children: [
@@ -576,8 +576,8 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
             : Container(color: Colors.transparent),
         // Right swipe background (Delete) - for all sets
         secondaryBackground: Container(
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 24),
+          alignment: AlignmentDirectional.centerEnd,
+          padding: const EdgeInsetsDirectional.only(end: 24),
           color: AppColors.error.withOpacity(0.15),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,

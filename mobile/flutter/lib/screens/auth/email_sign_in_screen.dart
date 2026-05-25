@@ -340,9 +340,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Welcome to ${Branding.appName}!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                  Text(AppLocalizations.of(context)!.emailSignInScreenWelcomeTo(Branding.appName), style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text('${Branding.appName} Support is now your friend. Reach out anytime for help!', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                  Text(AppLocalizations.of(context)!.emailSignInScreenSupportIsNowYour(Branding.appName), style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
                 ],
               ),
             ),
@@ -494,8 +494,8 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: t.buttonGradient,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                          begin: AlignmentDirectional.topStart,
+                          end: AlignmentDirectional.bottomEnd,
                         ),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: t.borderDefault),
@@ -649,7 +649,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                             if (!_isSignUp) ...[
                               const SizedBox(height: 8),
                               Align(
-                                alignment: Alignment.centerRight,
+                                alignment: AlignmentDirectional.centerEnd,
                                 child: GestureDetector(
                                   onTap: _forgotPassword,
                                   child: Text(
@@ -701,8 +701,8 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                 height: 54,
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                                    begin: AlignmentDirectional.topStart,
+                                    end: AlignmentDirectional.bottomEnd,
                                     colors: _isLoading
                                         ? [
                                             AppColors.orange.withValues(alpha: 0.55),

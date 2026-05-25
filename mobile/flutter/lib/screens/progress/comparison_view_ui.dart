@@ -42,7 +42,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
             const SizedBox(height: 8),
             Text(
               _filterViewType != null
-                  ? 'No ${_filterViewType!.displayName} photos yet. Try a different filter.'
+                  ? AppLocalizations.of(context)!.comparisonViewUiNoPhotosYetTry(_filterViewType!.displayName)
                   : 'Take some progress photos first to create a comparison.',
               textAlign: TextAlign.center,
               style: TextStyle(color: colorScheme.onSurfaceVariant),
@@ -446,7 +446,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
           const SizedBox(width: 6),
           Container(width: 0.5, height: 10, color: tint.withOpacity(0.4)),
           const SizedBox(width: 6),
-          Text('@$username', style: TextStyle(color: tint.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.w500)),
+          Text(AppLocalizations.of(context)!.comparisonViewUiValue(username), style: TextStyle(color: tint.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.w500)),
         ],
       ]),
     );

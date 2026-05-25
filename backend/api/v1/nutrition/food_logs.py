@@ -6,7 +6,7 @@ import json
 import time
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso, to_utc_iso
@@ -16,6 +16,7 @@ from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from core.supabase_client import get_supabase
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
+from core.locale import parse_accept_language, overlay_food_i18n
 from api.v1.nutrition.helpers import resign_food_image_url
 
 from api.v1.nutrition.models import (
@@ -872,15 +873,22 @@ class DishVariantsResponse(BaseModel):
 async def get_dish_variants(
     name: str = Query(..., min_length=2, max_length=100),
     current_user: dict = Depends(get_current_user),
+    accept_language: Optional[str] = Header(default=None, alias="Accept-Language"),
 ):
     """Return regional/restaurant variants of a dish via fuzzy match.
-    Used by the per-item edit sheet's Region dropdown."""
+    Used by the per-item edit sheet's Region dropdown.
+
+    Accepts an Accept-Language header to return translated display_name values
+    from food_nutrition_overrides_i18n when available. COALESCEs to English
+    ('en') when no row exists for the requested locale.
+    """
     from services.food_analysis.cache_service_phase2 import _normalize_food_name
     norm = _normalize_food_name(name)
     if not norm:
         return DishVariantsResponse(name=name, variants=[])
 
     db = get_supabase_db()
+    locale = parse_accept_language(accept_language or "en")
     rows = []
     try:
         res = (
@@ -901,6 +909,10 @@ async def get_dish_variants(
 
     variants: List[DishVariant] = []
     for r in rows:
+        # Apply i18n overlay: updates display_name from food_nutrition_overrides_i18n
+        # when a non-en locale is requested and a translation row exists.
+        r = dict(r)
+        overlay_food_i18n(r, db, locale)
         variants.append(DishVariant(
             id=r.get("id"),
             food_name_normalized=r.get("food_name_normalized") or "",

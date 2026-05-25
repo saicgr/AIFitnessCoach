@@ -46,14 +46,14 @@ class SupersetIndicator extends StatelessWidget {
     final themeColor = color ?? AppColors.purple;
 
     if (isHeader) {
-      return _buildHeader(themeColor);
+      return _buildHeader(context, themeColor);
     }
 
-    return _buildInlineBadge(themeColor);
+    return _buildInlineBadge(context, themeColor);
   }
 
   /// Build the header version (SUPERSET X) with icon
-  Widget _buildHeader(Color themeColor) {
+  Widget _buildHeader(BuildContext context, Color themeColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -74,7 +74,7 @@ class SupersetIndicator extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'SUPERSET $groupNumber',
+            AppLocalizations.of(context)!.supersetIndicatorSuperset(groupNumber),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -99,7 +99,7 @@ class SupersetIndicator extends StatelessWidget {
   }
 
   /// Build the inline badge version (SSX) for compact display
-  Widget _buildInlineBadge(Color themeColor) {
+  Widget _buildInlineBadge(BuildContext context, Color themeColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -112,7 +112,7 @@ class SupersetIndicator extends StatelessWidget {
           Icon(Icons.link, size: 10, color: themeColor),
           const SizedBox(width: 3),
           Text(
-            'SS$groupNumber',
+            AppLocalizations.of(context)!.supersetIndicatorSs(groupNumber),
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.bold,

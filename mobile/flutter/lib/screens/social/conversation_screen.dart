@@ -280,8 +280,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                 const SizedBox(width: 8),
                 Text(
                   typingUsers.length == 1
-                      ? '${typingUsers.first} is typing...'
-                      : '${typingUsers.length} people typing...',
+                      ? AppLocalizations.of(context)!.conversationScreenIsTyping(typingUsers.first)
+                      : AppLocalizations.of(context)!.conversationScreenPeopleTyping(typingUsers.length),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -527,9 +527,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
 
   Widget _buildReadReceipt(bool isDark) {
     return Align(
-      alignment: Alignment.centerRight,
+      alignment: AlignmentDirectional.centerEnd,
       child: Padding(
-        padding: const EdgeInsets.only(top: 2, right: 4),
+        padding: const EdgeInsetsDirectional.only(top: 2, end: 4),
         child: Text(
           AppLocalizations.of(context).conversationRead,
           style: TextStyle(
@@ -590,7 +590,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder);
 
     return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isMe ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
       child: Container(
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.75,

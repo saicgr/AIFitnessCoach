@@ -5,6 +5,7 @@ import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Compact horizontal strip showing today's XP goals progress
 /// Positioned above the hero card on home screen
@@ -153,7 +154,7 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
                   Row(
                     children: [
                       Text(
-                        'Today: ${dailyGoalsData.completed}/${dailyGoalsData.total} goals',
+                        AppLocalizations.of(context)!.dailyXpStripTodayGoals(dailyGoalsData.completed, dailyGoalsData.total),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -178,7 +179,7 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
                               ),
                               const SizedBox(width: 2),
                               Text(
-                                '${multiplier.toInt()}x',
+                                AppLocalizations.of(context)!.dailyXpStripX(multiplier.toInt()),
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -208,7 +209,7 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '+${dailyGoalsData.xpEarned} XP',
+                        AppLocalizations.of(context)!.dailyXpStripXp(dailyGoalsData.xpEarned),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -271,7 +272,7 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
               onTap: _dismiss,
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsetsDirectional.only(start: 4),
                 child: Icon(
                   Icons.close,
                   color: textSecondary,

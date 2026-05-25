@@ -246,7 +246,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                         Icon(Icons.check_circle, size: 14, color: AppColors.success),
                         const SizedBox(width: 4),
                         Text(
-                          '$completedCount done',
+                          AppLocalizations.of(context)!.setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(completedCount),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -264,7 +264,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '$remainingCount remaining',
+                      AppLocalizations.of(context)!.setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(remainingCount),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -284,8 +284,8 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                       ),
                       child: Text(
                         _sets.length < widget.originalSetCount
-                            ? '${widget.originalSetCount - _sets.length} removed'
-                            : '+${_sets.length - widget.originalSetCount} added',
+                            ? AppLocalizations.of(context)!.setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(widget.originalSetCount - _sets.length)
+                            : AppLocalizations.of(context)!.setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(_sets.length - widget.originalSetCount),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

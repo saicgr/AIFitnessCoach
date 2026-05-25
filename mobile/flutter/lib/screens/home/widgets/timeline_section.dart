@@ -120,7 +120,7 @@ class _TimelineSectionState extends ConsumerState<TimelineSection> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: TimelineFilter.values
                 .map((f) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsetsDirectional.only(end: 8),
                       child: ChoiceChip(
                         label: Text(f.label),
                         selected: state.filter == f,

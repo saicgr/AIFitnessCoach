@@ -680,7 +680,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
       children: [
         // Close button
         Align(
-          alignment: Alignment.topRight,
+          alignment: AlignmentDirectional.topEnd,
           child: GestureDetector(
             onTap: () => Navigator.pop(context, false),
             child: Container(
@@ -768,7 +768,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
       children: [
         // Close button
         Align(
-          alignment: Alignment.topRight,
+          alignment: AlignmentDirectional.topEnd,
           child: GestureDetector(
             onTap: () => Navigator.pop(context, false),
             child: Container(
@@ -841,8 +841,8 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
                 accentColor.withOpacity(0.15),
                 accentColor.withOpacity(0.05),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: accentColor.withOpacity(0.3)),

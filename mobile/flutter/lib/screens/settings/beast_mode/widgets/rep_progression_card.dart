@@ -34,7 +34,7 @@ class RepProgressionCard extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Rep Range
-          _sectionLabel('Rep Range', '${prefs.preferredMinReps}-${prefs.preferredMaxReps} reps'),
+          _sectionLabel('Rep Range', AppLocalizations.of(context)!.repProgressionCardReps(prefs.preferredMinReps, prefs.preferredMaxReps)),
           const SizedBox(height: 8),
           RangeSlider(
             values: RangeValues(prefs.preferredMinReps.toDouble(), prefs.preferredMaxReps.toDouble()),

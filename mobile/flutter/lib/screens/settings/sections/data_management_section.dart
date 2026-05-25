@@ -72,7 +72,7 @@ class DataManagementSection extends ConsumerWidget {
             ),
             SettingItemData(
               icon: Icons.file_download_outlined,
-              title: 'Export ${Branding.appName} Data',
+              title: AppLocalizations.of(context)!.dataManagementSectionExportData(Branding.appName),
               subtitle: AppLocalizations.of(context).dataManagementDownloadYourWorkoutNutrit,
               onTap: () => showExportDialog(context, ref),
             ),
@@ -84,8 +84,8 @@ class DataManagementSection extends ConsumerWidget {
             ),
             SettingItemData(
               icon: Icons.file_upload_outlined,
-              title: 'Import ${Branding.appName} Data',
-              subtitle: 'Restore from a ${Branding.appName} backup ZIP',
+              title: AppLocalizations.of(context)!.dataManagementSectionImportData(Branding.appName),
+              subtitle: AppLocalizations.of(context)!.dataManagementSectionRestoreFromABackup(Branding.appName),
               onTap: () => showImportDialog(context, ref),
             ),
             // SLICE_DEDUP — surface the cross-source dedup management
@@ -169,7 +169,7 @@ class DataManagementSection extends ConsumerWidget {
     }
 
     scaffold.showSnackBar(SnackBar(
-      content: Text('Queuing ${names.length} videos for download...'),
+      content: Text(AppLocalizations.of(context)!.dataManagementSectionQueuingVideosForDownload(names.length)),
       behavior: SnackBarBehavior.floating,
     ));
 
@@ -208,7 +208,7 @@ class DataManagementSection extends ConsumerWidget {
     videoCacheService.queueDownloads(items).then((_) {
       if (context.mounted) {
         scaffold.showSnackBar(SnackBar(
-          content: Text('✅ Finished queuing ${items.length} downloads'),
+          content: Text(AppLocalizations.of(context)!.dataManagementSectionFinishedQueuingDownloads(items.length)),
           behavior: SnackBarBehavior.floating,
         ));
       }
@@ -320,7 +320,7 @@ class _UpcomingRenewalCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '$tierName Plan',
+                      AppLocalizations.of(context)!.dataManagementSectionPlan(tierName),
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,

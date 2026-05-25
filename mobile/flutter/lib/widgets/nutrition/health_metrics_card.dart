@@ -217,7 +217,7 @@ class HealthMetricsCard extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${summary.readingCount} readings',
+              AppLocalizations.of(context)!.healthMetricsCardReadings(summary.readingCount),
               style: TextStyle(fontSize: 11, color: textMuted),
             ),
           ],

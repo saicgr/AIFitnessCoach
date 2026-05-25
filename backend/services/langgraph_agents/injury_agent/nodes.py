@@ -81,8 +81,29 @@ IMPORTANT: Always encourage users to see a medical professional for serious inju
 """
 
 
-def get_injury_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
-    """Build the full system prompt with personality customization."""
+def _locale_system_prefix(locale: str) -> str:
+    """Return the locale-awareness prefix to prepend to agent system prompts."""
+    if not locale or locale == "en":
+        return ""
+    from core.locale import LOCALE_NATIVE_NAMES
+    native = LOCALE_NATIVE_NAMES.get(locale, locale)
+    return (
+        f"The user's preferred language is {native} ({locale}).\n"
+        f"ALWAYS respond in {native}, regardless of which language the user\n"
+        f"writes in. Match their tone but use {native}. Exceptions: keep\n"
+        "technical fitness acronyms (RPE, 1RM, AMRAP, EMOM, PR, BMR, TDEE, HRV) and\n"
+        "brand names (Zealova, Strava, Fitbod, MyFitnessPal) in Latin script even\n"
+        "when responding in non-Latin-script languages.\n\n"
+    )
+
+
+def get_injury_system_prompt(ai_settings: Dict[str, Any] = None, locale: str = "en") -> str:
+    """Build the full system prompt with personality customization.
+
+    Args:
+        ai_settings: User's AI personality settings dict.
+        locale: ISO 639-1 locale code. Defaults to 'en'.
+    """
     settings_obj = AISettings(**ai_settings) if ai_settings else None
 
     # Get the coach name from settings or use default (sanitized)
@@ -96,7 +117,7 @@ def get_injury_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
         agent_name="Recovery",  # Fallback agent name if coach_name not set
         agent_specialty="sports medicine and injury recovery coaching"
     )
-    return f"{base_prompt}\n\n{personality}"
+    return f"{_locale_system_prefix(locale)}{base_prompt}\n\n{personality}"
 
 
 def should_use_tools(state: InjuryAgentState) -> Literal["agent", "respond"]:
@@ -181,7 +202,7 @@ async def injury_agent_node(state: InjuryAgentState) -> Dict[str, Any]:
 
     # Get personalized system prompt
     ai_settings = state.get("ai_settings")
-    base_system_prompt = get_injury_system_prompt(ai_settings)
+    base_system_prompt = get_injury_system_prompt(ai_settings, locale=state.get("locale") or "en")
 
     # Build system message
     tool_prompt = f"""{base_system_prompt}
@@ -318,7 +339,7 @@ async def injury_response_node(state: InjuryAgentState) -> Dict[str, Any]:
 
     # Get personalized system prompt
     ai_settings = state.get("ai_settings")
-    base_system_prompt = get_injury_system_prompt(ai_settings)
+    base_system_prompt = get_injury_system_prompt(ai_settings, locale=state.get("locale") or "en")
 
     system_prompt = f"""{base_system_prompt}
 
@@ -391,7 +412,7 @@ async def injury_autonomous_node(state: InjuryAgentState) -> Dict[str, Any]:
 
     # Get personalized system prompt
     ai_settings = state.get("ai_settings")
-    base_system_prompt = get_injury_system_prompt(ai_settings)
+    base_system_prompt = get_injury_system_prompt(ai_settings, locale=state.get("locale") or "en")
 
     system_prompt = f"""{base_system_prompt}
 

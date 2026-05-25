@@ -245,7 +245,7 @@ class _SoundCategoryRow extends StatelessWidget {
           InkWell(
             onTap: () => _openPicker(context, isDark),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(50, 10, 16, 12),
+              padding: const EdgeInsetsDirectional.fromSTEB(50, 10, 16, 12),
               child: Row(
                 children: [
                   Icon(Icons.music_note_outlined,

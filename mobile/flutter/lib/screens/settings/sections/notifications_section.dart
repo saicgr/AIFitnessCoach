@@ -200,7 +200,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             ),
             if (notifPrefs.weekendTimesEnabled) ...[
               Padding(
-                padding: const EdgeInsets.only(left: 50, right: 16, bottom: 12),
+                padding: const EdgeInsetsDirectional.only(start: 50, end: 16, bottom: 12),
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -996,7 +996,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
               final screenWidth = MediaQuery.of(context).size.width;
               final leftMargin = screenWidth < 380 ? 32.0 : 50.0;
               return Container(
-                margin: EdgeInsets.only(left: leftMargin, right: 16, bottom: 12),
+                margin: EdgeInsetsDirectional.only(start: leftMargin, end: 16, bottom: 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: cardBackground,

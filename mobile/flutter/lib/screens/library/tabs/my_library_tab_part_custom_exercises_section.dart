@@ -125,8 +125,8 @@ class _CustomExercisesSection extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [
               orange.withValues(alpha: 0.10),
               Colors.amber.withValues(alpha: 0.05),
@@ -223,8 +223,8 @@ class _CustomExerciseCard extends ConsumerWidget {
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [
               orange.withValues(alpha: 0.10),
               Colors.amber.withValues(alpha: 0.05),
@@ -399,7 +399,7 @@ class _FavoritesSection extends ConsumerWidget {
             Icon(Icons.favorite, size: 18, color: coral),
             const SizedBox(width: 8),
             Text(
-              'Favorites (${favoriteNames.length})',
+              AppLocalizations.of(context)!.myLibraryTabPartCustomExercisesSectionFavorites(favoriteNames.length),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -457,8 +457,7 @@ class _FavoritesSection extends ConsumerWidget {
                   itemCount: favoriteExercises.length,
                   itemBuilder: (context, index) {
                     return Padding(
-                      padding: EdgeInsets.only(
-                        right: index < favoriteExercises.length - 1 ? 10 : 0,
+                      padding: EdgeInsetsDirectional.only(end: index < favoriteExercises.length - 1 ? 10 : 0,
                       ),
                       child: _CompactExerciseCard(
                         exercise: favoriteExercises[index],
@@ -521,7 +520,7 @@ class _StaplesSection extends ConsumerWidget {
             Icon(Icons.push_pin, size: 18, color: purple),
             const SizedBox(width: 8),
             Text(
-              'Staples (${staples.length})',
+              AppLocalizations.of(context)!.myLibraryTabPartCustomExercisesSectionStaples(staples.length),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -574,8 +573,7 @@ class _StaplesSection extends ConsumerWidget {
                     itemCount: staples.length,
                     itemBuilder: (context, index) {
                       return Padding(
-                        padding: EdgeInsets.only(
-                          right: index < staples.length - 1 ? 10 : 0,
+                        padding: EdgeInsetsDirectional.only(end: index < staples.length - 1 ? 10 : 0,
                         ),
                         child: _StapleNameCard(
                           name: staples[index].exerciseName,
@@ -595,8 +593,7 @@ class _StaplesSection extends ConsumerWidget {
                   itemCount: stapleExercises.length,
                   itemBuilder: (context, index) {
                     return Padding(
-                      padding: EdgeInsets.only(
-                        right: index < stapleExercises.length - 1 ? 10 : 0,
+                      padding: EdgeInsetsDirectional.only(end: index < stapleExercises.length - 1 ? 10 : 0,
                       ),
                       child: _CompactExerciseCard(
                         exercise: stapleExercises[index],
@@ -655,8 +652,8 @@ class _StapleNameCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [
               purple.withValues(alpha: 0.10),
               AppColors.info.withValues(alpha: 0.05),
@@ -742,8 +739,8 @@ class _CompactExerciseCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: gradientColors,
             ),
             borderRadius: BorderRadius.circular(14),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Tappable chip showing the currently selected fasting protocol
 class ProtocolSelectorChip extends StatelessWidget {
@@ -57,7 +58,7 @@ class ProtocolSelectorChip extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${selectedProtocol.fastingHours}h fast',
+                  AppLocalizations.of(context)!.protocolSelectorChipHFast(selectedProtocol.fastingHours),
                   style: TextStyle(
                     fontSize: 11,
                     color: textMuted,

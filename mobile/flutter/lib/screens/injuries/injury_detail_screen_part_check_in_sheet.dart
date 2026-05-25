@@ -69,7 +69,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                'How is your ${widget.injury.bodyPartDisplay.toLowerCase()} feeling today?',
+                AppLocalizations.of(context)!.injuryDetailScreenPartCheckInSheetHowIsYourFeeling(widget.injury.bodyPartDisplay.toLowerCase()),
                 style: TextStyle(
                   fontSize: 14,
                   color: textMuted,

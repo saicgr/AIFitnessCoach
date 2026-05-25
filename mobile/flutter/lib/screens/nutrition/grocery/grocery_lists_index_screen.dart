@@ -149,7 +149,7 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
         children: [
           SizedBox(height: topPad + 8),
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 16, 4),
+            padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 16, 4),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -243,7 +243,7 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
             ),
             title: Text(l.name ?? AppLocalizations.of(context).groceryListsIndexUntitled,
                 style: TextStyle(color: text, fontWeight: FontWeight.w700)),
-            subtitle: Text('${l.checkedCount} of ${l.itemCount} checked',
+            subtitle: Text(AppLocalizations.of(context)!.groceryListsIndexScreenOfChecked(l.checkedCount, l.itemCount),
                 style: TextStyle(color: muted, fontSize: 11)),
             trailing: Icon(Icons.chevron_right, color: muted),
             onTap: () {

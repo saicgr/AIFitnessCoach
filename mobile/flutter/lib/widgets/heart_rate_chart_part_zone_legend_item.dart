@@ -35,7 +35,7 @@ class _ZoneLegendItem extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            '${zone.shortLabel} ${minutes}m ($percent%)',
+            AppLocalizations.of(context)!.heartRateChartPartZoneLegendItemM(zone.shortLabel, minutes, percent),
             style: TextStyle(
               fontSize: 11,
               color: textSecondary,
@@ -66,7 +66,7 @@ class _ZoneLegendItem extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              '${zone.name} Zone',
+              AppLocalizations.of(context)!.heartRateChartPartZoneLegendItemZone(zone.name),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -88,7 +88,7 @@ class _ZoneLegendItem extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Heart Rate: ${zone.percentageRange} of max',
+              AppLocalizations.of(context)!.heartRateChartPartZoneLegendItemHeartRateOfMax(zone.percentageRange),
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? Colors.grey[400] : Colors.grey[600],

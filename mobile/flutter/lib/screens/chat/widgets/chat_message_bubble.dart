@@ -28,6 +28,7 @@ import 'chat_media_widgets.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../data/services/chat_action_summary_builder.dart';
 /// A single chat message bubble (user, assistant, system, or error)
 class ChatMessageBubble extends ConsumerWidget {
   final ChatMessage message;
@@ -204,17 +205,16 @@ class ChatMessageBubble extends ConsumerWidget {
                               ),
                             ),
                           if (isUser && message.mediaRefs != null && message.mediaRefs!.length > 1)
-                            Positioned(
-                              bottom: 4,
-                              right: 4,
+                            PositionedDirectional(bottom: 4,
+                              end: 4,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.black54,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  '+${message.mediaRefs!.length - 1}',
+                                  AppLocalizations.of(context)!.chatMessageBubbleValue(message.mediaRefs!.length - 1),
                                   style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                                 ),
                               ),
@@ -376,7 +376,8 @@ class ChatMessageBubble extends ConsumerWidget {
                   message.actionData!['action'] == 'log_set'))
             ChatActionConfirmCard(
               actionData: Map<String, dynamic>.from(message.actionData!),
-              summaryText: (message.actionData!['summary_text'] as String?) ??
+              summaryText: ChatActionSummaryBuilder.build(context, message.actionData) ??
+                  (message.actionData!['summary_text'] as String?) ??
                   _scrubLegacyActionTokens(message.content),
             ),
           if (!isUser && message.hasProposedChange)
@@ -472,7 +473,7 @@ class ChatMessageBubble extends ConsumerWidget {
       if (equippedTitle != null) {
         final primary = equippedTitle.color ?? AppColors.cyan;
         titlePill = Padding(
-          padding: const EdgeInsets.only(bottom: 4, right: 4),
+          padding: const EdgeInsetsDirectional.only(bottom: 4, end: 4),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
@@ -508,7 +509,7 @@ class ChatMessageBubble extends ConsumerWidget {
     }
 
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isUser ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
       child: Column(
         crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
@@ -968,7 +969,7 @@ class _WorkoutContextMessageState extends State<_WorkoutContextMessage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '$label: ',
+                            AppLocalizations.of(context)!.chatMessageBubbleValue2(label),
                             style: TextStyle(
                               color: widget.textColor.withValues(alpha: 0.6),
                               fontSize: 11,

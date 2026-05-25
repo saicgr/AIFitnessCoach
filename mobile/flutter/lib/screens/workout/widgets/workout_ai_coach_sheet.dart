@@ -105,25 +105,25 @@ class _WorkoutAICoachSheetState extends ConsumerState<WorkoutAICoachSheet> {
   List<QuickPrompt> get _quickPrompts => [
     QuickPrompt(
       label: AppLocalizations.of(context).workoutAiCoachForm,
-      prompt: 'What are the key form tips for ${widget.currentExercise.name}?',
+      prompt: AppLocalizations.of(context)!.workoutAiCoachSheetWhatAreTheKey(widget.currentExercise.name),
       icon: Icons.sports_gymnastics,
       color: AppColors.cyan,
     ),
     QuickPrompt(
       label: AppLocalizations.of(context).workoutAiCoachSwaps,
-      prompt: 'What are some alternative exercises I can do instead of ${widget.currentExercise.name}?',
+      prompt: AppLocalizations.of(context)!.workoutAiCoachSheetWhatAreSomeAlternative(widget.currentExercise.name),
       icon: Icons.swap_horiz,
       color: AppColors.purple,
     ),
     QuickPrompt(
       label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
-      prompt: 'How long should I rest between sets of ${widget.currentExercise.name}?',
+      prompt: AppLocalizations.of(context)!.workoutAiCoachSheetHowLongShouldI(widget.currentExercise.name),
       icon: Icons.timer_outlined,
       color: AppColors.orange,
     ),
     QuickPrompt(
       label: AppLocalizations.of(context).workoutSummaryGeneralSets,
-      prompt: 'How many sets should I do of ${widget.currentExercise.name} for best results?',
+      prompt: AppLocalizations.of(context)!.workoutAiCoachSheetHowManySetsShould(widget.currentExercise.name),
       icon: Icons.format_list_numbered,
       color: AppColors.electricBlue,
     ),
@@ -237,7 +237,7 @@ User question: $message
         _isTyping = false;
       });
       _messageController.clear();
-      final defaultMsg = message.isNotEmpty ? message : 'Check my form on ${widget.currentExercise.name}';
+      final defaultMsg = message.isNotEmpty ? message : AppLocalizations.of(context)!.workoutAiCoachSheetCheckMyFormOn(widget.currentExercise.name);
       if (mediaList.length == 1) {
         ref.read(chatMessagesProvider.notifier).sendMessageWithMedia(
           defaultMsg,

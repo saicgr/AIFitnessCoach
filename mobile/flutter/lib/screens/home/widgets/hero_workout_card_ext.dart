@@ -329,7 +329,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
               const SizedBox(height: 8),
               // Stats
               Text(
-                '${workout.formattedDurationShort} • ${workout.exerciseCount} exercises',
+                AppLocalizations.of(context)!.heroWorkoutCardExtExercises(workout.formattedDurationShort, workout.exerciseCount),
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark ? Colors.white70 : Colors.black54,
@@ -359,7 +359,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                             ),
                           ),
                           Text(
-                            '${e.sets ?? 0} sets',
+                            AppLocalizations.of(context)!.heroWorkoutCardExtSets(e.sets ?? 0),
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark ? Colors.white54 : Colors.black45,
@@ -373,7 +373,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    '+${workout.exercises.length - 5} more exercises',
+                    AppLocalizations.of(context)!.heroWorkoutCardExtMoreExercises(workout.exercises.length - 5),
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.white54 : Colors.black45,

@@ -157,7 +157,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
           child: Row(children: [
             Icon(Icons.warning_amber, color: AppColors.error),
             const SizedBox(width: 8),
-            Expanded(child: Text('Allergen alert: ${r.allergenFlags.join(", ")}',
+            Expanded(child: Text(AppLocalizations.of(context)!.coachReviewSheetAllergenAlert(r.allergenFlags.join(", ")),
                 style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700))),
           ]),
         ),
@@ -175,7 +175,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
           dense: true,
           leading: CircleAvatar(
             backgroundColor: AppColors.yellow.withValues(alpha: 0.2),
-            child: Text('${g.deficitPct}%', style: TextStyle(color: AppColors.yellow, fontSize: 10)),
+            child: Text(AppLocalizations.of(context)!.coachReviewSheetValue(g.deficitPct), style: TextStyle(color: AppColors.yellow, fontSize: 10)),
           ),
           title: Text(g.nutrient, style: TextStyle(color: text)),
           subtitle: g.suggestion != null ? Text(g.suggestion!) : null,
@@ -187,7 +187,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         const SizedBox(height: 8),
         ...r.swapSuggestions.map((s) => Card(
           child: ListTile(
-            title: Text('${s.targetLabel} → ${s.suggestedLabel}'),
+            title: Text(AppLocalizations.of(context)!.coachReviewSheetValue2(s.targetLabel, s.suggestedLabel)),
             subtitle: Text(s.rationale),
             trailing: TextButton(
               onPressed: () {

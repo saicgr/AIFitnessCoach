@@ -254,7 +254,7 @@ class _LegendChip extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         Text(
-          '$label · $weight%',
+          AppLocalizations.of(context)!.scoreChangeAnnouncementSheetValue(label, weight),
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w700,

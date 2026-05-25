@@ -523,12 +523,11 @@ class _SyncedWorkoutCard extends ConsumerWidget {
         ),
         child: Stack(
           children: [
-            Positioned(
-              right: -10,
+            PositionedDirectional(end: -10,
               bottom: -14,
               child: IgnorePointer(
                 child: Transform.rotate(
-                  angle: -0.21,
+                        angle: -0.21,
                   child: Icon(
                     kind.icon,
                     size: 96,

@@ -170,7 +170,7 @@ class RestTimerOverlay extends StatelessWidget {
                   SizedBox(height: isCompactScreen ? 8 : 16),
                   _buildRestLabel(context, isDark),
                   const SizedBox(height: 8),
-                  _buildTimer(textColor),
+                  _buildTimer(context, textColor),
                   const SizedBox(height: 12),
                   _buildProgressBar(isDark),
                   SizedBox(height: isCompactScreen ? 12 : 20),
@@ -254,7 +254,7 @@ class RestTimerOverlay extends StatelessWidget {
                     // Ask AI Coach button
                     if (onAskAICoach != null) ...[
                       SizedBox(height: isCompactScreen ? 10 : 16),
-                      _buildAskAICoachButton(cardBg, textColor, subtitleColor, isDark),
+                      _buildAskAICoachButton(context, cardBg, textColor, subtitleColor, isDark),
                     ],
 
                     // Extra padding at bottom for scroll
@@ -289,9 +289,9 @@ class RestTimerOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildTimer(Color textColor) {
+  Widget _buildTimer(BuildContext context, Color textColor) {
     return Text(
-      '${restSecondsRemaining}s',
+      AppLocalizations.of(context)!.restTimerOverlayS(restSecondsRemaining),
       style: TextStyle(
         fontSize: 80,
         fontWeight: FontWeight.bold,
@@ -316,7 +316,7 @@ class RestTimerOverlay extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
           ),
           child: Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               height: 6,
@@ -545,6 +545,7 @@ class RestTimerOverlay extends StatelessWidget {
 
   /// Ask AI Coach button - opens chat for questions during rest
   Widget _buildAskAICoachButton(
+    BuildContext context,
     Color cardBg,
     Color textColor,
     Color subtitleColor,
@@ -586,7 +587,7 @@ class RestTimerOverlay extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Ask $coachName',
+                  AppLocalizations.of(context)!.restTimerOverlayAsk(coachName),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

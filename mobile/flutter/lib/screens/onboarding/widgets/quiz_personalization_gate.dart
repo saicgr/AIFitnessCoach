@@ -429,8 +429,8 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                     gradient: _isValid
                         ? LinearGradient(
                             colors: t.buttonGradient,
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                           )
                         : null,
                     color: _isValid ? null : t.cardFill,
@@ -575,8 +575,8 @@ class _GenderChip extends StatelessWidget {
             gradient: selected
                 ? LinearGradient(
                     colors: t.cardSelectedGradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   )
                 : null,
             color: selected ? null : t.cardFill,
@@ -648,7 +648,7 @@ class _MetricCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: t.borderDefault),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 12, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -707,7 +707,7 @@ class _BigNumberInput extends StatelessWidget {
             onChanged: (_) => onChanged(),
             keyboardType:
                 const TextInputType.numberWithOptions(decimal: true),
-            textAlign: TextAlign.left,
+            textAlign: TextAlign.start,
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w700,

@@ -55,7 +55,7 @@ class _FreshnessDecayCardState extends ConsumerState<FreshnessDecayCard> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Text('k = ${_freshnessDecay.toStringAsFixed(2)}',
+              Text(AppLocalizations.of(context)!.freshnessDecayCardK(_freshnessDecay.toStringAsFixed(2)),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.orange, fontFamily: 'monospace')),
               const Spacer(),
               Text(AppLocalizations.of(context).freshnessDecayCardRange0100, style: TextStyle(fontSize: 11, color: t.textMuted)),

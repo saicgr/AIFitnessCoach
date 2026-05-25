@@ -58,8 +58,8 @@ class AiCoachReportCard extends StatelessWidget {
               AppColors.orange.withOpacity(0.08),
               AppColors.purple.withOpacity(0.05),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
           ),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.orange.withOpacity(0.3)),
@@ -263,8 +263,8 @@ class _AiInsightSection extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [AppColors.orange, AppColors.purple],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
             ),
             shape: BoxShape.circle,
           ),
@@ -290,7 +290,7 @@ class _AiInsightSection extends StatelessWidget {
         ),
         if (!isLoading && (aiSummary?.length ?? 0) > 80)
           Padding(
-            padding: const EdgeInsets.only(left: 4),
+            padding: const EdgeInsetsDirectional.only(start: 4),
             child: Icon(
               isExpanded ? Icons.expand_less : Icons.expand_more,
               size: 16,
@@ -397,7 +397,7 @@ class _MuscleChip extends StatelessWidget {
         ),
         if (muscle.sets > 0)
           Text(
-            '${muscle.sets}s',
+            AppLocalizations.of(context)!.aiCoachReportCardS(muscle.sets),
             style: TextStyle(
               fontSize: 8,
               color: muscle.isPrimary ? AppColors.orange : textMuted,
@@ -463,7 +463,7 @@ class _QuickStatsRow extends StatelessWidget {
           child: _MiniStat(
             icon: Icons.speed,
             value: displayWorkRate.toStringAsFixed(0),
-            label: '$unit/min',
+            label: AppLocalizations.of(context)!.aiCoachReportCardMin(unit),
             color: AppColors.purple,
           ),
         ),
@@ -480,7 +480,7 @@ class _QuickStatsRow extends StatelessWidget {
               : _MiniStat(
                   icon: Icons.fitness_center,
                   value: displayAvgPerSet.toStringAsFixed(1),
-                  label: '$unit/set',
+                  label: AppLocalizations.of(context)!.aiCoachReportCardSet(unit),
                   color: AppColors.orange,
                 ),
         ),

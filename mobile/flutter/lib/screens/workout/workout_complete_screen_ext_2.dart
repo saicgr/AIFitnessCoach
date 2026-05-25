@@ -229,8 +229,8 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                 AppColors.cyan.withOpacity(0.1),
                 AppColors.purple.withOpacity(0.05),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
@@ -575,7 +575,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                             Text(
                               _exerciseRatings.isEmpty
                                   ? 'Optional - helps AI adapt workouts'
-                                  : '${_exerciseRatings.length} of ${widget.workout.exercises.length} rated',
+                                  : AppLocalizations.of(context)!.workoutCompleteScreenExt2OfRated(_exerciseRatings.length, widget.workout.exercises.length),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: textSecondaryFeedback,
@@ -660,7 +660,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                         });
                       },
                       child: Padding(
-                        padding: const EdgeInsets.only(right: 4),
+                        padding: const EdgeInsetsDirectional.only(end: 4),
                         child: Icon(
                           starValue <= rating ? Icons.star : Icons.star_border,
                           size: 24,
@@ -830,7 +830,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                       ),
                     ),
                     Text(
-                      'PR: ${maxWeight.toStringAsFixed(1)} kg',
+                      AppLocalizations.of(context)!.workoutCompleteScreenExt2PrKg(maxWeight.toStringAsFixed(1)),
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondaryTile,

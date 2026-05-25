@@ -87,7 +87,7 @@ extension _HomeScreenStateUI3 on _HomeScreenState {
         SliverToBoxAdapter(
           child: SectionHeader(
             title: AppLocalizations.of(context).homeScreenUiUpcoming,
-            subtitle: '${upcomingWorkouts.length} workouts',
+            subtitle: AppLocalizations.of(context)!.homeScreenUi3Workouts(upcomingWorkouts.length),
             actionText: 'View Schedule',
             onAction: () {
               HapticService.light();

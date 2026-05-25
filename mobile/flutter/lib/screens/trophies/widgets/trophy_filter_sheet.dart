@@ -234,7 +234,7 @@ class TrophyFilterSheet extends ConsumerWidget {
                       ),
                       child: Text(
                         filterState.hasActiveFilters
-                            ? 'Apply ${filterState.activeFilterCount} Filters'
+                            ? AppLocalizations.of(context)!.trophyFilterSheetApplyFilters(filterState.activeFilterCount)
                             : 'Apply Filters',
                         style: const TextStyle(
                           fontSize: 16,

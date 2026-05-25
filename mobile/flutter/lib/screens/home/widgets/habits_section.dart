@@ -143,7 +143,7 @@ class HabitsSection extends ConsumerWidget {
                 // Last item is the "Add Habit" card
                 if (index == allHabits.length) {
                   return Padding(
-                    padding: const EdgeInsets.only(right: 0),
+                    padding: const EdgeInsetsDirectional.only(end: 0),
                     child: _AddHabitCard(
                       onTap: () => _showAddHabitSheet(context, ref),
                     ),
@@ -152,7 +152,7 @@ class HabitsSection extends ConsumerWidget {
 
                 final habit = allHabits[index];
                 return Padding(
-                  padding: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsetsDirectional.only(end: 12),
                   child: HabitCard(
                     habit: habit,
                     size: 140,

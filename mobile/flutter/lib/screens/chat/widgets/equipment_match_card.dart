@@ -100,7 +100,7 @@ class EquipmentMatchCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       matches.isNotEmpty
-                          ? '${matches.length} exercise${matches.length == 1 ? "" : "s"} you can do here'
+                          ? AppLocalizations.of(context)!.equipmentMatchCardExerciseYouCanDo(matches.length, matches.length == 1 ? "" : "s")
                           : (unmatchedReason == 'not_equipment'
                               ? 'That doesn\'t look like gym equipment'
                               : 'No matching exercises in your library yet'),

@@ -93,7 +93,7 @@ Future<HydrationDialogResult?> showHydrationDialog({
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Log ${selectedDrinkType.label}',
+                            AppLocalizations.of(context)!.hydrationDialogLog(selectedDrinkType.label),
                             style: TextStyle(
                               color: textPrimary,
                               fontSize: 20,
@@ -146,7 +146,7 @@ Future<HydrationDialogResult?> showHydrationDialog({
                       final isSelected = type == selectedDrinkType;
                       final typeColor = getDrinkColor(type);
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsetsDirectional.only(end: 8),
                         child: GestureDetector(
                           onTap: () {
                             HapticFeedback.selectionClick();

@@ -131,8 +131,7 @@ class HabitCard extends ConsumerWidget {
             ),
             // FAB pinned to bottom-right corner
             if (onLog != null)
-              Positioned(
-                right: 6,
+              PositionedDirectional(end: 6,
                 bottom: 6,
                 child: GestureDetector(
                   onTap: () {

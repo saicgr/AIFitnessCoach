@@ -48,7 +48,7 @@ class TrainingLoadScreen extends ConsumerWidget {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 16, 4),
+                padding: const EdgeInsetsDirectional.fromSTEB(12, 8, 16, 4),
                 child: Row(
                   children: [
                     const GlassBackButton(),
@@ -405,7 +405,7 @@ class _ErrorBox extends StatelessWidget {
         border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
       ),
       child: Text(
-        'Could not load training load: $message',
+        AppLocalizations.of(context)!.trainingLoadScreenCouldNotLoadTraining(message),
         style: const TextStyle(color: Colors.redAccent),
       ),
     );

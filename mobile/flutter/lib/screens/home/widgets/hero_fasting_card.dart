@@ -139,7 +139,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
               if (hasFast && activeFast != null) ...[
                 // Elapsed time
                 Text(
-                  '${hours}h ${mins}m',
+                  AppLocalizations.of(context)!.heroFastingCardHM(hours, mins),
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.bold,
@@ -147,7 +147,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                   ),
                 ),
                 Text(
-                  'of ${targetHours}h goal',
+                  AppLocalizations.of(context)!.heroFastingCardOfHGoal(targetHours),
                   style: TextStyle(
                     fontSize: 14,
                     color: textSecondary,
@@ -278,7 +278,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                 const SizedBox(height: 6),
                 Text(
                   preferences != null
-                      ? '${preferences.defaultProtocol} Protocol'
+                      ? AppLocalizations.of(context)!.heroFastingCardProtocol(preferences.defaultProtocol)
                       : 'Intermittent fasting',
                   style: TextStyle(
                     fontSize: 15,

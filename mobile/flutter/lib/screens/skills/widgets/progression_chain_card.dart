@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/skill_progression.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Card displaying a progression chain with optional progress
 class ProgressionChainCard extends StatelessWidget {
@@ -163,7 +164,7 @@ class ProgressionChainCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Step ${progress!.currentStepOrder} of ${chain.steps?.length ?? "?"}',
+                  AppLocalizations.of(context)!.progressionChainCardStepOf(progress!.currentStepOrder, chain.steps?.length ?? "?"),
                   style: TextStyle(
                     color: textSecondary,
                     fontSize: 11,
@@ -179,7 +180,7 @@ class ProgressionChainCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${chain.steps?.length ?? "?"} steps',
+                      AppLocalizations.of(context)!.progressionChainCardSteps(chain.steps?.length ?? "?"),
                       style: TextStyle(
                         color: textSecondary,
                         fontSize: 12,
@@ -309,7 +310,7 @@ class ProgressionChainCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            'Step ${progress!.currentStepOrder} of ${chain.steps?.length ?? "?"}',
+                            AppLocalizations.of(context)!.progressionChainCardStepOf2(progress!.currentStepOrder, chain.steps?.length ?? "?"),
                             style: TextStyle(
                               color: textSecondary,
                               fontSize: 12,

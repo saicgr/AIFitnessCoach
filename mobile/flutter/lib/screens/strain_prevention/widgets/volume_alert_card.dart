@@ -29,8 +29,8 @@ class VolumeAlertCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [
               alertColor.withValues(alpha: 0.15),
               alertColor.withValues(alpha: 0.05),
@@ -348,7 +348,7 @@ class VolumeAlertBanner extends StatelessWidget {
                   Text(
                     alerts.length == 1
                         ? AppLocalizations.of(context).volumeAlertCardVolumeAlert
-                        : '${alerts.length} Volume Alerts',
+                        : AppLocalizations.of(context)!.volumeAlertCardVolumeAlerts(alerts.length),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -358,7 +358,7 @@ class VolumeAlertBanner extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     alerts.length == 1
-                        ? '${alerts.first.muscleGroupDisplay}: ${alerts.first.formattedIncrease} increase'
+                        ? AppLocalizations.of(context)!.volumeAlertCardIncrease(alerts.first.muscleGroupDisplay, alerts.first.formattedIncrease)
                         : 'Tap to review and acknowledge',
                     style: TextStyle(
                       fontSize: 13,

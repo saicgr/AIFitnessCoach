@@ -83,8 +83,8 @@ class _NeatLevelBadgeState extends State<NeatLevelBadge>
                 : EdgeInsets.all(widget.size * 0.2),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
                 colors: [
                   widget.level.color.withOpacity(0.2),
                   widget.level.color.withOpacity(0.1),
@@ -150,7 +150,7 @@ class _NeatLevelBadgeState extends State<NeatLevelBadge>
                         ),
                       ),
                       Text(
-                        'Level ${widget.level.index + 1}',
+                        AppLocalizations.of(context)!.neatGamificationWidgetsLevel(widget.level.index + 1),
                         style: TextStyle(
                           fontSize: 11,
                           color: colorScheme.onSurfaceVariant,

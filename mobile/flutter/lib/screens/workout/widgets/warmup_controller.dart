@@ -350,7 +350,7 @@ class WarmupPhaseScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final warmup = controller.exercises[controller.currentIndex + 1 + index];
               return Container(
-                margin: const EdgeInsets.only(right: 8),
+                margin: const EdgeInsetsDirectional.only(end: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: elevatedColor,

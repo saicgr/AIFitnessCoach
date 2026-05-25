@@ -230,7 +230,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                       style: TextStyle(color: textSecondary),
                     ),
                     Text(
-                      '${widget.current1rm!.toStringAsFixed(1)} kg',
+                      AppLocalizations.of(context)!.log1rmSheetKg(widget.current1rm!.toStringAsFixed(1)),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.cyan,
@@ -396,7 +396,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'RPE ${_rpe.toStringAsFixed(1)}',
+                        AppLocalizations.of(context)!.log1rmSheetRpe(_rpe.toStringAsFixed(1)),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -444,8 +444,8 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                     colors: isPR
                         ? [AppColors.orange.withOpacity(0.2), AppColors.orange.withOpacity(0.1)]
                         : [AppColors.cyan.withOpacity(0.2), AppColors.cyan.withOpacity(0.1)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(

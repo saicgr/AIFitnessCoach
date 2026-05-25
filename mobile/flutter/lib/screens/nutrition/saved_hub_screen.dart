@@ -176,12 +176,7 @@ class _SavedHubScreenState extends ConsumerState<SavedHubScreen>
         children: [
           // Header
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              8,
-              MediaQuery.of(context).padding.top + 8,
-              16,
-              4,
-            ),
+            padding: EdgeInsetsDirectional.fromSTEB(8, MediaQuery.of(context).padding.top + 8, 16, 4,),
             child: Row(
               children: [
                 GlassBackButton(onTap: () => Navigator.of(context).pop()),

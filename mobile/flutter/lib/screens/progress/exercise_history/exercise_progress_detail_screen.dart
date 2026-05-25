@@ -79,9 +79,9 @@ class _ExerciseProgressDetailScreenState extends ConsumerState<ExerciseProgressD
               children: [
                 // Header with title
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(56, 12, 16, 8),
+                  padding: const EdgeInsetsDirectional.fromSTEB(56, 12, 16, 8),
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     child: Text(
                       widget.exerciseName,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -122,9 +122,8 @@ class _ExerciseProgressDetailScreenState extends ConsumerState<ExerciseProgressD
               ],
             ),
             // Floating glass back button
-            Positioned(
-              top: 12,
-              left: 12,
+            PositionedDirectional(top: 12,
+              start: 12,
               child: GlassBackButton(
                 onTap: () => Navigator.of(context).pop(),
               ),

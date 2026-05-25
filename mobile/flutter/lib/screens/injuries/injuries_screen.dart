@@ -138,7 +138,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
           return AlertDialog(
             backgroundColor: isDark ? AppColors.elevated : Colors.white,
-            title: Text('Check-in: ${injury.bodyPartDisplay}'),
+            title: Text(AppLocalizations.of(context)!.injuriesScreenCheckIn(injury.bodyPartDisplay)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -173,7 +173,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
               FilledButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  AppSnackBar.success(context, 'Check-in saved: pain level $painLevel/10');
+                  AppSnackBar.success(context, AppLocalizations.of(context)!.injuriesScreenCheckInSavedPain(painLevel));
                   _loadInjuries();
                 },
                 child: Text(AppLocalizations.of(context).buttonSave),

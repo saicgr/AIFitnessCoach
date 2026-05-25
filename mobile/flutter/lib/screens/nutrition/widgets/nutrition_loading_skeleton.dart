@@ -131,8 +131,8 @@ class _ShimmerContainerState extends State<ShimmerContainer>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.borderRadius),
             gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+              begin: AlignmentDirectional.centerStart,
+              end: AlignmentDirectional.centerEnd,
               colors: [
                 widget.baseColor,
                 widget.highlightColor,

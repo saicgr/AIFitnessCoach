@@ -302,7 +302,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
           if (restWorkoutDays.isNotEmpty) ...[
             const SizedBox(height: 18),
             Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
               child: Text(
                 AppLocalizations.of(context).commitmentPactOtherWorkoutDays,
                 style: TextStyle(
@@ -804,7 +804,7 @@ class _FirstSessionCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  'FIRST SESSION · $dayLabel',
+                  AppLocalizations.of(context)!.commitmentPactScreenFirstSession(dayLabel),
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,

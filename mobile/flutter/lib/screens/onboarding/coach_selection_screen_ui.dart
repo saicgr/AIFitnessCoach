@@ -350,7 +350,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
 
   Widget _buildHeaderOverlay(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+      padding: const EdgeInsetsDirectional.only(start: 16, end: 16, top: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -446,7 +446,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
         child: isComplete
             ? Container(height: 2, color: activeColor)
                 .animate()
-                .scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft,
+                .scaleX(begin: 0, end: 1, alignment: Alignment.centerLeft, // rtl-keep: flutter_animate scaleX requires Alignment
                     delay: Duration(milliseconds: delay), duration: 300.ms,
                     curve: Curves.easeOut)
             : null,

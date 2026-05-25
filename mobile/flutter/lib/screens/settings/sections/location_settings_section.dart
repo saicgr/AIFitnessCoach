@@ -121,7 +121,7 @@ class _LocationSettingsCard extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           autoSwitchEnabled
-                              ? 'Active for ${autoSwitchProfiles.length} gym(s)'
+                              ? AppLocalizations.of(context)!.locationSettingsSectionActiveForGymS(autoSwitchProfiles.length)
                               : 'Switch profiles based on your location',
                           style: TextStyle(
                             fontSize: 12,
@@ -423,7 +423,7 @@ class _TimeSettingsCard extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           timeAutoSwitchEnabled
-                              ? 'Active for ${profilesWithTime.length} profile(s)'
+                              ? AppLocalizations.of(context)!.locationSettingsSectionActiveForProfileS(profilesWithTime.length)
                               : 'Switch profiles based on time of day',
                           style: TextStyle(
                             fontSize: 12,

@@ -629,7 +629,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         Navigator.pop(context, updatedWorkout);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Swapped to $newExerciseName'),
+            content: Text(AppLocalizations.of(context)!.exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(newExerciseName)),
             backgroundColor: AppColors.success,
           ),
         );
@@ -671,12 +671,11 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         ),
         // Snap-equipment FAB (Issue #1, Task #6). Fixed bottom-right; doesn't
         // overlap content because the tab bodies have their own bottom padding.
-        Positioned(
-          right: 16,
+        PositionedDirectional(end: 16,
           bottom: 16,
           child: FloatingActionButton.extended(
             heroTag: 'swap_snap_fab',
-            backgroundColor: AppColors.cyan,
+              backgroundColor: AppColors.cyan,
             icon: const Icon(Icons.camera_alt, color: Colors.black),
             label: const Text(
               'Snap equipment',
@@ -845,7 +844,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                             ),
                           ),
                           ..._reasons.map((reason) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsetsDirectional.only(end: 8),
                                 child: ChoiceChip(
                                   label: Text(
                                     reason,

@@ -258,7 +258,7 @@ class _FilterSectionState extends State<FilterSection> {
                         ),
                         decoration: InputDecoration(
                           hintText:
-                              'Search ${widget.title.toLowerCase()}...',
+                              AppLocalizations.of(context)!.filterSectionSearch(widget.title.toLowerCase()),
                           hintStyle: TextStyle(
                             fontSize: 14,
                             color: textMuted,
@@ -376,7 +376,7 @@ class _FilterSectionState extends State<FilterSection> {
                             Text(
                               _showAll
                                   ? 'Show less'
-                                  : 'Show ${widget.options.length - widget.initialShowCount} more',
+                                  : AppLocalizations.of(context)!.filterSectionShowMore(widget.options.length - widget.initialShowCount),
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,

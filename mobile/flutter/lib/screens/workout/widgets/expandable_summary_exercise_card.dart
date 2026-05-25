@@ -359,7 +359,7 @@ class _ExpandableSummaryExerciseCardState
             SizedBox(
               width: 44,
               child: Align(
-                alignment: Alignment.centerRight,
+                alignment: AlignmentDirectional.centerEnd,
                 child: Text(
                   'RPE',
                   style: TextStyle(
@@ -428,7 +428,7 @@ class _ExpandableSummaryExerciseCardState
           Expanded(
             child: Center(
               child: Text(
-                '${setLog.weightKg.toStringAsFixed(1)} kg',
+                AppLocalizations.of(context)!.expandableSummaryExerciseCardKg(setLog.weightKg.toStringAsFixed(1)),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -443,7 +443,7 @@ class _ExpandableSummaryExerciseCardState
             SizedBox(
               width: 44,
               child: Align(
-                alignment: Alignment.centerRight,
+                alignment: AlignmentDirectional.centerEnd,
                 child: Text(
                   setLog.rpe != null
                       ? setLog.rpe!.toStringAsFixed(1)
@@ -562,7 +562,7 @@ class _ExpandableSummaryExerciseCardState
           ),
           const SizedBox(width: 6),
           Text(
-            'Time: $formatted',
+            AppLocalizations.of(context)!.expandableSummaryExerciseCardTime(formatted),
             style: TextStyle(
               fontSize: 13,
               color: widget.isDark
@@ -764,7 +764,7 @@ class _ExpandableSummaryExerciseCardState
 
   Widget _buildEditButton() {
     return Align(
-      alignment: Alignment.centerRight,
+      alignment: AlignmentDirectional.centerEnd,
       child: OutlinedButton.icon(
         onPressed: widget.onEdit,
         icon: Icon(

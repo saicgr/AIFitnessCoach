@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../workout/widgets/share_templates/app_watermark.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 
 part 'activity_share_card_part_share_aspect_ratio.dart';
@@ -145,29 +146,29 @@ class ActivityShareCard extends StatelessWidget {
     return SizedBox(
       width: size.width,
       height: size.height,
-      child: _buildTemplate(),
+      child: _buildTemplate(context),
     );
   }
 
-  Widget _buildTemplate() {
+  Widget _buildTemplate(BuildContext context) {
     switch (template) {
       case ShareTemplate.darkMinimal:
-        return _buildDarkMinimal();
+        return _buildDarkMinimal(context);
       case ShareTemplate.gradientBold:
-        return _buildGradientBold();
+        return _buildGradientBold(context);
       case ShareTemplate.neonGlow:
-        return _buildNeonGlow();
+        return _buildNeonGlow(context);
       case ShareTemplate.cleanLight:
-        return _buildCleanLight();
+        return _buildCleanLight(context);
       case ShareTemplate.glassMorphism:
-        return _buildGlassMorphism();
+        return _buildGlassMorphism(context);
     }
   }
 
   // ═══════════════════════════════════════════════════════════════
   // TEMPLATE 2: Gradient Bold
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildGradientBold() {
+  Widget _buildGradientBold(BuildContext context) {
     final isCompact = aspectRatio == ShareAspectRatio.square;
 
     // Pick gradient based on activity type
@@ -176,8 +177,8 @@ class ActivityShareCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: gradientColors,
         ),
         borderRadius: BorderRadius.circular(24),
@@ -212,10 +213,10 @@ class ActivityShareCard extends StatelessWidget {
             _buildHeadlineText(Colors.white, Colors.white, bold: true),
             SizedBox(height: isCompact ? 8 : 16),
             if (!isCompact)
-              Expanded(child: _buildContentCard(Colors.white, lightBg: true)),
-            if (isCompact) _buildContentCard(Colors.white, lightBg: true),
+              Expanded(child: _buildContentCard(context, Colors.white, lightBg: true)),
+            if (isCompact) _buildContentCard(context, Colors.white, lightBg: true),
             if (!isCompact) const Spacer(),
-            _buildFooter(Colors.white),
+            _buildFooter(context, Colors.white),
             if (showWatermark) ...[
               SizedBox(height: isCompact ? 4 : 8),
               const AppWatermark(),
@@ -250,7 +251,7 @@ class ActivityShareCard extends StatelessWidget {
   // ═══════════════════════════════════════════════════════════════
   // TEMPLATE 4: Clean Light
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildCleanLight() {
+  Widget _buildCleanLight(BuildContext context) {
     final accent = _accent;
     final isCompact = aspectRatio == ShareAspectRatio.square;
 
@@ -290,6 +291,7 @@ class ActivityShareCard extends StatelessWidget {
             if (!isCompact)
               Expanded(
                 child: _buildContentCard(
+                  context,
                   accent,
                   textColor: const Color(0xFF1A1A2E),
                   cardBg: Colors.white,
@@ -297,12 +299,13 @@ class ActivityShareCard extends StatelessWidget {
               ),
             if (isCompact)
               _buildContentCard(
+                context,
                 accent,
                 textColor: const Color(0xFF1A1A2E),
                 cardBg: Colors.white,
               ),
             if (!isCompact) const Spacer(),
-            _buildFooter(const Color(0xFF1A1A2E)),
+            _buildFooter(context, const Color(0xFF1A1A2E)),
             if (showWatermark) ...[
               SizedBox(height: isCompact ? 4 : 8),
               const AppWatermark(
@@ -330,8 +333,8 @@ class ActivityShareCard extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [accent, accent.withValues(alpha: 0.7)],
           ),
           boxShadow: [
@@ -356,8 +359,8 @@ class ActivityShareCard extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [accent, accent.withValues(alpha: 0.7)],
         ),
         boxShadow: [
@@ -426,12 +429,12 @@ class ActivityShareCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter(Color textColor) {
+  Widget _buildFooter(BuildContext context, Color textColor) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          '@$userName',
+          AppLocalizations.of(context)!.activityShareCardValue(userName),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -613,6 +616,7 @@ class ActivityShareCard extends StatelessWidget {
   }
 
   Widget _buildWeightCard(
+    BuildContext context,
     Color accent, {
     Color? textColor,
     Color? cardBg,
@@ -646,7 +650,7 @@ class ActivityShareCard extends StatelessWidget {
             ),
           ),
           Text(
-            '$absValue lbs',
+            AppLocalizations.of(context)!.activityShareCardLbs(absValue),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,

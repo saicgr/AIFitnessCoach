@@ -22,7 +22,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
           Icon(Icons.file_upload_outlined, color: AppColors.purple, size: 24),
           const SizedBox(width: 12),
           Text(
-            'Import ${Branding.appName} Data',
+            AppLocalizations.of(context)!.importDialogImportData(Branding.appName),
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),
@@ -46,7 +46,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'This will replace your current ${Branding.appName} data',
+                    AppLocalizations.of(context)!.importDialogThisWillReplaceYour(Branding.appName),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppColors.orange,
@@ -59,7 +59,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
           ),
           const SizedBox(height: 16),
           Text(
-            'Select a previously exported ${Branding.appName} ZIP file to restore your data. The import will use whatever data is available in the file.',
+            AppLocalizations.of(context)!.importDialogSelectAPreviouslyExported(Branding.appName),
             style: TextStyle(
               color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
             ),
@@ -122,7 +122,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Import ${Branding.appName} Data',
+                  AppLocalizations.of(context)!.importDialogImportData2(Branding.appName),
                   style: TextStyle(
                     color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                   ),
@@ -135,7 +135,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'File: ${file.name}',
+                AppLocalizations.of(context)!.importDialogFile(file.name),
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -269,7 +269,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
                 ],
               ),
               content: Text(
-                'Imported:\n$summary',
+                AppLocalizations.of(context)!.importDialogImportedN(summary),
                 style: TextStyle(
                   color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                 ),

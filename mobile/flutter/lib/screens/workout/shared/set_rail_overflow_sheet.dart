@@ -91,7 +91,7 @@ class SetRailOverflowSheet extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${sets.length} total',
+                    AppLocalizations.of(context)!.setRailOverflowSheetTotal(sets.length),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,

@@ -364,7 +364,7 @@ class _RoadmapTabState extends State<_RoadmapTab> {
 
   Widget _buildSectionLabel(String label, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
       child: Text(
         label,
         style: TextStyle(

@@ -184,7 +184,7 @@ class TrainingProgramSelector extends StatelessWidget {
               }
 
               return Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsetsDirectional.only(end: 12),
                 child: GestureDetector(
                   onTap: disabled
                       ? null

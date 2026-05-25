@@ -414,8 +414,8 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                             colors: t.cardSelectedGradient,
                           )
                         : null,
@@ -509,7 +509,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
 
         return Expanded(
           child: Padding(
-            padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
+            padding: EdgeInsetsDirectional.only(end: index < 2 ? 8 : 0),
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
@@ -525,8 +525,8 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                               colors: t.cardSelectedGradient,
                             )
                           : null,
@@ -576,7 +576,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
 
         return Expanded(
           child: Padding(
-            padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
+            padding: EdgeInsetsDirectional.only(end: index < 2 ? 8 : 0),
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
@@ -592,8 +592,8 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                               colors: t.cardSelectedGradient,
                             )
                           : null,
@@ -645,7 +645,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
 
         return Expanded(
           child: Padding(
-            padding: EdgeInsets.only(right: index < 3 ? 6 : 0),
+            padding: EdgeInsetsDirectional.only(end: index < 3 ? 6 : 0),
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
@@ -661,8 +661,8 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                               colors: t.cardSelectedGradient,
                             )
                           : null,
@@ -727,7 +727,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '$selectedCount/3',
+                  AppLocalizations.of(context)!.quizTrainingPreferencesValue(selectedCount),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -765,8 +765,8 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                       gradient: isSelected
                           ? LinearGradient(
                               colors: t.cardSelectedGradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             )
                           : null,
                       color: isSelected

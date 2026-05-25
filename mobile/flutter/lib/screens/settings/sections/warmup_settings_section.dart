@@ -313,7 +313,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
 
     return ChoiceChip(
       label: Text(
-        '$label ($minutes min)',
+        AppLocalizations.of(context)!.warmupSettingsSectionMin(label, minutes),
         style: TextStyle(
           fontSize: 13,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,

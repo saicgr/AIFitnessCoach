@@ -118,7 +118,7 @@ class _AllLevelsSheet extends ConsumerWidget {
                   decoration: BoxDecoration(color: textMuted.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 12, 8),
                   child: Row(
                     children: [
                       Icon(Icons.stairs, color: accentColor, size: 24),
@@ -291,7 +291,7 @@ class _AllLevelsSheet extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: isCompleted || isCurrentLevel || isBigMilestone
-                      ? LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      ? LinearGradient(begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd,
                           colors: isCurrentLevel ? [accentColor, accentColor.withValues(alpha: 0.7)]
                               : isCompleted ? [titleColor, titleColor.withValues(alpha: 0.7)]
                               : [rewardColor, rewardColor.withValues(alpha: 0.7)])

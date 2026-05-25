@@ -83,7 +83,7 @@ class MeasurementTileGrid extends ConsumerWidget {
       children: [
         for (final group in _groups) ...[
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 16, 8),
+            padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 16, 8),
             child: Text(
               group.title.toUpperCase(),
               style: TextStyle(

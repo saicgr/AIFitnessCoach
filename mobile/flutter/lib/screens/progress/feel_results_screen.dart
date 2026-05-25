@@ -128,8 +128,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
               AppColors.cyan.withOpacity(0.15),
               AppColors.purple.withOpacity(0.1),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
@@ -181,8 +181,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                   AppColors.cyan.withOpacity(0.15),
                   AppColors.purple.withOpacity(0.1),
                 ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
@@ -211,7 +211,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '+${summary.moodImprovementPercent.toStringAsFixed(0)}%',
+                    AppLocalizations.of(context)!.feelResultsScreenValue(summary.moodImprovementPercent.toStringAsFixed(0)),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -403,7 +403,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                     size: 24,
                   ),
                   Text(
-                    isPositive ? '+${moodChange.toStringAsFixed(1)}' : moodChange.toStringAsFixed(1),
+                    isPositive ? AppLocalizations.of(context)!.feelResultsScreenValue2(moodChange.toStringAsFixed(1)) : moodChange.toStringAsFixed(1),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -662,7 +662,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              'W${trends.weeklyData[index].week}',
+                              AppLocalizations.of(context)!.feelResultsScreenW(trends.weeklyData[index].week),
                               style: TextStyle(
                                 fontSize: 10,
                                 color: textSecondary,
@@ -794,8 +794,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
             AppColors.success.withOpacity(0.15),
             AppColors.success.withOpacity(0.05),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.success.withOpacity(0.3)),
@@ -817,7 +817,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                 ),
               ),
               Text(
-                '${percent.toStringAsFixed(0)}%',
+                AppLocalizations.of(context)!.feelResultsScreenValue3(percent.toStringAsFixed(0)),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -850,7 +850,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'You felt stronger after ${trends.feelingStrongerCount} of ${trends.totalWorkouts} workouts!',
+                  AppLocalizations.of(context)!.feelResultsScreenYouFeltStrongerAfter(trends.feelingStrongerCount, trends.totalWorkouts),
                   style: TextStyle(
                     fontSize: 13,
                     color: textSecondary,

@@ -146,7 +146,7 @@ class _RefuelCard extends StatelessWidget {
           const SizedBox(height: 6),
           // ----- CTA row -----
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: TextButton.icon(
               onPressed: () {
                 // Deep-link into the food-logging flow. Caller (whichever

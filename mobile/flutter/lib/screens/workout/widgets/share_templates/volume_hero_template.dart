@@ -75,7 +75,7 @@ class VolumeHeroTemplate extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '— that\'s $comparison —',
+            AppLocalizations.of(context)!.volumeHeroTemplateThatS(comparison),
             style: TextStyle(
               fontSize: 13,
               color: const Color(0xFFF59E0B).withValues(alpha: 0.9),

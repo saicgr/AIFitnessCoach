@@ -133,7 +133,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
                   ),
                 ),
                 Text(
-                  '${scores.muscleScores.length} muscle groups',
+                  AppLocalizations.of(context)!.strengthOverviewCardUiMuscleGroups(scores.muscleScores.length),
                   style: TextStyle(
                     fontSize: 11,
                     color: colorScheme.onSurfaceVariant,
@@ -230,7 +230,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
                   return Container(
                     width: 4,
                     height: 3,
-                    margin: EdgeInsets.only(left: i > 0 ? 1 : 0),
+                    margin: EdgeInsetsDirectional.only(start: i > 0 ? 1 : 0),
                     decoration: BoxDecoration(
                       color: i < 3
                           ? const Color(0xFF22C55E)

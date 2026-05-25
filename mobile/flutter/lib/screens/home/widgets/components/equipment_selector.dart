@@ -132,7 +132,7 @@ class EquipmentSelector extends StatelessWidget {
               const Spacer(),
               if (selectedCount > 0)
                 Text(
-                  '$selectedCount selected',
+                  AppLocalizations.of(context)!.equipmentSelectorSelected(selectedCount),
                   style: TextStyle(color: colors.success, fontSize: 12),
                 ),
             ],

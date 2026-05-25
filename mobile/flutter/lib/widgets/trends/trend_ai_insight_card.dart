@@ -132,8 +132,8 @@ class TrendAiInsightCard extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             colors.accent.withValues(alpha: 0.12),
             colors.accent.withValues(alpha: 0.03),

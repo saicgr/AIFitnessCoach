@@ -85,7 +85,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
     final green = isDark ? AppColors.green : AppColorsLight.success;
 
     return Stack(
-      alignment: Alignment.bottomRight,
+      alignment: AlignmentDirectional.bottomEnd,
       children: [
         // Overlay to close on tap outside
         if (_isExpanded)

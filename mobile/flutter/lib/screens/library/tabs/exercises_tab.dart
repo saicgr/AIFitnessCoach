@@ -142,7 +142,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
               const Spacer(),
               // "Performed" toggle chip
               Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsetsDirectional.only(end: 8),
                 child: FilterChip(
                   label: Text(
                     AppLocalizations.of(context).commonDone,
@@ -290,7 +290,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
               size: 48,
             ),
             const SizedBox(height: 16),
-            Text('Failed to load exercises: ${exercisesState.error}'),
+            Text(AppLocalizations.of(context)!.exercisesTabFailedToLoadExercises(exercisesState.error)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => ref

@@ -131,7 +131,7 @@ class _CycleDayDetailBody extends StatelessWidget {
                       ),
                       if (phase != null)
                         Text(
-                          '${phase!.displayName} phase',
+                          AppLocalizations.of(context)!.cycleDayDetailSheetPhase(phase!.displayName),
                           style: TextStyle(
                             color: CyclePhaseColors.of(phase),
                             fontSize: 12,
@@ -183,7 +183,7 @@ class _CycleDayDetailBody extends StatelessWidget {
                         Flexible(
                           child: Text(
                             r.value,
-                            textAlign: TextAlign.right,
+                            textAlign: TextAlign.end,
                             style: TextStyle(
                               color: fg,
                               fontSize: 12,

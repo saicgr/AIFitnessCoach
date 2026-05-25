@@ -145,7 +145,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                         // Show confirmation
                         ScaffoldMessenger.of(_ctx).showSnackBar(
                           SnackBar(
-                            content: Text('Changed to ${type.displayName}'),
+                            content: Text(AppLocalizations.of(context)!.workoutSheetsMixinUiChangedTo(type.displayName)),
                             duration: const Duration(seconds: 2),
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -531,7 +531,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Superset (${supersetExercises.length} exercises)',
+                        AppLocalizations.of(context)!.workoutSheetsMixinUiSupersetExercises(supersetExercises.length),
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black,
                         fontSize: 18,

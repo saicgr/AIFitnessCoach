@@ -417,8 +417,8 @@ class _ExerciseScienceResearchScreenState
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                   colors: [
                     AppColors.info.withValues(alpha: 0.15),
                     AppColors.purple.withValues(alpha: 0.1),
@@ -454,7 +454,7 @@ class _ExerciseScienceResearchScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Every workout parameter in ${Branding.appName} is derived from peer-reviewed exercise science. Tap a paper to see details.',
+                    AppLocalizations.of(context)!.exerciseScienceResearchScreenEveryWorkoutParameterIn(Branding.appName),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -657,7 +657,7 @@ class _ExerciseScienceResearchScreenState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${paper.journal}, ${paper.year}',
+                          AppLocalizations.of(context)!.exerciseScienceResearchScreenValue(paper.journal, paper.year),
                           style: TextStyle(
                             fontSize: 11,
                             color: textMuted,
@@ -767,7 +767,7 @@ class _ExerciseScienceResearchScreenState
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'How ${Branding.appName} uses this',
+                              AppLocalizations.of(context)!.exerciseScienceResearchScreenHowUsesThis(Branding.appName),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,

@@ -13,6 +13,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
+import '../../core/providers/locale_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart' show SentryLevel;
 import '../../core/constants/api_constants.dart';
 import '../../core/services/sentry_service.dart';
@@ -160,12 +161,33 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   return client;
 });
 
+/// Wires the current app locale into [ApiClient] so the Accept-Language header
+/// stays in sync whenever the user changes their language in Settings.
+///
+/// Consume this provider once near the app root (e.g. in MaterialApp builder)
+/// to activate the side-effect. Separate from [apiClientProvider] so that
+/// locale changes don't recreate the entire HTTP client.
+final acceptLanguageSyncProvider = Provider<void>((ref) {
+  final localeState = ref.watch(localeProvider);
+  final client = ref.read(apiClientProvider);
+  client.updateAcceptLanguage(localeState.locale?.toLanguageTag());
+});
+
 /// HTTP API client with auth interceptor
 class ApiClient with WidgetsBindingObserver {
   final FlutterSecureStorage _storage;
   late final Dio _dio;
   StreamSubscription<AuthState>? _authSubscription;
   Timer? _tokenRefreshTimer;
+
+  /// The BCP-47 language tag to send as `Accept-Language`, e.g. `"en"`, `"fr"`.
+  /// `null` = system default (header is omitted; server defaults to `en`).
+  String? _currentAcceptLanguage;
+
+  /// Called by [acceptLanguageSyncProvider] whenever the user's locale changes.
+  void updateAcceptLanguage(String? languageTag) {
+    _currentAcceptLanguage = languageTag;
+  }
 
   static const _tokenKey = 'auth_token';
   static const _userIdKey = 'user_id';
@@ -689,6 +711,23 @@ class ApiClient with WidgetsBindingObserver {
             }
           } catch (e) {
             debugPrint('⚠️ [API] Could not attach timezone header: $e');
+          }
+          return handler.next(options);
+        },
+      ),
+    );
+
+    // Accept-Language interceptor — attaches the user's chosen locale so the
+    // backend can return locale-aware content (AI replies, exercise names, etc).
+    // Null locale = header omitted → backend defaults to 'en'.
+    // Updated reactively via [updateAcceptLanguage] whenever the user changes
+    // their language in Settings (driven by [acceptLanguageSyncProvider]).
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final lang = _currentAcceptLanguage;
+          if (lang != null && lang.isNotEmpty) {
+            options.headers['Accept-Language'] = lang;
           }
           return handler.next(options);
         },

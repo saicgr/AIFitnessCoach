@@ -97,7 +97,7 @@ class PRShareCard extends StatelessWidget {
                 const SizedBox(height: 80),
 
                 // PR card
-                _buildPRCard(textColor, subtitleColor, backgroundColor),
+                _buildPRCard(context, textColor, subtitleColor, backgroundColor),
 
                 if (showProgressChart && progressData != null) ...[
                   const SizedBox(height: 60),
@@ -108,7 +108,7 @@ class PRShareCard extends StatelessWidget {
 
                 // Workout info
                 Text(
-                  'Workout: $workoutName',
+                  AppLocalizations.of(context)!.prShareCardWorkout(workoutName),
                   style: TextStyle(
                     fontSize: 28,
                     color: subtitleColor,
@@ -168,7 +168,7 @@ class PRShareCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPRCard(Color textColor, Color subtitleColor, Color backgroundColor) {
+  Widget _buildPRCard(BuildContext context, Color textColor, Color subtitleColor, Color backgroundColor) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(48),
@@ -231,7 +231,7 @@ class PRShareCard extends StatelessWidget {
 
           // Reps info
           Text(
-            '${pr.reps} reps',
+            AppLocalizations.of(context)!.prShareCardReps(pr.reps),
             style: TextStyle(
               fontSize: 32,
               color: subtitleColor,

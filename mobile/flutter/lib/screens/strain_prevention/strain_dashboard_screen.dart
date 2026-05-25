@@ -394,8 +394,8 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             riskColor.withValues(alpha: 0.2),
             riskColor.withValues(alpha: 0.05),

@@ -36,8 +36,8 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: borderColor),
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
                 colors: [
                   AppColors.cyan.withOpacity(0.05),
                   Colors.transparent,

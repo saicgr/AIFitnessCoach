@@ -147,7 +147,7 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
 
                   // Description
                   Text(
-                    "You've used all free ${widget.featureName} for this period.",
+                    AppLocalizations.of(context)!.upgradePromptSheetYouVeUsedAll(widget.featureName),
                     textAlign: TextAlign.center,
                     style: textTheme.bodyMedium?.copyWith(
                       color: isDark

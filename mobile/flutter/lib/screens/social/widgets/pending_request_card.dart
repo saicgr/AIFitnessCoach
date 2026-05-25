@@ -74,7 +74,7 @@ class PendingRequestCard extends StatelessWidget {
           if (message != null && message.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              '"$message"',
+              AppLocalizations.of(context)!.pendingRequestCardValue(message),
               style: TextStyle(
                 fontSize: 11,
                 color: AppColors.textMuted,

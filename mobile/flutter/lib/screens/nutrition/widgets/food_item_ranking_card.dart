@@ -501,7 +501,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
       children: _presetMultipliers.keys.map((preset) {
         final isSelected = _activePreset == preset;
         return Padding(
-          padding: const EdgeInsets.only(right: 4),
+          padding: const EdgeInsetsDirectional.only(end: 4),
           child: GestureDetector(
             onTap: () => _onPresetTapped(preset),
             child: Container(

@@ -274,7 +274,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Copied: "$caption"'),
+            content: Text(AppLocalizations.of(context)!.shareWorkoutSheetCopied(caption)),
             duration: const Duration(seconds: 4),
           ),
         );

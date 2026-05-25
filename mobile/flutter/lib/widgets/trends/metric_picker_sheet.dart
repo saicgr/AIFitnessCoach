@@ -240,7 +240,7 @@ class _MetricPickerSheetState extends State<_MetricPickerSheet> {
                 decoration: InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
-                  hintText: 'Search ${TrendMetric.values.length} metrics…',
+                  hintText: AppLocalizations.of(context)!.metricPickerSheetSearchMetrics(TrendMetric.values.length),
                   hintStyle:
                       TextStyle(fontSize: 14, color: colors.textMuted),
                 ),
@@ -278,7 +278,7 @@ class _MetricPickerSheetState extends State<_MetricPickerSheet> {
               Icon(Icons.search_off_rounded,
                   size: 40, color: colors.textMuted),
               const SizedBox(height: 10),
-              Text('No metric matches “${_searchCtrl.text}”',
+              Text(AppLocalizations.of(context)!.metricPickerSheetNoMetricMatches(_searchCtrl.text),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13, color: colors.textMuted)),
             ],
@@ -292,7 +292,7 @@ class _MetricPickerSheetState extends State<_MetricPickerSheet> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
-          child: Text('${hits.length} RESULTS',
+          child: Text(AppLocalizations.of(context)!.metricPickerSheetResults(hits.length),
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,

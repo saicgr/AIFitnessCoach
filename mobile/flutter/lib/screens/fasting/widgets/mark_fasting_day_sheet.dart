@@ -220,9 +220,8 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Padding(
-            padding: EdgeInsets.only(
-              left: 24,
-              right: 24,
+            padding: EdgeInsetsDirectional.only(start: 24,
+              end: 24,
               top: 24,
               bottom: MediaQuery.of(context).viewInsets.bottom + 24,
             ),
@@ -389,7 +388,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                           ),
                         ),
                         Text(
-                          '${_estimatedHours.round()} hours',
+                          AppLocalizations.of(context)!.markFastingDaySheetHours(_estimatedHours.round()),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

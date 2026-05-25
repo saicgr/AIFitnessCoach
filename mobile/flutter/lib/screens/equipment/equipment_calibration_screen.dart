@@ -605,14 +605,14 @@ class _CalibrationEditorSheetState
               if (showBar)
                 _numericField(
                   controller: _barCtl,
-                  label: 'Bar empty weight ($_weightUnit)',
+                  label: AppLocalizations.of(context)!.equipmentCalibrationScreenBarEmptyWeight(_weightUnit),
                   hint: _weightUnit == 'lb' ? AppLocalizations.of(context).equipmentCalibration175ForEz : AppLocalizations.of(context).equipmentCalibration794ForEz,
                 ),
               if (showSled) ...[
                 const SizedBox(height: 12),
                 _numericField(
                   controller: _sledCtl,
-                  label: 'Machine sled / carriage ($_weightUnit)',
+                  label: AppLocalizations.of(context)!.equipmentCalibrationScreenMachineSledCarriage(_weightUnit),
                   hint: _weightUnit == 'lb' ? AppLocalizations.of(context).equipmentCalibrationLegPress45 : AppLocalizations.of(context).equipmentCalibrationLegPress20,
                 ),
               ],
@@ -623,7 +623,7 @@ class _CalibrationEditorSheetState
                     Expanded(
                       child: _numericField(
                         controller: _cablePinStartCtl,
-                        label: 'Pin start ($_weightUnit)',
+                        label: AppLocalizations.of(context)!.equipmentCalibrationScreenPinStart(_weightUnit),
                         hint: _weightUnit == 'lb' ? '20' : '9',
                       ),
                     ),
@@ -631,7 +631,7 @@ class _CalibrationEditorSheetState
                     Expanded(
                       child: _numericField(
                         controller: _cablePinIncCtl,
-                        label: 'Pin step ($_weightUnit)',
+                        label: AppLocalizations.of(context)!.equipmentCalibrationScreenPinStep(_weightUnit),
                         hint: _weightUnit == 'lb' ? '10' : '5',
                       ),
                     ),

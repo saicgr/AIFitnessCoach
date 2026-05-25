@@ -194,12 +194,12 @@ class _ProgramBuilderExercisePickerState
 
               // Header.
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 6, 8, 6),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
-                        'Add to ${widget.dayName}',
+                        AppLocalizations.of(context)!.programBuilderPartExercisePickerAddTo(widget.dayName),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,

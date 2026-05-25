@@ -159,7 +159,7 @@ class WeekChangesCard extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          '+${comparison.newExercises.length - 3} more new exercises',
+                          AppLocalizations.of(context)!.weekChangesCardMoreNewExercises(comparison.newExercises.length - 3),
                           style: TextStyle(
                             fontSize: 12,
                             color: textMuted,

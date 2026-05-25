@@ -399,7 +399,7 @@ class _AgendaWorkoutCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.only(left: leftMargin, bottom: 8),
+        margin: EdgeInsetsDirectional.only(start: leftMargin, bottom: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isCompleted
@@ -475,7 +475,7 @@ class _AgendaWorkoutCard extends StatelessWidget {
                           Icon(Icons.timer_outlined, size: 14, color: colors.textMuted),
                           const SizedBox(width: 4),
                           Text(
-                            '${workout.bestDurationMinutes} min',
+                            AppLocalizations.of(context)!.scheduleScreenPartWeekSelectorMin(workout.bestDurationMinutes),
                             style: TextStyle(
                               fontSize: 13,
                               color: colors.textMuted,
@@ -489,7 +489,7 @@ class _AgendaWorkoutCard extends StatelessWidget {
                           Icon(Icons.fitness_center, size: 14, color: colors.textMuted),
                           const SizedBox(width: 4),
                           Text(
-                            '${workout.exerciseCount} ex',
+                            AppLocalizations.of(context)!.scheduleScreenPartWeekSelectorEx(workout.exerciseCount),
                             style: TextStyle(
                               fontSize: 13,
                               color: colors.textMuted,

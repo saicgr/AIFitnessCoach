@@ -48,7 +48,7 @@ class MoodAnalyticsCard extends StatelessWidget {
                 textSecondary: textSecondary,
               ),
               _buildStatItem(
-                value: '${summary.completionRate.toInt()}%',
+                value: AppLocalizations.of(context)!.moodAnalyticsCardValue(summary.completionRate.toInt()),
                 label: AppLocalizations.of(context).progressionStepCardCompleted,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
@@ -110,6 +110,7 @@ class MoodAnalyticsCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           ...distribution.map((item) => _buildDistributionBar(
+                context,
                 item,
                 textPrimary,
                 textSecondary,
@@ -150,6 +151,7 @@ class MoodAnalyticsCard extends StatelessWidget {
   }
 
   Widget _buildDistributionBar(
+    BuildContext context,
     MoodDistribution item,
     Color textPrimary,
     Color textSecondary,
@@ -186,7 +188,7 @@ class MoodAnalyticsCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 widthFactor: item.percentage / 100,
                 child: Container(
                   decoration: BoxDecoration(
@@ -201,13 +203,13 @@ class MoodAnalyticsCard extends StatelessWidget {
           SizedBox(
             width: 45,
             child: Text(
-              '${item.percentage.toInt()}%',
+              AppLocalizations.of(context)!.moodAnalyticsCardValue2(item.percentage.toInt()),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: textPrimary,
               ),
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.end,
             ),
           ),
         ],

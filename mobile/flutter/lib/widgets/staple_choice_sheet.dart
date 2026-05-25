@@ -561,7 +561,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   final isSelected = _selectedSection == value;
                   return Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(right: value != 'stretches' ? 8 : 0),
+                      padding: EdgeInsetsDirectional.only(end: value != 'stretches' ? 8 : 0),
                       child: GestureDetector(
                         onTap: () {
                           HapticService.light();

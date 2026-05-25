@@ -130,7 +130,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Last ${state.analytics!.summary.daysTracked} days',
+                              AppLocalizations.of(context)!.moodHistoryScreenLastDays(state.analytics!.summary.daysTracked),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: textSecondary,
@@ -180,7 +180,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                             ),
                           ),
                           Text(
-                            '${state.totalCount} total',
+                            AppLocalizations.of(context)!.moodHistoryScreenTotal(state.totalCount),
                             style: TextStyle(
                               fontSize: 14,
                               color: textSecondary,

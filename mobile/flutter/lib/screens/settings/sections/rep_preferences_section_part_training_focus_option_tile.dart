@@ -717,7 +717,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Minimum Sets: $minSets',
+                    AppLocalizations.of(context)!.repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(minSets),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -765,7 +765,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Maximum Sets: $maxSets',
+                    AppLocalizations.of(context)!.repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(maxSets),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,

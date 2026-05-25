@@ -119,7 +119,7 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
           icon: Icons.self_improvement_outlined,
           iconColor: AppColors.orange,
           label: l10n.editableFitnessCardPrep,
-          value: '$_selectedWarmupDuration+$_selectedStretchDuration min',
+          value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateExtMin(_selectedWarmupDuration, _selectedStretchDuration),
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/schedule_item.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Card for agenda view of schedule items.
 /// Shows a left color bar, icon, title, time range, and status badge.
@@ -160,7 +161,7 @@ class _ScheduleItemCardState extends State<ScheduleItemCard>
                             if (item.durationMinutes != null) ...[
                               const SizedBox(width: 8),
                               Text(
-                                '${item.durationMinutes} min',
+                                AppLocalizations.of(context)!.scheduleItemCardMin(item.durationMinutes!),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark ? Colors.white38 : Colors.black38,
@@ -175,7 +176,7 @@ class _ScheduleItemCardState extends State<ScheduleItemCard>
                 ),
                 // Status badge + complete button
                 Padding(
-                  padding: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsetsDirectional.only(end: 12),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

@@ -52,7 +52,7 @@ class LiveChatMessageBubble extends StatelessWidget {
                 // Agent label for agent messages
                 if (!isUser && showAgentInfo)
                   Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 4),
+                    padding: const EdgeInsetsDirectional.only(start: 4, bottom: 4),
                     child: Text(
                       message.senderRole == SenderRole.agent ? AppLocalizations.of(context).liveChatMessageAgent : AppLocalizations.of(context).settingsThemeSystem,
                       style: TextStyle(
@@ -165,8 +165,8 @@ class _AgentAvatar extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: LinearGradient(
           colors: [AppColors.cyan, AppColors.teal],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
       ),
       child: avatarUrl != null

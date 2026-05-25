@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/constants/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 
 /// Large glowing button with press animation
 class GlowButton extends StatefulWidget {
@@ -61,6 +62,7 @@ class GlowButton extends StatefulWidget {
   /// Factory for complete set button
   factory GlowButton.complete({
     Key? key,
+    required BuildContext context,
     required VoidCallback? onTap,
     required int setNumber,
     double? width,
@@ -76,7 +78,7 @@ class GlowButton extends StatefulWidget {
       icon: Icons.check_rounded,
       isLoading: isLoading,
       child: Text(
-        'COMPLETE SET $setNumber',
+        AppLocalizations.of(context)!.glowButtonCompleteSet(setNumber),
         style: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w700,
@@ -192,8 +194,8 @@ class _GlowButtonState extends State<GlowButton>
                     ? null
                     : LinearGradient(
                         colors: [widget.color, secondaryColor],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                       ),
                 color: widget.isDisabled ? Colors.grey.shade700 : null,
                 borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -353,8 +355,8 @@ class _GlowIncrementButtonState extends State<GlowIncrementButton>
                           widget.color.withOpacity(0.3),
                           widget.color.withOpacity(0.1),
                         ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                       ),
                 color: widget.isDisabled
                     ? (isDark ? Colors.grey.shade800 : Colors.grey.shade300)

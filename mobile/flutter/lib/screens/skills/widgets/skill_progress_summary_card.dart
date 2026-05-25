@@ -29,8 +29,8 @@ class SkillProgressSummaryCard extends StatelessWidget {
             cyan.withOpacity(0.15),
             elevated,
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: cardBorder),
@@ -107,7 +107,7 @@ class SkillProgressSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${summary.totalAttempts} total practice sessions',
+                  AppLocalizations.of(context)!.skillProgressSummaryCardTotalPracticeSessions(summary.totalAttempts),
                   style: TextStyle(
                     color: textSecondary,
                     fontSize: 13,

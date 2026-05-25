@@ -82,8 +82,8 @@ class DifficultySelector extends StatelessWidget {
         ),
         content: Text(
           isHell
-              ? '$displayName mode is designed for experienced athletes. As a beginner, this may lead to injury or burnout. We recommend starting with Beginner or Moderate difficulty.'
-              : '$displayName mode may be intense for beginners. Consider starting with Beginner or Moderate difficulty and progressing as you build strength and endurance.',
+              ? AppLocalizations.of(context)!.difficultySelectorModeIsDesignedFor(displayName)
+              : AppLocalizations.of(context)!.difficultySelectorModeMayBeIntense(displayName),
           style: TextStyle(
             color: colors.textSecondary,
             fontSize: 14,
@@ -342,8 +342,7 @@ class DifficultySelector extends StatelessWidget {
 
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(
-                    right: difficulty != difficulties.last ? 8 : 0,
+                  padding: EdgeInsetsDirectional.only(end: difficulty != difficulties.last ? 8 : 0,
                   ),
                   child: Tooltip(
                     message: description,

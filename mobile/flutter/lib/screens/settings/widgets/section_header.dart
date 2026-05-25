@@ -58,7 +58,7 @@ class SectionHeader extends StatelessWidget {
               GestureDetector(
                 onTap: () => _showHelpSheet(context),
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsetsDirectional.only(start: 8),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

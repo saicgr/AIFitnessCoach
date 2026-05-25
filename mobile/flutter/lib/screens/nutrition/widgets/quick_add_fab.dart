@@ -23,11 +23,10 @@ class QuickAddFAB extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return Positioned(
-      right: 16,
+    return PositionedDirectional(end: 16,
       bottom: 100, // Above the bottom nav bar
       child: FloatingActionButton.extended(
-        heroTag: 'quick_add_fab',
+        heroTag: 'quick_add_b',
         onPressed: () => _openLogMealSheet(context, ref),
         backgroundColor: teal,
         foregroundColor: Colors.white,

@@ -121,7 +121,7 @@ class AchievementsCard extends ConsumerWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              isLoading ? '...' : '$totalAchieved badges',
+              isLoading ? '...' : AppLocalizations.of(context)!.achievementsCardBadges(totalAchieved),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -374,7 +374,7 @@ class AchievementsCard extends ConsumerWidget {
                     color: textMuted.withValues(alpha: 0.2),
                   ),
                   child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     widthFactor: nextMilestone.progressFraction.clamp(0.0, 1.0),
                     child: Container(
                       decoration: BoxDecoration(

@@ -243,7 +243,7 @@ class _AiModelDownloadScreenState
                 ramAsync.when(
                   data: (ram) => _CompatibilityRow(
                     label: AppLocalizations.of(context).aiModelDownloadRam,
-                    value: '${ram.toStringAsFixed(1)} GB',
+                    value: AppLocalizations.of(context)!.aiModelDownloadScreenGb(ram.toStringAsFixed(1)),
                     isGood: ram >= 2.0,
                   ),
                   loading: () => _CompatibilityRow(

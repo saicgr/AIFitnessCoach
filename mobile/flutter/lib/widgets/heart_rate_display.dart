@@ -158,7 +158,7 @@ class _TappableZoneBadge extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '${zone.name} Zone',
+                AppLocalizations.of(context)!.heartRateDisplayZone(zone.name),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -182,6 +182,7 @@ class _TappableZoneBadge extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildInfoRow(
+              context,
               Icons.speed,
               'Heart Rate',
               '${zone.percentageRange} of max',
@@ -189,6 +190,7 @@ class _TappableZoneBadge extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _buildInfoRow(
+              context,
               Icons.local_fire_department,
               'Fat Burned',
               '${(zone.fatCaloriePercent * 100).round()}% of calories',
@@ -212,7 +214,7 @@ class _TappableZoneBadge extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, bool isDark) {
+  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value, bool isDark) {
     return Row(
       children: [
         Icon(
@@ -222,7 +224,7 @@ class _TappableZoneBadge extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          '$label: ',
+          AppLocalizations.of(context)!.heartRateDisplayValue(label),
           style: TextStyle(
             fontSize: 13,
             color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -356,7 +358,7 @@ class HeartRateDisplayLarge extends ConsumerWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${zone.name} Zone',
+                        AppLocalizations.of(context)!.heartRateDisplayZone2(zone.name),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,

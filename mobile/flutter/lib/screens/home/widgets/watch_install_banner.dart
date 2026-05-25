@@ -239,8 +239,8 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
                             accentColor.withValues(alpha: 0.2),
                             accentColor.withValues(alpha: 0.1),
                           ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                          begin: AlignmentDirectional.topStart,
+                          end: AlignmentDirectional.bottomEnd,
                         ),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(

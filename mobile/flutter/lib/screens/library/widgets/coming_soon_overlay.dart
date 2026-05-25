@@ -8,9 +8,8 @@ class ComingSoonOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 12,
-      right: 12,
+    return PositionedDirectional(top: 12,
+      end: 12,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(

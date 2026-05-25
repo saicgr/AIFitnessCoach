@@ -17,8 +17,8 @@ class _AIHeaderCard extends StatelessWidget {
             AppColors.cyan.withOpacity(0.2),
             AppColors.purple.withOpacity(0.2),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
@@ -195,8 +195,8 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [coachColor, coachAccentColor],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -615,7 +615,7 @@ class _ResponsePreferencesSection extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => ref.read(aiSettingsProvider.notifier).updateResponseLength(length.$1),
                   child: Container(
-                    margin: EdgeInsets.only(right: length.$1 != 'detailed' ? 8 : 0),
+                    margin: EdgeInsetsDirectional.only(end: length.$1 != 'detailed' ? 8 : 0),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.orange.withOpacity(0.2) : Colors.transparent,
@@ -839,7 +839,7 @@ class _AgentToggleItem extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '@${agent.name}',
+                  AppLocalizations.of(context)!.aiSettingsScreenPartAIHeaderCardValue(agent.name),
                   style: TextStyle(
                     fontSize: 12,
                     color: agent.primaryColor,

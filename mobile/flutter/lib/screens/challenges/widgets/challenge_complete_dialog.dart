@@ -89,8 +89,8 @@ class ChallengeCompleteDialog extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: didBeat
               ? [
                   const Color(0xFFFFD700).withValues(alpha: 0.3),
@@ -203,8 +203,8 @@ class ChallengeCompleteDialog extends StatelessWidget {
               label: AppLocalizations.of(context).challengeCompleteTime,
               yourLabel: AppLocalizations.of(context).challengeCompleteYou,
               themLabel: AppLocalizations.of(context).challengeCompleteThem,
-              yourValue: '$yourDuration min',
-              theirValue: '$theirDuration min',
+              yourValue: AppLocalizations.of(context)!.challengeCompleteDialogMin(yourDuration),
+              theirValue: AppLocalizations.of(context)!.challengeCompleteDialogMin2(theirDuration),
               youWon: didBeat && yourDuration <= theirDuration,
             ),
             const SizedBox(height: 12),
@@ -218,7 +218,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
               yourLabel: AppLocalizations.of(context).challengeCompleteYou,
               themLabel: AppLocalizations.of(context).challengeCompleteThem,
               yourValue: '${yourVolume.toStringAsFixed(0)} lbs',
-              theirValue: '${theirVolume.toStringAsFixed(0)} lbs',
+              theirValue: AppLocalizations.of(context)!.challengeCompleteDialogLbs(theirVolume.toStringAsFixed(0)),
               youWon: didBeat && yourVolume >= theirVolume,
             ),
         ],

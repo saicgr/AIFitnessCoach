@@ -54,7 +54,7 @@ class MoodHistoryItemCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'Feeling ${item.mood}',
+                      AppLocalizations.of(context)!.moodHistoryItemCardFeeling(item.mood),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: textPrimary,

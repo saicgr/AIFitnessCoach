@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// User Search Result Card - Displays a user in search results or suggestions
 class UserSearchResultCard extends StatelessWidget {
@@ -84,7 +85,7 @@ class UserSearchResultCard extends StatelessWidget {
                 // Username
                 if (username != null && username.isNotEmpty)
                   Text(
-                    '@$username',
+                    AppLocalizations.of(context)!.userSearchResultCardValue(username),
                     style: TextStyle(fontSize: 13, color: AppColors.textMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -100,7 +101,7 @@ class UserSearchResultCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
-                        '$totalWorkouts workouts',
+                        AppLocalizations.of(context)!.userSearchResultCardWorkouts(totalWorkouts),
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textMuted,
@@ -159,7 +160,7 @@ class UserSearchResultCard extends StatelessWidget {
 
   Widget _buildBadge(String label, Color color) {
     return Container(
-      margin: const EdgeInsets.only(left: 8),
+      margin: const EdgeInsetsDirectional.only(start: 8),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),

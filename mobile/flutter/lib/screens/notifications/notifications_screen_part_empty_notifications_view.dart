@@ -359,7 +359,7 @@ class _NotificationCard extends StatelessWidget {
                             Container(
                               width: 8,
                               height: 8,
-                              margin: const EdgeInsets.only(left: 8, top: 4),
+                              margin: const EdgeInsetsDirectional.only(start: 8, top: 4),
                               decoration: BoxDecoration(
                                 color: typeColor,
                                 shape: BoxShape.circle,
@@ -604,7 +604,7 @@ class _UnifiedNotificationCard extends StatelessWidget {
                             Container(
                               width: 8,
                               height: 8,
-                              margin: const EdgeInsets.only(left: 8, top: 4),
+                              margin: const EdgeInsetsDirectional.only(start: 8, top: 4),
                               decoration: BoxDecoration(
                                 color: typeColor,
                                 shape: BoxShape.circle,

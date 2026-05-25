@@ -701,12 +701,11 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               ),
             ),
             // Reaction pill
-            Positioned(
-              left: left,
+            PositionedDirectional(start: left,
               top: top,
               child: ScaleTransition(
                 scale: _reactionScaleAnim,
-                alignment: Alignment.bottomCenter,
+                   alignment: Alignment.bottomCenter,
                 child: Material(
                   elevation: 8,
                   shadowColor: Colors.black45,

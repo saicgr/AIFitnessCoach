@@ -76,7 +76,7 @@ class WrappedTemplate extends StatelessWidget {
               const SizedBox(height: 18),
               _WrappedBlock(
                 index: '03',
-                label: '${workoutName.toUpperCase()} SETS',
+                label: AppLocalizations.of(context)!.wrappedTemplateSets(workoutName.toUpperCase()),
                 value: '$totalSets',
                 color: const Color(0xFFFB5607),
               ),

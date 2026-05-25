@@ -393,7 +393,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
         backgroundColor: snackColor,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 8),
-        margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+        margin: const EdgeInsetsDirectional.only(bottom: 80, start: 16, end: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: suggestion.action != AutoregAction.swapExercise
             ? SnackBarAction(

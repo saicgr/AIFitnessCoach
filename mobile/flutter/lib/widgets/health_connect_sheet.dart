@@ -255,7 +255,7 @@ class _HealthConnectSheetContentState
                       ),
                       const SizedBox(height: 8),
                       Align(
-                        alignment: Alignment.centerRight,
+                        alignment: AlignmentDirectional.centerEnd,
                         child: TextButton(
                           onPressed: _handleConnect,
                           child: Text(AppLocalizations.of(context).buttonRetry),

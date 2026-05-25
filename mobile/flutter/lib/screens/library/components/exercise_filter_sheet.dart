@@ -331,9 +331,8 @@ class ExerciseFilterSheet extends ConsumerWidget {
 
                 // Apply button
                 Padding(
-                  padding: EdgeInsets.only(
-                    left: 16,
-                    right: 16,
+                  padding: EdgeInsetsDirectional.only(start: 16,
+                    end: 16,
                     top: 12,
                     bottom: 12 + MediaQuery.of(context).padding.bottom,
                   ),

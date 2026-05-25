@@ -825,6 +825,7 @@ class LangGraphCoachService:
         beast_mode_config: Optional[Dict[str, Any]] = None,
         media_content_type: Optional[str] = None,
         user_tz: Optional[str] = None,
+        locale: str = "en",
     ) -> Dict[str, Any]:
         """Build the state dictionary for the selected agent.
 
@@ -832,6 +833,10 @@ class LangGraphCoachService:
         handler from X-User-Timezone. Carried through every agent state so
         downstream MCP tools never have to fall back to the (often stale)
         `users.timezone` DB column.
+
+        `locale` is the ISO 639-1 code resolved from the request's
+        Accept-Language header. Injected into every agent's system prompt
+        so Gemini responds in the user's preferred language.
         """
         base_state = {
             "user_message": cleaned_message,
@@ -854,6 +859,8 @@ class LangGraphCoachService:
             "unified_context": request.unified_context,
             # Media classification from classifier
             "media_content_type": media_content_type,
+            # i18n locale (ISO 639-1) — resolved from Accept-Language header
+            "locale": locale,
         }
 
         # Normalize media_refs from request (combine singular + plural)
@@ -1007,6 +1014,7 @@ class LangGraphCoachService:
         self,
         request: ChatRequest,
         user_tz: Optional[str] = None,
+        locale: str = "en",
     ) -> ChatResponse:
         """
         Process a user message using dedicated domain agents.
@@ -1015,6 +1023,10 @@ class LangGraphCoachService:
         handler. Required for every MCP tool that anchors a calendar day or
         reads "today" — otherwise stale `users.timezone` (often 'UTC') leaks
         through and produces off-by-one days for users west of UTC.
+
+        `locale` is the ISO 639-1 code resolved from the request's
+        Accept-Language header. Passed to _build_agent_state so each agent's
+        system prompt is prefixed with the appropriate language instruction.
 
         Flow:
         0. Fast-path for simple messages (greetings, thanks, goodbye)
@@ -1177,6 +1189,7 @@ class LangGraphCoachService:
                 beast_mode_config=beast_mode_config,
                 media_content_type=media_content_type,
                 user_tz=user_tz,
+                locale=locale,
             )
 
             # 6. Execute agent with retry for thought_signature errors
@@ -1256,6 +1269,7 @@ class LangGraphCoachService:
         self,
         request: ChatRequest,
         user_tz: Optional[str] = None,
+        locale: str = "en",
     ):
         """Streaming counterpart of `process_message`.
 
@@ -1428,6 +1442,7 @@ class LangGraphCoachService:
             beast_mode_config=beast_mode_config,
             media_content_type=media_content_type,
             user_tz=user_tz,
+            locale=locale,
         )
 
         # 6. Decide: true token-streaming vs. buffered agent run.

@@ -211,7 +211,7 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Edit $_originalTypeLabel ${widget.groupNumber}',
+                            AppLocalizations.of(context)!.supersetReorderSheetEdit(_originalTypeLabel, widget.groupNumber),
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: textPrimary,
@@ -311,8 +311,8 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
                                 : DismissDirection.none,
                             onDismissed: (_) => _removeExercise(index),
                             background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
+                              alignment: AlignmentDirectional.centerEnd,
+                              padding: const EdgeInsetsDirectional.only(end: 20),
                               decoration: BoxDecoration(
                                 color: errorColor,
                                 borderRadius: BorderRadius.circular(12),

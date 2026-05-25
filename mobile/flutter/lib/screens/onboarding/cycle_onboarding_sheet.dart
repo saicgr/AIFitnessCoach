@@ -236,7 +236,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
             // ── Cycle length ──────────────────────────────────────
             _SliderRow(
               label: AppLocalizations.of(context).cycleOnboardingTypicalCycleLength,
-              valueLabel: '$_cycleLength days',
+              valueLabel: AppLocalizations.of(context)!.cycleOnboardingSheetDays(_cycleLength),
               value: _cycleLength.toDouble(),
               min: 21,
               max: 45,
@@ -253,7 +253,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
             // ── Period length ─────────────────────────────────────
             _SliderRow(
               label: AppLocalizations.of(context).cycleOnboardingTypicalPeriodLength,
-              valueLabel: '$_periodLength days',
+              valueLabel: AppLocalizations.of(context)!.cycleOnboardingSheetDays2(_periodLength),
               value: _periodLength.toDouble(),
               min: 2,
               max: 10,

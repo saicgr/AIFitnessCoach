@@ -69,12 +69,11 @@ class GuestLockedFeatureCard extends StatelessWidget {
                       size: 24,
                     ),
                   ),
-                  Positioned(
-                    right: -4,
+                  PositionedDirectional(end: -4,
                     bottom: -4,
                     child: Container(
                       width: 22,
-                      height: 22,
+                                  height: 22,
                       decoration: BoxDecoration(
                         color: elevatedColor,
                         shape: BoxShape.circle,

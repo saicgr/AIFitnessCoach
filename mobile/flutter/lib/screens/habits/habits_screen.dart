@@ -323,8 +323,8 @@ class HabitsScreen extends ConsumerWidget {
         key: ValueKey('dismiss_${habit.id}'),
         direction: DismissDirection.endToStart,
         background: Container(
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
+          alignment: AlignmentDirectional.centerEnd,
+          padding: const EdgeInsetsDirectional.only(end: 20),
           decoration: BoxDecoration(
             color: AppColors.error,
             borderRadius: BorderRadius.circular(16),
@@ -375,7 +375,7 @@ class HabitsScreen extends ConsumerWidget {
           ref.read(habitsScreenProvider.notifier).deleteHabit(habit.id);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Deleted "${habit.name}"'),
+              content: Text(AppLocalizations.of(context)!.habitsScreenDeleted(habit.name)),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -514,7 +514,7 @@ class HabitsScreen extends ConsumerWidget {
                             ),
                             if (habit.last30Days.isNotEmpty)
                               Text(
-                                '${habit.last30Days.where((d) => d).length} of 30 days',
+                                AppLocalizations.of(context)!.habitsScreenOfDays(habit.last30Days.where((d) => d).length),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: textSecondary,
@@ -645,7 +645,7 @@ class HabitsScreen extends ConsumerWidget {
               Expanded(
                 child: _buildStatItem(
                   label: AppLocalizations.of(context).habits30DayRate,
-                  value: '$autoPercentage%',
+                  value: AppLocalizations.of(context)!.habitsScreenValue(autoPercentage),
                   icon: Icons.calendar_today,
                   accentColor: accentColor,
                   textPrimary: textPrimary,
@@ -728,7 +728,7 @@ class HabitsScreen extends ConsumerWidget {
               final index = rowIndex * columns + colIndex;
               final completed = index < paddedDays.length ? paddedDays[index] : false;
               return Padding(
-                padding: EdgeInsets.only(right: colIndex < columns - 1 ? spacing : 0),
+                padding: EdgeInsetsDirectional.only(end: colIndex < columns - 1 ? spacing : 0),
                 child: Container(
                   width: dotSize,
                   height: dotSize,
@@ -785,7 +785,7 @@ class HabitsScreen extends ConsumerWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Added "${template.name}"'),
+                      content: Text(AppLocalizations.of(context)!.habitsScreenAdded(template.name)),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );

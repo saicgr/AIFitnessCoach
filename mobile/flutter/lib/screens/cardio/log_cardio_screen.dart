@@ -320,7 +320,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              '${_selectedType.label} session logged - ${session.formattedDuration}'),
+              AppLocalizations.of(context)!.logCardioScreenSessionLogged(_selectedType.label, session.formattedDuration)),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
@@ -586,8 +586,8 @@ class _DurationInput extends StatelessWidget {
             electricBlue.withOpacity(0.15),
             electricBlue.withOpacity(0.05),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: electricBlue.withOpacity(0.3)),

@@ -170,6 +170,11 @@ class _AppRootState extends ConsumerState<AppRoot> {
     // wired here so any screen can call AppLocalizations.of(context).foo.
     final localeState = ref.watch(localeProvider);
 
+    // Phase 7.5 — keep Accept-Language header in sync with the user's locale.
+    // Reading (not watching) because acceptLanguageSyncProvider already watches
+    // localeProvider internally and updates ApiClient via a side-effect.
+    ref.watch(acceptLanguageSyncProvider);
+
     return MaterialApp.router(
       // Use a key that changes with theme/accent/gym-profile to force a clean rebuild
       // This prevents GlobalKey conflicts when theme changes
@@ -521,9 +526,8 @@ class _WorkoutMiniPlayerOverlay extends ConsumerWidget {
         // the overlay is mounted above the Navigator, so without this gate
         // the pill would float above every sheet (see #4 in plans).
         if (miniPlayerState.isMinimized && !miniPlayerState.suppressedForModal)
-          Positioned(
-            left: 16,
-            right: 16,
+          PositionedDirectional(start: 16,
+            end: 16,
             bottom: MediaQuery.paddingOf(context).bottom + 62,
             child: WorkoutMiniPlayer(
               onTap: () {

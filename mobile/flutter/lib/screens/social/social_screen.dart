@@ -279,13 +279,12 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
           ),
           // Accent dot when any auto-scroll is active
           if (anyAutoScroll)
-            Positioned(
-              top: -2,
-              right: -2,
+            PositionedDirectional(top: -2,
+              end: -2,
               child: Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(
+                      decoration: BoxDecoration(
                   color: colors.accent,
                   shape: BoxShape.circle,
                 ),

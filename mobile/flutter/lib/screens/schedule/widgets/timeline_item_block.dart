@@ -110,7 +110,7 @@ class _TimelineItemBlockState extends State<TimelineItemBlock>
       children: [
         if (isCompleted)
           Padding(
-            padding: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsetsDirectional.only(end: 4),
             child: Icon(Icons.check_circle, size: 14, color: color),
           ),
         Expanded(
@@ -147,7 +147,7 @@ class _TimelineItemBlockState extends State<TimelineItemBlock>
           children: [
             if (isCompleted)
               Padding(
-                padding: const EdgeInsets.only(right: 4),
+                padding: const EdgeInsetsDirectional.only(end: 4),
                 child: Icon(Icons.check_circle, size: 14, color: color),
               ),
             Expanded(

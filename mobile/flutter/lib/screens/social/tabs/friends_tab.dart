@@ -300,8 +300,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
                         itemBuilder: (context, index) {
                           final request = _pendingRequests[index];
                           return Padding(
-                            padding: EdgeInsets.only(
-                              right: index < _pendingRequests.length - 1 ? 12 : 0,
+                            padding: EdgeInsetsDirectional.only(end: index < _pendingRequests.length - 1 ? 12 : 0,
                             ),
                             child: PendingRequestCard(
                               request: request,

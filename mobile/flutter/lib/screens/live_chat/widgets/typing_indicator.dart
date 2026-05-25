@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Typing indicator widget showing animated dots when agent is typing
 class AgentTypingIndicator extends StatelessWidget {
@@ -29,8 +30,8 @@ class AgentTypingIndicator extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [AppColors.cyan, AppColors.teal],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
               ),
             ),
             child: Center(
@@ -61,7 +62,7 @@ class AgentTypingIndicator extends StatelessWidget {
               children: [
                 // "Agent is typing" text
                 Text(
-                  '$agentName is typing',
+                  AppLocalizations.of(context)!.typingIndicatorIsTyping(agentName),
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
@@ -177,7 +178,7 @@ class UserTypingIndicator extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '$userName is typing',
+            AppLocalizations.of(context)!.typingIndicatorIsTyping2(userName),
             style: TextStyle(
               fontSize: 12,
               color: AppColors.textMuted,
@@ -233,7 +234,7 @@ class TypingStatusBanner extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '$agentName is typing...',
+            AppLocalizations.of(context)!.typingIndicatorIsTyping3(agentName),
             style: TextStyle(
               fontSize: 13,
               color: AppColors.cyan,

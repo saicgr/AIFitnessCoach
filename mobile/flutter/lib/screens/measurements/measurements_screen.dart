@@ -187,7 +187,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                   // Header with title (offset for floating back button)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(56, 12, 16, 8),
+                      padding: const EdgeInsetsDirectional.fromSTEB(56, 12, 16, 8),
                       child: Row(
                         children: [
                           Expanded(
@@ -458,7 +458,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'HISTORY - ${_selectedType.displayName.toUpperCase()}',
+                              AppLocalizations.of(context)!.measurementsScreenHistory(_selectedType.displayName.toUpperCase()),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -468,7 +468,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                             ),
                             if (measurementsState.historyByType[_selectedType]?.isNotEmpty ?? false)
                               Text(
-                                '${measurementsState.historyByType[_selectedType]?.length ?? 0} entries',
+                                AppLocalizations.of(context)!.measurementsScreenEntries(measurementsState.historyByType[_selectedType]?.length ?? 0),
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: textMuted,
@@ -497,9 +497,8 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
             ),
 
             // Floating back button
-            Positioned(
-              top: 8,
-              left: 8,
+            PositionedDirectional(top: 8,
+              start: 8,
               child: GlassBackButton(
                 onTap: () {
                   HapticService.light();
@@ -635,7 +634,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                             Icon(Icons.straighten, size: 40, color: textMuted),
                             const SizedBox(height: 8),
                             Text(
-                              'No ${_selectedType.displayName.toLowerCase()} data yet',
+                              AppLocalizations.of(context)!.measurementsScreenNoDataYet(_selectedType.displayName.toLowerCase()),
                               style: TextStyle(color: textMuted),
                             ),
                             const SizedBox(height: 8),
@@ -946,7 +945,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('${type.displayName} recorded'),
+                    content: Text(AppLocalizations.of(context)!.measurementsScreenRecorded(type.displayName)),
                     backgroundColor: AppColors.success,
                   ),
                 );
@@ -957,7 +956,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                        "Couldn't save ${type.displayName.toLowerCase()}. Try again."),
+                        AppLocalizations.of(context)!.measurementsScreenCouldnTSaveTry(type.displayName.toLowerCase())),
                     backgroundColor: AppColors.error,
                   ),
                 );

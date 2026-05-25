@@ -124,7 +124,7 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
           content: Text(
               '${widget.exerciseName} flagged for pain — we\'ll skip it ${_windows[_windowIdx].duration == null ? 'until you re-enable it' : 'for ${_windows[_windowIdx].label}'}.'),
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.only(bottom: 90, left: 16, right: 16),
+          margin: const EdgeInsetsDirectional.only(bottom: 90, start: 16, end: 16),
         ),
       );
     } else {
@@ -144,9 +144,8 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
     final accent = AccentColorScope.of(context).getColor(isDark);
     final fg = isDark ? Colors.white : Colors.black;
     return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
+      padding: EdgeInsetsDirectional.only(start: 20,
+        end: 20,
         top: 8,
         bottom: MediaQuery.of(context).padding.bottom + 16,
       ),

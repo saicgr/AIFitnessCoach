@@ -217,7 +217,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                       const SizedBox(width: 8),
                       _InfoChip(
                         icon: Icons.schedule,
-                        label: _billingPeriod == AppLocalizations.of(context).requestRefundOneTime ? AppLocalizations.of(context).requestRefundOneTime2 : 'Per $_billingPeriod',
+                        label: _billingPeriod == AppLocalizations.of(context).requestRefundOneTime ? AppLocalizations.of(context).requestRefundOneTime2 : AppLocalizations.of(context)!.requestRefundScreenPer(_billingPeriod),
                         isDark: isDark,
                       ),
                     ],
@@ -610,7 +610,7 @@ class _RefundSuccessScreen extends StatelessWidget {
               const SizedBox(height: 12),
 
               Text(
-                'We have received your refund request for $planName',
+                AppLocalizations.of(context)!.requestRefundScreenWeHaveReceivedYour(planName),
                 style: TextStyle(
                   fontSize: 16,
                   color: textSecondary,

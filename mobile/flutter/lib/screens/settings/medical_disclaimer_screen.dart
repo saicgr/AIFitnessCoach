@@ -65,7 +65,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Please read this disclaimer carefully before using ${Branding.appName}.',
+                    AppLocalizations.of(context)!.medicalDisclaimerScreenPleaseReadThisDisclaimer(Branding.appName),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -84,7 +84,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
               icon: Icons.info_outlined,
               iconColor: AppColors.info,
               title: AppLocalizations.of(context).medicalDisclaimerNotMedicalAdvice,
-              content: '${Branding.appName} provides AI-generated fitness recommendations for informational and educational purposes only. The content provided by this app is not intended to be a substitute for professional medical advice, diagnosis, or treatment.',
+              content: AppLocalizations.of(context)!.medicalDisclaimerScreenProvidesAiGeneratedFitness(Branding.appName),
               elevated: elevated,
               cardBorder: cardBorder,
               textPrimary: textPrimary,
@@ -140,7 +140,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
               icon: Icons.warning_amber_outlined,
               iconColor: AppColors.warning,
               title: AppLocalizations.of(context).medicalDisclaimerAssumptionOfRisk,
-              content: 'Physical exercise involves inherent risks. By using ${Branding.appName}, you acknowledge that you are voluntarily participating in physical activities and assume all risks associated with such activities, including but not limited to injury, illness, or death.',
+              content: AppLocalizations.of(context)!.medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(Branding.appName),
               elevated: elevated,
               cardBorder: cardBorder,
               textPrimary: textPrimary,
@@ -152,7 +152,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             // Footer
             Center(
               child: Text(
-                'By continuing to use ${Branding.appName}, you acknowledge that you have read and understood this disclaimer.',
+                AppLocalizations.of(context)!.medicalDisclaimerScreenByContinuingToUse(Branding.appName),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,

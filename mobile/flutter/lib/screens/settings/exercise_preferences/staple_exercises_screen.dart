@@ -78,7 +78,7 @@ class StapleExercisesScreen extends ConsumerWidget {
           SnackBar(
             content: Text(
               success
-                  ? 'Added "${result.exerciseName}" as a staple'
+                  ? AppLocalizations.of(context)!.stapleExercisesScreenAddedAsAStaple(result.exerciseName)
                   : 'Failed to add exercise',
             ),
             backgroundColor: success ? AppColors.success : AppColors.error,
@@ -104,7 +104,7 @@ class StapleExercisesScreen extends ConsumerWidget {
     if (isAlreadyStaple) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('"${suggestion.name}" is already a staple'),
+          content: Text(AppLocalizations.of(context)!.stapleExercisesScreenIsAlreadyAStaple(suggestion.name)),
           backgroundColor: AppColors.cyan,
         ),
       );
@@ -137,7 +137,7 @@ class StapleExercisesScreen extends ConsumerWidget {
         SnackBar(
           content: Text(
             success
-                ? 'Added "${suggestion.name}" as a staple'
+                ? AppLocalizations.of(context)!.stapleExercisesScreenAddedAsAStaple2(suggestion.name)
                 : 'Failed to add exercise',
           ),
           backgroundColor: success ? AppColors.success : AppColors.error,
@@ -468,7 +468,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Edit "${staple.exerciseName}"',
+                    AppLocalizations.of(context)!.stapleExercisesScreenEdit(staple.exerciseName),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -496,8 +496,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                               : 'Stretch';
                       return Expanded(
                         child: Padding(
-                          padding: EdgeInsets.only(
-                            right: s != 'stretches' ? 8 : 0,
+                          padding: EdgeInsetsDirectional.only(end: s != 'stretches' ? 8 : 0,
                           ),
                           child: ChoiceChip(
                             label: Text(label),
@@ -976,7 +975,7 @@ class StapleExercisesScreen extends ConsumerWidget {
           SnackBar(
             content: Text(
               success
-                  ? 'Updated "${staple.exerciseName}"'
+                  ? AppLocalizations.of(context)!.stapleExercisesScreenUpdated(staple.exerciseName)
                   : 'Failed to update exercise',
             ),
             backgroundColor: success ? AppColors.success : AppColors.error,
@@ -1008,7 +1007,7 @@ class StapleExercisesScreen extends ConsumerWidget {
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Text(AppLocalizations.of(context).stapleExercisesRemoveStaple),
         content: Text(
-          'Remove "$exerciseName" from your staples? This exercise may be rotated out in future workouts.',
+          AppLocalizations.of(context)!.stapleExercisesScreenRemoveFromYourStaples(exerciseName),
         ),
         actions: [
           TextButton(

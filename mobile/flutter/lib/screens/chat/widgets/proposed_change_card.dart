@@ -174,7 +174,7 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
             if ((widget.reason ?? '').isNotEmpty) ...[
               const SizedBox(height: 6),
               Padding(
-                padding: const EdgeInsets.only(left: 26),
+                padding: const EdgeInsetsDirectional.only(start: 26),
                 child: Text(
                   widget.reason!,
                   style: TextStyle(

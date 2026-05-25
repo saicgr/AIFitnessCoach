@@ -113,7 +113,7 @@ class _Header extends ConsumerWidget {
     final syncState = ref.watch(healthSyncProvider);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 12, 4),
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 12, 4),
       child: Row(
         children: [
           Text(

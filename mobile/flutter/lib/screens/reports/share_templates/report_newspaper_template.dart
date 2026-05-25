@@ -123,7 +123,7 @@ class ReportNewspaperTemplate extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '— ${data.title.toUpperCase()}',
+                  AppLocalizations.of(context)!.reportNewspaperTemplateValue(data.title.toUpperCase()),
                   style: const TextStyle(
                     fontFamily: 'Times New Roman',
                     fontWeight: FontWeight.w700,

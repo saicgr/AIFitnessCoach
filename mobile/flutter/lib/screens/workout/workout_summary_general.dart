@@ -77,9 +77,8 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
+      padding: EdgeInsetsDirectional.only(start: 16,
+        end: 16,
         top: topPadding + 56,
       ),
       child: Column(
@@ -1271,7 +1270,7 @@ class _MuscleAvatar extends StatelessWidget {
         ),
         if (muscle.setCount > 0)
           Text(
-            '${muscle.setCount} sets',
+            AppLocalizations.of(context)!.workoutSummaryGeneralSets2(muscle.setCount),
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w700,
@@ -1359,7 +1358,7 @@ class _ExerciseTableSection extends StatelessWidget {
             if (libraryId != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Library ID: $libraryId',
+                AppLocalizations.of(context)!.workoutSummaryGeneralLibraryId(libraryId),
                 style: TextStyle(
                   fontSize: 12,
                   color: isDarkSheet
@@ -1399,8 +1398,8 @@ class _PersonalRecordsSection extends StatelessWidget {
             const Color(0xFFEAB308).withOpacity(isDark ? 0.10 : 0.08),
             const Color(0xFFF59E0B).withOpacity(isDark ? 0.06 : 0.04),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
@@ -1419,8 +1418,8 @@ class _PersonalRecordsSection extends StatelessWidget {
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFFEAB308), Color(0xFFF59E0B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   ),
                   shape: BoxShape.circle,
                 ),
@@ -1490,7 +1489,7 @@ class _PersonalRecordsSection extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                '${weightLbs.toStringAsFixed(1)} lb x ${pr.reps} reps',
+                                AppLocalizations.of(context)!.workoutSummaryGeneralLbXReps(weightLbs.toStringAsFixed(1), pr.reps),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -1572,8 +1571,8 @@ class _CoachReviewSection extends StatelessWidget {
             AppColors.orange.withOpacity(isDark ? 0.08 : 0.06),
             AppColors.purple.withOpacity(isDark ? 0.05 : 0.03),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.orange.withOpacity(0.25)),
@@ -1590,8 +1589,8 @@ class _CoachReviewSection extends StatelessWidget {
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppColors.orange, AppColors.purple],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   ),
                   shape: BoxShape.circle,
                 ),

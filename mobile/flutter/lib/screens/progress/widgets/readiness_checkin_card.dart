@@ -55,8 +55,8 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: hasCheckedIn
               ? [
                   Color(todayReadiness?.levelColor ?? 0xFF4CAF50)
@@ -415,7 +415,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
           ),
         ),
         title: Text(
-          'Readiness: ${result.readinessScore}',
+          AppLocalizations.of(context)!.readinessCheckinCardReadiness(result.readinessScore),
           style: TextStyle(color: levelColor),
         ),
         content: Column(

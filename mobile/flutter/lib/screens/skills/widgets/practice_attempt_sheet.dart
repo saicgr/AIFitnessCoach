@@ -175,7 +175,7 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Goal: ${widget.step.unlockCriteriaText}',
+                              AppLocalizations.of(context)!.practiceAttemptSheetGoal(widget.step.unlockCriteriaText),
                               style: TextStyle(
                                 color: textSecondary,
                                 fontSize: 13,

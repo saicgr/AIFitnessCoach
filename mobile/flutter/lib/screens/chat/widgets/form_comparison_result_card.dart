@@ -45,7 +45,7 @@ class FormComparisonResultCard extends StatelessWidget {
           _buildHeader(colors, isDark, l10n),
 
           // Score badges
-          if (videos.isNotEmpty) _buildScoreBadges(colors, isDark, videos),
+          if (videos.isNotEmpty) _buildScoreBadges(context, colors, isDark, videos),
 
           // Score trend chart (3+ videos)
           if (videos.length >= 3) _buildScoreTrendChart(colors, isDark, videos, l10n),
@@ -144,7 +144,7 @@ class FormComparisonResultCard extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreBadges(ThemeColors colors, bool isDark, List<Map<String, dynamic>> videos) {
+  Widget _buildScoreBadges(BuildContext context, ThemeColors colors, bool isDark, List<Map<String, dynamic>> videos) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 4, 14, 12),
       child: SingleChildScrollView(
@@ -158,7 +158,7 @@ class FormComparisonResultCard extends StatelessWidget {
             final scoreColor = _getScoreColor(score);
 
             return Container(
-              margin: const EdgeInsets.only(right: 10),
+              margin: const EdgeInsetsDirectional.only(end: 10),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: scoreColor.withOpacity(isDark ? 0.08 : 0.05),
@@ -215,7 +215,7 @@ class FormComparisonResultCard extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
-                        '$repCount reps',
+                        AppLocalizations.of(context)!.formComparisonResultCardReps(repCount),
                         style: TextStyle(
                           fontSize: 10,
                           color: colors.textSecondary,

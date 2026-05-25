@@ -442,8 +442,8 @@ class XPProgressCard extends ConsumerWidget {
                   color,
                   color.withValues(alpha: 0.7),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
               ),
         boxShadow: [
           BoxShadow(
@@ -501,7 +501,7 @@ class XPProgressBar extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Lvl ${userXp.currentLevel} ${xpTitle.displayName}',
+                  AppLocalizations.of(context)!.xpProgressCardLvl(userXp.currentLevel, xpTitle.displayName),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -509,7 +509,7 @@ class XPProgressBar extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  '${userXp.progressPercent}%',
+                  AppLocalizations.of(context)!.xpProgressCardValue(userXp.progressPercent),
                   style: TextStyle(
                     fontSize: 10,
                     color: color.withValues(alpha: 0.7),
@@ -530,7 +530,7 @@ class XPProgressBar extends ConsumerWidget {
                 color: color.withValues(alpha: 0.2),
               ),
               child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 widthFactor: value.clamp(0.0, 1.0),
                 child: Container(
                   decoration: BoxDecoration(
@@ -572,8 +572,8 @@ class LevelBadge extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: LinearGradient(
           colors: [color, color.withValues(alpha: 0.7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
       ),
       child: Center(

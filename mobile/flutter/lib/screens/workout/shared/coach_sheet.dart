@@ -123,7 +123,7 @@ class _CoachSheetState extends ConsumerState<CoachSheet> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 12, 4),
+            padding: const EdgeInsetsDirectional.fromSTEB(20, 12, 12, 4),
             child: Row(children: [
               const Text('🎭', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
@@ -159,7 +159,7 @@ class _CoachSheetState extends ConsumerState<CoachSheet> {
           final m = recent[i];
           final isUser = m.role == 'user';
           return Align(
-            alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: isUser ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 4),
               padding:

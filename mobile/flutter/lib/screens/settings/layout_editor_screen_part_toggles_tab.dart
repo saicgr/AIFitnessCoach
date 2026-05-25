@@ -614,7 +614,7 @@ class _DiscoverTab extends ConsumerWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '${preset.activeTiles.length} tiles',
+            AppLocalizations.of(context)!.layoutEditorScreenPartTogglesTabTiles(preset.activeTiles.length),
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
           const SizedBox(height: 2),
@@ -671,7 +671,7 @@ class _DiscoverTab extends ConsumerWidget {
                             : HomeFocus.workout;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Applied ${preset.name}'),
+                        content: Text(AppLocalizations.of(context)!.layoutEditorScreenPartTogglesTabApplied(preset.name)),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -746,7 +746,7 @@ class _DiscoverTab extends ConsumerWidget {
                             ),
                           ),
                           Text(
-                            '${preset.activeTiles.length} tiles',
+                            AppLocalizations.of(context)!.layoutEditorScreenPartTogglesTabTiles2(preset.activeTiles.length),
                             style: TextStyle(fontSize: 13, color: textMuted),
                           ),
                         ],
@@ -766,7 +766,7 @@ class _DiscoverTab extends ConsumerWidget {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Applied ${preset.name}'),
+                              content: Text(AppLocalizations.of(context)!.layoutEditorScreenPartTogglesTabApplied2(preset.name)),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );

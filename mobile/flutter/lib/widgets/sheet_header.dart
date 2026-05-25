@@ -81,7 +81,7 @@ class SheetHeader extends StatelessWidget {
 
         // Header row
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+          padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 12, 16),
           child: Row(
             children: [
               // Back button (if provided)

@@ -108,7 +108,7 @@ class _ParsedExercisesPreviewSheetState
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : Colors.white,
         title: Text(
-          'Edit ${exercise.name}',
+          AppLocalizations.of(context)!.parsedExercisesPreviewSheetEdit(exercise.name),
           style: TextStyle(
             color: isDark ? AppColors.textPrimary : Colors.black87,
           ),
@@ -207,7 +207,7 @@ class _ParsedExercisesPreviewSheetState
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Parsed ${_exercises.length} exercises',
+                  AppLocalizations.of(context)!.parsedExercisesPreviewSheetParsedExercises(_exercises.length),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -432,7 +432,7 @@ class _ExercisePreviewTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${exercise.formattedSetsReps} @ ${exercise.getFormattedWeight(useKg: useKg)}',
+                        AppLocalizations.of(context)!.parsedExercisesPreviewSheetValue(exercise.formattedSetsReps, exercise.getFormattedWeight(useKg: useKg)),
                         style: TextStyle(
                           color: textMuted,
                           fontSize: 13,

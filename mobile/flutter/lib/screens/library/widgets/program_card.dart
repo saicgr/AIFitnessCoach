@@ -156,7 +156,7 @@ class ProgramCard extends StatelessWidget {
 
                   // Arrow
                   Padding(
-                    padding: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsetsDirectional.only(end: 12),
                     child: Icon(
                       Icons.chevron_right,
                       color: textMuted,

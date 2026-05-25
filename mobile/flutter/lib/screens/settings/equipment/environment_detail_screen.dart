@@ -246,7 +246,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${item.displayName} removed'),
+        content: Text(AppLocalizations.of(context)!.environmentDetailScreenRemoved(item.displayName)),
         action: SnackBarAction(
           label: AppLocalizations.of(context).workoutUiBuildersUndo,
           onPressed: () {
@@ -304,7 +304,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
     ref.read(environmentEquipmentProvider.notifier).setEnvironment(widget.environment);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Switched to ${widget.environment.displayName}')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.environmentDetailScreenSwitchedTo(widget.environment.displayName))),
     );
 
     Navigator.pop(context);
@@ -662,9 +662,8 @@ class _EditEquipmentSheetState extends State<_EditEquipmentSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
+      padding: EdgeInsetsDirectional.only(start: 16,
+        end: 16,
         top: 16,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
@@ -685,7 +684,7 @@ class _EditEquipmentSheetState extends State<_EditEquipmentSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Edit ${widget.item.displayName}',
+              AppLocalizations.of(context)!.environmentDetailScreenEdit(widget.item.displayName),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,

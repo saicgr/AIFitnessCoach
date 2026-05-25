@@ -581,7 +581,7 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
                             .isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'With ${widget.card.celebrityName!.trim()}',
+                            AppLocalizations.of(context)!.programLibraryScreenWith(widget.card.celebrityName!.trim()),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -703,7 +703,7 @@ class _DayPreviewTile extends StatelessWidget {
             Icon(Icons.bedtime_outlined, size: 16, color: textSecondary),
             const SizedBox(width: 8),
             Text(
-              '${day.dayName} · Rest',
+              AppLocalizations.of(context)!.programLibraryScreenRest(day.dayName),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -749,7 +749,7 @@ class _DayPreviewTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${ex.sets} × ${ex.repsLabel()}',
+                    AppLocalizations.of(context)!.programLibraryScreenValue(ex.sets, ex.repsLabel()),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

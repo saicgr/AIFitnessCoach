@@ -209,7 +209,7 @@ class _GenerateWorkoutPlaceholderState
         builder: (_, __) {
           final t = _pulseController.value;
           return FractionallySizedBox(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             widthFactor: widthFactor,
             child: Container(
               height: height,
@@ -741,8 +741,8 @@ class _GenerateWorkoutPlaceholderState
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [startColor, endColor],
         ),
       ),

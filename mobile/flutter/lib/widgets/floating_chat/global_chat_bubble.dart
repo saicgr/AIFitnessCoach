@@ -413,7 +413,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
 
     if (isError) {
       return Align(
-        alignment: Alignment.centerLeft,
+        alignment: AlignmentDirectional.centerStart,
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -432,7 +432,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Padding(
-                padding: EdgeInsets.only(top: 2, right: 8),
+                padding: EdgeInsetsDirectional.only(top: 2, end: 8),
                 child: Icon(Icons.error_outline, color: Colors.red, size: 16),
               ),
               Flexible(
@@ -452,7 +452,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     }
 
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isUser ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -491,7 +491,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -9,6 +9,7 @@ import '../../../../data/providers/neat_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Focused steps card — today's step count vs a 10,000-step daily goal with a
 /// progress ring.
@@ -193,7 +194,7 @@ class _DailyStepsTileState extends ConsumerState<DailyStepsTile> {
                 const SizedBox(height: 2),
                 Text(
                   goalHit
-                      ? 'Daily goal reached 🎉 · via $sourceLabel'
+                      ? AppLocalizations.of(context)!.stepsCounterCardDailyGoalReachedVia(sourceLabel)
                       : '${_formatCount(dailyGoal - steps)} to go · via $sourceLabel',
                   style: TextStyle(
                     fontSize: 10.5,
@@ -251,7 +252,7 @@ class _DailyStepsTileState extends ConsumerState<DailyStepsTile> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Connect $sourceLabel',
+                    AppLocalizations.of(context)!.stepsCounterCardConnect(sourceLabel),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,

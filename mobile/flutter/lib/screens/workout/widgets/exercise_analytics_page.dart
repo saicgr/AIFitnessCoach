@@ -64,7 +64,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : Colors.grey.shade50,
-      appBar: PillAppBar(title: '${widget.exercise.name} Analytics'),
+      appBar: PillAppBar(title: AppLocalizations.of(context)!.exerciseAnalyticsPageAnalytics(widget.exercise.name)),
       body: Column(
         children: [
           SegmentedTabBar(
@@ -172,7 +172,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             ),
             const SizedBox(height: 12),
             Text(
-              'See how your performance on ${widget.exercise.name} compares to your friends.',
+              AppLocalizations.of(context)!.exerciseAnalyticsPageSeeHowYourPerformance(widget.exercise.name),
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -231,8 +231,8 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             AppColors.success.withOpacity(0.15),
             AppColors.success.withOpacity(0.05),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
@@ -679,7 +679,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               Expanded(
                 child: _buildStatItem(
                   label: AppLocalizations.of(context).volumeHistoryTotalVolume,
-                  value: '0 $_unit',
+                  value: AppLocalizations.of(context)!.exerciseAnalyticsPageValue(_unit),
                   color: AppColors.success,
                   isDark: isDark,
                   textPrimary: textPrimary,

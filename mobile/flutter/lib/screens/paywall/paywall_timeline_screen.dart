@@ -38,7 +38,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
           headerOverlay: Padding(
             padding: const EdgeInsets.all(16),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: GlassBackButton(
                 onTap: () => context.pop(),
               ),
@@ -101,7 +101,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'First charge: ${dateFormat.format(chargeDate)}',
+                        AppLocalizations.of(context)!.paywallTimelineScreenFirstCharge(dateFormat.format(chargeDate)),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -217,7 +217,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                   icon: Icons.credit_card_outlined,
                   iconColor: colors.textSecondary,
                   title: AppLocalizations.of(context).paywallTimelineIn7Days,
-                  subtitle: 'You\'ll be charged on ${dateFormat.format(chargeDate)}. Cancel anytime before - no questions asked.',
+                  subtitle: AppLocalizations.of(context)!.paywallTimelineScreenYouLlBeCharged(dateFormat.format(chargeDate)),
                   isFirst: false,
                   isLast: true,
                   colors: colors,

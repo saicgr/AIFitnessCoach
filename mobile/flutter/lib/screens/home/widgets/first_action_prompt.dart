@@ -97,8 +97,8 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             AppColors.onboardingAccent.withValues(alpha: 0.18),
             const Color(0xFFFF6B00).withValues(alpha: 0.10),

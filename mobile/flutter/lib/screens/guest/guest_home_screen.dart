@@ -399,7 +399,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isUser ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6),
@@ -755,7 +755,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Explore what ${Branding.appName} can do',
+                  AppLocalizations.of(context)!.guestHomeScreenExploreWhatCanDo(Branding.appName),
                   style: TextStyle(
                     fontSize: 13,
                     color: textSecondary,

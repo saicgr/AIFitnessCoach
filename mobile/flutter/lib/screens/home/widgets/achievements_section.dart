@@ -145,7 +145,7 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
                 itemBuilder: (context, index) {
                   final achievement = recentAchievements[index];
                   return Padding(
-                    padding: EdgeInsets.only(right: index < recentAchievements.length - 1 ? 8 : 0),
+                    padding: EdgeInsetsDirectional.only(end: index < recentAchievements.length - 1 ? 8 : 0),
                     child: _buildAchievementBadge(
                       name: achievement.achievement?.name ?? 'Achievement',
                       icon: _getAchievementIcon(achievement.achievement?.icon),

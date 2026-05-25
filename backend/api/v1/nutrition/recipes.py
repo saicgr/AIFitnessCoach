@@ -4,13 +4,14 @@ from datetime import datetime
 from typing import List, Optional
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Header, HTTPException, Query, Request, UploadFile
 
 from core.timezone_utils import resolve_timezone, get_user_now_iso
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
+from core.locale import parse_accept_language, overlay_recipe_i18n
 
 from models.recipe import (
     Recipe,
@@ -424,7 +425,12 @@ async def list_recipes(
 
 
 @router.get("/recipes/{recipe_id}", response_model=Recipe)
-async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
+async def get_recipe(
+    recipe_id: str,
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+    accept_language: Optional[str] = Header(default=None, alias="Accept-Language"),
+):
     """
     Get a specific recipe with all ingredients.
 
@@ -432,11 +438,16 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
       - Owner can always read.
       - is_public=TRUE: any authenticated user can read.
       - is_curated=TRUE: any authenticated user can read (Discover tab).
+
+    Accepts an Accept-Language header to return translated name, description,
+    and instructions from recipes_i18n when available. COALESCEs to English
+    ('en') when no row exists for the requested locale.
     """
     logger.info(f"Getting recipe {recipe_id} for user {user_id}")
 
     try:
         db = get_supabase_db()
+        locale = parse_accept_language(accept_language or "en")
 
         # Get recipe (select * includes is_curated, slug, source_recipe_*
         # columns added in migration 1925).
@@ -450,7 +461,10 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
         if not result.data:
             raise HTTPException(status_code=404, detail="Recipe not found")
 
-        row = result.data
+        # Overlay i18n translations (name / description / instructions) when
+        # a non-en locale is requested and a recipes_i18n row exists.
+        row = dict(result.data)
+        overlay_recipe_i18n(row, db, locale)
 
         # Check ownership, public, or curated. Curated rows may have user_id=NULL.
         if (
@@ -506,12 +520,12 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
         return Recipe(
             id=row["id"],
             user_id=row.get("user_id"),  # may be NULL for curated rows
-            name=row["name"],
-            description=row.get("description"),
+            name=row["name"],  # overlay_recipe_i18n may have updated this
+            description=row.get("description"),  # may be updated by overlay
             servings=row.get("servings", 1),
             prep_time_minutes=row.get("prep_time_minutes"),
             cook_time_minutes=row.get("cook_time_minutes"),
-            instructions=row.get("instructions"),
+            instructions=row.get("instructions"),  # may be updated by overlay
             image_url=row.get("image_url"),
             category=RecipeCategory(row["category"]) if row.get("category") else None,
             cuisine=row.get("cuisine"),

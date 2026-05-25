@@ -49,8 +49,7 @@ class SyncStatusWidget extends ConsumerWidget {
             color: statusColor,
           ),
           if (syncState.pendingCount > 0)
-            Positioned(
-              right: -2,
+            PositionedDirectional(end: -2,
               top: -2,
               child: Container(
                 padding: const EdgeInsets.all(3),

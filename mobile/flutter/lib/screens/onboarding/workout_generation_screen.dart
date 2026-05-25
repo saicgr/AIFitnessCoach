@@ -282,7 +282,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             // Back button (conditionally shown)
             if (widget.showBackButton)
               Align(
-                alignment: Alignment.topLeft,
+                alignment: AlignmentDirectional.topStart,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: GlassBackButton(

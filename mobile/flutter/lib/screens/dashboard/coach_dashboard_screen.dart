@@ -207,7 +207,7 @@ class _ComplianceRow extends StatelessWidget {
         Expanded(
           child: _RingCard(
             label: AppLocalizations.of(context).settingsNutritionSection,
-            centerText: '${nutritionPct.round()}%',
+            centerText: AppLocalizations.of(context)!.coachDashboardScreenValue(nutritionPct.round()),
             pct: nutritionPct,
             colors: colors,
           ),
@@ -691,7 +691,7 @@ class _ActiveGoals extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${pct.round()}%',
+                        AppLocalizations.of(context)!.coachDashboardScreenValue2(pct.round()),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,

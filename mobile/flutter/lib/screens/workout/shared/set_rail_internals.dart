@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import 'set_rail.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// One pill in the rail. Visual style switches on `summary.status`.
 class RailPill extends StatelessWidget {
@@ -178,7 +179,7 @@ class RailOverflowChip extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '$count more sets',
+      label: AppLocalizations.of(context)!.setRailInternalsMoreSets(count),
       child: GestureDetector(
         onTap: () {
           HapticService.instance.tick();
@@ -195,7 +196,7 @@ class RailOverflowChip extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Text(
-            '+$count',
+            AppLocalizations.of(context)!.setRailInternalsValue(count),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,

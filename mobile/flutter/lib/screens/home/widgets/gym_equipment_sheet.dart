@@ -320,7 +320,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 12, 8),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 12, 8),
             child: Row(
               children: [
                 // Back button (if provided)
@@ -351,7 +351,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                       Row(
                         children: [
                           Text(
-                            '${_selectedEquipment.length} selected',
+                            AppLocalizations.of(context)!.gymEquipmentSheetSelected(_selectedEquipment.length),
                             style: TextStyle(
                               fontSize: 13,
                               color: textMuted,
@@ -473,7 +473,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                   ),
                 ),
                 child: Text(
-                  'Save ${_selectedEquipment.length} Items',
+                  AppLocalizations.of(context)!.gymEquipmentSheetSaveItems(_selectedEquipment.length),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),

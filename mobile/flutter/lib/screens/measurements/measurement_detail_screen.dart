@@ -131,7 +131,7 @@ class _MeasurementDetailScreenState
                   // button (G7c).
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(56, 56, 16, 8),
+                      padding: const EdgeInsetsDirectional.fromSTEB(56, 56, 16, 8),
                       child: Row(
                         children: [
                           Expanded(
@@ -332,7 +332,7 @@ class _MeasurementDetailScreenState
                         ),
                       ),
                       Text(
-                        '${filteredHistory.length} entries',
+                        AppLocalizations.of(context)!.measurementDetailScreenEntries(filteredHistory.length),
                         style: TextStyle(
                           fontSize: 11,
                           color: textMuted,
@@ -361,9 +361,8 @@ class _MeasurementDetailScreenState
             ),
 
             // Floating back button
-            Positioned(
-              top: 8,
-              left: 8,
+            PositionedDirectional(top: 8,
+              start: 8,
               child: GlassBackButton(
                 onTap: () {
                   HapticService.light();
@@ -374,9 +373,8 @@ class _MeasurementDetailScreenState
             // Floating share button (mirrors the per-row share affordance on
             // Reports & Insights — exports the chart as a PNG via
             // share_report_helper.shareReportScreen).
-            Positioned(
-              top: 8,
-              right: 8,
+            PositionedDirectional(top: 8,
+              end: 8,
               child: _ShareIconButton(
                 onTap: () {
                   HapticService.light();
@@ -396,7 +394,7 @@ class _MeasurementDetailScreenState
       ),
       floatingActionButton: GlassCircleFab(
         onPressed: () => _showAddMeasurementSheet(context),
-        tooltip: 'Log ${_type.displayName}',
+        tooltip: AppLocalizations.of(context)!.measurementDetailScreenLog(_type.displayName),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
     );
   }
@@ -416,8 +414,8 @@ class _MeasurementDetailScreenState
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             cyan.withOpacity(0.15),
             cyan.withOpacity(0.05),
@@ -583,30 +581,30 @@ class _MeasurementDetailScreenState
         if (g == 'female') {
           return [
             HorizontalLine(y: 20, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
                 labelResolver: (_) => 'Athletes')),
             HorizontalLine(y: 24, color: Colors.cyan.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.cyan.withOpacity(0.7)),
                 labelResolver: (_) => 'Fitness')),
             HorizontalLine(y: 31, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
                 labelResolver: (_) => 'Obese')),
           ];
         } else {
           return [
             HorizontalLine(y: 13, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
                 labelResolver: (_) => 'Athletes')),
             HorizontalLine(y: 17, color: Colors.cyan.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.cyan.withOpacity(0.7)),
                 labelResolver: (_) => 'Fitness')),
             HorizontalLine(y: 24, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
                 labelResolver: (_) => 'Obese')),
           ];
@@ -615,22 +613,22 @@ class _MeasurementDetailScreenState
         if (g == 'female') {
           return [
             HorizontalLine(y: 80, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
                 labelResolver: (_) => 'Healthy')),
             HorizontalLine(y: 88, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
                 labelResolver: (_) => 'High Risk')),
           ];
         } else {
           return [
             HorizontalLine(y: 94, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
                 labelResolver: (_) => 'Healthy')),
             HorizontalLine(y: 102, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
-              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight,
+              label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
                 style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
                 labelResolver: (_) => 'High Risk')),
           ];
@@ -839,7 +837,7 @@ class _MeasurementDetailScreenState
                 children: [
                   // Title
                   Text(
-                    'Log ${_type.displayName}',
+                    AppLocalizations.of(context)!.measurementDetailScreenLog2(_type.displayName),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -973,7 +971,7 @@ class _MeasurementDetailScreenState
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content:
-                                          Text('${_type.displayName} recorded'),
+                                          Text(AppLocalizations.of(context)!.measurementDetailScreenRecorded(_type.displayName)),
                                       backgroundColor: AppColors.success,
                                     ),
                                   );
@@ -985,7 +983,7 @@ class _MeasurementDetailScreenState
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                          "Couldn't save ${_type.displayName.toLowerCase()}. Try again."),
+                                          AppLocalizations.of(context)!.measurementDetailScreenCouldnTSaveTry(_type.displayName.toLowerCase())),
                                       backgroundColor: AppColors.error,
                                     ),
                                   );

@@ -71,13 +71,12 @@ class StrengthTab extends ConsumerWidget {
         ),
 
         // Floating analytics buttons at bottom
-        Positioned(
-          left: 16,
-          right: 16,
+        PositionedDirectional(start: 16,
+          end: 16,
           bottom: 16,
           child: Container(
             decoration: BoxDecoration(
-              color: isDark
+               color: isDark
                   ? Colors.black.withValues(alpha: 0.85)
                   : Colors.white.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(14),

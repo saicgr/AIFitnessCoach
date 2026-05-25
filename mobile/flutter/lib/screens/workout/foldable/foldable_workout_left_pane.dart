@@ -313,8 +313,7 @@ class FoldableWorkoutLeftPane extends StatelessWidget {
     if (upcoming.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(
-        left: WorkoutDesign.paddingMedium,
+      padding: const EdgeInsetsDirectional.only(start: WorkoutDesign.paddingMedium,
         top: WorkoutDesign.paddingSmall,
         bottom: WorkoutDesign.paddingSmall,
       ),

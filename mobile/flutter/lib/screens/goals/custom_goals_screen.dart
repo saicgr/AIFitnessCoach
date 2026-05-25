@@ -316,7 +316,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
     final confirmed = await AppDialog.destructive(
       context,
       title: AppLocalizations.of(context).personalGoalsDeleteGoal,
-      message: 'Are you sure you want to delete "${goal.goalText}"?',
+      message: AppLocalizations.of(context)!.customGoalsScreenAreYouSureYou(goal.goalText),
       icon: Icons.delete_rounded,
     );
 
@@ -459,7 +459,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
               child: Row(
                 children: availableSuggestions.map((suggestion) {
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsetsDirectional.only(end: 8),
                     child: InkWell(
                       onTap: _isCreating ? null : () => _createGoal(suggestion),
                       borderRadius: BorderRadius.circular(20),

@@ -161,7 +161,7 @@ class InsightsReportCardTemplate extends StatelessWidget {
                 ),
                 _ReportRow(
                   label: AppLocalizations.of(context).statsWeeklyReportCompletion,
-                  value: '${_completionPercent.toStringAsFixed(0)}%',
+                  value: AppLocalizations.of(context)!.insightsReportCardTemplateValue(_completionPercent.toStringAsFixed(0)),
                 ),
                 _ReportRow(
                   label: 'TIME',
@@ -177,7 +177,7 @@ class InsightsReportCardTemplate extends StatelessWidget {
                 ),
                 _ReportRow(
                   label: AppLocalizations.of(context).insightsReportCardMaxStreak,
-                  value: '$maxStreak days',
+                  value: AppLocalizations.of(context)!.insightsReportCardTemplateDays(maxStreak),
                   isLast: true,
                 ),
                 const Spacer(),

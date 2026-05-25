@@ -46,7 +46,7 @@ class _GroundingPromptWidgetState extends State<GroundingPromptWidget> {
         child: Column(
           children: [
             Align(
-              alignment: Alignment.topRight,
+              alignment: AlignmentDirectional.topEnd,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextButton(

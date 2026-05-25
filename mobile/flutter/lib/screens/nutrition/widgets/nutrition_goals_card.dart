@@ -361,7 +361,7 @@ class NutritionGoalsCard extends ConsumerWidget {
                   Icon(Icons.local_fire_department, size: 14, color: green),
                   const SizedBox(width: 2),
                   Text(
-                    '${caloriesBurned.toInt()} burned',
+                    AppLocalizations.of(context)!.nutritionGoalsCardBurned(caloriesBurned.toInt()),
                     style: TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(width: 2),

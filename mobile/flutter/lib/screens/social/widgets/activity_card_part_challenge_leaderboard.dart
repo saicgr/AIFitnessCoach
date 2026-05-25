@@ -126,13 +126,13 @@ class _ChallengeLeaderboardState extends State<_ChallengeLeaderboard> {
                     // Beat indicator
                     if (didBeat)
                       Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsetsDirectional.only(end: 8),
                         child: Icon(Icons.check_circle, size: 14, color: Colors.green),
                       ),
                     // Stats
                     if (duration != null)
                       Text(
-                        '${duration}m',
+                        AppLocalizations.of(context)!.activityCardPartChallengeLeaderboardM(duration),
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textMuted,

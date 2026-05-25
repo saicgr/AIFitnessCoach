@@ -200,7 +200,7 @@ class _GlossaryScreenState extends ConsumerState<GlossaryScreen> {
             child: Row(
               children: [
                 Text(
-                  '${terms.length} terms',
+                  AppLocalizations.of(context)!.glossaryScreenTerms(terms.length),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

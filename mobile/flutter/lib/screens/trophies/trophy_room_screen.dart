@@ -360,12 +360,11 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                     onPressed: () => _showFilterSheet(context),
                   ),
                   if (filterState.hasActiveFilters)
-                    Positioned(
-                      right: 8,
+                    PositionedDirectional(end: 8,
                       top: 8,
                       child: Container(
                         width: 8,
-                        height: 8,
+                                      height: 8,
                         decoration: BoxDecoration(
                           color: accentColor,
                           shape: BoxShape.circle,
@@ -418,7 +417,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
           children: TrophyStatusFilter.values.map((filter) {
             final isSelected = _statusFilter == filter;
             return Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilterChip(
                 avatar: Icon(
                   filter.icon,

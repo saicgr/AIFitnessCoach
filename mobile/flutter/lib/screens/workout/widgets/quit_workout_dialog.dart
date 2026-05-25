@@ -98,7 +98,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                             ),
                           ),
                           Text(
-                            '$progressPercent% complete • $totalCompletedSets sets done',
+                            AppLocalizations.of(context)!.quitWorkoutDialogCompleteSetsDone(progressPercent, totalCompletedSets),
                             style: TextStyle(
                               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                               fontSize: 14,
@@ -120,7 +120,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     widthFactor: progressPercent / 100,
                     child: Container(
                       decoration: BoxDecoration(
@@ -382,7 +382,7 @@ Widget _buildCoachFeedbackView({
 
         // Coach name says
         Text(
-          '${coach.name} says:',
+          AppLocalizations.of(context)!.quitWorkoutDialogSays(coach.name),
           style: TextStyle(
             fontSize: 14,
             color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

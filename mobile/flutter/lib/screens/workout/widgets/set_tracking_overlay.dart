@@ -478,7 +478,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
       child: Container(
         width: 36,
         height: 36,
-        margin: const EdgeInsets.only(left: 8),
+        margin: const EdgeInsetsDirectional.only(start: 8),
         decoration: BoxDecoration(
           color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
           borderRadius: BorderRadius.circular(10),

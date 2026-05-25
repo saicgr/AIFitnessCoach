@@ -179,8 +179,8 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                   margin: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                       colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
                     ),
                     borderRadius: BorderRadius.circular(16),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/buddy_workout_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Phase 6 #15 — live buddy progress bar inside the active workout screen.
 ///
@@ -138,7 +139,7 @@ class _BuddyWorkoutBarState extends ConsumerState<BuddyWorkoutBar> {
                     _LiveDot(),
                     const Spacer(),
                     Text(
-                      '$_partnerSetsLogged sets',
+                      AppLocalizations.of(context)!.buddyWorkoutBarSets(_partnerSetsLogged),
                       style: TextStyle(fontSize: 11, color: textSecondary),
                     ),
                   ],

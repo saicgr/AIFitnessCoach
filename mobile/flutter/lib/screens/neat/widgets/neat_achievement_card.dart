@@ -466,8 +466,8 @@ class _AchievementIcon extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: achievement.isUnlocked
                 ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                     colors: [
                       tier.color.withOpacity(0.4),
                       tier.color.withOpacity(0.2),

@@ -405,7 +405,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
               )
             else
               Text(
-                '${exercise.duration} sec',
+                AppLocalizations.of(context)!.stretchPhaseScreenSec(exercise.duration),
                 style: TextStyle(
                   fontSize: 22,
                   color: textSecondary,
@@ -443,7 +443,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
               final stretch =
                   widget.exercises[_currentExerciseIndex + 1 + index];
               return Container(
-                margin: const EdgeInsets.only(right: 8),
+                margin: const EdgeInsetsDirectional.only(end: 8),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(

@@ -120,8 +120,8 @@ class _GlassOptionCard extends StatelessWidget {
                 gradient: isSelected
                     ? LinearGradient(
                         colors: t.cardSelectedGradient,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                       )
                     : null,
                 color: isSelected ? null : t.cardFill,
@@ -151,8 +151,8 @@ class _GlassOptionCard extends StatelessWidget {
                         colors: isSelected
                             ? t.iconContainerSelectedGradient(color)
                             : t.iconContainerGradient(color),
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
                       ),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(

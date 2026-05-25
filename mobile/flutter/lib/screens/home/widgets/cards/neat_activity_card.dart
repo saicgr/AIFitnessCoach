@@ -86,8 +86,8 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [
               _getProgressColor(progress).withValues(alpha: 0.15),
               colorScheme.surface,
@@ -220,7 +220,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                 _buildStatPill(
                   icon: Icons.timer_outlined,
                   label: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
-                  value: '${activeHours}h',
+                  value: AppLocalizations.of(context)!.neatActivityCardH(activeHours),
                   color: activeHours >= 8
                       ? Colors.green
                       : activeHours >= 5

@@ -162,8 +162,7 @@ class GymMapSection extends StatelessWidget {
 //               zoomControlsEnabled: false,
 //               onMapCreated: _ctl.complete,
 //             ),
-//           Positioned(
-//             top: 12, left: 12, right: 12,
+//           PositionedDirectional(//             top: 12, start: 12, end: 12,
 //             child: GymSearchBar(
 //               onChanged: (q) {
 //                 _query = q;
@@ -172,7 +171,7 @@ class GymMapSection extends StatelessWidget {
 //             ),
 //           ),
 //           if (_loading)
-//             const Positioned(top: 80, left: 0, right: 0,
+//             const PositionedDirectional(top: 80, start: 0, end: 0,
 //               child: Center(child: CircularProgressIndicator()),
 //             ),
 //           if (_error != null)
@@ -182,21 +181,19 @@ class GymMapSection extends StatelessWidget {
 //                 child: Text(_error!, style: TextStyle(color: accent)),
 //               ),
 //             ),
-//           Positioned(
-//             right: 12, bottom: 12,
+//           PositionedDirectional(//             end: 12, bottom: 12,
 //             child: FloatingActionButton.small(
 //               heroTag: 'gym_recenter',
-//               backgroundColor: accent,
+         backgroundColor: accent,
 //               onPressed: _recenter,
 //               child: const Icon(Icons.my_location_rounded, color: Colors.white),
 //             ),
 //           ),
 //           if (_selected != null)
-//             Positioned(
-//               left: 12, right: 12, bottom: 12,
+//             PositionedDirectional(//               start: 12, end: 12, bottom: 12,
 //               child: GymPinCard(
 //                 gym: _selected!,
-//                 onClose: () => setState(() => _selected = null),
+//        onClose: () => setState(() => _selected = null),
 //               ),
 //             ),
 //         ],

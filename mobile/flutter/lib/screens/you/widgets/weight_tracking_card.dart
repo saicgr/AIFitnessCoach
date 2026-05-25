@@ -778,7 +778,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                '${bmi.value.toStringAsFixed(1)} · ${bmi.label}',
+                AppLocalizations.of(context)!.weightTrackingCardValue(bmi.value.toStringAsFixed(1), bmi.label),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -797,7 +797,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
             height: 18,
             child: Stack(
               clipBehavior: Clip.none,
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               children: [
                 Container(
                   height: 8,
@@ -814,12 +814,11 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
                     ),
                   ),
                 ),
-                Positioned(
-                  left: thumbX,
+                PositionedDirectional(start: thumbX,
                   child: Container(
                     width: 14,
                     height: 14,
-                    decoration: BoxDecoration(
+                           decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: bmi.color,
                       border: Border.all(color: Colors.white, width: 2),

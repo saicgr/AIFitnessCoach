@@ -72,11 +72,11 @@ class _RatingPromptBannerState extends ConsumerState<RatingPromptBanner> {
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 8, 12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
             colors: [
               AppColors.orange.withValues(alpha: 0.16),
               const Color(0xFFFFB366).withValues(alpha: 0.08),

@@ -172,7 +172,7 @@ class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Set ${widget.setNumber} · ${widget.exerciseName}',
+                        AppLocalizations.of(context)!.intensityPromptSheetSet(widget.setNumber, widget.exerciseName),
                         style: TextStyle(fontSize: 12, color: textMuted),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -458,9 +458,8 @@ class _EffortTile extends StatelessWidget {
             ),
           ),
           if (showBadge)
-            Positioned(
-              top: -4,
-              right: -4,
+            PositionedDirectional(top: -4,
+              end: -4,
               child: LastUsedBadge.static(colorOverride: color, size: 14),
             ),
         ],

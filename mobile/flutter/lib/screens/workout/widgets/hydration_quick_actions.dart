@@ -50,7 +50,7 @@ class HydrationQuickActions extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         // Trailing padding ensures the Note button (rightmost) isn't hidden
         // under the floating AI Coach avatar (56px wide + 20px margin = 76px).
-        padding: const EdgeInsets.only(right: 80),
+        padding: const EdgeInsetsDirectional.only(end: 80),
         child: Row(
           children: [
             // Instructions button (info) - vibrant green

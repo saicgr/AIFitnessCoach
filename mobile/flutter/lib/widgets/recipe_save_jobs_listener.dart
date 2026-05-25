@@ -51,7 +51,7 @@ class _RecipeSaveJobsListenerState extends ConsumerState<RecipeSaveJobsListener>
   void _showScheduleToast(ScheduleSaveJob job) {
     if (job.status == ScheduleSaveStatus.error) {
       rootSnackBar(SnackBar(
-        content: Text("Couldn't schedule '${job.mealName}': ${job.error ?? 'Unknown error'}"),
+        content: Text(AppLocalizations.of(context)!.recipeSaveJobsListenerCouldnTSchedule(job.mealName, job.error ?? 'Unknown error')),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 6),
       ));
@@ -61,7 +61,7 @@ class _RecipeSaveJobsListenerState extends ConsumerState<RecipeSaveJobsListener>
       final next = job.result!.nextFireAt.toLocal();
       final fmt = DateFormat('EEE h:mm a');
       rootSnackBar(SnackBar(
-        content: Text("${job.cadenceLabel} — next at ${fmt.format(next)}"),
+        content: Text(AppLocalizations.of(context)!.recipeSaveJobsListenerNextAt(job.cadenceLabel, fmt.format(next))),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 5),
       ));
@@ -73,7 +73,7 @@ class _RecipeSaveJobsListenerState extends ConsumerState<RecipeSaveJobsListener>
     switch (job.status) {
       case RecipeSaveStatus.done:
         rootSnackBar(SnackBar(
-          content: Text("Saved '${job.mealName}' to your recipes"),
+          content: Text(AppLocalizations.of(context)!.recipeSaveJobsListenerSavedToYourRecipes(job.mealName)),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 5),
           action: job.result == null
@@ -86,7 +86,7 @@ class _RecipeSaveJobsListenerState extends ConsumerState<RecipeSaveJobsListener>
         break;
       case RecipeSaveStatus.merged:
         rootSnackBar(SnackBar(
-          content: Text("'${job.mealName}' is already in your recipes"),
+          content: Text(AppLocalizations.of(context)!.recipeSaveJobsListenerIsAlreadyInYour(job.mealName)),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 5),
           action: job.result == null
@@ -99,7 +99,7 @@ class _RecipeSaveJobsListenerState extends ConsumerState<RecipeSaveJobsListener>
         break;
       case RecipeSaveStatus.error:
         rootSnackBar(SnackBar(
-          content: Text("Couldn't save recipe: ${job.error ?? 'Unknown error'}"),
+          content: Text(AppLocalizations.of(context)!.recipeSaveJobsListenerCouldnTSaveRecipe(job.error ?? 'Unknown error')),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 6),
           action: SnackBarAction(

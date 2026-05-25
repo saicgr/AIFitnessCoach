@@ -244,7 +244,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 12, 16),
               child: Column(
                 children: [
                   Row(
@@ -596,7 +596,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${_selectedEquipment.length} Equipment Items',
+                                    AppLocalizations.of(context)!.editGymProfileSheetEquipmentItems(_selectedEquipment.length),
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,

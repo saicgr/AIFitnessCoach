@@ -148,7 +148,7 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
             child: Row(
               children: [
                 Text(
-                  'Select Friends (${_selectedMemberIds.length} selected)',
+                  AppLocalizations.of(context)!.groupCreateSheetSelectFriendsSelected(_selectedMemberIds.length),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -273,7 +273,7 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
             child: Text(
               searchQuery.isEmpty
                   ? AppLocalizations.of(context).socialScreenPartNoFriendsToAdd
-                  : 'No friends matching "$searchQuery"',
+                  : AppLocalizations.of(context)!.groupCreateSheetNoFriendsMatching(searchQuery),
               style: TextStyle(color: textMuted),
             ),
           );

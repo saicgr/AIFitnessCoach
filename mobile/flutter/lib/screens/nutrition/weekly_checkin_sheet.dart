@@ -440,7 +440,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                       border: Border.all(color: teal.withValues(alpha: 0.2)),
                     ),
                     child: Text(
-                      'Every week, ${Branding.appName} analyses your food logs to calculate how many calories your body is actually burning — then suggests smarter calorie & macro targets based on your real progress.',
+                      AppLocalizations.of(context)!.weeklyCheckinSheetEveryWeekAnalysesYour(Branding.appName),
                       style: TextStyle(
                         fontSize: 15,
                         color: textPrimary,

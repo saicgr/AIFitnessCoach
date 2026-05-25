@@ -189,7 +189,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                     _BottomIndicator(
                       icon: Icons.trending_up,
                       label: AppLocalizations.of(context).scoreBreakdownConsistency,
-                      value: '$consistencyScore%',
+                      value: AppLocalizations.of(context)!.fitnessScoreCardValue(consistencyScore),
                       isDark: isDark,
                     ),
                   ],
@@ -447,7 +447,7 @@ class _BottomIndicator extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          '$label: ',
+          AppLocalizations.of(context)!.fitnessScoreCardValue2(label),
           style: TextStyle(
             fontSize: 11,
             color: textMuted,

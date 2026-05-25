@@ -90,7 +90,7 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
           children: [
             // Edit/Pencil icon button before pills
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: GestureDetector(
                 onTap: () {
                   HapticService.selection();
@@ -127,7 +127,7 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
               final activeColor = colors.accent;
               final route = option['route'] as String?;
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsetsDirectional.only(end: 8),
                 child: _CategoryPill(
                   label: option['label'] as String,
                   icon: option['icon'] as IconData,

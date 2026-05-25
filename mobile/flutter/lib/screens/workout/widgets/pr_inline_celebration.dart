@@ -98,8 +98,8 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                   colors: isEpic
                       ? [
                           const Color(0xFFFFD700), // Gold
@@ -175,7 +175,7 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  '+${widget.pr.improvementPercent.toStringAsFixed(0)}%',
+                                  AppLocalizations.of(context)!.prInlineCelebrationValue(widget.pr.improvementPercent.toStringAsFixed(0)),
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -188,7 +188,7 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${widget.pr.exerciseName} • ${widget.pr.formattedValue}',
+                          AppLocalizations.of(context)!.prInlineCelebrationValue2(widget.pr.exerciseName, widget.pr.formattedValue),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.white.withOpacity(0.9),
@@ -290,8 +290,8 @@ class _MultiPRInlineCelebrationState extends State<MultiPRInlineCelebration> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
                 colors: [
                   Color(0xFFFF6B6B), // Red
                   Color(0xFFFFD93D), // Yellow
@@ -349,7 +349,7 @@ class _MultiPRInlineCelebrationState extends State<MultiPRInlineCelebration> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${widget.prs.length} Personal Records!',
+                        AppLocalizations.of(context)!.prInlineCelebrationPersonalRecords(widget.prs.length),
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.white.withOpacity(0.9),
@@ -360,7 +360,7 @@ class _MultiPRInlineCelebrationState extends State<MultiPRInlineCelebration> {
                       Row(
                         children: widget.prs.take(3).map((pr) {
                           return Container(
-                            margin: const EdgeInsets.only(right: 6),
+                            margin: const EdgeInsetsDirectional.only(end: 6),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 3,

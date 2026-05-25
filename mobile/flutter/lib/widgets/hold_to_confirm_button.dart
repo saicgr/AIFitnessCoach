@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/constants/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 
 /// A press-and-hold confirmation button.
 ///
@@ -137,7 +138,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     return Semantics(
       button: true,
       enabled: widget.enabled,
-      label: '${widget.label}. Press and hold to confirm.',
+      label: AppLocalizations.of(context)!.holdToConfirmButtonPressAndHoldTo(widget.label),
       child: GestureDetector(
         onTapDown: _holdStart,
         onTapUp: _holdEnd,
@@ -185,7 +186,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
               // Bright fill, clipped to progress width.
               Positioned.fill(
                 child: Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: FractionallySizedBox(
                     widthFactor: progress.clamp(0.0, 1.0),
                     child: const DecoratedBox(

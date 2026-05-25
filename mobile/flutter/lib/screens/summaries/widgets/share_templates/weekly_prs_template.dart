@@ -98,7 +98,7 @@ class WeeklyPrsTemplate extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        '+ ${prsAchieved - visiblePrs.length} more',
+                        AppLocalizations.of(context)!.weeklyPrsTemplateMore(prsAchieved - visiblePrs.length),
                         style: TextStyle(
                           color: const Color(0xFFFBBF24).withValues(alpha: 0.8),
                           fontSize: 11,
@@ -158,7 +158,7 @@ class _TrophyBadge extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                count == 1 ? AppLocalizations.of(context).weeklyPrsTemplate1Pr : '$count PRs',
+                count == 1 ? AppLocalizations.of(context).weeklyPrsTemplate1Pr : AppLocalizations.of(context)!.weeklyPrsTemplatePrs(count),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 11,

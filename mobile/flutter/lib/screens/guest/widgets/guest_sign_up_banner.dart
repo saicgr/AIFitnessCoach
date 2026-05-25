@@ -27,8 +27,8 @@ class GuestSignUpBanner extends StatelessWidget {
             AppColors.cyan.withOpacity(0.2),
             AppColors.purple.withOpacity(0.15),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(

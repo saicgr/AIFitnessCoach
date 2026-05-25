@@ -159,7 +159,7 @@ class _XPLevelBarState extends ConsumerState<XPLevelBar>
                   children: [
                     // XP Progress text
                     Text(
-                      '${userXp.xpInCurrentLevel} / ${userXp.xpToNextLevel} XP',
+                      AppLocalizations.of(context)!.xpLevelBarXp(userXp.xpInCurrentLevel, userXp.xpToNextLevel),
                       style: TextStyle(
                         fontSize: widget.compact ? 12 : 14,
                         fontWeight: FontWeight.w600,
@@ -222,8 +222,8 @@ class _XPLevelBarState extends ConsumerState<XPLevelBar>
                       color,
                       color.withValues(alpha: 0.7),
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: AlignmentDirectional.topStart,
+                    end: AlignmentDirectional.bottomEnd,
                   )
                 : null,
             color: isCurrentLevel ? null : color.withValues(alpha: 0.2),
@@ -325,7 +325,7 @@ class _XPLevelBarState extends ConsumerState<XPLevelBar>
                   Positioned.fill(
                     child: FractionallySizedBox(
                       widthFactor: progress,
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
@@ -348,7 +348,7 @@ class _XPLevelBarState extends ConsumerState<XPLevelBar>
             const SizedBox(height: 6),
             // Percentage indicator
             Text(
-              '${userXp.progressPercent}%',
+              AppLocalizations.of(context)!.xpLevelBarValue(userXp.progressPercent),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -479,8 +479,8 @@ class XPLevelBarCompact extends ConsumerWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                   colors: [
                     accentColor.withValues(alpha: 0.15),
                     accentColor.withValues(alpha: 0.05),
@@ -501,7 +501,7 @@ class XPLevelBarCompact extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      '$progressPercent%',
+                      AppLocalizations.of(context)!.xpLevelBarValue2(progressPercent),
                       style: TextStyle(
                         fontSize: 7,
                         fontWeight: FontWeight.w600,

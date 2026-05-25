@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/config/social_proof_config.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Standard gold used for rating stars across app stores.
 const Color _kStarGold = Color(0xFFF5A623);
@@ -43,11 +44,11 @@ class PaywallCredibilityStrip extends StatelessWidget {
 
     // Tier 1 — real social proof, rendered ONLY when it genuinely exists.
     if (SocialProofConfig.hasRating) {
-      children.add(_ratingRow());
+      children.add(_ratingRow(context));
     }
     if (!compact && SocialProofConfig.hasUserCount) {
       if (children.isNotEmpty) children.add(const SizedBox(height: 8));
-      children.add(_userCountRow());
+      children.add(_userCountRow(context));
     }
 
     // Tier 2 — no-traction credibility chips. Always shown (the treatment).
@@ -66,7 +67,7 @@ class PaywallCredibilityStrip extends StatelessWidget {
     );
   }
 
-  Widget _ratingRow() {
+  Widget _ratingRow(BuildContext context) {
     final rating = SocialProofConfig.storeRating!;
     final count = SocialProofConfig.ratingCount!;
     return Row(
@@ -84,7 +85,7 @@ class PaywallCredibilityStrip extends StatelessWidget {
         const SizedBox(width: 6),
         Flexible(
           child: Text(
-            '${rating.toStringAsFixed(1)} · $count ratings',
+            AppLocalizations.of(context)!.credibilityStripRatings(rating.toStringAsFixed(1), count),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -96,7 +97,7 @@ class PaywallCredibilityStrip extends StatelessWidget {
     );
   }
 
-  Widget _userCountRow() {
+  Widget _userCountRow(BuildContext context) {
     final formatted = SocialProofConfig.formattedUserCount;
     if (formatted == null) return const SizedBox.shrink();
     return Row(
@@ -107,7 +108,7 @@ class PaywallCredibilityStrip extends StatelessWidget {
         const SizedBox(width: 6),
         Flexible(
           child: Text(
-            'Join $formatted+ people training with Zealova',
+            AppLocalizations.of(context)!.credibilityStripJoinPeopleTrainingWith(formatted),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -183,7 +184,7 @@ class PaywallCredibilityStrip extends StatelessWidget {
                 const SizedBox(height: 6),
                 Expanded(
                   child: Text(
-                    '"${t.quote}"',
+                    AppLocalizations.of(context)!.credibilityStripValue(t.quote),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

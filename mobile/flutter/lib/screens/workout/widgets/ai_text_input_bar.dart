@@ -178,9 +178,9 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
     }
 
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Padding(
-        padding: const EdgeInsets.only(left: 4),
+        padding: const EdgeInsetsDirectional.only(start: 4),
         child: Semantics(
           label: AppLocalizations.of(context).aiTextInputOpenAiExerciseInput,
           button: true,
@@ -689,7 +689,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
 
     // Expanded header with close button
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 8, 0),
       child: Row(
         children: [
           Icon(

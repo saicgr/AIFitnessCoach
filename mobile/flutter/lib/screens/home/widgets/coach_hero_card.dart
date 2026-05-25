@@ -119,8 +119,8 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: c.cardBorder),
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: [
                 c.accent.withValues(alpha: 0.10),
                 c.accent.withValues(alpha: 0.03),
@@ -129,7 +129,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           ),
           // Slightly amplified top padding when expanded so the brief gets
           // breathing room without redesigning the collapsed footprint.
-          padding: EdgeInsets.fromLTRB(16, isExpanded ? 18 : 14, 14, 14),
+          padding: EdgeInsetsDirectional.fromSTEB(16, isExpanded ? 18 : 14, 14, 14),
           child: insightAsync.when(
             data: (insight) =>
                 _content(c, insight, isExpanded: isExpanded, now: now),
@@ -330,7 +330,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 6, right: 8, left: 2),
+          padding: const EdgeInsetsDirectional.only(top: 6, end: 8, start: 2),
           child: Container(
             width: 4,
             height: 4,

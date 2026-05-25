@@ -171,8 +171,7 @@ class _StapleExerciseTile extends ConsumerWidget {
                 ),
               ),
               // Reason badge
-              Positioned(
-                right: -3,
+              PositionedDirectional(end: -3,
                 top: -3,
                 child: Container(
                   padding: const EdgeInsets.all(3),
@@ -202,7 +201,7 @@ class _StapleExerciseTile extends ConsumerWidget {
               children: [
                 if (staple.section != 'main')
                   Padding(
-                    padding: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsetsDirectional.only(end: 6),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(

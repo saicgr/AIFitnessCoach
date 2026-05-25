@@ -202,7 +202,7 @@ class CycleTrackerWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(AppLocalizations.of(context).cycleTrackerDay1, style: Theme.of(context).textTheme.labelSmall),
-            Text('Day $cycleLength', style: Theme.of(context).textTheme.labelSmall),
+            Text(AppLocalizations.of(context)!.cycleTrackerWidgetDay(cycleLength), style: Theme.of(context).textTheme.labelSmall),
           ],
         ),
       ],
@@ -254,7 +254,7 @@ class CycleTrackerWidget extends StatelessWidget {
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
           Text(
-            '$label: ',
+            AppLocalizations.of(context)!.cycleTrackerWidgetValue(label),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
             ),

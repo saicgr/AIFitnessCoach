@@ -70,7 +70,7 @@ class _ProgressShareGalleryScreenState extends State<ProgressShareGalleryScreen>
           child: Row(children: [
             Icon(Icons.auto_awesome, size: 16, color: colorScheme.primary),
             const SizedBox(width: 6),
-            Text('${ProgressTemplateKind.values.length} viral formats', style: TextStyle(
+            Text(AppLocalizations.of(context)!.progressShareGalleryScreenViralFormats(ProgressTemplateKind.values.length), style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface,
             )),
             const Spacer(),

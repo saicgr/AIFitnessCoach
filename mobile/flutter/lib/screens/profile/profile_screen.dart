@@ -132,7 +132,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   // --- Section label (matches settings screen pattern) ---
   Widget _buildSectionLabel(String label, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4),
+      padding: const EdgeInsetsDirectional.only(start: 4),
       child: Text(
         label,
         style: TextStyle(
@@ -153,7 +153,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     const sectionColor = AppColors.info;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 4),
+      padding: const EdgeInsetsDirectional.only(start: 4),
       child: Row(
         children: [
           Text(
@@ -313,7 +313,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   if (_bioLoaded) ...[
                     const SizedBox(height: 10),
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: Text(
                         _bio != null && _bio!.isNotEmpty
                             ? _bio!
@@ -337,13 +337,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
 
             // Edit pencil icon in top-right corner
-            Positioned(
-              top: 12,
-              right: 12,
+            PositionedDirectional(top: 12,
+              end: 12,
               child: Container(
                 width: 28,
                 height: 28,
-                decoration: BoxDecoration(
+                      decoration: BoxDecoration(
                   color: textMuted.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),

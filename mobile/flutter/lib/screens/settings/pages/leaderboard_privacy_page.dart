@@ -42,7 +42,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
               // Brief framing copy — explains the umbrella setting so the
               // toggles below feel coherent rather than disconnected switches.
               Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 14, right: 4),
+                padding: const EdgeInsetsDirectional.only(start: 4, bottom: 14, end: 4),
                 child: Text(
                   'Control who sees you on the Discover leaderboard and how '
                   'your identity appears to other users.',

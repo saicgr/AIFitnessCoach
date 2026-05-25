@@ -246,11 +246,11 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
           Expanded(
             flex: 3,
             child: Padding(
-              padding: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsetsDirectional.only(start: 8),
               child: SizedBox(
                 height: 34, // Match SET badge height (32) + top padding (2)
                 child: Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: Text(
                     '—',
                     style: TextStyle(

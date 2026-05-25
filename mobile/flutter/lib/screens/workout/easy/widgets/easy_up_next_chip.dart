@@ -43,9 +43,8 @@ class EasyUpNextChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           onTap: enabled ? onSkipToNext : null,
           child: Container(
-            padding: EdgeInsets.only(
-              left: hasImage ? 4 : 12,
-              right: 12,
+            padding: EdgeInsetsDirectional.only(start: hasImage ? 4 : 12,
+              end: 12,
               top: 0,
               bottom: 0,
             ),
@@ -91,7 +90,7 @@ class EasyUpNextChip extends StatelessWidget {
                 const SizedBox(width: 10),
               ] else
                 Padding(
-                  padding: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsetsDirectional.only(end: 6),
                   child: Icon(
                     hasNext
                         ? Icons.arrow_forward_rounded

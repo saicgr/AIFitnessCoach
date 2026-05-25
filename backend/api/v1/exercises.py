@@ -16,11 +16,12 @@ CUSTOM EXERCISE ENDPOINTS:
 - DELETE /api/v1/exercises/custom/{user_id}/{exercise_id} - Delete user's custom exercise
 """
 from core.db import get_supabase_db
+from core.locale import parse_accept_language, overlay_exercise_i18n
 
 from .exercises_models import *  # noqa: F401, F403
 from .exercises_endpoints import router as _endpoints_router
 
-from fastapi import APIRouter, HTTPException, Query, Depends, Response
+from fastapi import APIRouter, Header, HTTPException, Query, Depends, Response
 from typing import List, Optional
 
 # Cache-Control header applied to read-only library endpoints. The exercise
@@ -270,15 +271,24 @@ async def get_rag_stats(current_user: dict = Depends(get_current_user)):
 
 
 @router.get("/library/by-name/{name}")
-async def get_exercise_from_library_by_name(name: str, current_user: dict = Depends(get_current_user)):
+async def get_exercise_from_library_by_name(
+    name: str,
+    current_user: dict = Depends(get_current_user),
+    accept_language: Optional[str] = Header(default=None, alias="Accept-Language"),
+):
     """
     Get full exercise details from exercise_library by name (case-insensitive fuzzy match).
 
     This is useful for fetching full instructions for exercises that may have
     been stored with truncated notes.
+
+    Accepts an Accept-Language header to return translated name + instructions
+    from exercise_library_i18n when available. COALESCEs to English ('en') when
+    no row exists for the requested locale.
     """
     try:
         db = get_supabase_db()
+        locale = parse_accept_language(accept_language or "en")
 
         # First try exact match (case-insensitive)
         # Note: exercise_library uses 'exercise_name' column, not 'name'
@@ -291,14 +301,18 @@ async def get_exercise_from_library_by_name(name: str, current_user: dict = Depe
         if not result.data:
             raise HTTPException(status_code=404, detail="Exercise not found in library")
 
-        exercise = result.data[0]
-
         # Map exercise_library columns to expected response format
         # Columns: id, exercise_name, body_part, equipment, target_muscle, secondary_muscles,
         #          instructions, difficulty_level, category, gif_url, video_s3_path, raw_data, created_at
+        exercise = dict(result.data[0])
+
+        # Apply i18n overlay: overlays name/instructions from exercise_library_i18n
+        # when a non-en locale is requested and a row exists. COALESCEs to en.
+        overlay_exercise_i18n(exercise, db, locale)
+
         return {
             "id": exercise.get("id"),
-            "name": exercise.get("exercise_name"),
+            "name": exercise.get("exercise_name") or exercise.get("name"),
             "instructions": exercise.get("instructions"),
             "muscle_group": exercise.get("target_muscle") or exercise.get("body_part"),
             "equipment": exercise.get("equipment"),

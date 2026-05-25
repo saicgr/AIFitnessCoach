@@ -118,8 +118,8 @@ class ProgramCarouselCard extends StatelessWidget {
                   height: isFeatured ? 110 : 85,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                       colors: [
                         categoryColor.withOpacity(0.3),
                         categoryColor.withOpacity(0.1),

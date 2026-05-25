@@ -227,7 +227,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
               children: List.generate(
                 3,
                 (i) => Padding(
-                  padding: EdgeInsets.only(right: i == 2 ? 0 : 8),
+                  padding: EdgeInsetsDirectional.only(end: i == 2 ? 0 : 8),
                   child: const SkeletonBox(width: 72, height: 32, radius: 16),
                 ),
               ),
@@ -338,9 +338,9 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 FastingImpactCard(
                   title: AppLocalizations.of(context).fastingImpactWeightImpact,
                   fastingValue:
-                      '${data.comparison.weightLossFastingDays?.toStringAsFixed(2) ?? "N/A"} kg',
+                      AppLocalizations.of(context)!.fastingImpactScreenKg(data.comparison.weightLossFastingDays?.toStringAsFixed(2) ?? "N/A"),
                   nonFastingValue:
-                      '${data.comparison.weightLossNonFastingDays?.toStringAsFixed(2) ?? "N/A"} kg',
+                      AppLocalizations.of(context)!.fastingImpactScreenKg2(data.comparison.weightLossNonFastingDays?.toStringAsFixed(2) ?? "N/A"),
                   fastingLabel: 'Avg daily change on fasting days',
                   nonFastingLabel: 'Avg daily change on non-fasting days',
                   correlation: data.weightCorrelation,
@@ -353,9 +353,9 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 FastingImpactCard(
                   title: AppLocalizations.of(context).fastingImpactGoalAchievement,
                   fastingValue:
-                      '${(data.comparison.goalCompletionRateFasting * 100).round()}%',
+                      AppLocalizations.of(context)!.fastingImpactScreenValue((data.comparison.goalCompletionRateFasting * 100).round()),
                   nonFastingValue:
-                      '${(data.comparison.goalCompletionRateNonFasting * 100).round()}%',
+                      AppLocalizations.of(context)!.fastingImpactScreenValue2((data.comparison.goalCompletionRateNonFasting * 100).round()),
                   fastingLabel: 'Completion rate on fasting days',
                   nonFastingLabel: 'Completion rate on non-fasting days',
                   correlation: data.goalCorrelation,
@@ -369,9 +369,9 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                   FastingImpactCard(
                     title: AppLocalizations.of(context).fastingImpactWorkoutPerformance,
                     fastingValue:
-                        '${((data.comparison.avgWorkoutPerformanceFasting ?? 0) * 100).round()}%',
+                        AppLocalizations.of(context)!.fastingImpactScreenValue3(((data.comparison.avgWorkoutPerformanceFasting ?? 0) * 100).round()),
                     nonFastingValue:
-                        '${((data.comparison.avgWorkoutPerformanceNonFasting ?? 0) * 100).round()}%',
+                        AppLocalizations.of(context)!.fastingImpactScreenValue4(((data.comparison.avgWorkoutPerformanceNonFasting ?? 0) * 100).round()),
                     fastingLabel: 'Avg performance on fasting days',
                     nonFastingLabel: 'Avg performance on non-fasting days',
                     correlation: data.workoutCorrelation,
@@ -532,8 +532,8 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             purple.withOpacity(0.15),
             purple.withOpacity(0.05),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(

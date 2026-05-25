@@ -29,7 +29,7 @@ extension __DerivedMetricDetailScreenStateExt on _DerivedMetricDetailScreenState
       dashArray: [5, 5],
       label: HorizontalLineLabel(
         show: true,
-        alignment: Alignment.topRight,
+        alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
         style: TextStyle(fontSize: 9, color: color.withOpacity(0.7)),
         labelResolver: (_) => label,
       ),

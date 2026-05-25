@@ -31,7 +31,7 @@ class DialogBulletPoint extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            margin: const EdgeInsets.only(top: 6, right: 10),
+            margin: const EdgeInsetsDirectional.only(top: 6, end: 10),
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,

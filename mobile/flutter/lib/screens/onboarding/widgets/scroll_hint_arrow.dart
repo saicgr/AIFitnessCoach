@@ -95,14 +95,13 @@ class _ScrollHintArrowState extends State<ScrollHintArrow> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Positioned(
-      bottom: 16,
-      left: 0,
-      right: 0,
+    return PositionedDirectional(bottom: 16,
+      start: 0,
+      end: 0,
       child: IgnorePointer(
         child: Center(
           child: Container(
-            padding: const EdgeInsets.all(8),
+         padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: (isDark ? AppColors.elevated : Colors.white).withOpacity(0.9),
               shape: BoxShape.circle,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Profile header widget displaying user avatar, name, username, and email.
 class ProfileHeader extends ConsumerWidget {
@@ -54,8 +55,8 @@ class ProfileHeader extends ConsumerWidget {
                 colors.accent.withOpacity(0.7),
                 colors.accent,
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
             ),
             shape: BoxShape.circle,
           ),
@@ -79,8 +80,7 @@ class ProfileHeader extends ConsumerWidget {
         ),
         // Edit button overlay
         if (onEditTap != null)
-          Positioned(
-            right: 0,
+          PositionedDirectional(end: 0,
             bottom: 0,
             child: GestureDetector(
               onTap: () {
@@ -128,7 +128,7 @@ class ProfileHeader extends ConsumerWidget {
 
   Widget _buildUsername(BuildContext context, ThemeColors colors) {
     return Text(
-      '@$username',
+      AppLocalizations.of(context)!.profileHeaderValue(username ?? ''),
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: colors.accent,
             fontWeight: FontWeight.w500,

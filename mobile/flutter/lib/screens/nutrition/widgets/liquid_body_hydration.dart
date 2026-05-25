@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:muscle_selector/muscle_selector.dart';
 import 'package:muscle_selector/src/parser.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Animated anatomical muscle body with liquid water fill effect and wave animation.
 /// Uses the muscle_selector package SVG for a realistic body outline.
@@ -160,7 +161,7 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '$percentage%',
+                      AppLocalizations.of(context)!.liquidBodyHydrationValue(percentage),
                       style: TextStyle(
                         fontSize: widget.width * 0.18,
                         fontWeight: FontWeight.bold,

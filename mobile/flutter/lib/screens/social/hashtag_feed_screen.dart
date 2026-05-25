@@ -164,7 +164,7 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(title: '#${widget.hashtagName}'),
+      appBar: PillAppBar(title: AppLocalizations.of(context)!.hashtagFeedScreenValue(widget.hashtagName)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null && _posts.isEmpty
@@ -206,7 +206,7 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No posts with #${widget.hashtagName}',
+                            AppLocalizations.of(context)!.hashtagFeedScreenNoPostsWith(widget.hashtagName),
                             style: TextStyle(
                               fontSize: 16,
                               color: AppColors.textMuted,

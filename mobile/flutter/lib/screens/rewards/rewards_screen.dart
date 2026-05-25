@@ -316,8 +316,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                         const Color(0xFFFFD700),
                         const Color(0xFFFFD700).withValues(alpha: 0.7),
                       ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -353,7 +353,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${xpState.totalXp} Total XP',
+                        AppLocalizations.of(context)!.rewardsScreenTotalXp(xpState.totalXp),
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 14,

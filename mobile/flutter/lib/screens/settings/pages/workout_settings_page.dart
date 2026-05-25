@@ -234,7 +234,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                   SettingItemData(
                     icon: Icons.tune,
                     title: AppLocalizations.of(context).workoutSettingsWeightIncrements,
-                    subtitle: 'Step size: ${ref.watch(weightIncrementsProvider).unit.toUpperCase()} · Tap to customize',
+                    subtitle: AppLocalizations.of(context)!.workoutSettingsPageStepSizeTapTo(ref.watch(weightIncrementsProvider).unit.toUpperCase()),
                     onTap: () => showWeightIncrementsSheet(context),
                     iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                   ),

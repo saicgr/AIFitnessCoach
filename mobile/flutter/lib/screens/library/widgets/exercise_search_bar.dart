@@ -146,7 +146,7 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
         ),
         if (equipmentMatch != null)
           Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
+            padding: const EdgeInsetsDirectional.only(top: 6, start: 4),
             child: Row(
               children: [
                 Icon(Icons.fitness_center_rounded, size: 14, color: cyan),

@@ -104,7 +104,7 @@ class _DerivedMetricDetailScreenState
                   // Header with title (offset for floating back button)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(56, 12, 16, 8),
+                      padding: const EdgeInsetsDirectional.fromSTEB(56, 12, 16, 8),
                       child: Text(
                         _getDisplayName(_type),
                         style: Theme.of(context)
@@ -256,7 +256,7 @@ class _DerivedMetricDetailScreenState
                             ),
                           ),
                           Text(
-                            '${filteredHistory.length} entries',
+                            AppLocalizations.of(context)!.derivedMetricDetailScreenEntries(filteredHistory.length),
                             style: TextStyle(
                               fontSize: 11,
                               color: textMuted,
@@ -283,9 +283,8 @@ class _DerivedMetricDetailScreenState
             ),
 
             // Floating back button
-            Positioned(
-              top: 8,
-              left: 8,
+            PositionedDirectional(top: 8,
+              start: 8,
               child: GlassBackButton(
                 onTap: () {
                   HapticService.light();
@@ -599,7 +598,7 @@ class _DerivedMetricDetailScreenState
           label: cat.label,
           color: cat.color,
           info:
-              'Arm symmetry compares your left and right bicep measurements. ${cat.info}',
+              AppLocalizations.of(context)!.derivedMetricDetailScreenArmSymmetryComparesYour(cat.info),
         );
 
       case DerivedMetricType.legSymmetry:
@@ -618,7 +617,7 @@ class _DerivedMetricDetailScreenState
           label: cat.label,
           color: cat.color,
           info:
-              'Leg symmetry compares your left and right thigh measurements. ${cat.info}',
+              AppLocalizations.of(context)!.derivedMetricDetailScreenLegSymmetryComparesYour(cat.info),
         );
     }
   }

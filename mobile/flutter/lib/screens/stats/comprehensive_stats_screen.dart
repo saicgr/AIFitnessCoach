@@ -198,7 +198,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
               final fg = Color.lerp(mutedText, Colors.white, progress)!;
 
               return Padding(
-                padding: EdgeInsets.only(right: i < _tabLabels.length - 1 ? 8 : 0),
+                padding: EdgeInsetsDirectional.only(end: i < _tabLabels.length - 1 ? 8 : 0),
                 child: GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();

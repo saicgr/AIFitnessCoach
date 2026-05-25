@@ -532,7 +532,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                 break;
             }
             return Padding(
-              padding: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsetsDirectional.only(end: 6),
               child: GestureDetector(
                 onTap: () {
                   HapticService.light();
@@ -890,7 +890,7 @@ class _ExercisePRCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '+${pr.improvementPercent!.toStringAsFixed(1)}%',
+                      AppLocalizations.of(context)!.personalRecordsScreenValue(pr.improvementPercent!.toStringAsFixed(1)),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

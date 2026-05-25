@@ -178,9 +178,8 @@ class _InlineExerciseInfoState extends ConsumerState<InlineExerciseInfo> {
           AnimatedCrossFade(
             firstChild: const SizedBox(width: double.infinity),
             secondChild: Padding(
-              padding: const EdgeInsets.only(
-                left: 12,
-                right: 12,
+              padding: const EdgeInsetsDirectional.only(start: 12,
+                end: 12,
                 bottom: 12,
               ),
               child: child,

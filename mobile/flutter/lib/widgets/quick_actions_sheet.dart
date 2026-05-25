@@ -130,7 +130,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
               ),
               backgroundColor: const Color(0xFF2D2D2D),
               behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+              margin: const EdgeInsetsDirectional.only(bottom: 80, start: 16, end: 16),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -139,7 +139,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
             SnackBar(
               content: Text(AppLocalizations.of(context).quickActionsRowFailedToLogWater),
               behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(bottom: 80, left: 16, right: 16),
+              margin: EdgeInsetsDirectional.only(bottom: 80, start: 16, end: 16),
             ),
           );
         }
@@ -151,7 +151,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           SnackBar(
             content: Text(AppLocalizations.of(context).quickActionsRowFailedToLogWater),
             behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.only(bottom: 80, left: 16, right: 16),
+            margin: EdgeInsetsDirectional.only(bottom: 80, start: 16, end: 16),
           ),
         );
       }
@@ -575,7 +575,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 8, 0),
               child: Row(
                 children: [
                   Expanded(
@@ -707,7 +707,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           Container(
                             width: 24,
                             height: 24,
-                            margin: const EdgeInsets.only(right: 12),
+                            margin: const EdgeInsetsDirectional.only(end: 12),
                             decoration: BoxDecoration(
                               color: action.color,
                               borderRadius: BorderRadius.circular(12),

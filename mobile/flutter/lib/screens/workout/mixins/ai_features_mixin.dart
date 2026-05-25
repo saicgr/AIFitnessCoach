@@ -22,6 +22,7 @@ import '../widgets/set_row.dart'; // For WeightIncrements
 import '../../ai_settings/ai_settings_screen.dart';
 import '../../../core/providers/weight_increments_provider.dart';
 import '../widgets/barbell_plate_indicator.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Mixin providing AI-powered features for the active workout screen:
 /// weight suggestions, fatigue detection, media fetching, coach tips.
@@ -361,7 +362,7 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$message: ${displayCurrent.toStringAsFixed(1)} → ${snappedDisplay.toStringAsFixed(1)} $unit',
+            AppLocalizations.of(context)!.aiFeaturesMixinValue(message, displayCurrent.toStringAsFixed(1), snappedDisplay.toStringAsFixed(1), unit),
           ),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,

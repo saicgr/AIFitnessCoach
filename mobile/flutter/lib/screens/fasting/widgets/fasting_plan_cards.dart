@@ -210,8 +210,8 @@ class _FastingPlanCardState extends State<FastingPlanCard> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
               colors: [
                 accent.withValues(alpha: colors.isDark ? 0.22 : 0.14),
                 accent.withValues(alpha: colors.isDark ? 0.07 : 0.04),
@@ -336,7 +336,7 @@ class _DifficultyDots extends StatelessWidget {
       children: List.generate(5, (i) {
         final filled = i < difficulty;
         return Padding(
-          padding: const EdgeInsets.only(right: 2),
+          padding: const EdgeInsetsDirectional.only(end: 2),
           child: Icon(
             Icons.bolt_rounded,
             size: 12,

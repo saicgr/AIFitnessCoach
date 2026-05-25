@@ -388,8 +388,7 @@ class _FoldableWorkoutLayoutState
               ),
 
               // ── Samsung-style swap button on hinge ──
-              Positioned(
-                left: hingeLeft + (hingeWidth / 2) - 20,
+              PositionedDirectional(start: hingeLeft + (hingeWidth / 2) - 20,
                 top: 0,
                 bottom: 0,
                 child: Center(

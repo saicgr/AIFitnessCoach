@@ -245,7 +245,7 @@ class _ExerciseDetailsSheetContentState
                                 !exercise.equipment!.toLowerCase().contains('body weight') &&
                                 exercise.equipment!.toLowerCase() != 'none')
                               Padding(
-                                padding: const EdgeInsets.only(left: 40, top: 2, bottom: 4),
+                                padding: const EdgeInsetsDirectional.only(start: 40, top: 2, bottom: 4),
                                 child: GestureDetector(
                                   onTap: () {
                                     Navigator.pop(context);

@@ -56,8 +56,8 @@ class CosmeticBadgePill extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [primary, secondary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(height),
         boxShadow: [

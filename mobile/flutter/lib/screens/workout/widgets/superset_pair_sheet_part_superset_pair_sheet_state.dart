@@ -749,7 +749,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${suggestion.exercise1.name} + ${suggestion.exercise2.name}',
+                            AppLocalizations.of(context)!.supersetPairSheetPartSupersetPairSheetStateValue(suggestion.exercise1.name, suggestion.exercise2.name),
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: textPrimary,

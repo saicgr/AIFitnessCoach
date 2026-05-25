@@ -61167,6 +61167,13227 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Skip'**
   String get workoutBottomBarSkip;
+
+  /// No description provided for @actionEquipmentCalibratedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Equipment calibrated'**
+  String get actionEquipmentCalibratedSummary;
+
+  /// No description provided for @actionRegenerateRequestedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout regeneration requested'**
+  String get actionRegenerateRequestedSummary;
+
+  /// No description provided for @actionDeloadStartedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Deload started: {reason}'**
+  String actionDeloadStartedSummary(String reason);
+
+  /// No description provided for @actionWorkoutAddedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout added'**
+  String get actionWorkoutAddedSummary;
+
+  /// No description provided for @actionWorkoutRemovedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout removed'**
+  String get actionWorkoutRemovedSummary;
+
+  /// No description provided for @actionExerciseSwappedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{oldExercise} swapped for {newExercise}'**
+  String actionExerciseSwappedSummary(String oldExercise, String newExercise);
+
+  /// No description provided for @actionFoodLoggedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Food logged'**
+  String get actionFoodLoggedSummary;
+
+  /// No description provided for @actionMealScannedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{itemCount} items scanned'**
+  String actionMealScannedSummary(int itemCount);
+
+  /// No description provided for @actionMenuScannedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{itemCount} menu items analyzed'**
+  String actionMenuScannedSummary(int itemCount);
+
+  /// No description provided for @actionSettingsChangedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{settingName} updated'**
+  String actionSettingsChangedSummary(String settingName);
+
+  /// No description provided for @actionDarkModeToggledSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark mode toggled'**
+  String get actionDarkModeToggledSummary;
+
+  /// No description provided for @actionCalibrationSavedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Calibration saved'**
+  String get actionCalibrationSavedSummary;
+
+  /// No description provided for @actionHydrationLoggedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} logged'**
+  String actionHydrationLoggedSummary(String amount);
+
+  /// No description provided for @fastingProtocol_16_8_name.
+  ///
+  /// In en, this message translates to:
+  /// **'16:8'**
+  String get fastingProtocol_16_8_name;
+
+  /// No description provided for @fastingProtocol_16_8_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip breakfast, eat between noon and 8 PM'**
+  String get fastingProtocol_16_8_desc;
+
+  /// No description provided for @fastingProtocol_18_6_name.
+  ///
+  /// In en, this message translates to:
+  /// **'18:6'**
+  String get fastingProtocol_18_6_name;
+
+  /// No description provided for @fastingProtocol_18_6_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tighter 6-hour eating window'**
+  String get fastingProtocol_18_6_desc;
+
+  /// No description provided for @fastingProtocol_20_4_name.
+  ///
+  /// In en, this message translates to:
+  /// **'20:4'**
+  String get fastingProtocol_20_4_name;
+
+  /// No description provided for @fastingProtocol_20_4_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Warrior diet — one main meal'**
+  String get fastingProtocol_20_4_desc;
+
+  /// No description provided for @fastingProtocol_omad_name.
+  ///
+  /// In en, this message translates to:
+  /// **'OMAD'**
+  String get fastingProtocol_omad_name;
+
+  /// No description provided for @fastingProtocol_omad_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'One Meal A Day — all nutrition in a single sitting'**
+  String get fastingProtocol_omad_desc;
+
+  /// No description provided for @fastingProtocol_adf_name.
+  ///
+  /// In en, this message translates to:
+  /// **'ADF'**
+  String get fastingProtocol_adf_name;
+
+  /// No description provided for @fastingProtocol_adf_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Alternate Day Fasting — normal day then very-low-cal day'**
+  String get fastingProtocol_adf_desc;
+
+  /// No description provided for @fastingProtocol_5_2_name.
+  ///
+  /// In en, this message translates to:
+  /// **'5:2'**
+  String get fastingProtocol_5_2_name;
+
+  /// No description provided for @fastingProtocol_5_2_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'5 days normal eating, 2 days 500-600 cal'**
+  String get fastingProtocol_5_2_desc;
+
+  /// No description provided for @fastingProtocol_36h_name.
+  ///
+  /// In en, this message translates to:
+  /// **'36-hour'**
+  String get fastingProtocol_36h_name;
+
+  /// No description provided for @fastingProtocol_36h_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Monk fast — extended autophagy window'**
+  String get fastingProtocol_36h_desc;
+
+  /// No description provided for @fastingProtocol_48h_name.
+  ///
+  /// In en, this message translates to:
+  /// **'48-hour'**
+  String get fastingProtocol_48h_name;
+
+  /// No description provided for @fastingProtocol_48h_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Extended fast — medical supervision recommended'**
+  String get fastingProtocol_48h_desc;
+
+  /// No description provided for @fastingProtocol_72h_name.
+  ///
+  /// In en, this message translates to:
+  /// **'72-hour'**
+  String get fastingProtocol_72h_name;
+
+  /// No description provided for @fastingProtocol_72h_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Stem-cell renewal fast — medical supervision required'**
+  String get fastingProtocol_72h_desc;
+
+  /// No description provided for @fastingProtocol_custom_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get fastingProtocol_custom_name;
+
+  /// No description provided for @fastingProtocol_custom_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your own eating and fasting window'**
+  String get fastingProtocol_custom_desc;
+
+  /// No description provided for @fastingStage_glycogen_depletion_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Glycogen Depletion'**
+  String get fastingStage_glycogen_depletion_name;
+
+  /// No description provided for @fastingStage_glycogen_depletion_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your body uses stored glucose first. After 12–14 hours liver glycogen runs low and the metabolic shift begins.'**
+  String get fastingStage_glycogen_depletion_desc;
+
+  /// No description provided for @fastingStage_fat_burning_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Fat Burning'**
+  String get fastingStage_fat_burning_name;
+
+  /// No description provided for @fastingStage_fat_burning_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'With glycogen low, fat cells release fatty acids into the bloodstream as fuel.'**
+  String get fastingStage_fat_burning_desc;
+
+  /// No description provided for @fastingStage_ketosis_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Ketosis'**
+  String get fastingStage_ketosis_name;
+
+  /// No description provided for @fastingStage_ketosis_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'The liver converts fatty acids into ketone bodies — a clean, efficient fuel for the brain.'**
+  String get fastingStage_ketosis_desc;
+
+  /// No description provided for @fastingStage_autophagy_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Autophagy'**
+  String get fastingStage_autophagy_name;
+
+  /// No description provided for @fastingStage_autophagy_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Cells begin breaking down and recycling damaged proteins and organelles — a deep cellular clean-up.'**
+  String get fastingStage_autophagy_desc;
+
+  /// No description provided for @fastingStage_growth_hormone_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Growth Hormone Surge'**
+  String get fastingStage_growth_hormone_name;
+
+  /// No description provided for @fastingStage_growth_hormone_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'HGH levels rise sharply, protecting lean muscle mass and accelerating fat metabolism.'**
+  String get fastingStage_growth_hormone_desc;
+
+  /// No description provided for @fastingStage_insulin_low_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Insulin'**
+  String get fastingStage_insulin_low_name;
+
+  /// No description provided for @fastingStage_insulin_low_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Insulin stays near baseline, unlocking fat stores and improving insulin sensitivity.'**
+  String get fastingStage_insulin_low_desc;
+
+  /// No description provided for @fastingStage_inflammation_drop_name.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflammation Drop'**
+  String get fastingStage_inflammation_drop_name;
+
+  /// No description provided for @fastingStage_inflammation_drop_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Inflammatory markers decrease as the gut rests and immune cells undergo regeneration.'**
+  String get fastingStage_inflammation_drop_desc;
+
+  /// No description provided for @fastingBenefit_weight_loss.
+  ///
+  /// In en, this message translates to:
+  /// **'Sustainable weight loss by targeting stored fat rather than lean tissue.'**
+  String get fastingBenefit_weight_loss;
+
+  /// No description provided for @fastingBenefit_autophagy.
+  ///
+  /// In en, this message translates to:
+  /// **'Cellular autophagy clears damaged proteins, linked to slower aging.'**
+  String get fastingBenefit_autophagy;
+
+  /// No description provided for @fastingBenefit_insulin_sensitivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Improved insulin sensitivity reduces risk of type 2 diabetes.'**
+  String get fastingBenefit_insulin_sensitivity;
+
+  /// No description provided for @fastingBenefit_mental_clarity.
+  ///
+  /// In en, this message translates to:
+  /// **'Ketones power the brain more steadily than glucose spikes.'**
+  String get fastingBenefit_mental_clarity;
+
+  /// No description provided for @fastingBenefit_energy.
+  ///
+  /// In en, this message translates to:
+  /// **'Stable energy throughout the day — no post-meal crashes.'**
+  String get fastingBenefit_energy;
+
+  /// No description provided for @fastingBenefit_gut_rest.
+  ///
+  /// In en, this message translates to:
+  /// **'Digestive system gets a break, supporting gut microbiome health.'**
+  String get fastingBenefit_gut_rest;
+
+  /// No description provided for @fastingBenefit_cellular_repair.
+  ///
+  /// In en, this message translates to:
+  /// **'DNA repair pathways activate during extended fasts.'**
+  String get fastingBenefit_cellular_repair;
+
+  /// No description provided for @fastingBenefit_longevity.
+  ///
+  /// In en, this message translates to:
+  /// **'Animal studies link fasting to longer healthspan and reduced disease markers.'**
+  String get fastingBenefit_longevity;
+
+  /// No description provided for @fastingBenefit_bs_control.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood sugar stays more stable, reducing cravings and energy dips.'**
+  String get fastingBenefit_bs_control;
+
+  /// No description provided for @fastingBenefit_appetite.
+  ///
+  /// In en, this message translates to:
+  /// **'Appetite hormones reset over time, making it easier to eat less.'**
+  String get fastingBenefit_appetite;
+
+  /// No description provided for @fastingTip_break_with_protein.
+  ///
+  /// In en, this message translates to:
+  /// **'Break your fast with a protein-rich meal to preserve muscle and stay full longer.'**
+  String get fastingTip_break_with_protein;
+
+  /// No description provided for @fastingTip_stay_hydrated.
+  ///
+  /// In en, this message translates to:
+  /// **'Water, black coffee, and plain tea are all fair game during your fast.'**
+  String get fastingTip_stay_hydrated;
+
+  /// No description provided for @fastingTip_coffee_ok.
+  ///
+  /// In en, this message translates to:
+  /// **'Black coffee won\'t break your fast and can actually blunt hunger.'**
+  String get fastingTip_coffee_ok;
+
+  /// No description provided for @fastingTip_bcaa_avoid.
+  ///
+  /// In en, this message translates to:
+  /// **'BCAAs and most supplements with calories or amino acids will break the fast.'**
+  String get fastingTip_bcaa_avoid;
+
+  /// No description provided for @fastingTip_exercise_fasted_ok_intermediate.
+  ///
+  /// In en, this message translates to:
+  /// **'Light to moderate cardio fasted is fine once you\'re adapted. Listen to your body.'**
+  String get fastingTip_exercise_fasted_ok_intermediate;
+
+  /// No description provided for @fastingTip_exercise_high_intensity_eat_first.
+  ///
+  /// In en, this message translates to:
+  /// **'For heavy lifting or intense intervals, eating beforehand protects performance.'**
+  String get fastingTip_exercise_high_intensity_eat_first;
+
+  /// No description provided for @fastingTip_sleep_helps_extended.
+  ///
+  /// In en, this message translates to:
+  /// **'Timing your fast to overlap with sleep makes longer windows much easier.'**
+  String get fastingTip_sleep_helps_extended;
+
+  /// No description provided for @fastingTip_ramp_up_gradually.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with 12 hours and add 30 minutes each week — don\'t jump to OMAD day one.'**
+  String get fastingTip_ramp_up_gradually;
+
+  /// No description provided for @fastingTip_track_hunger_separate_from_appetite.
+  ///
+  /// In en, this message translates to:
+  /// **'Hunger and appetite are different. Hunger fades in waves; appetite is habitual.'**
+  String get fastingTip_track_hunger_separate_from_appetite;
+
+  /// No description provided for @fastingTip_refeed_carbs_carefully.
+  ///
+  /// In en, this message translates to:
+  /// **'After a 36h+ fast, reintroduce carbs gradually to avoid refeeding discomfort.'**
+  String get fastingTip_refeed_carbs_carefully;
+
+  /// No description provided for @homeGreetingMorning_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning, {name}!'**
+  String homeGreetingMorning_v1(String name);
+
+  /// No description provided for @homeGreetingMorning_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Hey {name}, ready to crush it?'**
+  String homeGreetingMorning_v2(String name);
+
+  /// No description provided for @homeGreetingMorning_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning, {name}'**
+  String homeGreetingMorning_v3(String name);
+
+  /// No description provided for @homeGreetingMorning_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Up early, {name}?'**
+  String homeGreetingMorning_v4(String name);
+
+  /// No description provided for @homeGreetingMorning_v5.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back, {name}'**
+  String homeGreetingMorning_v5(String name);
+
+  /// No description provided for @homeGreetingMidday_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'Lunch break, {name}?'**
+  String homeGreetingMidday_v1(String name);
+
+  /// No description provided for @homeGreetingMidday_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Midday check-in, {name}'**
+  String homeGreetingMidday_v2(String name);
+
+  /// No description provided for @homeGreetingMidday_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Hey {name}, halfway there'**
+  String homeGreetingMidday_v3(String name);
+
+  /// No description provided for @homeGreetingMidday_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Powering through, {name}?'**
+  String homeGreetingMidday_v4(String name);
+
+  /// No description provided for @homeGreetingMidday_v5.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong day so far, {name}'**
+  String homeGreetingMidday_v5(String name);
+
+  /// No description provided for @homeGreetingAfternoon_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon energy, {name}!'**
+  String homeGreetingAfternoon_v1(String name);
+
+  /// No description provided for @homeGreetingAfternoon_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi {name}, time to move?'**
+  String homeGreetingAfternoon_v2(String name);
+
+  /// No description provided for @homeGreetingAfternoon_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Stretch break, {name}?'**
+  String homeGreetingAfternoon_v3(String name);
+
+  /// No description provided for @homeGreetingAfternoon_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'How\'s the day, {name}?'**
+  String homeGreetingAfternoon_v4(String name);
+
+  /// No description provided for @homeGreetingAfternoon_v5.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon, {name}'**
+  String homeGreetingAfternoon_v5(String name);
+
+  /// No description provided for @homeGreetingEvening_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind-down time, {name}'**
+  String homeGreetingEvening_v1(String name);
+
+  /// No description provided for @homeGreetingEvening_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening, {name}'**
+  String homeGreetingEvening_v2(String name);
+
+  /// No description provided for @homeGreetingEvening_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'End the day strong, {name}'**
+  String homeGreetingEvening_v3(String name);
+
+  /// No description provided for @homeGreetingEvening_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Last reps, {name}?'**
+  String homeGreetingEvening_v4(String name);
+
+  /// No description provided for @homeGreetingEvening_v5.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening reflection, {name}'**
+  String homeGreetingEvening_v5(String name);
+
+  /// No description provided for @homeStreak7Day_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'1 week streak — locked in!'**
+  String get homeStreak7Day_v1;
+
+  /// No description provided for @homeStreak7Day_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'7 days. You\'re on a roll.'**
+  String get homeStreak7Day_v2;
+
+  /// No description provided for @homeStreak7Day_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Week streak! Stack another.'**
+  String get homeStreak7Day_v3;
+
+  /// No description provided for @homeStreak7Day_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'7 days straight. Keep that fire going.'**
+  String get homeStreak7Day_v4;
+
+  /// No description provided for @homeStreak30Day_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'30 days. A full month of showing up.'**
+  String get homeStreak30Day_v1;
+
+  /// No description provided for @homeStreak30Day_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'One month in. This is a habit now.'**
+  String get homeStreak30Day_v2;
+
+  /// No description provided for @homeStreak30Day_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'30-day streak! Most people quit by now — not you.'**
+  String get homeStreak30Day_v3;
+
+  /// No description provided for @homeStreak30Day_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'A month of consistency. That\'s rare.'**
+  String get homeStreak30Day_v4;
+
+  /// No description provided for @homeStreak100Day_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'100 days. You built something real.'**
+  String get homeStreak100Day_v1;
+
+  /// No description provided for @homeStreak100Day_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Triple digits. You don\'t miss.'**
+  String get homeStreak100Day_v2;
+
+  /// No description provided for @homeStreak100Day_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'100-day streak! That\'s elite-level dedication.'**
+  String get homeStreak100Day_v3;
+
+  /// No description provided for @homeStreak100Day_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'100 days in the books. Unstoppable.'**
+  String get homeStreak100Day_v4;
+
+  /// No description provided for @homeStreak365Day_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'365 days. A full year of you.'**
+  String get homeStreak365Day_v1;
+
+  /// No description provided for @homeStreak365Day_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'One year streak. Legendary.'**
+  String get homeStreak365Day_v2;
+
+  /// No description provided for @homeStreak365Day_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'365 days straight. That\'s the whole year.'**
+  String get homeStreak365Day_v3;
+
+  /// No description provided for @homeStreak365Day_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'A year in. You redefined what consistency looks like.'**
+  String get homeStreak365Day_v4;
+
+  /// No description provided for @homeEmptyWorkout_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No workout yet — tap to generate today\'s session.'**
+  String get homeEmptyWorkout_v1;
+
+  /// No description provided for @homeEmptyWorkout_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest day? Or ready to move? Your call.'**
+  String get homeEmptyWorkout_v2;
+
+  /// No description provided for @homeEmptyWorkout_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Between programs — start a new one to get back on track.'**
+  String get homeEmptyWorkout_v3;
+
+  /// No description provided for @homeEmptyWorkout_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan yet. Let the AI build one around your goals.'**
+  String get homeEmptyWorkout_v4;
+
+  /// No description provided for @homeEmptyNutrition_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing logged yet. Snap a photo to start.'**
+  String get homeEmptyNutrition_v1;
+
+  /// No description provided for @homeEmptyNutrition_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Your nutrition slate is clean. What\'s your first meal?'**
+  String get homeEmptyNutrition_v2;
+
+  /// No description provided for @homeEmptyNutrition_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'No meals tracked today. Log one to see your macros.'**
+  String get homeEmptyNutrition_v3;
+
+  /// No description provided for @homeEmptyNutrition_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Eating something? Take a photo and we\'ll handle the numbers.'**
+  String get homeEmptyNutrition_v4;
+
+  /// No description provided for @homeEmptyChat_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet. Ask your coach anything.'**
+  String get homeEmptyChat_v1;
+
+  /// No description provided for @homeEmptyChat_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Your coach is ready. What\'s on your mind?'**
+  String get homeEmptyChat_v2;
+
+  /// No description provided for @homeEmptyChat_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat\'s empty. Drop a question or share how you\'re feeling.'**
+  String get homeEmptyChat_v3;
+
+  /// No description provided for @homeEmptyChat_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'First conversation starts here. Say hello.'**
+  String get homeEmptyChat_v4;
+
+  /// No description provided for @homeEmptyHistory_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No workouts logged yet. Complete one to start your history.'**
+  String get homeEmptyHistory_v1;
+
+  /// No description provided for @homeEmptyHistory_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Your history is clean — that changes after your first session.'**
+  String get homeEmptyHistory_v2;
+
+  /// No description provided for @homeEmptyHistory_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'No past workouts. Get one done and it\'ll show here.'**
+  String get homeEmptyHistory_v3;
+
+  /// No description provided for @homeEmptyHistory_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty history means you\'re just getting started. Go write it.'**
+  String get homeEmptyHistory_v4;
+
+  /// No description provided for @homeEmptyFavorites_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet. Heart a workout or exercise to save it.'**
+  String get homeEmptyFavorites_v1;
+
+  /// No description provided for @homeEmptyFavorites_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing saved here. Find something you love and keep it.'**
+  String get homeEmptyFavorites_v2;
+
+  /// No description provided for @homeEmptyFavorites_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Your favorites list is waiting. Explore and bookmark.'**
+  String get homeEmptyFavorites_v3;
+
+  /// No description provided for @homeEmptyFavorites_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the heart on any workout to add it here.'**
+  String get homeEmptyFavorites_v4;
+
+  /// No description provided for @homeEmptyChallenges_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No active challenges. Browse and pick one to start.'**
+  String get homeEmptyChallenges_v1;
+
+  /// No description provided for @homeEmptyChallenges_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenges are a great way to build momentum. Join one.'**
+  String get homeEmptyChallenges_v2;
+
+  /// No description provided for @homeEmptyChallenges_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing running yet. Find a challenge that fits your level.'**
+  String get homeEmptyChallenges_v3;
+
+  /// No description provided for @homeEmptyChallenges_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No challenges? There are some good ones waiting for you.'**
+  String get homeEmptyChallenges_v4;
+
+  /// No description provided for @homeEmptyAchievements_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No achievements yet. Keep training to unlock them.'**
+  String get homeEmptyAchievements_v1;
+
+  /// No description provided for @homeEmptyAchievements_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements unlock as you hit milestones. Keep going.'**
+  String get homeEmptyAchievements_v2;
+
+  /// No description provided for @homeEmptyAchievements_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing unlocked yet. Your first is closer than you think.'**
+  String get homeEmptyAchievements_v3;
+
+  /// No description provided for @homeEmptyAchievements_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Start logging workouts and achievements will follow.'**
+  String get homeEmptyAchievements_v4;
+
+  /// No description provided for @homeEmptyRecipes_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipes yet. Browse the library or ask your coach.'**
+  String get homeEmptyRecipes_v1;
+
+  /// No description provided for @homeEmptyRecipes_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Your recipe collection is empty. Add some meals you like.'**
+  String get homeEmptyRecipes_v2;
+
+  /// No description provided for @homeEmptyRecipes_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing saved here. Explore and save recipes you enjoy.'**
+  String get homeEmptyRecipes_v3;
+
+  /// No description provided for @homeEmptyRecipes_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe library is empty. Tap to discover new meals.'**
+  String get homeEmptyRecipes_v4;
+
+  /// No description provided for @homeEmptyPhotos_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No progress photos. Take your first one today.'**
+  String get homeEmptyPhotos_v1;
+
+  /// No description provided for @homeEmptyPhotos_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos tell the story numbers can\'t. Take one now.'**
+  String get homeEmptyPhotos_v2;
+
+  /// No description provided for @homeEmptyPhotos_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Start your visual progress journal.'**
+  String get homeEmptyPhotos_v3;
+
+  /// No description provided for @homeEmptyPhotos_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos logged. Add one to track visual changes over time.'**
+  String get homeEmptyPhotos_v4;
+
+  /// No description provided for @homeEmptyMeasurements_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No measurements logged. Add a baseline to track progress.'**
+  String get homeEmptyMeasurements_v1;
+
+  /// No description provided for @homeEmptyMeasurements_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing tracked yet. Start with your current numbers.'**
+  String get homeEmptyMeasurements_v2;
+
+  /// No description provided for @homeEmptyMeasurements_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'No body data yet. Log measurements to see trends.'**
+  String get homeEmptyMeasurements_v3;
+
+  /// No description provided for @homeEmptyMeasurements_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurements empty. Add one so you have something to beat.'**
+  String get homeEmptyMeasurements_v4;
+
+  /// No description provided for @homeEmptyMood_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No mood entries. How are you feeling today?'**
+  String get homeEmptyMood_v1;
+
+  /// No description provided for @homeEmptyMood_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Mood tracking is empty. Log how you feel after your next workout.'**
+  String get homeEmptyMood_v2;
+
+  /// No description provided for @homeEmptyMood_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing logged yet. Mood patterns help predict your best training days.'**
+  String get homeEmptyMood_v3;
+
+  /// No description provided for @homeEmptyMood_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No mood data. Tap to add today\'s entry.'**
+  String get homeEmptyMood_v4;
+
+  /// No description provided for @homeEmptySleep_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No sleep data. Connect a wearable or log manually.'**
+  String get homeEmptySleep_v1;
+
+  /// No description provided for @homeEmptySleep_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep tracking empty. Recovery starts with knowing your sleep.'**
+  String get homeEmptySleep_v2;
+
+  /// No description provided for @homeEmptySleep_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'No sleep logged. Add last night\'s data to see recovery trends.'**
+  String get homeEmptySleep_v3;
+
+  /// No description provided for @homeEmptySleep_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep data missing. Log it and we\'ll factor it into your recovery score.'**
+  String get homeEmptySleep_v4;
+
+  /// No description provided for @homeEmptyWater_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No water logged today. Hit your first glass.'**
+  String get homeEmptyWater_v1;
+
+  /// No description provided for @homeEmptyWater_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Hydration tracking empty. Log your first cup.'**
+  String get homeEmptyWater_v2;
+
+  /// No description provided for @homeEmptyWater_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing logged yet. Start your water intake for the day.'**
+  String get homeEmptyWater_v3;
+
+  /// No description provided for @homeEmptyWater_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No water logged. Stay ahead of thirst — log now.'**
+  String get homeEmptyWater_v4;
+
+  /// No description provided for @homeEmptyFasting_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No fasting sessions started. Choose a protocol to begin.'**
+  String get homeEmptyFasting_v1;
+
+  /// No description provided for @homeEmptyFasting_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasting tracker is empty. Start a session when you\'re ready.'**
+  String get homeEmptyFasting_v2;
+
+  /// No description provided for @homeEmptyFasting_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing logged yet. Pick a window and start the clock.'**
+  String get homeEmptyFasting_v3;
+
+  /// No description provided for @homeEmptyFasting_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No fasting data. Tap to start your first session.'**
+  String get homeEmptyFasting_v4;
+
+  /// No description provided for @homeEmptyJournal_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No journal entries. Write down today\'s win, however small.'**
+  String get homeEmptyJournal_v1;
+
+  /// No description provided for @homeEmptyJournal_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Journal is empty. Document your journey — you\'ll be glad you did.'**
+  String get homeEmptyJournal_v2;
+
+  /// No description provided for @homeEmptyJournal_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing written yet. Your first entry starts here.'**
+  String get homeEmptyJournal_v3;
+
+  /// No description provided for @homeEmptyJournal_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries. Grab 2 minutes and write something honest.'**
+  String get homeEmptyJournal_v4;
+
+  /// No description provided for @homeEmptyPrograms_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No active program. Browse programs to find your next goal.'**
+  String get homeEmptyPrograms_v1;
+
+  /// No description provided for @homeEmptyPrograms_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Programs give your training structure. Pick one to start.'**
+  String get homeEmptyPrograms_v2;
+
+  /// No description provided for @homeEmptyPrograms_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing running yet. Start a program to unlock weekly plans.'**
+  String get homeEmptyPrograms_v3;
+
+  /// No description provided for @homeEmptyPrograms_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No program active. Choose one that matches where you are.'**
+  String get homeEmptyPrograms_v4;
+
+  /// No description provided for @homeEmptyCustomExercises_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No custom exercises yet. Build your own and add them to any workout.'**
+  String get homeEmptyCustomExercises_v1;
+
+  /// No description provided for @homeEmptyCustomExercises_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom exercise library is empty. Create your first move.'**
+  String get homeEmptyCustomExercises_v2;
+
+  /// No description provided for @homeEmptyCustomExercises_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Add an exercise that\'s not in the main library.'**
+  String get homeEmptyCustomExercises_v3;
+
+  /// No description provided for @homeEmptyCustomExercises_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No custom exercises. Build one and it\'ll show up in search.'**
+  String get homeEmptyCustomExercises_v4;
+
+  /// No description provided for @homeEmptyGymProfiles_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No gym profiles. Add your equipment so workouts fit your setup.'**
+  String get homeEmptyGymProfiles_v1;
+
+  /// No description provided for @homeEmptyGymProfiles_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Gym profile empty. Tell us your equipment once — we\'ll use it every time.'**
+  String get homeEmptyGymProfiles_v2;
+
+  /// No description provided for @homeEmptyGymProfiles_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'No setup saved. Add a gym profile to get tailored workouts.'**
+  String get homeEmptyGymProfiles_v3;
+
+  /// No description provided for @homeEmptyGymProfiles_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile empty. Configure your equipment and let the AI do the rest.'**
+  String get homeEmptyGymProfiles_v4;
+
+  /// No description provided for @homeEmptyScores_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No scores yet. Log a workout to generate your first readiness score.'**
+  String get homeEmptyScores_v1;
+
+  /// No description provided for @homeEmptyScores_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Scores appear after you start logging data. Keep at it.'**
+  String get homeEmptyScores_v2;
+
+  /// No description provided for @homeEmptyScores_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing scored yet. Complete a session to see your first rating.'**
+  String get homeEmptyScores_v3;
+
+  /// No description provided for @homeEmptyScores_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Score empty. More data means sharper insights — start logging.'**
+  String get homeEmptyScores_v4;
+
+  /// No description provided for @homeEmptyTrends_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No trends yet. Log consistently for 7 days to see patterns.'**
+  String get homeEmptyTrends_v1;
+
+  /// No description provided for @homeEmptyTrends_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Trends need data. Keep logging and graphs will fill in.'**
+  String get homeEmptyTrends_v2;
+
+  /// No description provided for @homeEmptyTrends_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to show yet. Come back after a week of tracking.'**
+  String get homeEmptyTrends_v3;
+
+  /// No description provided for @homeEmptyTrends_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend view empty. Consistency unlocks this — start logging daily.'**
+  String get homeEmptyTrends_v4;
+
+  /// No description provided for @homeEmptyRecovery_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No recovery data. Log sleep, HRV, or soreness to get a score.'**
+  String get homeEmptyRecovery_v1;
+
+  /// No description provided for @homeEmptyRecovery_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery tracking is empty. Connect a wearable or log manually.'**
+  String get homeEmptyRecovery_v2;
+
+  /// No description provided for @homeEmptyRecovery_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing tracked yet. Recovery data helps you train smarter.'**
+  String get homeEmptyRecovery_v3;
+
+  /// No description provided for @homeEmptyRecovery_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery empty. Add today\'s data to protect your next session.'**
+  String get homeEmptyRecovery_v4;
+
+  /// No description provided for @homeEmptyPlans_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan yet. Let the AI build one around your schedule and goals.'**
+  String get homeEmptyPlans_v1;
+
+  /// No description provided for @homeEmptyPlans_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Plans empty. Generate a personalized training plan to get started.'**
+  String get homeEmptyPlans_v2;
+
+  /// No description provided for @homeEmptyPlans_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing set up yet. Create a plan and stick to it.'**
+  String get homeEmptyPlans_v3;
+
+  /// No description provided for @homeEmptyPlans_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan active. Start one to stop guessing what to do each day.'**
+  String get homeEmptyPlans_v4;
+
+  /// No description provided for @homeEmptyFriends_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No connections yet. Invite a friend to train together.'**
+  String get homeEmptyFriends_v1;
+
+  /// No description provided for @homeEmptyFriends_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends list is empty. Accountability is a real thing.'**
+  String get homeEmptyFriends_v2;
+
+  /// No description provided for @homeEmptyFriends_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody here yet. Share your link to grow your circle.'**
+  String get homeEmptyFriends_v3;
+
+  /// No description provided for @homeEmptyFriends_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends added. Working out alongside someone helps — add one.'**
+  String get homeEmptyFriends_v4;
+
+  /// No description provided for @homeEmptyVitals_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No vitals logged. Connect a wearable or enter them manually.'**
+  String get homeEmptyVitals_v1;
+
+  /// No description provided for @homeEmptyVitals_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Vitals tracking empty. Add a data point to start.'**
+  String get homeEmptyVitals_v2;
+
+  /// No description provided for @homeEmptyVitals_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Log resting HR, HRV, or blood pressure.'**
+  String get homeEmptyVitals_v3;
+
+  /// No description provided for @homeEmptyVitals_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No vitals data. Connect your wearable to auto-sync.'**
+  String get homeEmptyVitals_v4;
+
+  /// No description provided for @homeEmptyHabits_v1.
+  ///
+  /// In en, this message translates to:
+  /// **'No habits set up. Add one small daily habit to start.'**
+  String get homeEmptyHabits_v1;
+
+  /// No description provided for @homeEmptyHabits_v2.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit tracker empty. Build one habit and make it automatic.'**
+  String get homeEmptyHabits_v2;
+
+  /// No description provided for @homeEmptyHabits_v3.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing tracked yet. Start with one habit you can do every day.'**
+  String get homeEmptyHabits_v3;
+
+  /// No description provided for @homeEmptyHabits_v4.
+  ///
+  /// In en, this message translates to:
+  /// **'No habits active. Small daily actions compound into big results.'**
+  String get homeEmptyHabits_v4;
+
+  /// No description provided for @homeTip_progressive_overload.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a little more weight or one more rep each week. That\'s how you grow.'**
+  String get homeTip_progressive_overload;
+
+  /// No description provided for @homeTip_protein_per_meal.
+  ///
+  /// In en, this message translates to:
+  /// **'Aim for 30–40g of protein per meal. Spreading it out beats one big dose.'**
+  String get homeTip_protein_per_meal;
+
+  /// No description provided for @homeTip_sleep_for_recovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Your muscles don\'t grow during the workout — they grow while you sleep.'**
+  String get homeTip_sleep_for_recovery;
+
+  /// No description provided for @homeTip_walk_after_meals.
+  ///
+  /// In en, this message translates to:
+  /// **'A 10-minute walk after eating can cut your blood sugar spike by 30%.'**
+  String get homeTip_walk_after_meals;
+
+  /// No description provided for @homeTip_hydration_basics.
+  ///
+  /// In en, this message translates to:
+  /// **'Drink half your bodyweight in ounces daily. Add more on training days.'**
+  String get homeTip_hydration_basics;
+
+  /// No description provided for @homeTip_warm_up_matters.
+  ///
+  /// In en, this message translates to:
+  /// **'5 minutes of movement prep makes every set safer and stronger.'**
+  String get homeTip_warm_up_matters;
+
+  /// No description provided for @homeTip_compound_lifts.
+  ///
+  /// In en, this message translates to:
+  /// **'Squat, hinge, push, pull, carry. Master those five and you\'ve covered 80%.'**
+  String get homeTip_compound_lifts;
+
+  /// No description provided for @homeTip_rest_days_grow_muscle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest days aren\'t laziness — they\'re when the adaptation actually happens.'**
+  String get homeTip_rest_days_grow_muscle;
+
+  /// No description provided for @homeTip_form_over_weight.
+  ///
+  /// In en, this message translates to:
+  /// **'Ego lifts with bad form build injury, not muscle. Dial in the movement first.'**
+  String get homeTip_form_over_weight;
+
+  /// No description provided for @homeTip_track_to_progress.
+  ///
+  /// In en, this message translates to:
+  /// **'If you\'re not tracking it, you\'re not managing it. Log your sets.'**
+  String get homeTip_track_to_progress;
+
+  /// No description provided for @homeTip_mind_muscle_connection.
+  ///
+  /// In en, this message translates to:
+  /// **'Slow down and feel the muscle working. It\'s not just about moving weight.'**
+  String get homeTip_mind_muscle_connection;
+
+  /// No description provided for @homeTip_deload_week.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 4–6 weeks, cut volume by 40%. Your body will come back stronger.'**
+  String get homeTip_deload_week;
+
+  /// No description provided for @homeTip_eat_before_training.
+  ///
+  /// In en, this message translates to:
+  /// **'Training fasted can work, but a small meal 60–90 min before helps most people perform better.'**
+  String get homeTip_eat_before_training;
+
+  /// No description provided for @homeTip_creatine_basics.
+  ///
+  /// In en, this message translates to:
+  /// **'Creatine monohydrate is the most studied supplement in sports science. 3–5g daily works.'**
+  String get homeTip_creatine_basics;
+
+  /// No description provided for @homeTip_breathing_during_lifts.
+  ///
+  /// In en, this message translates to:
+  /// **'Exhale on the hard part, inhale on the easy part. Brace your core throughout.'**
+  String get homeTip_breathing_during_lifts;
+
+  /// No description provided for @homeTip_consistency_beats_perfection.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing up at 70% is better than skipping because you can\'t give 100%.'**
+  String get homeTip_consistency_beats_perfection;
+
+  /// No description provided for @homeTip_set_rep_ranges.
+  ///
+  /// In en, this message translates to:
+  /// **'1–5 reps builds strength. 6–12 builds size. 12–20 builds endurance. All matter.'**
+  String get homeTip_set_rep_ranges;
+
+  /// No description provided for @homeTip_eccentric_focus.
+  ///
+  /// In en, this message translates to:
+  /// **'The lowering phase is where most muscle damage (and growth) happens. Control it.'**
+  String get homeTip_eccentric_focus;
+
+  /// No description provided for @homeTip_fiber_and_gut.
+  ///
+  /// In en, this message translates to:
+  /// **'30g of fiber a day keeps energy steady and reduces cravings. Most people get 15.'**
+  String get homeTip_fiber_and_gut;
+
+  /// No description provided for @homeTip_caffeine_timing.
+  ///
+  /// In en, this message translates to:
+  /// **'Caffeine peaks 45–60 min after drinking. Time it before your session.'**
+  String get homeTip_caffeine_timing;
+
+  /// No description provided for @homeTip_rate_of_perceived_exertion.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate your effort 1–10. Staying between 7–8 most sessions is the sweet spot.'**
+  String get homeTip_rate_of_perceived_exertion;
+
+  /// No description provided for @homeTip_stress_and_recovery.
+  ///
+  /// In en, this message translates to:
+  /// **'High stress = high cortisol = slower recovery. Manage the whole picture.'**
+  String get homeTip_stress_and_recovery;
+
+  /// No description provided for @homeTip_meal_timing_simple.
+  ///
+  /// In en, this message translates to:
+  /// **'Eat mostly whole foods, hit your protein, sleep enough. Most of the rest is noise.'**
+  String get homeTip_meal_timing_simple;
+
+  /// No description provided for @homeTip_core_in_every_lift.
+  ///
+  /// In en, this message translates to:
+  /// **'Your core is working on every compound movement. You don\'t need 20 minutes of crunches.'**
+  String get homeTip_core_in_every_lift;
+
+  /// No description provided for @homeTip_mobility_daily.
+  ///
+  /// In en, this message translates to:
+  /// **'10 minutes of mobility work daily beats a 60-minute session once a week.'**
+  String get homeTip_mobility_daily;
+
+  /// No description provided for @homeTip_cardio_and_strength.
+  ///
+  /// In en, this message translates to:
+  /// **'Cardio doesn\'t kill gains if you\'re eating enough and not overdoing volume.'**
+  String get homeTip_cardio_and_strength;
+
+  /// No description provided for @homeTip_sodium_and_water.
+  ///
+  /// In en, this message translates to:
+  /// **'Salt isn\'t the enemy — it helps with hydration and performance. Don\'t fear it.'**
+  String get homeTip_sodium_and_water;
+
+  /// No description provided for @homeTip_omega3_basics.
+  ///
+  /// In en, this message translates to:
+  /// **'1–2g EPA+DHA daily reduces inflammation and supports joint health.'**
+  String get homeTip_omega3_basics;
+
+  /// No description provided for @homeTip_vitamin_d.
+  ///
+  /// In en, this message translates to:
+  /// **'Most people are deficient in vitamin D. 1000–2000 IU daily is a safe baseline.'**
+  String get homeTip_vitamin_d;
+
+  /// No description provided for @homeTip_grip_strength.
+  ///
+  /// In en, this message translates to:
+  /// **'Grip strength predicts longevity better than almost any other metric. Train it.'**
+  String get homeTip_grip_strength;
+
+  /// No description provided for @homeTip_no_junk_volume.
+  ///
+  /// In en, this message translates to:
+  /// **'10 hard, focused sets beat 20 half-hearted ones. Quality over quantity.'**
+  String get homeTip_no_junk_volume;
+
+  /// No description provided for @homeTip_split_options.
+  ///
+  /// In en, this message translates to:
+  /// **'Push/pull/legs, upper/lower, full-body 3x — all work if you\'re consistent.'**
+  String get homeTip_split_options;
+
+  /// No description provided for @homeTip_tempo_training.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a 3-0-1 tempo (3s down, 0 pause, 1s up) to feel any exercise differently.'**
+  String get homeTip_tempo_training;
+
+  /// No description provided for @homeTip_cold_exposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Cold showers or ice baths may blunt post-workout inflammation. Save them for after, not before.'**
+  String get homeTip_cold_exposure;
+
+  /// No description provided for @homeTip_periodization.
+  ///
+  /// In en, this message translates to:
+  /// **'Vary your rep ranges and intensity over time. Linear progress doesn\'t last forever.'**
+  String get homeTip_periodization;
+
+  /// No description provided for @homeTip_ankle_mobility.
+  ///
+  /// In en, this message translates to:
+  /// **'Limited ankle mobility forces compensations in squats. Stretch and drill it daily.'**
+  String get homeTip_ankle_mobility;
+
+  /// No description provided for @homeTip_zone2_cardio.
+  ///
+  /// In en, this message translates to:
+  /// **'Zone 2 cardio (conversational pace) builds the aerobic base everything else sits on.'**
+  String get homeTip_zone2_cardio;
+
+  /// No description provided for @homeTip_scale_not_everything.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight fluctuates 2–4 lbs daily from water and food. Judge by weekly averages.'**
+  String get homeTip_scale_not_everything;
+
+  /// No description provided for @homeTip_compound_before_isolation.
+  ///
+  /// In en, this message translates to:
+  /// **'Do your big lifts first when you\'re fresh. Isolation work comes at the end.'**
+  String get homeTip_compound_before_isolation;
+
+  /// No description provided for @homeTip_protein_sources_vary.
+  ///
+  /// In en, this message translates to:
+  /// **'Mix protein sources — chicken, eggs, Greek yogurt, legumes. Variety covers all amino acids.'**
+  String get homeTip_protein_sources_vary;
+
+  /// No description provided for @workoutSummaryAdvancedValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{confidence}/5'**
+  String workoutSummaryAdvancedValue(String confidence);
+
+  /// No description provided for @workoutSummaryAdvancedS.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration}s'**
+  String workoutSummaryAdvancedS(Object duration);
+
+  /// No description provided for @workoutSummaryAdvancedMS.
+  ///
+  /// In en, this message translates to:
+  /// **'{m}m {s}s'**
+  String workoutSummaryAdvancedMS(String m, String s);
+
+  /// No description provided for @workoutSummaryAdvancedValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPct}%'**
+  String workoutSummaryAdvancedValue2(Object progressPct);
+
+  /// No description provided for @workoutSummaryAdvancedLb.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalVol} lb'**
+  String workoutSummaryAdvancedLb(Object totalVol);
+
+  /// No description provided for @workoutSummaryAdvancedLb2.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} lb'**
+  String workoutSummaryAdvancedLb2(String value);
+
+  /// No description provided for @workoutSummaryAdvancedNewThisSession.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} new this session'**
+  String workoutSummaryAdvancedNewThisSession(Object length);
+
+  /// No description provided for @workoutSummaryAdvancedExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{completedCount} / {totalPlanned} exercises'**
+  String workoutSummaryAdvancedExercises(
+    Object completedCount,
+    Object totalPlanned,
+  );
+
+  /// No description provided for @workoutSummaryAdvancedLong.
+  ///
+  /// In en, this message translates to:
+  /// **'{tooLong} long'**
+  String workoutSummaryAdvancedLong(String tooLong);
+
+  /// No description provided for @workoutSummaryAdvancedValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'{adherencePct}%'**
+  String workoutSummaryAdvancedValue3(Object adherencePct);
+
+  /// No description provided for @workoutSummaryAdvancedRir.
+  ///
+  /// In en, this message translates to:
+  /// **'RIR {rir}'**
+  String workoutSummaryAdvancedRir(String rir);
+
+  /// No description provided for @loggedMealsSectionEaten.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCaloriesEaten} eaten'**
+  String loggedMealsSectionEaten(Object totalCaloriesEaten);
+
+  /// No description provided for @loggedMealsSectionCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCaloriesEaten} / {target} cal'**
+  String loggedMealsSectionCal(Object totalCaloriesEaten, String target);
+
+  /// No description provided for @loggedMealsSectionVia.
+  ///
+  /// In en, this message translates to:
+  /// **'via {label}'**
+  String loggedMealsSectionVia(String label);
+
+  /// No description provided for @loggedMealsSectionCal2.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} cal'**
+  String loggedMealsSectionCal2(Object calories);
+
+  /// No description provided for @loggedMealsSectionGProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'{proteinG}g protein'**
+  String loggedMealsSectionGProtein(String proteinG);
+
+  /// No description provided for @loggedMealsSectionKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCalories} kcal'**
+  String loggedMealsSectionKcal(Object totalCalories);
+
+  /// No description provided for @loggedMealsSectionGl.
+  ///
+  /// In en, this message translates to:
+  /// **'GL {glycemicLoad}'**
+  String loggedMealsSectionGl(String glycemicLoad);
+
+  /// No description provided for @loggedMealsSectionValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{energyLevel}/5'**
+  String loggedMealsSectionValue(Object energyLevel);
+
+  /// No description provided for @loggedMealsSectionG.
+  ///
+  /// In en, this message translates to:
+  /// **'{proteinG}g'**
+  String loggedMealsSectionG(String proteinG);
+
+  /// No description provided for @loggedMealsSectionG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{carbsG}g'**
+  String loggedMealsSectionG2(String carbsG);
+
+  /// No description provided for @loggedMealsSectionG3.
+  ///
+  /// In en, this message translates to:
+  /// **'{fatG}g'**
+  String loggedMealsSectionG3(String fatG);
+
+  /// No description provided for @loggedMealsSectionKcal2.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCalories} kcal'**
+  String loggedMealsSectionKcal2(Object totalCalories);
+
+  /// No description provided for @loggedMealsSectionCopyTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy {name} to...'**
+  String loggedMealsSectionCopyTo(String name);
+
+  /// No description provided for @loggedMealsSectionMoveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move {name} to...'**
+  String loggedMealsSectionMoveTo(String name);
+
+  /// No description provided for @loggedMealsSectionValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{energyLevel}/5'**
+  String loggedMealsSectionValue2(Object energyLevel);
+
+  /// No description provided for @loggedMealsSectionValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'{key}: '**
+  String loggedMealsSectionValue3(String key);
+
+  /// No description provided for @loggedMealsSectionRemoved2.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {removedName}'**
+  String loggedMealsSectionRemoved2(String removedName);
+
+  /// No description provided for @loggedMealsSectionSwap.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap {existingName}'**
+  String loggedMealsSectionSwap(String existingName);
+
+  /// No description provided for @loggedMealsSectionValue4.
+  ///
+  /// In en, this message translates to:
+  /// **'({dateStr})'**
+  String loggedMealsSectionValue4(String dateStr);
+
+  /// No description provided for @loggedMealsSectionGC.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCarbs}g C'**
+  String loggedMealsSectionGC(Object totalCarbs);
+
+  /// No description provided for @loggedMealsSectionGP.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalProtein}g P'**
+  String loggedMealsSectionGP(Object totalProtein);
+
+  /// No description provided for @loggedMealsSectionGF.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalFat}g F'**
+  String loggedMealsSectionGF(Object totalFat);
+
+  /// No description provided for @loggedMealsSectionG4.
+  ///
+  /// In en, this message translates to:
+  /// **'{consumed}/{target}g'**
+  String loggedMealsSectionG4(Object consumed, String target);
+
+  /// No description provided for @loggedMealsSectionG5.
+  ///
+  /// In en, this message translates to:
+  /// **'{consumed}g'**
+  String loggedMealsSectionG5(Object consumed);
+
+  /// No description provided for @loggedMealsSectionCal3.
+  ///
+  /// In en, this message translates to:
+  /// **'{food} cal'**
+  String loggedMealsSectionCal3(Object food);
+
+  /// No description provided for @loggedMealsSectionGProtein2.
+  ///
+  /// In en, this message translates to:
+  /// **'{food}g protein'**
+  String loggedMealsSectionGProtein2(String food);
+
+  /// No description provided for @loggedMealsSectionRemoved3.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {name}'**
+  String loggedMealsSectionRemoved3(Object name);
+
+  /// No description provided for @workoutShowcaseScreenSession.
+  ///
+  /// In en, this message translates to:
+  /// **'SESSION: {title}'**
+  String workoutShowcaseScreenSession(String title);
+
+  /// No description provided for @workoutShowcaseScreenDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'DURATION: {duration}'**
+  String workoutShowcaseScreenDuration(Object duration);
+
+  /// No description provided for @workoutShowcaseScreenVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'VOLUME:   {volume}'**
+  String workoutShowcaseScreenVolume(String volume);
+
+  /// No description provided for @workoutShowcaseScreenPrs.
+  ///
+  /// In en, this message translates to:
+  /// **'PRS:      {prs}'**
+  String workoutShowcaseScreenPrs(String prs);
+
+  /// No description provided for @workoutShowcaseScreenVolZealovaPress.
+  ///
+  /// In en, this message translates to:
+  /// **'VOL. {day} · ZEALOVA PRESS'**
+  String workoutShowcaseScreenVolZealovaPress(String day);
+
+  /// No description provided for @workoutShowcaseScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} · {volume}'**
+  String workoutShowcaseScreenValue(Object duration, String volume);
+
+  /// No description provided for @workoutShowcaseScreenDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {day}'**
+  String workoutShowcaseScreenDay(String day);
+
+  /// No description provided for @workoutShowcaseScreenTotalPrs.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL  {duration} · {volume} · {prs} PRS'**
+  String workoutShowcaseScreenTotalPrs(
+    Object duration,
+    String volume,
+    String prs,
+  );
+
+  /// No description provided for @workoutShowcaseScreenYouDay.
+  ///
+  /// In en, this message translates to:
+  /// **'@you · day {day}'**
+  String workoutShowcaseScreenYouDay(String day);
+
+  /// No description provided for @workoutShowcaseScreenPrsEntered.
+  ///
+  /// In en, this message translates to:
+  /// **'{prs} PRS · ENTERED'**
+  String workoutShowcaseScreenPrsEntered(String prs);
+
+  /// No description provided for @stackedBannerPanelRenewsInDaysFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{tierLabel} renews in {days} days for {formattedAmount}'**
+  String stackedBannerPanelRenewsInDaysFor(
+    String tierLabel,
+    String days,
+    Object formattedAmount,
+  );
+
+  /// No description provided for @stackedBannerPanelMinExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{missedDescription} · {durationMinutes}min · {exercisesCount} exercises'**
+  String stackedBannerPanelMinExercises(
+    String missedDescription,
+    Object durationMinutes,
+    Object exercisesCount,
+  );
+
+  /// No description provided for @stackedBannerPanelCratesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayCount} Crates Available!'**
+  String stackedBannerPanelCratesAvailable(Object displayCount);
+
+  /// No description provided for @stackedBannerPanelCratesReadyToOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayCount} crates ready to open'**
+  String stackedBannerPanelCratesReadyToOpen(Object displayCount);
+
+  /// No description provided for @stackedBannerPanelXXpActive.
+  ///
+  /// In en, this message translates to:
+  /// **'{xpMultiplier}x XP Active'**
+  String stackedBannerPanelXXpActive(String xpMultiplier);
+
+  /// No description provided for @stackedBannerPanelValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{eventName} · {timeStr}'**
+  String stackedBannerPanelValue(String eventName, String timeStr);
+
+  /// No description provided for @stackedBannerPanelYourWrappedIsHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {month} Wrapped Is Here'**
+  String stackedBannerPanelYourWrappedIsHere(String month);
+
+  /// No description provided for @stackedBannerPanelWorkoutsLifted.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkouts} workouts · {volumeStr} lifted'**
+  String stackedBannerPanelWorkoutsLifted(
+    Object totalWorkouts,
+    String volumeStr,
+  );
+
+  /// No description provided for @stackedBannerPanelWrapped.
+  ///
+  /// In en, this message translates to:
+  /// **'/wrapped/{period}'**
+  String stackedBannerPanelWrapped(String period);
+
+  /// No description provided for @stackedBannerPanelWrapped2.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} Wrapped'**
+  String stackedBannerPanelWrapped2(String month);
+
+  /// No description provided for @stackedBannerPanelWrapped3.
+  ///
+  /// In en, this message translates to:
+  /// **'/wrapped/{period}'**
+  String stackedBannerPanelWrapped3(String period);
+
+  /// No description provided for @stackedBannerPanelYouReAwayFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re {remaining} {workoutWord} away from your weekly goal'**
+  String stackedBannerPanelYouReAwayFrom(String remaining, String workoutWord);
+
+  /// No description provided for @stackedBannerPanelLbs.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseName}: {weightLbs} lbs'**
+  String stackedBannerPanelLbs(String exerciseName, Object weightLbs);
+
+  /// No description provided for @stackedBannerPanelWorkoutTipsMealIdeas.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout tips, meal ideas, and community highlights @{marketingDomain}'**
+  String stackedBannerPanelWorkoutTipsMealIdeas(String marketingDomain);
+
+  /// No description provided for @stackedBannerPanelCrateOpenedYouGot.
+  ///
+  /// In en, this message translates to:
+  /// **'🎁 Crate opened! You got {rewardName}'**
+  String stackedBannerPanelCrateOpenedYouGot(String rewardName);
+
+  /// No description provided for @syncedWorkoutDetailScreenOnlyASummaryWas.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a summary was shared from {sourceApp}'**
+  String syncedWorkoutDetailScreenOnlyASummaryWas(String sourceApp);
+
+  /// No description provided for @syncedWorkoutDetailScreenAppDetailedSamplesMay.
+  ///
+  /// In en, this message translates to:
+  /// **'app, detailed samples may not reach {sourceApp}.'**
+  String syncedWorkoutDetailScreenAppDetailedSamplesMay(String sourceApp);
+
+  /// No description provided for @syncedWorkoutDetailScreenBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} {value} bpm'**
+  String syncedWorkoutDetailScreenBpm(String label, String value);
+
+  /// No description provided for @syncedWorkoutDetailScreenSpm.
+  ///
+  /// In en, this message translates to:
+  /// **'{cadence} spm'**
+  String syncedWorkoutDetailScreenSpm(String cadence);
+
+  /// No description provided for @syncedWorkoutDetailScreenIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{stride} in'**
+  String syncedWorkoutDetailScreenIn(String stride);
+
+  /// No description provided for @syncedWorkoutDetailScreenM.
+  ///
+  /// In en, this message translates to:
+  /// **'{elev} m'**
+  String syncedWorkoutDetailScreenM(String elev);
+
+  /// No description provided for @syncedWorkoutDetailScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{spo2}%'**
+  String syncedWorkoutDetailScreenValue2(String spo2);
+
+  /// No description provided for @syncedWorkoutDetailScreenC.
+  ///
+  /// In en, this message translates to:
+  /// **'{temp}°C'**
+  String syncedWorkoutDetailScreenC(String temp);
+
+  /// No description provided for @syncedWorkoutDetailScreenMs.
+  ///
+  /// In en, this message translates to:
+  /// **'{hrvPre} ms'**
+  String syncedWorkoutDetailScreenMs(String hrvPre);
+
+  /// No description provided for @syncedWorkoutDetailScreenMs2.
+  ///
+  /// In en, this message translates to:
+  /// **'{hrvPost} ms'**
+  String syncedWorkoutDetailScreenMs2(String hrvPost);
+
+  /// No description provided for @syncedWorkoutDetailScreenBpm2.
+  ///
+  /// In en, this message translates to:
+  /// **'{rhr} bpm'**
+  String syncedWorkoutDetailScreenBpm2(String rhr);
+
+  /// No description provided for @syncedWorkoutDetailScreenKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{bodyKg} kg'**
+  String syncedWorkoutDetailScreenKg(String bodyKg);
+
+  /// No description provided for @syncedWorkoutDetailScreenTrimpFromHrReserve.
+  ///
+  /// In en, this message translates to:
+  /// **'TRIMP {trimp} · from HR reserve, duration, and recovery'**
+  String syncedWorkoutDetailScreenTrimpFromHrReserve(String trimp);
+
+  /// No description provided for @syncedWorkoutDetailScreenCoach.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach: {_insight}'**
+  String syncedWorkoutDetailScreenCoach(String _insight);
+
+  /// No description provided for @aiCoachMealSuggestionSheetLoggingMyHitMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging my {meal}. Hit me with something that fits my day so far — one pick, macros, short and real.'**
+  String aiCoachMealSuggestionSheetLoggingMyHitMe(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetIMHuntingFor.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m hunting for a high-protein {meal} option. One pick, full macros, and why it\'s fire.'**
+  String aiCoachMealSuggestionSheetIMHuntingFor(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetDropALowCal.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop a low-cal {meal} swap that still hits my macros. Keep it hype, include macros.'**
+  String aiCoachMealSuggestionSheetDropALowCal(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetNoStoveNoOven.
+  ///
+  /// In en, this message translates to:
+  /// **'No stove, no oven — what\'s a solid no-cook {meal} I can throw together in 5 min? Macros too.'**
+  String aiCoachMealSuggestionSheetNoStoveNoOven(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetVegetarianIdeaThatStill.
+  ///
+  /// In en, this message translates to:
+  /// **'Vegetarian {meal} idea that still hits protein. One pick, macros, and prep notes.'**
+  String aiCoachMealSuggestionSheetVegetarianIdeaThatStill(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetKeepingSpendTightCheap.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeping spend tight — cheap {meal} idea with solid macros. One pick, rough cost, macros.'**
+  String aiCoachMealSuggestionSheetKeepingSpendTightCheap(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetHowAmITracking.
+  ///
+  /// In en, this message translates to:
+  /// **'How am I tracking against my calorie target today? If I\'m behind, what {meal} closes the gap?'**
+  String aiCoachMealSuggestionSheetHowAmITracking(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetINeedMoreFiber.
+  ///
+  /// In en, this message translates to:
+  /// **'I need more fiber. What\'s a {meal} idea that bumps it up without going wild on carbs?'**
+  String aiCoachMealSuggestionSheetINeedMoreFiber(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetFastingFriendlyIdeaThat.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasting-friendly {meal} idea that won\'t spike insulin hard. One pick, macros, why it works.'**
+  String aiCoachMealSuggestionSheetFastingFriendlyIdeaThat(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetLowSugarPickThat.
+  ///
+  /// In en, this message translates to:
+  /// **'Low-sugar {meal} pick that still tastes like a win. Macros and why it\'s low-sugar.'**
+  String aiCoachMealSuggestionSheetLowSugarPickThat(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetGotALaterToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Got a {workoutType} later today. Solid pre-workout {meal} bite to load up right? Macros + timing.'**
+  String aiCoachMealSuggestionSheetGotALaterToday(
+    String workoutType,
+    String meal,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetJustFinishedMyRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Just finished my {workoutType}. Recovery {meal} that lines up with what I already ate?'**
+  String aiCoachMealSuggestionSheetJustFinishedMyRecovery(
+    String workoutType,
+    String meal,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetTodaySARecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s a recovery day. How should my {meal} look — macros, portion, any tweaks vs training days?'**
+  String aiCoachMealSuggestionSheetTodaySARecovery(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetFeelingStressedAndReaching.
+  ///
+  /// In en, this message translates to:
+  /// **'Feeling stressed and reaching for food. Give me a {meal} pick that actually calms me down, not just sugar. Macros.'**
+  String aiCoachMealSuggestionSheetFeelingStressedAndReaching(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetIMAngryAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m angry and want to stress-eat. Give me a {meal} pick that takes the edge off without wrecking my macros. Short and real.'**
+  String aiCoachMealSuggestionSheetIMAngryAnd(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetRunningOnFumesPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Running on fumes. {meal} pick that gives real energy (no crash), with macros.'**
+  String aiCoachMealSuggestionSheetRunningOnFumesPick(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetFeelingAnxiousPickWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Feeling anxious — {meal} pick with calming nutrients (magnesium, omega-3, etc.)? Macros and why.'**
+  String aiCoachMealSuggestionSheetFeelingAnxiousPickWith(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetIMCuttingIdea.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m cutting. {meal} idea that\'s high-satiety, protein-forward, under budget. Macros.'**
+  String aiCoachMealSuggestionSheetIMCuttingIdea(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetBulkingCalorieDenseThat.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulking — calorie-dense {meal} that doesn\'t feel like a chore to eat. Macros.'**
+  String aiCoachMealSuggestionSheetBulkingCalorieDenseThat(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetOnMaintenanceGiveMe.
+  ///
+  /// In en, this message translates to:
+  /// **'On maintenance. Give me a {meal} that keeps me steady — balanced macros, nothing extreme.'**
+  String aiCoachMealSuggestionSheetOnMaintenanceGiveMe(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetIMBloatedPick.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m bloated. {meal} pick that\'s gentle on the gut and what to avoid today?'**
+  String aiCoachMealSuggestionSheetIMBloatedPick(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetSleptBadWhatHelps.
+  ///
+  /// In en, this message translates to:
+  /// **'Slept bad. What {meal} helps me feel human today without tanking energy later?'**
+  String aiCoachMealSuggestionSheetSleptBadWhatHelps(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetHeadacheComingOnAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Headache coming on. Any {meal} or hydration move that helps? Skip if no real food link.'**
+  String aiCoachMealSuggestionSheetHeadacheComingOnAny(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetHeartburnProneTodaySafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Heartburn-prone today. Safe {meal} pick — what to eat and what to skip. Macros.'**
+  String aiCoachMealSuggestionSheetHeartburnProneTodaySafe(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetStomachSOffGentle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stomach\'s off. Gentle {meal} pick that won\'t make it worse. Macros.'**
+  String aiCoachMealSuggestionSheetStomachSOffGentle(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetCravingMexicanPickThat.
+  ///
+  /// In en, this message translates to:
+  /// **'Craving Mexican. {meal} pick that hits my macros (not just rice + tortillas). Macros.'**
+  String aiCoachMealSuggestionSheetCravingMexicanPickThat(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetAsianInspiredThatS.
+  ///
+  /// In en, this message translates to:
+  /// **'Asian-inspired {meal} that\'s high-protein and macro-friendly. Macros.'**
+  String aiCoachMealSuggestionSheetAsianInspiredThatS(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetMediterraneanStyleMacrosWhat.
+  ///
+  /// In en, this message translates to:
+  /// **'Mediterranean-style {meal} — macros, what makes it work, and one quick prep note.'**
+  String aiCoachMealSuggestionSheetMediterraneanStyleMacrosWhat(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetComfortFoodCravingBut.
+  ///
+  /// In en, this message translates to:
+  /// **'Comfort food craving but want to stay on plan. Smart {meal} version of a classic. Macros.'**
+  String aiCoachMealSuggestionSheetComfortFoodCravingBut(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetLoggingMyHitMe2.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging my {meal}. Hit me with one healthy real-food pick that fits my day — macros, short and direct.{budgetTail}'**
+  String aiCoachMealSuggestionSheetLoggingMyHitMe2(
+    String meal,
+    String budgetTail,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetCravingFastFoodFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Craving fast food for {meal}. Pick ONE real item from a common US chain '**
+  String aiCoachMealSuggestionSheetCravingFastFoodFor(String meal);
+
+  /// No description provided for @aiCoachMealSuggestionSheetHighProteinPickOne.
+  ///
+  /// In en, this message translates to:
+  /// **'High-protein {meal} pick. One item, full macros, brief prep.{budgetTail}'**
+  String aiCoachMealSuggestionSheetHighProteinPickOne(
+    String meal,
+    String budgetTail,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetNoStoveNoOven2.
+  ///
+  /// In en, this message translates to:
+  /// **'No stove, no oven — one quick {meal} I can throw together in 5 minutes. Macros + what to grab.{budgetTail}'**
+  String aiCoachMealSuggestionSheetNoStoveNoOven2(
+    String meal,
+    String budgetTail,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetIndianOneAuthenticPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Indian {meal} — one authentic pick (north or south), macros, sides to skip/include to stay on track.{budgetTail}'**
+  String aiCoachMealSuggestionSheetIndianOneAuthenticPick(
+    String meal,
+    String budgetTail,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetMexicanOneRealPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Mexican {meal} — one real pick (bowl, tacos, etc.), macros, what to build it with to stay on track.{budgetTail}'**
+  String aiCoachMealSuggestionSheetMexicanOneRealPick(
+    String meal,
+    String budgetTail,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetAsianInspiredOnePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Asian-inspired {meal} — one pick (rice bowl, noodles, sushi, stir fry), macros and prep.{budgetTail}'**
+  String aiCoachMealSuggestionSheetAsianInspiredOnePick(
+    String meal,
+    String budgetTail,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetMediterraneanOnePickBowl.
+  ///
+  /// In en, this message translates to:
+  /// **'Mediterranean {meal} — one pick (bowl, plate, wrap), macros, what makes it fit.{budgetTail}'**
+  String aiCoachMealSuggestionSheetMediterraneanOnePickBowl(
+    String meal,
+    String budgetTail,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetItalianOrComfortOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Italian or comfort {meal} — one real pick, macros, lighter swap if needed.{budgetTail}'**
+  String aiCoachMealSuggestionSheetItalianOrComfortOne(
+    String meal,
+    String budgetTail,
+  );
+
+  /// No description provided for @aiCoachMealSuggestionSheetQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} questions'**
+  String aiCoachMealSuggestionSheetQuestions(Object length);
+
+  /// No description provided for @aiCoachMealSuggestionSheetNoQuestionsMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No questions match \"{_query}\".'**
+  String aiCoachMealSuggestionSheetNoQuestionsMatch(String _query);
+
+  /// No description provided for @logMealSheetUi1AddAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another {noun}'**
+  String logMealSheetUi1AddAnother(String noun);
+
+  /// No description provided for @logMealSheetUi1ThatCorrectionLooksOff.
+  ///
+  /// In en, this message translates to:
+  /// **'That correction looks off ({cals} kcal) — kept the previous estimate.'**
+  String logMealSheetUi1ThatCorrectionLooksOff(String cals);
+
+  /// No description provided for @menuAnalysisSheetCouldnTAddFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\\\'t add food: {message}'**
+  String menuAnalysisSheetCouldnTAddFood(String message);
+
+  /// No description provided for @menuAnalysisSheetYouAlreadySavedA.
+  ///
+  /// In en, this message translates to:
+  /// **'You already saved a menu for \"{restaurantName}\"'**
+  String menuAnalysisSheetYouAlreadySavedA(String restaurantName);
+
+  /// No description provided for @menuAnalysisSheetGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal: {displayName}'**
+  String menuAnalysisSheetGoal(String displayName);
+
+  /// No description provided for @menuAnalysisSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **')(elapsed)'**
+  String menuAnalysisSheetValue(String elapsed);
+
+  /// No description provided for @menuAnalysisSheetMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More (+{extraCount})'**
+  String menuAnalysisSheetMore(Object extraCount);
+
+  /// No description provided for @menuAnalysisSheetSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort: {label}'**
+  String menuAnalysisSheetSort(String label);
+
+  /// No description provided for @menuAnalysisSheetMore2.
+  ///
+  /// In en, this message translates to:
+  /// **'+{extraCount} more'**
+  String menuAnalysisSheetMore2(Object extraCount);
+
+  /// No description provided for @menuAnalysisSheetValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String menuAnalysisSheetValue2(String rank);
+
+  /// No description provided for @menuAnalysisSheetSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} selected'**
+  String menuAnalysisSheetSelected(Object length);
+
+  /// No description provided for @menuAnalysisSheetCalGP.
+  ///
+  /// In en, this message translates to:
+  /// **'{cal} cal  {protein}g P  '**
+  String menuAnalysisSheetCalGP(Object cal, Object protein);
+
+  /// No description provided for @menuAnalysisSheetGCGF.
+  ///
+  /// In en, this message translates to:
+  /// **'{carbs}g C  {fat}g F'**
+  String menuAnalysisSheetGCGF(Object carbs, Object fat);
+
+  /// No description provided for @workoutCompleteScreenExt1ErrorCompletingChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Error completing challenge: {e}'**
+  String workoutCompleteScreenExt1ErrorCompletingChallenge(String e);
+
+  /// No description provided for @workoutCompleteScreenExt1GreatWillBeIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Great! {suggestedNextVariant} will be included in future workouts.'**
+  String workoutCompleteScreenExt1GreatWillBeIncluded(
+    String suggestedNextVariant,
+  );
+
+  /// No description provided for @workoutCompleteScreenExt1AddedMoreExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {length} more exercises!'**
+  String workoutCompleteScreenExt1AddedMoreExercises(Object length);
+
+  /// No description provided for @progressShareTemplatesValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{daysBetween}'**
+  String progressShareTemplatesValue(String daysBetween);
+
+  /// No description provided for @progressShareTemplatesVol.
+  ///
+  /// In en, this message translates to:
+  /// **'VOL. {totalWorkouts}'**
+  String progressShareTemplatesVol(Object totalWorkouts);
+
+  /// No description provided for @progressShareTemplatesLocalLegendShedsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'LOCAL LEGEND SHEDS {weightLostText} IN {durationText}'**
+  String progressShareTemplatesLocalLegendShedsIn(
+    Object weightLostText,
+    Object durationText,
+  );
+
+  /// No description provided for @progressShareTemplatesLocalLegendTransformsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'LOCAL LEGEND TRANSFORMS IN {durationText}'**
+  String progressShareTemplatesLocalLegendTransformsIn(Object durationText);
+
+  /// No description provided for @progressShareTemplatesFromAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'from {durationText} ago'**
+  String progressShareTemplatesFromAgo(Object durationText);
+
+  /// No description provided for @progressShareTemplatesValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'#{daysBetween}'**
+  String progressShareTemplatesValue2(String daysBetween);
+
+  /// No description provided for @progressShareTemplatesHowSheLost.
+  ///
+  /// In en, this message translates to:
+  /// **'HOW SHE LOST {weightLostText}'**
+  String progressShareTemplatesHowSheLost(Object weightLostText);
+
+  /// No description provided for @progressShareTemplatesTheGlowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'THE {durationText} GLOW-UP'**
+  String progressShareTemplatesTheGlowUp(Object durationText);
+
+  /// No description provided for @progressShareTemplatesWorkoutsDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkouts} workouts · {currentStreak}-day streak'**
+  String progressShareTemplatesWorkoutsDayStreak(
+    Object totalWorkouts,
+    String currentStreak,
+  );
+
+  /// No description provided for @progressShareTemplatesNworkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'+{totalWorkouts}\\nWORKOUTS'**
+  String progressShareTemplatesNworkouts(Object totalWorkouts);
+
+  /// No description provided for @progressShareTemplatesOfWork.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationText} OF WORK'**
+  String progressShareTemplatesOfWork(Object durationText);
+
+  /// No description provided for @progressShareTemplatesTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkouts} total'**
+  String progressShareTemplatesTotal(Object totalWorkouts);
+
+  /// No description provided for @progressShareTemplatesToLater.
+  ///
+  /// In en, this message translates to:
+  /// **'TO {durationText} LATER'**
+  String progressShareTemplatesToLater(Object durationText);
+
+  /// No description provided for @progressShareTemplatesWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkouts} WORKOUTS'**
+  String progressShareTemplatesWorkouts(Object totalWorkouts);
+
+  /// No description provided for @progressShareTemplatesWW.
+  ///
+  /// In en, this message translates to:
+  /// **'W1 → W{weeks}'**
+  String progressShareTemplatesWW(String weeks);
+
+  /// No description provided for @mediaPickerHelperPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'{permissionName} Permission Required'**
+  String mediaPickerHelperPermissionRequired(String permissionName);
+
+  /// No description provided for @mediaPickerHelperAccessHasBeenPermanently.
+  ///
+  /// In en, this message translates to:
+  /// **'{permissionName} access has been permanently denied. '**
+  String mediaPickerHelperAccessHasBeenPermanently(String permissionName);
+
+  /// No description provided for @workoutDetailScreenUi1AndAreAlreadyIn.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" and \"{name1}\" are already in different supersets.\\n\\nBreak the existing supersets first to create a new pairing.'**
+  String workoutDetailScreenUi1AndAreAlreadyIn(String name, String name1);
+
+  /// No description provided for @workoutDetailScreenUi1AddToCreateA.
+  ///
+  /// In en, this message translates to:
+  /// **'Add \"{name}\" to create a {newSetType}?'**
+  String workoutDetailScreenUi1AddToCreateA(String name, String newSetType);
+
+  /// No description provided for @workoutDetailScreenUi1Created.
+  ///
+  /// In en, this message translates to:
+  /// **'{setType} created!'**
+  String workoutDetailScreenUi1Created(String setType);
+
+  /// No description provided for @nutritionScreenUpdatedYourDailyTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated your daily target: {newCalories} cal/day '**
+  String nutritionScreenUpdatedYourDailyTarget(Object newCalories);
+
+  /// No description provided for @nutritionScreenWasWeFixedHow.
+  ///
+  /// In en, this message translates to:
+  /// **'(was {oldCalories}). We fixed how we calculate the deficit '**
+  String nutritionScreenWasWeFixedHow(Object oldCalories);
+
+  /// No description provided for @workoutUiBuildersMixinUi2YouSaidCurrentExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'You said \"{liftHint}\" — current exercise is '**
+  String workoutUiBuildersMixinUi2YouSaidCurrentExercise(String liftHint);
+
+  /// No description provided for @workoutUiBuildersMixinUi2LoggingAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\". Logging anyway.'**
+  String workoutUiBuildersMixinUi2LoggingAnyway(Object name);
+
+  /// No description provided for @workoutUiBuildersMixinUi2HeardKg.
+  ///
+  /// In en, this message translates to:
+  /// **'Heard: {parsed} kg × '**
+  String workoutUiBuildersMixinUi2HeardKg(Object parsed);
+
+  /// No description provided for @workoutUiBuildersMixinUi2LoggedReps.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged {weightDisplay} × {reps} reps'**
+  String workoutUiBuildersMixinUi2LoggedReps(Object weightDisplay, Object reps);
+
+  /// No description provided for @aiFeaturesMixinValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{message}: {displayCurrent} → {snappedDisplay} {unit}'**
+  String aiFeaturesMixinValue(
+    String message,
+    String displayCurrent,
+    String snappedDisplay,
+    String unit,
+  );
+
+  /// No description provided for @customContentSectionPartCustomContentCardFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String customContentSectionPartCustomContentCardFailedToSave(String e);
+
+  /// No description provided for @customContentSectionPartCustomContentCardIsAlreadyInYour.
+  ///
+  /// In en, this message translates to:
+  /// **'{trimmed} is already in your list'**
+  String customContentSectionPartCustomContentCardIsAlreadyInYour(
+    String trimmed,
+  );
+
+  /// No description provided for @customContentSectionPartCustomContentCardAddedToYourEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{trimmed}\" to your equipment'**
+  String customContentSectionPartCustomContentCardAddedToYourEquipment(
+    String trimmed,
+  );
+
+  /// No description provided for @customContentSectionPartCustomContentCardRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed \"{name}\"'**
+  String customContentSectionPartCustomContentCardRemoved(String name);
+
+  /// No description provided for @customContentSectionPartCustomContentCardAreYouSureYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"?'**
+  String customContentSectionPartCustomContentCardAreYouSureYou(String name);
+
+  /// No description provided for @customContentSectionPartCustomContentCardDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{name}\"'**
+  String customContentSectionPartCustomContentCardDeleted(String name);
+
+  /// No description provided for @logWeightSheetFromYourPreviousLow.
+  ///
+  /// In en, this message translates to:
+  /// **'-{_selectedUnit} {label} from your previous low'**
+  String logWeightSheetFromYourPreviousLow(Object _selectedUnit, String label);
+
+  /// No description provided for @logWeightSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **')(changeInUnit)'**
+  String logWeightSheetValue(String changeInUnit);
+
+  /// No description provided for @logWeightSheetValidRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid range: {minValue}-{maxValue} {label}'**
+  String logWeightSheetValidRange(
+    Object minValue,
+    Object maxValue,
+    String label,
+  );
+
+  /// No description provided for @logWeightSheetDAvg.
+  ///
+  /// In en, this message translates to:
+  /// **'7d avg · {avgDisplay} {label}'**
+  String logWeightSheetDAvg(Object avgDisplay, String label);
+
+  /// No description provided for @customTrendScreenLastCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} · last cycle'**
+  String customTrendScreenLastCycle(String displayName);
+
+  /// No description provided for @customTrendScreenCouldnTLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load {name}'**
+  String customTrendScreenCouldnTLoad(String name);
+
+  /// No description provided for @customTrendScreenMaxOverlaysRemoveOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Max {_kMaxOverlays} overlays — remove one to add another'**
+  String customTrendScreenMaxOverlaysRemoveOne(Object _kMaxOverlays);
+
+  /// No description provided for @customTrendScreenCorrelationVs.
+  ///
+  /// In en, this message translates to:
+  /// **'Correlation vs {displayName}'**
+  String customTrendScreenCorrelationVs(String displayName);
+
+  /// No description provided for @customTrendScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **')(value) · (strengthLabel)'**
+  String customTrendScreenValue(String value, String strengthLabel);
+
+  /// No description provided for @customTrendScreenSharedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{pairedPoints}/{kMinCorrelationPairs} shared days'**
+  String customTrendScreenSharedDays(
+    String pairedPoints,
+    Object kMinCorrelationPairs,
+  );
+
+  /// No description provided for @workoutCompleteScreenWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} Workout'**
+  String workoutCompleteScreenWorkout(String appName);
+
+  /// No description provided for @workoutCompleteScreenMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{_saunaMinutes}min'**
+  String workoutCompleteScreenMin(Object _saunaMinutes);
+
+  /// No description provided for @workoutCompleteScreenMinSaunaCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{_saunaMinutes} min sauna · ~{_saunaCalories} cal'**
+  String workoutCompleteScreenMinSaunaCal(
+    Object _saunaMinutes,
+    Object _saunaCalories,
+  );
+
+  /// No description provided for @workoutSheetsMixinMlLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'{amountMl}ml {label} logged'**
+  String workoutSheetsMixinMlLogged(Object amountMl, String label);
+
+  /// No description provided for @workoutSheetsMixinLoggedLocallySyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} logged locally (sync failed)'**
+  String workoutSheetsMixinLoggedLocallySyncFailed(String label);
+
+  /// No description provided for @workoutSheetsMixinMlLogged2.
+  ///
+  /// In en, this message translates to:
+  /// **'{amountMl}ml {label} logged'**
+  String workoutSheetsMixinMlLogged2(Object amountMl, String label);
+
+  /// No description provided for @activeWorkoutScreenRefactoredFor.
+  ///
+  /// In en, this message translates to:
+  /// **') for (name)'**
+  String activeWorkoutScreenRefactoredFor(String name);
+
+  /// No description provided for @activeWorkoutScreenRefactoredExerciseSAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{_exercises} exercise(s) added'**
+  String activeWorkoutScreenRefactoredExerciseSAdded(Object _exercises);
+
+  /// No description provided for @foodBrowserPanelResultsUBMs.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCount} results \\u00b7 {searchTimeMs}ms'**
+  String foodBrowserPanelResultsUBMs(Object totalCount, String searchTimeMs);
+
+  /// No description provided for @foodBrowserPanelItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalItems} items'**
+  String foodBrowserPanelItems(Object totalItems);
+
+  /// No description provided for @foodBrowserPanelKcal2.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCal} kcal'**
+  String foodBrowserPanelKcal2(Object totalCal);
+
+  /// No description provided for @editTargetsSheetFailedToRecalculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to recalculate: {e}'**
+  String editTargetsSheetFailedToRecalculate(String e);
+
+  /// No description provided for @editTargetsSheetFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String editTargetsSheetFailedToSave(String e);
+
+  /// No description provided for @editTargetsSheetGKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentRatio} g/kg · '**
+  String editTargetsSheetGKg(String currentRatio);
+
+  /// No description provided for @editTargetsSheetKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{fmt}kg'**
+  String editTargetsSheetKg(Object fmt);
+
+  /// No description provided for @editTargetsSheetProteinTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein target {anchorLabel}'**
+  String editTargetsSheetProteinTarget(String anchorLabel);
+
+  /// No description provided for @editTargetsSheetTotalUBMust.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {sum}% \\u00b7 Must equal 100%'**
+  String editTargetsSheetTotalUBMust(Object sum);
+
+  /// No description provided for @editTargetsSheetCalculatedKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculated: {numberFormat} kcal'**
+  String editTargetsSheetCalculatedKcal(Object numberFormat);
+
+  /// No description provided for @editTargetsSheetSafeMinimumCaloriesMeet.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe-minimum calories ({cappedMinimum}) meet your TDEE \\u2014 '**
+  String editTargetsSheetSafeMinimumCaloriesMeet(Object cappedMinimum);
+
+  /// No description provided for @editTargetsSheetUWks.
+  ///
+  /// In en, this message translates to:
+  /// **'{goalLabel} \\u2192 ~{weeks} wks ({dateStr}){deficitInfo}'**
+  String editTargetsSheetUWks(
+    String goalLabel,
+    String weeks,
+    String dateStr,
+    String deficitInfo,
+  );
+
+  /// No description provided for @editTargetsSheetCappedAtSafeMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'Capped at safe minimum ({cappedMinimum} kcal) \\u2014 '**
+  String editTargetsSheetCappedAtSafeMinimum(Object cappedMinimum);
+
+  /// No description provided for @editTargetsSheetGKg2.
+  ///
+  /// In en, this message translates to:
+  /// **'{ratio} g/kg'**
+  String editTargetsSheetGKg2(String ratio);
+
+  /// No description provided for @editTargetsSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} {pct}%'**
+  String editTargetsSheetValue(String label, Object pct);
+
+  /// No description provided for @discoverScreenOf.
+  ///
+  /// In en, this message translates to:
+  /// **'#{yourRank} of {totalActive}'**
+  String discoverScreenOf(String yourRank, Object totalActive);
+
+  /// No description provided for @discoverScreenLvl.
+  ///
+  /// In en, this message translates to:
+  /// **'Lvl {level}'**
+  String discoverScreenLvl(Object level);
+
+  /// No description provided for @discoverScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String discoverScreenValue(String rank);
+
+  /// No description provided for @discoverScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String discoverScreenValue2(String rank);
+
+  /// No description provided for @discoverScreenValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'@{username}'**
+  String discoverScreenValue3(String username);
+
+  /// No description provided for @discoverScreenValue4.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{bio}\"'**
+  String discoverScreenValue4(String bio);
+
+  /// No description provided for @discoverScreenLvl2.
+  ///
+  /// In en, this message translates to:
+  /// **'Lvl {level}'**
+  String discoverScreenLvl2(Object level);
+
+  /// No description provided for @discoverScreenValue5.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String discoverScreenValue5(String rank);
+
+  /// No description provided for @logMealSheetYouVeBeenFasting.
+  ///
+  /// In en, this message translates to:
+  /// **'You\\\'ve been fasting for {elapsedHours}h {elapsedMins}m.'**
+  String logMealSheetYouVeBeenFasting(Object elapsedHours, Object elapsedMins);
+
+  /// No description provided for @logMealSheetNutritionFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Nutrition for {servingsLabel}'**
+  String logMealSheetNutritionFor(String servingsLabel);
+
+  /// No description provided for @logMealSheetKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCalories} kcal'**
+  String logMealSheetKcal(Object totalCalories);
+
+  /// No description provided for @logMealSheetG.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalProtein}g'**
+  String logMealSheetG(Object totalProtein);
+
+  /// No description provided for @logMealSheetG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCarbs}g'**
+  String logMealSheetG2(Object totalCarbs);
+
+  /// No description provided for @logMealSheetG3.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalFat}g'**
+  String logMealSheetG3(Object totalFat);
+
+  /// No description provided for @logMealSheetG4.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalFiber}g'**
+  String logMealSheetG4(Object totalFiber);
+
+  /// No description provided for @logMealSheetG5.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalSugar}g'**
+  String logMealSheetG5(Object totalSugar);
+
+  /// No description provided for @logMealSheetG6.
+  ///
+  /// In en, this message translates to:
+  /// **'{vitaminA100g} µg'**
+  String logMealSheetG6(Object vitaminA100g);
+
+  /// No description provided for @logMealSheetMg.
+  ///
+  /// In en, this message translates to:
+  /// **'{vitaminC100g} mg'**
+  String logMealSheetMg(Object vitaminC100g);
+
+  /// No description provided for @logMealSheetG7.
+  ///
+  /// In en, this message translates to:
+  /// **'{vitaminD100g} µg'**
+  String logMealSheetG7(Object vitaminD100g);
+
+  /// No description provided for @logMealSheetMg2.
+  ///
+  /// In en, this message translates to:
+  /// **'{calcium100g} mg'**
+  String logMealSheetMg2(String calcium100g);
+
+  /// No description provided for @logMealSheetMg3.
+  ///
+  /// In en, this message translates to:
+  /// **'{iron100g} mg'**
+  String logMealSheetMg3(String iron100g);
+
+  /// No description provided for @logMealSheetMg4.
+  ///
+  /// In en, this message translates to:
+  /// **'{potassium100g} mg'**
+  String logMealSheetMg4(String potassium100g);
+
+  /// No description provided for @logMealSheetMg5.
+  ///
+  /// In en, this message translates to:
+  /// **'{magnesium100g} mg'**
+  String logMealSheetMg5(String magnesium100g);
+
+  /// No description provided for @logMealSheetMg6.
+  ///
+  /// In en, this message translates to:
+  /// **'{zinc100g} mg'**
+  String logMealSheetMg6(String zinc100g);
+
+  /// No description provided for @logMealSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'× {servingLabel}'**
+  String logMealSheetValue(String servingLabel);
+
+  /// No description provided for @nutritionPatternsTabG.
+  ///
+  /// In en, this message translates to:
+  /// **'{grams}g · {pct}%'**
+  String nutritionPatternsTabG(String grams, Object pct);
+
+  /// No description provided for @nutritionPatternsTabG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{grams}g'**
+  String nutritionPatternsTabG2(String grams);
+
+  /// No description provided for @nutritionPatternsTabKcalDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{avgCalories} kcal/day'**
+  String nutritionPatternsTabKcalDay(Object avgCalories);
+
+  /// No description provided for @nutritionPatternsTabGoalKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal: {calorieGoal} kcal'**
+  String nutritionPatternsTabGoalKcal(Object calorieGoal);
+
+  /// No description provided for @nutritionPatternsTabLogMealsToSee.
+  ///
+  /// In en, this message translates to:
+  /// **'Log meals to see your top {_METRICS} sources.'**
+  String nutritionPatternsTabLogMealsToSee(String _METRICS);
+
+  /// No description provided for @nutritionPatternsTabViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all {length}'**
+  String nutritionPatternsTabViewAll(Object length);
+
+  /// No description provided for @nutritionPatternsTabNoMealsThis.
+  ///
+  /// In en, this message translates to:
+  /// **'No meals this {range}'**
+  String nutritionPatternsTabNoMealsThis(String range);
+
+  /// No description provided for @nutritionPatternsTabKcalPGC.
+  ///
+  /// In en, this message translates to:
+  /// **'{cal} kcal · P {p}g · C {c}g · F {f}g'**
+  String nutritionPatternsTabKcalPGC(String cal, String p, String c, String f);
+
+  /// No description provided for @nutrientRushGameS.
+  ///
+  /// In en, this message translates to:
+  /// **'S{_stageNumber}'**
+  String nutrientRushGameS(Object _stageNumber);
+
+  /// No description provided for @nutrientRushGameX.
+  ///
+  /// In en, this message translates to:
+  /// **'x{_combo}'**
+  String nutrientRushGameX(String _combo);
+
+  /// No description provided for @nutrientRushGameYourBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Your best: {best}'**
+  String nutrientRushGameYourBest(String best);
+
+  /// No description provided for @nutrientRushGameYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (You)'**
+  String nutrientRushGameYou(String name);
+
+  /// No description provided for @exerciseNavigationMixinRemoveFromThisWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\" from this workout?'**
+  String exerciseNavigationMixinRemoveFromThisWorkout(String name);
+
+  /// No description provided for @exerciseNavigationMixinRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed'**
+  String exerciseNavigationMixinRemoved(String name);
+
+  /// No description provided for @exerciseNavigationMixinChangedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed to {displayName}'**
+  String exerciseNavigationMixinChangedTo(String displayName);
+
+  /// No description provided for @exerciseNavigationMixinSuperset.
+  ///
+  /// In en, this message translates to:
+  /// **'Superset: {name} + {name1}'**
+  String exerciseNavigationMixinSuperset(String name, String name1);
+
+  /// No description provided for @exerciseNavigationMixinFailedToAddExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add exercises: {e}'**
+  String exerciseNavigationMixinFailedToAddExercises(String e);
+
+  /// No description provided for @exerciseNavigationMixinFailedToAddExercises2.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add exercises: {e}'**
+  String exerciseNavigationMixinFailedToAddExercises2(String e);
+
+  /// No description provided for @exerciseNavigationMixinRemovedFromSuperset.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed from superset'**
+  String exerciseNavigationMixinRemovedFromSuperset(String name);
+
+  /// No description provided for @exerciseNavigationMixinSetThisCountSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Set this count ({newCount} sets) on every exercise in the superset group? '**
+  String exerciseNavigationMixinSetThisCountSets(Object newCount);
+
+  /// No description provided for @exerciseNavigationMixinSuperset2.
+  ///
+  /// In en, this message translates to:
+  /// **'Superset: {name}'**
+  String exerciseNavigationMixinSuperset2(String name);
+
+  /// No description provided for @setTrackingTablePartSetNumberBadgeRir.
+  ///
+  /// In en, this message translates to:
+  /// **'RIR {previousRir}'**
+  String setTrackingTablePartSetNumberBadgeRir(String previousRir);
+
+  /// No description provided for @setTrackingTablePartSetNumberBadgeRir2.
+  ///
+  /// In en, this message translates to:
+  /// **'RIR {displayRir}'**
+  String setTrackingTablePartSetNumberBadgeRir2(String displayRir);
+
+  /// No description provided for @quitWorkoutDialogCompleteSetsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPercent}% complete • {totalCompletedSets} sets done'**
+  String quitWorkoutDialogCompleteSetsDone(
+    Object progressPercent,
+    Object totalCompletedSets,
+  );
+
+  /// No description provided for @quitWorkoutDialogSays.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} says:'**
+  String quitWorkoutDialogSays(String name);
+
+  /// No description provided for @coachSelectionScreenUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use {_customName}'**
+  String coachSelectionScreenUse(String _customName);
+
+  /// No description provided for @unifiedHomeWidgetsCups.
+  ///
+  /// In en, this message translates to:
+  /// **'{cups} / {cupGoal} cups'**
+  String unifiedHomeWidgetsCups(String cups, String cupGoal);
+
+  /// No description provided for @unifiedHomeWidgetsG.
+  ///
+  /// In en, this message translates to:
+  /// **'{eaten} / {goal} g'**
+  String unifiedHomeWidgetsG(String eaten, String goal);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity Multiplier (×{activityMultiplier})'**
+  String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(
+    String activityMultiplier,
+  );
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetMacroSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Macro Split ({displayName}: {carbPct}/{proteinPct}/{fatPct})'**
+  String nutritionGoalsCardPartCalculationInfoSheetMacroSplit(
+    String displayName,
+    Object carbPct,
+    Object proteinPct,
+    Object fatPct,
+  );
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetKg.
+  ///
+  /// In en, this message translates to:
+  /// **'10 × {weight} kg'**
+  String nutritionGoalsCardPartCalculationInfoSheetKg(Object weight);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetCm.
+  ///
+  /// In en, this message translates to:
+  /// **'6.25 × {height} cm'**
+  String nutritionGoalsCardPartCalculationInfoSheetCm(String height);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetYrs.
+  ///
+  /// In en, this message translates to:
+  /// **'5 × {age} yrs'**
+  String nutritionGoalsCardPartCalculationInfoSheetYrs(String age);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetCal.
+  ///
+  /// In en, this message translates to:
+  /// **'= {bmr} cal'**
+  String nutritionGoalsCardPartCalculationInfoSheetCal(String bmr);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'= {displayValue}'**
+  String nutritionGoalsCardPartCalculationInfoSheetValue(String displayValue);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetG.
+  ///
+  /// In en, this message translates to:
+  /// **'{grams}g'**
+  String nutritionGoalsCardPartCalculationInfoSheetG(String grams);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String nutritionGoalsCardPartCalculationInfoSheetValue2(Object pct);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: '**
+  String nutritionGoalsCardPartCalculationInfoSheetValue3(String label);
+
+  /// No description provided for @nutritionGoalsCardPartCalculationInfoSheetG2.
+  ///
+  /// In en, this message translates to:
+  /// **'/{target}g'**
+  String nutritionGoalsCardPartCalculationInfoSheetG2(String target);
+
+  /// No description provided for @measurementsTabLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Log {displayName}'**
+  String measurementsTabLog(String displayName);
+
+  /// No description provided for @measurementsTabCouldnTSaveTry.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save {displayName}. Try again.'**
+  String measurementsTabCouldnTSaveTry(String displayName);
+
+  /// No description provided for @measurementsTabNoLogsInLast.
+  ///
+  /// In en, this message translates to:
+  /// **'No {displayName} logs in last {periodLabel}'**
+  String measurementsTabNoLogsInLast(String displayName, String periodLabel);
+
+  /// No description provided for @measurementsTabLogToSeeTrends.
+  ///
+  /// In en, this message translates to:
+  /// **'Log {displayName} to see trends'**
+  String measurementsTabLogToSeeTrends(String displayName);
+
+  /// No description provided for @measurementsTabValue.
+  ///
+  /// In en, this message translates to:
+  /// **'— {unit}'**
+  String measurementsTabValue(String unit);
+
+  /// No description provided for @settingsScreenCouldNotOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open {url}'**
+  String settingsScreenCouldNotOpen(String url);
+
+  /// No description provided for @settingsScreenUBDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{splitName} \\u00B7 {daysPerWeek} days'**
+  String settingsScreenUBDays(String splitName, String daysPerWeek);
+
+  /// No description provided for @settingsScreenMailtoSubjectSupportRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'mailto:{supportEmail}?subject={appName} Support Request'**
+  String settingsScreenMailtoSubjectSupportRequest(
+    String supportEmail,
+    String appName,
+  );
+
+  /// No description provided for @settingsScreenAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About {appName}'**
+  String settingsScreenAbout(String appName);
+
+  /// No description provided for @settingsScreenV.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} v{version}'**
+  String settingsScreenV(String appName, String version);
+
+  /// No description provided for @milestonesScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{next}%'**
+  String milestonesScreenValue(Object next);
+
+  /// No description provided for @milestonesScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{progress}%'**
+  String milestonesScreenValue2(Object progress);
+
+  /// No description provided for @milestonesScreenPts.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pts'**
+  String milestonesScreenPts(String points);
+
+  /// No description provided for @sleepDetailScreenMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{latencyMinutes} min'**
+  String sleepDetailScreenMin(Object latencyMinutes);
+
+  /// No description provided for @sleepDetailScreenNaps.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} naps'**
+  String sleepDetailScreenNaps(Object length);
+
+  /// No description provided for @sleepDetailScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{fmt} – {fmt1}'**
+  String sleepDetailScreenValue(String fmt, String fmt1);
+
+  /// No description provided for @sleepDetailScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{regularity} / 100'**
+  String sleepDetailScreenValue2(String regularity);
+
+  /// No description provided for @sleepDetailScreenHM.
+  ///
+  /// In en, this message translates to:
+  /// **'{summary}h {summary1}m'**
+  String sleepDetailScreenHM(Object summary, Object summary1);
+
+  /// No description provided for @sleepDetailScreenHM2.
+  ///
+  /// In en, this message translates to:
+  /// **'{summary}h {summary1}m'**
+  String sleepDetailScreenHM2(Object summary, Object summary1);
+
+  /// No description provided for @sleepDetailScreenHM3.
+  ///
+  /// In en, this message translates to:
+  /// **'{summary}h {summary1}m'**
+  String sleepDetailScreenHM3(Object summary, Object summary1);
+
+  /// No description provided for @sleepDetailScreenAcrossTrackedNights.
+  ///
+  /// In en, this message translates to:
+  /// **'Across {nightCount} tracked nights.'**
+  String sleepDetailScreenAcrossTrackedNights(Object nightCount);
+
+  /// No description provided for @fastingScreenRedesignedPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} plan'**
+  String fastingScreenRedesignedPlan(String displayName);
+
+  /// No description provided for @fastingScreenRedesignedStartedOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Started {timeFormat} · Ongoing'**
+  String fastingScreenRedesignedStartedOngoing(String timeFormat);
+
+  /// No description provided for @fastingScreenRedesignedFailedToStartFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to start fast: {e}'**
+  String fastingScreenRedesignedFailedToStartFast(String e);
+
+  /// No description provided for @fastingScreenRedesignedFailedToEndFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to end fast: {e}'**
+  String fastingScreenRedesignedFailedToEndFast(String e);
+
+  /// No description provided for @activityCardUiMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{yourDuration} min'**
+  String activityCardUiMin(Object yourDuration);
+
+  /// No description provided for @activityCardUiMin2.
+  ///
+  /// In en, this message translates to:
+  /// **'{theirDuration} min'**
+  String activityCardUiMin2(Object theirDuration);
+
+  /// No description provided for @activityCardUiMinFaster.
+  ///
+  /// In en, this message translates to:
+  /// **'{timeDifference} min faster'**
+  String activityCardUiMinFaster(String timeDifference);
+
+  /// No description provided for @activityCardUiLbs.
+  ///
+  /// In en, this message translates to:
+  /// **'{yourVolume} lbs'**
+  String activityCardUiLbs(String yourVolume);
+
+  /// No description provided for @activityCardUiLbs2.
+  ///
+  /// In en, this message translates to:
+  /// **'{theirVolume} lbs'**
+  String activityCardUiLbs2(String theirVolume);
+
+  /// No description provided for @activityCardUiLbs3.
+  ///
+  /// In en, this message translates to:
+  /// **'+{volumeDifference} lbs'**
+  String activityCardUiLbs3(String volumeDifference);
+
+  /// No description provided for @workoutSummaryScreenTotalKgLifted.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {volume} kg lifted'**
+  String workoutSummaryScreenTotalKgLifted(String volume);
+
+  /// No description provided for @workoutSummaryScreenManuallyMarkedAsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Manually marked as done at {formatted}'**
+  String workoutSummaryScreenManuallyMarkedAsDone(String formatted);
+
+  /// No description provided for @workoutSummaryScreenRepsAcrossSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalReps} reps across {totalSets} sets'**
+  String workoutSummaryScreenRepsAcrossSets(Object totalReps, Object totalSets);
+
+  /// No description provided for @cardioHistoryScreenBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'{avgHeartRate} bpm'**
+  String cardioHistoryScreenBpm(Object avgHeartRate);
+
+  /// No description provided for @cardioHistoryScreenCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} cal'**
+  String cardioHistoryScreenCal(Object calories);
+
+  /// No description provided for @cardioHistoryScreenBpm2.
+  ///
+  /// In en, this message translates to:
+  /// **'{maxHeartRate} bpm'**
+  String cardioHistoryScreenBpm2(Object maxHeartRate);
+
+  /// No description provided for @cardioHistoryScreenW.
+  ///
+  /// In en, this message translates to:
+  /// **'{avgWatts} W'**
+  String cardioHistoryScreenW(Object avgWatts);
+
+  /// No description provided for @cardioHistoryScreenM.
+  ///
+  /// In en, this message translates to:
+  /// **'{log} m'**
+  String cardioHistoryScreenM(String log);
+
+  /// No description provided for @logMealSheetUiValue.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{description}\"'**
+  String logMealSheetUiValue(String description);
+
+  /// No description provided for @logMealSheetUiValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{dateLabel}: '**
+  String logMealSheetUiValue2(String dateLabel);
+
+  /// No description provided for @logMealSheetUiKcalLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesRemaining} kcal left'**
+  String logMealSheetUiKcalLeft(Object caloriesRemaining);
+
+  /// No description provided for @logMealSheetUiGProteinLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{proteinRemaining}g protein left'**
+  String logMealSheetUiGProteinLeft(String proteinRemaining);
+
+  /// No description provided for @logMealSheetUiOfItemsMatchedVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'{verifiedCount} of {length} items matched verified nutrition data'**
+  String logMealSheetUiOfItemsMatchedVerified(
+    Object verifiedCount,
+    Object length,
+  );
+
+  /// No description provided for @exerciseDetailScreenErrorLoadingHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading history: {error}'**
+  String exerciseDetailScreenErrorLoadingHistory(String error);
+
+  /// No description provided for @exerciseDetailScreenMS.
+  ///
+  /// In en, this message translates to:
+  /// **'{mins}m {secs}s'**
+  String exerciseDetailScreenMS(Object mins, String secs);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysLogged}/7'**
+  String nutritionTabPartWeeklyOverviewCardValue(String daysLogged);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardG.
+  ///
+  /// In en, this message translates to:
+  /// **'{avgProtein}g'**
+  String nutritionTabPartWeeklyOverviewCardG(Object avgProtein);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardKg.
+  ///
+  /// In en, this message translates to:
+  /// **')(data) kg'**
+  String nutritionTabPartWeeklyOverviewCardKg(Object data);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardAvgCal.
+  ///
+  /// In en, this message translates to:
+  /// **'avg {averageDailyCalories} cal'**
+  String nutritionTabPartWeeklyOverviewCardAvgCal(Object averageDailyCalories);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{grams}g'**
+  String nutritionTabPartWeeklyOverviewCardG2(String grams);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String nutritionTabPartWeeklyOverviewCardValue2(Object pct);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardCalDay.
+  ///
+  /// In en, this message translates to:
+  /// **'cal/day  {uncertaintyDisplay}'**
+  String nutritionTabPartWeeklyOverviewCardCalDay(String uncertaintyDisplay);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardAvgIntakeCal.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg intake: {avgIntake} cal'**
+  String nutritionTabPartWeeklyOverviewCardAvgIntakeCal(Object avgIntake);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardCal.
+  ///
+  /// In en, this message translates to:
+  /// **')(tdee) cal'**
+  String nutritionTabPartWeeklyOverviewCardCal(Object tdee);
+
+  /// No description provided for @nutritionTabPartWeeklyOverviewCardWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight: {formattedWeeklyRate}'**
+  String nutritionTabPartWeeklyOverviewCardWeight(Object formattedWeeklyRate);
+
+  /// No description provided for @demoWorkoutScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: '**
+  String demoWorkoutScreenValue(String label);
+
+  /// No description provided for @muscleDetailScreenSetsWk.
+  ///
+  /// In en, this message translates to:
+  /// **'{weeklySets} sets/wk'**
+  String muscleDetailScreenSetsWk(Object weeklySets);
+
+  /// No description provided for @foodAnalysisResultCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({length})'**
+  String foodAnalysisResultCardValue(String label, Object length);
+
+  /// No description provided for @foodAnalysisResultCardShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {dishes} more...'**
+  String foodAnalysisResultCardShowMore(Object dishes);
+
+  /// No description provided for @foodAnalysisResultCardCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{adjustedCal} cal'**
+  String foodAnalysisResultCardCal(String adjustedCal);
+
+  /// No description provided for @foodAnalysisResultCardGP.
+  ///
+  /// In en, this message translates to:
+  /// **'{adjustedProtein}g P'**
+  String foodAnalysisResultCardGP(String adjustedProtein);
+
+  /// No description provided for @foodAnalysisResultCardCalTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCalories} cal total'**
+  String foodAnalysisResultCardCalTotal(Object totalCalories);
+
+  /// No description provided for @foodAnalysisResultCardGProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalProtein}g protein'**
+  String foodAnalysisResultCardGProtein(Object totalProtein);
+
+  /// No description provided for @foodAnalysisResultCardLeavesYouCalFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaves you {remaining} cal for {mealLabel}'**
+  String foodAnalysisResultCardLeavesYouCalFor(
+    String remaining,
+    String mealLabel,
+  );
+
+  /// No description provided for @foodAnalysisResultCardSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} selected'**
+  String foodAnalysisResultCardSelected(Object length);
+
+  /// No description provided for @cycleInsightsChartsDaysVariability.
+  ///
+  /// In en, this message translates to:
+  /// **'{avg} days, variability '**
+  String cycleInsightsChartsDaysVariability(Object avg);
+
+  /// No description provided for @cycleInsightsChartsDays.
+  ///
+  /// In en, this message translates to:
+  /// **'(±{stddev} days).'**
+  String cycleInsightsChartsDays(String stddev);
+
+  /// No description provided for @cycleInsightsChartsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String cycleInsightsChartsValue(Object pct);
+
+  /// No description provided for @cycleInsightsChartsD.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d'**
+  String cycleInsightsChartsD(String days);
+
+  /// No description provided for @cycleInsightsChartsMyCycleStatsCycles.
+  ///
+  /// In en, this message translates to:
+  /// **'my cycle stats — {cyclesTracked} cycles tracked, '**
+  String cycleInsightsChartsMyCycleStatsCycles(String cyclesTracked);
+
+  /// No description provided for @aiSettingsScreenAddFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Add focus  ({length}/5)'**
+  String aiSettingsScreenAddFocus(Object length);
+
+  /// No description provided for @aiSettingsScreenPriorityOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority {value} of 5'**
+  String aiSettingsScreenPriorityOf(String value);
+
+  /// No description provided for @inlineRestRowValue.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{aiTip}\"'**
+  String inlineRestRowValue(String aiTip);
+
+  /// No description provided for @paywallPricingScreenYear.
+  ///
+  /// In en, this message translates to:
+  /// **'{yearlyTotal}/year'**
+  String paywallPricingScreenYear(Object yearlyTotal);
+
+  /// No description provided for @aiIntegrationsScreenWillImmediatelyLoseAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} will immediately lose access to your '**
+  String aiIntegrationsScreenWillImmediatelyLoseAccess(String name);
+
+  /// No description provided for @aiIntegrationsScreenDataYouCanCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} data. You can create a new connection anytime.'**
+  String aiIntegrationsScreenDataYouCanCreate(String appName);
+
+  /// No description provided for @aiIntegrationsScreenDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} disconnected'**
+  String aiIntegrationsScreenDisconnected(String name);
+
+  /// No description provided for @aiIntegrationsScreenCouldNotDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not disconnect {name}.'**
+  String aiIntegrationsScreenCouldNotDisconnect(String name);
+
+  /// No description provided for @aiIntegrationsScreenReadAndModifyYour.
+  ///
+  /// In en, this message translates to:
+  /// **'read and modify your {appName} data within the scopes '**
+  String aiIntegrationsScreenReadAndModifyYour(String appName);
+
+  /// No description provided for @aiIntegrationsScreenConnectAnywhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {appName} anywhere'**
+  String aiIntegrationsScreenConnectAnywhere(String appName);
+
+  /// No description provided for @aiIntegrationsScreenCreateAConnectionTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a connection to plug {appName} into Claude, ChatGPT, Cursor, '**
+  String aiIntegrationsScreenCreateAConnectionTo(String appName);
+
+  /// No description provided for @aiIntegrationsScreenCreateOneToStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Create one to start using {appName} in Claude, ChatGPT, or Cursor.'**
+  String aiIntegrationsScreenCreateOneToStart(String appName);
+
+  /// No description provided for @scheduleScreenFailedToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {error}'**
+  String scheduleScreenFailedToLoad(String error);
+
+  /// No description provided for @scheduleScreenFailedToLoadTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load timeline: {error}'**
+  String scheduleScreenFailedToLoadTimeline(String error);
+
+  /// No description provided for @scheduleScreenGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating {_generatedCount}/{_totalToGenerate}...'**
+  String scheduleScreenGenerating(
+    Object _generatedCount,
+    Object _totalToGenerate,
+  );
+
+  /// No description provided for @scheduleScreenGeneratedOfWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated {successCount} of {length} workouts'**
+  String scheduleScreenGeneratedOfWorkouts(Object successCount, Object length);
+
+  /// No description provided for @chatMessageBubbleValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{message}'**
+  String chatMessageBubbleValue(Object message);
+
+  /// No description provided for @chatMessageBubbleValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: '**
+  String chatMessageBubbleValue2(String label);
+
+  /// No description provided for @xpGoalsScreenUi1Xp.
+  ///
+  /// In en, this message translates to:
+  /// **'{xpInCurrentLevel} / {xpToNextLevel} XP'**
+  String xpGoalsScreenUi1Xp(Object xpInCurrentLevel, Object xpToNextLevel);
+
+  /// No description provided for @xpGoalsScreenUi1Xp2.
+  ///
+  /// In en, this message translates to:
+  /// **'{earnedXP} XP'**
+  String xpGoalsScreenUi1Xp2(String earnedXP);
+
+  /// No description provided for @xpGoalsScreenUi1Xp3.
+  ///
+  /// In en, this message translates to:
+  /// **'/ {maxXP} XP'**
+  String xpGoalsScreenUi1Xp3(Object maxXP);
+
+  /// No description provided for @xpGoalsScreenUi1CheckpointsComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'{completedCount}/{length} checkpoints complete'**
+  String xpGoalsScreenUi1CheckpointsComplete(
+    Object completedCount,
+    Object length,
+  );
+
+  /// No description provided for @xpGoalsScreenUi1Xp4.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xpReward} XP'**
+  String xpGoalsScreenUi1Xp4(String xpReward);
+
+  /// No description provided for @xpGoalsScreenUi1DaysRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysRemaining} days remaining'**
+  String xpGoalsScreenUi1DaysRemaining(String daysRemaining);
+
+  /// No description provided for @xpGoalsScreenUi1Xp5.
+  ///
+  /// In en, this message translates to:
+  /// **'{earnedXP} / {maxXP} XP'**
+  String xpGoalsScreenUi1Xp5(String earnedXP, Object maxXP);
+
+  /// No description provided for @xpGoalsScreenUi1Complete.
+  ///
+  /// In en, this message translates to:
+  /// **'{completedCount}/{length} complete'**
+  String xpGoalsScreenUi1Complete(Object completedCount, Object length);
+
+  /// No description provided for @xpGoalsScreenUi1Xp6.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xpReward} XP'**
+  String xpGoalsScreenUi1Xp6(String xpReward);
+
+  /// No description provided for @pillarDetailScreenTodayS.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s {label}'**
+  String pillarDetailScreenTodayS(String label);
+
+  /// No description provided for @pillarDetailScreenNotActiveToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} · not active today'**
+  String pillarDetailScreenNotActiveToday(String label);
+
+  /// No description provided for @pillarDetailScreenEx.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseCount} ex'**
+  String pillarDetailScreenEx(Object exerciseCount);
+
+  /// No description provided for @pillarDetailScreenMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{activeMin} min'**
+  String pillarDetailScreenMin(Object activeMin);
+
+  /// No description provided for @pillarDetailScreenKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{cal} kcal'**
+  String pillarDetailScreenKcal(String cal);
+
+  /// No description provided for @pillarDetailScreenStatsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'/stats?tab={statsTab}'**
+  String pillarDetailScreenStatsTab(String statsTab);
+
+  /// No description provided for @insightsDetailScreenCouldNotRegenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not regenerate — {e}'**
+  String insightsDetailScreenCouldNotRegenerate(String e);
+
+  /// No description provided for @insightsDetailScreenReport.
+  ///
+  /// In en, this message translates to:
+  /// **'{weekLabel} Report'**
+  String insightsDetailScreenReport(String weekLabel);
+
+  /// No description provided for @insightsDetailScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate}%'**
+  String insightsDetailScreenValue(Object rate);
+
+  /// No description provided for @insightsDetailScreenOfWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutsCompleted} of {workoutsScheduled} workouts'**
+  String insightsDetailScreenOfWorkouts(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  );
+
+  /// No description provided for @insightsDetailScreenDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentStreak} day streak'**
+  String insightsDetailScreenDayStreak(Object currentStreak);
+
+  /// No description provided for @insightsDetailScreenPrs.
+  ///
+  /// In en, this message translates to:
+  /// **'{prsAchieved} PRs'**
+  String insightsDetailScreenPrs(Object prsAchieved);
+
+  /// No description provided for @myWrappedScreenWrappedDropsInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{monthName} Wrapped drops in {daysUntilDrop} days'**
+  String myWrappedScreenWrappedDropsInDays(
+    String monthName,
+    String daysUntilDrop,
+  );
+
+  /// No description provided for @myWrappedScreenWrappedDropsSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'{monthName} Wrapped drops soon'**
+  String myWrappedScreenWrappedDropsSoon(String monthName);
+
+  /// No description provided for @myWrappedScreenYourWrappedIsBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {monthName} Wrapped is building...'**
+  String myWrappedScreenYourWrappedIsBuilding(String monthName);
+
+  /// No description provided for @myWrappedScreenWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkouts} workouts'**
+  String myWrappedScreenWorkouts(Object totalWorkouts);
+
+  /// No description provided for @myWrappedScreenOfCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'{collected} of 12 collected'**
+  String myWrappedScreenOfCollected(String collected);
+
+  /// No description provided for @statsRewardsTabActive.
+  ///
+  /// In en, this message translates to:
+  /// **'{activeChains} active'**
+  String statsRewardsTabActive(String activeChains);
+
+  /// No description provided for @statsRewardsTabDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{completedChains} done'**
+  String statsRewardsTabDone(String completedChains);
+
+  /// No description provided for @statsRewardsTabEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'{achievementsEarned} earned'**
+  String statsRewardsTabEarned(String achievementsEarned);
+
+  /// No description provided for @statsRewardsTabPts.
+  ///
+  /// In en, this message translates to:
+  /// **'{achievementsPoints} pts'**
+  String statsRewardsTabPts(String achievementsPoints);
+
+  /// No description provided for @statsRewardsTabWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{workouts} workouts'**
+  String statsRewardsTabWorkouts(String workouts);
+
+  /// No description provided for @statsRewardsTabPrsLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{prs} PRs last week'**
+  String statsRewardsTabPrsLastWeek(String prs);
+
+  /// No description provided for @statsRewardsTabReady.
+  ///
+  /// In en, this message translates to:
+  /// **'{unclaimedRewards} ready'**
+  String statsRewardsTabReady(String unclaimedRewards);
+
+  /// No description provided for @weeklyCheckinSheetPartRecommendationOptionCardCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} cal'**
+  String weeklyCheckinSheetPartRecommendationOptionCardCal(Object calories);
+
+  /// No description provided for @weeklyCheckinSheetPartRecommendationOptionCardGP.
+  ///
+  /// In en, this message translates to:
+  /// **'{proteinG}g P'**
+  String weeklyCheckinSheetPartRecommendationOptionCardGP(String proteinG);
+
+  /// No description provided for @weeklyCheckinSheetPartRecommendationOptionCardGC.
+  ///
+  /// In en, this message translates to:
+  /// **'{carbsG}g C'**
+  String weeklyCheckinSheetPartRecommendationOptionCardGC(String carbsG);
+
+  /// No description provided for @weeklyCheckinSheetPartRecommendationOptionCardGF.
+  ///
+  /// In en, this message translates to:
+  /// **'{fatG}g F'**
+  String weeklyCheckinSheetPartRecommendationOptionCardGF(String fatG);
+
+  /// No description provided for @weeklyCheckinSheetPartRecommendationOptionCardDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} / {target} days'**
+  String weeklyCheckinSheetPartRecommendationOptionCardDays(
+    String current,
+    String target,
+  );
+
+  /// No description provided for @expandableSummaryExerciseCardKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{weightKg} kg'**
+  String expandableSummaryExerciseCardKg(Object weightKg);
+
+  /// No description provided for @expandableSummaryExerciseCardTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time: {formatted}'**
+  String expandableSummaryExerciseCardTime(String formatted);
+
+  /// No description provided for @editWeightsSheetSelectedItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {_totalWeights} items'**
+  String editWeightsSheetSelectedItems(Object _totalWeights);
+
+  /// No description provided for @aiInputPreviewSheetEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {name}'**
+  String aiInputPreviewSheetEdit(String name);
+
+  /// No description provided for @aiInputPreviewSheetFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From: \"{originalInput}\"'**
+  String aiInputPreviewSheetFrom(String originalInput);
+
+  /// No description provided for @levelUpDialogXpEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xpEarned} XP EARNED'**
+  String levelUpDialogXpEarned(String xpEarned);
+
+  /// No description provided for @levelUpDialogNewRank.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW RANK: {displayName}'**
+  String levelUpDialogNewRank(String displayName);
+
+  /// No description provided for @levelUpDialogLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'Levels {levelRange}'**
+  String levelUpDialogLevels(Object levelRange);
+
+  /// No description provided for @levelUpDialogX.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} x{quantity}'**
+  String levelUpDialogX(String displayName, String quantity);
+
+  /// No description provided for @levelUpDialogLevelReward.
+  ///
+  /// In en, this message translates to:
+  /// **'LEVEL {level} REWARD'**
+  String levelUpDialogLevelReward(Object level);
+
+  /// No description provided for @levelUpDialogTier.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} TIER'**
+  String levelUpDialogTier(String displayName);
+
+  /// No description provided for @levelUpDialogNextMilestoneLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT MILESTONE: LEVEL {m}'**
+  String levelUpDialogNextMilestoneLevel(String m);
+
+  /// No description provided for @levelUpDialogRank.
+  ///
+  /// In en, this message translates to:
+  /// **'RANK: {displayName}'**
+  String levelUpDialogRank(String displayName);
+
+  /// No description provided for @levelUpDialogPlayAgainBest.
+  ///
+  /// In en, this message translates to:
+  /// **'PLAY AGAIN · BEST {_bonusGameScore}'**
+  String levelUpDialogPlayAgainBest(Object _bonusGameScore);
+
+  /// No description provided for @leaderboardRankCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String leaderboardRankCardValue(String rank);
+
+  /// No description provided for @leaderboardRankCardOf.
+  ///
+  /// In en, this message translates to:
+  /// **'of {totalUsers}'**
+  String leaderboardRankCardOf(Object totalUsers);
+
+  /// No description provided for @leaderboardRankCardTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top {percentile}%'**
+  String leaderboardRankCardTop(Object percentile);
+
+  /// No description provided for @insightsScreenPartPeriodSelectorCompletionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'{completionRate}% completion rate'**
+  String insightsScreenPartPeriodSelectorCompletionRate(Object completionRate);
+
+  /// No description provided for @insightsScreenPartPeriodSelectorValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{adherence}%'**
+  String insightsScreenPartPeriodSelectorValue(String adherence);
+
+  /// No description provided for @programTemplateBuilderScreenWeeksWhenScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'{repeatWeeksHint} weeks when scheduled.'**
+  String programTemplateBuilderScreenWeeksWhenScheduled(String repeatWeeksHint);
+
+  /// No description provided for @programTemplateBuilderScreenTo.
+  ///
+  /// In en, this message translates to:
+  /// **'to {destLabel}'**
+  String programTemplateBuilderScreenTo(String destLabel);
+
+  /// No description provided for @programTemplateBuilderScreenSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved \"{name}\"'**
+  String programTemplateBuilderScreenSaved(String name);
+
+  /// No description provided for @programTemplateBuilderScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{sets} × {exercise}'**
+  String programTemplateBuilderScreenValue(Object sets, Object exercise);
+
+  /// No description provided for @programTemplateBuilderScreenCopyInto.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy \"{sourceName}\" into…'**
+  String programTemplateBuilderScreenCopyInto(String sourceName);
+
+  /// No description provided for @programTemplateBuilderScreenDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {d} · {label}'**
+  String programTemplateBuilderScreenDay(Object d, String label);
+
+  /// No description provided for @summaryExerciseTableSetNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {setNumber} notes'**
+  String summaryExerciseTableSetNotes(Object setNumber);
+
+  /// No description provided for @summaryExerciseTableNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} notes'**
+  String summaryExerciseTableNotes(String n);
+
+  /// No description provided for @exerciseSetTrackerSavedAsYourDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as your default for {muscle}'**
+  String exerciseSetTrackerSavedAsYourDefault(String muscle);
+
+  /// No description provided for @exerciseSetTrackerS.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s'**
+  String exerciseSetTrackerS(Object seconds);
+
+  /// No description provided for @measurementDetailScreenEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} entries'**
+  String measurementDetailScreenEntries(Object length);
+
+  /// No description provided for @measurementDetailScreenLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Log {displayName}'**
+  String measurementDetailScreenLog(String displayName);
+
+  /// No description provided for @measurementDetailScreenLog2.
+  ///
+  /// In en, this message translates to:
+  /// **'Log {displayName}'**
+  String measurementDetailScreenLog2(String displayName);
+
+  /// No description provided for @measurementDetailScreenRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} recorded'**
+  String measurementDetailScreenRecorded(String displayName);
+
+  /// No description provided for @measurementDetailScreenCouldnTSaveTry.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save {displayName}. Try again.'**
+  String measurementDetailScreenCouldnTSaveTry(String displayName);
+
+  /// No description provided for @gymProfileSwitcherFailedToSwitchProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to switch profile: {e}'**
+  String gymProfileSwitcherFailedToSwitchProfile(String e);
+
+  /// No description provided for @gymProfileSwitcherDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{name}\"'**
+  String gymProfileSwitcherDeleted(String name);
+
+  /// No description provided for @gymProfileSwitcherFailedToDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete: {e}'**
+  String gymProfileSwitcherFailedToDelete(String e);
+
+  /// No description provided for @gymProfileSwitcherEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'{equipmentCount} equipment • {environmentDisplayName}'**
+  String gymProfileSwitcherEquipment(
+    Object equipmentCount,
+    String environmentDisplayName,
+  );
+
+  /// No description provided for @gymProfileSwitcherCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created \"{result}\"'**
+  String gymProfileSwitcherCreated(String result);
+
+  /// No description provided for @gymProfileSwitcherAreYouSureYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"? This action cannot be undone.'**
+  String gymProfileSwitcherAreYouSureYou(String name);
+
+  /// No description provided for @contextualBannerFastingWindowEndsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasting window ends in {timeStr}'**
+  String contextualBannerFastingWindowEndsIn(String timeStr);
+
+  /// No description provided for @contextualBannerYouReAwayFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re {remaining} {workoutWord} away from your weekly goal'**
+  String contextualBannerYouReAwayFrom(String remaining, String workoutWord);
+
+  /// No description provided for @contextualBannerLbs.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseName}: {weightLbs} lbs'**
+  String contextualBannerLbs(String exerciseName, Object weightLbs);
+
+  /// No description provided for @comparisonViewUiNoPhotosYetTry.
+  ///
+  /// In en, this message translates to:
+  /// **'No {displayName} photos yet. Try a different filter.'**
+  String comparisonViewUiNoPhotosYetTry(String displayName);
+
+  /// No description provided for @comparisonViewUiValue.
+  ///
+  /// In en, this message translates to:
+  /// **'@{username}'**
+  String comparisonViewUiValue(String username);
+
+  /// No description provided for @rewardsScreenTotalXp.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalXp} Total XP'**
+  String rewardsScreenTotalXp(Object totalXp);
+
+  /// No description provided for @overviewTabWorkoutsPrs.
+  ///
+  /// In en, this message translates to:
+  /// **'{workouts} workouts • {prs} PRs'**
+  String overviewTabWorkoutsPrs(String workouts, String prs);
+
+  /// No description provided for @overviewTabReady.
+  ///
+  /// In en, this message translates to:
+  /// **'{ready} ready'**
+  String overviewTabReady(String ready);
+
+  /// No description provided for @foodBrowserPanelPartExpandableSearchCardStateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({opt}{calDelta})'**
+  String foodBrowserPanelPartExpandableSearchCardStateValue(
+    String label,
+    String opt,
+    String calDelta,
+  );
+
+  /// No description provided for @workoutCompleteScreenUi1DayStreakTotalWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{streak} day streak, {totalWorkouts} total workouts'**
+  String workoutCompleteScreenUi1DayStreakTotalWorkouts(
+    String streak,
+    Object totalWorkouts,
+  );
+
+  /// No description provided for @workoutCompleteScreenUi1MarkedAsTooEasy.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as \"too easy\" {consecutiveEasySessions}x in a row'**
+  String workoutCompleteScreenUi1MarkedAsTooEasy(
+    String consecutiveEasySessions,
+  );
+
+  /// No description provided for @workoutCompleteScreenUi1RmKg.
+  ///
+  /// In en, this message translates to:
+  /// **'1RM: {estimated1rm} kg'**
+  String workoutCompleteScreenUi1RmKg(String estimated1rm);
+
+  /// No description provided for @exerciseProgressionsScreenYouWillMoveFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'You will move from {exerciseName} to {suggestedExercise}. '**
+  String exerciseProgressionsScreenYouWillMoveFrom(
+    String exerciseName,
+    String suggestedExercise,
+  );
+
+  /// No description provided for @exerciseProgressionsScreenCouldNotAdvance.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not advance: {e}'**
+  String exerciseProgressionsScreenCouldNotAdvance(String e);
+
+  /// No description provided for @exerciseProgressionsScreenConfident.
+  ///
+  /// In en, this message translates to:
+  /// **'{confidencePct}% confident'**
+  String exerciseProgressionsScreenConfident(Object confidencePct);
+
+  /// No description provided for @exerciseProgressionsScreenAdvanceTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Advance to {suggestedExercise}'**
+  String exerciseProgressionsScreenAdvanceTo(String suggestedExercise);
+
+  /// No description provided for @exerciseProgressionsScreenDifficulty.
+  ///
+  /// In en, this message translates to:
+  /// **'Difficulty {difficultyLevel}/10'**
+  String exerciseProgressionsScreenDifficulty(Object difficultyLevel);
+
+  /// No description provided for @exerciseProgressionsScreenChain.
+  ///
+  /// In en, this message translates to:
+  /// **'{chainName} chain'**
+  String exerciseProgressionsScreenChain(String chainName);
+
+  /// No description provided for @exerciseProgressionsScreenKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{mastery} kg'**
+  String exerciseProgressionsScreenKg(Object mastery);
+
+  /// No description provided for @exerciseProgressionsScreenSessionsBest.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalSessions} sessions · best '**
+  String exerciseProgressionsScreenSessionsBest(Object totalSessions);
+
+  /// No description provided for @exerciseProgressionsScreenReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentMaxReps} reps'**
+  String exerciseProgressionsScreenReps(Object currentMaxReps);
+
+  /// No description provided for @exerciseProgressionsScreenEasySessions.
+  ///
+  /// In en, this message translates to:
+  /// **'{consecutiveEasy} / {_target} easy sessions'**
+  String exerciseProgressionsScreenEasySessions(
+    String consecutiveEasy,
+    String _target,
+  );
+
+  /// No description provided for @futuristicSetCardSetOf.
+  ///
+  /// In en, this message translates to:
+  /// **'SET {currentSetNumber} OF {totalSets}'**
+  String futuristicSetCardSetOf(Object currentSetNumber, Object totalSets);
+
+  /// No description provided for @futuristicSetCardRir.
+  ///
+  /// In en, this message translates to:
+  /// **'{targetRir} RIR'**
+  String futuristicSetCardRir(String targetRir);
+
+  /// No description provided for @futuristicSetCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **') × (targetReps)'**
+  String futuristicSetCardValue(Object targetReps);
+
+  /// No description provided for @futuristicSetCardRmKg.
+  ///
+  /// In en, this message translates to:
+  /// **'1RM: {suggestion}kg'**
+  String futuristicSetCardRmKg(String suggestion);
+
+  /// No description provided for @futuristicSetCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **')×(reps)'**
+  String futuristicSetCardValue2(Object reps);
+
+  /// No description provided for @nutritionShowcaseScreenSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} selected'**
+  String nutritionShowcaseScreenSelected(Object length);
+
+  /// No description provided for @nutritionShowcaseScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'· {count}'**
+  String nutritionShowcaseScreenValue(Object count);
+
+  /// No description provided for @nutritionShowcaseScreenOfCal.
+  ///
+  /// In en, this message translates to:
+  /// **'of {_calorieGoal} cal'**
+  String nutritionShowcaseScreenOfCal(String _calorieGoal);
+
+  /// No description provided for @nutritionShowcaseScreenCalJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'{cal} cal · just now'**
+  String nutritionShowcaseScreenCalJustNow(String cal);
+
+  /// No description provided for @nutritionShowcaseScreenG.
+  ///
+  /// In en, this message translates to:
+  /// **'{weightG} g · {price}'**
+  String nutritionShowcaseScreenG(Object weightG, String price);
+
+  /// No description provided for @exportDataScreenNativeSchemaMaximumFidelity.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName}-native schema. Maximum fidelity.'**
+  String exportDataScreenNativeSchemaMaximumFidelity(String appName);
+
+  /// No description provided for @exportDataScreenGdprArtCompliant.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName}. GDPR Art. 20 compliant.'**
+  String exportDataScreenGdprArtCompliant(String appName);
+
+  /// No description provided for @settingsCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({value}%)'**
+  String settingsCardValue(String label, String value);
+
+  /// No description provided for @settingsCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({value}%)'**
+  String settingsCardValue2(String label, String value);
+
+  /// No description provided for @settingsCardExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} exercises'**
+  String settingsCardExercises(Object length);
+
+  /// No description provided for @settingsCardQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} queued'**
+  String settingsCardQueued(Object length);
+
+  /// No description provided for @settingsCardExercises2.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} exercises'**
+  String settingsCardExercises2(Object length);
+
+  /// No description provided for @settingsCardValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String settingsCardValue3(Object percentage);
+
+  /// No description provided for @settingsCardLifts.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} lifts'**
+  String settingsCardLifts(Object length);
+
+  /// No description provided for @settingsCardValue4.
+  ///
+  /// In en, this message translates to:
+  /// **'{globalIntensityPercent}%'**
+  String settingsCardValue4(Object globalIntensityPercent);
+
+  /// No description provided for @settingsCardAvoided.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} avoided'**
+  String settingsCardAvoided(Object length);
+
+  /// No description provided for @settingsCardVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'{cachedVideoCount} videos'**
+  String settingsCardVideos(Object cachedVideoCount);
+
+  /// No description provided for @settingsCardBodyWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Body {bodyUnit} · Workout {workoutUnit}'**
+  String settingsCardBodyWorkout(String bodyUnit, String workoutUnit);
+
+  /// No description provided for @signInScreenWelcomeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to {appName}!'**
+  String signInScreenWelcomeTo(String appName);
+
+  /// No description provided for @signInScreenSupportIsNowYour.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} Support is now your friend. Reach out anytime for help!'**
+  String signInScreenSupportIsNowYour(String appName);
+
+  /// No description provided for @signInScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPercent}%'**
+  String signInScreenValue(Object progressPercent);
+
+  /// No description provided for @signInScreenYourPlanDaysWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {goalDisplay} Plan · {quizData} days/week'**
+  String signInScreenYourPlanDaysWeek(String goalDisplay, String quizData);
+
+  /// No description provided for @weeklySummaryScreenWorkoutsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutsCompleted}/{workoutsScheduled} workouts completed'**
+  String weeklySummaryScreenWorkoutsCompleted(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+  );
+
+  /// No description provided for @weeklySummaryScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{completionRate}%'**
+  String weeklySummaryScreenValue(Object completionRate);
+
+  /// No description provided for @weeklySummaryScreenDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{streak} day streak'**
+  String weeklySummaryScreenDayStreak(String streak);
+
+  /// No description provided for @weeklySummaryScreenPrs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} PRs'**
+  String weeklySummaryScreenPrs(Object count);
+
+  /// No description provided for @foodLibraryScreenLogging.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging {name}...'**
+  String foodLibraryScreenLogging(String name);
+
+  /// No description provided for @foodLibraryScreenLoggedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} logged to {label}'**
+  String foodLibraryScreenLoggedTo(String name, String label);
+
+  /// No description provided for @foodLibraryScreenFailedToLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to log: {e}'**
+  String foodLibraryScreenFailedToLog(String e);
+
+  /// No description provided for @foodLibraryScreenFailedToLoadRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load recipe: {e}'**
+  String foodLibraryScreenFailedToLoadRecipe(String e);
+
+  /// No description provided for @foodLibraryScreenDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String foodLibraryScreenDelete(String name);
+
+  /// No description provided for @foodLibraryScreenDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} deleted'**
+  String foodLibraryScreenDeleted(String name);
+
+  /// No description provided for @foodLibraryScreenAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All ({length})'**
+  String foodLibraryScreenAll(Object length);
+
+  /// No description provided for @foodLibraryScreenSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved ({length})'**
+  String foodLibraryScreenSaved(Object length);
+
+  /// No description provided for @foodLibraryScreenRecipes.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipes ({length})'**
+  String foodLibraryScreenRecipes(Object length);
+
+  /// No description provided for @foodLibraryScreenAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" added'**
+  String foodLibraryScreenAdded(String name);
+
+  /// No description provided for @recipeDetailScreenUForkedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'\\u2728 Forked from {sourceName}'**
+  String recipeDetailScreenUForkedFrom(String sourceName);
+
+  /// No description provided for @recipeDetailScreenPerServingUD.
+  ///
+  /// In en, this message translates to:
+  /// **'Per serving (\\u00d7{servings} servings)'**
+  String recipeDetailScreenPerServingUD(String servings);
+
+  /// No description provided for @recipeDetailScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'(brand) \" : \"\")(foodName)'**
+  String recipeDetailScreenValue(String brand, String foodName);
+
+  /// No description provided for @recipeDetailScreenKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{i} kcal'**
+  String recipeDetailScreenKcal(Object i);
+
+  /// No description provided for @recipeDetailScreenGroceryListCreatedItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Grocery list created ({length} items)'**
+  String recipeDetailScreenGroceryListCreatedItems(Object length);
+
+  /// No description provided for @recipeDetailScreenWillBePermanentlyRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" will be permanently removed.'**
+  String recipeDetailScreenWillBePermanentlyRemoved(String name);
+
+  /// No description provided for @workoutSummaryScreenUiKgXRepsEst.
+  ///
+  /// In en, this message translates to:
+  /// **'{weightKg} kg x {reps} reps  |  Est. 1RM: {estimated1rmKg} kg'**
+  String workoutSummaryScreenUiKgXRepsEst(
+    Object weightKg,
+    Object reps,
+    String estimated1rmKg,
+  );
+
+  /// No description provided for @workoutSummaryScreenUiImprovement.
+  ///
+  /// In en, this message translates to:
+  /// **'+{pr}% improvement'**
+  String workoutSummaryScreenUiImprovement(Object pr);
+
+  /// No description provided for @workoutSummaryScreenUiValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{overallRating}/10'**
+  String workoutSummaryScreenUiValue(String overallRating);
+
+  /// No description provided for @shareWorkoutSheetCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied: \"{caption}\"'**
+  String shareWorkoutSheetCopied(String caption);
+
+  /// No description provided for @trophiesEarnedSheetX.
+  ///
+  /// In en, this message translates to:
+  /// **' x {reps}'**
+  String trophiesEarnedSheetX(Object reps);
+
+  /// No description provided for @trophiesEarnedSheetPts.
+  ///
+  /// In en, this message translates to:
+  /// **'+{points} pts'**
+  String trophiesEarnedSheetPts(String points);
+
+  /// No description provided for @restTimerOverlayUiReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{reps} reps'**
+  String restTimerOverlayUiReps(Object reps);
+
+  /// No description provided for @restTimerOverlayUiKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentExercise} kg'**
+  String restTimerOverlayUiKg(Object currentExercise);
+
+  /// No description provided for @restTimerOverlayUiKg2.
+  ///
+  /// In en, this message translates to:
+  /// **'{suggestedWeight} kg'**
+  String restTimerOverlayUiKg2(Object suggestedWeight);
+
+  /// No description provided for @restTimerOverlayUiUseKg.
+  ///
+  /// In en, this message translates to:
+  /// **'Use {suggestedWeight} kg'**
+  String restTimerOverlayUiUseKg(Object suggestedWeight);
+
+  /// No description provided for @manageDuplicateImportsScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{primary} · '**
+  String manageDuplicateImportsScreenValue(String primary);
+
+  /// No description provided for @manageDuplicateImportsScreenSources.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} sources'**
+  String manageDuplicateImportsScreenSources(Object length);
+
+  /// No description provided for @manageDuplicateImportsScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'(row)\" : \"\")'**
+  String manageDuplicateImportsScreenValue2(String row);
+
+  /// No description provided for @connectedAppsScreenRidesAndWorkoutsData.
+  ///
+  /// In en, this message translates to:
+  /// **'rides, and workouts. Data flows both ways — {appName} workouts can '**
+  String connectedAppsScreenRidesAndWorkoutsData(String appName);
+
+  /// No description provided for @connectedAppsScreenSignInTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to {displayName}'**
+  String connectedAppsScreenSignInTo(String displayName);
+
+  /// No description provided for @connectedAppsScreenDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect {displayName}?'**
+  String connectedAppsScreenDisconnect(String displayName);
+
+  /// No description provided for @connectedAppsScreenPreviouslyImportedActivitiesWill.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously imported activities will stay in your {appName} history. '**
+  String connectedAppsScreenPreviouslyImportedActivitiesWill(String appName);
+
+  /// No description provided for @addGymProfileSheetExtSelectedEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Equipment ({length})'**
+  String addGymProfileSheetExtSelectedEquipment(Object length);
+
+  /// No description provided for @syncedWorkoutsSummaryCardSyncedWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} synced workouts'**
+  String syncedWorkoutsSummaryCardSyncedWorkouts(Object count);
+
+  /// No description provided for @syncedWorkoutsSummaryCardFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'from {platformLabel}'**
+  String syncedWorkoutsSummaryCardFrom(String platformLabel);
+
+  /// No description provided for @syncedWorkoutsSummaryCardViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all {count}'**
+  String syncedWorkoutsSummaryCardViewAll(Object count);
+
+  /// No description provided for @syncedWorkoutsSummaryCardSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced {month}/{day}'**
+  String syncedWorkoutsSummaryCardSynced(String month, String day);
+
+  /// No description provided for @syncedWorkoutsSummaryCardM.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration}m'**
+  String syncedWorkoutsSummaryCardM(Object duration);
+
+  /// No description provided for @syncedWorkoutsSummaryCardCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} cal'**
+  String syncedWorkoutsSummaryCardCal(Object calories);
+
+  /// No description provided for @syncedWorkoutsSummaryCardSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{steps} steps'**
+  String syncedWorkoutsSummaryCardSteps(String steps);
+
+  /// No description provided for @heroWorkoutCardExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseCount} exercises'**
+  String heroWorkoutCardExercises(Object exerciseCount);
+
+  /// No description provided for @heroWorkoutCardWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'/workout/{id}'**
+  String heroWorkoutCardWorkout(String id);
+
+  /// No description provided for @progressChartsScreenKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} kg'**
+  String progressChartsScreenKg(String value);
+
+  /// No description provided for @combinedHealthScreenCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesBurned} cal'**
+  String combinedHealthScreenCal(Object caloriesBurned);
+
+  /// No description provided for @combinedHealthScreenBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'{restingHeartRate} bpm'**
+  String combinedHealthScreenBpm(Object restingHeartRate);
+
+  /// No description provided for @combinedHealthScreenHM.
+  ///
+  /// In en, this message translates to:
+  /// **'{day}h {day1}m'**
+  String combinedHealthScreenHM(Object day, Object day1);
+
+  /// No description provided for @combinedHealthScreenMl.
+  ///
+  /// In en, this message translates to:
+  /// **'{waterMl} ml'**
+  String combinedHealthScreenMl(String waterMl);
+
+  /// No description provided for @fastingBodyStatusScreenAtH.
+  ///
+  /// In en, this message translates to:
+  /// **'at {startHour}h'**
+  String fastingBodyStatusScreenAtH(String startHour);
+
+  /// No description provided for @fastingBodyStatusScreenH.
+  ///
+  /// In en, this message translates to:
+  /// **'{hourOffset}h · '**
+  String fastingBodyStatusScreenH(String hourOffset);
+
+  /// No description provided for @fastingBodyStatusScreenAtH2.
+  ///
+  /// In en, this message translates to:
+  /// **'at {hourOffset}h'**
+  String fastingBodyStatusScreenAtH2(String hourOffset);
+
+  /// No description provided for @groupSettingsScreenFailedToUpdateName.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update name: {e}'**
+  String groupSettingsScreenFailedToUpdateName(String e);
+
+  /// No description provided for @groupSettingsScreenRemoveFromThisGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {memberName} from this group?'**
+  String groupSettingsScreenRemoveFromThisGroup(String memberName);
+
+  /// No description provided for @groupSettingsScreenRemovedFromGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'{memberName} removed from group'**
+  String groupSettingsScreenRemovedFromGroup(String memberName);
+
+  /// No description provided for @groupSettingsScreenAddedMemberS.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {length} member(s)'**
+  String groupSettingsScreenAddedMemberS(Object length);
+
+  /// No description provided for @groupSettingsScreenYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{memberName} (You)'**
+  String groupSettingsScreenYou(String memberName);
+
+  /// No description provided for @groupSettingsScreenAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add ({length})'**
+  String groupSettingsScreenAdd(Object length);
+
+  /// No description provided for @syncedWorkoutsHistoryScreenMi.
+  ///
+  /// In en, this message translates to:
+  /// **'{miles} mi'**
+  String syncedWorkoutsHistoryScreenMi(String miles);
+
+  /// No description provided for @syncedWorkoutsHistoryScreenMi2.
+  ///
+  /// In en, this message translates to:
+  /// **'{miles} mi'**
+  String syncedWorkoutsHistoryScreenMi2(String miles);
+
+  /// No description provided for @syncedWorkoutsHistoryScreenM.
+  ///
+  /// In en, this message translates to:
+  /// **'{bestElev} m'**
+  String syncedWorkoutsHistoryScreenM(String bestElev);
+
+  /// No description provided for @syncedWorkoutsHistoryScreenZ.
+  ///
+  /// In en, this message translates to:
+  /// **'{bestZ4plus}% Z4+'**
+  String syncedWorkoutsHistoryScreenZ(String bestZ4plus);
+
+  /// No description provided for @syncedWorkoutsHistoryScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} · {count}'**
+  String syncedWorkoutsHistoryScreenValue(String label, Object count);
+
+  /// No description provided for @editableFitnessCardPartEditableFitnessCardStateMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedWarmupDuration} min'**
+  String editableFitnessCardPartEditableFitnessCardStateMin(
+    Object _selectedWarmupDuration,
+  );
+
+  /// No description provided for @editableFitnessCardPartEditableFitnessCardStateMin2.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedStretchDuration} min'**
+  String editableFitnessCardPartEditableFitnessCardStateMin2(
+    Object _selectedStretchDuration,
+  );
+
+  /// No description provided for @editableFitnessCardPartEditableFitnessCardStateMin3.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} min'**
+  String editableFitnessCardPartEditableFitnessCardStateMin3(Object duration);
+
+  /// No description provided for @editableFitnessCardPartEditableFitnessCardStateMin4.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} min'**
+  String editableFitnessCardPartEditableFitnessCardStateMin4(Object duration);
+
+  /// No description provided for @injuryDetailScreenFailedToLogCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to log check-in: {e}'**
+  String injuryDetailScreenFailedToLogCheck(String e);
+
+  /// No description provided for @injuryDetailScreenInjuries.
+  ///
+  /// In en, this message translates to:
+  /// **'/injuries/{id}'**
+  String injuryDetailScreenInjuries(String id);
+
+  /// No description provided for @injuryDetailScreenFailedToMarkAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to mark as healed: {e}'**
+  String injuryDetailScreenFailedToMarkAs(String e);
+
+  /// No description provided for @injuryDetailScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{recoveryProgress}%'**
+  String injuryDetailScreenValue(String recoveryProgress);
+
+  /// No description provided for @shareInsightsSheetMyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'My {appName} {periodName} report'**
+  String shareInsightsSheetMyReport(String appName, String periodName);
+
+  /// No description provided for @shareInsightsSheetMyReport2.
+  ///
+  /// In en, this message translates to:
+  /// **'My {appName} Report'**
+  String shareInsightsSheetMyReport2(String appName);
+
+  /// No description provided for @merchClaimsScreenReachMilestoneLevelsAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach milestone levels and we ship you real {appName} gear. '**
+  String merchClaimsScreenReachMilestoneLevelsAnd(String appName);
+
+  /// No description provided for @merchClaimsScreenYourFirstPhysicalReward.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first physical reward unlocks at Level 50 — a free {appName} sticker pack.'**
+  String merchClaimsScreenYourFirstPhysicalReward(String appName);
+
+  /// No description provided for @merchClaimsScreenKeepAnEyeOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep an eye on the email tied to your {appName} account.'**
+  String merchClaimsScreenKeepAnEyeOn(String appName);
+
+  /// No description provided for @merchClaimsScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} — {statusLabel}'**
+  String merchClaimsScreenValue(String displayName, String statusLabel);
+
+  /// No description provided for @merchClaimsScreenShipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipped: {claim}'**
+  String merchClaimsScreenShipped(String claim);
+
+  /// No description provided for @merchClaimsScreenDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered: {claim}'**
+  String merchClaimsScreenDelivered(String claim);
+
+  /// No description provided for @foodHistoryScreenPartDateRangeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{_dateLabel}  ·  {_mealLabel}  ·  {_sourceLabel}'**
+  String foodHistoryScreenPartDateRangeValue(
+    String _dateLabel,
+    String _mealLabel,
+    String _sourceLabel,
+  );
+
+  /// No description provided for @foodHistoryScreenPartDateRangeG.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalProteinG}g'**
+  String foodHistoryScreenPartDateRangeG(Object totalProteinG);
+
+  /// No description provided for @foodHistoryScreenPartDateRangeNoResultsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'No results for \"{query}\"'**
+  String foodHistoryScreenPartDateRangeNoResultsFor(String query);
+
+  /// No description provided for @foodHistoryScreenPartDateRangeCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} cal'**
+  String foodHistoryScreenPartDateRangeCal(Object calories);
+
+  /// No description provided for @foodHistoryScreenPartDateRangeGP.
+  ///
+  /// In en, this message translates to:
+  /// **'{result}g P'**
+  String foodHistoryScreenPartDateRangeGP(String result);
+
+  /// No description provided for @foodHistoryScreenPartDateRangeCal2.
+  ///
+  /// In en, this message translates to:
+  /// **'{dayCals} cal'**
+  String foodHistoryScreenPartDateRangeCal2(String dayCals);
+
+  /// No description provided for @foodHistoryScreenPartDateRangeGP2.
+  ///
+  /// In en, this message translates to:
+  /// **'{dayProtein}g P'**
+  String foodHistoryScreenPartDateRangeGP2(String dayProtein);
+
+  /// No description provided for @foodBrowserPanelPartNLItemSectionStateCalG.
+  ///
+  /// In en, this message translates to:
+  /// **'{calPer100g} cal/100g'**
+  String foodBrowserPanelPartNLItemSectionStateCalG(String calPer100g);
+
+  /// No description provided for @foodBrowserPanelPartNLItemSectionStateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({opt}{calDelta})'**
+  String foodBrowserPanelPartNLItemSectionStateValue(
+    String label,
+    String opt,
+    String calDelta,
+  );
+
+  /// No description provided for @workoutSummaryGeneralSets2.
+  ///
+  /// In en, this message translates to:
+  /// **'{setCount} sets'**
+  String workoutSummaryGeneralSets2(Object setCount);
+
+  /// No description provided for @workoutSummaryGeneralLibraryId.
+  ///
+  /// In en, this message translates to:
+  /// **'Library ID: {libraryId}'**
+  String workoutSummaryGeneralLibraryId(String libraryId);
+
+  /// No description provided for @workoutSummaryGeneralLbXReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{weightLbs} lb x {reps} reps'**
+  String workoutSummaryGeneralLbXReps(Object weightLbs, Object reps);
+
+  /// No description provided for @exerciseDetailSheetMS.
+  ///
+  /// In en, this message translates to:
+  /// **'{restMins}m {restSecs}s'**
+  String exerciseDetailSheetMS(Object restMins, String restSecs);
+
+  /// No description provided for @exerciseDetailSheetSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {setNumber}'**
+  String exerciseDetailSheetSet(Object setNumber);
+
+  /// No description provided for @exerciseDetailSheetLbs.
+  ///
+  /// In en, this message translates to:
+  /// **') lbs × (repRange)'**
+  String exerciseDetailSheetLbs(Object repRange);
+
+  /// No description provided for @equipmentCalibrationScreenBarEmptyWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Bar empty weight ({_weightUnit})'**
+  String equipmentCalibrationScreenBarEmptyWeight(Object _weightUnit);
+
+  /// No description provided for @equipmentCalibrationScreenMachineSledCarriage.
+  ///
+  /// In en, this message translates to:
+  /// **'Machine sled / carriage ({_weightUnit})'**
+  String equipmentCalibrationScreenMachineSledCarriage(Object _weightUnit);
+
+  /// No description provided for @equipmentCalibrationScreenPinStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin start ({_weightUnit})'**
+  String equipmentCalibrationScreenPinStart(Object _weightUnit);
+
+  /// No description provided for @equipmentCalibrationScreenPinStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin step ({_weightUnit})'**
+  String equipmentCalibrationScreenPinStep(Object _weightUnit);
+
+  /// No description provided for @commitmentPactScreenFirstSession.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRST SESSION · {dayLabel}'**
+  String commitmentPactScreenFirstSession(String dayLabel);
+
+  /// No description provided for @syncDetailsScreenLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest: {first}'**
+  String syncDetailsScreenLatest(String first);
+
+  /// No description provided for @syncDetailsScreenRetries.
+  ///
+  /// In en, this message translates to:
+  /// **'{retryCount} retries'**
+  String syncDetailsScreenRetries(Object retryCount);
+
+  /// No description provided for @healthSyncSectionSamsungHealthDataSyncs.
+  ///
+  /// In en, this message translates to:
+  /// **'Samsung Health data syncs to {appName} through Health Connect. Follow these steps:'**
+  String healthSyncSectionSamsungHealthDataSyncs(String appName);
+
+  /// No description provided for @healthSyncSectionConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {appName}'**
+  String healthSyncSectionConnect(String appName);
+
+  /// No description provided for @healthSyncSectionYourSamsungHealthData.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Samsung Health data will automatically appear in {appName} after setup.'**
+  String healthSyncSectionYourSamsungHealthData(String appName);
+
+  /// No description provided for @healthSyncSectionConnectedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {platform}'**
+  String healthSyncSectionConnectedTo(String platform);
+
+  /// No description provided for @healthSyncSectionOpenHealthConnectAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Health Connect and grant permissions for {appName}'**
+  String healthSyncSectionOpenHealthConnectAnd(String appName);
+
+  /// No description provided for @healthSyncSectionFindN.
+  ///
+  /// In en, this message translates to:
+  /// **'3. Find \"{appName}\"\\n'**
+  String healthSyncSectionFindN(String appName);
+
+  /// No description provided for @healthSyncSectionDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect {platform}?'**
+  String healthSyncSectionDisconnect(String platform);
+
+  /// No description provided for @healthSyncSectionSyncedHealthDataPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced {length} health data points'**
+  String healthSyncSectionSyncedHealthDataPoints(Object length);
+
+  /// No description provided for @dataManagementSectionExportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Export {appName} Data'**
+  String dataManagementSectionExportData(String appName);
+
+  /// No description provided for @dataManagementSectionImportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Import {appName} Data'**
+  String dataManagementSectionImportData(String appName);
+
+  /// No description provided for @dataManagementSectionRestoreFromABackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from a {appName} backup ZIP'**
+  String dataManagementSectionRestoreFromABackup(String appName);
+
+  /// No description provided for @dataManagementSectionQueuingVideosForDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Queuing {length} videos for download...'**
+  String dataManagementSectionQueuingVideosForDownload(Object length);
+
+  /// No description provided for @dataManagementSectionFinishedQueuingDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'✅ Finished queuing {length} downloads'**
+  String dataManagementSectionFinishedQueuingDownloads(Object length);
+
+  /// No description provided for @dataManagementSectionPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'{tierName} Plan'**
+  String dataManagementSectionPlan(String tierName);
+
+  /// No description provided for @subscriptionManagementScreenSubscriptionPausedForDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription paused for {durationDays} days'**
+  String subscriptionManagementScreenSubscriptionPausedForDays(
+    Object durationDays,
+  );
+
+  /// No description provided for @subscriptionManagementScreenFailedToPauseSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to pause subscription: {e}'**
+  String subscriptionManagementScreenFailedToPauseSubscription(String e);
+
+  /// No description provided for @subscriptionManagementScreenFailedToResumeSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to resume subscription: {e}'**
+  String subscriptionManagementScreenFailedToResumeSubscription(String e);
+
+  /// No description provided for @importEquipmentSheetUpToPhotosEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {_kMaxPhotos} photos — equipment walls, racks, machine tags'**
+  String importEquipmentSheetUpToPhotosEquipment(Object _kMaxPhotos);
+
+  /// No description provided for @photoEditorScreenFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String photoEditorScreenFailedToSave(String e);
+
+  /// No description provided for @photoEditorScreenEditPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {viewTypeName} Photo'**
+  String photoEditorScreenEditPhoto(String viewTypeName);
+
+  /// No description provided for @photoEditorScreenPose.
+  ///
+  /// In en, this message translates to:
+  /// **'{viewTypeName} pose'**
+  String photoEditorScreenPose(String viewTypeName);
+
+  /// No description provided for @comparisonViewKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{weight} kg'**
+  String comparisonViewKg(Object weight);
+
+  /// No description provided for @comparisonViewComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} Comparison'**
+  String comparisonViewComparison(String displayName);
+
+  /// No description provided for @comparisonViewViral.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} viral'**
+  String comparisonViewViral(Object length);
+
+  /// No description provided for @comparisonViewValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{values}'**
+  String comparisonViewValue(Object values);
+
+  /// No description provided for @workoutsScreenBringYourPastWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring your past workouts and PRs into {appName} so the AI can pick the right weights from day one.'**
+  String workoutsScreenBringYourPastWorkouts(String appName);
+
+  /// No description provided for @habitDetailScreenPartCompactHeroSectionValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{completionRate}%'**
+  String habitDetailScreenPartCompactHeroSectionValue(Object completionRate);
+
+  /// No description provided for @habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysUntilBestStreak} days until you beat your personal best!'**
+  String habitDetailScreenPartCompactHeroSectionDaysUntilYouBeat(
+    String daysUntilBestStreak,
+  );
+
+  /// No description provided for @habitDetailScreenPartCompactHeroSectionValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{strength}%'**
+  String habitDetailScreenPartCompactHeroSectionValue2(String strength);
+
+  /// No description provided for @habitsScreenDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{name}\"'**
+  String habitsScreenDeleted(String name);
+
+  /// No description provided for @habitsScreenOfDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{last30Days} of 30 days'**
+  String habitsScreenOfDays(Object last30Days);
+
+  /// No description provided for @habitsScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{autoPercentage}%'**
+  String habitsScreenValue(Object autoPercentage);
+
+  /// No description provided for @habitsScreenAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{name}\"'**
+  String habitsScreenAdded(String name);
+
+  /// No description provided for @sharedWorkoutDetailScreenBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{_actionVerb} by {posterName}'**
+  String sharedWorkoutDetailScreenBy(String _actionVerb, String posterName);
+
+  /// No description provided for @sharedWorkoutDetailScreenMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{_duration} min'**
+  String sharedWorkoutDetailScreenMin(Object _duration);
+
+  /// No description provided for @sharedWorkoutDetailScreenExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{_exercises} exercises'**
+  String sharedWorkoutDetailScreenExercises(Object _exercises);
+
+  /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardLastDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {daysIncluded} days'**
+  String diabetesDashboardScreenPartCurrentGlucoseCardLastDays(
+    String daysIncluded,
+  );
+
+  /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String diabetesDashboardScreenPartCurrentGlucoseCardValue(Object percentage);
+
+  /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardMgDl.
+  ///
+  /// In en, this message translates to:
+  /// **'{range} mg/dL'**
+  String diabetesDashboardScreenPartCurrentGlucoseCardMgDl(String range);
+
+  /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardU.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalUnits}U'**
+  String diabetesDashboardScreenPartCurrentGlucoseCardU(Object totalUnits);
+
+  /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardU2.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalRapidUnits}U'**
+  String diabetesDashboardScreenPartCurrentGlucoseCardU2(
+    Object totalRapidUnits,
+  );
+
+  /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardU3.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalLongUnits}U'**
+  String diabetesDashboardScreenPartCurrentGlucoseCardU3(Object totalLongUnits);
+
+  /// No description provided for @diabetesDashboardScreenPartCurrentGlucoseCardU4.
+  ///
+  /// In en, this message translates to:
+  /// **'{units} U'**
+  String diabetesDashboardScreenPartCurrentGlucoseCardU4(String units);
+
+  /// No description provided for @challengeHistoryScreenFailedToSendRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send retry: {e}'**
+  String challengeHistoryScreenFailedToSendRetry(String e);
+
+  /// No description provided for @weightTrackingCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} · {label}'**
+  String weightTrackingCardValue(String value, String label);
+
+  /// No description provided for @neatDashboardScreenPartNeatScoreCardOf.
+  ///
+  /// In en, this message translates to:
+  /// **'of {maxScore}'**
+  String neatDashboardScreenPartNeatScoreCardOf(Object maxScore);
+
+  /// No description provided for @neatDashboardScreenPartNeatScoreCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String neatDashboardScreenPartNeatScoreCardValue(Object percentage);
+
+  /// No description provided for @neatDashboardScreenPartNeatScoreCardGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal: {goal}+'**
+  String neatDashboardScreenPartNeatScoreCardGoal(String goal);
+
+  /// No description provided for @stepGoalEditorSheetSelectedGoalSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected goal: {_selectedGoal} steps'**
+  String stepGoalEditorSheetSelectedGoalSteps(String _selectedGoal);
+
+  /// No description provided for @stepGoalEditorSheetStepGoalSliderFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Step goal slider, from {_minGoal} to {_maxGoal} steps'**
+  String stepGoalEditorSheetStepGoalSliderFrom(
+    Object _minGoal,
+    Object _maxGoal,
+  );
+
+  /// No description provided for @stepGoalEditorSheetSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedGoal} steps'**
+  String stepGoalEditorSheetSteps(String _selectedGoal);
+
+  /// No description provided for @stepGoalEditorSheetSaveGoalOfSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Save goal of {_selectedGoal} steps'**
+  String stepGoalEditorSheetSaveGoalOfSteps(String _selectedGoal);
+
+  /// No description provided for @weeklyCheckinSheetPartWeeklySummaryCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysLogged}/7'**
+  String weeklyCheckinSheetPartWeeklySummaryCardValue(Object daysLogged);
+
+  /// No description provided for @weeklyCheckinSheetPartWeeklySummaryCardG.
+  ///
+  /// In en, this message translates to:
+  /// **'{avgProtein}g'**
+  String weeklyCheckinSheetPartWeeklySummaryCardG(Object avgProtein);
+
+  /// No description provided for @weeklyCheckinSheetPartWeeklySummaryCardWeightTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight trend: {formattedWeeklyRate}'**
+  String weeklyCheckinSheetPartWeeklySummaryCardWeightTrend(
+    Object formattedWeeklyRate,
+  );
+
+  /// No description provided for @weeklyCheckinSheetPartWeeklySummaryCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{dataQualityPercent}%'**
+  String weeklyCheckinSheetPartWeeklySummaryCardValue2(
+    Object dataQualityPercent,
+  );
+
+  /// No description provided for @weeklyCheckinSheetPartWeeklySummaryCardValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}%'**
+  String weeklyCheckinSheetPartWeeklySummaryCardValue3(String value);
+
+  /// No description provided for @fastingTabFailedToStartFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to start fast: {e}'**
+  String fastingTabFailedToStartFast(String e);
+
+  /// No description provided for @fastingTabFailedToEndFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to end fast: {e}'**
+  String fastingTabFailedToEndFast(String e);
+
+  /// No description provided for @recipeCreateScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'(brand) \" : \"\")(foodName)'**
+  String recipeCreateScreenValue(String brand, String foodName);
+
+  /// No description provided for @recipeCreateScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'✨ {selected}'**
+  String recipeCreateScreenValue2(String selected);
+
+  /// No description provided for @caloriesBurnedSheetKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalBurned} kcal'**
+  String caloriesBurnedSheetKcal(Object totalBurned);
+
+  /// No description provided for @caloriesBurnedSheetWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} Workouts'**
+  String caloriesBurnedSheetWorkouts(String appName);
+
+  /// No description provided for @caloriesBurnedSheetMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationMinutes} min'**
+  String caloriesBurnedSheetMin(Object durationMinutes);
+
+  /// No description provided for @caloriesBurnedSheetKcal2.
+  ///
+  /// In en, this message translates to:
+  /// **'{entry} kcal'**
+  String caloriesBurnedSheetKcal2(Object entry);
+
+  /// No description provided for @caloriesBurnedSheetKcal3.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} kcal'**
+  String caloriesBurnedSheetKcal3(String value);
+
+  /// No description provided for @workoutActionsSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{_regenerateMessage} ({_regenerateStep}/{_regenerateTotalSteps})'**
+  String workoutActionsSheetValue(
+    Object _regenerateMessage,
+    Object _regenerateStep,
+    Object _regenerateTotalSteps,
+  );
+
+  /// No description provided for @workoutActionsSheetGetALinkFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a {marketingDomain} link for friends'**
+  String workoutActionsSheetGetALinkFor(String marketingDomain);
+
+  /// No description provided for @workoutActionsSheetN.
+  ///
+  /// In en, this message translates to:
+  /// **') — (appName)\\n(url)'**
+  String workoutActionsSheetN(String appName, String url);
+
+  /// No description provided for @workoutActionsSheetWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} workout'**
+  String workoutActionsSheetWorkout(String appName);
+
+  /// No description provided for @workoutActionsSheetV.
+  ///
+  /// In en, this message translates to:
+  /// **'v{versionNum}'**
+  String workoutActionsSheetV(Object versionNum);
+
+  /// No description provided for @workoutActionsSheetRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore \"{name}\"?'**
+  String workoutActionsSheetRestore(String name);
+
+  /// No description provided for @workoutActionsSheetS.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration}s'**
+  String workoutActionsSheetS(Object duration);
+
+  /// No description provided for @firstWorkoutForecastSheetYourFirstWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first {appName} workout'**
+  String firstWorkoutForecastSheetYourFirstWorkout(String appName);
+
+  /// No description provided for @firstWorkoutForecastSheetThatS.
+  ///
+  /// In en, this message translates to:
+  /// **'That\\\'s {volumeComparison}'**
+  String firstWorkoutForecastSheetThatS(String volumeComparison);
+
+  /// No description provided for @firstWorkoutForecastSheetThatS2.
+  ///
+  /// In en, this message translates to:
+  /// **'That\\\'s {caloriesComparison}'**
+  String firstWorkoutForecastSheetThatS2(Object caloriesComparison);
+
+  /// No description provided for @firstWorkoutForecastSheetEstimateBasedOnSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate based on {effectiveSessions} sessions/week'**
+  String firstWorkoutForecastSheetEstimateBasedOnSessions(
+    String effectiveSessions,
+  );
+
+  /// No description provided for @personalRecordsScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{pr}%'**
+  String personalRecordsScreenValue(Object pr);
+
+  /// No description provided for @notificationTestScreenPendingNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Notifications ({length})'**
+  String notificationTestScreenPendingNotifications(Object length);
+
+  /// No description provided for @notificationTestScreenId.
+  ///
+  /// In en, this message translates to:
+  /// **'ID: {id}'**
+  String notificationTestScreenId(String id);
+
+  /// No description provided for @notificationTestScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{key}:'**
+  String notificationTestScreenValue(String key);
+
+  /// No description provided for @avoidedExercisesScreenAvoidExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid {count} exercises'**
+  String avoidedExercisesScreenAvoidExercises(Object count);
+
+  /// No description provided for @avoidedExercisesScreenUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {day}/{month}/{year}'**
+  String avoidedExercisesScreenUntil(String day, String month, String year);
+
+  /// No description provided for @avoidedExercisesScreenAddToAvoidList.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count} to Avoid List'**
+  String avoidedExercisesScreenAddToAvoidList(Object count);
+
+  /// No description provided for @avoidedExercisesScreenAvoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid \"{exerciseName}\"'**
+  String avoidedExercisesScreenAvoid(String exerciseName);
+
+  /// No description provided for @avoidedExercisesScreenUntil2.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {day}/{month}/{year}'**
+  String avoidedExercisesScreenUntil2(String day, String month, String year);
+
+  /// No description provided for @avoidedExercisesScreenReplacedInUpcomingWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced \"{exerciseName}\" in upcoming workouts'**
+  String avoidedExercisesScreenReplacedInUpcomingWorkouts(String exerciseName);
+
+  /// No description provided for @avoidedExercisesScreenEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit \"{exerciseName}\"'**
+  String avoidedExercisesScreenEdit(String exerciseName);
+
+  /// No description provided for @avoidedExercisesScreenUntil3.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {day}/{month}/{year}'**
+  String avoidedExercisesScreenUntil3(String day, String month, String year);
+
+  /// No description provided for @avoidedExercisesScreenUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated \"{exerciseName}\"'**
+  String avoidedExercisesScreenUpdated(String exerciseName);
+
+  /// No description provided for @avoidedExercisesScreenRemoveFromAvoidList.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{exerciseName}\" from avoid list?'**
+  String avoidedExercisesScreenRemoveFromAvoidList(String exerciseName);
+
+  /// No description provided for @avoidedExercisesScreenRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed \"{exerciseName}\"'**
+  String avoidedExercisesScreenRemoved(String exerciseName);
+
+  /// No description provided for @exercisePickerSheetPartExercisePickerSheetStateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'({customCount})'**
+  String exercisePickerSheetPartExercisePickerSheetStateValue(
+    Object customCount,
+  );
+
+  /// No description provided for @exercisePickerSheetPartExercisePickerSheetStateValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({count})'**
+  String exercisePickerSheetPartExercisePickerSheetStateValue2(
+    String name,
+    Object count,
+  );
+
+  /// No description provided for @exercisePickerSheetPartExercisePickerSheetStateShowingOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {length} of {length1}'**
+  String exercisePickerSheetPartExercisePickerSheetStateShowingOf(
+    Object length,
+    Object length1,
+  );
+
+  /// No description provided for @timelineSummaryCardDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {streakDay}'**
+  String timelineSummaryCardDay(Object streakDay);
+
+  /// No description provided for @timelineSummaryCardXp.
+  ///
+  /// In en, this message translates to:
+  /// **'{xpEarned} XP'**
+  String timelineSummaryCardXp(Object xpEarned);
+
+  /// No description provided for @timelineSummaryCardM.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutsTotalMinutes}m'**
+  String timelineSummaryCardM(Object workoutsTotalMinutes);
+
+  /// No description provided for @timelineSummaryCardMl.
+  ///
+  /// In en, this message translates to:
+  /// **'{waterMl}/{waterGoalMl} ml'**
+  String timelineSummaryCardMl(Object waterMl, Object waterGoalMl);
+
+  /// No description provided for @timelineSummaryCardKcalIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesEaten} kcal in'**
+  String timelineSummaryCardKcalIn(Object caloriesEaten);
+
+  /// No description provided for @timelineSummaryCardHabits.
+  ///
+  /// In en, this message translates to:
+  /// **'{habitsCompleted} habits'**
+  String timelineSummaryCardHabits(Object habitsCompleted);
+
+  /// No description provided for @timelineSummaryCardMood.
+  ///
+  /// In en, this message translates to:
+  /// **'Mood: {mood}'**
+  String timelineSummaryCardMood(Object mood);
+
+  /// No description provided for @timelineSummaryCardSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{steps} steps'**
+  String timelineSummaryCardSteps(Object steps);
+
+  /// No description provided for @muscleAnalyticsScreenKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{balance} kg'**
+  String muscleAnalyticsScreenKg(String balance);
+
+  /// No description provided for @fastingImpactScreenKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{comparison} kg'**
+  String fastingImpactScreenKg(Object comparison);
+
+  /// No description provided for @fastingImpactScreenKg2.
+  ///
+  /// In en, this message translates to:
+  /// **'{comparison} kg'**
+  String fastingImpactScreenKg2(Object comparison);
+
+  /// No description provided for @fastingImpactScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{comparison}%'**
+  String fastingImpactScreenValue(Object comparison);
+
+  /// No description provided for @fastingImpactScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{comparison}%'**
+  String fastingImpactScreenValue2(Object comparison);
+
+  /// No description provided for @fastingImpactScreenValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'{comparison}%'**
+  String fastingImpactScreenValue3(Object comparison);
+
+  /// No description provided for @fastingImpactScreenValue4.
+  ///
+  /// In en, this message translates to:
+  /// **'{comparison}%'**
+  String fastingImpactScreenValue4(Object comparison);
+
+  /// No description provided for @leaderboardEntryCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String leaderboardEntryCardValue(String rank);
+
+  /// No description provided for @wrappedBannerYourWrappedIsHere.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR {month} WRAPPED IS HERE'**
+  String wrappedBannerYourWrappedIsHere(String month);
+
+  /// No description provided for @wrappedBannerWrappedDropsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{month} Wrapped drops in {daysLabel}'**
+  String wrappedBannerWrappedDropsIn(String month, String daysLabel);
+
+  /// No description provided for @wrappedBannerWorkoutsSoFarKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutsSoFar} workouts so far  ·  Keep going!'**
+  String wrappedBannerWorkoutsSoFarKeep(String workoutsSoFar);
+
+  /// No description provided for @nutrientExplorerPartNutrientScoreCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{score}%'**
+  String nutrientExplorerPartNutrientScoreCardValue(Object score);
+
+  /// No description provided for @nutrientExplorerPartNutrientScoreCardOptimal.
+  ///
+  /// In en, this message translates to:
+  /// **'{optimalCount}/{totalCount} optimal'**
+  String nutrientExplorerPartNutrientScoreCardOptimal(
+    Object optimalCount,
+    Object totalCount,
+  );
+
+  /// No description provided for @nutrientExplorerPartNutrientScoreCardNutrients.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} nutrients'**
+  String nutrientExplorerPartNutrientScoreCardNutrients(Object length);
+
+  /// No description provided for @nutrientExplorerPartNutrientScoreCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String nutrientExplorerPartNutrientScoreCardValue2(Object percentage);
+
+  /// No description provided for @nutrientExplorerPartNutrientScoreCardCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current: {currentValue}{unit}'**
+  String nutrientExplorerPartNutrientScoreCardCurrent(
+    String currentValue,
+    String unit,
+  );
+
+  /// No description provided for @recipeFromFridgeScreenScanningU.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning {done}/{total}\\u2026'**
+  String recipeFromFridgeScreenScanningU(String done, Object total);
+
+  /// No description provided for @recipeFromFridgeScreenMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'{overallMatchScore}% match'**
+  String recipeFromFridgeScreenMatch(Object overallMatchScore);
+
+  /// No description provided for @recipeFromFridgeScreenKcalServ.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesPerServing} kcal/serv'**
+  String recipeFromFridgeScreenKcalServ(Object caloriesPerServing);
+
+  /// No description provided for @recipeFromFridgeScreenUGP.
+  ///
+  /// In en, this message translates to:
+  /// **'\\u2022 {suggestion}g P'**
+  String recipeFromFridgeScreenUGP(String suggestion);
+
+  /// No description provided for @recipeFromFridgeScreenUses.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses: {matchedPantryItems}'**
+  String recipeFromFridgeScreenUses(String matchedPantryItems);
+
+  /// No description provided for @recipeFromFridgeScreenNeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Need: {missingIngredients}'**
+  String recipeFromFridgeScreenNeed(String missingIngredients);
+
+  /// No description provided for @dailyTabLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged {name}'**
+  String dailyTabLogged(String name);
+
+  /// No description provided for @dailyTabFailedToLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to log: {e}'**
+  String dailyTabFailedToLog(String e);
+
+  /// No description provided for @dailyTabPinned.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} pinned'**
+  String dailyTabPinned(Object length);
+
+  /// No description provided for @dailyTabLogged2.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged {ev}'**
+  String dailyTabLogged2(String ev);
+
+  /// No description provided for @dailyTabOfLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{portionsRemaining} of {portionsMade} left'**
+  String dailyTabOfLeft(String portionsRemaining, String portionsMade);
+
+  /// No description provided for @nutritionGoalsCardBurned.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesBurned} burned'**
+  String nutritionGoalsCardBurned(Object caloriesBurned);
+
+  /// No description provided for @workoutDetailScreenUi2RemoveFromThisWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\" from this workout?'**
+  String workoutDetailScreenUi2RemoveFromThisWorkout(String name);
+
+  /// No description provided for @workoutDetailScreenUi2RemovedFromWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed from workout'**
+  String workoutDetailScreenUi2RemovedFromWorkout(String name);
+
+  /// No description provided for @workoutDetailScreenUi2FailedToRemoveExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to remove exercise: {e}'**
+  String workoutDetailScreenUi2FailedToRemoveExercise(String e);
+
+  /// No description provided for @workoutDetailScreenUi2BlockFromAllFuture.
+  ///
+  /// In en, this message translates to:
+  /// **'Block \"{name}\" from all future AI recommendations?\\n\\n'**
+  String workoutDetailScreenUi2BlockFromAllFuture(String name);
+
+  /// No description provided for @workoutDetailScreenUi2WillNoLongerBe.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} will no longer be recommended'**
+  String workoutDetailScreenUi2WillNoLongerBe(String name);
+
+  /// No description provided for @setRailInternalsMoreSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} more sets'**
+  String setRailInternalsMoreSets(Object count);
+
+  /// No description provided for @setRailInternalsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count}'**
+  String setRailInternalsValue(Object count);
+
+  /// No description provided for @syncedSummaryViewM.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration}m'**
+  String syncedSummaryViewM(Object duration);
+
+  /// No description provided for @syncedSummaryViewBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'{avgHr} bpm'**
+  String syncedSummaryViewBpm(Object avgHr);
+
+  /// No description provided for @syncedSummaryViewBpm2.
+  ///
+  /// In en, this message translates to:
+  /// **'{maxHr} bpm'**
+  String syncedSummaryViewBpm2(Object maxHr);
+
+  /// No description provided for @syncedSummaryViewActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'{platform} activity'**
+  String syncedSummaryViewActivity(String platform);
+
+  /// No description provided for @syncedSummaryViewThisWorkoutWasImported.
+  ///
+  /// In en, this message translates to:
+  /// **'This workout was imported from {platform}. Zealova '**
+  String syncedSummaryViewThisWorkoutWasImported(String platform);
+
+  /// No description provided for @syncedSummaryViewSessionsOpenOnYour.
+  ///
+  /// In en, this message translates to:
+  /// **'sessions — open {platform} on your device for the '**
+  String syncedSummaryViewSessionsOpenOnYour(String platform);
+
+  /// No description provided for @syncedSummaryViewSyncedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced from {platform}'**
+  String syncedSummaryViewSyncedFrom(String platform);
+
+  /// No description provided for @setRowPartWeightIncrementsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{actualPercent}%'**
+  String setRowPartWeightIncrementsValue(Object actualPercent);
+
+  /// No description provided for @personalGoalsScreenPermanentlyDeleteThisCannot.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete \"{exerciseName}\"? This cannot be undone.'**
+  String personalGoalsScreenPermanentlyDeleteThisCannot(String exerciseName);
+
+  /// No description provided for @personalGoalsScreenDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{exerciseName}\" deleted'**
+  String personalGoalsScreenDeleted(String exerciseName);
+
+  /// No description provided for @personalGoalsScreenViewAllRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'View all {length} records'**
+  String personalGoalsScreenViewAllRecords(Object length);
+
+  /// No description provided for @lifetimeMemberBadgeDaysUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysRemaining} days until {nextTierName}'**
+  String lifetimeMemberBadgeDaysUntil(
+    String daysRemaining,
+    String nextTierName,
+  );
+
+  /// No description provided for @todayStatsRowValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed}/4'**
+  String todayStatsRowValue(String completed);
+
+  /// No description provided for @todayStatsRowL.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentL}L'**
+  String todayStatsRowL(String currentL);
+
+  /// No description provided for @programHistoryScreenThisWillRestoreAs.
+  ///
+  /// In en, this message translates to:
+  /// **'This will restore \"{displayName}\" as your current program. '**
+  String programHistoryScreenThisWillRestoreAs(String displayName);
+
+  /// No description provided for @programHistoryScreenFailedToRestoreProgram.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to restore program: {e}'**
+  String programHistoryScreenFailedToRestoreProgram(String e);
+
+  /// No description provided for @programHistoryScreenMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationMinutes} min'**
+  String programHistoryScreenMin(Object durationMinutes);
+
+  /// No description provided for @programHistoryScreenDaysWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} days/week'**
+  String programHistoryScreenDaysWeek(Object length);
+
+  /// No description provided for @programHistoryScreenWorkoutsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkoutsCompleted} workouts completed'**
+  String programHistoryScreenWorkoutsCompleted(Object totalWorkoutsCompleted);
+
+  /// No description provided for @editGymProfileSheetExtCreatedCopyOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Created copy of \"{name}\"'**
+  String editGymProfileSheetExtCreatedCopyOf(String name);
+
+  /// No description provided for @editGymProfileSheetExtFailedToDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to duplicate: {e}'**
+  String editGymProfileSheetExtFailedToDuplicate(String e);
+
+  /// No description provided for @editGymProfileSheetExtUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated \"{text}\"'**
+  String editGymProfileSheetExtUpdated(String text);
+
+  /// No description provided for @editGymProfileSheetExtFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String editGymProfileSheetExtFailedToSave(String e);
+
+  /// No description provided for @editGymProfileSheetExtPinFocusFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin focus for {dayName}'**
+  String editGymProfileSheetExtPinFocusFor(String dayName);
+
+  /// No description provided for @editGymProfileSheetExtMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedDuration} minutes'**
+  String editGymProfileSheetExtMinutes(Object _selectedDuration);
+
+  /// No description provided for @workoutImportScreenM.
+  ///
+  /// In en, this message translates to:
+  /// **'{workout} m'**
+  String workoutImportScreenM(String workout);
+
+  /// No description provided for @workoutImportScreenAvgBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg {avgHeartRate} bpm'**
+  String workoutImportScreenAvgBpm(Object avgHeartRate);
+
+  /// No description provided for @workoutImportScreenMaxBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'  |  Max {maxHeartRate} bpm'**
+  String workoutImportScreenMaxBpm(Object maxHeartRate);
+
+  /// No description provided for @homeTimelineLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{remainingTimeString} left · '**
+  String homeTimelineLeft(String remainingTimeString);
+
+  /// No description provided for @homeTimelineElapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{elapsedTimeString} elapsed'**
+  String homeTimelineElapsed(String elapsedTimeString);
+
+  /// No description provided for @homeTimelineProtocolNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'{defaultProtocol} protocol · not started'**
+  String homeTimelineProtocolNotStarted(String defaultProtocol);
+
+  /// No description provided for @newTilesPartPersonalRecordsCardKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{change} kg'**
+  String newTilesPartPersonalRecordsCardKg(String change);
+
+  /// No description provided for @newTilesPartPersonalRecordsCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String newTilesPartPersonalRecordsCardValue(String rank);
+
+  /// No description provided for @newTilesPartPersonalRecordsCardH.
+  ///
+  /// In en, this message translates to:
+  /// **'{sleepHours}h'**
+  String newTilesPartPersonalRecordsCardH(Object sleepHours);
+
+  /// No description provided for @chatScreenExtThatWasYourLast.
+  ///
+  /// In en, this message translates to:
+  /// **'That was your last free {gateName} for this period.'**
+  String chatScreenExtThatWasYourLast(String gateName);
+
+  /// No description provided for @chatScreenExtFailedToSendMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send media: {e}'**
+  String chatScreenExtFailedToSendMedia(String e);
+
+  /// No description provided for @chatScreenExtThatWasYourLast2.
+  ///
+  /// In en, this message translates to:
+  /// **'That was your last free {gateName} for this period.'**
+  String chatScreenExtThatWasYourLast2(String gateName);
+
+  /// No description provided for @chatScreenExtFailedToSendMedia2.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send media: {e}'**
+  String chatScreenExtFailedToSendMedia2(String e);
+
+  /// No description provided for @chatScreenExtAs.
+  ///
+  /// In en, this message translates to:
+  /// **') as (mealType)'**
+  String chatScreenExtAs(String mealType);
+
+  /// No description provided for @chatScreenExtFailedToSendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send message: {e}'**
+  String chatScreenExtFailedToSendMessage(String e);
+
+  /// No description provided for @dailyPlanDetailSheetMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutDurationMinutes} min'**
+  String dailyPlanDetailSheetMin(Object workoutDurationMinutes);
+
+  /// No description provided for @dailyPlanDetailSheetG.
+  ///
+  /// In en, this message translates to:
+  /// **'{proteinTargetG}g'**
+  String dailyPlanDetailSheetG(String proteinTargetG);
+
+  /// No description provided for @dailyPlanDetailSheetG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{carbsTargetG}g'**
+  String dailyPlanDetailSheetG2(String carbsTargetG);
+
+  /// No description provided for @dailyPlanDetailSheetG3.
+  ///
+  /// In en, this message translates to:
+  /// **'{fatTargetG}g'**
+  String dailyPlanDetailSheetG3(String fatTargetG);
+
+  /// No description provided for @dailyPlanDetailSheetHFast.
+  ///
+  /// In en, this message translates to:
+  /// **'{fastingDurationHours}h fast'**
+  String dailyPlanDetailSheetHFast(Object fastingDurationHours);
+
+  /// No description provided for @dailyPlanDetailSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({amount})'**
+  String dailyPlanDetailSheetValue(String name, Object amount);
+
+  /// No description provided for @dailyPlanDetailSheetCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} cal'**
+  String dailyPlanDetailSheetCal(Object calories);
+
+  /// No description provided for @hrZonesCardMaxHrBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'Max HR: {maxHR} bpm'**
+  String hrZonesCardMaxHrBpm(Object maxHR);
+
+  /// No description provided for @hrZonesCardBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentHR} bpm'**
+  String hrZonesCardBpm(String currentHR);
+
+  /// No description provided for @hrZonesCardZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Zone: {name}'**
+  String hrZonesCardZone(String name);
+
+  /// No description provided for @hrZonesCardYearsYounger.
+  ///
+  /// In en, this message translates to:
+  /// **'{ageDiff} years younger'**
+  String hrZonesCardYearsYounger(String ageDiff);
+
+  /// No description provided for @habitDetailScreenPartYearlyHeatmapStateActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'{year} Activity'**
+  String habitDetailScreenPartYearlyHeatmapStateActivity(String year);
+
+  /// No description provided for @habitDetailScreenPartYearlyHeatmapStateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String habitDetailScreenPartYearlyHeatmapStateValue(Object percentage);
+
+  /// No description provided for @leaderboardTabChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge {userName}'**
+  String leaderboardTabChallenge(String userName);
+
+  /// No description provided for @diabetesDashboardScreenPartA1CCardDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysSinceMeasured} days ago'**
+  String diabetesDashboardScreenPartA1CCardDaysAgo(String daysSinceMeasured);
+
+  /// No description provided for @diabetesDashboardScreenPartA1CCardMgDl.
+  ///
+  /// In en, this message translates to:
+  /// **'{valueMgDl} mg/dL'**
+  String diabetesDashboardScreenPartA1CCardMgDl(String valueMgDl);
+
+  /// No description provided for @menuAnalysisHistoryScreenNothingMatchedTryAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matched \"{query}\". Try another search.'**
+  String menuAnalysisHistoryScreenNothingMatchedTryAnother(String query);
+
+  /// No description provided for @menuAnalysisHistoryScreenItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} items · {type}'**
+  String menuAnalysisHistoryScreenItems(Object length, String type);
+
+  /// No description provided for @nutritionSettingsScreenUi1Value.
+  ///
+  /// In en, this message translates to:
+  /// **'+{length}'**
+  String nutritionSettingsScreenUi1Value(Object length);
+
+  /// No description provided for @recipeSuggestionCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{overallMatchScore}%'**
+  String recipeSuggestionCardValue(Object overallMatchScore);
+
+  /// No description provided for @recipeSuggestionCardServings.
+  ///
+  /// In en, this message translates to:
+  /// **'{servings} servings'**
+  String recipeSuggestionCardServings(String servings);
+
+  /// No description provided for @recipeSuggestionCardCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} cal'**
+  String recipeSuggestionCardCal(Object calories);
+
+  /// No description provided for @recipeSuggestionCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{score}%'**
+  String recipeSuggestionCardValue2(Object score);
+
+  /// No description provided for @nutritionStreakCardCouldNotUseFreeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not use freeze: {e}'**
+  String nutritionStreakCardCouldNotUseFreeze(String e);
+
+  /// No description provided for @nutritionStreakCardDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{streakDays}-day streak'**
+  String nutritionStreakCardDayStreak(String streakDays);
+
+  /// No description provided for @nutritionStreakCardBestTotalDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Best {best} · Total {total} days'**
+  String nutritionStreakCardBestTotalDays(String best, Object total);
+
+  /// No description provided for @nutritionStreakCardDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{logged} / {target} days'**
+  String nutritionStreakCardDays(String logged, String target);
+
+  /// No description provided for @scheduleMealSheetEveryDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {_intervalDays} days'**
+  String scheduleMealSheetEveryDays(String _intervalDays);
+
+  /// No description provided for @scheduleMealSheetDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{i} days'**
+  String scheduleMealSheetDays(String i);
+
+  /// No description provided for @menuAnalysisItemCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{s}/10'**
+  String menuAnalysisItemCardValue(String s);
+
+  /// No description provided for @menuAnalysisItemCardG.
+  ///
+  /// In en, this message translates to:
+  /// **'{grams} g'**
+  String menuAnalysisItemCardG(String grams);
+
+  /// No description provided for @recommendationExplainSheetWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Why {name}?'**
+  String recommendationExplainSheetWhy(String name);
+
+  /// No description provided for @recommendationExplainSheetRankOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank #{rank} of {totalAccepted}'**
+  String recommendationExplainSheetRankOf(String rank, Object totalAccepted);
+
+  /// No description provided for @templateListScreenRemoveWorkoutsAlreadyOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\"? Workouts already on your calendar '**
+  String templateListScreenRemoveWorkoutsAlreadyOn(String name);
+
+  /// No description provided for @templateListScreenDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{name}\"'**
+  String templateListScreenDeleted(String name);
+
+  /// No description provided for @templateListScreenSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule \"{name}\"'**
+  String templateListScreenSchedule(String name);
+
+  /// No description provided for @templateListScreenAllDays.
+  ///
+  /// In en, this message translates to:
+  /// **'All days: {_defaultTime}'**
+  String templateListScreenAllDays(String _defaultTime);
+
+  /// No description provided for @templateListScreenWorkoutsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutsCreated} workouts added '**
+  String templateListScreenWorkoutsAdded(String workoutsCreated);
+
+  /// No description provided for @templateListScreenAlreadyExisted.
+  ///
+  /// In en, this message translates to:
+  /// **'({skippedExisting} already existed)'**
+  String templateListScreenAlreadyExisted(String skippedExisting);
+
+  /// No description provided for @templateListScreenWorkoutsAddedToYour.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutsCreated} workouts added to your calendar'**
+  String templateListScreenWorkoutsAddedToYour(String workoutsCreated);
+
+  /// No description provided for @exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Swapped to {newExerciseName}'**
+  String exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(
+    String newExerciseName,
+  );
+
+  /// No description provided for @nextSetPreviewCardKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{recommendedWeight} kg'**
+  String nextSetPreviewCardKg(Object recommendedWeight);
+
+  /// No description provided for @nextSetPreviewCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **')(weightDelta)'**
+  String nextSetPreviewCardValue(Object weightDelta);
+
+  /// No description provided for @nextSetPreviewCardX.
+  ///
+  /// In en, this message translates to:
+  /// **'x {recommendedReps}'**
+  String nextSetPreviewCardX(Object recommendedReps);
+
+  /// No description provided for @nextSetPreviewCardKg2.
+  ///
+  /// In en, this message translates to:
+  /// **')(weightDelta) kg'**
+  String nextSetPreviewCardKg2(Object weightDelta);
+
+  /// No description provided for @nextSetPreviewCardIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'{intensityPercentage}% intensity'**
+  String nextSetPreviewCardIntensity(Object intensityPercentage);
+
+  /// No description provided for @newspaperTemplateLiftsInGruelingSession.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} LIFTS {volLabel} IN GRUELING SESSION'**
+  String newspaperTemplateLiftsInGruelingSession(String name, String volLabel);
+
+  /// No description provided for @newspaperTemplateExpertsStunnedByPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Experts stunned by {topEx} performance\"'**
+  String newspaperTemplateExpertsStunnedByPerformance(String topEx);
+
+  /// No description provided for @newspaperTemplateContinuedOnPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Continued on page {completedAt}'**
+  String newspaperTemplateContinuedOnPage(String completedAt);
+
+  /// No description provided for @bodyAnalyzerScreenCorrectiveExercisesQueuedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} corrective exercises queued for the next program'**
+  String bodyAnalyzerScreenCorrectiveExercisesQueuedFor(Object length);
+
+  /// No description provided for @bodyAnalyzerScreenCouldnTLoadBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\\\'t load Body Analyzer: {_error}'**
+  String bodyAnalyzerScreenCouldnTLoadBody(String _error);
+
+  /// No description provided for @measurementsScreenHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'HISTORY - {displayName}'**
+  String measurementsScreenHistory(String displayName);
+
+  /// No description provided for @measurementsScreenEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'{measurementsState} entries'**
+  String measurementsScreenEntries(Object measurementsState);
+
+  /// No description provided for @measurementsScreenNoDataYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No {displayName} data yet'**
+  String measurementsScreenNoDataYet(String displayName);
+
+  /// No description provided for @measurementsScreenRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} recorded'**
+  String measurementsScreenRecorded(String displayName);
+
+  /// No description provided for @measurementsScreenCouldnTSaveTry.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save {displayName}. Try again.'**
+  String measurementsScreenCouldnTSaveTry(String displayName);
+
+  /// No description provided for @xpProgressCardLvl.
+  ///
+  /// In en, this message translates to:
+  /// **'Lvl {currentLevel} {displayName}'**
+  String xpProgressCardLvl(Object currentLevel, String displayName);
+
+  /// No description provided for @xpProgressCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPercent}%'**
+  String xpProgressCardValue(Object progressPercent);
+
+  /// No description provided for @moodCardIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'{mood} - Intensity'**
+  String moodCardIntensity(String mood);
+
+  /// No description provided for @moodCardX.
+  ///
+  /// In en, this message translates to:
+  /// **'{v}x'**
+  String moodCardX(String v);
+
+  /// No description provided for @moodCardVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'{mood} - Volume'**
+  String moodCardVolume(String mood);
+
+  /// No description provided for @moodCardX2.
+  ///
+  /// In en, this message translates to:
+  /// **'{v}x'**
+  String moodCardX2(String v);
+
+  /// No description provided for @moodCardRest2.
+  ///
+  /// In en, this message translates to:
+  /// **'{mood} - Rest'**
+  String moodCardRest2(String mood);
+
+  /// No description provided for @moodCardX3.
+  ///
+  /// In en, this message translates to:
+  /// **'{v}x'**
+  String moodCardX3(String v);
+
+  /// No description provided for @importDialogImportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Import {appName} Data'**
+  String importDialogImportData(String appName);
+
+  /// No description provided for @importDialogThisWillReplaceYour.
+  ///
+  /// In en, this message translates to:
+  /// **'This will replace your current {appName} data'**
+  String importDialogThisWillReplaceYour(String appName);
+
+  /// No description provided for @importDialogSelectAPreviouslyExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a previously exported {appName} ZIP file to restore your data. The import will use whatever data is available in the file.'**
+  String importDialogSelectAPreviouslyExported(String appName);
+
+  /// No description provided for @importDialogImportData2.
+  ///
+  /// In en, this message translates to:
+  /// **'Import {appName} Data'**
+  String importDialogImportData2(String appName);
+
+  /// No description provided for @importDialogFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File: {name}'**
+  String importDialogFile(String name);
+
+  /// No description provided for @importDialogImportedN.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported:\\n{summary}'**
+  String importDialogImportedN(Object summary);
+
+  /// No description provided for @downloadedVideosScreenDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{exerciseName}\"'**
+  String downloadedVideosScreenDeleted(String exerciseName);
+
+  /// No description provided for @downloadedVideosScreenMb.
+  ///
+  /// In en, this message translates to:
+  /// **'{formattedCacheSize} / 500 MB'**
+  String downloadedVideosScreenMb(Object formattedCacheSize);
+
+  /// No description provided for @downloadedVideosScreenVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'{cachedVideoCount} videos'**
+  String downloadedVideosScreenVideos(Object cachedVideoCount);
+
+  /// No description provided for @importEquipmentResultSheetAddedEquipmentItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {addedCount} equipment items'**
+  String importEquipmentResultSheetAddedEquipmentItems(Object addedCount);
+
+  /// No description provided for @importEquipmentResultSheetWeFoundItemsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'We found {totalExtracted} items in your gym'**
+  String importEquipmentResultSheetWeFoundItemsIn(Object totalExtracted);
+
+  /// No description provided for @importEquipmentResultSheetMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched ({matchedKeptCount}/{totalMatched})'**
+  String importEquipmentResultSheetMatched(
+    Object matchedKeptCount,
+    Object totalMatched,
+  );
+
+  /// No description provided for @importEquipmentResultSheetUnmatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmatched ({length})'**
+  String importEquipmentResultSheetUnmatched(Object length);
+
+  /// No description provided for @importEquipmentResultSheetSaveItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {keepCount} items'**
+  String importEquipmentResultSheetSaveItems(Object keepCount);
+
+  /// No description provided for @workoutOptionsSheetMarkWorkoutForAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark workout for {dateLabel} as done? This will mark it as '**
+  String workoutOptionsSheetMarkWorkoutForAs(String dateLabel);
+
+  /// No description provided for @workoutOptionsSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{formattedDurationShort} • '**
+  String workoutOptionsSheetValue(Object formattedDurationShort);
+
+  /// No description provided for @workoutOptionsSheetExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseCount} exercises'**
+  String workoutOptionsSheetExercises(Object exerciseCount);
+
+  /// No description provided for @workoutOptionsSheetSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{e} sets'**
+  String workoutOptionsSheetSets(Object e);
+
+  /// No description provided for @workoutOptionsSheetMoreExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'+{exercises} more exercises'**
+  String workoutOptionsSheetMoreExercises(Object exercises);
+
+  /// No description provided for @heroNutritionCardKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesConsumed} / {calorieTarget} kcal'**
+  String heroNutritionCardKcal(Object caloriesConsumed, String calorieTarget);
+
+  /// No description provided for @heroNutritionCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{caloriesRemaining}'**
+  String heroNutritionCardValue(Object caloriesRemaining);
+
+  /// No description provided for @heroNutritionCardGG.
+  ///
+  /// In en, this message translates to:
+  /// **'{consumed}g / {target}g'**
+  String heroNutritionCardGG(Object consumed, String target);
+
+  /// No description provided for @lastNightSleepCardH.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h'**
+  String lastNightSleepCardH(Object hours);
+
+  /// No description provided for @lastNightSleepCardM.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m'**
+  String lastNightSleepCardM(Object minutes);
+
+  /// No description provided for @lastNightSleepCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{fmt} – {fmt1}'**
+  String lastNightSleepCardValue(String fmt, String fmt1);
+
+  /// No description provided for @feelResultsScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{moodImprovementPercent}%'**
+  String feelResultsScreenValue(Object moodImprovementPercent);
+
+  /// No description provided for @feelResultsScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'+{moodChange}'**
+  String feelResultsScreenValue2(String moodChange);
+
+  /// No description provided for @feelResultsScreenW.
+  ///
+  /// In en, this message translates to:
+  /// **'W{week}'**
+  String feelResultsScreenW(Object week);
+
+  /// No description provided for @feelResultsScreenValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%'**
+  String feelResultsScreenValue3(Object percent);
+
+  /// No description provided for @feelResultsScreenYouFeltStrongerAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'You felt stronger after {feelingStrongerCount} of {totalWorkouts} workouts!'**
+  String feelResultsScreenYouFeltStrongerAfter(
+    Object feelingStrongerCount,
+    Object totalWorkouts,
+  );
+
+  /// No description provided for @progressScreenYourProgressPhotoHas.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {displayName} progress photo has been saved successfully.'**
+  String progressScreenYourProgressPhotoHas(String displayName);
+
+  /// No description provided for @progressScreenWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight: {formattedWeight}'**
+  String progressScreenWeight(Object formattedWeight);
+
+  /// No description provided for @chatMediaWidgetsItemsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} items found'**
+  String chatMediaWidgetsItemsFound(Object length);
+
+  /// No description provided for @chatMediaWidgetsCalTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCal} cal total'**
+  String chatMediaWidgetsCalTotal(Object totalCal);
+
+  /// No description provided for @chatMediaWidgetsGProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalProtein}g protein'**
+  String chatMediaWidgetsGProtein(Object totalProtein);
+
+  /// No description provided for @chatMediaWidgetsGoTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to {workoutName}'**
+  String chatMediaWidgetsGoTo(String workoutName);
+
+  /// No description provided for @achievementsScreenAchievementsEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalAchievements} Achievements Earned'**
+  String achievementsScreenAchievementsEarned(Object totalAchievements);
+
+  /// No description provided for @achievementsScreenBestDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Best: {longestStreak} days'**
+  String achievementsScreenBestDays(String longestStreak);
+
+  /// No description provided for @achievementsScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{points}'**
+  String achievementsScreenValue(String points);
+
+  /// No description provided for @achievementsScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'+{record}%'**
+  String achievementsScreenValue2(Object record);
+
+  /// No description provided for @referralsScreenNextFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: FREE {nextMerchDisplayName}'**
+  String referralsScreenNextFree(Object nextMerchDisplayName);
+
+  /// No description provided for @referralsScreenMoreQualifiedReferral.
+  ///
+  /// In en, this message translates to:
+  /// **'{neededForNext} more qualified referral'**
+  String referralsScreenMoreQualifiedReferral(Object neededForNext);
+
+  /// No description provided for @referralsScreenToUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'{summary} to unlock'**
+  String referralsScreenToUnlock(Object summary);
+
+  /// No description provided for @referralsScreenQualifiedReferrals.
+  ///
+  /// In en, this message translates to:
+  /// **'{threshold} qualified referrals'**
+  String referralsScreenQualifiedReferrals(String threshold);
+
+  /// No description provided for @challengeCompareScreenMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{v} min'**
+  String challengeCompareScreenMin(String v);
+
+  /// No description provided for @challengeCompareScreenFailedToSendRematch.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send rematch: {e}'**
+  String challengeCompareScreenFailedToSendRematch(String e);
+
+  /// No description provided for @fastingStatsCardKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} kg'**
+  String fastingStatsCardKg(String value);
+
+  /// No description provided for @nutritionFastingCardCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentCalories} cal'**
+  String nutritionFastingCardCal(Object currentCalories);
+
+  /// No description provided for @nutritionFastingCardG.
+  ///
+  /// In en, this message translates to:
+  /// **'{protein}g'**
+  String nutritionFastingCardG(String protein);
+
+  /// No description provided for @nutritionFastingCardG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{carbs}g'**
+  String nutritionFastingCardG2(String carbs);
+
+  /// No description provided for @nutritionFastingCardG3.
+  ///
+  /// In en, this message translates to:
+  /// **'{fat}g'**
+  String nutritionFastingCardG3(String fat);
+
+  /// No description provided for @chainDetailScreenSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} steps'**
+  String chainDetailScreenSteps(Object length);
+
+  /// No description provided for @chainDetailScreenAttemptsAtCurrentStep.
+  ///
+  /// In en, this message translates to:
+  /// **'{attemptsAtCurrent} attempts at current step'**
+  String chainDetailScreenAttemptsAtCurrentStep(String attemptsAtCurrent);
+
+  /// No description provided for @chainDetailScreenBestReps.
+  ///
+  /// In en, this message translates to:
+  /// **'Best: {bestRepsAtCurrent} reps'**
+  String chainDetailScreenBestReps(Object bestRepsAtCurrent);
+
+  /// No description provided for @chainDetailScreenStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {stepOrder} - {difficultyLabel}'**
+  String chainDetailScreenStep(String stepOrder, String difficultyLabel);
+
+  /// No description provided for @neatDashboardScreenPartStreaksCardDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{longestNeatScoreStreak} days'**
+  String neatDashboardScreenPartStreaksCardDays(Object longestNeatScoreStreak);
+
+  /// No description provided for @neatDashboardScreenPartStreaksCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{points}'**
+  String neatDashboardScreenPartStreaksCardValue(String points);
+
+  /// No description provided for @neatDashboardScreenPartStreaksCardMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}min'**
+  String neatDashboardScreenPartStreaksCardMin(Object minutes);
+
+  /// No description provided for @neatDashboardScreenPartStreaksCardSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{stepsThreshold} steps'**
+  String neatDashboardScreenPartStreaksCardSteps(String stepsThreshold);
+
+  /// No description provided for @neatDashboardScreenPartStreaksCardQuietHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet hours: {startTime} - {endTime}'**
+  String neatDashboardScreenPartStreaksCardQuietHours(
+    String startTime,
+    String endTime,
+  );
+
+  /// No description provided for @hourlyActivityChartActiveHours2.
+  ///
+  /// In en, this message translates to:
+  /// **'{_activeHours} active hours'**
+  String hourlyActivityChartActiveHours2(Object _activeHours);
+
+  /// No description provided for @hourlyActivityChartSedentaryHours2.
+  ///
+  /// In en, this message translates to:
+  /// **'{_sedentaryHours} sedentary hours'**
+  String hourlyActivityChartSedentaryHours2(Object _sedentaryHours);
+
+  /// No description provided for @hourlyActivityChartSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{steps} steps'**
+  String hourlyActivityChartSteps(String steps);
+
+  /// No description provided for @mealPlannerScreenLoggedItemS.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged {length} item(s)'**
+  String mealPlannerScreenLoggedItemS(Object length);
+
+  /// No description provided for @mealPlannerScreenServings.
+  ///
+  /// In en, this message translates to:
+  /// **'×{servings} servings'**
+  String mealPlannerScreenServings(String servings);
+
+  /// No description provided for @mealPlannerScreenG.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} / {target} g'**
+  String mealPlannerScreenG(String current, String target);
+
+  /// No description provided for @mealPlannerScreenKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{r} kcal'**
+  String mealPlannerScreenKcal(Object r);
+
+  /// No description provided for @recipesTabValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{timeLabel} · {value}'**
+  String recipesTabValue(String timeLabel, String value);
+
+  /// No description provided for @recipesTabServing.
+  ///
+  /// In en, this message translates to:
+  /// **'{servings} serving'**
+  String recipesTabServing(String servings);
+
+  /// No description provided for @recipesTabOfLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{portionsRemaining} of {portionsMade} left'**
+  String recipesTabOfLeft(String portionsRemaining, String portionsMade);
+
+  /// No description provided for @recipesTabAreYouSureYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"? This cannot be undone.'**
+  String recipesTabAreYouSureYou(String name);
+
+  /// No description provided for @recipesTabCouldnTLoadRecipes.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\\\'t load recipes: {message}'**
+  String recipesTabCouldnTLoadRecipes(String message);
+
+  /// No description provided for @companionPickerSheetOnItsOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'{primaryName} on its own.'**
+  String companionPickerSheetOnItsOwn(String primaryName);
+
+  /// No description provided for @companionPickerSheetTypicalCompanionsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Typical companions for {primaryName}.'**
+  String companionPickerSheetTypicalCompanionsFor(String primaryName);
+
+  /// No description provided for @companionPickerSheetCalAlwaysIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'{primaryCalories} cal — always included'**
+  String companionPickerSheetCalAlwaysIncluded(Object primaryCalories);
+
+  /// No description provided for @companionPickerSheetCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} cal'**
+  String companionPickerSheetCal(Object item);
+
+  /// No description provided for @companionPickerSheetCal2.
+  ///
+  /// In en, this message translates to:
+  /// **'{estCalories} cal'**
+  String companionPickerSheetCal2(Object estCalories);
+
+  /// No description provided for @companionPickerSheetCal3.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedCalTotal} cal'**
+  String companionPickerSheetCal3(Object _selectedCalTotal);
+
+  /// No description provided for @companionPickerSheetGProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'· {_selectedProteinTotal}g protein'**
+  String companionPickerSheetGProtein(Object _selectedProteinTotal);
+
+  /// No description provided for @workoutStatsStripKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} kcal'**
+  String workoutStatsStripKcal(Object calories);
+
+  /// No description provided for @hydrationDialogLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Log {label}'**
+  String hydrationDialogLog(String label);
+
+  /// No description provided for @shareStatsSheetUnlocksAtLevelLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocks at Level 75 · {levelsToGo} levels to go'**
+  String shareStatsSheetUnlocksAtLevelLevels(Object levelsToGo);
+
+  /// No description provided for @photosTabSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} selected'**
+  String photosTabSelected(Object length);
+
+  /// No description provided for @photosTabSavedComparisons.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Comparisons ({length})'**
+  String photosTabSavedComparisons(Object length);
+
+  /// No description provided for @photosTabPhotoSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} photo saved!'**
+  String photosTabPhotoSaved(String displayName);
+
+  /// No description provided for @photosTabFailedToUploadPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to upload photo: {e}'**
+  String photosTabFailedToUploadPhoto(String e);
+
+  /// No description provided for @photosTabFailedToOpenEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to open editor: {e}'**
+  String photosTabFailedToOpenEditor(String e);
+
+  /// No description provided for @quizNutritionGoalsG.
+  ///
+  /// In en, this message translates to:
+  /// **'{protein}g'**
+  String quizNutritionGoalsG(String protein);
+
+  /// No description provided for @quizNutritionGoalsG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{carbs}g'**
+  String quizNutritionGoalsG2(String carbs);
+
+  /// No description provided for @quizNutritionGoalsG3.
+  ///
+  /// In en, this message translates to:
+  /// **'{fat}g'**
+  String quizNutritionGoalsG3(String fat);
+
+  /// No description provided for @quizNutritionGoalsKcalGProteinPer.
+  ///
+  /// In en, this message translates to:
+  /// **'~{calPerMeal} kcal & {proteinPerMeal}g protein per meal'**
+  String quizNutritionGoalsKcalGProteinPer(
+    String calPerMeal,
+    String proteinPerMeal,
+  );
+
+  /// No description provided for @weeklyRecapDialogValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String weeklyRecapDialogValue(String rank);
+
+  /// No description provided for @weeklyRecapDialogXp.
+  ///
+  /// In en, this message translates to:
+  /// **'+{shown} XP'**
+  String weeklyRecapDialogXp(String shown);
+
+  /// No description provided for @weeklyRecapDialogWeekIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Week {weeks} in {tierLabel}'**
+  String weeklyRecapDialogWeekIn(String weeks, String tierLabel);
+
+  /// No description provided for @weeklyRecapDialogXp2.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xp} XP'**
+  String weeklyRecapDialogXp2(String xp);
+
+  /// No description provided for @weeklyRecapDialogRankShieldsActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Rank Shields activated'**
+  String weeklyRecapDialogRankShieldsActivated(Object count);
+
+  /// No description provided for @aiModelDownloadScreenGb.
+  ///
+  /// In en, this message translates to:
+  /// **'{ram} GB'**
+  String aiModelDownloadScreenGb(String ram);
+
+  /// No description provided for @repProgressionCardReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{preferredMinReps}-{preferredMaxReps} reps'**
+  String repProgressionCardReps(
+    Object preferredMinReps,
+    Object preferredMaxReps,
+  );
+
+  /// No description provided for @workoutImportSummarySheetMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{more} more'**
+  String workoutImportSummarySheetMore(String more);
+
+  /// No description provided for @workoutImportSummarySheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'•  {w}'**
+  String workoutImportSummarySheetValue(String w);
+
+  /// No description provided for @homeScreenUiRestoreTheOriginalLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore the original {appName} layout'**
+  String homeScreenUiRestoreTheOriginalLayout(String appName);
+
+  /// No description provided for @manageGymProfilesSheetCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created \"{name}\"'**
+  String manageGymProfilesSheetCreated(String name);
+
+  /// No description provided for @manageGymProfilesSheetAreYouSureYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"? '**
+  String manageGymProfilesSheetAreYouSureYou(String name);
+
+  /// No description provided for @manageGymProfilesSheetDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{name}\"'**
+  String manageGymProfilesSheetDeleted(String name);
+
+  /// No description provided for @manageGymProfilesSheetEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'{equipmentCount} equipment • {environmentDisplayName}'**
+  String manageGymProfilesSheetEquipment(
+    Object equipmentCount,
+    String environmentDisplayName,
+  );
+
+  /// No description provided for @regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to regenerate: {message}'**
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(
+    String message,
+  );
+
+  /// No description provided for @regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to regenerate: {e}'**
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(
+    String e,
+  );
+
+  /// No description provided for @regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to apply suggestion: {message}'**
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(
+    String message,
+  );
+
+  /// No description provided for @regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to apply suggestion: {e}'**
+  String
+  regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(
+    String e,
+  );
+
+  /// No description provided for @nextWorkoutCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count}'**
+  String nextWorkoutCardValue(Object count);
+
+  /// No description provided for @quickActionsRowPartHeroActionCardPhotoSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} photo saved!'**
+  String quickActionsRowPartHeroActionCardPhotoSaved(String displayName);
+
+  /// No description provided for @quickActionsRowPartHeroActionCardFailedToUploadPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to upload photo: {e}'**
+  String quickActionsRowPartHeroActionCardFailedToUploadPhoto(String e);
+
+  /// No description provided for @quickActionsRowPartHeroActionCardHM.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {mins}m'**
+  String quickActionsRowPartHeroActionCardHM(Object hours, Object mins);
+
+  /// No description provided for @quickActionsRowPartHeroActionCardFailedToEndFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to end fast: {e}'**
+  String quickActionsRowPartHeroActionCardFailedToEndFast(String e);
+
+  /// No description provided for @chatScreenPartMediaSendStatusPeopleInQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentQueueSize} people in queue'**
+  String chatScreenPartMediaSendStatusPeopleInQueue(Object currentQueueSize);
+
+  /// No description provided for @chatScreenPartMediaSendStatusFailedToConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to connect: {e}'**
+  String chatScreenPartMediaSendStatusFailedToConnect(String e);
+
+  /// No description provided for @customGoalsScreenAreYouSureYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{goalText}\"?'**
+  String customGoalsScreenAreYouSureYou(String goalText);
+
+  /// No description provided for @personalBestsGridLb.
+  ///
+  /// In en, this message translates to:
+  /// **'{weightLb} lb'**
+  String personalBestsGridLb(Object weightLb);
+
+  /// No description provided for @myStatsTabExercisesTrackedTotalSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} exercises tracked  •  {totalSets} total sets'**
+  String myStatsTabExercisesTrackedTotalSets(Object length, Object totalSets);
+
+  /// No description provided for @exerciseSafetyAuditScreenExerciseSPendingAudit.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} exercise(s) pending audit'**
+  String exerciseSafetyAuditScreenExerciseSPendingAudit(Object length);
+
+  /// No description provided for @feedTabErrorLoadingFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading feed: {error}'**
+  String feedTabErrorLoadingFeed(String error);
+
+  /// No description provided for @hormonalHealthSettingsScreenDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{selected} days'**
+  String hormonalHealthSettingsScreenDays(String selected);
+
+  /// No description provided for @hormonalHealthSettingsScreenDays2.
+  ///
+  /// In en, this message translates to:
+  /// **'{selected} days'**
+  String hormonalHealthSettingsScreenDays2(String selected);
+
+  /// No description provided for @hormonalHealthSettingsScreenDays3.
+  ///
+  /// In en, this message translates to:
+  /// **'{selected} days'**
+  String hormonalHealthSettingsScreenDays3(String selected);
+
+  /// No description provided for @hormonalHealthSettingsScreenDays4.
+  ///
+  /// In en, this message translates to:
+  /// **'{selected} days'**
+  String hormonalHealthSettingsScreenDays4(String selected);
+
+  /// No description provided for @insightsScreenPartBodyCardWorkoutsMinKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutsCompleted}/{workoutsScheduled} workouts  |  {totalTimeMinutes}min  |  {caloriesBurnedEstimate} kcal'**
+  String insightsScreenPartBodyCardWorkoutsMinKcal(
+    Object workoutsCompleted,
+    Object workoutsScheduled,
+    Object totalTimeMinutes,
+    Object caloriesBurnedEstimate,
+  );
+
+  /// No description provided for @insightsScreenPartBodyCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{completionRate}%'**
+  String insightsScreenPartBodyCardValue(Object completionRate);
+
+  /// No description provided for @insightsReportCardTemplateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{_completionPercent}%'**
+  String insightsReportCardTemplateValue(Object _completionPercent);
+
+  /// No description provided for @insightsReportCardTemplateDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{maxStreak} days'**
+  String insightsReportCardTemplateDays(Object maxStreak);
+
+  /// No description provided for @insightsSummaryTemplateValue.
+  ///
+  /// In en, this message translates to:
+  /// **')(pct)%'**
+  String insightsSummaryTemplateValue(Object pct);
+
+  /// No description provided for @progressionChainCardStepOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {currentStepOrder} of {chain}'**
+  String progressionChainCardStepOf(Object currentStepOrder, Object chain);
+
+  /// No description provided for @progressionChainCardSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{chain} steps'**
+  String progressionChainCardSteps(Object chain);
+
+  /// No description provided for @progressionChainCardStepOf2.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {currentStepOrder} of {chain}'**
+  String progressionChainCardStepOf2(Object currentStepOrder, Object chain);
+
+  /// No description provided for @recipeBuilderSheetRecipeCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe \"{text}\" created!'**
+  String recipeBuilderSheetRecipeCreated(String text);
+
+  /// No description provided for @recipeBuilderSheetG.
+  ///
+  /// In en, this message translates to:
+  /// **'{inputGrams}g {result} '**
+  String recipeBuilderSheetG(String inputGrams, String result);
+
+  /// No description provided for @recipeBuilderSheetG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{foodName} = {outputGrams}g '**
+  String recipeBuilderSheetG2(String foodName, String outputGrams);
+
+  /// No description provided for @recipeBuilderSheetLoggedServingSOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged {portionEaten} serving(s) of \"{recipeName}\": '**
+  String recipeBuilderSheetLoggedServingSOf(
+    String portionEaten,
+    String recipeName,
+  );
+
+  /// No description provided for @recipeBuilderSheetKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesConsumed} kcal'**
+  String recipeBuilderSheetKcal(Object caloriesConsumed);
+
+  /// No description provided for @recipeBuilderSheetItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} items'**
+  String recipeBuilderSheetItems(Object length);
+
+  /// No description provided for @foodHistoryScreenPartFrequentFoodChipX.
+  ///
+  /// In en, this message translates to:
+  /// **'{timesLogged}x'**
+  String foodHistoryScreenPartFrequentFoodChipX(String timesLogged);
+
+  /// No description provided for @foodHistoryScreenPartFrequentFoodChipPCF.
+  ///
+  /// In en, this message translates to:
+  /// **'{proteinG}P · {carbsG}C · {fatG}F'**
+  String foodHistoryScreenPartFrequentFoodChipPCF(
+    String proteinG,
+    String carbsG,
+    String fatG,
+  );
+
+  /// No description provided for @foodLoggingRulesScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{text}\"'**
+  String foodLoggingRulesScreenValue(String text);
+
+  /// No description provided for @logMealSheetUi2KcalLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesRemaining} kcal left'**
+  String logMealSheetUi2KcalLeft(Object caloriesRemaining);
+
+  /// No description provided for @logMealSheetUi2GProteinLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{proteinRemaining}g protein left'**
+  String logMealSheetUi2GProteinLeft(String proteinRemaining);
+
+  /// No description provided for @logMealSheetUi2Value.
+  ///
+  /// In en, this message translates to:
+  /// **'{length}/5'**
+  String logMealSheetUi2Value(Object length);
+
+  /// No description provided for @logMealSheetUi2PickUpTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up to {remaining}'**
+  String logMealSheetUi2PickUpTo(String remaining);
+
+  /// No description provided for @logMealHelpersNova.
+  ///
+  /// In en, this message translates to:
+  /// **'NOVA {group} '**
+  String logMealHelpersNova(String group);
+
+  /// No description provided for @logMealHelpersValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({count})'**
+  String logMealHelpersValue(Object label, Object count);
+
+  /// No description provided for @workoutDetailScreenMinSauna.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationMinutes} min sauna'**
+  String workoutDetailScreenMinSauna(Object durationMinutes);
+
+  /// No description provided for @workoutDetailScreenCalBurned.
+  ///
+  /// In en, this message translates to:
+  /// **'~{estimatedCalories} cal burned'**
+  String workoutDetailScreenCalBurned(Object estimatedCalories);
+
+  /// No description provided for @workoutDetailScreenProgressionFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Progression from {progressionFrom}'**
+  String workoutDetailScreenProgressionFrom(Object progressionFrom);
+
+  /// No description provided for @supersetPairSheetPartSupersetPairSheetStateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} + {name1}'**
+  String supersetPairSheetPartSupersetPairSheetStateValue(
+    String name,
+    String name1,
+  );
+
+  /// No description provided for @onboardingValueScreenMo.
+  ///
+  /// In en, this message translates to:
+  /// **'{priceLabel}/mo'**
+  String onboardingValueScreenMo(String priceLabel);
+
+  /// No description provided for @weightProjectionScreenDaysWk.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutDays} days/wk'**
+  String weightProjectionScreenDaysWk(String workoutDays);
+
+  /// No description provided for @levelUpCatchUpBannerYouLeveledUpTo.
+  ///
+  /// In en, this message translates to:
+  /// **'You leveled up to Level {highestLevel}!'**
+  String levelUpCatchUpBannerYouLeveledUpTo(Object highestLevel);
+
+  /// No description provided for @levelUpCatchUpBannerYouGainedLevelsUp.
+  ///
+  /// In en, this message translates to:
+  /// **'You gained {count} levels (up to L{highestLevel})'**
+  String levelUpCatchUpBannerYouGainedLevelsUp(
+    Object count,
+    Object highestLevel,
+  );
+
+  /// No description provided for @levelUpCatchUpBannerLevelUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {levelReached} unlocked!'**
+  String levelUpCatchUpBannerLevelUnlocked(Object levelReached);
+
+  /// No description provided for @levelUpCatchUpBannerYouLeveledUpTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'You leveled up {length} times'**
+  String levelUpCatchUpBannerYouLeveledUpTimes(Object length);
+
+  /// No description provided for @levelUpCatchUpBannerFree.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE {displayName}'**
+  String levelUpCatchUpBannerFree(String displayName);
+
+  /// No description provided for @levelUpCatchUpBannerValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{quantity}× {displayName}'**
+  String levelUpCatchUpBannerValue(String quantity, String displayName);
+
+  /// No description provided for @xpHeroTileValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{thisWeekXp}'**
+  String xpHeroTileValue(String thisWeekXp);
+
+  /// No description provided for @xpHeroTileXp.
+  ///
+  /// In en, this message translates to:
+  /// **'{xpInLevel} / {xpToNext} XP'**
+  String xpHeroTileXp(Object xpInLevel, String xpToNext);
+
+  /// No description provided for @xpHeroTileLv.
+  ///
+  /// In en, this message translates to:
+  /// **'Lv {level}'**
+  String xpHeroTileLv(Object level);
+
+  /// No description provided for @xpHeroTileLv2.
+  ///
+  /// In en, this message translates to:
+  /// **'Lv {nextLevel} → {label}'**
+  String xpHeroTileLv2(Object nextLevel, String label);
+
+  /// No description provided for @xpHeroTileDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{streak}-day streak'**
+  String xpHeroTileDayStreak(String streak);
+
+  /// No description provided for @workoutDayDetailSheetSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {sourceApp}'**
+  String workoutDayDetailSheetSource(String sourceApp);
+
+  /// No description provided for @workoutDayDetailSheetScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled: {workoutName}'**
+  String workoutDayDetailSheetScheduled(String workoutName);
+
+  /// No description provided for @weightIncrementsSheetTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{unit} total'**
+  String weightIncrementsSheetTotal(String unit);
+
+  /// No description provided for @weightIncrementsSheetSide.
+  ///
+  /// In en, this message translates to:
+  /// **'{unit}/side'**
+  String weightIncrementsSheetSide(String unit);
+
+  /// No description provided for @coachBannerOverlayXp.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xpAwarded} XP'**
+  String coachBannerOverlayXp(String xpAwarded);
+
+  /// No description provided for @workoutHistoryImportScreenKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{lastWeightKg} kg'**
+  String workoutHistoryImportScreenKg(Object lastWeightKg);
+
+  /// No description provided for @workoutHistoryImportScreenSetsRepsKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{sets} sets × {reps} reps @ {weightKg} kg'**
+  String workoutHistoryImportScreenSetsRepsKg(
+    Object sets,
+    Object reps,
+    Object weightKg,
+  );
+
+  /// No description provided for @favoriteExercisesScreenAddedToFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{exerciseName}\" to favorites'**
+  String favoriteExercisesScreenAddedToFavorites(String exerciseName);
+
+  /// No description provided for @favoriteExercisesScreenIsAlreadyAFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" is already a favorite'**
+  String favoriteExercisesScreenIsAlreadyAFavorite(String name);
+
+  /// No description provided for @favoriteExercisesScreenAddedToFavorites2.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{name}\" to favorites'**
+  String favoriteExercisesScreenAddedToFavorites2(String name);
+
+  /// No description provided for @favoriteExercisesScreenRemoveFromYourFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{exerciseName}\" from your favorites? The AI will no longer prioritize this exercise.'**
+  String favoriteExercisesScreenRemoveFromYourFavorites(String exerciseName);
+
+  /// No description provided for @difficultyCardVolume2.
+  ///
+  /// In en, this message translates to:
+  /// **'{tier} - Volume'**
+  String difficultyCardVolume2(String tier);
+
+  /// No description provided for @difficultyCardX.
+  ///
+  /// In en, this message translates to:
+  /// **'{v}x'**
+  String difficultyCardX(String v);
+
+  /// No description provided for @difficultyCardRest2.
+  ///
+  /// In en, this message translates to:
+  /// **'{tier} - Rest'**
+  String difficultyCardRest2(String tier);
+
+  /// No description provided for @difficultyCardX2.
+  ///
+  /// In en, this message translates to:
+  /// **'{v}x'**
+  String difficultyCardX2(String v);
+
+  /// No description provided for @difficultyCardRpe.
+  ///
+  /// In en, this message translates to:
+  /// **'{tier} - RPE'**
+  String difficultyCardRpe(String tier);
+
+  /// No description provided for @my1rmsScreenPartOneRMCardLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'{linkedCount} linked'**
+  String my1rmsScreenPartOneRMCardLinked(Object linkedCount);
+
+  /// No description provided for @my1rmsScreenPartOneRMCardRemoveFromLinkedExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {linkedExerciseName} from linked exercises?'**
+  String my1rmsScreenPartOneRMCardRemoveFromLinkedExercises(
+    String linkedExerciseName,
+  );
+
+  /// No description provided for @my1rmsScreenPartOneRMCardKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{multiplierDisplay} = {derivedWeight} kg • {relationshipDisplay}'**
+  String my1rmsScreenPartOneRMCardKg(
+    String multiplierDisplay,
+    Object derivedWeight,
+    String relationshipDisplay,
+  );
+
+  /// No description provided for @my1rmsScreenPartOneRMCardLinkedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked {text} to {primaryExerciseName}'**
+  String my1rmsScreenPartOneRMCardLinkedTo(
+    String text,
+    String primaryExerciseName,
+  );
+
+  /// No description provided for @my1rmsScreenPartOneRMCardLinkTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to {primaryExerciseName}'**
+  String my1rmsScreenPartOneRMCardLinkTo(String primaryExerciseName);
+
+  /// No description provided for @my1rmsScreenPartOneRMCardDerivedRmKg.
+  ///
+  /// In en, this message translates to:
+  /// **'Derived 1RM: {derivedWeight} kg'**
+  String my1rmsScreenPartOneRMCardDerivedRmKg(Object derivedWeight);
+
+  /// No description provided for @unresolvedExercisesBulkSheetMappedRowsTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Mapped {rowsAffected} rows to \"{canonicalName}\".'**
+  String unresolvedExercisesBulkSheetMappedRowsTo(
+    String rowsAffected,
+    String canonicalName,
+  );
+
+  /// No description provided for @unresolvedExercisesBulkSheetRevertedRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverted {rowsAffected} rows.'**
+  String unresolvedExercisesBulkSheetRevertedRows(String rowsAffected);
+
+  /// No description provided for @unresolvedExercisesBulkSheetCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load: {error}'**
+  String unresolvedExercisesBulkSheetCouldNotLoad(String error);
+
+  /// No description provided for @unresolvedExercisesBulkSheetRows.
+  ///
+  /// In en, this message translates to:
+  /// **'{rowCount} rows'**
+  String unresolvedExercisesBulkSheetRows(Object rowCount);
+
+  /// No description provided for @unresolvedExercisesBulkSheetMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Map → {canonicalName}'**
+  String unresolvedExercisesBulkSheetMap(String canonicalName);
+
+  /// No description provided for @workoutReviewSheetExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseCount} exercises'**
+  String workoutReviewSheetExercises(Object exerciseCount);
+
+  /// No description provided for @roiSummaryCardYouReSinceYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re {strengthIncreaseText} since you started!'**
+  String roiSummaryCardYouReSinceYou(String strengthIncreaseText);
+
+  /// No description provided for @newTilesPartActiveChallengeCardDayOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {currentDay} of {totalDays}'**
+  String newTilesPartActiveChallengeCardDayOf(
+    String currentDay,
+    Object totalDays,
+  );
+
+  /// No description provided for @newTilesPartActiveChallengeCardTodayReps.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: {todayReps} / {targetReps} reps'**
+  String newTilesPartActiveChallengeCardTodayReps(
+    Object todayReps,
+    Object targetReps,
+  );
+
+  /// No description provided for @newTilesPartActiveChallengeCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{match},'**
+  String newTilesPartActiveChallengeCardValue(String match);
+
+  /// No description provided for @newTilesPartActiveChallengeCardRestingBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'Resting: {restingBPM} BPM'**
+  String newTilesPartActiveChallengeCardRestingBpm(String restingBPM);
+
+  /// No description provided for @volumeHistoryScreenSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalSets} sets'**
+  String volumeHistoryScreenSets(Object totalSets);
+
+  /// No description provided for @volumeHistoryScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{key}: {value}'**
+  String volumeHistoryScreenValue(String key, String value);
+
+  /// No description provided for @volumeAlertCardVolumeAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} Volume Alerts'**
+  String volumeAlertCardVolumeAlerts(Object length);
+
+  /// No description provided for @volumeAlertCardIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'{muscleGroupDisplay}: {formattedIncrease} increase'**
+  String volumeAlertCardIncrease(
+    String muscleGroupDisplay,
+    String formattedIncrease,
+  );
+
+  /// No description provided for @consistencyScreenLongestDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest: {longestStreak} days'**
+  String consistencyScreenLongestDays(String longestStreak);
+
+  /// No description provided for @consistencyScreenOfWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'of {scheduled} workouts'**
+  String consistencyScreenOfWorkouts(String scheduled);
+
+  /// No description provided for @consistencyScreenCompletionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate}% completion rate'**
+  String consistencyScreenCompletionRate(Object rate);
+
+  /// No description provided for @consistencyScreenAverageWeeklyCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Average: {avgRate}% weekly completion'**
+  String consistencyScreenAverageWeeklyCompletion(Object avgRate);
+
+  /// No description provided for @milestonesScreenUiAchieved.
+  ///
+  /// In en, this message translates to:
+  /// **'Achieved ({totalAchieved})'**
+  String milestonesScreenUiAchieved(Object totalAchieved);
+
+  /// No description provided for @milestonesScreenUiAverageMinWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Average: {averageWorkoutDurationMinutes} min/workout'**
+  String milestonesScreenUiAverageMinWorkout(
+    Object averageWorkoutDurationMinutes,
+  );
+
+  /// No description provided for @milestonesScreenUiKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWeightLiftedKg} kg'**
+  String milestonesScreenUiKg(Object totalWeightLiftedKg);
+
+  /// No description provided for @foodAnalysisInlineCardCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedCalTotal} cal'**
+  String foodAnalysisInlineCardCal(Object _selectedCalTotal);
+
+  /// No description provided for @foodAnalysisInlineCardCal2.
+  ///
+  /// In en, this message translates to:
+  /// **'{cal} cal'**
+  String foodAnalysisInlineCardCal2(String cal);
+
+  /// No description provided for @foodAnalysisInlineCardGP.
+  ///
+  /// In en, this message translates to:
+  /// **'{protein}g P'**
+  String foodAnalysisInlineCardGP(String protein);
+
+  /// No description provided for @foodAnalysisInlineCardGC.
+  ///
+  /// In en, this message translates to:
+  /// **'{carbs}g C'**
+  String foodAnalysisInlineCardGC(String carbs);
+
+  /// No description provided for @foodAnalysisInlineCardGF.
+  ///
+  /// In en, this message translates to:
+  /// **'{fat}g F'**
+  String foodAnalysisInlineCardGF(String fat);
+
+  /// No description provided for @upcomingWorkoutsSheetFailedToGenerateWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate workout: {message}'**
+  String upcomingWorkoutsSheetFailedToGenerateWorkout(String message);
+
+  /// No description provided for @upcomingWorkoutsSheetFailedToGenerateWorkout2.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate workout: {e}'**
+  String upcomingWorkoutsSheetFailedToGenerateWorkout2(String e);
+
+  /// No description provided for @racePredictorDetailScreenCouldNotLoadPredictions.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load predictions.\\n{e}'**
+  String racePredictorDetailScreenCouldNotLoadPredictions(String e);
+
+  /// No description provided for @createExerciseSheetExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercises ({length})'**
+  String createExerciseSheetExercises(Object length);
+
+  /// No description provided for @createExerciseSheetAddMoreExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {length} more exercises'**
+  String createExerciseSheetAddMoreExercises(Object length);
+
+  /// No description provided for @createExerciseSheetFailedToAnalyzePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to analyze photo: {e}'**
+  String createExerciseSheetFailedToAnalyzePhoto(String e);
+
+  /// No description provided for @challengeFriendsDialogChallengeSentToFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'🏆 Challenge sent to {length} friend(s)!'**
+  String challengeFriendsDialogChallengeSentToFriend(Object length);
+
+  /// No description provided for @challengeFriendsDialogFailedToSendChallenges.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send challenges: {e}'**
+  String challengeFriendsDialogFailedToSendChallenges(String e);
+
+  /// No description provided for @challengeFriendsDialogSendChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Challenge ({length})'**
+  String challengeFriendsDialogSendChallenge(Object length);
+
+  /// No description provided for @myLibraryTabPartHistoryTimelineCardBestKgX.
+  ///
+  /// In en, this message translates to:
+  /// **'Best: {item}kg x {maxReps}'**
+  String myLibraryTabPartHistoryTimelineCardBestKgX(
+    Object item,
+    Object maxReps,
+  );
+
+  /// No description provided for @myLibraryTabPartHistoryTimelineCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **')(item)%'**
+  String myLibraryTabPartHistoryTimelineCardValue(Object item);
+
+  /// No description provided for @flexibilityProgressChartValue.
+  ///
+  /// In en, this message translates to:
+  /// **')(improvementAbsolute)'**
+  String flexibilityProgressChartValue(String improvementAbsolute);
+
+  /// No description provided for @flexibilityProgressChartAssessments.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalAssessments} assessments'**
+  String flexibilityProgressChartAssessments(Object totalAssessments);
+
+  /// No description provided for @xpLeaderboardScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String xpLeaderboardScreenValue(String rank);
+
+  /// No description provided for @xpLeaderboardScreenLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {currentLevel}'**
+  String xpLeaderboardScreenLevel(Object currentLevel);
+
+  /// No description provided for @xpLeaderboardScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String xpLeaderboardScreenValue2(String rank);
+
+  /// No description provided for @xpLeaderboardScreenLvl.
+  ///
+  /// In en, this message translates to:
+  /// **'Lvl {currentLevel}'**
+  String xpLeaderboardScreenLvl(Object currentLevel);
+
+  /// No description provided for @kegelSessionScreenErrorLoadingExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading exercises: {e}'**
+  String kegelSessionScreenErrorLoadingExercises(String e);
+
+  /// No description provided for @kegelSessionScreenRepsXSHold.
+  ///
+  /// In en, this message translates to:
+  /// **'{defaultReps} reps x {defaultHoldSeconds}s hold'**
+  String kegelSessionScreenRepsXSHold(
+    Object defaultReps,
+    Object defaultHoldSeconds,
+  );
+
+  /// No description provided for @kegelSessionScreenRepOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Rep {_currentRep} of {_totalReps}'**
+  String kegelSessionScreenRepOf(String _currentRep, Object _totalReps);
+
+  /// No description provided for @activityShareCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'@{userName}'**
+  String activityShareCardValue(String userName);
+
+  /// No description provided for @activityShareCardLbs.
+  ///
+  /// In en, this message translates to:
+  /// **'{absValue} lbs'**
+  String activityShareCardLbs(String absValue);
+
+  /// No description provided for @trainingSetupCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({value}%)'**
+  String trainingSetupCardValue(String label, String value);
+
+  /// No description provided for @importExercisePreviewSheetYouAlreadyHaveIn.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have \'{name}\' in your exercises. Viewing the '**
+  String importExercisePreviewSheetYouAlreadyHaveIn(String name);
+
+  /// No description provided for @importExercisePreviewSheetAiConfidencePleaseReview.
+  ///
+  /// In en, this message translates to:
+  /// **'AI confidence: {pct}% — please review'**
+  String importExercisePreviewSheetAiConfidencePleaseReview(Object pct);
+
+  /// No description provided for @shareWeeklySummarySheetMyWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'My {appName} week — {dateRange}'**
+  String shareWeeklySummarySheetMyWeek(String appName, String dateRange);
+
+  /// No description provided for @shareWeeklySummarySheetMyWeeklyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'My {appName} Weekly Report'**
+  String shareWeeklySummarySheetMyWeeklyReport(String appName);
+
+  /// No description provided for @insightsProgressTemplateDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{maxStreak} days'**
+  String insightsProgressTemplateDays(Object maxStreak);
+
+  /// No description provided for @foodLibraryScreenPartFoodLibraryCardDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String foodLibraryScreenPartFoodLibraryCardDelete(String name);
+
+  /// No description provided for @foodLibraryScreenPartFoodLibraryCardCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{calories} cal'**
+  String foodLibraryScreenPartFoodLibraryCardCal(Object calories);
+
+  /// No description provided for @foodLibraryScreenPartFoodLibraryCardGProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'{item}g protein'**
+  String foodLibraryScreenPartFoodLibraryCardGProtein(String item);
+
+  /// No description provided for @foodLibraryScreenPartFoodLibraryCardX.
+  ///
+  /// In en, this message translates to:
+  /// **'{timesUsed}x'**
+  String foodLibraryScreenPartFoodLibraryCardX(String timesUsed);
+
+  /// No description provided for @foodLibraryScreenPartFoodLibraryCardLoggedX.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged {timesUsed}x'**
+  String foodLibraryScreenPartFoodLibraryCardLoggedX(String timesUsed);
+
+  /// No description provided for @recipeBuilderSheetPartIngredientEntryFailedToAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to analyze: {e}'**
+  String recipeBuilderSheetPartIngredientEntryFailedToAnalyze(String e);
+
+  /// No description provided for @recipeBuilderSheetPartIngredientEntryG.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}g'**
+  String recipeBuilderSheetPartIngredientEntryG(String value);
+
+  /// No description provided for @myFoodsSheetKcalUBP.
+  ///
+  /// In en, this message translates to:
+  /// **'{food} kcal \\u00B7 P:{food1}g \\u00B7 C:{food2}g \\u00B7 F:{food3}g'**
+  String myFoodsSheetKcalUBP(
+    Object food,
+    Object food1,
+    Object food2,
+    Object food3,
+  );
+
+  /// No description provided for @myFoodsSheetLoggedX.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged {timesLogged}x'**
+  String myFoodsSheetLoggedX(String timesLogged);
+
+  /// No description provided for @myFoodsSheetKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{recipe} kcal'**
+  String myFoodsSheetKcal(Object recipe);
+
+  /// No description provided for @myFoodsSheetIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'{ingredientCount} ingredients'**
+  String myFoodsSheetIngredients(Object ingredientCount);
+
+  /// No description provided for @myFoodsSheetX.
+  ///
+  /// In en, this message translates to:
+  /// **' {timesLogged}x'**
+  String myFoodsSheetX(String timesLogged);
+
+  /// No description provided for @customWorkoutBuilderScreenIsAlreadyInYour.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is already in your workout'**
+  String customWorkoutBuilderScreenIsAlreadyInYour(String name);
+
+  /// No description provided for @customWorkoutBuilderScreenExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercises ({length})'**
+  String customWorkoutBuilderScreenExercises(Object length);
+
+  /// No description provided for @workoutCompleteScreenUi2KgXReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{exComp} kg x {currentReps} reps'**
+  String workoutCompleteScreenUi2KgXReps(Object exComp, Object currentReps);
+
+  /// No description provided for @workoutCompleteScreenUi2SetsReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentSets} sets, {currentReps} reps'**
+  String workoutCompleteScreenUi2SetsReps(
+    Object currentSets,
+    Object currentReps,
+  );
+
+  /// No description provided for @workoutCompleteScreenUi2Kg.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentTotalVolumeKg} kg'**
+  String workoutCompleteScreenUi2Kg(Object currentTotalVolumeKg);
+
+  /// No description provided for @workoutCompleteScreenUi2Value.
+  ///
+  /// In en, this message translates to:
+  /// **')(workoutComp)'**
+  String workoutCompleteScreenUi2Value(Object workoutComp);
+
+  /// No description provided for @prDetailsSheetOnFirePrs.
+  ///
+  /// In en, this message translates to:
+  /// **'ON FIRE! {length} PRs!'**
+  String prDetailsSheetOnFirePrs(Object length);
+
+  /// No description provided for @prDetailsSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{improvementPercent}%'**
+  String prDetailsSheetValue(Object improvementPercent);
+
+  /// No description provided for @prDetailsSheetKgXReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{weight}kg x {reps} reps'**
+  String prDetailsSheetKgXReps(Object weight, Object reps);
+
+  /// No description provided for @workoutDetailAiInsightsMoreExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {exerciseReasoning} more exercises...'**
+  String workoutDetailAiInsightsMoreExercises(Object exerciseReasoning);
+
+  /// No description provided for @workoutDetailAiInsightsMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationMinutes} min'**
+  String workoutDetailAiInsightsMin(Object durationMinutes);
+
+  /// No description provided for @workoutDetailAiInsightsMin2.
+  ///
+  /// In en, this message translates to:
+  /// **'{params} min'**
+  String workoutDetailAiInsightsMin2(Object params);
+
+  /// No description provided for @aiCoachReportCardS.
+  ///
+  /// In en, this message translates to:
+  /// **'{sets}s'**
+  String aiCoachReportCardS(Object sets);
+
+  /// No description provided for @aiCoachReportCardMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{unit}/min'**
+  String aiCoachReportCardMin(String unit);
+
+  /// No description provided for @aiCoachReportCardSet.
+  ///
+  /// In en, this message translates to:
+  /// **'{unit}/set'**
+  String aiCoachReportCardSet(String unit);
+
+  /// No description provided for @measurementDetailScreenUiTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} Trend'**
+  String measurementDetailScreenUiTrend(String displayName);
+
+  /// No description provided for @measurementDetailScreenUiSourceGuideline.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {source} guideline'**
+  String measurementDetailScreenUiSourceGuideline(String source);
+
+  /// No description provided for @overviewTabValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{liftDescription}  •  {dateStr}'**
+  String overviewTabValue(String liftDescription, String dateStr);
+
+  /// No description provided for @overviewTabValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'+{pr}%'**
+  String overviewTabValue2(Object pr);
+
+  /// No description provided for @quizFastingH.
+  ///
+  /// In en, this message translates to:
+  /// **'{_customFastingHours} h'**
+  String quizFastingH(Object _customFastingHours);
+
+  /// No description provided for @quizFastingH2.
+  ///
+  /// In en, this message translates to:
+  /// **'{_customEatingHours} h'**
+  String quizFastingH2(Object _customEatingHours);
+
+  /// No description provided for @quizFastingCustomProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom {_customFastingHours}:{_customEatingHours} protocol'**
+  String quizFastingCustomProtocol(
+    Object _customFastingHours,
+    Object _customEatingHours,
+  );
+
+  /// No description provided for @quizBodyMetricsUiY.
+  ///
+  /// In en, this message translates to:
+  /// **'{age}y'**
+  String quizBodyMetricsUiY(String age);
+
+  /// No description provided for @quizBodyMetricsUiCurrentBmi.
+  ///
+  /// In en, this message translates to:
+  /// **'Current BMI: {bmi}'**
+  String quizBodyMetricsUiCurrentBmi(String bmi);
+
+  /// No description provided for @postWorkoutNutritionReminderG.
+  ///
+  /// In en, this message translates to:
+  /// **'{proteinTarget}g'**
+  String postWorkoutNutritionReminderG(String proteinTarget);
+
+  /// No description provided for @postWorkoutNutritionReminderG2.
+  ///
+  /// In en, this message translates to:
+  /// **'{carbsTarget}g'**
+  String postWorkoutNutritionReminderG2(String carbsTarget);
+
+  /// No description provided for @postWorkoutNutritionReminderG3.
+  ///
+  /// In en, this message translates to:
+  /// **'{fatTarget}g'**
+  String postWorkoutNutritionReminderG3(String fatTarget);
+
+  /// No description provided for @floatingChatOverlayGoTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to {workoutName}'**
+  String floatingChatOverlayGoTo(String workoutName);
+
+  /// No description provided for @cycleSettingsScreenAHeadsUp.
+  ///
+  /// In en, this message translates to:
+  /// **'A heads-up {cyclePeriodApproachingLeadDays} '**
+  String cycleSettingsScreenAHeadsUp(String cyclePeriodApproachingLeadDays);
+
+  /// No description provided for @settingsScreenExtVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} ({buildNumber})'**
+  String settingsScreenExtVersion(String version, Object buildNumber);
+
+  /// No description provided for @settingsScreenExtWhyIBuilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Why I built {appName}'**
+  String settingsScreenExtWhyIBuilt(String appName);
+
+  /// No description provided for @stapleExercisesScreenAddedAsAStaple.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{exerciseName}\" as a staple'**
+  String stapleExercisesScreenAddedAsAStaple(String exerciseName);
+
+  /// No description provided for @stapleExercisesScreenIsAlreadyAStaple.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" is already a staple'**
+  String stapleExercisesScreenIsAlreadyAStaple(String name);
+
+  /// No description provided for @stapleExercisesScreenAddedAsAStaple2.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{name}\" as a staple'**
+  String stapleExercisesScreenAddedAsAStaple2(String name);
+
+  /// No description provided for @stapleExercisesScreenEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit \"{exerciseName}\"'**
+  String stapleExercisesScreenEdit(String exerciseName);
+
+  /// No description provided for @stapleExercisesScreenUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated \"{exerciseName}\"'**
+  String stapleExercisesScreenUpdated(String exerciseName);
+
+  /// No description provided for @stapleExercisesScreenRemoveFromYourStaples.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{exerciseName}\" from your staples? This exercise may be rotated out in future workouts.'**
+  String stapleExercisesScreenRemoveFromYourStaples(String exerciseName);
+
+  /// No description provided for @exerciseQueueScreenAddedToQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{exerciseName}\" to queue'**
+  String exerciseQueueScreenAddedToQueue(String exerciseName);
+
+  /// No description provided for @exerciseQueueScreenRemoveFromYourQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{exerciseName}\" from your queue? It won\\\'t be included in your next workout.'**
+  String exerciseQueueScreenRemoveFromYourQueue(String exerciseName);
+
+  /// No description provided for @exerciseQueueScreenExpiresInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in {daysLeft} days'**
+  String exerciseQueueScreenExpiresInDays(String daysLeft);
+
+  /// No description provided for @aiModelsSectionDeleteModelFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Model (Free {downloadState})'**
+  String aiModelsSectionDeleteModelFree(Object downloadState);
+
+  /// No description provided for @aiModelsSectionDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download {displayName}'**
+  String aiModelsSectionDownload(String displayName);
+
+  /// No description provided for @aiModelsSectionDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device: {displayName}'**
+  String aiModelsSectionDevice(String displayName);
+
+  /// No description provided for @aiModelsSectionGbRam.
+  ///
+  /// In en, this message translates to:
+  /// **'{ram} GB RAM'**
+  String aiModelsSectionGbRam(String ram);
+
+  /// No description provided for @aiModelsSectionGbRam2.
+  ///
+  /// In en, this message translates to:
+  /// **'{minRamGB} GB RAM'**
+  String aiModelsSectionGbRam2(Object minRamGB);
+
+  /// No description provided for @supersetAlgorithmCardSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} saved'**
+  String supersetAlgorithmCardSaved(Object length);
+
+  /// No description provided for @cancelConfirmationSheetAppliedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} applied successfully!'**
+  String cancelConfirmationSheetAppliedSuccessfully(String name);
+
+  /// No description provided for @cancelConfirmationSheetFailedToApplyOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to apply offer: {e}'**
+  String cancelConfirmationSheetFailedToApplyOffer(String e);
+
+  /// No description provided for @cancelConfirmationSheetCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel {planName}?'**
+  String cancelConfirmationSheetCancel(String planName);
+
+  /// No description provided for @workoutImportPreviewSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%'**
+  String workoutImportPreviewSheetValue(Object percent);
+
+  /// No description provided for @workoutImportPreviewSheetValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'•  {w}'**
+  String workoutImportPreviewSheetValue2(String w);
+
+  /// No description provided for @workoutImportPreviewSheetMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{more} more'**
+  String workoutImportPreviewSheetMore(String more);
+
+  /// No description provided for @addGymProfileSheetCouldNotSaveProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save profile before import: {e}'**
+  String addGymProfileSheetCouldNotSaveProfile(String e);
+
+  /// No description provided for @heroWorkoutCardPartCompletedWorkoutHeroCardMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{bestDurationMinutes} min'**
+  String heroWorkoutCardPartCompletedWorkoutHeroCardMin(
+    Object bestDurationMinutes,
+  );
+
+  /// No description provided for @heroWorkoutCardPartCompletedWorkoutHeroCardExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseCount} exercises'**
+  String heroWorkoutCardPartCompletedWorkoutHeroCardExercises(
+    Object exerciseCount,
+  );
+
+  /// No description provided for @heroWorkoutCardExtExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{formattedDurationShort} • {exerciseCount} exercises'**
+  String heroWorkoutCardExtExercises(
+    Object formattedDurationShort,
+    Object exerciseCount,
+  );
+
+  /// No description provided for @heroWorkoutCardExtSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{e} sets'**
+  String heroWorkoutCardExtSets(Object e);
+
+  /// No description provided for @heroWorkoutCardExtMoreExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'+{exercises} more exercises'**
+  String heroWorkoutCardExtMoreExercises(Object exercises);
+
+  /// No description provided for @renewalReminderBannerRenewsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Renews on {formattedRenewalDate}'**
+  String renewalReminderBannerRenewsOn(String formattedRenewalDate);
+
+  /// No description provided for @stepsCounterCardDailyGoalReachedVia.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily goal reached 🎉 · via {sourceLabel}'**
+  String stepsCounterCardDailyGoalReachedVia(String sourceLabel);
+
+  /// No description provided for @stepsCounterCardConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {sourceLabel}'**
+  String stepsCounterCardConnect(String sourceLabel);
+
+  /// No description provided for @weeklyGoalsCardNewPr.
+  ///
+  /// In en, this message translates to:
+  /// **'🏆 {prsThisWeek} new PR!'**
+  String weeklyGoalsCardNewPr(String prsThisWeek);
+
+  /// No description provided for @plateauDashboardScreenWeeksStalled.
+  ///
+  /// In en, this message translates to:
+  /// **'{weeksStalled} weeks stalled'**
+  String plateauDashboardScreenWeeksStalled(String weeksStalled);
+
+  /// No description provided for @plateauDashboardScreenKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentWeight} kg'**
+  String plateauDashboardScreenKg(Object currentWeight);
+
+  /// No description provided for @leaderboardRowAdornmentsUpPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Up {absStr} places'**
+  String leaderboardRowAdornmentsUpPlaces(String absStr);
+
+  /// No description provided for @leaderboardRowAdornmentsDownPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Down {absStr} places'**
+  String leaderboardRowAdornmentsDownPlaces(String absStr);
+
+  /// No description provided for @leaderboardRowAdornmentsStreakDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak {streak} days'**
+  String leaderboardRowAdornmentsStreakDays(String streak);
+
+  /// No description provided for @progressScreenExtSetsWk.
+  ///
+  /// In en, this message translates to:
+  /// **'{weeklySets} sets/wk'**
+  String progressScreenExtSetsWk(Object weeklySets);
+
+  /// No description provided for @shareStrengthSheetMuscleGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} muscle groups'**
+  String shareStrengthSheetMuscleGroups(Object length);
+
+  /// No description provided for @formCheckResultCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{score}/10'**
+  String formCheckResultCardValue(Object score);
+
+  /// No description provided for @formCheckResultCardEstimatedReps.
+  ///
+  /// In en, this message translates to:
+  /// **'~{repCount} estimated reps'**
+  String formCheckResultCardEstimatedReps(Object repCount);
+
+  /// No description provided for @formCheckResultCardShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {improvements} more...'**
+  String formCheckResultCardShowMore(Object improvements);
+
+  /// No description provided for @formCheckResultCardObserved.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed: {pattern}'**
+  String formCheckResultCardObserved(String pattern);
+
+  /// No description provided for @formCheckResultCardObserved2.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed: {observed}'**
+  String formCheckResultCardObserved2(String observed);
+
+  /// No description provided for @customExercisesScreenExercisesUses.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCustomExercises} exercises, {totalUses} uses'**
+  String customExercisesScreenExercisesUses(
+    Object totalCustomExercises,
+    Object totalUses,
+  );
+
+  /// No description provided for @customExercisesScreenAreYouSureYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"? This cannot be undone.'**
+  String customExercisesScreenAreYouSureYou(String name);
+
+  /// No description provided for @customExercisesScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'(name) (targetDisplay))\" : \"\")'**
+  String customExercisesScreenValue(String name, String targetDisplay);
+
+  /// No description provided for @customExercisesScreenUsedTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Used (usageCount) times(lastUsedFormatted)\" : \"\")'**
+  String customExercisesScreenUsedTimes(
+    Object usageCount,
+    String lastUsedFormatted,
+  );
+
+  /// No description provided for @exerciseDetailSheetDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {pct}%'**
+  String exerciseDetailSheetDownloading(Object pct);
+
+  /// No description provided for @fastingHistoryListValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{completionPercent}%'**
+  String fastingHistoryListValue(Object completionPercent);
+
+  /// No description provided for @startFastSheetHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{_customHours} hours'**
+  String startFastSheetHours(Object _customHours);
+
+  /// No description provided for @fastingScoreCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **')(scoreChange)'**
+  String fastingScoreCardValue(Object scoreChange);
+
+  /// No description provided for @fastingScoreCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}%'**
+  String fastingScoreCardValue2(String value);
+
+  /// No description provided for @fastingScoreCardValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'+{weightedValue}'**
+  String fastingScoreCardValue3(Object weightedValue);
+
+  /// No description provided for @scheduleWorkoutDialogScheduleFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule \"{workoutName}\" for:'**
+  String scheduleWorkoutDialogScheduleFor(String workoutName);
+
+  /// No description provided for @scheduleWorkoutDialogWorkoutSAlreadyOn.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} workout(s) already on this date'**
+  String scheduleWorkoutDialogWorkoutSAlreadyOn(Object length);
+
+  /// No description provided for @scheduleWorkoutDialogWorkoutScheduledFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout scheduled for {month}/{day}!'**
+  String scheduleWorkoutDialogWorkoutScheduledFor(String month, String day);
+
+  /// No description provided for @scheduleWorkoutDialogFailedToScheduleWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to schedule workout: {e}'**
+  String scheduleWorkoutDialogFailedToScheduleWorkout(String e);
+
+  /// No description provided for @hormoneLogSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}/10'**
+  String hormoneLogSheetValue(String value);
+
+  /// No description provided for @hormoneLogSheetFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String hormoneLogSheetFailedToSave(String e);
+
+  /// No description provided for @injuriesScreenCheckIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in: {bodyPartDisplay}'**
+  String injuriesScreenCheckIn(String bodyPartDisplay);
+
+  /// No description provided for @injuriesScreenCheckInSavedPain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in saved: pain level {painLevel}/10'**
+  String injuriesScreenCheckInSavedPain(Object painLevel);
+
+  /// No description provided for @importExerciseScreenS.
+  ///
+  /// In en, this message translates to:
+  /// **'{inSeconds}s'**
+  String importExerciseScreenS(Object inSeconds);
+
+  /// No description provided for @weeklyRecapTemplateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String weeklyRecapTemplateValue(Object pct);
+
+  /// No description provided for @streakBadgesDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentStreak} Day Streak'**
+  String streakBadgesDayStreak(String currentStreak);
+
+  /// No description provided for @streakBadgesMoreDaysToBronze.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentStreak} more days to Bronze!'**
+  String streakBadgesMoreDaysToBronze(String currentStreak);
+
+  /// No description provided for @streakBadgesBestDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Best: {longestStreak} days'**
+  String streakBadgesBestDays(String longestStreak);
+
+  /// No description provided for @neatGamificationWidgetsPartNeatMilestonePopupStateXp.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xpEarned} XP'**
+  String neatGamificationWidgetsPartNeatMilestonePopupStateXp(String xpEarned);
+
+  /// No description provided for @weeklyCheckinSheetEveryWeekAnalysesYour.
+  ///
+  /// In en, this message translates to:
+  /// **'Every week, {appName} analyses your food logs to calculate how many calories your body is actually burning — then suggests smarter calorie & macro targets based on your real progress.'**
+  String weeklyCheckinSheetEveryWeekAnalysesYour(String appName);
+
+  /// No description provided for @foodHistoryScreenReLoggedAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-logged {name} as {mealType}'**
+  String foodHistoryScreenReLoggedAs(String name, String mealType);
+
+  /// No description provided for @foodHistoryScreenFailedToReLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to re-log {name}'**
+  String foodHistoryScreenFailedToReLog(String name);
+
+  /// No description provided for @foodHistoryScreenReLoggedAs2.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-logged {foodName} as {mealType}'**
+  String foodHistoryScreenReLoggedAs2(String foodName, String mealType);
+
+  /// No description provided for @foodHistoryScreenDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted {foodName}'**
+  String foodHistoryScreenDeleted(String foodName);
+
+  /// No description provided for @logMealSheetL2Kcal.
+  ///
+  /// In en, this message translates to:
+  /// **'~{calories} kcal · {timesLogged}×'**
+  String logMealSheetL2Kcal(Object calories, String timesLogged);
+
+  /// No description provided for @logMealSheetL2Logged.
+  ///
+  /// In en, this message translates to:
+  /// **'logged {timesLogged}×'**
+  String logMealSheetL2Logged(String timesLogged);
+
+  /// No description provided for @logMealSheetL2SetToForThe.
+  ///
+  /// In en, this message translates to:
+  /// **'Set to {label} for the time of day — tap the meal pill to change.'**
+  String logMealSheetL2SetToForThe(String label);
+
+  /// No description provided for @logMealSheetL2YourUsual.
+  ///
+  /// In en, this message translates to:
+  /// **'Your usual {label}'**
+  String logMealSheetL2YourUsual(String label);
+
+  /// No description provided for @nutrientExplorerAddedToPinnedNutrients.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} added to pinned nutrients'**
+  String nutrientExplorerAddedToPinnedNutrients(String displayName);
+
+  /// No description provided for @nutrientExplorerRemovedFromPinnedNutrients.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} removed from pinned nutrients'**
+  String nutrientExplorerRemovedFromPinnedNutrients(String displayName);
+
+  /// No description provided for @nutrientExplorerTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {unit}'**
+  String nutrientExplorerTarget(String unit);
+
+  /// No description provided for @nutrientExplorerValue.
+  ///
+  /// In en, this message translates to:
+  /// **') (unit)'**
+  String nutrientExplorerValue(String unit);
+
+  /// No description provided for @healthBreakdownSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{s}/10'**
+  String healthBreakdownSheetValue(String s);
+
+  /// No description provided for @healthBreakdownSheetGl.
+  ///
+  /// In en, this message translates to:
+  /// **'GL {gl}'**
+  String healthBreakdownSheetGl(String gl);
+
+  /// No description provided for @healthBreakdownSheetTriggers.
+  ///
+  /// In en, this message translates to:
+  /// **'Triggers: {fodmapReason}'**
+  String healthBreakdownSheetTriggers(String fodmapReason);
+
+  /// No description provided for @foodAnalysisLoadingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayMessage}…'**
+  String foodAnalysisLoadingValue(String displayMessage);
+
+  /// No description provided for @foodAnalysisLoadingS.
+  ///
+  /// In en, this message translates to:
+  /// **'{analysisLoadingCopy}… {_elapsedSeconds}s'**
+  String foodAnalysisLoadingS(
+    Object analysisLoadingCopy,
+    Object _elapsedSeconds,
+  );
+
+  /// No description provided for @foodAnalysisLoadingSElapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{_elapsedSeconds}s elapsed'**
+  String foodAnalysisLoadingSElapsed(Object _elapsedSeconds);
+
+  /// No description provided for @foodAnalysisLoadingElapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'elapsed-{_elapsedSeconds}-{_stillWorkingIndex}'**
+  String foodAnalysisLoadingElapsed(
+    Object _elapsedSeconds,
+    Object _stillWorkingIndex,
+  );
+
+  /// No description provided for @menuDishAdjustSheetThisDishCalG.
+  ///
+  /// In en, this message translates to:
+  /// **'This dish: ~{previewCal} cal · {previewP}g protein'**
+  String menuDishAdjustSheetThisDishCalG(String previewCal, String previewP);
+
+  /// No description provided for @moodWeeklyChartValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{length}/7'**
+  String moodWeeklyChartValue(Object length);
+
+  /// No description provided for @programLibraryScreenWith.
+  ///
+  /// In en, this message translates to:
+  /// **'With {card}'**
+  String programLibraryScreenWith(String card);
+
+  /// No description provided for @programLibraryScreenRest.
+  ///
+  /// In en, this message translates to:
+  /// **'{dayName} · Rest'**
+  String programLibraryScreenRest(String dayName);
+
+  /// No description provided for @programLibraryScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{sets} × {ex}'**
+  String programLibraryScreenValue(Object sets, Object ex);
+
+  /// No description provided for @setTrackingSectionExerciseOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise {widget} of {totalExercises}'**
+  String setTrackingSectionExerciseOf(Object widget, Object totalExercises);
+
+  /// No description provided for @setTrackingSectionSetTapToExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {currentSetNumber}/{totalSets} • Tap to expand'**
+  String setTrackingSectionSetTapToExpand(
+    Object currentSetNumber,
+    Object totalSets,
+  );
+
+  /// No description provided for @setTrackingSectionValue.
+  ///
+  /// In en, this message translates to:
+  /// **')×(reps)'**
+  String setTrackingSectionValue(Object reps);
+
+  /// No description provided for @setTrackingSectionSetsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} sets completed'**
+  String setTrackingSectionSetsCompleted(Object length);
+
+  /// No description provided for @setTrackingSectionSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{widget} sets'**
+  String setTrackingSectionSets(Object widget);
+
+  /// No description provided for @exerciseAnalyticsPageAnalytics.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} Analytics'**
+  String exerciseAnalyticsPageAnalytics(String name);
+
+  /// No description provided for @exerciseAnalyticsPageSeeHowYourPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'See how your performance on {name} compares to your friends.'**
+  String exerciseAnalyticsPageSeeHowYourPerformance(String name);
+
+  /// No description provided for @exerciseAnalyticsPageValue.
+  ///
+  /// In en, this message translates to:
+  /// **'0 {_unit}'**
+  String exerciseAnalyticsPageValue(String _unit);
+
+  /// No description provided for @equipmentSnapFlowSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set: {m}:{s}'**
+  String equipmentSnapFlowSet(String m, String s);
+
+  /// No description provided for @setRowTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target: {targetPercent}%'**
+  String setRowTarget(Object targetPercent);
+
+  /// No description provided for @setRowValue.
+  ///
+  /// In en, this message translates to:
+  /// **'→ {actualPercent}%'**
+  String setRowValue(Object actualPercent);
+
+  /// No description provided for @setRowRm.
+  ///
+  /// In en, this message translates to:
+  /// **'(1RM: {oneRM})'**
+  String setRowRm(String oneRM);
+
+  /// No description provided for @setRowPrevKg.
+  ///
+  /// In en, this message translates to:
+  /// **'Prev: {setData} kg'**
+  String setRowPrevKg(Object setData);
+
+  /// No description provided for @setRowPrevReps.
+  ///
+  /// In en, this message translates to:
+  /// **'Prev: {previousReps} reps'**
+  String setRowPrevReps(Object previousReps);
+
+  /// No description provided for @quickWorkoutSheetPartQuickWorkoutSheetStateMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedDuration} min'**
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMin(
+    Object _selectedDuration,
+  );
+
+  /// No description provided for @quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mesocycle: {phaseDisplayName}'**
+  String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(
+    String phaseDisplayName,
+  );
+
+  /// No description provided for @quickWorkoutSheetPartQuickWorkoutSheetStateWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week {weekNumber}/{totalWeeks}'**
+  String quickWorkoutSheetPartQuickWorkoutSheetStateWeek(
+    Object weekNumber,
+    Object totalWeeks,
+  );
+
+  /// No description provided for @quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate {_selectedDuration}-min Workout'**
+  String quickWorkoutSheetPartQuickWorkoutSheetStateGenerateMinWorkout(
+    Object _selectedDuration,
+  );
+
+  /// No description provided for @exerciseAddSheetPartExerciseAddSheetStateAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {exerciseName}'**
+  String exerciseAddSheetPartExerciseAddSheetStateAdded(String exerciseName);
+
+  /// No description provided for @fatigueAlertModalAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'{severityLabel} Alert'**
+  String fatigueAlertModalAlert(String severityLabel);
+
+  /// No description provided for @fatigueAlertModalLighter.
+  ///
+  /// In en, this message translates to:
+  /// **'{truePercent}% lighter'**
+  String fatigueAlertModalLighter(Object truePercent);
+
+  /// No description provided for @fatigueAlertModalHeavier.
+  ///
+  /// In en, this message translates to:
+  /// **'{truePercent}% heavier'**
+  String fatigueAlertModalHeavier(Object truePercent);
+
+  /// No description provided for @fatigueAlertModalReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{newReps} reps'**
+  String fatigueAlertModalReps(Object newReps);
+
+  /// No description provided for @warmupPhaseScreenSec.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} sec'**
+  String warmupPhaseScreenSec(Object duration);
+
+  /// No description provided for @volumeHeroTemplateThatS.
+  ///
+  /// In en, this message translates to:
+  /// **'— that\\\'s {comparison} —'**
+  String volumeHeroTemplateThatS(String comparison);
+
+  /// No description provided for @prShareCardWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout: {workoutName}'**
+  String prShareCardWorkout(String workoutName);
+
+  /// No description provided for @prShareCardReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{reps} reps'**
+  String prShareCardReps(Object reps);
+
+  /// No description provided for @recordAttemptDialogAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {unit}'**
+  String recordAttemptDialogAdd(String unit);
+
+  /// No description provided for @recordAttemptDialogCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{unit} Completed'**
+  String recordAttemptDialogCompleted(String unit);
+
+  /// No description provided for @recordAttemptDialogToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'{unit} to Add'**
+  String recordAttemptDialogToAdd(String unit);
+
+  /// No description provided for @recordAttemptDialogAdd2.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {unit}'**
+  String recordAttemptDialogAdd2(String unit);
+
+  /// No description provided for @quizFastingUiMealScheduleInH.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal schedule in {eatingHours}h window'**
+  String quizFastingUiMealScheduleInH(Object eatingHours);
+
+  /// No description provided for @quizFastingUiMealsSpacedHoursApart.
+  ///
+  /// In en, this message translates to:
+  /// **'{meals} meals spaced ~{hoursBetweenMeals} hours apart'**
+  String quizFastingUiMealsSpacedHoursApart(
+    String meals,
+    Object hoursBetweenMeals,
+  );
+
+  /// No description provided for @quizFastingUiAHEatingWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'A {eatingHours}h eating window fits max {maxMeals} meals.'**
+  String quizFastingUiAHEatingWindow(Object eatingHours, Object maxMeals);
+
+  /// No description provided for @quizFastingUiAdjustToMeals.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust to {maxMeals} meals'**
+  String quizFastingUiAdjustToMeals(Object maxMeals);
+
+  /// No description provided for @quizBodyMetricsHowMuchDoYou.
+  ///
+  /// In en, this message translates to:
+  /// **'How much do you want to {directionLabel}?'**
+  String quizBodyMetricsHowMuchDoYou(String directionLabel);
+
+  /// No description provided for @quizBodyMetricsEnterAmountTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter amount to {directionLabel}'**
+  String quizBodyMetricsEnterAmountTo(String directionLabel);
+
+  /// No description provided for @quizBodyMetricsEnterAValueBetween.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a value between 1-{dialogMax} {unit}'**
+  String quizBodyMetricsEnterAValueBetween(Object dialogMax, String unit);
+
+  /// No description provided for @reportNewspaperTemplateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'— {title}'**
+  String reportNewspaperTemplateValue(String title);
+
+  /// No description provided for @moodPickerSheetMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{_effectiveDuration} min'**
+  String moodPickerSheetMin(Object _effectiveDuration);
+
+  /// No description provided for @moodPickerSheetMoodLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Mood logged: {label}'**
+  String moodPickerSheetMoodLogged(String label);
+
+  /// No description provided for @moodPickerSheetFailedToGenerateWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate workout: {e}'**
+  String moodPickerSheetFailedToGenerateWorkout(String e);
+
+  /// No description provided for @moodPickerSheetMood.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} mood. {description}'**
+  String moodPickerSheetMood(String label, String description);
+
+  /// No description provided for @guestUpgradeSheetChatsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{remainingChatMessages} chats left'**
+  String guestUpgradeSheetChatsLeft(String remainingChatMessages);
+
+  /// No description provided for @trainingLoadChartCouldNotLoadTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load training load: {e}'**
+  String trainingLoadChartCouldNotLoadTraining(String e);
+
+  /// No description provided for @foodMoodAnalyticsCardPartFoodMoodAnalyticsSheetX.
+  ///
+  /// In en, this message translates to:
+  /// **'{occurrences}x'**
+  String foodMoodAnalyticsCardPartFoodMoodAnalyticsSheetX(String occurrences);
+
+  /// No description provided for @demoActiveWorkoutScreenUi1SetOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {_currentSet} of {_currentExerciseSets}'**
+  String demoActiveWorkoutScreenUi1SetOf(
+    String _currentSet,
+    Object _currentExerciseSets,
+  );
+
+  /// No description provided for @demoActiveWorkoutScreenUi1Reps.
+  ///
+  /// In en, this message translates to:
+  /// **'{_currentExerciseReps} reps'**
+  String demoActiveWorkoutScreenUi1Reps(Object _currentExerciseReps);
+
+  /// No description provided for @avoidedMusclesScreenRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{displayName}\"?'**
+  String avoidedMusclesScreenRemove(String displayName);
+
+  /// No description provided for @avoidedMusclesScreenReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String avoidedMusclesScreenReason(String reason);
+
+  /// No description provided for @avoidedMusclesScreenReplacedExercisesTargetingMuscles.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced exercises targeting {count} muscles in upcoming workouts'**
+  String avoidedMusclesScreenReplacedExercisesTargetingMuscles(Object count);
+
+  /// No description provided for @avoidedMusclesScreenRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed \"{displayName}\"'**
+  String avoidedMusclesScreenRemoved(String displayName);
+
+  /// No description provided for @repPreferencesSectionPartTrainingFocusOptionTileMinimumSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum Sets: {minSets}'**
+  String repPreferencesSectionPartTrainingFocusOptionTileMinimumSets(
+    Object minSets,
+  );
+
+  /// No description provided for @repPreferencesSectionPartTrainingFocusOptionTileMaximumSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum Sets: {maxSets}'**
+  String repPreferencesSectionPartTrainingFocusOptionTileMaximumSets(
+    Object maxSets,
+  );
+
+  /// No description provided for @recoverySectionValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{score}%'**
+  String recoverySectionValue(Object score);
+
+  /// No description provided for @recoverySectionKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} kg'**
+  String recoverySectionKg(String value);
+
+  /// No description provided for @volumeProgressionCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{v}%'**
+  String volumeProgressionCardValue(String v);
+
+  /// No description provided for @volumeProgressionCardW.
+  ///
+  /// In en, this message translates to:
+  /// **'W{v}'**
+  String volumeProgressionCardW(String v);
+
+  /// No description provided for @homeScreenUi2TryAgainInS.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again in {cooldownLeft} s'**
+  String homeScreenUi2TryAgainInS(String cooldownLeft);
+
+  /// No description provided for @missedWorkoutBannerYouMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'You missed {dayPossessive} {name}'**
+  String missedWorkoutBannerYouMissed(String dayPossessive, String name);
+
+  /// No description provided for @missedWorkoutBannerMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationMinutes} min'**
+  String missedWorkoutBannerMin(Object durationMinutes);
+
+  /// No description provided for @missedWorkoutBannerExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{exercisesCount} exercises'**
+  String missedWorkoutBannerExercises(Object exercisesCount);
+
+  /// No description provided for @missedWorkoutBannerMoreMissedWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'+{missedList} more missed workouts'**
+  String missedWorkoutBannerMoreMissedWorkouts(Object missedList);
+
+  /// No description provided for @dailyActivityCardConnectToSeeSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {healthName} to see steps, calories & more'**
+  String dailyActivityCardConnectToSeeSteps(String healthName);
+
+  /// No description provided for @homeReadinessCardEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated: {label}'**
+  String homeReadinessCardEstimated(String label);
+
+  /// No description provided for @wellnessCheckinCardSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep {sleepQuality}  '**
+  String wellnessCheckinCardSleep(String sleepQuality);
+
+  /// No description provided for @wellnessCheckinCardEnergy.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy {energyLevel}  '**
+  String wellnessCheckinCardEnergy(Object energyLevel);
+
+  /// No description provided for @wellnessCheckinCardSoreness.
+  ///
+  /// In en, this message translates to:
+  /// **'Soreness {muscleSoreness}  '**
+  String wellnessCheckinCardSoreness(String muscleSoreness);
+
+  /// No description provided for @wellnessCheckinCardStress.
+  ///
+  /// In en, this message translates to:
+  /// **'Stress {stressLevel}  '**
+  String wellnessCheckinCardStress(Object stressLevel);
+
+  /// No description provided for @dailyStatsCardCalBurnedFromExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesBurned} cal burned from exercise'**
+  String dailyStatsCardCalBurnedFromExercise(Object caloriesBurned);
+
+  /// No description provided for @fitnessScoreCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{consistencyScore}%'**
+  String fitnessScoreCardValue(Object consistencyScore);
+
+  /// No description provided for @fitnessScoreCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: '**
+  String fitnessScoreCardValue2(String label);
+
+  /// No description provided for @strainRiskCardKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentVolumeKg} kg'**
+  String strainRiskCardKg(String currentVolumeKg);
+
+  /// No description provided for @strainRiskCardOfKgCap.
+  ///
+  /// In en, this message translates to:
+  /// **'of {volumeCapKg} kg cap'**
+  String strainRiskCardOfKgCap(String volumeCapKg);
+
+  /// No description provided for @exerciseHistoryScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{timesPerformed}×'**
+  String exerciseHistoryScreenValue(String timesPerformed);
+
+  /// No description provided for @exerciseHistoryScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'+{pr}%'**
+  String exerciseHistoryScreenValue2(Object pr);
+
+  /// No description provided for @exerciseHistoryScreenValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank}'**
+  String exerciseHistoryScreenValue3(String rank);
+
+  /// No description provided for @prSummaryCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{pr}%'**
+  String prSummaryCardValue(Object pr);
+
+  /// No description provided for @emailSignInScreenWelcomeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to {appName}!'**
+  String emailSignInScreenWelcomeTo(String appName);
+
+  /// No description provided for @emailSignInScreenSupportIsNowYour.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} Support is now your friend. Reach out anytime for help!'**
+  String emailSignInScreenSupportIsNowYour(String appName);
+
+  /// No description provided for @exercisePreferencesCardExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{customCount} exercises'**
+  String exercisePreferencesCardExercises(Object customCount);
+
+  /// No description provided for @exercisePreferencesCardExercises2.
+  ///
+  /// In en, this message translates to:
+  /// **'{favoriteCount} exercises'**
+  String exercisePreferencesCardExercises2(Object favoriteCount);
+
+  /// No description provided for @exercisePreferencesCardExercises3.
+  ///
+  /// In en, this message translates to:
+  /// **'{stapleCount} exercises'**
+  String exercisePreferencesCardExercises3(Object stapleCount);
+
+  /// No description provided for @exercisePreferencesCardQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'{queueCount} queued'**
+  String exercisePreferencesCardQueued(Object queueCount);
+
+  /// No description provided for @exercisePreferencesCardAvoided.
+  ///
+  /// In en, this message translates to:
+  /// **'{avoidedCount} avoided'**
+  String exercisePreferencesCardAvoided(Object avoidedCount);
+
+  /// No description provided for @cyclePhaseRingCycleDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle day {day}'**
+  String cyclePhaseRingCycleDay(String day);
+
+  /// No description provided for @cyclePhaseRingEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'{cycleConfidence} · estimate'**
+  String cyclePhaseRingEstimate(String cycleConfidence);
+
+  /// No description provided for @challengeCompleteDialogMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{yourDuration} min'**
+  String challengeCompleteDialogMin(Object yourDuration);
+
+  /// No description provided for @challengeCompleteDialogMin2.
+  ///
+  /// In en, this message translates to:
+  /// **'{theirDuration} min'**
+  String challengeCompleteDialogMin2(Object theirDuration);
+
+  /// No description provided for @challengeCompleteDialogLbs.
+  ///
+  /// In en, this message translates to:
+  /// **'{theirVolume} lbs'**
+  String challengeCompleteDialogLbs(String theirVolume);
+
+  /// No description provided for @trophyRoomScreenPartTrophyCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPercentage}%'**
+  String trophyRoomScreenPartTrophyCardValue(Object progressPercentage);
+
+  /// No description provided for @trophyRoomScreenPartTrophyCardComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPercentage}% complete'**
+  String trophyRoomScreenPartTrophyCardComplete(Object progressPercentage);
+
+  /// No description provided for @habitCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{completionRate7d}%'**
+  String habitCardValue(Object completionRate7d);
+
+  /// No description provided for @xpGoalsScreenXp.
+  ///
+  /// In en, this message translates to:
+  /// **'+{effectiveXP} XP'**
+  String xpGoalsScreenXp(String effectiveXP);
+
+  /// No description provided for @aiSplitPresetDetailSheetDaysWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysPerWeek} days/week'**
+  String aiSplitPresetDetailSheetDaysWeek(String daysPerWeek);
+
+  /// No description provided for @aiSplitPresetDetailSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{hypertrophyScore}/10'**
+  String aiSplitPresetDetailSheetValue(Object hypertrophyScore);
+
+  /// No description provided for @aiSplitPresetDetailSheetSwitchedToGeneratingNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched to {splitDisplayName}{scheduleSuffix}. Generating new workouts...'**
+  String aiSplitPresetDetailSheetSwitchedToGeneratingNew(
+    String splitDisplayName,
+    String scheduleSuffix,
+  );
+
+  /// No description provided for @aiSplitPresetDetailSheetFailedToUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update: {e}'**
+  String aiSplitPresetDetailSheetFailedToUpdate(String e);
+
+  /// No description provided for @exerciseStatsSheetKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} kg'**
+  String exerciseStatsSheetKg(Object item);
+
+  /// No description provided for @exerciseStatsSheetKg2.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} kg'**
+  String exerciseStatsSheetKg2(String item);
+
+  /// No description provided for @filterSectionSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search {title}...'**
+  String filterSectionSearch(String title);
+
+  /// No description provided for @filterSectionShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {initialShowCount} more'**
+  String filterSectionShowMore(Object initialShowCount);
+
+  /// No description provided for @programDetailSheetInspiredBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspired by {celebrityName}'**
+  String programDetailSheetInspiredBy(String celebrityName);
+
+  /// No description provided for @programDetailSheetWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedWeeks} weeks'**
+  String programDetailSheetWeeks(String _selectedWeeks);
+
+  /// No description provided for @programDetailSheetWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedSessionsPerWeek}/week'**
+  String programDetailSheetWeek(String _selectedSessionsPerWeek);
+
+  /// No description provided for @programDetailSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{tag}'**
+  String programDetailSheetValue(String tag);
+
+  /// No description provided for @programDetailSheetStartWeekProgram.
+  ///
+  /// In en, this message translates to:
+  /// **'Start {_selectedWeeks}-Week Program'**
+  String programDetailSheetStartWeekProgram(String _selectedWeeks);
+
+  /// No description provided for @fastingSettingsSheetFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String fastingSettingsSheetFailedToSave(String e);
+
+  /// No description provided for @fastingSettingsSheetHFasting.
+  ///
+  /// In en, this message translates to:
+  /// **'{_customHours}h fasting'**
+  String fastingSettingsSheetHFasting(Object _customHours);
+
+  /// No description provided for @fastingSettingsSheetH.
+  ///
+  /// In en, this message translates to:
+  /// **'{_customHours}h'**
+  String fastingSettingsSheetH(Object _customHours);
+
+  /// No description provided for @fastingCalendarWidgetHFast.
+  ///
+  /// In en, this message translates to:
+  /// **'{data}h fast'**
+  String fastingCalendarWidgetHFast(Object data);
+
+  /// No description provided for @fastingCalendarWidgetCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{goalsCompleted}/{goalsTotal} completed'**
+  String fastingCalendarWidgetCompleted(
+    String goalsCompleted,
+    Object goalsTotal,
+  );
+
+  /// No description provided for @fastingCalendarWidgetKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{data} kg'**
+  String fastingCalendarWidgetKg(Object data);
+
+  /// No description provided for @fastingCalendarWidgetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{energyLevel}/10'**
+  String fastingCalendarWidgetValue(Object energyLevel);
+
+  /// No description provided for @fastingTimelinePagerH.
+  ///
+  /// In en, this message translates to:
+  /// **'{hourOffset}h — {text}'**
+  String fastingTimelinePagerH(String hourOffset, String text);
+
+  /// No description provided for @fastingTimelinePagerExtendedFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Extended fast · {label}'**
+  String fastingTimelinePagerExtendedFast(String label);
+
+  /// No description provided for @fastingStageCardNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {name}'**
+  String fastingStageCardNext(String name);
+
+  /// No description provided for @hashtagFeedScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{hashtagName}'**
+  String hashtagFeedScreenValue(String hashtagName);
+
+  /// No description provided for @hashtagFeedScreenNoPostsWith.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts with #{hashtagName}'**
+  String hashtagFeedScreenNoPostsWith(String hashtagName);
+
+  /// No description provided for @injuryCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{recoveryProgress}%'**
+  String injuryCardValue(String recoveryProgress);
+
+  /// No description provided for @injuryCardPain.
+  ///
+  /// In en, this message translates to:
+  /// **'Pain: {painLevel}/10'**
+  String injuryCardPain(Object painLevel);
+
+  /// No description provided for @injuryCardDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysUntilRecovery} days left'**
+  String injuryCardDaysLeft(String daysUntilRecovery);
+
+  /// No description provided for @injuryCardDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysSinceReported} days ago'**
+  String injuryCardDaysAgo(String daysSinceReported);
+
+  /// No description provided for @stepGoalCardStepGoalProgressOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Step goal progress: {currentSteps} of {goalSteps} steps, {percentage} percent complete'**
+  String stepGoalCardStepGoalProgressOf(
+    String currentSteps,
+    String goalSteps,
+    Object percentage,
+  );
+
+  /// No description provided for @stepGoalCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String stepGoalCardValue(Object percentage);
+
+  /// No description provided for @neatScoreDisplayNeatScoreOutOf.
+  ///
+  /// In en, this message translates to:
+  /// **'NEAT Score: {animatedScore} out of 100, grade: {label}'**
+  String neatScoreDisplayNeatScoreOutOf(Object animatedScore, String label);
+
+  /// No description provided for @neatScoreDisplayTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend: {name}'**
+  String neatScoreDisplayTrend(String name);
+
+  /// No description provided for @neatScoreDisplayValue.
+  ///
+  /// In en, this message translates to:
+  /// **'))(widget)'**
+  String neatScoreDisplayValue(Object widget);
+
+  /// No description provided for @nutritionSettingsScreenUiX.
+  ///
+  /// In en, this message translates to:
+  /// **'{multiplier}x'**
+  String nutritionSettingsScreenUiX(String multiplier);
+
+  /// No description provided for @nutritionSettingsScreenUiExampleACalMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Example: A 600 cal meal would be logged as {exampleCal} cal'**
+  String nutritionSettingsScreenUiExampleACalMeal(String exampleCal);
+
+  /// No description provided for @nutritionSettingsScreenUiMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{t} min'**
+  String nutritionSettingsScreenUiMin(String t);
+
+  /// No description provided for @hydrationTabAddedOfWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {displayAmount}{label} of water'**
+  String hydrationTabAddedOfWater(Object displayAmount, String label);
+
+  /// No description provided for @hydrationTabMl.
+  ///
+  /// In en, this message translates to:
+  /// **'{ml}ml'**
+  String hydrationTabMl(String ml);
+
+  /// No description provided for @hydrationTabLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Log {label}'**
+  String hydrationTabLog(String label);
+
+  /// No description provided for @hydrationTabMlOf.
+  ///
+  /// In en, this message translates to:
+  /// **'])ml of (label)'**
+  String hydrationTabMlOf(String label);
+
+  /// No description provided for @mealScoreWidgetsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{score}/10'**
+  String mealScoreWidgetsValue(Object score);
+
+  /// No description provided for @foodSearchResultsG.
+  ///
+  /// In en, this message translates to:
+  /// **'{result}g'**
+  String foodSearchResultsG(String result);
+
+  /// No description provided for @foodSearchResultsNoSavedFoodsMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved foods match \"{query}\".'**
+  String foodSearchResultsNoSavedFoodsMatch(String query);
+
+  /// No description provided for @foodSearchResultsAiWillEstimateNutrition.
+  ///
+  /// In en, this message translates to:
+  /// **'AI will estimate nutrition for \"{query}\"'**
+  String foodSearchResultsAiWillEstimateNutrition(String query);
+
+  /// No description provided for @postMealReviewSheetKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{foodSummary}{extraCount} · {totalCalories} kcal'**
+  String postMealReviewSheetKcal(
+    Object foodSummary,
+    Object extraCount,
+    Object totalCalories,
+  );
+
+  /// No description provided for @menuFilterSheetShowAllDishes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {total} dishes'**
+  String menuFilterSheetShowAllDishes(Object total);
+
+  /// No description provided for @menuFilterSheetShowOfDishes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {matches} of {total} dishes'**
+  String menuFilterSheetShowOfDishes(String matches, Object total);
+
+  /// No description provided for @exerciseDetailScreenUiErrorLoadingStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading stats: {error}'**
+  String exerciseDetailScreenUiErrorLoadingStats(String error);
+
+  /// No description provided for @exerciseDetailScreenUiRir.
+  ///
+  /// In en, this message translates to:
+  /// **'RIR {rir}'**
+  String exerciseDetailScreenUiRir(String rir);
+
+  /// No description provided for @exerciseDetailScreenUiRir2.
+  ///
+  /// In en, this message translates to:
+  /// **'RIR {targetRir}'**
+  String exerciseDetailScreenUiRir2(String targetRir);
+
+  /// No description provided for @workoutSheetsMixinUiChangedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed to {displayName}'**
+  String workoutSheetsMixinUiChangedTo(String displayName);
+
+  /// No description provided for @workoutSheetsMixinUiSupersetExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Superset ({length} exercises)'**
+  String workoutSheetsMixinUiSupersetExercises(Object length);
+
+  /// No description provided for @trophyCelebrationOverlayWorkoutsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutMilestone} Workouts Completed'**
+  String trophyCelebrationOverlayWorkoutsCompleted(String workoutMilestone);
+
+  /// No description provided for @trophyCelebrationOverlayDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentStreak} Day Streak!'**
+  String trophyCelebrationOverlayDayStreak(String currentStreak);
+
+  /// No description provided for @setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{completedCount} done'**
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(
+    Object completedCount,
+  );
+
+  /// No description provided for @setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{remainingCount} remaining'**
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemaining(
+    Object remainingCount,
+  );
+
+  /// No description provided for @setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} removed'**
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateRemoved(
+    Object length,
+  );
+
+  /// No description provided for @setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'+{originalSetCount} added'**
+  String setAdjustmentSheetPartInWorkoutSetEditingSheetStateAdded(
+    Object originalSetCount,
+  );
+
+  /// No description provided for @inlineWorkoutChatWhatAreTheKey.
+  ///
+  /// In en, this message translates to:
+  /// **'What are the key form tips for {name}?'**
+  String inlineWorkoutChatWhatAreTheKey(String name);
+
+  /// No description provided for @inlineWorkoutChatWhatAreSomeAlternative.
+  ///
+  /// In en, this message translates to:
+  /// **'What are some alternative exercises I can do instead of {name}?'**
+  String inlineWorkoutChatWhatAreSomeAlternative(String name);
+
+  /// No description provided for @inlineWorkoutChatHowLongShouldI.
+  ///
+  /// In en, this message translates to:
+  /// **'How long should I rest between sets of {name}?'**
+  String inlineWorkoutChatHowLongShouldI(String name);
+
+  /// No description provided for @inlineWorkoutChatHowManySetsShould.
+  ///
+  /// In en, this message translates to:
+  /// **'How many sets should I do of {name} for best results?'**
+  String inlineWorkoutChatHowManySetsShould(String name);
+
+  /// No description provided for @inlineWorkoutChatCheckMyFormOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Check my form on {name}'**
+  String inlineWorkoutChatCheckMyFormOn(String name);
+
+  /// No description provided for @workoutAiCoachSheetWhatAreTheKey.
+  ///
+  /// In en, this message translates to:
+  /// **'What are the key form tips for {name}?'**
+  String workoutAiCoachSheetWhatAreTheKey(String name);
+
+  /// No description provided for @workoutAiCoachSheetWhatAreSomeAlternative.
+  ///
+  /// In en, this message translates to:
+  /// **'What are some alternative exercises I can do instead of {name}?'**
+  String workoutAiCoachSheetWhatAreSomeAlternative(String name);
+
+  /// No description provided for @workoutAiCoachSheetHowLongShouldI.
+  ///
+  /// In en, this message translates to:
+  /// **'How long should I rest between sets of {name}?'**
+  String workoutAiCoachSheetHowLongShouldI(String name);
+
+  /// No description provided for @workoutAiCoachSheetHowManySetsShould.
+  ///
+  /// In en, this message translates to:
+  /// **'How many sets should I do of {name} for best results?'**
+  String workoutAiCoachSheetHowManySetsShould(String name);
+
+  /// No description provided for @workoutAiCoachSheetCheckMyFormOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Check my form on {name}'**
+  String workoutAiCoachSheetCheckMyFormOn(String name);
+
+  /// No description provided for @buddyWorkoutBarSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{_partnerSetsLogged} sets'**
+  String buddyWorkoutBarSets(Object _partnerSetsLogged);
+
+  /// No description provided for @setRowPartRpeRirSelectorStateLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} left'**
+  String setRowPartRpeRirSelectorStateLeft(Object value);
+
+  /// No description provided for @shareWorkoutSheetPartSimplePhotoEditorFailedToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to share: {e}'**
+  String shareWorkoutSheetPartSimplePhotoEditorFailedToShare(String e);
+
+  /// No description provided for @parsedExercisesPreviewSheetEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {name}'**
+  String parsedExercisesPreviewSheetEdit(String name);
+
+  /// No description provided for @parsedExercisesPreviewSheetParsedExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Parsed {length} exercises'**
+  String parsedExercisesPreviewSheetParsedExercises(Object length);
+
+  /// No description provided for @parsedExercisesPreviewSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{formattedSetsReps} @ {exercise}'**
+  String parsedExercisesPreviewSheetValue(
+    Object formattedSetsReps,
+    Object exercise,
+  );
+
+  /// No description provided for @setAdjustmentSheetPartSetAdjustmentReasonOf.
+  ///
+  /// In en, this message translates to:
+  /// **') of (exerciseName)'**
+  String setAdjustmentSheetPartSetAdjustmentReasonOf(String exerciseName);
+
+  /// No description provided for @setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{completedSets} sets completed'**
+  String setAdjustmentSheetPartSetAdjustmentReasonSetsCompleted(
+    Object completedSets,
+  );
+
+  /// No description provided for @setAdjustmentSheetPartSetAdjustmentReasonOfPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'of {totalSets} planned'**
+  String setAdjustmentSheetPartSetAdjustmentReasonOfPlanned(Object totalSets);
+
+  /// No description provided for @receiptTemplateOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'ORDER: {workoutName}'**
+  String receiptTemplateOrder(String workoutName);
+
+  /// No description provided for @receiptTemplateX.
+  ///
+  /// In en, this message translates to:
+  /// **'{sets}x{reps}'**
+  String receiptTemplateX(Object sets, Object reps);
+
+  /// No description provided for @retuneProposalSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{before}  →  {after}'**
+  String retuneProposalSheetValue(String before, String after);
+
+  /// No description provided for @measurementsScreenPartAddMeasurementSheetLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Log {displayName}'**
+  String measurementsScreenPartAddMeasurementSheetLog(String displayName);
+
+  /// No description provided for @measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Export (length)\") measurement types as .(_selectedFormat)'**
+  String measurementsScreenPartAddMeasurementSheetExportMeasurementTypesAs(
+    Object length,
+    String _selectedFormat,
+  );
+
+  /// No description provided for @goalLeaderboardSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{userProgressPercentage}%'**
+  String goalLeaderboardSheetValue(Object userProgressPercentage);
+
+  /// No description provided for @measurementsTabUiValue.
+  ///
+  /// In en, this message translates to:
+  /// **'— {unit}'**
+  String measurementsTabUiValue(String unit);
+
+  /// No description provided for @muscleScoreBreakdownSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String muscleScoreBreakdownSheetValue(Object pct);
+
+  /// No description provided for @muscleScoreBreakdownSheetEstimatedRmKg.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated 1RM {e1rm} kg'**
+  String muscleScoreBreakdownSheetEstimatedRmKg(String e1rm);
+
+  /// No description provided for @nutritionTabPartAdherenceCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{averageAdherence}%'**
+  String nutritionTabPartAdherenceCardValue(String averageAdherence);
+
+  /// No description provided for @nutritionTabPartAdherenceCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{consistencyScore}%'**
+  String nutritionTabPartAdherenceCardValue2(Object consistencyScore);
+
+  /// No description provided for @nutritionTabPartAdherenceCardValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'{loggingScore}%'**
+  String nutritionTabPartAdherenceCardValue3(Object loggingScore);
+
+  /// No description provided for @nutritionTabPartAdherenceCardLastWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {length} weeks'**
+  String nutritionTabPartAdherenceCardLastWeeks(Object length);
+
+  /// No description provided for @exerciseSearchResultsWorkoutsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{exerciseName}\" - {totalResults} workouts found'**
+  String exerciseSearchResultsWorkoutsFound(
+    String exerciseName,
+    Object totalResults,
+  );
+
+  /// No description provided for @exerciseSearchResultsMoreWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'+{results} more workouts'**
+  String exerciseSearchResultsMoreWorkouts(Object results);
+
+  /// No description provided for @exerciseSearchResultsSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{setsCompleted} sets'**
+  String exerciseSearchResultsSets(Object setsCompleted);
+
+  /// No description provided for @exerciseSearchResultsBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Best: {bestSetDisplay}'**
+  String exerciseSearchResultsBest(String bestSetDisplay);
+
+  /// No description provided for @exerciseSearchResultsNoWorkoutsContainingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'No workouts containing \"{exerciseName}\" in selected time range'**
+  String exerciseSearchResultsNoWorkoutsContainingIn(String exerciseName);
+
+  /// No description provided for @recipeSaveJobsListenerCouldnTSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t schedule \'{mealName}\': {job}'**
+  String recipeSaveJobsListenerCouldnTSchedule(String mealName, String job);
+
+  /// No description provided for @recipeSaveJobsListenerNextAt.
+  ///
+  /// In en, this message translates to:
+  /// **'{cadenceLabel} — next at {fmt}'**
+  String recipeSaveJobsListenerNextAt(String cadenceLabel, String fmt);
+
+  /// No description provided for @recipeSaveJobsListenerSavedToYourRecipes.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved \'{mealName}\' to your recipes'**
+  String recipeSaveJobsListenerSavedToYourRecipes(String mealName);
+
+  /// No description provided for @recipeSaveJobsListenerIsAlreadyInYour.
+  ///
+  /// In en, this message translates to:
+  /// **'\'{mealName}\' is already in your recipes'**
+  String recipeSaveJobsListenerIsAlreadyInYour(String mealName);
+
+  /// No description provided for @recipeSaveJobsListenerCouldnTSaveRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save recipe: {job}'**
+  String recipeSaveJobsListenerCouldnTSaveRecipe(String job);
+
+  /// No description provided for @fastingTrainingWarningHFasted.
+  ///
+  /// In en, this message translates to:
+  /// **'{hoursFasted}h fasted'**
+  String fastingTrainingWarningHFasted(Object hoursFasted);
+
+  /// No description provided for @fastingTrainingWarningH.
+  ///
+  /// In en, this message translates to:
+  /// **'{hoursFasted}h'**
+  String fastingTrainingWarningH(Object hoursFasted);
+
+  /// No description provided for @upgradePromptSheetYouVeUsedAll.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve used all free {featureName} for this period.'**
+  String upgradePromptSheetYouVeUsedAll(String featureName);
+
+  /// No description provided for @exerciseStatsWidgetsTrainingFrequency.
+  ///
+  /// In en, this message translates to:
+  /// **'Training frequency: {formattedFrequency}'**
+  String exerciseStatsWidgetsTrainingFrequency(Object formattedFrequency);
+
+  /// No description provided for @exerciseStatsWidgetsAchieved.
+  ///
+  /// In en, this message translates to:
+  /// **'Achieved {formattedAchievedDate}'**
+  String exerciseStatsWidgetsAchieved(String formattedAchievedDate);
+
+  /// No description provided for @heartRateDisplayZone.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} Zone'**
+  String heartRateDisplayZone(String name);
+
+  /// No description provided for @heartRateDisplayValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: '**
+  String heartRateDisplayValue(String label);
+
+  /// No description provided for @heartRateDisplayZone2.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} Zone'**
+  String heartRateDisplayZone2(String name);
+
+  /// No description provided for @phaseRecommendationBannerEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence: {evidenceCitation}'**
+  String phaseRecommendationBannerEvidence(String evidenceCitation);
+
+  /// No description provided for @phaseRecommendationBannerBasedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on: {evidenceCitation}'**
+  String phaseRecommendationBannerBasedOn(String evidenceCitation);
+
+  /// No description provided for @phaseRecommendationBannerCycleDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle day {cycleDay}'**
+  String phaseRecommendationBannerCycleDay(String cycleDay);
+
+  /// No description provided for @phaseRecommendationBannerConfidenceEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'(confidence)-confidence estimate\" : \"\")'**
+  String phaseRecommendationBannerConfidenceEstimate(String confidence);
+
+  /// No description provided for @cookingConverterSheetG.
+  ///
+  /// In en, this message translates to:
+  /// **'{inputAmount}g'**
+  String cookingConverterSheetG(Object inputAmount);
+
+  /// No description provided for @layoutEditorScreenPartTogglesTabTiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} tiles'**
+  String layoutEditorScreenPartTogglesTabTiles(Object length);
+
+  /// No description provided for @layoutEditorScreenPartTogglesTabApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied {name}'**
+  String layoutEditorScreenPartTogglesTabApplied(String name);
+
+  /// No description provided for @layoutEditorScreenPartTogglesTabTiles2.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} tiles'**
+  String layoutEditorScreenPartTogglesTabTiles2(Object length);
+
+  /// No description provided for @layoutEditorScreenPartTogglesTabApplied2.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied {name}'**
+  String layoutEditorScreenPartTogglesTabApplied2(String name);
+
+  /// No description provided for @mealRemindersSettingsScreenCouldnTLoadSchedules.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\\\'t load schedules: {e}'**
+  String mealRemindersSettingsScreenCouldnTLoadSchedules(String e);
+
+  /// No description provided for @mealRemindersSettingsScreenReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} reminder'**
+  String mealRemindersSettingsScreenReminder(String value);
+
+  /// No description provided for @trainingFocusScreenFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String trainingFocusScreenFailedToSave(String e);
+
+  /// No description provided for @trainingFocusScreenAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{availablePoints}/{maxTotalPoints} available'**
+  String trainingFocusScreenAvailable(
+    String availablePoints,
+    Object maxTotalPoints,
+  );
+
+  /// No description provided for @medicalDisclaimerScreenPleaseReadThisDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Please read this disclaimer carefully before using {appName}.'**
+  String medicalDisclaimerScreenPleaseReadThisDisclaimer(String appName);
+
+  /// No description provided for @medicalDisclaimerScreenProvidesAiGeneratedFitness.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} provides AI-generated fitness recommendations for informational and educational purposes only. The content provided by this app is not intended to be a substitute for professional medical advice, diagnosis, or treatment.'**
+  String medicalDisclaimerScreenProvidesAiGeneratedFitness(String appName);
+
+  /// No description provided for @medicalDisclaimerScreenPhysicalExerciseInvolvesInherent.
+  ///
+  /// In en, this message translates to:
+  /// **'Physical exercise involves inherent risks. By using {appName}, you acknowledge that you are voluntarily participating in physical activities and assume all risks associated with such activities, including but not limited to injury, illness, or death.'**
+  String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
+    String appName,
+  );
+
+  /// No description provided for @medicalDisclaimerScreenByContinuingToUse.
+  ///
+  /// In en, this message translates to:
+  /// **'By continuing to use {appName}, you acknowledge that you have read and understood this disclaimer.'**
+  String medicalDisclaimerScreenByContinuingToUse(String appName);
+
+  /// No description provided for @locationSettingsSectionActiveForGymS.
+  ///
+  /// In en, this message translates to:
+  /// **'Active for {length} gym(s)'**
+  String locationSettingsSectionActiveForGymS(Object length);
+
+  /// No description provided for @locationSettingsSectionActiveForProfileS.
+  ///
+  /// In en, this message translates to:
+  /// **'Active for {length} profile(s)'**
+  String locationSettingsSectionActiveForProfileS(Object length);
+
+  /// No description provided for @scoringCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{key}: {pct}%'**
+  String scoringCardValue(String key, Object pct);
+
+  /// No description provided for @scoringCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String scoringCardValue2(Object pct);
+
+  /// No description provided for @scoringCardTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {totalPct}%'**
+  String scoringCardTotal(Object totalPct);
+
+  /// No description provided for @restTimerCardS.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}s'**
+  String restTimerCardS(String value);
+
+  /// No description provided for @restTimerCardS2.
+  ///
+  /// In en, this message translates to:
+  /// **'{restTimerBaseRest}s'**
+  String restTimerCardS2(String restTimerBaseRest);
+
+  /// No description provided for @restTimerCardX.
+  ///
+  /// In en, this message translates to:
+  /// **'{restTimerMultiplier}x'**
+  String restTimerCardX(String restTimerMultiplier);
+
+  /// No description provided for @restTimerCardS3.
+  ///
+  /// In en, this message translates to:
+  /// **'{s}s'**
+  String restTimerCardS3(String s);
+
+  /// No description provided for @requestRefundScreenPer.
+  ///
+  /// In en, this message translates to:
+  /// **'Per {_billingPeriod}'**
+  String requestRefundScreenPer(String _billingPeriod);
+
+  /// No description provided for @requestRefundScreenWeHaveReceivedYour.
+  ///
+  /// In en, this message translates to:
+  /// **'We have received your refund request for {planName}'**
+  String requestRefundScreenWeHaveReceivedYour(String planName);
+
+  /// No description provided for @settingsCardPartAccentColorGridUnlocksAtLevelKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocks at Level {unlockLevel} — keep going!'**
+  String settingsCardPartAccentColorGridUnlocksAtLevelKeep(Object unlockLevel);
+
+  /// No description provided for @settingsCardPartAccentColorGridLvl.
+  ///
+  /// In en, this message translates to:
+  /// **'Lvl {unlockLevel}'**
+  String settingsCardPartAccentColorGridLvl(Object unlockLevel);
+
+  /// No description provided for @settingsCardPartAccentColorGridValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{region} • {currentOffset}'**
+  String settingsCardPartAccentColorGridValue(
+    String region,
+    String currentOffset,
+  );
+
+  /// No description provided for @settingsCardPartAccentColorGridSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} selected'**
+  String settingsCardPartAccentColorGridSelected(Object length);
+
+  /// No description provided for @gymEquipmentSheetSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} selected'**
+  String gymEquipmentSheetSelected(Object length);
+
+  /// No description provided for @gymEquipmentSheetSaveItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {length} Items'**
+  String gymEquipmentSheetSaveItems(Object length);
+
+  /// No description provided for @heroFastingCardHM.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {mins}m'**
+  String heroFastingCardHM(Object hours, Object mins);
+
+  /// No description provided for @heroFastingCardOfHGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'of {targetHours}h goal'**
+  String heroFastingCardOfHGoal(Object targetHours);
+
+  /// No description provided for @heroFastingCardProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'{defaultProtocol} Protocol'**
+  String heroFastingCardProtocol(String defaultProtocol);
+
+  /// No description provided for @editProgramSheetPartEditProgramSheetStateOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{_generatingWorkout} of {_totalWorkoutsToGenerate}'**
+  String editProgramSheetPartEditProgramSheetStateOf(
+    String _generatingWorkout,
+    Object _totalWorkoutsToGenerate,
+  );
+
+  /// No description provided for @moodPickerCardStepOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {currentStep} of {totalSteps}'**
+  String moodPickerCardStepOf(String currentStep, Object totalSteps);
+
+  /// No description provided for @moodPickerCardGeneratingYourWorkout2.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating your {label} workout...'**
+  String moodPickerCardGeneratingYourWorkout2(String label);
+
+  /// No description provided for @moodPickerCardStepOf2.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {currentStep} of {totalSteps}'**
+  String moodPickerCardStepOf2(String currentStep, Object totalSteps);
+
+  /// No description provided for @caloriesSummaryCardKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{consumed} / {calorieTarget} kcal'**
+  String caloriesSummaryCardKcal(Object consumed, String calorieTarget);
+
+  /// No description provided for @caloriesSummaryCardCalPhase.
+  ///
+  /// In en, this message translates to:
+  /// **'+{delta} cal · {phase} phase'**
+  String caloriesSummaryCardCalPhase(String delta, String phase);
+
+  /// No description provided for @quickStartCardNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {name}'**
+  String quickStartCardNext(String name);
+
+  /// No description provided for @quickStartCardInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'In {daysUntilNext} days'**
+  String quickStartCardInDays(String daysUntilNext);
+
+  /// No description provided for @habitsTileCardMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{remainingCount} more'**
+  String habitsTileCardMore(Object remainingCount);
+
+  /// No description provided for @neatActivityCardH.
+  ///
+  /// In en, this message translates to:
+  /// **'{activeHours}h'**
+  String neatActivityCardH(Object activeHours);
+
+  /// No description provided for @weekChangesCardMoreNewExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'+{newExercises} more new exercises'**
+  String weekChangesCardMoreNewExercises(Object newExercises);
+
+  /// No description provided for @durationRangeSliderMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{minDuration} min'**
+  String durationRangeSliderMin(Object minDuration);
+
+  /// No description provided for @durationRangeSliderMin2.
+  ///
+  /// In en, this message translates to:
+  /// **'{maxDuration} min'**
+  String durationRangeSliderMin2(Object maxDuration);
+
+  /// No description provided for @dailyXpStripTodayGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: {completed}/{total} goals'**
+  String dailyXpStripTodayGoals(Object completed, Object total);
+
+  /// No description provided for @dailyXpStripX.
+  ///
+  /// In en, this message translates to:
+  /// **'{multiplier}x'**
+  String dailyXpStripX(Object multiplier);
+
+  /// No description provided for @dailyXpStripXp.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xpEarned} XP'**
+  String dailyXpStripXp(Object xpEarned);
+
+  /// No description provided for @workoutLoadingScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String workoutLoadingScreenValue(Object percentage);
+
+  /// No description provided for @strengthOverviewCardUiMuscleGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} muscle groups'**
+  String strengthOverviewCardUiMuscleGroups(Object length);
+
+  /// No description provided for @vo2maxDetailScreenCouldNotLoadVo.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load VO2max.\\n{error}'**
+  String vo2maxDetailScreenCouldNotLoadVo(String error);
+
+  /// No description provided for @vo2maxDetailScreenFitnessAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Fitness age {fitnessAge}'**
+  String vo2maxDetailScreenFitnessAge(String fitnessAge);
+
+  /// No description provided for @vo2maxDetailScreenAsOf.
+  ///
+  /// In en, this message translates to:
+  /// **'as of {whenStr}'**
+  String vo2maxDetailScreenAsOf(String whenStr);
+
+  /// No description provided for @vo2maxDetailScreenPts.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} pts'**
+  String vo2maxDetailScreenPts(Object length);
+
+  /// No description provided for @customExerciseCardExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{componentCount} exercises'**
+  String customExerciseCardExercises(Object componentCount);
+
+  /// No description provided for @customExerciseCardUsedTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {usageCount} times'**
+  String customExerciseCardUsedTimes(Object usageCount);
+
+  /// No description provided for @cycleScreenIJustLoggedMy.
+  ///
+  /// In en, this message translates to:
+  /// **'I just logged my {what}. Anything I should know?'**
+  String cycleScreenIJustLoggedMy(String what);
+
+  /// No description provided for @cycleScreenSwitchedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched to {displayName}'**
+  String cycleScreenSwitchedTo(String displayName);
+
+  /// No description provided for @cycleScreenCouldNotSwitchMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not switch mode: {e}'**
+  String cycleScreenCouldNotSwitchMode(String e);
+
+  /// No description provided for @habitProgressHeaderOf.
+  ///
+  /// In en, this message translates to:
+  /// **'of {total}'**
+  String habitProgressHeaderOf(Object total);
+
+  /// No description provided for @habitProgressHeaderComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}% complete'**
+  String habitProgressHeaderComplete(Object percentage);
+
+  /// No description provided for @xpGoalsScreenUi2Xp.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xp} XP'**
+  String xpGoalsScreenUi2Xp(String xp);
+
+  /// No description provided for @consistencyScoreCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{consistencyScore}%'**
+  String consistencyScoreCardValue(Object consistencyScore);
+
+  /// No description provided for @consistencyScoreCardDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentStreakValue} days'**
+  String consistencyScoreCardDays(String currentStreakValue);
+
+  /// No description provided for @netflixExercisesTabPartExerciseListCardFlexible.
+  ///
+  /// In en, this message translates to:
+  /// **'Flexible • {duration}'**
+  String netflixExercisesTabPartExerciseListCardFlexible(Object duration);
+
+  /// No description provided for @netflixExercisesTabPartExerciseListCardDaysWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysPerWeek} days/week • {duration}'**
+  String netflixExercisesTabPartExerciseListCardDaysWeek(
+    String daysPerWeek,
+    Object duration,
+  );
+
+  /// No description provided for @exercisesTabFailedToLoadExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load exercises: {error}'**
+  String exercisesTabFailedToLoadExercises(String error);
+
+  /// No description provided for @exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the offline video for \"{exerciseName}\"? You can re-download it anytime.'**
+  String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(
+    String exerciseName,
+  );
+
+  /// No description provided for @exerciseDetailSheetPartExerciseActionButtonsStateStapledTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Stapled \"{exerciseName}\" to {section} ({timing})'**
+  String exerciseDetailSheetPartExerciseActionButtonsStateStapledTo(
+    String exerciseName,
+    String section,
+    Object timing,
+  );
+
+  /// No description provided for @exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to staple: {e}'**
+  String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(
+    String e,
+  );
+
+  /// No description provided for @exerciseDetailSheetPartExerciseActionButtonsStateUnstapled.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{exerciseName}\" unstapled'**
+  String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(
+    String exerciseName,
+  );
+
+  /// No description provided for @exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced \"{selected}\" with \"{exerciseName}\"'**
+  String exerciseDetailSheetPartExerciseActionButtonsStateReplacedWith(
+    String selected,
+    String exerciseName,
+  );
+
+  /// No description provided for @exerciseCardAddedToQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{exerciseName}\" to queue'**
+  String exerciseCardAddedToQueue(String exerciseName);
+
+  /// No description provided for @exerciseCardAddedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{exerciseName}\" to {name}'**
+  String exerciseCardAddedTo(String exerciseName, String name);
+
+  /// No description provided for @flexibilityScoreCardTestsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{testsCompleted} tests completed'**
+  String flexibilityScoreCardTestsCompleted(Object testsCompleted);
+
+  /// No description provided for @flexibilityScoreCardTotalAssessments.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalAssessments} total assessments'**
+  String flexibilityScoreCardTotalAssessments(Object totalAssessments);
+
+  /// No description provided for @coachDashboardScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{nutritionPct}%'**
+  String coachDashboardScreenValue(Object nutritionPct);
+
+  /// No description provided for @coachDashboardScreenValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String coachDashboardScreenValue2(Object pct);
+
+  /// No description provided for @groupCreateSheetSelectFriendsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Friends ({length} selected)'**
+  String groupCreateSheetSelectFriendsSelected(Object length);
+
+  /// No description provided for @groupCreateSheetNoFriendsMatching.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends matching \"{searchQuery}\"'**
+  String groupCreateSheetNoFriendsMatching(String searchQuery);
+
+  /// No description provided for @socialScreenPartMessagesScreenGroupCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Group \"{name}\" created'**
+  String socialScreenPartMessagesScreenGroupCreated(String name);
+
+  /// No description provided for @socialScreenPartMessagesScreenSelectMembersSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select members ({length} selected)'**
+  String socialScreenPartMessagesScreenSelectMembersSelected(Object length);
+
+  /// No description provided for @conversationScreenIsTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'{first} is typing...'**
+  String conversationScreenIsTyping(String first);
+
+  /// No description provided for @conversationScreenPeopleTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} people typing...'**
+  String conversationScreenPeopleTyping(Object length);
+
+  /// No description provided for @challengeCardParticipating.
+  ///
+  /// In en, this message translates to:
+  /// **'{participantCount} participating'**
+  String challengeCardParticipating(Object participantCount);
+
+  /// No description provided for @challengeCardDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysRemaining} days left'**
+  String challengeCardDaysLeft(String daysRemaining);
+
+  /// No description provided for @friendCardDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentStreak} day streak'**
+  String friendCardDayStreak(String currentStreak);
+
+  /// No description provided for @friendCardWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkouts} workouts'**
+  String friendCardWorkouts(Object totalWorkouts);
+
+  /// No description provided for @friendCardBadges.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalAchievements} badges'**
+  String friendCardBadges(Object totalAchievements);
+
+  /// No description provided for @friendCardSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} Support'**
+  String friendCardSupport(String appName);
+
+  /// No description provided for @hormonalHealthScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}/10'**
+  String hormonalHealthScreenValue(String value);
+
+  /// No description provided for @cycleTrackerWidgetDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {cycleLength}'**
+  String cycleTrackerWidgetDay(Object cycleLength);
+
+  /// No description provided for @cycleTrackerWidgetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: '**
+  String cycleTrackerWidgetValue(String label);
+
+  /// No description provided for @reportInjuryScreenFailedToReportInjury.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to report injury: {e}'**
+  String reportInjuryScreenFailedToReportInjury(String e);
+
+  /// No description provided for @inventoryScreenHM.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String inventoryScreenHM(Object hours, Object minutes);
+
+  /// No description provided for @inventoryScreenHMRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m remaining'**
+  String inventoryScreenHMRemaining(Object hours, Object minutes);
+
+  /// No description provided for @inventoryScreenToClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'{pendingCount} to claim'**
+  String inventoryScreenToClaim(Object pendingCount);
+
+  /// No description provided for @recipeHistoryScreenScheduleSNowUse.
+  ///
+  /// In en, this message translates to:
+  /// **'{schedulesUsingRecipeCount} schedule(s) now use the reverted version'**
+  String recipeHistoryScreenScheduleSNowUse(Object schedulesUsingRecipeCount);
+
+  /// No description provided for @recipeHistoryScreenV.
+  ///
+  /// In en, this message translates to:
+  /// **'v{versionNumber}'**
+  String recipeHistoryScreenV(Object versionNumber);
+
+  /// No description provided for @recipeHistoryScreenVV.
+  ///
+  /// In en, this message translates to:
+  /// **'v{fromVersion} → v{toVersion}'**
+  String recipeHistoryScreenVV(String fromVersion, String toVersion);
+
+  /// No description provided for @recipeHistoryScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{f}  →  {f1}'**
+  String recipeHistoryScreenValue(String f, String f1);
+
+  /// No description provided for @publicRecipeScreenByViewsSaves.
+  ///
+  /// In en, this message translates to:
+  /// **'by {authorDisplayName} · {viewCount} views · {saveCount} saves'**
+  String publicRecipeScreenByViewsSaves(
+    String authorDisplayName,
+    Object viewCount,
+    Object saveCount,
+  );
+
+  /// No description provided for @coachReviewSheetAllergenAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Allergen alert: {allergenFlags}'**
+  String coachReviewSheetAllergenAlert(String allergenFlags);
+
+  /// No description provided for @coachReviewSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{deficitPct}%'**
+  String coachReviewSheetValue(Object deficitPct);
+
+  /// No description provided for @coachReviewSheetValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{targetLabel} → {suggestedLabel}'**
+  String coachReviewSheetValue2(String targetLabel, String suggestedLabel);
+
+  /// No description provided for @hydrationSummaryBlockMl.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentMl} / {goalMl} ml'**
+  String hydrationSummaryBlockMl(String currentMl, String goalMl);
+
+  /// No description provided for @hydrationSummaryBlockValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentageInt}%'**
+  String hydrationSummaryBlockValue(Object percentageInt);
+
+  /// No description provided for @hydrationSummaryBlockGal.
+  ///
+  /// In en, this message translates to:
+  /// **'({gallons} / {goalGallons} gal)'**
+  String hydrationSummaryBlockGal(String gallons, String goalGallons);
+
+  /// No description provided for @foodBrowserPanelPartFoodBrowserItemValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{healthScore}/10'**
+  String foodBrowserPanelPartFoodBrowserItemValue(Object healthScore);
+
+  /// No description provided for @foodBrowserPanelPartFoodBrowserItemValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{healthScore}/10'**
+  String foodBrowserPanelPartFoodBrowserItemValue2(Object healthScore);
+
+  /// No description provided for @exerciseNavigationMixinUiRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed'**
+  String exerciseNavigationMixinUiRemoved(String name);
+
+  /// No description provided for @editWorkoutEquipmentSheetItemsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} items selected'**
+  String editWorkoutEquipmentSheetItemsSelected(Object length);
+
+  /// No description provided for @editWorkoutEquipmentSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'({selectedInCategory}/{length})'**
+  String editWorkoutEquipmentSheetValue(
+    String selectedInCategory,
+    Object length,
+  );
+
+  /// No description provided for @timedExerciseTimerSetOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {setNumber} of {totalSets}'**
+  String timedExerciseTimerSetOf(Object setNumber, Object totalSets);
+
+  /// No description provided for @supersetIndicatorSuperset.
+  ///
+  /// In en, this message translates to:
+  /// **'SUPERSET {groupNumber}'**
+  String supersetIndicatorSuperset(Object groupNumber);
+
+  /// No description provided for @supersetIndicatorSs.
+  ///
+  /// In en, this message translates to:
+  /// **'SS{groupNumber}'**
+  String supersetIndicatorSs(Object groupNumber);
+
+  /// No description provided for @intensityPromptSheetSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {setNumber} · {exerciseName}'**
+  String intensityPromptSheetSet(Object setNumber, String exerciseName);
+
+  /// No description provided for @numberInputWidgetsTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target ({targetReps})'**
+  String numberInputWidgetsTarget(Object targetReps);
+
+  /// No description provided for @numberInputWidgetsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{accuracyPercent}%'**
+  String numberInputWidgetsValue(Object accuracyPercent);
+
+  /// No description provided for @numberInputWidgetsTarget2.
+  ///
+  /// In en, this message translates to:
+  /// **'Target: {targetReps}'**
+  String numberInputWidgetsTarget2(Object targetReps);
+
+  /// No description provided for @quickWorkoutSheetPartQuickWorkoutSheetStateExt1X.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty}x'**
+  String quickWorkoutSheetPartQuickWorkoutSheetStateExt1X(String qty);
+
+  /// No description provided for @progressionSuggestionCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{difficultyIncrease}'**
+  String progressionSuggestionCardValue(String difficultyIncrease);
+
+  /// No description provided for @progressionSuggestionCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentExercise} -> {suggestedExercise}'**
+  String progressionSuggestionCardValue2(
+    String currentExercise,
+    String suggestedExercise,
+  );
+
+  /// No description provided for @progressionSuggestionCardValue3.
+  ///
+  /// In en, this message translates to:
+  /// **'+{difficultyIncrease}'**
+  String progressionSuggestionCardValue3(String difficultyIncrease);
+
+  /// No description provided for @supersetReorderSheetEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {_originalTypeLabel} {groupNumber}'**
+  String supersetReorderSheetEdit(
+    String _originalTypeLabel,
+    Object groupNumber,
+  );
+
+  /// No description provided for @exerciseBreakdownTemplateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{sets} × {reps}'**
+  String exerciseBreakdownTemplateValue(Object sets, Object reps);
+
+  /// No description provided for @wrappedTemplateSets.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutName} SETS'**
+  String wrappedTemplateSets(String workoutName);
+
+  /// No description provided for @prsTemplateValue.
+  ///
+  /// In en, this message translates to:
+  /// **') (unit)'**
+  String prsTemplateValue(String unit);
+
+  /// No description provided for @prsTemplateValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'+{improvement} {unit}'**
+  String prsTemplateValue2(String improvement, String unit);
+
+  /// No description provided for @prsTemplateAchievementsUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'+{length} Achievements Unlocked'**
+  String prsTemplateAchievementsUnlocked(Object length);
+
+  /// No description provided for @shareBodyAnalyzerSheetBodyAnalyzer.
+  ///
+  /// In en, this message translates to:
+  /// **'@{appName} · Body Analyzer'**
+  String shareBodyAnalyzerSheetBodyAnalyzer(String appName);
+
+  /// No description provided for @goalCardPermanentlyRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently remove \"{exerciseName}\"'**
+  String goalCardPermanentlyRemove(String exerciseName);
+
+  /// No description provided for @goalCardDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysRemaining} days left'**
+  String goalCardDaysLeft(String daysRemaining);
+
+  /// No description provided for @statsWeeklyReportTemplateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{_completionPercent}%'**
+  String statsWeeklyReportTemplateValue(Object _completionPercent);
+
+  /// No description provided for @statsWeeklyReportTemplateDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentStreak} days'**
+  String statsWeeklyReportTemplateDays(String currentStreak);
+
+  /// No description provided for @statsWeeklyReportTemplateWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkouts} workouts'**
+  String statsWeeklyReportTemplateWorkouts(Object totalWorkouts);
+
+  /// No description provided for @statsOverviewTemplateDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{currentStreak} day streak'**
+  String statsOverviewTemplateDayStreak(String currentStreak);
+
+  /// No description provided for @personalInfoScreenFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String personalInfoScreenFailedToSave(String e);
+
+  /// No description provided for @quizEquipmentUsersSnappedEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'{apiBaseUrl}/users/{userId}/snapped-equipment'**
+  String quizEquipmentUsersSnappedEquipment(String apiBaseUrl, String userId);
+
+  /// No description provided for @reportShareSheetShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share {title}'**
+  String reportShareSheetShare(String title);
+
+  /// No description provided for @scheduleMismatchDialogRequiresDaysPerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{splitName} requires {requiredDays} days per week, but you currently have {currentDayCount} days selected.'**
+  String scheduleMismatchDialogRequiresDaysPerWeek(
+    String splitName,
+    String requiredDays,
+    Object currentDayCount,
+  );
+
+  /// No description provided for @scheduleMismatchDialogAiWillSwitchTo.
+  ///
+  /// In en, this message translates to:
+  /// **'AI will switch to {compatibleSplitName} instead'**
+  String scheduleMismatchDialogAiWillSwitchTo(String compatibleSplitName);
+
+  /// No description provided for @scheduleMismatchDialogUpdateToSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Update to {splitName} schedule'**
+  String scheduleMismatchDialogUpdateToSchedule(String splitName);
+
+  /// No description provided for @scheduleMismatchDialogUseTheFullDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the full {requiredDays}-day program'**
+  String scheduleMismatchDialogUseTheFullDay(String requiredDays);
+
+  /// No description provided for @heartRateChartValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: {value}'**
+  String heartRateChartValue(String label, String value);
+
+  /// No description provided for @trophyCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPercentage}%'**
+  String trophyCardValue(Object progressPercentage);
+
+  /// No description provided for @trophyCardXp.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xpReward} XP'**
+  String trophyCardXp(String xpReward);
+
+  /// No description provided for @levelUpDialogPartAccomplishmentNextRewardAtLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT REWARD AT LEVEL {widget}'**
+  String levelUpDialogPartAccomplishmentNextRewardAtLevel(Object widget);
+
+  /// No description provided for @doubleXpBannerX.
+  ///
+  /// In en, this message translates to:
+  /// **'{xpMultiplier}x'**
+  String doubleXpBannerX(String xpMultiplier);
+
+  /// No description provided for @doubleXpBannerEndsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends in {formattedTimeRemaining}'**
+  String doubleXpBannerEndsIn(String formattedTimeRemaining);
+
+  /// No description provided for @doubleXpBannerX2.
+  ///
+  /// In en, this message translates to:
+  /// **'{multiplier}x'**
+  String doubleXpBannerX2(String multiplier);
+
+  /// No description provided for @heartRateChartPartZoneLegendItemM.
+  ///
+  /// In en, this message translates to:
+  /// **'{shortLabel} {minutes}m ({percent}%)'**
+  String heartRateChartPartZoneLegendItemM(
+    String shortLabel,
+    Object minutes,
+    Object percent,
+  );
+
+  /// No description provided for @heartRateChartPartZoneLegendItemZone.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} Zone'**
+  String heartRateChartPartZoneLegendItemZone(String name);
+
+  /// No description provided for @heartRateChartPartZoneLegendItemHeartRateOfMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Heart Rate: {percentageRange} of max'**
+  String heartRateChartPartZoneLegendItemHeartRateOfMax(Object percentageRange);
+
+  /// No description provided for @log1rmSheetKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{widget} kg'**
+  String log1rmSheetKg(String widget);
+
+  /// No description provided for @log1rmSheetRpe.
+  ///
+  /// In en, this message translates to:
+  /// **'RPE {_rpe}'**
+  String log1rmSheetRpe(String _rpe);
+
+  /// No description provided for @fitnessCrateDialogCrate.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} CRATE'**
+  String fitnessCrateDialogCrate(String displayName);
+
+  /// No description provided for @metricPickerSheetSearchMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Search {length} metrics…'**
+  String metricPickerSheetSearchMetrics(Object length);
+
+  /// No description provided for @metricPickerSheetNoMetricMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No metric matches “{text}”'**
+  String metricPickerSheetNoMetricMatches(String text);
+
+  /// No description provided for @metricPickerSheetResults.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} RESULTS'**
+  String metricPickerSheetResults(Object length);
+
+  /// No description provided for @demoActiveWorkoutScreenCompleteSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Set {_currentSet}'**
+  String demoActiveWorkoutScreenCompleteSet(String _currentSet);
+
+  /// No description provided for @progressionPaceScreenWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{weeksToProgress} weeks'**
+  String progressionPaceScreenWeeks(String weeksToProgress);
+
+  /// No description provided for @progressionPaceScreenEveryWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {deloadFrequency} weeks'**
+  String progressionPaceScreenEveryWeeks(String deloadFrequency);
+
+  /// No description provided for @exerciseScienceResearchScreenEveryWorkoutParameterIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Every workout parameter in {appName} is derived from peer-reviewed exercise science. Tap a paper to see details.'**
+  String exerciseScienceResearchScreenEveryWorkoutParameterIn(String appName);
+
+  /// No description provided for @exerciseScienceResearchScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{journal}, {year}'**
+  String exerciseScienceResearchScreenValue(String journal, String year);
+
+  /// No description provided for @exerciseScienceResearchScreenHowUsesThis.
+  ///
+  /// In en, this message translates to:
+  /// **'How {appName} uses this'**
+  String exerciseScienceResearchScreenHowUsesThis(String appName);
+
+  /// No description provided for @bleHeartRateSectionDbm.
+  ///
+  /// In en, this message translates to:
+  /// **'{rssi} dBm'**
+  String bleHeartRateSectionDbm(String rssi);
+
+  /// No description provided for @freshnessDecayCardK.
+  ///
+  /// In en, this message translates to:
+  /// **'k = {_freshnessDecay}'**
+  String freshnessDecayCardK(String _freshnessDecay);
+
+  /// No description provided for @vacationModePageFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String vacationModePageFailedToSave(String e);
+
+  /// No description provided for @environmentListScreenEnvironmentSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Environment \"{name}\" saved'**
+  String environmentListScreenEnvironmentSaved(String name);
+
+  /// No description provided for @environmentListScreenEquipmentItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} equipment items'**
+  String environmentListScreenEquipmentItems(Object length);
+
+  /// No description provided for @environmentListScreenMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{currentEquipment} more'**
+  String environmentListScreenMore(Object currentEquipment);
+
+  /// No description provided for @environmentDetailScreenRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} removed'**
+  String environmentDetailScreenRemoved(String displayName);
+
+  /// No description provided for @environmentDetailScreenSwitchedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Switched to {displayName}'**
+  String environmentDetailScreenSwitchedTo(String displayName);
+
+  /// No description provided for @environmentDetailScreenEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {displayName}'**
+  String environmentDetailScreenEdit(String displayName);
+
+  /// No description provided for @homeScreenUi3Workouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} workouts'**
+  String homeScreenUi3Workouts(Object length);
+
+  /// No description provided for @homeScreenUi1MoreTiles.
+  ///
+  /// In en, this message translates to:
+  /// **'+{tiles} more tiles'**
+  String homeScreenUi1MoreTiles(Object tiles);
+
+  /// No description provided for @homeScreenUi1Workouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} workouts'**
+  String homeScreenUi1Workouts(Object length);
+
+  /// No description provided for @trialProgressWidgetTrialDay.
+  ///
+  /// In en, this message translates to:
+  /// **'TRIAL · DAY {dayOfTrial} / 7'**
+  String trialProgressWidgetTrialDay(String dayOfTrial);
+
+  /// No description provided for @trialProgressWidgetDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{daysRemaining} days left'**
+  String trialProgressWidgetDaysLeft(String daysRemaining);
+
+  /// No description provided for @timelineEntryTileValue.
+  ///
+  /// In en, this message translates to:
+  /// **'💬 {coachNote}'**
+  String timelineEntryTileValue(Object coachNote);
+
+  /// No description provided for @heroWorkoutCardModesVariantComingWithThe.
+  ///
+  /// In en, this message translates to:
+  /// **'{which} variant coming with the backend variant generator'**
+  String heroWorkoutCardModesVariantComingWithThe(String which);
+
+  /// No description provided for @editGymProfileSheetEquipmentItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} Equipment Items'**
+  String editGymProfileSheetEquipmentItems(Object length);
+
+  /// No description provided for @achievementsCardBadges.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalAchieved} badges'**
+  String achievementsCardBadges(Object totalAchieved);
+
+  /// No description provided for @todayWorkoutCardNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {name}'**
+  String todayWorkoutCardNext(String name);
+
+  /// No description provided for @todayWorkoutCardInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'In {daysUntilNext} days'**
+  String todayWorkoutCardInDays(String daysUntilNext);
+
+  /// No description provided for @weeklyReportCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String weeklyReportCardValue(Object pct);
+
+  /// No description provided for @weeklyReportCardOfWorkoutsThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed} of {scheduled} workouts this week'**
+  String weeklyReportCardOfWorkoutsThisWeek(String completed, String scheduled);
+
+  /// No description provided for @weeklyReportCardDayStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{streak} day streak'**
+  String weeklyReportCardDayStreak(String streak);
+
+  /// No description provided for @durationSliderMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} min'**
+  String durationSliderMin(Object duration);
+
+  /// No description provided for @durationSliderMin2.
+  ///
+  /// In en, this message translates to:
+  /// **'{minDuration} min'**
+  String durationSliderMin2(Object minDuration);
+
+  /// No description provided for @durationSliderMin3.
+  ///
+  /// In en, this message translates to:
+  /// **'{maxDuration} min'**
+  String durationSliderMin3(Object maxDuration);
+
+  /// No description provided for @safetyDisclaimerBannerMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{overflow} more'**
+  String safetyDisclaimerBannerMore(String overflow);
+
+  /// No description provided for @scheduleScreenPartWeekSelectorMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{bestDurationMinutes} min'**
+  String scheduleScreenPartWeekSelectorMin(Object bestDurationMinutes);
+
+  /// No description provided for @scheduleScreenPartWeekSelectorEx.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseCount} ex'**
+  String scheduleScreenPartWeekSelectorEx(Object exerciseCount);
+
+  /// No description provided for @comparisonViewExtSelectedPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} selected ({minPhotos}-{maxPhotos} photos)'**
+  String comparisonViewExtSelectedPhotos(
+    Object length,
+    Object minPhotos,
+    Object maxPhotos,
+  );
+
+  /// No description provided for @comparisonViewExtSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} / {photoCount} selected'**
+  String comparisonViewExtSelected(Object length, Object photoCount);
+
+  /// No description provided for @muscleFrequencyChartX.
+  ///
+  /// In en, this message translates to:
+  /// **'{frequency}x'**
+  String muscleFrequencyChartX(String frequency);
+
+  /// No description provided for @muscleFrequencyChartX2.
+  ///
+  /// In en, this message translates to:
+  /// **'{frequency}x'**
+  String muscleFrequencyChartX2(String frequency);
+
+  /// No description provided for @muscleFrequencyChartXWk.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}x/wk'**
+  String muscleFrequencyChartXWk(String value);
+
+  /// No description provided for @managedGymCardGymProfilesTapTo.
+  ///
+  /// In en, this message translates to:
+  /// **'{profileCount} gym profiles · tap to switch'**
+  String managedGymCardGymProfilesTapTo(Object profileCount);
+
+  /// No description provided for @dayCardNoteS.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} note(s)'**
+  String dayCardNoteS(Object length);
+
+  /// No description provided for @planHeaderDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{trainingDayCount} days'**
+  String planHeaderDays(Object trainingDayCount);
+
+  /// No description provided for @planHeaderDays2.
+  ///
+  /// In en, this message translates to:
+  /// **'{restDayCount} days'**
+  String planHeaderDays2(Object restDayCount);
+
+  /// No description provided for @logPeriodSheetWithNoEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'{cycleDates} with no end '**
+  String logPeriodSheetWithNoEnd(String cycleDates);
+
+  /// No description provided for @logPeriodSheetCouldNotSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save: {e}'**
+  String logPeriodSheetCouldNotSave(String e);
+
+  /// No description provided for @logPeriodSheetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Started {cycleDates}'**
+  String logPeriodSheetStarted(String cycleDates);
+
+  /// No description provided for @myBadgesShowcaseEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} earned / {totalTrophies}'**
+  String myBadgesShowcaseEarned(Object length, Object totalTrophies);
+
+  /// No description provided for @myBadgesShowcaseEarned2.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} earned'**
+  String myBadgesShowcaseEarned2(Object length);
+
+  /// No description provided for @myBadgesShowcaseBadgesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{total} badges available'**
+  String myBadgesShowcaseBadgesAvailable(Object total);
+
+  /// No description provided for @habitsScreenUiCreatedXpBonus.
+  ///
+  /// In en, this message translates to:
+  /// **'Created \"{habitName}\" +{xpAwarded} XP bonus!'**
+  String habitsScreenUiCreatedXpBonus(String habitName, String xpAwarded);
+
+  /// No description provided for @habitsScreenUiCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Created \"{habitName}\"'**
+  String habitsScreenUiCreated(String habitName);
+
+  /// No description provided for @habitsScreenUiFailedToCreateHabit.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create habit: {e}'**
+  String habitsScreenUiFailedToCreateHabit(String e);
+
+  /// No description provided for @nutritionScoreCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%'**
+  String nutritionScoreCardValue(Object percent);
+
+  /// No description provided for @netflixExercisesTabUiAllExercisesLoaded.
+  ///
+  /// In en, this message translates to:
+  /// **'All {length} exercises loaded'**
+  String netflixExercisesTabUiAllExercisesLoaded(Object length);
+
+  /// No description provided for @weekDurationSelectorWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{selectedWeeks} weeks'**
+  String weekDurationSelectorWeeks(String selectedWeeks);
+
+  /// No description provided for @weekDurationSelectorWk.
+  ///
+  /// In en, this message translates to:
+  /// **'{spw}/wk'**
+  String weekDurationSelectorWk(String spw);
+
+  /// No description provided for @weekDurationSelectorW.
+  ///
+  /// In en, this message translates to:
+  /// **'{first}w'**
+  String weekDurationSelectorW(String first);
+
+  /// No description provided for @flexibilityAssessmentScreenViewAllTests.
+  ///
+  /// In en, this message translates to:
+  /// **'View all {length} tests'**
+  String flexibilityAssessmentScreenViewAllTests(Object length);
+
+  /// No description provided for @flexibilityAssessmentScreenCurrentRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Rating: {rating}'**
+  String flexibilityAssessmentScreenCurrentRating(String rating);
+
+  /// No description provided for @cosmeticsGalleryScreenFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} frame'**
+  String cosmeticsGalleryScreenFrame(String displayName);
+
+  /// No description provided for @cosmeticsGalleryScreenUnlocksAtLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocks at Level {unlockLevel}'**
+  String cosmeticsGalleryScreenUnlocksAtLevel(Object unlockLevel);
+
+  /// No description provided for @askCoachButtonAskCoachAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask coach about {contextLabel}'**
+  String askCoachButtonAskCoachAbout(String contextLabel);
+
+  /// No description provided for @fastingScreenFailedToStartFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to start fast: {e}'**
+  String fastingScreenFailedToStartFast(String e);
+
+  /// No description provided for @fastingScreenYouVeBeenFasting.
+  ///
+  /// In en, this message translates to:
+  /// **'You\\\'ve been fasting for {elapsedTimeFormatted}'**
+  String fastingScreenYouVeBeenFasting(String elapsedTimeFormatted);
+
+  /// No description provided for @protocolSelectorSheetHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{_customHours} hours'**
+  String protocolSelectorSheetHours(Object _customHours);
+
+  /// No description provided for @activityCardPartChallengeLeaderboardM.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration}m'**
+  String activityCardPartChallengeLeaderboardM(Object duration);
+
+  /// No description provided for @typingIndicatorIsTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'{agentName} is typing'**
+  String typingIndicatorIsTyping(String agentName);
+
+  /// No description provided for @typingIndicatorIsTyping2.
+  ///
+  /// In en, this message translates to:
+  /// **'{userName} is typing'**
+  String typingIndicatorIsTyping2(String userName);
+
+  /// No description provided for @typingIndicatorIsTyping3.
+  ///
+  /// In en, this message translates to:
+  /// **'{agentName} is typing...'**
+  String typingIndicatorIsTyping3(String agentName);
+
+  /// No description provided for @queuePositionCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{position}'**
+  String queuePositionCardValue(String position);
+
+  /// No description provided for @queuePositionCardEstimatedWaitMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated wait: ~{estimatedWaitMinutes} min'**
+  String queuePositionCardEstimatedWaitMin(Object estimatedWaitMinutes);
+
+  /// No description provided for @queuePositionCardInQueue2.
+  ///
+  /// In en, this message translates to:
+  /// **'#{position} in queue'**
+  String queuePositionCardInQueue2(String position);
+
+  /// No description provided for @aiSettingsScreenPartAIHeaderCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'@{name}'**
+  String aiSettingsScreenPartAIHeaderCardValue(String name);
+
+  /// No description provided for @insightsPrsTemplateMorePrs.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {length} more PRs'**
+  String insightsPrsTemplateMorePrs(Object length);
+
+  /// No description provided for @insightsPrsTemplatePrs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} PRs'**
+  String insightsPrsTemplatePrs(Object count);
+
+  /// No description provided for @weeklyPrsTemplateMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {length} more'**
+  String weeklyPrsTemplateMore(Object length);
+
+  /// No description provided for @weeklyPrsTemplatePrs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} PRs'**
+  String weeklyPrsTemplatePrs(Object count);
+
+  /// No description provided for @nutritionSettingsScreenErrorSavingSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving settings: {e}'**
+  String nutritionSettingsScreenErrorSavingSettings(String e);
+
+  /// No description provided for @customFoodBuilderSheetAlreadyExistsAsA.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" already exists as a custom food'**
+  String customFoodBuilderSheetAlreadyExistsAsA(String name);
+
+  /// No description provided for @customFoodBuilderSheetNeedsEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}  •  needs entry'**
+  String customFoodBuilderSheetNeedsEntry(String label);
+
+  /// No description provided for @hydrationTabPartStatItemVia.
+  ///
+  /// In en, this message translates to:
+  /// **'via {label}'**
+  String hydrationTabPartStatItemVia(String label);
+
+  /// No description provided for @recipeScheduleScreenSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'Slots: {_batchSlots} / {_portionsMade}'**
+  String recipeScheduleScreenSlots(String _batchSlots, String _portionsMade);
+
+  /// No description provided for @recipeScheduleScreenValue.
+  ///
+  /// In en, this message translates to:
+  /// **'×{servings}'**
+  String recipeScheduleScreenValue(String servings);
+
+  /// No description provided for @inflammationAnalysisWidgetShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {sortedIngredients} more'**
+  String inflammationAnalysisWidgetShowMore(Object sortedIngredients);
+
+  /// No description provided for @moodHistoryScreenLastDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {daysTracked} days'**
+  String moodHistoryScreenLastDays(Object daysTracked);
+
+  /// No description provided for @moodHistoryScreenTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalCount} total'**
+  String moodHistoryScreenTotal(Object totalCount);
+
+  /// No description provided for @moodAnalyticsCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{completionRate}%'**
+  String moodAnalyticsCardValue(Object completionRate);
+
+  /// No description provided for @moodAnalyticsCardValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String moodAnalyticsCardValue2(Object percentage);
+
+  /// No description provided for @workoutDetailScreenUiValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: '**
+  String workoutDetailScreenUiValue(String label);
+
+  /// No description provided for @workoutDetailScreenUiSRest.
+  ///
+  /// In en, this message translates to:
+  /// **'{restSeconds}s rest'**
+  String workoutDetailScreenUiSRest(Object restSeconds);
+
+  /// No description provided for @foldableWarmupLayoutSec.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} sec'**
+  String foldableWarmupLayoutSec(Object duration);
+
+  /// No description provided for @foldableWarmupLayoutS.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration}s'**
+  String foldableWarmupLayoutS(Object duration);
+
+  /// No description provided for @restTimerOverlayS.
+  ///
+  /// In en, this message translates to:
+  /// **'{restSecondsRemaining}s'**
+  String restTimerOverlayS(Object restSecondsRemaining);
+
+  /// No description provided for @restTimerOverlayAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask {coachName}'**
+  String restTimerOverlayAsk(String coachName);
+
+  /// No description provided for @saunaDialogMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}min'**
+  String saunaDialogMin(Object minutes);
+
+  /// No description provided for @saunaDialogLogMinSauna.
+  ///
+  /// In en, this message translates to:
+  /// **'Log {selectedMinutes}min Sauna'**
+  String saunaDialogLogMinSauna(Object selectedMinutes);
+
+  /// No description provided for @postWorkoutHrGraphAvg.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg {avg}'**
+  String postWorkoutHrGraphAvg(Object avg);
+
+  /// No description provided for @postWorkoutHrGraphValue.
+  ///
+  /// In en, this message translates to:
+  /// **'−{recovery}'**
+  String postWorkoutHrGraphValue(String recovery);
+
+  /// No description provided for @prInlineCelebrationValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{improvementPercent}%'**
+  String prInlineCelebrationValue(Object improvementPercent);
+
+  /// No description provided for @prInlineCelebrationValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseName} • {formattedValue}'**
+  String prInlineCelebrationValue2(String exerciseName, String formattedValue);
+
+  /// No description provided for @prInlineCelebrationPersonalRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} Personal Records!'**
+  String prInlineCelebrationPersonalRecords(Object length);
+
+  /// No description provided for @rescheduleSheetSwapsWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Swaps with: {swapWorkoutName}'**
+  String rescheduleSheetSwapsWith(String swapWorkoutName);
+
+  /// No description provided for @prFullCelebrationReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{reps} reps'**
+  String prFullCelebrationReps(Object reps);
+
+  /// No description provided for @prFullCelebrationValue.
+  ///
+  /// In en, this message translates to:
+  /// **'(+{improvementPercent}%)'**
+  String prFullCelebrationValue(Object improvementPercent);
+
+  /// No description provided for @prFullCelebrationPersonalRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} Personal Records!'**
+  String prFullCelebrationPersonalRecords(Object length);
+
+  /// No description provided for @exercisePreviewOverlayTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target: {muscles}'**
+  String exercisePreviewOverlayTarget(String muscles);
+
+  /// No description provided for @exercisePreviewOverlayS.
+  ///
+  /// In en, this message translates to:
+  /// **'{_remainingSeconds}s'**
+  String exercisePreviewOverlayS(Object _remainingSeconds);
+
+  /// No description provided for @derivedMetricDetailScreenEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} entries'**
+  String derivedMetricDetailScreenEntries(Object length);
+
+  /// No description provided for @derivedMetricDetailScreenArmSymmetryComparesYour.
+  ///
+  /// In en, this message translates to:
+  /// **'Arm symmetry compares your left and right bicep measurements. {info}'**
+  String derivedMetricDetailScreenArmSymmetryComparesYour(String info);
+
+  /// No description provided for @derivedMetricDetailScreenLegSymmetryComparesYour.
+  ///
+  /// In en, this message translates to:
+  /// **'Leg symmetry compares your left and right thigh measurements. {info}'**
+  String derivedMetricDetailScreenLegSymmetryComparesYour(String info);
+
+  /// No description provided for @pauseInterceptSheetCouldnTPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t pause: {e}'**
+  String pauseInterceptSheetCouldnTPause(String e);
+
+  /// No description provided for @credibilityStripRatings.
+  ///
+  /// In en, this message translates to:
+  /// **'{rating} · {count} ratings'**
+  String credibilityStripRatings(String rating, Object count);
+
+  /// No description provided for @credibilityStripJoinPeopleTrainingWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Join {formatted}+ people training with Zealova'**
+  String credibilityStripJoinPeopleTrainingWith(String formatted);
+
+  /// No description provided for @credibilityStripValue.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{quote}\"'**
+  String credibilityStripValue(String quote);
+
+  /// No description provided for @friendAvatarsRowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{remaining} more'**
+  String friendAvatarsRowMore(String remaining);
+
+  /// No description provided for @notificationsScreenYouAndAreNow.
+  ///
+  /// In en, this message translates to:
+  /// **'You and {fromUserName} are now friends!'**
+  String notificationsScreenYouAndAreNow(String fromUserName);
+
+  /// No description provided for @cycleOnboardingSheetDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{_cycleLength} days'**
+  String cycleOnboardingSheetDays(Object _cycleLength);
+
+  /// No description provided for @cycleOnboardingSheetDays2.
+  ///
+  /// In en, this message translates to:
+  /// **'{_periodLength} days'**
+  String cycleOnboardingSheetDays2(Object _periodLength);
+
+  /// No description provided for @equipmentSearchSheetSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} selected'**
+  String equipmentSearchSheetSelected(Object length);
+
+  /// No description provided for @equipmentSearchSheetAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add \"{_searchQuery}\"'**
+  String equipmentSearchSheetAdd(String _searchQuery);
+
+  /// No description provided for @reportsHubScreenEverythingYouVeEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you\\\'ve earned in {appName}'**
+  String reportsHubScreenEverythingYouVeEarned(String appName);
+
+  /// No description provided for @deleteAccountFlowDeletingYourAccountDoes.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting your account does NOT cancel your {storeName} subscription. '**
+  String deleteAccountFlowDeletingYourAccountDoes(String storeName);
+
+  /// No description provided for @deleteAccountFlowYouWillContinueTo.
+  ///
+  /// In en, this message translates to:
+  /// **'You will continue to be billed unless you cancel from the {storeName} first.\\n\\n'**
+  String deleteAccountFlowYouWillContinueTo(String storeName);
+
+  /// No description provided for @deleteAccountFlowOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open {storeName}'**
+  String deleteAccountFlowOpen(String storeName);
+
+  /// No description provided for @xpLevelBarXp.
+  ///
+  /// In en, this message translates to:
+  /// **'{xpInCurrentLevel} / {xpToNextLevel} XP'**
+  String xpLevelBarXp(Object xpInCurrentLevel, Object xpToNextLevel);
+
+  /// No description provided for @xpLevelBarValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPercent}%'**
+  String xpLevelBarValue(Object progressPercent);
+
+  /// No description provided for @xpLevelBarValue2.
+  ///
+  /// In en, this message translates to:
+  /// **'{progressPercent}%'**
+  String xpLevelBarValue2(Object progressPercent);
+
+  /// No description provided for @elevationProfileM.
+  ///
+  /// In en, this message translates to:
+  /// **'+{ascent} m'**
+  String elevationProfileM(String ascent);
+
+  /// No description provided for @elevationProfileM2.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} m'**
+  String elevationProfileM2(String value);
+
+  /// No description provided for @healthMetricsCardReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'{readingCount} readings'**
+  String healthMetricsCardReadings(Object readingCount);
+
+  /// No description provided for @seniorFitnessScreenS.
+  ///
+  /// In en, this message translates to:
+  /// **'{restBetweenSets}s'**
+  String seniorFitnessScreenS(Object restBetweenSets);
+
+  /// No description provided for @avoidedExercisesScreenPartAvoidedExerciseCardUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {day}/{month}/{year}'**
+  String avoidedExercisesScreenPartAvoidedExerciseCardUntil(
+    String day,
+    String month,
+    String year,
+  );
+
+  /// No description provided for @avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Instead of {exerciseName}'**
+  String avoidedExercisesScreenPartAvoidedExerciseCardInsteadOf(
+    String exerciseName,
+  );
+
+  /// No description provided for @warmupCooldownCardMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{warmupDurationMinutes} min'**
+  String warmupCooldownCardMin(Object warmupDurationMinutes);
+
+  /// No description provided for @my1rmsScreenRemoveFromYourSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {exerciseName} from your saved 1RMs?'**
+  String my1rmsScreenRemoveFromYourSaved(String exerciseName);
+
+  /// No description provided for @workoutSettingsPageStepSizeTapTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Step size: {ref} · Tap to customize'**
+  String workoutSettingsPageStepSizeTapTo(Object ref);
+
+  /// No description provided for @workoutImportProgressSheetJobId.
+  ///
+  /// In en, this message translates to:
+  /// **'Job ID: {jobId}'**
+  String workoutImportProgressSheetJobId(String jobId);
+
+  /// No description provided for @unresolvedExercisesSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% · {source}'**
+  String unresolvedExercisesSheetValue(Object pct, String source);
+
+  /// No description provided for @workoutDaysSheetFailedToUpdateWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update workout days: {e}'**
+  String workoutDaysSheetFailedToUpdateWorkout(String e);
+
+  /// No description provided for @minimalHeaderD.
+  ///
+  /// In en, this message translates to:
+  /// **'{streakDays}d'**
+  String minimalHeaderD(String streakDays);
+
+  /// No description provided for @compactWorkoutRowMinExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{bestDurationMinutes}min • {exerciseCount} exercises'**
+  String compactWorkoutRowMinExercises(
+    Object bestDurationMinutes,
+    Object exerciseCount,
+  );
+
+  /// No description provided for @todayScoreSetupCardGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'GET STARTED · {completedCount}/{length}'**
+  String todayScoreSetupCardGetStarted(Object completedCount, Object length);
+
+  /// No description provided for @todayScoreSetupCardContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue: {label}'**
+  String todayScoreSetupCardContinue(String label);
+
+  /// No description provided for @upcomingWorkoutCardMExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'{workout}m - {exerciseCount} exercises'**
+  String upcomingWorkoutCardMExercises(Object workout, Object exerciseCount);
+
+  /// No description provided for @weeklyProgressCardOfWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed} of {total} workouts'**
+  String weeklyProgressCardOfWorkouts(Object completed, Object total);
+
+  /// No description provided for @difficultySelectorModeIsDesignedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} mode is designed for experienced athletes. As a beginner, this may lead to injury or burnout. We recommend starting with Beginner or Moderate difficulty.'**
+  String difficultySelectorModeIsDesignedFor(String displayName);
+
+  /// No description provided for @difficultySelectorModeMayBeIntense.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} mode may be intense for beginners. Consider starting with Beginner or Moderate difficulty and progressing as you build strength and endurance.'**
+  String difficultySelectorModeMayBeIntense(String displayName);
+
+  /// No description provided for @googleCalendarConnectSheetConnectYourGoogleCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your Google Calendar to see your busy times and sync {appName} events'**
+  String googleCalendarConnectSheetConnectYourGoogleCalendar(String appName);
+
+  /// No description provided for @scheduleItemCardMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationMinutes} min'**
+  String scheduleItemCardMin(Object durationMinutes);
+
+  /// No description provided for @logMeasurementSheetFailedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {e}'**
+  String logMeasurementSheetFailedToSave(String e);
+
+  /// No description provided for @comparisonGalleryValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{beforeDate}  ->  {afterDate}'**
+  String comparisonGalleryValue(String beforeDate, String afterDate);
+
+  /// No description provided for @progressShareGalleryScreenViralFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} viral formats'**
+  String progressShareGalleryScreenViralFormats(Object length);
+
+  /// No description provided for @readinessCheckinCardReadiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Readiness: {readinessScore}'**
+  String readinessCheckinCardReadiness(Object readinessScore);
+
+  /// No description provided for @formComparisonResultCardReps.
+  ///
+  /// In en, this message translates to:
+  /// **'{repCount} reps'**
+  String formComparisonResultCardReps(Object repCount);
+
+  /// No description provided for @equipmentMatchCardExerciseYouCanDo.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} exercise{matches} you can do here'**
+  String equipmentMatchCardExerciseYouCanDo(Object length, Object matches);
+
+  /// No description provided for @cardioPrHistorySheetCouldNotLoadCardio.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load cardio PRs: {err}'**
+  String cardioPrHistorySheetCouldNotLoadCardio(String err);
+
+  /// No description provided for @cycleDayDetailSheetPhase.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} phase'**
+  String cycleDayDetailSheetPhase(String displayName);
+
+  /// No description provided for @suggestFeatureSheetYouVeUsedAll.
+  ///
+  /// In en, this message translates to:
+  /// **'You\\\'ve used all {used} of your {used} suggestions. Vote on existing features instead!'**
+  String suggestFeatureSheetYouVeUsedAll(String used);
+
+  /// No description provided for @habitTemplatesSheetTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target: {suggestedTargetCount} {unit}'**
+  String habitTemplatesSheetTarget(Object suggestedTargetCount, String unit);
+
+  /// No description provided for @myLibraryTabPartCustomExercisesSectionFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites ({length})'**
+  String myLibraryTabPartCustomExercisesSectionFavorites(Object length);
+
+  /// No description provided for @myLibraryTabPartCustomExercisesSectionStaples.
+  ///
+  /// In en, this message translates to:
+  /// **'Staples ({length})'**
+  String myLibraryTabPartCustomExercisesSectionStaples(Object length);
+
+  /// No description provided for @comingSoonBottomSheetWeeksSessionsPerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationWeeks} weeks • {sessionsPerWeek} sessions per week'**
+  String comingSoonBottomSheetWeeksSessionsPerWeek(
+    Object durationWeeks,
+    String sessionsPerWeek,
+  );
+
+  /// No description provided for @recordAssessmentSheetTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top {assessment}%'**
+  String recordAssessmentSheetTop(Object assessment);
+
+  /// No description provided for @fastingScheduleEditorSheetFailedToSaveSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save schedule: {e}'**
+  String fastingScheduleEditorSheetFailedToSaveSchedule(String e);
+
+  /// No description provided for @fastingScheduleEditorSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName}  ·  {difficulty}'**
+  String fastingScheduleEditorSheetValue(String displayName, String difficulty);
+
+  /// No description provided for @userSearchResultCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'@{username}'**
+  String userSearchResultCardValue(String username);
+
+  /// No description provided for @userSearchResultCardWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalWorkouts} workouts'**
+  String userSearchResultCardWorkouts(Object totalWorkouts);
+
+  /// No description provided for @diabetesDashboardScreenGlucoseLoggedMgDl.
+  ///
+  /// In en, this message translates to:
+  /// **'Glucose logged: {value} mg/dL'**
+  String diabetesDashboardScreenGlucoseLoggedMgDl(String value);
+
+  /// No description provided for @diabetesDashboardScreenInsulinLoggedU.
+  ///
+  /// In en, this message translates to:
+  /// **'Insulin logged: {units} U'**
+  String diabetesDashboardScreenInsulinLoggedU(String units);
+
+  /// No description provided for @editableFitnessCardPartEditableFitnessCardStateExtMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{_selectedWarmupDuration}+{_selectedStretchDuration} min'**
+  String editableFitnessCardPartEditableFitnessCardStateExtMin(
+    Object _selectedWarmupDuration,
+    Object _selectedStretchDuration,
+  );
+
+  /// No description provided for @injuryDetailScreenPartCheckInSheetHowIsYourFeeling.
+  ///
+  /// In en, this message translates to:
+  /// **'How is your {bodyPartDisplay} feeling today?'**
+  String injuryDetailScreenPartCheckInSheetHowIsYourFeeling(
+    String bodyPartDisplay,
+  );
+
+  /// No description provided for @injuriesListScreenInjuries.
+  ///
+  /// In en, this message translates to:
+  /// **'/injuries/{id}'**
+  String injuriesListScreenInjuries(String id);
+
+  /// No description provided for @guestHomeScreenExploreWhatCanDo.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore what {appName} can do'**
+  String guestHomeScreenExploreWhatCanDo(String appName);
+
+  /// No description provided for @guestLibraryScreenShowingSampleExercisesSign.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {guestExerciseLimit} sample exercises. Sign up free to access 1700+ exercises!'**
+  String guestLibraryScreenShowingSampleExercisesSign(
+    String guestExerciseLimit,
+  );
+
+  /// No description provided for @weeklyPercentileHeroTopThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Top {topPct}% this week'**
+  String weeklyPercentileHeroTopThisWeek(Object topPct);
+
+  /// No description provided for @weeklyPercentileHeroOfActiveUsersTap.
+  ///
+  /// In en, this message translates to:
+  /// **'#{yourRank} of {totalActive} active users · tap for Discover'**
+  String weeklyPercentileHeroOfActiveUsersTap(
+    Object yourRank,
+    Object totalActive,
+  );
+
+  /// No description provided for @introCardFormatDataTotalvolumelbsRound.
+  ///
+  /// In en, this message translates to:
+  /// **').format(data.totalVolumeLbs.round())) lbs · (totalSets) sets'**
+  String introCardFormatDataTotalvolumelbsRound(Object totalSets);
+
+  /// No description provided for @consistencyCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutConsistencyPct}%'**
+  String consistencyCardValue(Object workoutConsistencyPct);
+
+  /// No description provided for @trophiesCardNewBadgesThisPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} new badges this period'**
+  String trophiesCardNewBadgesThisPeriod(Object length);
+
+  /// No description provided for @trophiesCardWrapped.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} Wrapped'**
+  String trophiesCardWrapped(String appName);
+
+  /// No description provided for @groceryListsIndexScreenOfChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'{checkedCount} of {itemCount} checked'**
+  String groceryListsIndexScreenOfChecked(
+    Object checkedCount,
+    Object itemCount,
+  );
+
+  /// No description provided for @recipeCardKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{caloriesPerServing} kcal'**
+  String recipeCardKcal(Object caloriesPerServing);
+
+  /// No description provided for @recipeCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'×{timesLogged}'**
+  String recipeCardValue(Object timesLogged);
+
+  /// No description provided for @liquidBodyHydrationValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String liquidBodyHydrationValue(Object percentage);
+
+  /// No description provided for @accuracyFeedbackSnackbarCal.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} — {calories} cal'**
+  String accuracyFeedbackSnackbarCal(String displayName, Object calories);
+
+  /// No description provided for @foodReportDialogValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{reportId}'**
+  String foodReportDialogValue(String reportId);
+
+  /// No description provided for @foodReportDialogFailedToSubmitReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit report: {e}'**
+  String foodReportDialogFailedToSubmitReport(String e);
+
+  /// No description provided for @aiSuggestionSectionSTip.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s Tip'**
+  String aiSuggestionSectionSTip(String name);
+
+  /// No description provided for @aiSuggestionSectionTry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try: {recommendedSwap}'**
+  String aiSuggestionSectionTry(String recommendedSwap);
+
+  /// No description provided for @fastingPanelLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{remainingTimeString} left'**
+  String fastingPanelLeft(String remainingTimeString);
+
+  /// No description provided for @workoutCompleteScreenExt2OfRated.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} of {length1} rated'**
+  String workoutCompleteScreenExt2OfRated(Object length, Object length1);
+
+  /// No description provided for @workoutCompleteScreenExt2PrKg.
+  ///
+  /// In en, this message translates to:
+  /// **'PR: {maxWeight} kg'**
+  String workoutCompleteScreenExt2PrKg(Object maxWeight);
+
+  /// No description provided for @programBuilderPartTemplateMetaEveryWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {current} weeks'**
+  String programBuilderPartTemplateMetaEveryWeeks(String current);
+
+  /// No description provided for @easyRestOverlaySetOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {nextSetNumber} of {totalSets}'**
+  String easyRestOverlaySetOf(Object nextSetNumber, Object totalSets);
+
+  /// No description provided for @inlineEditPillEditSetByReps.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit set, {_weightText} {unit} by {reps} reps'**
+  String inlineEditPillEditSetByReps(
+    Object _weightText,
+    String unit,
+    Object reps,
+  );
+
+  /// No description provided for @inlineEditPillValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{_weightText} {unit} × {reps}'**
+  String inlineEditPillValue(Object _weightText, String unit, Object reps);
+
+  /// No description provided for @preSetInsightBannerValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} · '**
+  String preSetInsightBannerValue(String label);
+
+  /// No description provided for @setRailOverflowRowSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {displayIndex}'**
+  String setRailOverflowRowSet(Object displayIndex);
+
+  /// No description provided for @workoutMiniPlayerS.
+  ///
+  /// In en, this message translates to:
+  /// **'{restSecondsRemaining}s'**
+  String workoutMiniPlayerS(Object restSecondsRemaining);
+
+  /// No description provided for @stretchPhaseScreenSec.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} sec'**
+  String stretchPhaseScreenSec(Object duration);
+
+  /// No description provided for @programLibraryCardWk.
+  ///
+  /// In en, this message translates to:
+  /// **'{durationWeeks} wk'**
+  String programLibraryCardWk(Object durationWeeks);
+
+  /// No description provided for @programLibraryCardWk2.
+  ///
+  /// In en, this message translates to:
+  /// **'{sessionsPerWeek}/wk'**
+  String programLibraryCardWk2(String sessionsPerWeek);
+
+  /// No description provided for @setTrackingOverlayUi1Of.
+  ///
+  /// In en, this message translates to:
+  /// **'{widget} of {totalExercises}'**
+  String setTrackingOverlayUi1Of(Object widget, Object totalExercises);
+
+  /// No description provided for @setTrackingOverlayUi1Value.
+  ///
+  /// In en, this message translates to:
+  /// **'{warmupWeight} × {warmupReps}'**
+  String setTrackingOverlayUi1Value(Object warmupWeight, Object warmupReps);
+
+  /// No description provided for @viralExtrasW.
+  ///
+  /// In en, this message translates to:
+  /// **'{marketingDomain}/w/{shortId}'**
+  String viralExtrasW(String marketingDomain, String shortId);
+
+  /// No description provided for @bodyAnalyzerCaptureScreenNoPhotosYetCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'No {label} photos yet — capture one from Progress.'**
+  String bodyAnalyzerCaptureScreenNoPhotosYetCapture(String label);
+
+  /// No description provided for @bodyAgeBadgeBodyAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Body age {bodyAge}'**
+  String bodyAgeBadgeBodyAge(String bodyAge);
+
+  /// No description provided for @bodyAgeBadgeYrVsActual.
+  ///
+  /// In en, this message translates to:
+  /// **'{sign}{delta} yr vs actual'**
+  String bodyAgeBadgeYrVsActual(String sign, String delta);
+
+  /// No description provided for @measurementBodyViewMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+{length} More'**
+  String measurementBodyViewMore(Object length);
+
+  /// No description provided for @paywallTimelineScreenFirstCharge.
+  ///
+  /// In en, this message translates to:
+  /// **'First charge: {dateFormat}'**
+  String paywallTimelineScreenFirstCharge(String dateFormat);
+
+  /// No description provided for @paywallTimelineScreenYouLlBeCharged.
+  ///
+  /// In en, this message translates to:
+  /// **'You\\\'ll be charged on {dateFormat}. Cancel anytime before - no questions asked.'**
+  String paywallTimelineScreenYouLlBeCharged(String dateFormat);
+
+  /// No description provided for @createGoalSheetTargetBestInOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {fullLabel} (best in one session)'**
+  String createGoalSheetTargetBestInOne(String fullLabel);
+
+  /// No description provided for @createGoalSheetTargetTotalThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Target {fullLabel} (total this week)'**
+  String createGoalSheetTargetTotalThisWeek(String fullLabel);
+
+  /// No description provided for @statsPrsTemplatePrs.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalPRCount} PRs'**
+  String statsPrsTemplatePrs(Object totalPRCount);
+
+  /// No description provided for @onboardingConfidenceScreenHowConfidentAreYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, how confident are you you\'ll get there?'**
+  String onboardingConfidenceScreenHowConfidentAreYou(String name);
+
+  /// No description provided for @onboardingConfidenceScreenOutOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} out of 10'**
+  String onboardingConfidenceScreenOutOf(String value);
+
+  /// No description provided for @founderNoteSheetANoteFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'A NOTE FROM {_founderName}'**
+  String founderNoteSheetANoteFrom(String _founderName);
+
+  /// No description provided for @founderNoteSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'— {_founderName}'**
+  String founderNoteSheetValue(String _founderName);
+
+  /// No description provided for @healthConnectOnboardingScreenConnectSoZealovaCan.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {_platformName} so Zealova can turn your '**
+  String healthConnectOnboardingScreenConnectSoZealovaCan(String _platformName);
+
+  /// No description provided for @healthConnectOnboardingScreenConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {_platformName}'**
+  String healthConnectOnboardingScreenConnect(String _platformName);
+
+  /// No description provided for @notificationPrimeScreenTurnOnNotificationsSo.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on notifications so {appName} can coach you when it matters most.'**
+  String notificationPrimeScreenTurnOnNotificationsSo(String appName);
+
+  /// No description provided for @quizMuscleFocusAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{availablePoints}/{maxTotalPoints} available'**
+  String quizMuscleFocusAvailable(
+    String availablePoints,
+    Object maxTotalPoints,
+  );
+
+  /// No description provided for @reportReceiptTemplateReportReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'REPORT RECEIPT · {periodLabel}'**
+  String reportReceiptTemplateReportReceipt(String periodLabel);
+
+  /// No description provided for @reportReceiptTemplateTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL {unit}'**
+  String reportReceiptTemplateTotal(String unit);
+
+  /// No description provided for @quickActionsSheetPartHeroActionCardHM.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {mins}m'**
+  String quickActionsSheetPartHeroActionCardHM(Object hours, Object mins);
+
+  /// No description provided for @quickActionsSheetPartHeroActionCardFailedToEndFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to end fast: {e}'**
+  String quickActionsSheetPartHeroActionCardFailedToEndFast(String e);
+
+  /// No description provided for @streakSavedDialogWeUsedStreakShield.
+  ///
+  /// In en, this message translates to:
+  /// **'We used 1 Streak Shield to keep your {savedStreakCount}-day streak alive.'**
+  String streakSavedDialogWeUsedStreakShield(Object savedStreakCount);
+
+  /// No description provided for @breathPromptWidgetStartsInS.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts in {_sessionSecondsLeft}s'**
+  String breathPromptWidgetStartsInS(Object _sessionSecondsLeft);
+
+  /// No description provided for @activityHeatmapTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'{timesPerformed} times'**
+  String activityHeatmapTimes(String timesPerformed);
+
+  /// No description provided for @trophyCeremonyOverlayLv.
+  ///
+  /// In en, this message translates to:
+  /// **'Lv.{level}'**
+  String trophyCeremonyOverlayLv(Object level);
+
+  /// No description provided for @racePredictorCardCouldNotLoadPredictions.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load predictions.\\n{message}'**
+  String racePredictorCardCouldNotLoadPredictions(String message);
+
+  /// No description provided for @workoutMetricChartNotEnoughDataTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough {label} data to chart.'**
+  String workoutMetricChartNotEnoughDataTo(String label);
+
+  /// No description provided for @livePrSnackbarRm.
+  ///
+  /// In en, this message translates to:
+  /// **'{weightStr}{unitLabel}×{reps}  →  {oneRmStr} {unitLabel} 1RM, '**
+  String livePrSnackbarRm(
+    Object weightStr,
+    String unitLabel,
+    Object reps,
+    String oneRmStr,
+  );
+
+  /// No description provided for @livePrSnackbarValue.
+  ///
+  /// In en, this message translates to:
+  /// **'+{deltaStr} {unitLabel}'**
+  String livePrSnackbarValue(String deltaStr, String unitLabel);
+
+  /// No description provided for @aiDataUsageScreenSendsYourFitnessProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} sends your fitness profile, chats, food photos, and form videos to models that generate personalized guidance. Here is exactly what happens.'**
+  String aiDataUsageScreenSendsYourFitnessProfile(String appName);
+
+  /// No description provided for @trainingMethodsScreenRest.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest: {restDisplayHint}'**
+  String trainingMethodsScreenRest(String restDisplayHint);
+
+  /// No description provided for @emailPreferencesSectionControlWhatEmailsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Control what emails you receive from {appName}'**
+  String emailPreferencesSectionControlWhatEmailsYou(String appName);
+
+  /// No description provided for @warmupSettingsSectionMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} ({minutes} min)'**
+  String warmupSettingsSectionMin(String label, Object minutes);
+
+  /// No description provided for @audioSettingsSectionValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayPct}%'**
+  String audioSettingsSectionValue(Object displayPct);
+
+  /// No description provided for @fontScaleCardX.
+  ///
+  /// In en, this message translates to:
+  /// **'{scale}x'**
+  String fontScaleCardX(String scale);
+
+  /// No description provided for @customColorLabCardMatched.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched: {displayName}'**
+  String customColorLabCardMatched(String displayName);
+
+  /// No description provided for @exportDialogPartExportDataDialogExportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Export {appName} Data'**
+  String exportDialogPartExportDataDialogExportData(String appName);
+
+  /// No description provided for @aiCoachPageTapToChange.
+  ///
+  /// In en, this message translates to:
+  /// **'{tagline} · Tap to change'**
+  String aiCoachPageTapToChange(String tagline);
+
+  /// No description provided for @workoutUiModeSheetMode.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} mode'**
+  String workoutUiModeSheetMode(String title);
+
+  /// No description provided for @templatePickerSheetTheOriginalHomeScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'The original {appName} home screen experience'**
+  String templatePickerSheetTheOriginalHomeScreen(String appName);
+
+  /// No description provided for @homeMySpaceScreenLayoutApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} layout applied'**
+  String homeMySpaceScreenLayoutApplied(String name);
+
+  /// No description provided for @addGymProfileSheetPartEquipmentFollowUpValue.
+  ///
+  /// In en, this message translates to:
+  /// **'#{currentColor}'**
+  String addGymProfileSheetPartEquipmentFollowUpValue(String currentColor);
+
+  /// No description provided for @scoreChangeAnnouncementSheetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} · {weight}%'**
+  String scoreChangeAnnouncementSheetValue(String label, Object weight);
+
+  /// No description provided for @myProgramSummaryCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutDays}  •  {experience}  •  {goal}'**
+  String myProgramSummaryCardValue(
+    String workoutDays,
+    String experience,
+    String goal,
+  );
+
+  /// No description provided for @collapsedBannerStripGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'{completedGoals}/{totalGoals} goals'**
+  String collapsedBannerStripGoals(String completedGoals, Object totalGoals);
+
+  /// No description provided for @cycleStatusCardDay.
+  ///
+  /// In en, this message translates to:
+  /// **'· Day {day}'**
+  String cycleStatusCardDay(String day);
+
+  /// No description provided for @recoveryPillsRowValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{scorePct}%'**
+  String recoveryPillsRowValue(Object scorePct);
+
+  /// No description provided for @smartInsightCardDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days'**
+  String smartInsightCardDays(String n);
+
+  /// No description provided for @macroRingsCardGG.
+  ///
+  /// In en, this message translates to:
+  /// **'{consumed}g / {target}g'**
+  String macroRingsCardGG(Object consumed, String target);
+
+  /// No description provided for @programMenuButtonGeneratedFreshWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated {generatedCount} fresh workouts!'**
+  String programMenuButtonGeneratedFreshWorkouts(Object generatedCount);
+
+  /// No description provided for @focusAreasSelectorSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{selectedCount} selected'**
+  String focusAreasSelectorSelected(Object selectedCount);
+
+  /// No description provided for @equipmentSelectorSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{selectedCount} selected'**
+  String equipmentSelectorSelected(Object selectedCount);
+
+  /// No description provided for @injuriesSelectorSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{selectedCount} selected'**
+  String injuriesSelectorSelected(Object selectedCount);
+
+  /// No description provided for @workoutDaysSelectorDaysWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} days/week'**
+  String workoutDaysSelectorDaysWeek(Object length);
+
+  /// No description provided for @milestoneCelebrationDialogPts.
+  ///
+  /// In en, this message translates to:
+  /// **'+{points} PTS'**
+  String milestoneCelebrationDialogPts(String points);
+
+  /// No description provided for @reportMessageSheetFailedToSubmitReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit report: {e}'**
+  String reportMessageSheetFailedToSubmitReport(String e);
+
+  /// No description provided for @enhancedEmptyStateTryAsking2.
+  ///
+  /// In en, this message translates to:
+  /// **'Try asking {name}'**
+  String enhancedEmptyStateTryAsking2(String name);
+
+  /// No description provided for @introScreenV.
+  ///
+  /// In en, this message translates to:
+  /// **'v{_appVersion}'**
+  String introScreenV(String _appVersion);
+
+  /// No description provided for @preAuthReferralChipCodeWillApplyAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Code {_pendingCode} will apply after signup'**
+  String preAuthReferralChipCodeWillApplyAfter(String _pendingCode);
+
+  /// No description provided for @trainingLoadScreenCouldNotLoadTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load training load: {message}'**
+  String trainingLoadScreenCouldNotLoadTraining(String message);
+
+  /// No description provided for @logCardioScreenSessionLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} session logged - {formattedDuration}'**
+  String logCardioScreenSessionLogged(String label, Object formattedDuration);
+
+  /// No description provided for @todayCycleLengthSparklineD.
+  ///
+  /// In en, this message translates to:
+  /// **'{last}d'**
+  String todayCycleLengthSparklineD(String last);
+
+  /// No description provided for @badgeHubScreenTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} total'**
+  String badgeHubScreenTotal(Object count);
+
+  /// No description provided for @trophyFilterSheetApplyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply {activeFilterCount} Filters'**
+  String trophyFilterSheetApplyFilters(Object activeFilterCount);
+
+  /// No description provided for @masteriesGridLv.
+  ///
+  /// In en, this message translates to:
+  /// **'Lv.{level}'**
+  String masteriesGridLv(Object level);
+
+  /// No description provided for @activeFilterChipsAvoid.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid: {avoid}'**
+  String activeFilterChipsAvoid(String avoid);
+
+  /// No description provided for @compactSplitCardDWk.
+  ///
+  /// In en, this message translates to:
+  /// **'(daysPerWeek)d/wk\") · (duration)'**
+  String compactSplitCardDWk(String daysPerWeek, Object duration);
+
+  /// No description provided for @fastingZoneTimelineH.
+  ///
+  /// In en, this message translates to:
+  /// **'{startHour}h'**
+  String fastingZoneTimelineH(String startHour);
+
+  /// No description provided for @fastingImpactCardCorrelation.
+  ///
+  /// In en, this message translates to:
+  /// **'Correlation: {displayName}'**
+  String fastingImpactCardCorrelation(String displayName);
+
+  /// No description provided for @fastingHydrationRowMl.
+  ///
+  /// In en, this message translates to:
+  /// **' / {goalMl} ml'**
+  String fastingHydrationRowMl(String goalMl);
+
+  /// No description provided for @markFastingDaySheetHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{_estimatedHours} hours'**
+  String markFastingDaySheetHours(Object _estimatedHours);
+
+  /// No description provided for @fastingMoodCheckinValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}/5'**
+  String fastingMoodCheckinValue(String value);
+
+  /// No description provided for @protocolSelectorChipHFast.
+  ///
+  /// In en, this message translates to:
+  /// **'{fastingHours}h fast'**
+  String protocolSelectorChipHFast(Object fastingHours);
+
+  /// No description provided for @fastingEditSheetHM.
+  ///
+  /// In en, this message translates to:
+  /// **'{h}h {m}m'**
+  String fastingEditSheetHM(String h, String m);
+
+  /// No description provided for @pendingRequestCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{message}\"'**
+  String pendingRequestCardValue(String message);
+
+  /// No description provided for @leaderboardLockedStateWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutsCompleted} / 10 workouts'**
+  String leaderboardLockedStateWorkouts(String workoutsCompleted);
+
+  /// No description provided for @agentInfoHeaderSupportAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'{appName} Support Agent'**
+  String agentInfoHeaderSupportAgent(String appName);
+
+  /// No description provided for @profileHeaderValue.
+  ///
+  /// In en, this message translates to:
+  /// **'@{username}'**
+  String profileHeaderValue(Object username);
+
+  /// No description provided for @inventoryScreenPartConsumableCardX.
+  ///
+  /// In en, this message translates to:
+  /// **'x{count}'**
+  String inventoryScreenPartConsumableCardX(Object count);
+
+  /// No description provided for @insightsNarrativeTemplateAi.
+  ///
+  /// In en, this message translates to:
+  /// **'{periodName} AI'**
+  String insightsNarrativeTemplateAi(String periodName);
+
+  /// No description provided for @glossaryScreenTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} terms'**
+  String glossaryScreenTerms(Object length);
+
+  /// No description provided for @personalityCardValue.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{motivationQuote}\"'**
+  String personalityCardValue(String motivationQuote);
+
+  /// No description provided for @skillProgressSummaryCardTotalPracticeSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'{totalAttempts} total practice sessions'**
+  String skillProgressSummaryCardTotalPracticeSessions(Object totalAttempts);
+
+  /// No description provided for @progressionStepCardGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal: {unlockCriteriaText}'**
+  String progressionStepCardGoal(String unlockCriteriaText);
+
+  /// No description provided for @practiceAttemptSheetGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal: {unlockCriteriaText}'**
+  String practiceAttemptSheetGoal(String unlockCriteriaText);
+
+  /// No description provided for @youHubScreenMore.
+  ///
+  /// In en, this message translates to:
+  /// **'{remaining} more…'**
+  String youHubScreenMore(String remaining);
+
+  /// No description provided for @neatGamificationWidgetsLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level}'**
+  String neatGamificationWidgetsLevel(Object level);
+
+  /// No description provided for @recipeSuggestionsScreenRecipeSavedXpFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe saved! +{xpAwarded} XP first recipe bonus!'**
+  String recipeSuggestionsScreenRecipeSavedXpFirst(String xpAwarded);
+
+  /// No description provided for @recipeImportScreenConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence: {confidence}%'**
+  String recipeImportScreenConfidence(String confidence);
+
+  /// No description provided for @recipeShareSheetAnyoneWithTheLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link can view. Saves to libraries: {saveCount} · Views: {viewCount}'**
+  String recipeShareSheetAnyoneWithTheLink(Object saveCount, Object viewCount);
+
+  /// No description provided for @communityRecipeSearchScreenKcalLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'{summary} kcal · {timesLogged} logs'**
+  String communityRecipeSearchScreenKcalLogs(
+    Object summary,
+    Object timesLogged,
+  );
+
+  /// No description provided for @bodyHydrationAnimationValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}%'**
+  String bodyHydrationAnimationValue(Object percentage);
+
+  /// No description provided for @regionVariantDropdownKcalG.
+  ///
+  /// In en, this message translates to:
+  /// **'{v} kcal/100g'**
+  String regionVariantDropdownKcalG(Object v);
+
+  /// No description provided for @moodHistoryItemCardFeeling.
+  ///
+  /// In en, this message translates to:
+  /// **'Feeling {mood}'**
+  String moodHistoryItemCardFeeling(String mood);
+
+  /// No description provided for @programBuilderPartExercisePickerAddTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to {dayName}'**
+  String programBuilderPartExercisePickerAddTo(String dayName);
+
+  /// No description provided for @easyExerciseHeaderSetOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {currentSet} of {totalSets}'**
+  String easyExerciseHeaderSetOf(String currentSet, Object totalSets);
+
+  /// No description provided for @exerciseManagementMixinCreateSupersetWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Create superset with {name}'**
+  String exerciseManagementMixinCreateSupersetWith(Object name);
+
+  /// No description provided for @setRailOverflowSheetTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{length} total'**
+  String setRailOverflowSheetTotal(Object length);
+
+  /// No description provided for @focalStepperInternalsEditValueCurrently.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {unit} value, currently {_display}'**
+  String focalStepperInternalsEditValueCurrently(String unit, String _display);
+
+  /// No description provided for @changeEquipmentHelperCouldNotSaveEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save equipment: {e}'**
+  String changeEquipmentHelperCouldNotSaveEquipment(String e);
+
+  /// No description provided for @preSetCoachingBannerCoachingInsight.
+  ///
+  /// In en, this message translates to:
+  /// **'Coaching insight. {message}.'**
+  String preSetCoachingBannerCoachingInsight(String message);
+
+  /// No description provided for @quizTrainingPreferencesValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{selectedCount}/3'**
+  String quizTrainingPreferencesValue(Object selectedCount);
+
+  /// No description provided for @comebackModeSheetYouHavenTWorked.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t worked out in {daysSinceLastWorkout} days'**
+  String comebackModeSheetYouHavenTWorked(String daysSinceLastWorkout);
+
+  /// No description provided for @glowButtonCompleteSet.
+  ///
+  /// In en, this message translates to:
+  /// **'COMPLETE SET {setNumber}'**
+  String glowButtonCompleteSet(Object setNumber);
+
+  /// No description provided for @usageCounterStripLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayCount} left'**
+  String usageCounterStripLeft(Object displayCount);
+
+  /// No description provided for @xpEarnedAnimationXp.
+  ///
+  /// In en, this message translates to:
+  /// **'+{xpAmount} XP'**
+  String xpEarnedAnimationXp(Object xpAmount);
+
+  /// No description provided for @holdToConfirmButtonPressAndHoldTo.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}. Press and hold to confirm.'**
+  String holdToConfirmButtonPressAndHoldTo(String label);
+
+  /// No description provided for @seniorCardExercisesMin.
+  ///
+  /// In en, this message translates to:
+  /// **'{exerciseCount} exercises  •  {durationMinutes} min'**
+  String seniorCardExercisesMin(Object exerciseCount, Object durationMinutes);
+
+  /// No description provided for @sleepCorrelationCardPairedSessionsR.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} paired sessions · r={r}'**
+  String sleepCorrelationCardPairedSessionsR(String n, String r);
 }
 
 class _AppLocalizationsDelegate

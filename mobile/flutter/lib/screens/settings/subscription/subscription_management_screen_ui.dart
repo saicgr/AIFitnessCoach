@@ -27,8 +27,8 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
             tierColor.withValues(alpha: 0.15),
             tierColor.withValues(alpha: 0.05),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(

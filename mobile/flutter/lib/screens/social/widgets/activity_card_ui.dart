@@ -485,8 +485,8 @@ extension _ActivityCardStateUI on _ActivityCardState {
                     Colors.yellow.withValues(alpha: 0.4),
                     Colors.orange.withValues(alpha: 0.4),
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
                 ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
@@ -558,10 +558,10 @@ extension _ActivityCardStateUI on _ActivityCardState {
                 _buildVictoryComparison(
                   emoji: '⏱️',
                   label: AppLocalizations.of(context).workoutShowcaseTime,
-                  yourValue: '$yourDuration min',
-                  theirValue: '$theirDuration min',
+                  yourValue: AppLocalizations.of(context)!.activityCardUiMin(yourDuration),
+                  theirValue: AppLocalizations.of(context)!.activityCardUiMin2(theirDuration),
                   improvement: timeDifference != null && timeDifference > 0
-                      ? '${timeDifference.abs()} min faster'
+                      ? AppLocalizations.of(context)!.activityCardUiMinFaster(timeDifference.abs())
                       : null,
                 ),
                 const SizedBox(height: 8),
@@ -572,10 +572,10 @@ extension _ActivityCardStateUI on _ActivityCardState {
                 _buildVictoryComparison(
                   emoji: '💪',
                   label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
-                  yourValue: '${yourVolume.toStringAsFixed(0)} lbs',
-                  theirValue: '${theirVolume.toStringAsFixed(0)} lbs',
+                  yourValue: AppLocalizations.of(context)!.activityCardUiLbs(yourVolume.toStringAsFixed(0)),
+                  theirValue: AppLocalizations.of(context)!.activityCardUiLbs2(theirVolume.toStringAsFixed(0)),
                   improvement: volumeDifference != null && volumeDifference > 0
-                      ? '+${volumeDifference.toStringAsFixed(0)} lbs'
+                      ? AppLocalizations.of(context)!.activityCardUiLbs3(volumeDifference.toStringAsFixed(0))
                       : null,
                 ),
             ],

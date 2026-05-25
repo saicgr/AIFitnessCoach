@@ -27,8 +27,8 @@ class ShareWeeklySummarySheet {
     await ShareTemplateSheet.show(
       context: context,
       title: AppLocalizations.of(context).shareWeeklySummaryShareYourWeek,
-      caption: 'My ${Branding.appName} week — $dateRange',
-      subject: 'My ${Branding.appName} Weekly Report',
+      caption: AppLocalizations.of(context)!.shareWeeklySummarySheetMyWeek(Branding.appName, dateRange),
+      subject: AppLocalizations.of(context)!.shareWeeklySummarySheetMyWeeklyReport(Branding.appName),
       templatesBuilder: (showWatermark) => [
         ShareTemplateDef(
           name: 'Recap',

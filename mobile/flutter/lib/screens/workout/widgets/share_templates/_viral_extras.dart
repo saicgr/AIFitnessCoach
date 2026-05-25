@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Curated celebrity / athlete volume benchmarks, rough historical
 /// training volumes per session. Data sourced from public training
@@ -93,7 +94,7 @@ class ShareDeepLinkFooter extends StatelessWidget {
         Icon(Icons.qr_code_2, size: 14, color: color),
         const SizedBox(width: 4),
         Text(
-          '${Branding.marketingDomain}/w/$shortId',
+          AppLocalizations.of(context)!.viralExtrasW(Branding.marketingDomain, shortId),
           style: TextStyle(
             fontSize: 9,
             color: color,

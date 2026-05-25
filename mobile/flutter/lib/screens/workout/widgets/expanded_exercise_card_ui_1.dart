@@ -347,7 +347,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                           final badgeColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
                           final badgeTextColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
                           return Container(
-                            margin: const EdgeInsets.only(left: 8),
+                            margin: const EdgeInsetsDirectional.only(start: 8),
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: badgeColor,
@@ -454,13 +454,12 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         children: [
           _buildImage(glassSurface, textMuted, accentColor),
           if (muscleAsset != null)
-            Positioned(
-              right: 3,
+            PositionedDirectional(end: 3,
               bottom: 3,
               child: Container(
                 width: 22,
                 height: 22,
-                padding: const EdgeInsets.all(1.5),
+                      padding: const EdgeInsets.all(1.5),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
@@ -873,7 +872,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
               Expanded(
                 flex: 3,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsetsDirectional.only(start: 8),
                   child: Text(
                     l.exerciseTableHeaderLast,
                     style: TextStyle(

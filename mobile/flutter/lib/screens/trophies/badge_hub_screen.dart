@@ -263,7 +263,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 12, 0),
+      padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 12, 0),
       child: Row(
         children: [
           Expanded(
@@ -347,7 +347,7 @@ class _AllBadgesFooter extends StatelessWidget {
                 ),
               ),
               Text(
-                count > 0 ? '$count total' : '',
+                count > 0 ? AppLocalizations.of(context)!.badgeHubScreenTotal(count) : '',
                 style: TextStyle(
                   color: fg.withValues(alpha: 0.55),
                   fontSize: 12,

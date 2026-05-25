@@ -49,8 +49,8 @@ class ProgramSummaryScreen extends ConsumerWidget {
                                 AppColors.success.withValues(alpha: 0.2),
                                 AppColors.success.withValues(alpha: 0.08),
                               ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: AlignmentDirectional.topStart,
+                              end: AlignmentDirectional.bottomEnd,
                             ),
                           ),
                           child: const Icon(

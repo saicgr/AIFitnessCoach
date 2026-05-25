@@ -189,7 +189,7 @@ class _CommunityRow extends ConsumerWidget {
                 Text(summary.name, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(
-                  '${summary.caloriesPerServing ?? 0} kcal · ${summary.timesLogged} logs',
+                  AppLocalizations.of(context)!.communityRecipeSearchScreenKcalLogs(summary.caloriesPerServing ?? 0, summary.timesLogged),
                   style: TextStyle(color: muted, fontSize: 11),
                 ),
               ],

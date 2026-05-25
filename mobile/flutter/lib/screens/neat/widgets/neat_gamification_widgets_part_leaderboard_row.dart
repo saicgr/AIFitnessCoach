@@ -344,7 +344,7 @@ class _CompactStatItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(1.5),
             ),
             child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               widthFactor: progress,
               child: Container(
                 decoration: BoxDecoration(

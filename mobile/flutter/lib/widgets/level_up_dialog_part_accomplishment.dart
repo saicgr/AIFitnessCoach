@@ -360,8 +360,8 @@ class _RankEmblemPainter extends CustomPainter {
       path,
       Paint()
         ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
           colors: [
             glowColor.withValues(alpha: 0.4),
             glowColor.withValues(alpha: 0.15),
@@ -803,7 +803,7 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
 
                     // Next reward info
                     Text(
-                      'NEXT REWARD AT LEVEL ${widget.newLevel + 2}',
+                      AppLocalizations.of(context)!.levelUpDialogPartAccomplishmentNextRewardAtLevel(widget.newLevel + 2),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -848,8 +848,8 @@ class _LevelBadge extends StatelessWidget {
         gradient: isActive
             ? LinearGradient(
                 colors: [Colors.amber.shade600, Colors.orange.shade800],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
               )
             : null,
         color: isActive ? null : Colors.grey.shade800,

@@ -113,8 +113,8 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: AlignmentDirectional.topStart,
+                            end: AlignmentDirectional.bottomEnd,
                             colors: t.cardSelectedGradient,
                           ),
                           borderRadius: BorderRadius.circular(16),
@@ -274,8 +274,8 @@ class _QuizLimitationsState extends State<QuizLimitations> {
             decoration: BoxDecoration(
               gradient: isSelected
                   ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
                       colors: selectedGradient,
                     )
                   : null,

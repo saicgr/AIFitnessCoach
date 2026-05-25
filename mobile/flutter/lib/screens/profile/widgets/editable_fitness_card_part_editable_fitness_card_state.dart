@@ -239,7 +239,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             icon: Icons.whatshot_outlined,
             iconColor: AppColors.orange,
             label: l10n.editableFitnessCardWarmup,
-            value: '$_selectedWarmupDuration min',
+            value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin(_selectedWarmupDuration),
             isEditing: _isEditing,
             editWidget: _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
             isDark: isDark,
@@ -252,7 +252,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             icon: Icons.self_improvement_outlined,
             iconColor: AppColors.purple,
             label: l10n.editableFitnessCardStretch,
-            value: '$_selectedStretchDuration min',
+            value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin2(_selectedStretchDuration),
             isEditing: _isEditing,
             editWidget: _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
             isDark: isDark,
@@ -566,7 +566,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
       children: _levelOptions.map((level) {
         final isSelected = _selectedLevel == level;
         return Padding(
-          padding: const EdgeInsets.only(right: 6),
+          padding: const EdgeInsetsDirectional.only(end: 6),
           child: _buildChip(
             label: level,
             isSelected: isSelected,
@@ -655,7 +655,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
       children: _warmupStretchOptions.map((duration) {
         final isSelected = _selectedWarmupDuration == duration;
         return _buildChip(
-          label: '$duration min', // TODO(i18n): editableFitnessCardDurationMin(duration)
+          label: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin3(duration), // TODO(i18n): editableFitnessCardDurationMin(duration)
           isSelected: isSelected,
           color: color,
           borderColor: cardBorder,
@@ -673,7 +673,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
       children: _warmupStretchOptions.map((duration) {
         final isSelected = _selectedStretchDuration == duration;
         return _buildChip(
-          label: '$duration min', // TODO(i18n): editableFitnessCardDurationMin(duration)
+          label: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin4(duration), // TODO(i18n): editableFitnessCardDurationMin(duration)
           isSelected: isSelected,
           color: color,
           borderColor: cardBorder,

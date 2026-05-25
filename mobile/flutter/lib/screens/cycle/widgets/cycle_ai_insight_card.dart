@@ -78,8 +78,8 @@ class _InsightBody extends StatelessWidget {
             accent.withValues(alpha: isDark ? 0.16 : 0.12),
             accent.withValues(alpha: isDark ? 0.06 : 0.04),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withValues(alpha: 0.3)),
@@ -122,7 +122,7 @@ class _InsightBody extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Align(
-            alignment: Alignment.centerRight,
+            alignment: AlignmentDirectional.centerEnd,
             child: GestureDetector(
               onTap: () => openCycleChat(
                 context,

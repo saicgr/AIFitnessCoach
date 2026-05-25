@@ -97,9 +97,8 @@ class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
     // the GlassSheet so the coachmark matches every other glass sheet in
     // the app (was an opaque white card before — see issue #1).
     return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
+      padding: EdgeInsetsDirectional.only(start: 20,
+        end: 20,
         top: 14,
         bottom: MediaQuery.of(context).padding.bottom + 16,
       ),
