@@ -226,9 +226,22 @@ async function main() {
       // Small settle delay so animations / lazy components paint.
       await new Promise((r) => setTimeout(r, 300));
 
-      const html = await page.evaluate(
+      let html = await page.evaluate(
         () => '<!DOCTYPE html>' + document.documentElement.outerHTML
       );
+
+      // Inject <link rel="canonical"> if missing. GSC flagged
+      // "Duplicate without user-selected canonical" because most
+      // prerendered pages shipped with zero canonical tags, leaving
+      // Google to pick between zealova.com vs zealova.com/ vs query
+      // variants on its own. Homepage canonical keeps the trailing
+      // slash; everything else is slash-less to match the sitemap.
+      if (!/<link[^>]+rel=["']canonical["']/i.test(html)) {
+        const canonicalPath = route === '/' ? '/' : route.replace(/\/$/, '');
+        const canonicalUrl = `https://zealova.com${canonicalPath}`;
+        const tag = `<link rel="canonical" href="${canonicalUrl}">`;
+        html = html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n    ${tag}`);
+      }
 
       // CRITICAL: never write to dist/index.html during the run. sirv serves
       // it as the SPA fallback for EVERY non-existent path, and once it

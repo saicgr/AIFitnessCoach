@@ -97,7 +97,7 @@ async function writeSitemap(tools) {
 
   for (const r of STATIC_ROUTES) {
     rows.push(
-      `  <url>\n    <loc>${DOMAIN}${r.path === '/' ? '' : r.path}</loc>\n` +
+      `  <url>\n    <loc>${DOMAIN}${r.path === '/' ? '/' : r.path}</loc>\n` +
         `    <lastmod>${today}</lastmod>\n` +
         `    <changefreq>${r.changefreq}</changefreq>\n` +
         `    <priority>${r.priority}</priority>\n  </url>`,
