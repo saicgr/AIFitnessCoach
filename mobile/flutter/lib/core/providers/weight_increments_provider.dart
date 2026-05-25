@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../data/repositories/equipment_calibration_repository.dart';
 import '../../data/services/api_client.dart';
 import 'auth_provider.dart';
 
@@ -330,3 +331,33 @@ class WeightIncrementsNotifier extends StateNotifier<WeightIncrementsState> {
     await _fetchFromBackend();
   }
 }
+
+/// Effective increment for an equipment type, honoring per-machine calibration
+/// from `equipment_inventory` (Phase 1 of workouts overhaul).
+///
+/// When a user has calibrated a specific cable or machine with a custom pin
+/// increment (e.g. "my gym's cable steps are 7.5lb, not 10"), this provider
+/// returns that override. Falls back to the global [WeightIncrementsState]
+/// value otherwise — never silently degrades (per `feedback_no_silent_fallbacks`).
+final effectiveWeightIncrementProvider =
+    Provider.family<double, String>((ref, equipmentType) {
+  final globals = ref.watch(weightIncrementsProvider);
+  final calibAsync = ref.watch(equipmentCalibrationListProvider);
+  final calibs = calibAsync.asData?.value ?? const [];
+  final eq = equipmentType.toLowerCase();
+
+  // Cable + machine: per-machine pin increment overrides global if present.
+  if (eq.contains('cable') || eq.contains('machine')) {
+    for (final c in calibs) {
+      if (c.category == 'cable' || c.category == 'machine') {
+        final inc = c.cablePinIncrementKg;
+        if (inc != null && inc > 0) {
+          // Stored in kg; convert to user's unit if global state is lbs.
+          return globals.unit == 'lbs' ? inc / 0.45359237 : inc;
+        }
+      }
+    }
+  }
+
+  return globals.getIncrement(equipmentType);
+});

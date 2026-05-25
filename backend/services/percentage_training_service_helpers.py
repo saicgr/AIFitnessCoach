@@ -107,6 +107,7 @@ class PercentageTrainingService:
         one_rep_max_kg: float,
         intensity_percent: int,
         equipment_type: str = 'barbell',
+        calibration: Optional[Dict] = None,
     ) -> float:
         """
         Calculate working weight from 1RM and intensity percentage.
@@ -115,9 +116,17 @@ class PercentageTrainingService:
             one_rep_max_kg: User's 1RM for the exercise
             intensity_percent: Desired training intensity (50-100)
             equipment_type: Type of equipment for rounding
+            calibration: Optional equipment_inventory row for this user/equipment.
+                When present, fields override the hardcoded defaults:
+                - cable_pin_increment_kg overrides the cable/machine increment
+                - bar_empty_weight_kg subtracted before plate-rounding for barbell
+                - machine_empty_weight_kg added back after plate-rounding for machines
+                - plate_inventory restricts achievable plate combinations
+                See migration 2100_equipment_inventory.sql for schema.
 
         Returns:
-            Working weight rounded to equipment increment
+            Working weight rounded to equipment increment (and to user's actual
+            plate set when calibration.plate_inventory is provided).
         """
         if intensity_percent < 50:
             intensity_percent = 50
@@ -126,14 +135,173 @@ class PercentageTrainingService:
 
         raw_weight = one_rep_max_kg * (intensity_percent / 100)
 
-        # Round to equipment increment
-        increment = self.WEIGHT_INCREMENTS.get(equipment_type, 2.5)
+        # Equipment increment: calibration override beats hardcoded default.
+        increment = self._effective_increment_kg(equipment_type, calibration)
+
+        # Subtract bar weight before rounding to plate increments; add back later.
+        bar_weight_kg = self._calibrated_bar_weight_kg(equipment_type, calibration)
+        machine_base_kg = self._calibrated_machine_base_kg(equipment_type, calibration)
+
+        # Plate-loaded barbell: round the LOAD (raw - bar) to plate increments,
+        # then add the bar back. This matches what a lifter actually does:
+        # they pick plates, not a final total.
+        if equipment_type == 'barbell' and bar_weight_kg > 0:
+            load_kg = max(0.0, raw_weight - bar_weight_kg)
+            if increment > 0:
+                load_kg = round(load_kg / increment) * increment
+            # Snap to actual plate inventory when provided.
+            if calibration and calibration.get('plate_inventory'):
+                load_kg = self._snap_to_plate_inventory(
+                    load_kg,
+                    calibration['plate_inventory'],
+                    calibration.get('weight_unit', 'kg'),
+                )
+            return round(bar_weight_kg + load_kg, 2)
+
+        # Machine with carriage/sled empty weight (leg press +45lb sled etc.).
+        if machine_base_kg > 0:
+            load_kg = max(0.0, raw_weight - machine_base_kg)
+            if increment > 0:
+                load_kg = round(load_kg / increment) * increment
+            return round(machine_base_kg + load_kg, 2)
+
+        # Cable / non-bar machine / kettlebell / bodyweight: simple round.
         if increment > 0:
             rounded_weight = round(raw_weight / increment) * increment
         else:
             rounded_weight = raw_weight
 
-        return round(rounded_weight, 1)
+        return round(rounded_weight, 2)
+
+    # -------------------------------------------------------------------------
+    # Calibration helpers (Phase 1 of workouts overhaul — equipment_inventory)
+    # -------------------------------------------------------------------------
+
+    def _effective_increment_kg(
+        self,
+        equipment_type: str,
+        calibration: Optional[Dict],
+    ) -> float:
+        """Return the increment to round to, honoring calibration overrides."""
+        if calibration:
+            # Cables: explicit pin increment beats default 2.5kg.
+            if equipment_type in ('cable', 'machine'):
+                cal_inc = calibration.get('cable_pin_increment_kg')
+                if cal_inc and cal_inc > 0:
+                    return float(cal_inc)
+        return self.WEIGHT_INCREMENTS.get(equipment_type, 2.5)
+
+    def _calibrated_bar_weight_kg(
+        self,
+        equipment_type: str,
+        calibration: Optional[Dict],
+    ) -> float:
+        """Return user's calibrated bar empty weight, or 0 if not applicable."""
+        if equipment_type != 'barbell':
+            return 0.0
+        if not calibration:
+            return 20.0  # Standard Olympic default — current behavior preserved.
+        cal_bar = calibration.get('bar_empty_weight_kg')
+        if cal_bar is not None and cal_bar >= 0:
+            return float(cal_bar)
+        return 20.0
+
+    def _calibrated_machine_base_kg(
+        self,
+        equipment_type: str,
+        calibration: Optional[Dict],
+    ) -> float:
+        """Return machine carriage/sled empty weight, or 0 if not applicable."""
+        if equipment_type != 'machine':
+            return 0.0
+        if not calibration:
+            return 0.0
+        cal_base = calibration.get('machine_empty_weight_kg')
+        if cal_base is not None and cal_base >= 0:
+            return float(cal_base)
+        return 0.0
+
+    def _snap_to_plate_inventory(
+        self,
+        target_load_kg: float,
+        plate_inventory: Dict[str, int],
+        weight_unit: str,
+    ) -> float:
+        """Snap a target plate-load to what the user can actually build with
+        their plate set. Pairs only (symmetric loading), greedy descending.
+
+        Inventory keys are weights as strings ("45", "25", ...) in the user's
+        configured weight_unit; values are counts of physical plates owned.
+        We need pairs (both sides), so each plate weight contributes
+        floor(count / 2) usable pairs.
+        """
+        if not plate_inventory or target_load_kg <= 0:
+            return target_load_kg
+
+        # Normalize each plate-weight key to kg.
+        # In kg already if weight_unit == 'kg'; lb→kg = ×0.45359237.
+        lb_to_kg = 0.45359237
+        plates_kg: list[tuple[float, int]] = []
+        for raw_w, count in plate_inventory.items():
+            try:
+                w = float(raw_w)
+            except (TypeError, ValueError):
+                continue
+            if w <= 0 or count <= 0:
+                continue
+            pair_count = int(count) // 2
+            if pair_count <= 0:
+                continue
+            w_kg = w * lb_to_kg if weight_unit == 'lb' else w
+            plates_kg.append((w_kg, pair_count))
+
+        if not plates_kg:
+            return target_load_kg
+
+        # Greedy: each pair adds 2 × plate_weight to total bar load.
+        plates_kg.sort(reverse=True)
+        remaining = target_load_kg
+        loaded = 0.0
+        for plate_w, pair_count in plates_kg:
+            pair_load = 2 * plate_w
+            if pair_load <= 0:
+                continue
+            while remaining >= pair_load - 1e-6 and pair_count > 0:
+                loaded += pair_load
+                remaining -= pair_load
+                pair_count -= 1
+        return round(loaded, 2)
+
+    def fetch_user_calibration(
+        self,
+        user_id: str,
+        category: Optional[str] = None,
+    ) -> Optional[Dict]:
+        """Look up a user's equipment_inventory row. Returns the FIRST match,
+        or None when the user has no calibration (caller falls back to defaults).
+
+        Caller passes the row as `calibration=` to calculate_working_weight.
+        Kept narrow on purpose — multi-row resolution (e.g. picking the right
+        leg press when the user owns three) is left to the caller.
+        """
+        if not self.supabase:
+            return None
+        try:
+            q = (
+                self.supabase.table("equipment_inventory")
+                .select("*")
+                .eq("user_id", user_id)
+            )
+            if category:
+                q = q.eq("category", category)
+            res = q.limit(1).execute()
+            return (res.data or [None])[0]
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [PercentageTraining] equipment_inventory lookup failed "
+                f"user={user_id} category={category}: {e}"
+            )
+            return None
 
     def get_intensity_description(self, intensity_percent: int) -> str:
         """Get description for an intensity percentage."""

@@ -16,6 +16,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/models/hydration.dart';
 import '../../../data/models/parsed_exercise.dart';
 import '../../../data/models/rest_suggestion.dart';
+import '../../../data/repositories/equipment_calibration_repository.dart';
 import '../../../core/services/weight_suggestion_service.dart' show WeightSuggestion;
 import '../../../data/services/ble_heart_rate_service.dart';
 import '../../../data/providers/voice_set_logging_provider.dart';

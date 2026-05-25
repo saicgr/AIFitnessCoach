@@ -25,6 +25,8 @@ class EquipmentPage extends ConsumerWidget {
             children: [
               CustomContentSection(),
               SizedBox(height: 16),
+              EquipmentCalibrationSection(),
+              SizedBox(height: 16),
               WarmupSettingsSection(),
               SizedBox(height: 16),
               SupersetSettingsSection(),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/models/equipment_calibration.dart';
+
 /// Standard plate weights available in gyms (in lbs).
 const _platesLbs = [45.0, 35.0, 25.0, 10.0, 5.0, 2.5];
 
@@ -118,6 +120,53 @@ double getBarWeight(String? equipment, {required bool useKg}) {
   }
   // Standard barbell.
   return useKg ? 20.0 : 45.0;
+}
+
+/// Bar weight honoring per-user equipment_inventory calibration (Phase 1 of
+/// workouts overhaul).
+///
+/// When [calibration] is non-null and carries a `barEmptyWeightKg`, that value
+/// is returned (converted to the active unit). Otherwise falls back to
+/// [getBarWeight] for the existing const-table behavior. Reddit insight:
+/// "I told it my EZ bar is 17.5lb. Now plate suggestions actually work."
+double getBarWeightCalibrated(
+  String? equipment, {
+  required bool useKg,
+  EquipmentCalibration? calibration,
+}) {
+  if (calibration != null && calibration.barEmptyWeightKg != null) {
+    final kg = calibration.barEmptyWeightKg!;
+    return useKg ? kg : kg / 0.45359237;
+  }
+  return getBarWeight(equipment, useKg: useKg);
+}
+
+/// Extract the user's actual plate set from an equipment_inventory calibration
+/// row, in the active workout unit. Keys with a quantity ≥ 2 (a usable pair)
+/// are returned, sorted descending. Returns null when no override is set —
+/// callers fall back to the standard IPF plate ladders.
+List<double>? availablePlatesFromCalibration(
+  EquipmentCalibration? calibration, {
+  required bool useKg,
+}) {
+  if (calibration == null || calibration.plateInventory.isEmpty) return null;
+  final unit = calibration.weightUnit; // 'kg' or 'lb'
+  final result = <double>[];
+  calibration.plateInventory.forEach((rawWeight, count) {
+    if (count < 2) return; // Need a pair (one per side) to be useful.
+    final w = double.tryParse(rawWeight);
+    if (w == null || w <= 0) return;
+    // Normalize to active unit. Backend stores per the row's weight_unit.
+    double inActive;
+    if (useKg) {
+      inActive = unit == 'lb' ? w * 0.45359237 : w;
+    } else {
+      inActive = unit == 'kg' ? w / 0.45359237 : w;
+    }
+    result.add(inActive);
+  });
+  result.sort((a, b) => b.compareTo(a));
+  return result.isEmpty ? null : result;
 }
 
 /// Equipment strings that are explicitly non-barbell. When set, we must NOT

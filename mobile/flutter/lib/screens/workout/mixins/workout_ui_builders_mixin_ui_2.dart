@@ -458,25 +458,44 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                         // Barbell plate indicator (only for barbell exercises).
                         // Outside the Expanded so it sits on top of the AI
                         // input bar without being clipped by a long set list.
+                        // Reads the per-user equipment_inventory calibration
+                        // (Phase 1) so bar weight + plate set match reality.
                         if (isBarbell(exercises[viewingExerciseIndex].equipment, exerciseName: exercises[viewingExerciseIndex].name))
-                          AnimatedBuilder(
-                            animation: weightController,
-                            builder: (context, _) {
-                              final weight = double.tryParse(weightController.text) ?? 0;
-                              final barEquipment = exerciseBarType[viewingExerciseIndex]
-                                  ?? exercises[viewingExerciseIndex].equipment;
-                              final barWt = getBarWeight(barEquipment, useKg: useKg);
-                              if (weight < barWt) return const SizedBox.shrink();
-                              return Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                                child: GestureDetector(
-                                  onTap: () => showBarTypeSelectorImpl(exercises[viewingExerciseIndex]),
-                                  child: BarbellPlateIndicator(
-                                    totalWeight: weight,
-                                    barWeight: barWt,
+                          Consumer(
+                            builder: (context, ref, _) {
+                              final calibAsync = ref.watch(
+                                equipmentCalibrationByCategoryProvider('barbell'),
+                              );
+                              final calibration = calibAsync.asData?.value;
+                              return AnimatedBuilder(
+                                animation: weightController,
+                                builder: (context, _) {
+                                  final weight = double.tryParse(weightController.text) ?? 0;
+                                  final barEquipment = exerciseBarType[viewingExerciseIndex]
+                                      ?? exercises[viewingExerciseIndex].equipment;
+                                  final barWt = getBarWeightCalibrated(
+                                    barEquipment,
                                     useKg: useKg,
-                                  ),
-                                ),
+                                    calibration: calibration,
+                                  );
+                                  if (weight < barWt) return const SizedBox.shrink();
+                                  final plateOverride = availablePlatesFromCalibration(
+                                    calibration,
+                                    useKg: useKg,
+                                  );
+                                  return Padding(
+                                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                                    child: GestureDetector(
+                                      onTap: () => showBarTypeSelectorImpl(exercises[viewingExerciseIndex]),
+                                      child: BarbellPlateIndicator(
+                                        totalWeight: weight,
+                                        barWeight: barWt,
+                                        useKg: useKg,
+                                        availablePlates: plateOverride,
+                                      ),
+                                    ),
+                                  );
+                                },
                               );
                             },
                           ),
