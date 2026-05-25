@@ -12,6 +12,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import 'hero_workout_carousel.dart';
 import 'hero_workout_card.dart';
+import 'recovery_pills_row.dart';
 import 'hero_nutrition_card.dart';
 // TODO: Re-enable when fasting feature launches
 // import 'hero_fasting_card.dart';
@@ -141,11 +142,19 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
       );
     }
 
-    return HeroWorkoutCarousel(
-      externalPageController: widget.carouselPageController,
-      onCarouselItemsChanged: widget.onCarouselItemsChanged,
-      onPageChanged: widget.onPageChanged,
-      carouselKey: widget.carouselKey,
+    // Phase 4 — recovery pills sit directly above the hero so users see
+    // per-muscle readiness at a glance before tapping Start.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const RecoveryPillsRow(),
+        HeroWorkoutCarousel(
+          externalPageController: widget.carouselPageController,
+          onCarouselItemsChanged: widget.onCarouselItemsChanged,
+          onPageChanged: widget.onPageChanged,
+          carouselKey: widget.carouselKey,
+        ),
+      ],
     );
   }
 

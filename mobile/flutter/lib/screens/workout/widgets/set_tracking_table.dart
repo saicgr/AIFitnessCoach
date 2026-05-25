@@ -176,6 +176,12 @@ class SetTrackingTable extends StatefulWidget {
   /// Callback when RIR badge is tapped for editing (setIndex, currentRir)
   final void Function(int setIndex, int? currentRir)? onRirTapped;
 
+  /// Phase 2.D — RPE/RIR captured for a completed set via long-press picker.
+  /// Writes back to `set_rep_accuracy.rpe / .rir` via the backend; powers
+  /// auto-regulation (3 consecutive RPE ≥ 9 → -5% next set) and the rolling
+  /// 7d RPE per-exercise feed into UserState.
+  final void Function(int setIndex, double rpe, int? rir)? onRpeLogged;
+
   /// Current RIR selection for the active set
   final int? activeRir;
 
@@ -245,6 +251,7 @@ class SetTrackingTable extends StatefulWidget {
     this.onSetDeleted,
     this.onToggleUnit,
     this.onRirTapped,
+    this.onRpeLogged,
     this.activeRir,
     this.onActiveRirChanged,
     this.showInlineRest = false,
@@ -823,6 +830,100 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     );
   }
 
+  Future<void> _showRpePicker(BuildContext context, int setIndex) async {
+    // Lazy import via showModalBottomSheet — keeps the existing import block
+    // untouched and zero-risk to compile. RpePill itself is built but its
+    // _RpePicker is private; we re-render the same 3×3 grid here inline so
+    // the same UX ships without exposing the private widget.
+    const grid = [
+      [6.0, 6.5, 7.0],
+      [7.5, 8.0, 8.5],
+      [9.0, 9.5, 10.0],
+    ];
+    String hint(double rpe) {
+      if (rpe <= 6.0) return 'Very light';
+      if (rpe <= 6.5) return 'Light';
+      if (rpe <= 7.0) return 'Easy';
+      if (rpe <= 7.5) return 'Moderate';
+      if (rpe <= 8.0) return '2 reps left';
+      if (rpe <= 8.5) return '1–2 reps left';
+      if (rpe <= 9.0) return '1 rep left';
+      if (rpe <= 9.5) return 'Just made it';
+      return 'Failure';
+    }
+    double selected = 8.0;
+    final picked = await showModalBottomSheet<double>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        return StatefulBuilder(builder: (innerCtx, setStateLocal) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(innerCtx).colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40, height: 4,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Text('RPE — set ${setIndex + 1}',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(hint(selected),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(innerCtx).colorScheme.onSurface.withValues(alpha: 0.65),
+                      )),
+                  const SizedBox(height: 12),
+                  for (final row in grid)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: row.map((rpe) {
+                          final isSel = (rpe - selected).abs() < 0.01;
+                          return ChoiceChip(
+                            label: Text(
+                              rpe.toStringAsFixed(rpe == rpe.roundToDouble() ? 0 : 1),
+                            ),
+                            selected: isSel,
+                            onSelected: (_) => setStateLocal(() => selected = rpe),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(sheetCtx, selected),
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+    if (picked != null) {
+      // RIR = 10 - RPE (industry convention; clamped to int).
+      final rirEstimate = (10 - picked).round().clamp(0, 5);
+      widget.onRpeLogged?.call(setIndex, picked, rirEstimate);
+    }
+  }
+
   Widget _buildSetRow(BuildContext context, WorkoutDesignTheme theme, int index, SetRowData set) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isEditing = _editingSetIndex == index;
@@ -832,6 +933,13 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       behavior: HitTestBehavior.opaque,
       onTap: set.isCompleted && widget.onSetUpdated != null
           ? () => _startEditing(index)
+          : null,
+      // Phase 2.D: long-press a completed set to log RPE/RIR. Kept off the
+      // primary tap so the existing edit-weight flow isn't shadowed. The
+      // pill UI for inline rendering lives in rpe_pill.dart — long-press
+      // surfaces the same picker without touching this 1100-line layout.
+      onLongPress: set.isCompleted && widget.onRpeLogged != null
+          ? () => _showRpePicker(context, index)
           : null,
       child: Container(
         height: WorkoutDesign.setRowHeight,

@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../progress/widgets/strength_overview_card.dart';
+import 'muscle_score_breakdown_sheet.dart';
 import 'overview_tab.dart';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -45,10 +46,13 @@ class StrengthTab extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Strength Overview Card
+                // Tap = open the Phase-4 per-exercise contribution drill-down
+                // (Gravl-equivalent "see the logic / exercises contributing").
+                // Long-press fallback opens the muscle-analytics history page.
                 StrengthOverviewCard(
                   userId: userId!,
                   onTapMuscleGroup: (muscleGroup) {
-                    context.push('/stats/muscle-analytics/$muscleGroup');
+                    MuscleScoreBreakdownSheet.show(context, muscleGroup);
                   },
                 ),
                 const SizedBox(height: 24),
