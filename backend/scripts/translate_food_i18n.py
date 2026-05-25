@@ -63,27 +63,24 @@ BRAND_ACRONYMS = "RPE, 1RM, AMRAP, EMOM, BMR, TDEE, HRV, Zealova, Strava, Fitbod
 
 # 35 non-English locales (same list as translate_exercise_library_i18n.py)
 NON_EN_LOCALES: list[str] = [
-    "af", "ar", "bg", "bn", "cs", "da", "de", "el", "es", "et",
-    "fa", "fi", "fr", "gu", "he", "hi", "hr", "hu", "id", "it",
-    "ja", "kn", "ko", "lt", "lv", "ml", "mr", "nl", "no", "pl",
-    "pt", "ro", "ru", "sk", "sl", "sr", "sv", "sw", "ta", "te",
-    "th", "tr", "uk", "ur", "vi", "zh",
+    "ar", "bn", "cs", "de", "es", "fi", "fr", "ha", "hi", "id",
+    "it", "ja", "jv", "kn", "ko", "ml", "mr", "ms", "ne", "nl",
+    "or", "pa", "pl", "pt", "ru", "sv", "sw", "ta", "te", "th",
+    "tl", "tr", "ur", "vi", "zh",
 ]
-NON_EN_LOCALES = NON_EN_LOCALES[:35]
+assert len(NON_EN_LOCALES) == 35
 
 LOCALE_NAMES: dict[str, str] = {
-    "af": "Afrikaans", "ar": "Arabic", "bg": "Bulgarian", "bn": "Bengali",
-    "cs": "Czech", "da": "Danish", "de": "German", "el": "Greek",
-    "es": "Spanish", "et": "Estonian", "fa": "Persian (Farsi)",
-    "fi": "Finnish", "fr": "French", "gu": "Gujarati", "he": "Hebrew",
-    "hi": "Hindi", "hr": "Croatian", "hu": "Hungarian", "id": "Indonesian",
-    "it": "Italian", "ja": "Japanese", "kn": "Kannada", "ko": "Korean",
-    "lt": "Lithuanian", "lv": "Latvian", "ml": "Malayalam", "mr": "Marathi",
-    "nl": "Dutch", "no": "Norwegian", "pl": "Polish", "pt": "Portuguese",
-    "ro": "Romanian", "ru": "Russian", "sk": "Slovak", "sl": "Slovenian",
-    "sr": "Serbian", "sv": "Swedish", "sw": "Swahili", "ta": "Tamil",
-    "te": "Telugu", "th": "Thai", "tr": "Turkish", "uk": "Ukrainian",
-    "ur": "Urdu", "vi": "Vietnamese", "zh": "Chinese (Simplified)",
+    "ar": "Arabic", "bn": "Bengali", "cs": "Czech", "de": "German",
+    "es": "Spanish", "fi": "Finnish", "fr": "French", "ha": "Hausa",
+    "hi": "Hindi", "id": "Indonesian", "it": "Italian", "ja": "Japanese",
+    "jv": "Javanese", "kn": "Kannada", "ko": "Korean", "ml": "Malayalam",
+    "mr": "Marathi", "ms": "Malay", "ne": "Nepali", "nl": "Dutch",
+    "or": "Odia", "pa": "Punjabi", "pl": "Polish", "pt": "Portuguese",
+    "ru": "Russian", "sv": "Swedish", "sw": "Swahili", "ta": "Tamil",
+    "te": "Telugu", "th": "Thai", "tl": "Tagalog (Filipino)",
+    "tr": "Turkish", "ur": "Urdu", "vi": "Vietnamese",
+    "zh": "Chinese (Simplified)",
 }
 
 # ---------------------------------------------------------------------------
