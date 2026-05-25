@@ -51,6 +51,7 @@ class ProgressionService:
         progression_pace: str = "medium",
         template_id: Optional[str] = None,
         progression_strategy: Optional[str] = None,
+        form_score: Optional[float] = None,
     ) -> ProgressionRecommendation:
         """
         Generate a progression recommendation for an exercise.
@@ -95,6 +96,7 @@ class ProgressionService:
                 return self._calculate_progression(
                     exercise_id, exercise_name, last_performance,
                     strategy, reason,
+                    form_score=form_score,
                 )
 
         avg_rpe = self._calculate_average_rpe(performance_history[-3:])
@@ -126,7 +128,8 @@ class ProgressionService:
             reason = "Building consistency before weight increase"
 
         return self._calculate_progression(
-            exercise_id, exercise_name, last_performance, strategy, reason
+            exercise_id, exercise_name, last_performance, strategy, reason,
+            form_score=form_score,
         )
 
     # ------------------------------------------------------------------
@@ -247,6 +250,7 @@ class ProgressionService:
         strategy: ProgressionStrategy,
         reason: str,
         equipment_type: Optional[str] = None,
+        form_score: Optional[float] = None,
     ) -> ProgressionRecommendation:
         """
         Calculate specific weight/rep recommendations using equipment-aware increments.
@@ -333,6 +337,32 @@ class ProgressionService:
             new_reps = last_reps
             new_sets = last_sets
             confidence = 0.60
+
+        # Phase 2.I — form-score gate (per workouts-overhaul plan).
+        # form_score comes from health_insights_engine._form_score_day_signals
+        # (already populated daily from form_analysis jobs). 1-10 scale.
+        # Rules (deterministic, no LLM):
+        #   <5  → hold weight + flag (technique session)
+        #   5-7 → no change (default behavior)
+        #   8-10→ small overload bonus when LINEAR (don't double-apply on
+        #          DELOAD / WAVE where the strategy already drives volume).
+        # Reason text is augmented so the UI can explain "why this weight"
+        # — directly supports Phase 4 "why this workout" surface.
+        if form_score is not None:
+            if form_score < 5 and strategy in (
+                ProgressionStrategy.LINEAR,
+                ProgressionStrategy.DOUBLE_PROGRESSION,
+            ):
+                new_weight = last_weight
+                confidence = min(confidence, 0.55)
+                reason = (
+                    f"{reason} · Form score {form_score:.1f}/10 — holding "
+                    f"weight; queue a technique session."
+                )
+            elif form_score >= 8 and strategy == ProgressionStrategy.LINEAR:
+                new_weight = last_weight + (increment * 1.5)
+                confidence = min(0.95, confidence + 0.05)
+                reason = f"{reason} · Form score {form_score:.1f}/10 — small overload bonus."
 
         # Snap to valid equipment weights (e.g., standard dumbbell increments)
         final_weight = snap_to_available_weights(new_weight, equipment_type)

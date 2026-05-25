@@ -1303,6 +1303,103 @@ If user has gym equipment - most exercises MUST use that equipment!"""
             }
             workout_data["exercises"] = validate_set_targets_strict(workout_data["exercises"], user_context)
 
+            # ─── Phase 2.C two-pass validator loop ────────────────────────
+            # Run the deterministic workout validator over Gemini's output.
+            # If there are HARD violations (MEV/MRV cap, antagonist superset
+            # rule, recovery <40% gate, equipment infeasibility, ±5 min time
+            # budget drift), re-prompt Gemini once with explicit feedback.
+            # On a second failure → return the pass-2 plan with validation
+            # metadata so downstream can decide to swap in the deterministic
+            # builder. This wrapper is fail-OPEN — any validator/state error
+            # falls back to the raw Gemini output (no silent feature regression).
+            try:
+                from services.user_state_assembler import assemble_user_state
+                from services.workout_validator_phase2 import (
+                    WorkoutValidator, violations_to_revise_prompt,
+                )
+                from core.db import get_supabase_db
+
+                if user_id:
+                    state = assemble_user_state(
+                        user_id, get_supabase_db().client, force=False,
+                    )
+                    validator = WorkoutValidator(state)
+                    violations = validator.validate(workout_data)
+                    hard = [v for v in violations if v.severity == "hard"]
+                    if hard:
+                        feedback = violations_to_revise_prompt(violations)
+                        logger.warning(
+                            f"🔁 [two-pass] {len(hard)} hard violation(s); "
+                            f"requesting Gemini revise:\n{feedback}"
+                        )
+                        revise_prompt = (
+                            f"{prompt}\n\n"
+                            f"---\nIMPORTANT REVISE INSTRUCTIONS:\n{feedback}"
+                        )
+                        try:
+                            response2 = await gemini_generate_with_retry(
+                                model=self.model,
+                                contents=revise_prompt,
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json",
+                                    response_schema=GeneratedWorkoutResponse,
+                                    temperature=0.5,
+                                    max_output_tokens=8000,
+                                ),
+                                user_id=user_id,
+                                timeout=90,
+                                method_name="generate_workout_plan_revise",
+                            )
+                            parsed2 = response2.parsed
+                            if parsed2:
+                                if hasattr(parsed2, "model_dump"):
+                                    revised = parsed2.model_dump()
+                                elif isinstance(parsed2, dict):
+                                    revised = parsed2
+                                elif isinstance(parsed2, str):
+                                    revised = json.loads(parsed2)
+                                else:
+                                    revised = None
+                                if (
+                                    isinstance(revised, dict)
+                                    and revised.get("exercises")
+                                ):
+                                    revised["exercises"] = validate_set_targets_strict(
+                                        revised["exercises"], user_context,
+                                    )
+                                    workout_data = revised
+                                    final_v = validator.validate(workout_data)
+                                    workout_data["_validation"] = {
+                                        "passes": 2,
+                                        "hard_violations_post_revise": [
+                                            v.message for v in final_v if v.severity == "hard"
+                                        ],
+                                        "warn_violations_post_revise": [
+                                            v.message for v in final_v if v.severity == "warn"
+                                        ],
+                                        "source": "gemini_pass2",
+                                    }
+                        except Exception as e_revise:
+                            logger.warning(
+                                f"⚠️ [two-pass] revise pass failed, shipping pass1: {e_revise}"
+                            )
+                            workout_data["_validation"] = {
+                                "passes": 1,
+                                "hard_violations": [v.message for v in hard],
+                                "source": "gemini_pass1_revise_errored",
+                            }
+                    else:
+                        workout_data["_validation"] = {
+                            "passes": 1,
+                            "warn_violations": [v.message for v in violations],
+                            "source": "gemini_pass1",
+                        }
+            except Exception as e_validator:
+                # Validator infrastructure error — log + ship pass-1 verbatim.
+                logger.warning(
+                    f"⚠️ [two-pass] validator path skipped (will ship pass1): {e_validator}"
+                )
+
             return workout_data
 
         except Exception as e:

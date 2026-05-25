@@ -118,6 +118,9 @@ from api.v1 import equipment  # Snap-equipment flow (point camera at gym machine
 from api.v1 import wellness  # Generalized event log + mood + Timeline aggregator
 from api.v1 import timeline  # GET /timeline aggregator (Zepp-style journal)
 from api.v1 import free_tools  # Public unauthenticated AI sampler endpoints (IP-rate-limited)
+from api.v1 import periodization  # Phase 2.E + 2.H — mesocycle state + bonus workout
+from api.v1 import scores_breakdown  # Phase 4 — per-exercise strength contribution drill-down
+from api.v1 import workouts_overhaul_extras  # Phase 4 + Phase 6 grab-bag (movement balance, RTP, challenges, journal, body comp, morning nudge)
 from api.v1.ai_tools import physique_analyzer as ai_tools_physique  # Public physique analyzer + 4-week program
 from api.v1.ai_tools import form_check as ai_tools_form_check  # Public AI form check — video lift analysis
 
@@ -135,6 +138,9 @@ router.include_router(users.router, prefix="/users", tags=["Users"])
 router.include_router(exercises.router, prefix="/exercises", tags=["Exercises"])
 router.include_router(workouts.router, prefix="/workouts", tags=["Workouts"])
 router.include_router(equipment.router, prefix="/equipment", tags=["Equipment"])
+router.include_router(periodization.router, tags=["Periodization"])  # /periodization/state, /periodization/force-deload, /periodization/bonus-workout
+router.include_router(scores_breakdown.router, tags=["Scores"])  # /scores/breakdown/{muscle_group}
+router.include_router(workouts_overhaul_extras.router, tags=["WorkoutsOverhaul"])  # stats + rtp + challenges + journal + body-comp + cron
 router.include_router(performance_db.router, prefix="/performance", tags=["Performance"])
 
 # Health metrics endpoints
