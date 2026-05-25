@@ -6,6 +6,7 @@ import '../../../../data/models/home_layout.dart';
 import '../../../../data/repositories/measurements_repository.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../progress/log_measurement_sheet.dart';
 
@@ -40,7 +41,8 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     final hips = summary?.latestByType[MeasurementType.hips];
 
     // Calculate last update time
-    String lastUpdatedText = 'Not logged yet';
+    final l10n = AppLocalizations.of(context)!;
+    String lastUpdatedText = l10n.quickLogMeasurementsNotLoggedYet;
     DateTime? lastUpdate;
 
     for (final m in [waist, chest, hips]) {
@@ -52,11 +54,11 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     if (lastUpdate != null) {
       final daysAgo = DateTime.now().difference(lastUpdate).inDays;
       if (daysAgo == 0) {
-        lastUpdatedText = 'Updated today';
+        lastUpdatedText = l10n.quickLogMeasurementsUpdatedToday;
       } else if (daysAgo == 1) {
-        lastUpdatedText = 'Updated yesterday';
+        lastUpdatedText = l10n.quickLogMeasurementsUpdatedYesterday;
       } else {
-        lastUpdatedText = 'Updated $daysAgo days ago';
+        lastUpdatedText = l10n.quickLogMeasurementsUpdatedDaysAgo(daysAgo);
       }
     }
 
@@ -88,7 +90,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
           border: Border.all(color: cardBorder),
         ),
         child: isLoading
-            ? _buildLoadingState(textMuted)
+            ? _buildLoadingState(context, textMuted)
             : (waist == null && chest == null && hips == null)
                 ? _buildEmptyState(textMuted, accentColor, context, ref)
                 : _buildContentState(
@@ -137,7 +139,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              hasMeasurements ? 'Measurements' : 'Log',
+              hasMeasurements ? AppLocalizations.of(context)!.quickLogMeasurementsMeasurements : AppLocalizations.of(context)!.quickLogMeasurementsLog,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -150,7 +152,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
+  Widget _buildLoadingState(BuildContext context, Color textMuted) {
     return Row(
       children: [
         SizedBox(
@@ -163,7 +165,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          'Loading measurements...',
+          AppLocalizations.of(context)!.quickLogMeasurementsLoadingMeasurements,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -182,7 +184,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
             Icon(Icons.straighten, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Body Measurements',
+              AppLocalizations.of(context)!.quickLogMeasurementsBodyMeasurements,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -193,7 +195,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Track your body changes over time',
+          AppLocalizations.of(context)!.quickLogMeasurementsTrackYourBodyChanges,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -203,7 +205,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         ElevatedButton.icon(
           onPressed: () => _openMeasurementsSheet(context, ref),
           icon: Icon(Icons.add, size: 18),
-          label: Text('Log Measurements'),
+          label: Text(AppLocalizations.of(context)!.quickLogMeasurementsLogMeasurements),
           style: ElevatedButton.styleFrom(
             backgroundColor: accentColor,
             foregroundColor: isDark ? Colors.black : Colors.white,
@@ -240,7 +242,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Measurements',
+                AppLocalizations.of(context)!.quickLogMeasurementsMeasurements,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -263,7 +265,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
             if (waist != null)
               Expanded(
                 child: _MeasurementItem(
-                  label: 'Waist',
+                  label: AppLocalizations.of(context)!.quickLogMeasurementsWaist,
                   value: '${waist.getValueInUnit(isMetric).toStringAsFixed(1)} ${isMetric ? 'cm' : 'in'}',
                   color: accentColor,
                   textColor: textColor,
@@ -279,7 +281,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
             if (chest != null)
               Expanded(
                 child: _MeasurementItem(
-                  label: 'Chest',
+                  label: AppLocalizations.of(context)!.quickLogMeasurementsChest,
                   value: '${chest.getValueInUnit(isMetric).toStringAsFixed(1)} ${isMetric ? 'cm' : 'in'}',
                   color: accentColor,
                   textColor: textColor,
@@ -295,7 +297,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
             if (hips != null)
               Expanded(
                 child: _MeasurementItem(
-                  label: 'Hips',
+                  label: AppLocalizations.of(context)!.quickLogMeasurementsHips,
                   value: '${hips.getValueInUnit(isMetric).toStringAsFixed(1)} ${isMetric ? 'cm' : 'in'}',
                   color: accentColor,
                   textColor: textColor,
@@ -329,7 +331,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Update',
+                  AppLocalizations.of(context)!.quickLogMeasurementsUpdate,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -344,13 +346,14 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         // Full size: show changes
         if (size == TileSize.full) ...[
           const SizedBox(height: 12),
-          _buildChangesRow(textMuted, waist, chest, hips),
+          _buildChangesRow(context, textMuted, waist, chest, hips),
         ],
       ],
     );
   }
 
   Widget _buildChangesRow(
+    BuildContext context,
     Color textMuted,
     MeasurementEntry? waist,
     MeasurementEntry? chest,
@@ -362,7 +365,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
         Icon(Icons.show_chart, size: 14, color: textMuted),
         const SizedBox(width: 6),
         Text(
-          'Tap to view full history and trends',
+          AppLocalizations.of(context)!.quickLogMeasurementsTapToViewFull,
           style: TextStyle(
             fontSize: 12,
             color: textMuted,
@@ -380,7 +383,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
 
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please sign in to log measurements')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.quickLogMeasurementsPleaseSignInTo)),
       );
       return;
     }

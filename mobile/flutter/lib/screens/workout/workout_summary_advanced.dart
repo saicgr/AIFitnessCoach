@@ -12,7 +12,12 @@ import '../../core/utils/muscle_aliases.dart' as muscle_util;
 import '../../data/models/exercise.dart';
 import '../../data/models/workout.dart';
 import '../library/providers/library_providers.dart';
+import '../../l10n/generated/app_localizations.dart';
 
+// TODO(i18n): _buildKpiTiles() and _PyramidExerciseCardState._modelLabel are
+// top-level / getter contexts with no BuildContext — their labels ('VOLUME',
+// 'TOP 1RM', 'PRs HIT', 'AVG EFFORT', progression model names) remain
+// hardcoded English until those are refactored to accept AppLocalizations.
 class WorkoutSummaryAdvanced extends StatelessWidget {
   final WorkoutSummaryResponse? data;
   final Map<String, dynamic>? metadata;
@@ -33,6 +38,7 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final hasSetLogs = data != null && data!.setLogs.isNotEmpty;
@@ -338,6 +344,7 @@ class _PerformanceComparisonSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final wc = comparison.workoutComparison;
     final days = wc.previousPerformedAt != null
         ? DateTime.now().difference(wc.previousPerformedAt!).inDays
@@ -346,7 +353,7 @@ class _PerformanceComparisonSection extends StatelessWidget {
     return _SectionCard(
       isDark: isDark,
       icon: Icons.compare_arrows,
-      title: 'Performance Comparison',
+      title: l.summaryPerformanceComparison,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -354,7 +361,7 @@ class _PerformanceComparisonSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
-                'vs $days days ago',
+                l.summaryVsDaysAgo(days),
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -365,7 +372,7 @@ class _PerformanceComparisonSection extends StatelessWidget {
           // Stat rows
           if (wc.hasPrevious) ...[
             _ComparisonRow(
-              label: 'Volume',
+              label: l.summaryVolume,
               current: '${(wc.currentTotalVolumeKg * 2.20462).toStringAsFixed(0)} lb',
               previous: wc.previousTotalVolumeKg != null
                   ? '${(wc.previousTotalVolumeKg! * 2.20462).toStringAsFixed(0)} lb'
@@ -374,7 +381,7 @@ class _PerformanceComparisonSection extends StatelessWidget {
               isDark: isDark,
             ),
             _ComparisonRow(
-              label: 'Duration',
+              label: l.summaryDuration,
               current: _fmtDuration(wc.currentDurationSeconds),
               previous: wc.previousDurationSeconds != null
                   ? _fmtDuration(wc.previousDurationSeconds!)
@@ -383,14 +390,14 @@ class _PerformanceComparisonSection extends StatelessWidget {
               isDark: isDark,
             ),
             _ComparisonRow(
-              label: 'Sets',
+              label: l.summarySets,
               current: '${wc.currentTotalSets}',
               previous: wc.previousTotalSets != null ? '${wc.previousTotalSets}' : '-',
               diffPercent: null,
               isDark: isDark,
             ),
             _ComparisonRow(
-              label: 'Reps',
+              label: l.summaryReps,
               current: '${wc.currentTotalReps}',
               previous: wc.previousTotalReps != null ? '${wc.previousTotalReps}' : '-',
               diffPercent: null,
@@ -401,7 +408,7 @@ class _PerformanceComparisonSection extends StatelessWidget {
           if (comparison.exerciseComparisons.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              'Per Exercise',
+              l.summaryPerExercise,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -585,23 +592,24 @@ class _WarmupStretchSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return _SectionCard(
       isDark: isDark,
       icon: Icons.accessibility_new,
-      title: 'Warmup & Stretching',
+      title: l.summaryWarmupStretching,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Warmup sub-section
           if (warmupStatus != null || warmupExercises.isNotEmpty) ...[
-            _SubHeader(label: 'Warmup', status: warmupStatus, isDark: isDark),
+            _SubHeader(label: l.summaryWarmup, status: warmupStatus, isDark: isDark),
             ...warmupExercises.map((e) => _ExerciseTile(exercise: e, isDark: isDark)),
             if (stretchExercises.isNotEmpty || stretchStatus != null) const SizedBox(height: 10),
           ],
 
           // Stretch sub-section
           if (stretchStatus != null || stretchExercises.isNotEmpty) ...[
-            _SubHeader(label: 'Stretching', status: stretchStatus, isDark: isDark),
+            _SubHeader(label: l.summaryStretching, status: stretchStatus, isDark: isDark),
             ...stretchExercises.map((e) => _ExerciseTile(exercise: e, isDark: isDark)),
           ],
         ],
@@ -763,6 +771,7 @@ class _RestAnalysisSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     // Compute aggregates
     final totalRest = intervals.fold<int>(
       0,
@@ -781,20 +790,20 @@ class _RestAnalysisSection extends StatelessWidget {
     return _SectionCard(
       isDark: isDark,
       icon: Icons.timer_outlined,
-      title: 'Rest Analysis',
+      title: l.summaryRestAnalysis,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Summary row
           Row(
             children: [
-              _MiniStat(label: 'Total Rest', value: _fmtRest(totalRest), isDark: isDark),
+              _MiniStat(label: l.summaryTotalRest, value: _fmtRest(totalRest), isDark: isDark),
               const SizedBox(width: 16),
               if (betweenSets.isNotEmpty)
-                _MiniStat(label: 'Avg (Sets)', value: _fmtRest(avgOf(betweenSets)), isDark: isDark),
+                _MiniStat(label: l.summaryAvgSets, value: _fmtRest(avgOf(betweenSets)), isDark: isDark),
               if (betweenExercises.isNotEmpty) ...[
                 const SizedBox(width: 16),
-                _MiniStat(label: 'Avg (Exercises)', value: _fmtRest(avgOf(betweenExercises)), isDark: isDark),
+                _MiniStat(label: l.summaryAvgExercises, value: _fmtRest(avgOf(betweenExercises)), isDark: isDark),
               ],
             ],
           ),
@@ -917,12 +926,13 @@ class _HydrationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final totalOz = (totalMl / 29.5735).toStringAsFixed(0);
 
     return _SectionCard(
       isDark: isDark,
       icon: Icons.water_drop_outlined,
-      title: 'Hydration',
+      title: l.summaryHydration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1050,6 +1060,7 @@ class _AIInteractionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final items = <_AIStatItem>[];
 
     void addIfPresent(String key, String label, IconData icon, {String? suffix}) {
@@ -1064,29 +1075,29 @@ class _AIInteractionsSection extends StatelessWidget {
     final sugAccepted = interactions['weight_suggestions_accepted'];
     if (sugShown != null && sugShown != 0) {
       items.add(_AIStatItem(
-        label: 'Weight Suggestions',
+        label: l.summaryAiWeightSuggestions,
         value: '${sugAccepted ?? 0}/$sugShown accepted',
         icon: Icons.fitness_center,
       ));
     }
 
-    addIfPresent('coach_opened', 'Coach Opened', Icons.chat_bubble_outline);
-    addIfPresent('chat_messages_sent', 'Messages Sent', Icons.send_outlined);
-    addIfPresent('coach_tips_shown', 'Coach Tips', Icons.lightbulb_outline);
-    addIfPresent('coach_tips_dismissed', 'Tips Dismissed', Icons.close);
-    addIfPresent('fatigue_alerts_triggered', 'Fatigue Alerts', Icons.warning_amber_outlined);
-    addIfPresent('rest_suggestions_shown', 'Rest Suggestions', Icons.timer_outlined);
-    addIfPresent('exercise_info_opened', 'Info Opened', Icons.info_outline);
-    addIfPresent('video_views', 'Videos Watched', Icons.play_circle_outline);
-    addIfPresent('breathing_guide_opened', 'Breathing Guide', Icons.air);
-    addIfPresent('exercise_swaps_requested', 'Exercise Swaps', Icons.swap_horiz);
+    addIfPresent('coach_opened', l.summaryAiCoachOpened, Icons.chat_bubble_outline);
+    addIfPresent('chat_messages_sent', l.summaryAiMessagesSent, Icons.send_outlined);
+    addIfPresent('coach_tips_shown', l.summaryAiCoachTips, Icons.lightbulb_outline);
+    addIfPresent('coach_tips_dismissed', l.summaryAiTipsDismissed, Icons.close);
+    addIfPresent('fatigue_alerts_triggered', l.summaryAiFatigueAlerts, Icons.warning_amber_outlined);
+    addIfPresent('rest_suggestions_shown', l.summaryAiRestSuggestions, Icons.timer_outlined);
+    addIfPresent('exercise_info_opened', l.summaryAiInfoOpened, Icons.info_outline);
+    addIfPresent('video_views', l.summaryAiVideosWatched, Icons.play_circle_outline);
+    addIfPresent('breathing_guide_opened', l.summaryAiBreathingGuide, Icons.air);
+    addIfPresent('exercise_swaps_requested', l.summaryAiExerciseSwaps, Icons.swap_horiz);
 
     if (items.isEmpty) return const SizedBox.shrink();
 
     return _SectionCard(
       isDark: isDark,
       icon: Icons.smart_toy_outlined,
-      title: 'AI Interactions',
+      title: l.summaryAiInteractions,
       child: GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
@@ -1166,6 +1177,7 @@ class _SubjectiveFeedbackSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final mood = feedback['mood_after'] as int?;
     final energy = feedback['energy_after'] as int?;
     final confidence = feedback['confidence_level'] as int?;
@@ -1174,30 +1186,30 @@ class _SubjectiveFeedbackSection extends StatelessWidget {
     return _SectionCard(
       isDark: isDark,
       icon: Icons.sentiment_satisfied_alt,
-      title: 'How You Felt',
+      title: l.summaryHowYouFelt,
       child: Column(
         children: [
           if (mood != null)
             _FeedbackRow(
-              label: 'Mood',
+              label: l.summaryFeedbackMood,
               display: '${_safeEmoji(_moodEmojis, mood)} $mood/5',
               isDark: isDark,
             ),
           if (energy != null)
             _FeedbackRow(
-              label: 'Energy',
+              label: l.summaryFeedbackEnergy,
               display: '${_safeEmoji(_energyEmojis, energy)} $energy/5',
               isDark: isDark,
             ),
           if (confidence != null)
             _FeedbackRow(
-              label: 'Confidence',
+              label: l.summaryFeedbackConfidence,
               display: '$confidence/5',
               isDark: isDark,
             ),
           if (stronger != null)
             _FeedbackRow(
-              label: 'Feeling Stronger',
+              label: l.summaryFeedbackFeelingStronger,
               display: stronger ? 'Yes \u2705' : 'No',
               isDark: isDark,
             ),
@@ -1259,16 +1271,18 @@ class _SettingsUsedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final unit = settings['unit'] as String? ?? 'lbs';
 
     final entries = <MapEntry<String, String>>[];
-    entries.add(MapEntry('Weight Unit', unit));
+    entries.add(MapEntry(l.summaryWeightUnit, unit));
 
     for (final key in ['dumbbell', 'barbell', 'machine', 'kettlebell', 'cable']) {
       final val = settings[key];
       if (val != null) {
+        final capitalized = '${key[0].toUpperCase()}${key.substring(1)}';
         entries.add(MapEntry(
-          '${key[0].toUpperCase()}${key.substring(1)} Increment',
+          l.summaryEquipmentIncrement(capitalized),
           '$val $unit',
         ));
       }
@@ -1277,7 +1291,7 @@ class _SettingsUsedSection extends StatelessWidget {
     return _SectionCard(
       isDark: isDark,
       icon: Icons.settings_outlined,
-      title: 'Settings Used',
+      title: l.summarySettingsUsed,
       child: Column(
         children: entries.map((e) {
           return Padding(
@@ -1364,17 +1378,18 @@ class _PerExerciseDeepDiveSection extends StatelessWidget {
       grouped.putIfAbsent(key, () => []).add(s);
     }
 
+    final l = AppLocalizations.of(context)!;
     if (grouped.isEmpty) {
       final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
       return _SectionCard(
         isDark: isDark,
         icon: Icons.fitness_center,
-        title: 'Per-Exercise Deep Dive',
+        title: l.summaryPerExerciseDeepDive,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 18),
           child: Center(
             child: Text(
-              'No completed sets logged for this workout.',
+              l.summaryNoCompletedSets,
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
           ),
@@ -1385,7 +1400,7 @@ class _PerExerciseDeepDiveSection extends StatelessWidget {
     return _SectionCard(
       isDark: isDark,
       icon: Icons.fitness_center,
-      title: 'Per-Exercise Deep Dive',
+      title: l.summaryPerExerciseDeepDive,
       child: Column(
         children: grouped.entries.map((entry) {
           final exerciseName = originalNames[entry.key]!;
@@ -1460,6 +1475,7 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isDark = widget.isDark;
     final modelName = _PerExerciseDeepDiveSection
         ._progressionModelNames[widget.progressionModel];
@@ -1572,7 +1588,7 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
                   // Timing rows
                   const SizedBox(height: 10),
                   Text(
-                    'TIMING',
+                    l.summaryTiming,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -1589,7 +1605,7 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
                   if (widget.drinks.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Text(
-                      'HYDRATION',
+                      l.summaryHydrationLabel,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -1636,7 +1652,7 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
                               size: 14, color: AppColors.warning),
                           const SizedBox(width: 6),
                           Text(
-                            'Est. 1RM: ${widget.best1RM!.toStringAsFixed(0)} lb',
+                            l.summaryEst1RM(widget.best1RM!.toStringAsFixed(0)),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -1659,6 +1675,7 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
   }
 
   Widget _buildSetTable() {
+    final l = AppLocalizations.of(context)!;
     final isDark = widget.isDark;
     final headerStyle = TextStyle(
       fontSize: 10,
@@ -1684,13 +1701,13 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
         dataRowMinHeight: 32,
         dataRowMaxHeight: 48,
         columns: [
-          DataColumn(label: Text('Set', style: headerStyle)),
-          DataColumn(label: Text('Prev', style: headerStyle)),
-          DataColumn(label: Text('Target', style: headerStyle)),
-          DataColumn(label: Text('Weight', style: headerStyle)),
-          DataColumn(label: Text('Reps', style: headerStyle)),
-          DataColumn(label: Text('RIR', style: headerStyle)),
-          DataColumn(label: Text('RPE', style: headerStyle)),
+          DataColumn(label: Text(l.summaryColSet, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColPrev, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColTarget, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColWeight, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColReps, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColRir, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColRpe, style: headerStyle)),
         ],
         rows: widget.sets.map((s) {
           final setNum = s['set_number'] as int? ?? 0;
@@ -1796,10 +1813,11 @@ class _SupersetDetailsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return _SectionCard(
       isDark: isDark,
       icon: Icons.link,
-      title: 'Superset Details',
+      title: l.summarySupersetDetails,
       child: Column(
         children: supersets.map((ss) {
           final groupId = ss['group_id'] ?? '';
@@ -1820,7 +1838,7 @@ class _SupersetDetailsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Superset $groupId',
+                  l.summarySupersetN(groupId.toString()),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -1903,10 +1921,11 @@ class _ExerciseOrderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return _SectionCard(
       isDark: isDark,
       icon: Icons.format_list_numbered,
-      title: 'Exercise Order & Time',
+      title: l.summaryExerciseOrderAndTime,
       child: Column(
         children: exercises.asMap().entries.map((entry) {
           final idx = entry.key;
@@ -2009,6 +2028,7 @@ class _WorkoutExitStatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final exitReason = metadata['exit_reason'] as String? ?? 'Unknown';
     final progressPct = (metadata['progress_percentage'] as num?)?.toDouble();
     final exercisesCompleted =
@@ -2019,7 +2039,7 @@ class _WorkoutExitStatsSection extends StatelessWidget {
     return _SectionCard(
       isDark: isDark,
       icon: Icons.exit_to_app,
-      title: 'Workout Ended Early',
+      title: l.summaryWorkoutEndedEarly,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2057,7 +2077,7 @@ class _WorkoutExitStatsSection extends StatelessWidget {
             children: [
               if (progressPct != null)
                 _MiniStat(
-                  label: 'Progress',
+                  label: l.summaryExitProgress,
                   value: '${progressPct.toStringAsFixed(0)}%',
                   isDark: isDark,
                 ),
@@ -2065,14 +2085,14 @@ class _WorkoutExitStatsSection extends StatelessWidget {
                 const SizedBox(width: 20),
               if (exercisesCompleted != null)
                 _MiniStat(
-                  label: 'Exercises Done',
+                  label: l.summaryExitExercisesDone,
                   value: '$exercisesCompleted',
                   isDark: isDark,
                 ),
               if (timeSpent != null) ...[
                 const SizedBox(width: 20),
                 _MiniStat(
-                  label: 'Time Spent',
+                  label: l.summaryExitTimeSpent,
                   value: _fmtDuration(timeSpent),
                   isDark: isDark,
                 ),
@@ -2135,10 +2155,11 @@ class _VolumeBreakdownSection extends StatelessWidget {
     final maxVol = sorted.first.value;
     final totalVol = sorted.fold<double>(0, (sum, e) => sum + e.value);
 
+    final l = AppLocalizations.of(context)!;
     return _SectionCard(
       isDark: isDark,
       icon: Icons.bar_chart_rounded,
-      title: 'Volume Breakdown',
+      title: l.summaryVolumeBreakdown,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2155,7 +2176,7 @@ class _VolumeBreakdownSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Total Volume: ',
+                  l.summaryTotalVolumeLabel,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -2242,6 +2263,7 @@ class _IntensityAnalysisSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final withRpe = setLogs.where((l) => l.rpe != null).toList();
     final withRir = setLogs.where((l) => l.rir != null).toList();
 
@@ -2280,17 +2302,17 @@ class _IntensityAnalysisSection extends StatelessWidget {
 
     // RPE intensity label
     String rpeLabel(double rpe) {
-      if (rpe < 6) return 'Easy';
-      if (rpe < 7) return 'Moderate';
-      if (rpe < 8.5) return 'Hard';
-      if (rpe < 10) return 'Very Hard';
-      return 'Maximal';
+      if (rpe < 6) return loc.summaryIntensityEasy;
+      if (rpe < 7) return loc.summaryIntensityModerate;
+      if (rpe < 8.5) return loc.summaryIntensityHard;
+      if (rpe < 10) return loc.summaryIntensityVeryHard;
+      return loc.summaryIntensityMaximal;
     }
 
     return _SectionCard(
       isDark: isDark,
       icon: Icons.speed_rounded,
-      title: 'Intensity Analysis',
+      title: loc.summaryIntensityAnalysis,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2300,7 +2322,7 @@ class _IntensityAnalysisSection extends StatelessWidget {
               if (avgRpe != null)
                 Expanded(
                   child: _IntensityStat(
-                    label: 'Avg RPE',
+                    label: loc.summaryAvgRpe,
                     value: avgRpe.toStringAsFixed(1),
                     subLabel: rpeLabel(avgRpe),
                     color: rpeColor(avgRpe),
@@ -2310,7 +2332,7 @@ class _IntensityAnalysisSection extends StatelessWidget {
               if (maxRpe != null)
                 Expanded(
                   child: _IntensityStat(
-                    label: 'Peak RPE',
+                    label: loc.summaryPeakRpe,
                     value: maxRpe.toStringAsFixed(1),
                     subLabel: rpeLabel(maxRpe),
                     color: rpeColor(maxRpe),
@@ -2320,9 +2342,9 @@ class _IntensityAnalysisSection extends StatelessWidget {
               if (avgRir != null)
                 Expanded(
                   child: _IntensityStat(
-                    label: 'Avg RIR',
+                    label: loc.summaryAvgRir,
                     value: avgRir.toStringAsFixed(1),
-                    subLabel: '${avgRir.toStringAsFixed(0)} reps left',
+                    subLabel: loc.summaryRepsLeft(avgRir.toStringAsFixed(0)),
                     color: avgRir <= 1 ? AppColors.error : avgRir <= 2 ? AppColors.orange : AppColors.success,
                     isDark: isDark,
                   ),
@@ -2333,7 +2355,7 @@ class _IntensityAnalysisSection extends StatelessWidget {
           if (withRpe.length >= 3) ...[
             const SizedBox(height: 14),
             Text(
-              'RPE Distribution',
+              loc.summaryRpeDistribution,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -2472,17 +2494,18 @@ class _Estimated1RMSection extends StatelessWidget {
     final sorted = best1RMs.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
+    final l = AppLocalizations.of(context)!;
     return _SectionCard(
       isDark: isDark,
       icon: Icons.emoji_events_rounded,
-      title: 'Estimated 1RM',
+      title: l.summaryEstimated1RM,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Text(
-              'Based on Epley formula from your best sets',
+              l.summaryEpleyFormula,
               style: TextStyle(
                 fontSize: 11,
                 fontStyle: FontStyle.italic,
@@ -2522,7 +2545,7 @@ class _Estimated1RMSection extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Best set: ${weightLb.toStringAsFixed(1)} lb x ${set.repsCompleted}',
+                            l.summaryBestSet(weightLb.toStringAsFixed(1), set.repsCompleted),
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -2570,6 +2593,7 @@ class _SetTypeDistributionSection extends StatelessWidget {
     required this.isDark,
   });
 
+  // TODO(i18n): no context at static const — migrate to a method with BuildContext when needed
   static const _typeLabels = {
     'working': 'Working',
     'warmup': 'Warm-up',
@@ -2607,10 +2631,11 @@ class _SetTypeDistributionSection extends StatelessWidget {
         return b.value.compareTo(a.value);
       });
 
+    final l = AppLocalizations.of(context)!;
     return _SectionCard(
       isDark: isDark,
       icon: Icons.donut_small_rounded,
-      title: 'Set Type Distribution',
+      title: l.summarySetTypeDistribution,
       child: Column(
         children: [
           // Stacked bar
@@ -2700,7 +2725,7 @@ class _InfoBanner extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Text(
-              'Detailed tracking data is not available for this workout.',
+              AppLocalizations.of(context)!.summaryNoDetailedData,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -2766,6 +2791,7 @@ class _CoachHeroCard extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
+    final l = AppLocalizations.of(context)!;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -2816,7 +2842,7 @@ class _CoachHeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'COACH',
+                      l.summaryCoachLabel,
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w800,
@@ -3191,6 +3217,9 @@ class _KpiSparklinePainter extends CustomPainter {
 /// zero (older workouts whose summary row was never written). Per-set
 /// rows from `performance_logs` are the source of truth for "what the
 /// user actually lifted" — the aggregates are derived from them.
+// TODO(i18n): no BuildContext at top-level function — KPI tile labels are
+// hardcoded English ('VOLUME', 'TOP 1RM', 'PRs HIT', 'AVG EFFORT').
+// Migrate by adding a BuildContext/AppLocalizations parameter.
 List<_KpiTileData> _buildKpiTiles({
   required WorkoutSummaryResponse? data,
   required Map<String, dynamic>? metadata,
@@ -3649,6 +3678,7 @@ class _SessionScoreRings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -3749,7 +3779,7 @@ class _SessionScoreRings extends StatelessWidget {
               Icon(Icons.radar_rounded, size: 14, color: textMuted),
               const SizedBox(width: 6),
               Text(
-                'SESSION SCORE',
+                l.summarySessionScore,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -3797,7 +3827,7 @@ class _SessionScoreRings extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'out of 100',
+                              l.summaryOutOf100,
                               style: TextStyle(
                                 fontSize: 9,
                                 color: textMuted,
@@ -3821,9 +3851,9 @@ class _SessionScoreRings extends StatelessWidget {
                   children: [
                     _RingLegendRow(
                       color: purple,
-                      label: 'Plan',
+                      label: l.summaryRingPlan,
                       valueLabel: adherence == null
-                          ? 'No plan data'
+                          ? l.summaryNoPlanData
                           : '${(adherence * 100).round()}% · '
                               '$completedCount / $totalPlanned exercises',
                       textPrimary: textPrimary,
@@ -3832,11 +3862,11 @@ class _SessionScoreRings extends StatelessWidget {
                     const SizedBox(height: 10),
                     _RingLegendRow(
                       color: orange,
-                      label: 'Effort',
+                      label: l.summaryRingEffort,
                       valueLabel: intensityCoverage == null
-                          ? 'No working sets'
+                          ? l.summaryNoWorkingSets
                           : intensityCoverage >= 0.999
-                              ? 'Every set rated'
+                              ? l.summaryEverySetRated
                               : '${(intensityCoverage * 100).round()}% · '
                                   '$rirLogged / $working sets rated',
                       textPrimary: textPrimary,
@@ -3845,9 +3875,9 @@ class _SessionScoreRings extends StatelessWidget {
                     const SizedBox(height: 10),
                     _RingLegendRow(
                       color: teal,
-                      label: 'Rest',
+                      label: l.summaryRingRest,
                       valueLabel: rest == null
-                          ? 'No rest data'
+                          ? l.summaryNoRestData
                           : '${(rest * 100).round()}% on target · '
                               '${restStats.tooShort} short · '
                               '${restStats.tooLong} long',
@@ -4010,6 +4040,7 @@ class _IntensityDonutRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final success = isDark ? AppColors.success : AppColorsLight.success;
     final warning = isDark ? AppColors.warning : AppColorsLight.warning;
     final error = isDark ? AppColors.error : AppColorsLight.error;
@@ -4042,9 +4073,9 @@ class _IntensityDonutRow extends StatelessWidget {
     }
     final restPct = restTotal == 0 ? null : (100 * onTarget / restTotal);
     final restDonut = _DonutCard(
-      title: 'REST COMPLIANCE',
+      title: l.summaryDonutRestCompliance,
       centerBig: restPct == null ? '—' : '${restPct.toStringAsFixed(0)}%',
-      centerSmall: restPct == null ? null : 'on target',
+      centerSmall: restPct == null ? null : l.summaryDonutOnTarget,
       segments: restTotal == 0
           ? [_DonutSegment(1, muted.withValues(alpha: 0.2))]
           : [
@@ -4053,7 +4084,7 @@ class _IntensityDonutRow extends StatelessWidget {
               _DonutSegment(tooLong.toDouble(), error),
             ],
       caption: restTotal == 0
-          ? 'No rest data'
+          ? l.summaryNoRestData
           : '$onTarget on · $tooShort short · $tooLong long',
       isDark: isDark,
     );
@@ -4101,16 +4132,16 @@ class _IntensityDonutRow extends StatelessWidget {
     if (rirTotal == 0) {
       rirLabel = '—';
     } else if (hard >= moderate && hard >= easy) {
-      rirLabel = 'HARD';
+      rirLabel = l.summaryIntensityHard;
     } else if (moderate >= easy) {
-      rirLabel = 'MODERATE';
+      rirLabel = l.summaryIntensityModerate;
     } else {
-      rirLabel = 'EASY';
+      rirLabel = l.summaryIntensityEasy;
     }
     final rirDonut = _DonutCard(
-      title: 'INTENSITY',
+      title: l.summaryDonutIntensity,
       centerBig: rirLabel,
-      centerSmall: rirTotal == 0 ? null : '$rirTotal sets',
+      centerSmall: rirTotal == 0 ? null : l.summaryNSets(rirTotal),
       segments: rirTotal == 0
           ? [_DonutSegment(1, muted.withValues(alpha: 0.2))]
           : [
@@ -4119,7 +4150,7 @@ class _IntensityDonutRow extends StatelessWidget {
               _DonutSegment(easy.toDouble(), success),
             ],
       caption: rirTotal == 0
-          ? 'No RIR logged'
+          ? l.summaryNoRirLogged
           : '$hard hard · $moderate mod · $easy easy',
       isDark: isDark,
     );
@@ -4137,7 +4168,7 @@ class _IntensityDonutRow extends StatelessWidget {
         ? null
         : (100 * completedCount / totalPlanned).clamp(0.0, 100.0);
     final planDonut = _DonutCard(
-      title: 'PLAN ADHERENCE',
+      title: l.summaryDonutPlanAdherence,
       centerBig:
           adherencePct == null ? '—' : '${adherencePct.toStringAsFixed(0)}%',
       centerSmall: totalPlanned == 0
@@ -4150,10 +4181,10 @@ class _IntensityDonutRow extends StatelessWidget {
               _DonutSegment(skippedIndices.toDouble(), muted),
             ],
       caption: totalPlanned == 0
-          ? 'No plan data'
+          ? l.summaryNoPlanData
           : skippedIndices == 0
-              ? 'All exercises completed'
-              : '$skippedIndices skipped',
+              ? l.summaryAllExercisesCompleted
+              : l.summaryNSkipped(skippedIndices),
       isDark: isDark,
     );
 
@@ -4377,7 +4408,7 @@ class _SessionTimeline extends StatelessWidget {
             Icon(Icons.timeline_rounded, size: 14, color: textMuted),
             const SizedBox(width: 6),
             Text(
-              'SESSION TIMELINE',
+              AppLocalizations.of(context)!.summarySessionTimeline,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -4672,7 +4703,7 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
         Icon(Icons.accessibility_new_rounded, size: 14, color: textMuted),
         const SizedBox(width: 6),
         Text(
-          'MUSCLES HIT',
+          AppLocalizations.of(context)!.summaryMusclesHit,
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
@@ -4715,7 +4746,7 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
                 Icon(Icons.directions_run, size: 28, color: textMuted),
                 const SizedBox(height: 6),
                 Text(
-                  'Cardio session',
+                  AppLocalizations.of(context)!.summaryCardioSession,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -4724,7 +4755,7 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Muscle map not applicable',
+                  AppLocalizations.of(context)!.summaryMuscleMapNotApplicable,
                   style: TextStyle(fontSize: 11, color: textMuted),
                 ),
               ],
@@ -4772,7 +4803,7 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
               child: Column(
                 children: [
                   Text(
-                    'No volume data yet',
+                    AppLocalizations.of(context)!.summaryNoVolumeData,
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
                   if (untagged.isNotEmpty) ...[
@@ -4917,7 +4948,7 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                'Tag muscles · $preview',
+                AppLocalizations.of(context)!.summaryTagMuscles(preview),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -5005,8 +5036,8 @@ class _FrontBackToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          pill('FRONT', AtlasAsset.musclesFront, Icons.person_rounded),
-          pill('BACK', AtlasAsset.musclesBack, Icons.accessibility_new_rounded),
+          pill(AppLocalizations.of(context)!.summaryAtlasFront, AtlasAsset.musclesFront, Icons.person_rounded),
+          pill(AppLocalizations.of(context)!.summaryAtlasBack, AtlasAsset.musclesBack, Icons.accessibility_new_rounded),
         ],
       ),
     );
@@ -5060,7 +5091,7 @@ class _PyramidDeepDiveSection extends StatelessWidget {
               Icon(Icons.fitness_center_rounded, size: 14, color: textMuted),
               const SizedBox(width: 6),
               Text(
-                'PER-EXERCISE DEEP DIVE',
+                AppLocalizations.of(context)!.summaryPerExerciseDeepDiveLabel,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -5111,6 +5142,7 @@ class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
     return (raw ?? 'straightSets').toString();
   }
 
+  // TODO(i18n): no BuildContext in getter — migrate to a method accepting context if needed
   String get _modelLabel {
     switch (_modelKey) {
       case 'pyramidUp':
@@ -5463,6 +5495,7 @@ class _PyramidSetTable extends StatelessWidget {
     );
     String lb(double? kg) =>
         kg == null || kg <= 0 ? '—' : (kg * 2.20462).toStringAsFixed(0);
+    final l = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
@@ -5471,13 +5504,13 @@ class _PyramidSetTable extends StatelessWidget {
         dataRowMaxHeight: 32,
         headingRowHeight: 26,
         columns: [
-          DataColumn(label: Text('Set', style: headerStyle)),
-          DataColumn(label: Text('Prev', style: headerStyle)),
-          DataColumn(label: Text('Target', style: headerStyle)),
-          DataColumn(label: Text('Weight', style: headerStyle)),
-          DataColumn(label: Text('Reps', style: headerStyle)),
-          DataColumn(label: Text('RIR', style: headerStyle)),
-          DataColumn(label: Text('RPE', style: headerStyle)),
+          DataColumn(label: Text(l.summaryColSet, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColPrev, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColTarget, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColWeight, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColReps, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColRir, style: headerStyle)),
+          DataColumn(label: Text(l.summaryColRpe, style: headerStyle)),
         ],
         rows: [
           for (final s in sets)
@@ -5627,7 +5660,7 @@ class _CollapsibleDetailsState extends State<_CollapsibleDetails> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _expanded ? 'Hide details' : 'More details',
+                      _expanded ? AppLocalizations.of(context)!.summaryHideDetails : AppLocalizations.of(context)!.summaryMoreDetails,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,

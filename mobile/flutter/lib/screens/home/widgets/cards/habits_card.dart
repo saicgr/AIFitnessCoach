@@ -7,6 +7,7 @@ import '../../../../data/models/habit.dart';
 import '../../../../data/providers/habit_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// ============================================================
 /// HABITS CARD
@@ -214,7 +215,7 @@ class HabitsCard extends ConsumerWidget {
             Icon(Icons.error_outline, color: AppColors.error, size: 40),
             const SizedBox(height: 12),
             Text(
-              'Failed to load habits',
+              AppLocalizations.of(context)!.habitsCardFailedToLoadHabits,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -238,7 +239,7 @@ class HabitsCard extends ConsumerWidget {
                 foregroundColor: AppColors.error,
                 side: BorderSide(color: AppColors.error),
               ),
-              child: const Text('Try Again'),
+              child: Text(AppLocalizations.of(context)!.habitsCardTryAgain),
             ),
           ],
         ),
@@ -307,7 +308,7 @@ class HabitsCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Build Daily Habits',
+                    AppLocalizations.of(context)!.habitsCardBuildDailyHabits,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -318,7 +319,7 @@ class HabitsCard extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Start tracking daily habits to build consistency and achieve your goals.',
+                AppLocalizations.of(context)!.habitsCardStartTrackingDailyHabits,
                 style: TextStyle(
                   fontSize: 13,
                   color: textMuted,
@@ -328,7 +329,7 @@ class HabitsCard extends ConsumerWidget {
               const SizedBox(height: 16),
               // Template suggestions
               Text(
-                'Quick Start:',
+                AppLocalizations.of(context)!.habitsCardQuickStart,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -353,7 +354,7 @@ class HabitsCard extends ConsumerWidget {
                     context.push('/habits');
                   },
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Your First Habit'),
+                  label: Text(AppLocalizations.of(context)!.habitsCardAddYourFirstHabit),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentColor,
                     foregroundColor: Colors.white,
@@ -482,7 +483,7 @@ class HabitsCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Today's Habits",
+                          AppLocalizations.of(context)!.habitsCardTodaySHabits,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -491,7 +492,7 @@ class HabitsCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${habitsState.completedToday}/${habitsState.totalHabits} completed',
+                          AppLocalizations.of(context)!.habitsCardCompletedCount(habitsState.completedToday, habitsState.totalHabits),
                           style: TextStyle(
                             fontSize: 12,
                             color: textMuted,
@@ -544,7 +545,7 @@ class HabitsCard extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'All habits completed!',
+                              AppLocalizations.of(context)!.habitsCardAllHabitsCompleted,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -552,7 +553,7 @@ class HabitsCard extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              'Great job keeping up your streaks',
+                              AppLocalizations.of(context)!.habitsCardGreatJobKeepingUp,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: textMuted,
@@ -579,7 +580,7 @@ class HabitsCard extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'View All ${habitsState.totalHabits} Habits',
+                          AppLocalizations.of(context)!.habitsCardViewAllHabits(habitsState.totalHabits),
                           style: TextStyle(
                             fontSize: 13,
                             color: accentColor,
@@ -599,6 +600,7 @@ class HabitsCard extends ConsumerWidget {
                   longestStreakHabit.currentStreak > 0) ...[
                 const SizedBox(height: 8),
                 _buildStreakHighlight(
+                  context,
                   longestStreakHabit,
                   textColor,
                   textMuted,
@@ -673,6 +675,7 @@ class HabitsCard extends ConsumerWidget {
     Color textColor,
     Color textMuted,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final habitColor = _parseColor(habit.color);
 
     return Row(
@@ -719,7 +722,7 @@ class HabitsCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      '${habit.currentStreak} day streak',
+                      l10n.habitsCardDayStreak(habit.currentStreak),
                       style: TextStyle(
                         fontSize: 11,
                         color: textMuted,
@@ -767,10 +770,12 @@ class HabitsCard extends ConsumerWidget {
 
   /// Streak highlight banner
   Widget _buildStreakHighlight(
+    BuildContext context,
     HabitWithStatus habit,
     Color textColor,
     Color textMuted,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -797,7 +802,7 @@ class HabitsCard extends ConsumerWidget {
                 style: TextStyle(fontSize: 12, color: textMuted),
                 children: [
                   TextSpan(
-                    text: '${habit.currentStreak} day streak',
+                    text: l10n.habitsCardDayStreak(habit.currentStreak),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.orange,

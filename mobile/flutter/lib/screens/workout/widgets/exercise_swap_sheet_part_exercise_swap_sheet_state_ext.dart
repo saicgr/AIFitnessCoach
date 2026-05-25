@@ -6,6 +6,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
   /// AI Picks tab - slow AI-powered suggestions (~10s)
   /// Now includes text + voice input for custom requests
   Widget _buildAITab(Color textMuted, Color textPrimary) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBackground =
         isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -188,7 +189,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Listening... speak now',
+                  l.exerciseSwapListeningNow,
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.cyan,
@@ -257,7 +258,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'Finding your best alternatives',
+                      l.exerciseSwapFindingAlternatives,
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 15,
@@ -266,7 +267,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Matching equipment, muscles, and your training history',
+                      l.exerciseSwapMatchingEquipment,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,
@@ -304,7 +305,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Ask AI for suggestions',
+                      l.exerciseSwapAskAiTitle,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -313,7 +314,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Describe your equipment or preferences\ne.g., "I have a bad shoulder" or "bodyweight only"',
+                      l.exerciseSwapAskAiHint,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
@@ -326,7 +327,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                         _loadAISuggestions();
                       },
                       icon: const Icon(Icons.auto_awesome, size: 18),
-                      label: const Text('Get AI Suggestions'),
+                      label: Text(l.exerciseSwapGetAiSuggestions),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.cyan,
                         foregroundColor: Colors.white,
@@ -364,8 +365,8 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     const SizedBox(height: 16),
                     Text(
                       _aiError != null
-                          ? 'AI Picks unavailable'
-                          : 'No alternatives matched your request',
+                          ? l.exerciseSwapAiUnavailable
+                          : l.exerciseSwapNoAlternatives,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: textPrimary,
@@ -375,7 +376,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     const SizedBox(height: 8),
                     Text(
                       _aiError ??
-                          'Try rephrasing your request above, picking a different reason, or check the Library tab.',
+                          l.exerciseSwapTryRephrasing,
                       style: TextStyle(fontSize: 13, color: textMuted),
                       textAlign: TextAlign.center,
                     ),
@@ -385,7 +386,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                         setState(() => _aiLoaded = false);
                         _loadAISuggestions();
                       },
-                      child: const Text('Try Again'),
+                      child: Text(l.commonTryAgain),
                     ),
                   ],
                 ),
@@ -437,10 +438,10 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                   badge = 'YOURS';
                   badgeColor = AppColors.orange;
                 } else if (rank == 1) {
-                  badge = 'Best Match';
+                  badge = l.exerciseSwapBadgeBestMatch;
                   badgeColor = AppColors.success;
                 } else if (rank <= 3) {
-                  badge = 'Top Pick';
+                  badge = l.exerciseSwapBadgeTopPick;
                   badgeColor = AppColors.cyan;
                 } else {
                   badge = equipment.isNotEmpty ? equipment : 'Alternative';
@@ -472,6 +473,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
     String? instructions,
     required String source,
   }) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
@@ -596,7 +598,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                                   size: 16, color: AppColors.orange),
                               const SizedBox(width: 6),
                               Text(
-                                'Instructions',
+                                l.exerciseSwapInstructions,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -634,9 +636,9 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     _swapExercise(name, source: source);
                   },
                   icon: const Icon(Icons.swap_horiz, size: 22),
-                  label: const Text(
-                    'Swap to this exercise',
-                    style: TextStyle(
+                  label: Text(
+                    l.exerciseSwapSwapToThis,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

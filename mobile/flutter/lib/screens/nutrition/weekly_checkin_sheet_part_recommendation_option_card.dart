@@ -85,7 +85,7 @@ class _RecommendationOptionCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                'RECOMMENDED',
+                                AppLocalizations.of(context).weeklyCheckinSheetRecommended,
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,

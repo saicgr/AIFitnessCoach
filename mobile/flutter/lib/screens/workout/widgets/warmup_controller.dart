@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Controller for warmup phase logic
 class WarmupController {
@@ -142,11 +143,11 @@ class WarmupPhaseScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Top bar
-                _buildTopBar(textPrimary, elevatedColor),
+                _buildTopBar(context, textPrimary, elevatedColor),
                 const SizedBox(height: 24),
 
                 // Header
-                _buildHeader(textSecondary),
+                _buildHeader(context, textSecondary),
                 const SizedBox(height: 16),
 
                 // Progress bar
@@ -159,10 +160,10 @@ class WarmupPhaseScreen extends StatelessWidget {
 
                 // Upcoming exercises
                 if (!controller.isLastExercise)
-                  _buildUpcoming(textSecondary, elevatedColor),
+                  _buildUpcoming(context, textSecondary, elevatedColor),
 
                 // Action buttons
-                _buildActionButtons(),
+                _buildActionButtons(context),
               ],
             ),
           ),
@@ -171,7 +172,8 @@ class WarmupPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar(Color textPrimary, Color elevatedColor) {
+  Widget _buildTopBar(BuildContext context, Color textPrimary, Color elevatedColor) {
+    final l = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -201,9 +203,9 @@ class WarmupPhaseScreen extends StatelessWidget {
         ),
         TextButton(
           onPressed: controller.skip,
-          child: const Text(
-            'Skip Warmup',
-            style: TextStyle(
+          child: Text(
+            l.warmupControllerSkipWarmup,
+            style: const TextStyle(
               color: AppColors.orange,
               fontWeight: FontWeight.w600,
             ),
@@ -213,7 +215,8 @@ class WarmupPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Color textSecondary) {
+  Widget _buildHeader(BuildContext context, Color textSecondary) {
+    final l = AppLocalizations.of(context)!;
     return Row(
       children: [
         Container(
@@ -232,9 +235,9 @@ class WarmupPhaseScreen extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'WARM UP',
-              style: TextStyle(
+            Text(
+              l.warmupControllerWarmUp,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.orange,
@@ -324,12 +327,13 @@ class WarmupPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcoming(Color textSecondary, Color elevatedColor) {
+  Widget _buildUpcoming(BuildContext context, Color textSecondary, Color elevatedColor) {
+    final l = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'UP NEXT',
+          l.warmupControllerUpNext,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -378,7 +382,8 @@ class WarmupPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -411,8 +416,8 @@ class WarmupPhaseScreen extends StatelessWidget {
             ),
             label: Text(
               controller.isRunning
-                  ? 'Pause'
-                  : (controller.secondsRemaining > 0 ? 'Resume' : 'Start Timer'),
+                  ? l.stretchControllerPause
+                  : (controller.secondsRemaining > 0 ? l.stretchControllerResume : l.stretchControllerStartTimer),
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -436,7 +441,7 @@ class WarmupPhaseScreen extends StatelessWidget {
               controller.isLastExercise ? Icons.check : Icons.skip_next,
             ),
             label: Text(
-              controller.isLastExercise ? 'Start Workout' : 'Next',
+              controller.isLastExercise ? l.warmupControllerStartWorkout : l.commonNext,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

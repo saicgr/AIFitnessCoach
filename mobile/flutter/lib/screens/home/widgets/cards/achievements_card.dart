@@ -7,6 +7,7 @@ import '../../../../data/models/home_layout.dart';
 import '../../../../data/models/milestone.dart';
 import '../../../../data/providers/milestones_provider.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Achievements Tile - Shows recent achievement and next milestone
 /// Displays last earned badge with progress to next one
@@ -69,10 +70,11 @@ class AchievementsCard extends ConsumerWidget {
           border: Border.all(color: cardBorder),
         ),
         child: isLoading
-            ? _buildLoadingState(textMuted)
+            ? _buildLoadingState(context, textMuted)
             : achieved.isEmpty && nextMilestone == null
-                ? _buildEmptyState(textMuted, accentColor)
+                ? _buildEmptyState(context, textMuted, accentColor)
                 : _buildContentState(
+                    context: context,
                     textColor: textColor,
                     textMuted: textMuted,
                     accentColor: accentColor,
@@ -132,7 +134,7 @@ class AchievementsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
+  Widget _buildLoadingState(BuildContext context, Color textMuted) {
     return Row(
       children: [
         SizedBox(
@@ -145,7 +147,7 @@ class AchievementsCard extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          'Loading achievements...',
+          AppLocalizations.of(context)!.achievementsCardLoadingAchievements,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -155,7 +157,8 @@ class AchievementsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted, Color accentColor) {
+  Widget _buildEmptyState(BuildContext context, Color textMuted, Color accentColor) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -164,7 +167,7 @@ class AchievementsCard extends ConsumerWidget {
             Icon(Icons.emoji_events, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Achievements',
+              l10n.achievementsCardAchievements,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -175,7 +178,7 @@ class AchievementsCard extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Complete workouts to unlock badges!',
+          l10n.achievementsCardCompleteWorkoutsToUnlock,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -189,7 +192,7 @@ class AchievementsCard extends ConsumerWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'Start your journey',
+            l10n.achievementsCardStartYourJourney,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -202,6 +205,7 @@ class AchievementsCard extends ConsumerWidget {
   }
 
   Widget _buildContentState({
+    required BuildContext context,
     required Color textColor,
     required Color textMuted,
     required Color accentColor,
@@ -228,7 +232,7 @@ class AchievementsCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Achievements',
+                    AppLocalizations.of(context)!.achievementsCardAchievements,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -338,7 +342,7 @@ class AchievementsCard extends ConsumerWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'Next: ',
+                AppLocalizations.of(context)!.achievementsCardNext,
                 style: TextStyle(
                   fontSize: 12,
                   color: textMuted,

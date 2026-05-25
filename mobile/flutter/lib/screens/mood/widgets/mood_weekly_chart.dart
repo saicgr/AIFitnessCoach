@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/mood.dart';
 import '../../../data/repositories/mood_history_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Provider for weekly mood data
 final moodWeeklyProvider = FutureProvider.autoDispose<MoodWeeklyResponse?>((ref) async {
@@ -34,12 +35,12 @@ class MoodWeeklyChart extends ConsumerWidget {
       child: weeklyData.when(
         data: (data) {
           if (data == null || data.days.isEmpty) {
-            return _buildEmptyState(textSecondary);
+            return _buildEmptyState(context, textSecondary);
           }
           return _buildChart(context, data, isDark, textPrimary, textSecondary);
         },
         loading: () => _buildLoadingState(),
-        error: (e, _) => _buildErrorState(textSecondary),
+        error: (e, _) => _buildErrorState(context, textSecondary),
       ),
     );
   }
@@ -51,6 +52,7 @@ class MoodWeeklyChart extends ConsumerWidget {
     Color textPrimary,
     Color textSecondary,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -59,14 +61,14 @@ class MoodWeeklyChart extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Mood Trends',
+              l10n.moodWeeklyChartMoodTrends,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
             ),
-            _buildTrendBadge(data.summary, isDark),
+            _buildTrendBadge(context, data.summary, isDark),
           ],
         ),
         const SizedBox(height: 16),
@@ -90,19 +92,19 @@ class MoodWeeklyChart extends ConsumerWidget {
           children: [
             _StatItem(
               value: '${data.summary.totalCheckins}',
-              label: 'Check-ins',
+              label: l10n.moodWeeklyChartCheckIns,
               color: textPrimary,
               textSecondary: textSecondary,
             ),
             _StatItem(
               value: data.summary.avgMoodScore.toStringAsFixed(1),
-              label: 'Avg Score',
+              label: l10n.moodWeeklyChartAvgScore,
               color: textPrimary,
               textSecondary: textSecondary,
             ),
             _StatItem(
               value: '${data.daysWithCheckins.length}/7',
-              label: 'Days Active',
+              label: l10n.moodWeeklyChartDaysActive,
               color: textPrimary,
               textSecondary: textSecondary,
             ),
@@ -112,7 +114,8 @@ class MoodWeeklyChart extends ConsumerWidget {
     );
   }
 
-  Widget _buildTrendBadge(MoodWeeklySummary summary, bool isDark) {
+  Widget _buildTrendBadge(BuildContext context, MoodWeeklySummary summary, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     Color bgColor;
     Color textColor;
     IconData icon;
@@ -123,19 +126,19 @@ class MoodWeeklyChart extends ConsumerWidget {
         bgColor = Colors.green.withValues(alpha: 0.15);
         textColor = Colors.green;
         icon = Icons.trending_up;
-        label = 'Improving';
+        label = l10n.moodWeeklyChartImproving;
         break;
       case 'declining':
         bgColor = Colors.orange.withValues(alpha: 0.15);
         textColor = Colors.orange;
         icon = Icons.trending_down;
-        label = 'Declining';
+        label = l10n.moodWeeklyChartDeclining;
         break;
       default:
         bgColor = Colors.blue.withValues(alpha: 0.15);
         textColor = Colors.blue;
         icon = Icons.trending_flat;
-        label = 'Stable';
+        label = l10n.moodWeeklyChartStable;
     }
 
     return Container(
@@ -162,7 +165,8 @@ class MoodWeeklyChart extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textSecondary) {
+  Widget _buildEmptyState(BuildContext context, Color textSecondary) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 150,
       child: Center(
@@ -176,12 +180,12 @@ class MoodWeeklyChart extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'No mood data this week',
+              l10n.moodWeeklyChartNoMoodDataThis,
               style: TextStyle(color: textSecondary),
             ),
             const SizedBox(height: 4),
             Text(
-              'Start tracking your mood to see trends',
+              l10n.moodWeeklyChartStartTrackingYourMood,
               style: TextStyle(
                 color: textSecondary.withValues(alpha: 0.7),
                 fontSize: 12,
@@ -202,7 +206,8 @@ class MoodWeeklyChart extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorState(Color textSecondary) {
+  Widget _buildErrorState(BuildContext context, Color textSecondary) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 150,
       child: Center(
@@ -216,7 +221,7 @@ class MoodWeeklyChart extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Failed to load mood data',
+              l10n.moodWeeklyChartFailedToLoadMood,
               style: TextStyle(color: textSecondary),
             ),
           ],

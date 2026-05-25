@@ -38,63 +38,76 @@ class _RegenerateWorkoutSheetState
   // Main-line phase labels that rotate when the backend hasn't sent a fresh
   // message in a while. Keeps the headline alive instead of stuck on
   // "Starting regeneration...".
-  static const Map<int, List<String>> _stepMainLabels = {
-    0: [
-      'Starting regeneration…',
-      'Booting up the AI',
-      'Preparing your request',
-      'Getting ready',
-    ],
-    1: [
-      'Reading your profile',
-      'Loading preferences',
-      'Pulling your goals',
-    ],
-    2: [
-      'Picking your exercises',
-      'Filtering by equipment',
-      'Matching your fitness level',
-    ],
-    3: [
-      'Designing your workout',
-      'Shaping the session',
-      'Building your plan',
-      'Fine-tuning the details',
-    ],
-    4: [
-      'Finalizing your workout',
-      'Saving to your plan',
-    ],
-  };
+  Map<int, List<String>> _stepMainLabels(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return {
+      0: [
+        l10n.regenerateSheetStartingRegeneration,
+        l10n.regenerateSheetBootingUpTheAi,
+        l10n.regenerateSheetPreparingYourRequest,
+        l10n.regenerateSheetGettingReady,
+      ],
+      1: [
+        l10n.regenerateSheetReadingYourProfile,
+        l10n.regenerateSheetLoadingPreferences,
+        l10n.regenerateSheetPullingYourGoals,
+      ],
+      2: [
+        l10n.regenerateSheetPickingYourExercises,
+        l10n.regenerateSheetFilteringByEquipment,
+        l10n.regenerateSheetMatchingYourFitnessLevel,
+      ],
+      3: [
+        l10n.regenerateSheetDesigningYourWorkout,
+        l10n.regenerateSheetShapingTheSession,
+        l10n.regenerateSheetBuildingYourPlan,
+        l10n.regenerateSheetFineTuningTheDetails,
+      ],
+      4: [
+        l10n.regenerateSheetFinalizingYourWorkout,
+        l10n.regenerateSheetSavingToYourPlan,
+      ],
+    };
+  }
 
   // Hints appropriate for the phase the backend is currently in. Step 3
   // (AI generation) is the only truly slow phase, so it gets the richest set.
-  static const Map<int, List<String>> _stepHints = {
-    0: [
-      'Warming up',
-      'Connecting to the AI',
-      'Priming the engine',
-      'Loading your profile',
-    ],
-    1: ['Reading your profile', 'Checking preferences', 'Loading injuries and goals'],
-    2: [
-      'Scanning the exercise library',
-      'Filtering by your equipment',
-      'Matching your fitness level',
-      'Considering focus areas',
-    ],
-    3: [
-      'Balancing muscle groups',
-      'Dialing in sets and reps',
-      'Sequencing compound lifts first',
-      'Matching intensity to your difficulty',
-      'Pairing push and pull work',
-      'Respecting your injury list',
-      'Tuning rest periods',
-      'Adding variety to prevent plateaus',
-    ],
-    4: ['Saving to your plan', 'Updating your schedule'],
-  };
+  Map<int, List<String>> _stepHints(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return {
+      0: [
+        l10n.regenerateSheetWarmingUp,
+        l10n.regenerateSheetConnectingToTheAi,
+        l10n.regenerateSheetPrimingTheEngine,
+        l10n.regenerateSheetLoadingYourProfile,
+      ],
+      1: [
+        l10n.regenerateSheetReadingYourProfile,
+        l10n.regenerateSheetCheckingPreferences,
+        l10n.regenerateSheetLoadingInjuriesAndGoals,
+      ],
+      2: [
+        l10n.regenerateSheetScanningTheExerciseLibrary,
+        l10n.regenerateSheetFilteringByYourEquipment,
+        l10n.regenerateSheetMatchingYourFitnessLevel,
+        l10n.regenerateSheetConsideringFocusAreas,
+      ],
+      3: [
+        l10n.regenerateSheetBalancingMuscleGroups,
+        l10n.regenerateSheetDialingInSetsAndReps,
+        l10n.regenerateSheetSequencingCompoundLifts,
+        l10n.regenerateSheetMatchingIntensity,
+        l10n.regenerateSheetPairingPushAndPull,
+        l10n.regenerateSheetRespectingYourInjuryList,
+        l10n.regenerateSheetTuningRestPeriods,
+        l10n.regenerateSheetAddingVariety,
+      ],
+      4: [
+        l10n.regenerateSheetSavingToYourPlan,
+        l10n.regenerateSheetUpdatingYourSchedule,
+      ],
+    };
+  }
 
   // How long a backend message stays "fresh" — after this, the main label
   // starts rotating through phase-appropriate headings so the UI never feels
@@ -359,7 +372,7 @@ class _RegenerateWorkoutSheetState
     ];
     final weekday = weekdayNames[originalDate.weekday - 1];
     final month = monthNames[originalDate.month - 1];
-    final keepLabel = 'Keep $weekday, $month ${originalDate.day}';
+    final keepLabel = AppLocalizations.of(context)!.regenerateSheetKeepDate(weekday, month, originalDate.day);
 
     final todayIsPreferred = _userWorkoutDays.isEmpty
         ? true
@@ -371,7 +384,7 @@ class _RegenerateWorkoutSheetState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'WHEN?',
+            AppLocalizations.of(context)!.regenerateSheetWhen,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: colors.textMuted,
                   fontWeight: FontWeight.w600,
@@ -395,7 +408,7 @@ class _RegenerateWorkoutSheetState
               Expanded(
                 child: _buildWhenChip(
                   colors: colors,
-                  label: 'Do this today',
+                  label: AppLocalizations.of(context)!.regenerateSheetDoThisToday,
                   selected: _moveToToday,
                   onTap: _isRegenerating
                       ? null
@@ -407,7 +420,7 @@ class _RegenerateWorkoutSheetState
           if (_moveToToday && !todayIsPreferred) ...[
             const SizedBox(height: 6),
             Text(
-              "Today isn't in your usual workout days — we'll add it anyway.",
+              AppLocalizations.of(context)!.regenerateSheetTodayNotInUsualDays,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colors.textMuted,
                     fontStyle: FontStyle.italic,
@@ -490,28 +503,30 @@ class _RegenerateWorkoutSheetState
   /// it's still fresh; once that message has been sitting on screen for
   /// [_mainMessageFreshness], we rotate through phase-appropriate labels so
   /// the UI never feels stuck on a single sentence.
-  String _displayMainMessage() {
+  String _displayMainMessage(BuildContext context) {
     final isFresh = _lastBackendUpdateAt != null &&
         DateTime.now().difference(_lastBackendUpdateAt!) <
             _mainMessageFreshness;
     if (isFresh && _progressMessage.isNotEmpty) {
       return _progressMessage;
     }
-    final labels = _stepMainLabels[_currentStep];
+    final labels = _stepMainLabels(context)[_currentStep];
     if (labels != null && labels.isNotEmpty) {
       return labels[_hintIndex % labels.length];
     }
-    return _progressMessage.isNotEmpty ? _progressMessage : 'Warming up…';
+    return _progressMessage.isNotEmpty
+        ? _progressMessage
+        : AppLocalizations.of(context)!.regenerateSheetWarmingUp;
   }
 
   /// Returns the substatus shown under the main progress message. Prefers the
   /// backend-provided detail, and falls back to a rotating hint for the
   /// current step so the UI keeps moving even when nothing is being emitted.
-  String? _displayDetail() {
+  String? _displayDetail(BuildContext context) {
     if (_progressDetail != null && _progressDetail!.isNotEmpty) {
       return _progressDetail;
     }
-    final hints = _stepHints[_currentStep];
+    final hints = _stepHints(context)[_currentStep];
     if (hints == null || hints.isEmpty) return null;
     return hints[_hintIndex % hints.length];
   }
@@ -662,7 +677,7 @@ class _RegenerateWorkoutSheetState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Regenerate Current Workout',
+                      AppLocalizations.of(context)!.regenerateSheetRegenerateCurrentWorkout,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -670,7 +685,7 @@ class _RegenerateWorkoutSheetState
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Customize or let AI suggest',
+                      AppLocalizations.of(context)!.regenerateSheetCustomizeOrLetAiSuggest,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: colors.textMuted,
                           ),
@@ -691,13 +706,14 @@ class _RegenerateWorkoutSheetState
   }
 
   Widget _buildTabBar(SheetColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return SegmentedTabBar(
       controller: _tabController,
       showIcons: false,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      tabs: const [
-        SegmentedTabItem(label: 'Customize'),
-        SegmentedTabItem(label: 'AI Suggestions'),
+      tabs: [
+        SegmentedTabItem(label: l10n.regenerateSheetCustomize),
+        SegmentedTabItem(label: l10n.regenerateSheetAiSuggestions),
       ],
     );
   }
@@ -843,7 +859,7 @@ class _RegenerateWorkoutSheetState
                       const CircularProgressIndicator(color: AppColors.cyan),
                       const SizedBox(height: 16),
                       Text(
-                        'Generating suggestions...',
+                        AppLocalizations.of(context)!.regenerateSheetGeneratingSuggestions,
                         style: TextStyle(color: colors.textMuted),
                       ),
                     ],
@@ -887,7 +903,7 @@ class _RegenerateWorkoutSheetState
               Icon(Icons.chat_bubble_outline, size: 18, color: colors.cyan),
               const SizedBox(width: 8),
               Text(
-                'Describe your ideal workout',
+                AppLocalizations.of(context)!.regenerateSheetDescribeYourIdealWorkout,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -959,7 +975,7 @@ class _RegenerateWorkoutSheetState
             ),
             const SizedBox(height: 16),
             Text(
-              'No suggestions yet',
+              AppLocalizations.of(context)!.regenerateSheetNoSuggestionsYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -968,7 +984,7 @@ class _RegenerateWorkoutSheetState
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter a prompt above or tap refresh to get AI-powered workout suggestions',
+              AppLocalizations.of(context)!.regenerateSheetEnterAPrompt,
               style: TextStyle(fontSize: 14, color: colors.textMuted),
               textAlign: TextAlign.center,
             ),
@@ -976,7 +992,7 @@ class _RegenerateWorkoutSheetState
             OutlinedButton.icon(
               onPressed: _isLoadingSuggestions ? null : _loadAISuggestions,
               icon: const Icon(Icons.refresh),
-              label: const Text('Get Suggestions'),
+              label: Text(AppLocalizations.of(context)!.regenerateSheetGetSuggestions),
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.cyan,
                 side: BorderSide(color: colors.cyan),
@@ -1024,21 +1040,20 @@ class _RegenerateWorkoutSheetState
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Generating... ${_formatElapsed(_elapsed)}',
+                          AppLocalizations.of(context)!.regenerateSheetGeneratingElapsed(_formatElapsed(_elapsed)),
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ],
                     )
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.auto_awesome, size: 20),
-                        SizedBox(width: 8),
+                        const Icon(Icons.auto_awesome, size: 20),
+                        const SizedBox(width: 8),
                         Text(
-                          'Regenerate Workout',
-                          style:
-                              TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          AppLocalizations.of(context)!.regenerateSheetRegenerateWorkout,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ],
                     ),
@@ -1094,21 +1109,20 @@ class _RegenerateWorkoutSheetState
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Generating... ${_formatElapsed(_elapsed)}',
+                          AppLocalizations.of(context)!.regenerateSheetGeneratingElapsed(_formatElapsed(_elapsed)),
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ],
                     )
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check, size: 20),
-                        SizedBox(width: 8),
+                        const Icon(Icons.check, size: 20),
+                        const SizedBox(width: 8),
                         Text(
-                          'Apply This Workout',
-                          style:
-                              TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          AppLocalizations.of(context)!.regenerateSheetApplyThisWorkout,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ],
                     ),
@@ -1155,7 +1169,7 @@ class _LastUsedRegenBanner extends StatelessWidget {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 240),
               child: Text(
-                'Restored from your last regeneration',
+                AppLocalizations.of(context)!.regenerateSheetRestoredFromLastRegen,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -1173,9 +1187,9 @@ class _LastUsedRegenBanner extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 foregroundColor: accent,
               ),
-              child: const Text(
-                'Reset',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              child: Text(
+                AppLocalizations.of(context)!.regenerateSheetReset,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),
           ],

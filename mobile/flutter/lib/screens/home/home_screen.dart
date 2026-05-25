@@ -152,47 +152,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _markedInteractive = false;
 
   void _triggerNavTour() {
+    final l10n = AppLocalizations.of(context)!;
     final steps = [
       AppTourStep(
         id: 'nav_step_topbar',
         targetKey: AppTourKeys.topBarKey,
-        title: 'Your Command Center',
-        description: 'Customize your home layout, switch gym profiles, and track your level — all from here.',
+        title: l10n.homeScreenTourTopbarTitle,
+        description: l10n.homeScreenTourTopbarDesc,
         position: TooltipPosition.below,
       ),
       AppTourStep(
         id: 'nav_step_carousel',
         targetKey: AppTourKeys.heroCarouselKey,
-        title: 'Your AI Workout',
-        description: 'Swipe to see this week\'s plan. Tap to start today\'s workout.',
+        title: l10n.homeScreenTourCarouselTitle,
+        description: l10n.homeScreenTourCarouselDesc,
         position: TooltipPosition.below,
       ),
       AppTourStep(
         id: 'nav_step_quicklog',
         targetKey: AppTourKeys.quickLogKey,
-        title: 'Quick Actions',
-        description: 'Quick workout generation, weight logging, food logging and more.',
+        title: l10n.homeScreenTourQuicklogTitle,
+        description: l10n.homeScreenTourQuicklogDesc,
         position: TooltipPosition.above,
       ),
       AppTourStep(
         id: 'nav_step_workout',
         targetKey: AppTourKeys.workoutNavKey,
-        title: 'Workouts',
-        description: 'View your workout history and browse the exercise library.',
+        title: l10n.homeScreenTourWorkoutTitle,
+        description: l10n.homeScreenTourWorkoutDesc,
         position: TooltipPosition.above,
       ),
       AppTourStep(
         id: 'nav_step_nutrition',
         targetKey: AppTourKeys.nutritionNavKey,
-        title: 'Track Nutrition',
-        description: 'Scan meals with your camera. Track macros easily.',
+        title: l10n.homeScreenTourNutritionTitle,
+        description: l10n.homeScreenTourNutritionDesc,
         position: TooltipPosition.above,
       ),
       AppTourStep(
         id: 'nav_step_profile',
         targetKey: AppTourKeys.profileNavKey,
-        title: 'Your Progress',
-        description: 'View strength charts, streaks, XP, and achievements.',
+        title: l10n.homeScreenTourProfileTitle,
+        description: l10n.homeScreenTourProfileDesc,
         position: TooltipPosition.above,
       ),
     ];
@@ -397,8 +398,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (count > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              'Imported $count workout${count > 1 ? 's' : ''} from Health Connect'),
+          content: Text(AppLocalizations.of(context)!.homeScreenImportedWorkouts(count)),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 3),
         ),
@@ -578,7 +578,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Apply ${preset.name}?',
+                AppLocalizations.of(context)!.homeScreenApplyPreset(preset.name),
                 style: TextStyle(
                   color: textPrimary,
                   fontSize: 18,
@@ -588,7 +588,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
         content: Text(
-          'This will replace your current tiles with the ${preset.name} layout. You can still customize after applying.',
+          AppLocalizations.of(context)!.homeScreenApplyPresetBody(preset.name),
           style: TextStyle(
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),
@@ -597,7 +597,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context)!.homeScreenCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
               ),
@@ -620,7 +620,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('${preset.name} layout applied!'),
+                    content: Text(AppLocalizations.of(context)!.homeScreenPresetApplied(preset.name)),
                     backgroundColor: AppColors.success,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -631,7 +631,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               backgroundColor: AppColors.purple,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Apply'),
+            child: Text(AppLocalizations.of(context)!.homeScreenApply),
           ),
         ],
       ),
@@ -656,7 +656,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Reset to Default?',
+                AppLocalizations.of(context)!.homeScreenResetToDefault,
                 style: TextStyle(
                   color: textPrimary,
                   fontSize: 18,
@@ -666,7 +666,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
         ),
         content: Text(
-          'This will restore the Minimalist layout (the app default). Your current customizations will be replaced.',
+          AppLocalizations.of(context)!.homeScreenResetToDefaultBody,
           style: TextStyle(
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),
@@ -675,7 +675,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context)!.homeScreenCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
               ),
@@ -693,7 +693,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Default layout restored!'),
+                    content: Text(AppLocalizations.of(context)!.homeScreenDefaultRestored),
                     backgroundColor: AppColors.success,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -704,7 +704,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               backgroundColor: AppColors.orange,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Reset'),
+            child: Text(AppLocalizations.of(context)!.homeScreenReset),
           ),
         ],
       ),
@@ -988,7 +988,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               CoachBannerOverlay.show(
                 context,
                 coach: coach,
-                title: 'Daily steps goal',
+                title: AppLocalizations.of(context)!.homeScreenDailyStepsGoal,
                 message: buildStepsGoalMessage(coach, next.value),
                 xpAwarded: next.xpAwarded,
                 icon: Icons.directions_walk_rounded,

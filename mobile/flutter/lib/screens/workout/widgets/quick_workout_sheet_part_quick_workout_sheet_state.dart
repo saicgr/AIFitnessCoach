@@ -52,6 +52,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final state = ref.watch(quickWorkoutProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBackground = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -88,7 +89,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Quick Workout',
+                      l.quickWorkoutTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: textPrimary,
@@ -96,7 +97,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Perfect for busy days',
+                      l.quickWorkoutSubtitle,
                       style: TextStyle(
                         color: textSecondary,
                         fontSize: 14,
@@ -153,7 +154,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                 Row(
                   children: [
                     Text(
-                      'Duration',
+                      l.quickWorkoutDuration,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: textPrimary,
@@ -196,7 +197,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
 
                 // Focus selector
                 Text(
-                  'Focus (Optional)',
+                  l.quickWorkoutFocusOptional,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: textPrimary,

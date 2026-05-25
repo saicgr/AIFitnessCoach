@@ -127,7 +127,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                   // Celebration text
                   if (widget.newLevel != null)
                     Text(
-                      'LEVEL UP!',
+                      AppLocalizations.of(context)!.neatGamificationWidgetsLevelUp,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -137,7 +137,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                     )
                   else
                     Text(
-                      'ACHIEVEMENT UNLOCKED!',
+                      AppLocalizations.of(context)!.neatGamificationWidgetsAchievementUnlocked,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -271,7 +271,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                             children: [
                               _ShareButton(
                                 icon: Icons.share,
-                                label: 'Share',
+                                label: AppLocalizations.of(context)!.commonShare,
                                 onTap: widget.onShare!,
                               ),
                             ],
@@ -293,9 +293,9 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Continue',
-                              style: TextStyle(
+                            child: Text(
+                              AppLocalizations.of(context)!.buttonContinue,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -341,6 +341,7 @@ class CompactNeatStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final stepProgress = (todaySteps / stepGoal).clamp(0.0, 1.0);
     final activeProgress = (activeHours / targetActiveHours).clamp(0.0, 1.0);
@@ -364,9 +365,9 @@ class CompactNeatStatsCard extends StatelessWidget {
             Expanded(
               child: _CompactStatItem(
                 icon: '\u{1F6B6}', // Walking person
-                label: 'Steps',
+                label: l10n.neatGamificationWidgetsSteps,
                 value: '$todaySteps',
-                subValue: '/ $stepGoal',
+                subValue: l10n.neatGamificationWidgetsStepGoal(stepGoal),
                 progress: stepProgress,
                 progressColor: AppColors.cyan,
               ),
@@ -380,9 +381,9 @@ class CompactNeatStatsCard extends StatelessWidget {
             Expanded(
               child: _CompactStatItem(
                 icon: '\u{23F0}', // Alarm clock
-                label: 'Active',
+                label: l10n.neatGamificationWidgetsActive,
                 value: '$activeHours',
-                subValue: '/ $targetActiveHours hrs',
+                subValue: l10n.neatGamificationWidgetsTargetActiveHours(targetActiveHours),
                 progress: activeProgress,
                 progressColor: AppColors.teal,
               ),
@@ -396,9 +397,9 @@ class CompactNeatStatsCard extends StatelessWidget {
             Expanded(
               child: _CompactStatItem(
                 icon: '\u{26A1}', // Lightning
-                label: 'NEAT',
+                label: l10n.neatGamificationWidgetsNeat,
                 value: '$neatScore',
-                subValue: 'score',
+                subValue: l10n.neatGamificationWidgetsScore,
                 progress: (neatScore / 100).clamp(0.0, 1.0),
                 progressColor: AppColors.orange,
               ),

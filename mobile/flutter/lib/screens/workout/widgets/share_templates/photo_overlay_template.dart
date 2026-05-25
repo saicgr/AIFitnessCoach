@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
 
 /// Photo Overlay Template - User's photo with workout stats overlay
@@ -54,6 +55,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     // Calculate responsive height based on available space
     final screenHeight = MediaQuery.of(context).size.height;
     final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);
@@ -126,7 +128,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
 
                   // Workout info
                   Text(
-                    'WORKOUT COMPLETE',
+                    l.shareStatsWorkoutComplete,
                     style: TextStyle(
                       color: AppColors.cyan,
                       fontSize: 11,
@@ -168,6 +170,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
     );
   }
 
+  // TODO(i18n): _buildPlaceholder, _buildStatsRow use strings without BuildContext — refactor to accept AppLocalizations
   Widget _buildPhotoBackground() {
     if (userPhotoBytes != null) {
       return Image.memory(

@@ -12,6 +12,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/rest_suggestion.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Glassmorphic card displaying AI rest time suggestion
 class RestSuggestionCard extends StatelessWidget {
@@ -76,12 +77,12 @@ class RestSuggestionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header with AI badge and dismiss button
-              _buildHeader(isDark, accentColor),
+              _buildHeader(context, isDark, accentColor),
 
               SizedBox(height: isCompact ? 8 : 12),
 
               // Main suggestion display
-              _buildSuggestionDisplay(isDark, accentColor, isSmallScreen),
+              _buildSuggestionDisplay(context, isDark, accentColor, isSmallScreen),
 
               SizedBox(height: isCompact ? 8 : 12),
 
@@ -91,7 +92,7 @@ class RestSuggestionCard extends StatelessWidget {
               SizedBox(height: isCompact ? 12 : 16),
 
               // Action buttons
-              _buildActionButtons(isDark, accentColor, isSmallScreen),
+              _buildActionButtons(context, isDark, accentColor, isSmallScreen),
             ],
           ),
         ),
@@ -102,7 +103,8 @@ class RestSuggestionCard extends StatelessWidget {
         .slideY(begin: 0.1, end: 0, duration: 300.ms);
   }
 
-  Widget _buildHeader(bool isDark, Color accentColor) {
+  Widget _buildHeader(BuildContext context, bool isDark, Color accentColor) {
+    final l = AppLocalizations.of(context)!;
     final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
     final bgOpacity = isDark ? 0.2 : 0.15;
     return Row(
@@ -129,7 +131,7 @@ class RestSuggestionCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'AI REST COACH',
+                    l.restSuggestionAiRestCoach,
                     style: TextStyle(
                       fontSize: isCompact ? 10 : 11,
                       fontWeight: FontWeight.w600,
@@ -197,10 +199,12 @@ class RestSuggestionCard extends StatelessWidget {
   }
 
   Widget _buildSuggestionDisplay(
+    BuildContext context,
     bool isDark,
     Color accentColor,
     bool isSmallScreen,
   ) {
+    final l = AppLocalizations.of(context)!;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isCompact ? 12 : 16,
@@ -230,7 +234,7 @@ class RestSuggestionCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'SUGGESTED',
+                l.restSuggestionSuggested,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
@@ -263,7 +267,7 @@ class RestSuggestionCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'QUICK',
+                  l.restSuggestionQuick,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -293,18 +297,20 @@ class RestSuggestionCard extends StatelessWidget {
   }
 
   Widget _buildActionButtons(
+    BuildContext context,
     bool isDark,
     Color accentColor,
     bool isSmallScreen,
   ) {
+    final l = AppLocalizations.of(context)!;
     return Row(
       children: [
         // Quick Rest button (if available)
         if (suggestion.hasQuickOption)
           Expanded(
             child: _buildActionButton(
-              label: 'Quick Rest',
-              sublabel: 'Save ${suggestion.timeSavedDisplay}',
+              label: l.restSuggestionQuickRest,
+              sublabel: l.restSuggestionSaveTime(suggestion.timeSavedDisplay),
               icon: Icons.fast_forward,
               color: isDark ? Colors.white24 : Colors.black12,
               textColor: isDark ? Colors.white70 : Colors.black54,
@@ -323,7 +329,7 @@ class RestSuggestionCard extends StatelessWidget {
         Expanded(
           flex: suggestion.hasQuickOption ? 1 : 2,
           child: _buildActionButton(
-            label: 'Use Suggested',
+            label: l.restSuggestionUseSuggested,
             sublabel: suggestion.suggestedDisplay,
             icon: Icons.check,
             color: accentColor,
@@ -458,6 +464,7 @@ class RestSuggestionLoadingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l = AppLocalizations.of(context)!;
     final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
     final bgOpacity = isDark ? 0.2 : 0.15;
     final borderOpacity = isDark ? 0.3 : 0.4;
@@ -502,7 +509,7 @@ class RestSuggestionLoadingCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'AI REST COACH',
+                      l.restSuggestionAiRestCoach,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -512,7 +519,7 @@ class RestSuggestionLoadingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Calculating optimal rest time...',
+                      l.restSuggestionCalculatingOptimalRestTime,
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark ? Colors.white70 : Colors.black54,

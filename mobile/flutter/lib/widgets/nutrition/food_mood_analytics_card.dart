@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../glass_sheet.dart';
 
 part 'food_mood_analytics_card_part_food_mood_analytics_sheet.dart';
@@ -329,7 +330,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'FOOD & MOOD',
+                  AppLocalizations.of(context).foodMoodAnalyticsFoodMood,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -347,13 +348,13 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             analyticsAsync.when(
-              loading: () => _buildLoadingState(textMuted),
-              error: (_, __) => _buildErrorState(textMuted),
+              loading: () => _buildLoadingState(context, textMuted),
+              error: (_, __) => _buildErrorState(context, textMuted),
               data: (analytics) {
                 if (!analytics.hasData) {
-                  return _buildNoDataState(textMuted, purple);
+                  return _buildNoDataState(context, textMuted, purple);
                 }
-                return _buildSummary(analytics, textPrimary, textMuted, purple);
+                return _buildSummary(context, analytics, textPrimary, textMuted, purple);
               },
             ),
           ],
@@ -362,7 +363,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
+  Widget _buildLoadingState(BuildContext context, Color textMuted) {
     return Row(
       children: [
         const SizedBox(
@@ -372,26 +373,26 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
         ),
         const SizedBox(width: 12),
         Text(
-          'Analyzing mood patterns...',
+          AppLocalizations.of(context).foodMoodAnalyticsAnalyzingMoodPatterns,
           style: TextStyle(fontSize: 14, color: textMuted),
         ),
       ],
     );
   }
 
-  Widget _buildErrorState(Color textMuted) {
+  Widget _buildErrorState(BuildContext context, Color textMuted) {
     return Text(
-      'Unable to load mood data',
+      AppLocalizations.of(context).foodMoodAnalyticsUnableToLoadMood,
       style: TextStyle(fontSize: 14, color: textMuted),
     );
   }
 
-  Widget _buildNoDataState(Color textMuted, Color purple) {
+  Widget _buildNoDataState(BuildContext context, Color textMuted, Color purple) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Start tracking mood',
+          AppLocalizations.of(context).foodMoodAnalyticsStartTrackingMood,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -400,7 +401,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Log how you feel before and after meals to discover patterns',
+          AppLocalizations.of(context).foodMoodAnalyticsLogHowYouFeel,
           style: TextStyle(fontSize: 12, color: textMuted.withOpacity(0.7)),
         ),
         const SizedBox(height: 12),
@@ -416,7 +417,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
               Icon(Icons.tips_and_updates, size: 14, color: purple),
               const SizedBox(width: 6),
               Text(
-                'Available when logging meals',
+                AppLocalizations.of(context).foodMoodAnalyticsAvailableWhenLoggingMeals,
                 style: TextStyle(fontSize: 11, color: purple),
               ),
             ],
@@ -427,11 +428,13 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
   }
 
   Widget _buildSummary(
+    BuildContext context,
     FoodMoodAnalytics analytics,
     Color textPrimary,
     Color textMuted,
     Color purple,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         // Stats row
@@ -440,7 +443,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
             Expanded(
               child: _buildStatItem(
                 '${(analytics.moodImprovementRate * 100).toStringAsFixed(0)}%',
-                'Mood improved',
+                l10n.foodMoodAnalyticsMoodImproved,
                 const Color(0xFF6BCB77),
               ),
             ),
@@ -448,7 +451,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
             Expanded(
               child: _buildStatItem(
                 analytics.averageEnergy.toStringAsFixed(1),
-                'Avg energy',
+                l10n.foodMoodAnalyticsAvgEnergy,
                 const Color(0xFFF39C12),
               ),
             ),
@@ -456,7 +459,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
             Expanded(
               child: _buildStatItem(
                 '${analytics.logsWithMood}',
-                'Tracked meals',
+                l10n.foodMoodAnalyticsTrackedMeals,
                 purple,
               ),
             ),
@@ -477,7 +480,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${_capitalize(analytics.positiveCorrelations.first.foodName)} often improves your mood',
+                    l10n.foodMoodAnalyticsOftenImprovesYourMood(_capitalize(analytics.positiveCorrelations.first.foodName)),
                     style: TextStyle(
                       fontSize: 12,
                       color: textPrimary,

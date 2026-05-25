@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/coach_persona.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/coach_avatar.dart';
 
 /// Enhanced coach profile card for the swipeable PageView selection.
@@ -85,7 +86,7 @@ class CoachProfileCard extends StatelessWidget {
                   const SizedBox(height: 10),
 
                   // Sample message
-                  _buildSampleMessage(isDark, textPrimary, textSecondary),
+                  _buildSampleMessage(context, isDark, textPrimary, textSecondary),
                 ],
               ),
             ),
@@ -172,7 +173,7 @@ class CoachProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSampleMessage(bool isDark, Color textPrimary, Color textSecondary) {
+  Widget _buildSampleMessage(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
     final conversation = coach.sampleConversation;
     // Base delay for stagger — each message appears 600ms apart
     const baseDelay = 400;
@@ -191,7 +192,7 @@ class CoachProfileCard extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              'Sample conversation',
+              AppLocalizations.of(context)!.coachProfileCardSampleConversation,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,

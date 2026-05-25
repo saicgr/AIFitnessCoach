@@ -42,7 +42,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Generate My First Workout',
+                          AppLocalizations.of(context)!.preAuthQuizGenerateMyFirstWorkout,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
@@ -65,7 +65,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Text(
-                    'Skip, let AI decide',
+                    AppLocalizations.of(context)!.preAuthQuizSkipLetAiDecide,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -86,7 +86,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
       isLastQuestion: _currentQuestion == _totalQuestions - 1,
       onPressed: _nextQuestion,
       onSkip: _isCurrentPageSkippable ? _skipCurrentPage : null,
-      skipText: _currentQuestion == 10 ? 'Skip & Finish' : 'Skip',
+      skipText: _currentQuestion == 10 ? AppLocalizations.of(context)!.preAuthQuizSkipAndFinish : AppLocalizations.of(context)!.onboardingSkip,
     );
   }
 
@@ -101,7 +101,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
         children: [
           if (showHeader) ...[
             Text(
-              'Which days work best?',
+              AppLocalizations.of(context)!.preAuthQuizWhichDaysWorkBest,
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -110,7 +110,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 6),
             Text(
-              'Select ${_selectedDays ?? 0} days for your workouts',
+              AppLocalizations.of(context)!.quizDaysSelectorSelectNDays(_selectedDays ?? 0),
               style: TextStyle(
                 fontSize: 15,
                 color: t.textSecondary,
@@ -119,25 +119,28 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
             const SizedBox(height: 24),
           ],
           Expanded(
-            child: ListView(
+            child: Builder(builder: (ctx) {
+              final l10n = AppLocalizations.of(ctx)!;
+              return ListView(
               padding: EdgeInsets.zero,
               children: [
-                _buildDayCheckbox(1, 'Monday', 300.ms),
+                _buildDayCheckbox(1, l10n.settingsCardPartMonday, 300.ms),
                 const SizedBox(height: 12),
-                _buildDayCheckbox(2, 'Tuesday', 350.ms),
+                _buildDayCheckbox(2, l10n.settingsCardPartTuesday, 350.ms),
                 const SizedBox(height: 12),
-                _buildDayCheckbox(3, 'Wednesday', 400.ms),
+                _buildDayCheckbox(3, l10n.settingsCardPartWednesday, 400.ms),
                 const SizedBox(height: 12),
-                _buildDayCheckbox(4, 'Thursday', 450.ms),
+                _buildDayCheckbox(4, l10n.settingsCardPartThursday, 450.ms),
                 const SizedBox(height: 12),
-                _buildDayCheckbox(5, 'Friday', 500.ms),
+                _buildDayCheckbox(5, l10n.settingsCardPartFriday, 500.ms),
                 const SizedBox(height: 12),
-                _buildDayCheckbox(6, 'Saturday', 550.ms),
+                _buildDayCheckbox(6, l10n.settingsCardPartSaturday, 550.ms),
                 const SizedBox(height: 12),
-                _buildDayCheckbox(7, 'Sunday', 600.ms),
+                _buildDayCheckbox(7, l10n.settingsCardPartSunday, 600.ms),
                 const SizedBox(height: 24),
               ],
-            ),
+            );
+            }),
           ),
         ],
       ),

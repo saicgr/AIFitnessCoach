@@ -55,7 +55,7 @@ class _GuestModeBanner extends ConsumerWidget {
                   Row(
                     children: [
                       Text(
-                        'Guest Mode',
+                        AppLocalizations.of(context)!.mainShellPartGuestMode,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -70,7 +70,7 @@ class _GuestModeBanner extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          '${usage.remainingChatMessages} chats left today',
+                          AppLocalizations.of(context)!.mainShellPartChatsLeftToday(usage.remainingChatMessages),
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
@@ -81,7 +81,7 @@ class _GuestModeBanner extends ConsumerWidget {
                     ],
                   ),
                   Text(
-                    'Sign up free for unlimited access',
+                    AppLocalizations.of(context)!.mainShellPartSignUpFreeFor,
                     style: TextStyle(
                       fontSize: 11,
                       color: textSecondary,
@@ -105,9 +105,9 @@ class _GuestModeBanner extends ConsumerWidget {
                   color: AppColors.cyan,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Sign Up',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.mainShellPartSignUp,
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,

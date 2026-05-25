@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/today_score.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/providers/pillar_history_provider.dart';
 import '../../data/providers/today_score_provider.dart';
@@ -296,7 +297,8 @@ class _ComponentBreakdownCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rows = _components(ref);
+    final l10n = AppLocalizations.of(context)!;
+    final rows = _components(context, ref);
 
     return _Card(
       isDark: isDark,
@@ -306,7 +308,7 @@ class _ComponentBreakdownCard extends ConsumerWidget {
           _CardHeader(
             icon: Icons.dashboard_customize_rounded,
             color: color,
-            title: 'Components',
+            title: AppLocalizations.of(context)!.pillarDetailComponents,
             isDark: isDark,
           ),
           const SizedBox(height: 14),
@@ -321,7 +323,8 @@ class _ComponentBreakdownCard extends ConsumerWidget {
 
   /// Three per-pillar components. Sleep gets a single "duration" row in v1 —
   /// the existing sleep_detail_screen owns the richer breakdown.
-  List<_ComponentData> _components(WidgetRef ref) {
+  List<_ComponentData> _components(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     switch (kind) {
       case PillarKind.train:
         final workout = ref.watch(todayWorkoutProvider).valueOrNull;
@@ -329,22 +332,24 @@ class _ComponentBreakdownCard extends ConsumerWidget {
         final completed = workout?.completedToday ?? false;
         return [
           _ComponentData(
-            label: 'Completion',
+            label: l10n.pillarDetailCompletion,
             valueLabel: completed ? '100%' : (hasToday ? '0%' : '—'),
             fraction: completed ? 1.0 : 0.0,
           ),
           _ComponentData(
-            label: 'Volume',
+            label: l10n.pillarDetailVolume,
             valueLabel: workout?.todayWorkout?.exerciseCount != null
                 ? '${workout!.todayWorkout!.exerciseCount} ex'
                 : '—',
             fraction: completed ? 1.0 : 0.0,
           ),
           _ComponentData(
-            label: 'Intensity',
+            label: l10n.pillarDetailIntensity,
             // TODO(pillar-train): expose per-set RPE / load progression
             // once today_workout_provider surfaces an in-session signal.
-            valueLabel: completed ? 'Logged' : 'Pending',
+            valueLabel: completed
+                ? AppLocalizations.of(context)!.pillarDetailLogged
+                : AppLocalizations.of(context)!.pillarDetailPending,
             fraction: completed ? 0.8 : 0.0,
           ),
         ];
@@ -362,22 +367,22 @@ class _ComponentBreakdownCard extends ConsumerWidget {
         final variety = (summary?.totalCalories ?? 0) > 0 ? 0.5 : 0.0;
         return [
           _ComponentData(
-            label: 'Calorie hit',
+            label: l10n.pillarDetailCalorieHit,
             valueLabel: calGoal > 0
                 ? '${(calHit * 100).round()}%'
-                : 'Set a goal',
+                : AppLocalizations.of(context)!.pillarDetailSetAGoal,
             fraction: calHit.toDouble(),
           ),
           _ComponentData(
-            label: 'Protein hit',
+            label: l10n.pillarDetailProteinHit,
             valueLabel: protGoal > 0
                 ? '${(protHit * 100).round()}%'
-                : 'Set a goal',
+                : AppLocalizations.of(context)!.pillarDetailSetAGoal,
             fraction: protHit.toDouble(),
           ),
           _ComponentData(
-            label: 'Variety',
-            valueLabel: variety > 0 ? 'Tracking' : '—',
+            label: l10n.pillarDetailVariety,
+            valueLabel: variety > 0 ? l10n.pillarDetailTracking : '—',
             fraction: variety,
           ),
         ];
@@ -395,17 +400,17 @@ class _ComponentBreakdownCard extends ConsumerWidget {
         // healthGoalsProvider and replace the 60 / 600 placeholders.
         return [
           _ComponentData(
-            label: 'Steps',
+            label: l10n.pillarDetailSteps,
             valueLabel: '$steps / $stepGoal',
             fraction: stepHit.toDouble(),
           ),
           _ComponentData(
-            label: 'Active min',
+            label: l10n.pillarDetailActiveMin,
             valueLabel: activeMin > 0 ? '$activeMin min' : '—',
             fraction: (activeMin / 60).clamp(0.0, 1.0),
           ),
           _ComponentData(
-            label: 'Calories burned',
+            label: l10n.pillarDetailCaloriesBurned,
             valueLabel: cal > 0 ? '$cal kcal' : '—',
             fraction: (cal / 600).clamp(0.0, 1.0),
           ),
@@ -414,9 +419,9 @@ class _ComponentBreakdownCard extends ConsumerWidget {
         // The sleep detail screen is the source of truth — this pillar entry
         // is a lightweight pointer.
         return [
-          const _ComponentData(
-            label: 'Duration',
-            valueLabel: 'Open Sleep →',
+          _ComponentData(
+            label: l10n.pillarDetailDuration,
+            valueLabel: l10n.pillarDetailOpenSleep,
             fraction: 0.0,
           ),
         ];
@@ -562,7 +567,7 @@ class _GraphCardHeader extends StatelessWidget {
         ),
         IconButton(
           icon: const Icon(Icons.open_in_full_rounded, size: 18),
-          tooltip: 'Open full screen',
+          tooltip: AppLocalizations.of(context)!.pillarDetailOpenFullScreen,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           onPressed: () {
@@ -610,7 +615,7 @@ class _HeadlineSparklineCard extends ConsumerWidget {
           _GraphCardHeader(
             icon: Icons.show_chart_rounded,
             color: color,
-            title: '7-day completion',
+            title: AppLocalizations.of(context)!.pillarDetail7DayCompletion,
             isDark: isDark,
             chartId: 'sparkline-7d',
             kind: kind,
@@ -626,12 +631,12 @@ class _HeadlineSparklineCard extends ConsumerWidget {
             child: history.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (_, __) => _emptyChartText('Could not load.', isDark),
+              error: (_, __) => _emptyChartText(AppLocalizations.of(context)!.pillarDetailCouldNotLoad, isDark),
               data: (all) {
                 final last7 = _last(all, 7);
                 if (last7.length < 2) {
                   return _emptyChartText(
-                    'Two or more logged days are needed to chart a trend.',
+                    AppLocalizations.of(context)!.pillarDetailTwoOrMoreLoggedDays,
                     isDark,
                   );
                 }
@@ -731,7 +736,7 @@ class _HeatmapCard extends ConsumerWidget {
           _GraphCardHeader(
             icon: Icons.calendar_view_month_rounded,
             color: color,
-            title: 'Last 30 days',
+            title: AppLocalizations.of(context)!.pillarDetailLast30Days,
             isDark: isDark,
             chartId: 'heatmap-30d',
             kind: kind,
@@ -745,11 +750,11 @@ class _HeatmapCard extends ConsumerWidget {
                 height: 120,
                 child: Center(child: CircularProgressIndicator())),
             error: (_, __) =>
-                _emptyChartText('Could not load.', isDark),
+                _emptyChartText(AppLocalizations.of(context)!.pillarDetailCouldNotLoad, isDark),
             data: (all) {
               if (all.isEmpty) {
                 return _emptyChartText(
-                  'No history yet — keep logging and your heatmap fills in.',
+                  AppLocalizations.of(context)!.pillarDetailNoHistoryYet,
                   isDark,
                 );
               }
@@ -827,7 +832,7 @@ class _Heatmap extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Darker = closer to goal. Bordered cells hit goal.',
+          AppLocalizations.of(context)!.pillarDetailDarkerCloserToGoal,
           style: TextStyle(fontSize: 11, color: textMuted),
         ),
       ],
@@ -857,7 +862,7 @@ class _BandCard extends ConsumerWidget {
           _GraphCardHeader(
             icon: Icons.compress_rounded,
             color: color,
-            title: 'Today vs your 30-day range',
+            title: AppLocalizations.of(context)!.pillarDetailTodayVsYour30,
             isDark: isDark,
             chartId: 'band-30d',
             kind: kind,
@@ -871,11 +876,11 @@ class _BandCard extends ConsumerWidget {
                 height: 64,
                 child: Center(child: CircularProgressIndicator())),
             error: (_, __) =>
-                _emptyChartText('Could not load.', isDark),
+                _emptyChartText(AppLocalizations.of(context)!.pillarDetailCouldNotLoad, isDark),
             data: (all) {
               if (all.length < 5) {
                 return _emptyChartText(
-                  'Five or more logged days unlock your range band.',
+                  AppLocalizations.of(context)!.pillarDetailFiveOrMoreLoggedDays,
                   isDark,
                 );
               }
@@ -978,7 +983,7 @@ class _BandRow extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          'Band shows the 10th–90th percentile of your last 30 days.',
+          AppLocalizations.of(context)!.pillarDetailBandShowsThe10th,
           style: TextStyle(fontSize: 11, color: textMuted),
         ),
       ],
@@ -1000,7 +1005,7 @@ class _CreativeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (icon, title, body) = _creativeMeta(kind);
+    final (icon, title, body) = _creativeMeta(context, kind);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     return _Card(
       isDark: isDark,
@@ -1041,31 +1046,32 @@ class _CreativeCard extends ConsumerWidget {
     );
   }
 
-  (IconData, String, String) _creativeMeta(PillarKind kind) {
+  (IconData, String, String) _creativeMeta(BuildContext context, PillarKind kind) {
+    final l10n = AppLocalizations.of(context)!;
     switch (kind) {
       case PillarKind.train:
         return (
           Icons.bubble_chart_rounded,
-          'When you train',
-          'Coming soon: a time-of-day × duration bubble of every workout this month, sized by volume.',
+          l10n.pillarDetailWhenYouTrain,
+          l10n.pillarDetailWhenYouTrainBody,
         );
       case PillarKind.nourish:
         return (
           Icons.stacked_line_chart_rounded,
-          'Macro stream',
-          'Coming soon: stacked daily protein / carb / fat that flows across the last 30 days.',
+          l10n.pillarDetailMacroStream,
+          l10n.pillarDetailMacroStreamBody,
         );
       case PillarKind.move:
         return (
           Icons.line_axis_rounded,
-          'Hourly activity ribbon',
-          'Coming soon: an hour-by-hour ribbon showing when your steps land each day.',
+          l10n.pillarDetailHourlyActivityRibbon,
+          l10n.pillarDetailHourlyActivityRibbonBody,
         );
       case PillarKind.sleep:
         return (
           Icons.bedtime_rounded,
-          'Sleep stages',
-          'Open the dedicated Sleep screen for hypnogram + stages.',
+          l10n.pillarDetailSleepStages,
+          l10n.pillarDetailSleepStagesBody,
         );
     }
   }
@@ -1091,7 +1097,7 @@ class _CustomTrendsButton extends StatelessWidget {
           context.push('/trends/custom', extra: null);
         },
         icon: const Icon(Icons.tune_rounded, size: 18),
-        label: const Text('Custom Trends'),
+        label: Text(AppLocalizations.of(context)!.pillarDetailCustomTrends),
       ),
     );
   }
@@ -1104,7 +1110,8 @@ class _PrimaryCtas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (primaryLabel, primaryRoute, statsTab) = _ctaTargets(kind);
+    final l10n = AppLocalizations.of(context)!;
+    final (primaryLabel, primaryRoute, statsTab) = _ctaTargets(context, kind);
     return Column(
       children: [
         SizedBox(
@@ -1119,7 +1126,7 @@ class _PrimaryCtas extends StatelessWidget {
           width: double.infinity,
           child: TextButton(
             onPressed: () => context.push('/stats?tab=$statsTab'),
-            child: const Text('View full stats →'),
+            child: Text(l10n.pillarDetailViewFullStats),
           ),
         ),
       ],
@@ -1131,17 +1138,18 @@ class _PrimaryCtas extends StatelessWidget {
   ///   Nourish → Nutrition screen, stats Nutrition (4)
   ///   Move    → Health/activity hub, stats Overview (0)
   ///   Sleep   → Sleep detail screen, stats Overview (0)
-  (String, String, int) _ctaTargets(PillarKind kind) {
+  (String, String, int) _ctaTargets(BuildContext context, PillarKind kind) {
+    final l10n = AppLocalizations.of(context)!;
     switch (kind) {
       case PillarKind.train:
-        return ('Open Workouts →', '/workouts', 0);
+        return (l10n.pillarDetailOpenWorkouts, '/workouts', 0);
       case PillarKind.nourish:
-        return ('Open Nutrition →', '/nutrition', 4);
+        return (l10n.pillarDetailOpenNutrition, '/nutrition', 4);
       case PillarKind.move:
         // Combined health hub holds the activity detail.
-        return ('Open Activity →', '/health', 0);
+        return (l10n.pillarDetailOpenActivity, '/health', 0);
       case PillarKind.sleep:
-        return ('Open Sleep →', '/health/sleep', 0);
+        return (l10n.pillarDetailOpenSleep, '/health/sleep', 0);
     }
   }
 }

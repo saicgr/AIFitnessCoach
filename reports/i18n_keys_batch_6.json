@@ -1,0 +1,382 @@
+{
+  "newKeys": [
+    {
+      "key": "fastingBodyStatusLiveSubtitle",
+      "value": "Your live metabolic journey — {elapsed} in.",
+      "description": "Subtitle shown when a fast is active. {elapsed} is a formatted time string like '3h 20m'.",
+      "placeholders": {
+        "elapsed": { "type": "String" }
+      }
+    },
+    {
+      "key": "fastingBodyStatusPreviewSubtitle",
+      "value": "A preview of the metabolic stages of a fast.",
+      "description": "Subtitle shown in preview mode (no active fast)."
+    },
+    {
+      "key": "fastingBodyStatusStartFastHint",
+      "value": "Start a fast to see your live timeline with the exact clock time each stage is reached.",
+      "description": "Hint shown when no fast is active, encouraging user to start one."
+    },
+    {
+      "key": "fastingBodyStatusYouAreHere",
+      "value": "You are here",
+      "description": "Label on the current stage marker in the fasting body status timeline."
+    },
+    {
+      "key": "fastingBodyStatusBeyondGoal",
+      "value": "Beyond your goal",
+      "description": "Label on stages that are beyond the user's fasting goal in the timeline."
+    },
+    {
+      "key": "fastingGuideSubtitle",
+      "value": "Everything you need to fast confidently — what it is, how it works, and what happens in your body.",
+      "description": "Subtitle under the Fasting Guide screen header."
+    },
+    {
+      "key": "fastingGuideSwipeTimeline",
+      "value": "Swipe through what happens hour by hour — from your last meal all the way to a 30-day fast.",
+      "description": "Description below 'The fasting timeline' header in the fasting guide."
+    },
+    {
+      "key": "fastingGuideFaq",
+      "value": "FAQ",
+      "description": "Section header label for the FAQ accordion in the fasting guide."
+    },
+    {
+      "key": "fastingGuideSafetyBody",
+      "value": "Stop fasting and eat if you feel dizzy, faint, shaky, or unwell. Fasts beyond 24 hours need extra attention to electrolytes, and fasts beyond 72 hours should only be done under medical supervision. Fasting is not a substitute for medical care — this guide is educational and not medical advice.",
+      "description": "Safety guidance body text in the fasting guide."
+    },
+    {
+      "key": "fastingScoreCardCompletionRate",
+      "value": "Completion Rate",
+      "description": "Label for the completion rate row in the fasting score breakdown section."
+    },
+    {
+      "key": "fastingScoreCardStreakBonus",
+      "value": "Streak Bonus",
+      "description": "Label for the streak bonus row in the fasting score breakdown section."
+    },
+    {
+      "key": "fastingScoreCardWeeklyGoal",
+      "value": "Weekly Goal",
+      "description": "Label for the weekly goal row in the fasting score breakdown section."
+    },
+    {
+      "key": "fastingScoreCardProtocolLevel",
+      "value": "Protocol Level",
+      "description": "Label for the protocol level row in the fasting score breakdown section."
+    },
+    {
+      "key": "fastingStatsCardStreakDays",
+      "value": "{count, plural, =1{1 day} other{{count} days}}",
+      "description": "Streak count label in the fasting stats card streak section.",
+      "placeholders": {
+        "count": { "type": "int" }
+      }
+    },
+    {
+      "key": "fastingStatsCardFastsProgress",
+      "value": "{fasts} / {goal} fasts",
+      "description": "Weekly fasts progress label in the fasting stats card.",
+      "placeholders": {
+        "fasts": { "type": "int" },
+        "goal": { "type": "int" }
+      }
+    },
+    {
+      "key": "fastingStatsCardFastingHelps",
+      "value": "Fasting helps",
+      "description": "Weight correlation text shown when fasting days correlate with lower weight."
+    },
+    {
+      "key": "fastingStatsCardMixedResults",
+      "value": "Mixed results",
+      "description": "Weight correlation text shown when fasting shows mixed weight results."
+    },
+    {
+      "key": "fastingStatsCardNeutral",
+      "value": "Neutral",
+      "description": "Weight correlation text shown when fasting has no clear weight effect."
+    },
+    {
+      "key": "fastingStatsCardNeedMoreData",
+      "value": "Need more data",
+      "description": "Weight correlation text shown when there is insufficient data to draw conclusions."
+    },
+    {
+      "key": "chatScreenFailedToSendVoice",
+      "value": "Failed to send voice message: {error}",
+      "description": "SnackBar error when a voice message fails to send.",
+      "placeholders": {
+        "error": { "type": "String" }
+      }
+    },
+    {
+      "key": "chatScreenRouteNotRegistered",
+      "value": "Route not registered: {route}",
+      "description": "SnackBar error when a suggested chip tries to navigate to an unknown route.",
+      "placeholders": {
+        "route": { "type": "String" }
+      }
+    },
+    {
+      "key": "chatScreenCoachIsThinkingLonger",
+      "value": "Coach is thinking longer than usual.",
+      "description": "Error headline shown when the multi-agent response is slow."
+    },
+    {
+      "key": "chatScreenCantReachCoach",
+      "value": "Can't reach the coach right now.",
+      "description": "Error headline shown when the coach is unreachable."
+    },
+    {
+      "key": "chatScreenCouldntReachCoach",
+      "value": "Couldn't reach the coach.",
+      "description": "Error headline shown when a coach request fails."
+    },
+    {
+      "key": "chatScreenSomethingWentWrongLoading",
+      "value": "Something went wrong loading your chat.",
+      "description": "Error headline shown when the chat fails to load."
+    },
+    {
+      "key": "chatScreenMultiAgentHangTight",
+      "value": "Multi-agent answers can take up to two minutes — hang tight or retry.",
+      "description": "Error subtitle for the slow multi-agent response state."
+    },
+    {
+      "key": "chatScreenCheckConnection",
+      "value": "Check your connection and try again.",
+      "description": "Error subtitle prompting the user to check their network."
+    },
+    {
+      "key": "chatScreenMessagesLeftToday",
+      "value": "{count, plural, =1{1 message left today} other{{count} messages left today}}",
+      "description": "Daily message quota remaining indicator in the chat bar.",
+      "placeholders": {
+        "count": { "type": "int" }
+      }
+    },
+    {
+      "key": "chatScreenTyping",
+      "value": "Typing...",
+      "description": "Status label shown while the coach is composing a response."
+    },
+    {
+      "key": "formComparisonResultBeta",
+      "value": "BETA",
+      "description": "BETA badge label on the form comparison result card."
+    },
+    {
+      "key": "formComparisonResultImproving",
+      "value": "Improving",
+      "description": "Score trend label when the user's form score is getting better."
+    },
+    {
+      "key": "formComparisonResultRegressing",
+      "value": "Regressing",
+      "description": "Score trend label when the user's form score is getting worse."
+    },
+    {
+      "key": "formComparisonResultStable",
+      "value": "Stable",
+      "description": "Score trend label when the user's form score is unchanged."
+    },
+    {
+      "key": "exerciseProgressDetailProgress",
+      "value": "Progress",
+      "description": "Tab label for the progress chart tab in exercise progress detail screen."
+    },
+    {
+      "key": "exerciseProgressDetailHistory",
+      "value": "History",
+      "description": "Tab label for the history tab in exercise progress detail screen."
+    },
+    {
+      "key": "muscleAnalyticsNeedsWork",
+      "value": "Needs Work",
+      "description": "Balance score status label when a muscle group balance score is poor."
+    },
+    {
+      "key": "socialSortRecent",
+      "value": "Recent",
+      "description": "Sort option label to sort the social feed by most recent."
+    },
+    {
+      "key": "socialSortTop",
+      "value": "Top",
+      "description": "Sort option label to sort the social feed by top posts."
+    },
+    {
+      "key": "socialSortTrending",
+      "value": "Trending",
+      "description": "Sort option label to sort the social feed by trending posts."
+    },
+    {
+      "key": "socialUsernameCopied",
+      "value": "Username copied: @{username}",
+      "description": "SnackBar confirmation after copying a user's @handle to clipboard.",
+      "placeholders": {
+        "username": { "type": "String" }
+      }
+    },
+    {
+      "key": "socialUserIdCopied",
+      "value": "User ID copied",
+      "description": "SnackBar confirmation after copying a user's ID to clipboard."
+    },
+    {
+      "key": "introTagline",
+      "value": "An AI coach that builds the plan, learns your body, and adjusts every week.",
+      "description": "Main tagline on the intro/onboarding screen."
+    },
+    {
+      "key": "introBuildMyPlan",
+      "value": "Build My Plan",
+      "description": "Primary CTA button label on the intro screen."
+    },
+    {
+      "key": "introIAlreadyHaveAnAccount",
+      "value": "I already have an account",
+      "description": "Secondary link below the CTA on the intro screen for returning users."
+    },
+    {
+      "key": "combinedHealthActivityStreakDays",
+      "value": "{count, plural, =1{1 day at or above your step goal.} other{{count} days in a row at or above your step goal.}}",
+      "description": "Activity streak description in the combined health screen.",
+      "placeholders": {
+        "count": { "type": "int" }
+      }
+    },
+    {
+      "key": "combinedHealthConnectHealthBody",
+      "value": "Steps, heart rate, sleep and more sync from Health Connect on Android and the Health app on iOS.",
+      "description": "Body text on the empty state when health is not yet connected."
+    },
+    {
+      "key": "moodWeeklyChartImproving",
+      "value": "Improving",
+      "description": "Trend badge label when mood trend is improving over the week."
+    },
+    {
+      "key": "moodWeeklyChartDeclining",
+      "value": "Declining",
+      "description": "Trend badge label when mood trend is declining over the week."
+    },
+    {
+      "key": "moodWeeklyChartStable",
+      "value": "Stable",
+      "description": "Trend badge label when mood trend is stable over the week."
+    },
+    {
+      "key": "favoriteWorkoutsSavedCount",
+      "value": "{count, plural, =1{1 saved workout} other{{count} saved workouts}}",
+      "description": "Subtitle showing how many favorite workouts are saved.",
+      "placeholders": {
+        "count": { "type": "int" }
+      }
+    },
+    {
+      "key": "favoriteWorkoutsWorkoutFallback",
+      "value": "Workout",
+      "description": "Fallback name shown for a workout that has no name set."
+    },
+    {
+      "key": "streakMilestoneDays",
+      "value": "DAYS",
+      "description": "Label below the streak count number in the streak milestone dialog."
+    },
+    {
+      "key": "streakMilestoneRare",
+      "value": "RARE",
+      "description": "Badge label on rare cosmetic rewards in the streak milestone dialog."
+    },
+    {
+      "key": "streakMilestoneNextBadgeName",
+      "value": "Next: {name}",
+      "description": "Label previewing the next milestone badge name in the streak milestone dialog.",
+      "placeholders": {
+        "name": { "type": "String" }
+      }
+    },
+    {
+      "key": "streakMilestoneDaysToGo",
+      "value": "{count, plural, =1{1 day to go!} other{{count} days to go!}}",
+      "description": "Days remaining until the next streak milestone.",
+      "placeholders": {
+        "count": { "type": "int" }
+      }
+    },
+    {
+      "key": "streakMilestonePreviewDays",
+      "value": "{count, plural, =1{1 day} other{{count} days}}",
+      "description": "Days label on the next milestone preview chip in the streak milestone dialog.",
+      "placeholders": {
+        "count": { "type": "int" }
+      }
+    }
+  ],
+  "sourceFiles": [
+    "lib/screens/fasting/fasting_body_status_screen.dart",
+    "lib/screens/fasting/fasting_guide_screen.dart",
+    "lib/screens/fasting/widgets/fasting_score_card.dart",
+    "lib/screens/fasting/widgets/fasting_stats_card.dart",
+    "lib/screens/chat/chat_screen.dart",
+    "lib/screens/chat/widgets/form_comparison_result_card.dart",
+    "lib/screens/progress/charts/widgets/volume_chart.dart",
+    "lib/screens/progress/exercise_history/exercise_progress_detail_screen.dart",
+    "lib/screens/progress/muscle_analytics/muscle_analytics_screen.dart",
+    "lib/screens/social/social_screen.dart",
+    "lib/screens/auth/intro_screen.dart",
+    "lib/screens/health/combined_health_screen.dart",
+    "lib/screens/mood/widgets/mood_weekly_chart.dart",
+    "lib/screens/workouts/widgets/favorite_workouts_sheet.dart",
+    "lib/widgets/streak_milestone_dialog.dart"
+  ],
+  "noChangeFiles": [
+    "lib/screens/fasting/widgets/fasting_stage_model.dart",
+    "lib/widgets/tooltips/tours/discover_tour.dart",
+    "lib/widgets/tooltips/tours/menu_analysis_tour.dart",
+    "lib/widgets/tooltips/tours/nutrition_tour.dart",
+    "lib/widgets/tooltips/tours/workouts_tour.dart",
+    "lib/screens/chat/widgets/suggested_reply_chips.dart",
+    "lib/screens/social/widgets/activity_share_card.dart",
+    "lib/widgets/fullscreen_image_viewer.dart"
+  ],
+  "todoComments": [
+    {
+      "file": "lib/screens/fasting/widgets/fasting_stage_model.dart",
+      "reason": "All strings are enum const field initializers — no BuildContext available."
+    },
+    {
+      "file": "lib/widgets/tooltips/tours/discover_tour.dart",
+      "reason": "steps() is a top-level function returning List<TourStep> with no BuildContext."
+    },
+    {
+      "file": "lib/widgets/tooltips/tours/menu_analysis_tour.dart",
+      "reason": "steps() is a top-level function returning List<TourStep> with no BuildContext."
+    },
+    {
+      "file": "lib/widgets/tooltips/tours/nutrition_tour.dart",
+      "reason": "steps() is a top-level function returning List<TourStep> with no BuildContext."
+    },
+    {
+      "file": "lib/widgets/tooltips/tours/workouts_tour.dart",
+      "reason": "steps() is a top-level function returning List<TourStep> with no BuildContext."
+    },
+    {
+      "file": "lib/screens/chat/widgets/suggested_reply_chips.dart",
+      "reason": "chipsForWorkoutMode is a top-level function with no BuildContext available for chip label strings."
+    },
+    {
+      "file": "lib/screens/social/widgets/activity_share_card.dart",
+      "reason": "_typeConfigs is a static const map — no BuildContext available for defaultHeadline strings."
+    },
+    {
+      "file": "lib/widgets/fullscreen_image_viewer.dart",
+      "reason": "_errorPlaceholder is a top-level function — no BuildContext available for 'Could not load image'."
+    }
+  ]
+}

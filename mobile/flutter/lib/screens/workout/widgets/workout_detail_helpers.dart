@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // String Extension
@@ -212,6 +213,7 @@ class _AnimatedFireIconState extends State<AnimatedFireIcon>
 
 class AnimatedHellBadge extends StatefulWidget {
   final String label;
+  // TODO(i18n): 'Hell' default value is a const — caller must pass a localized string
   final String value;
 
   const AnimatedHellBadge({
@@ -478,6 +480,7 @@ class QuickReplaceProgressDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -498,7 +501,7 @@ class QuickReplaceProgressDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Updating Exercises',
+              l.workoutDetailUpdatingExercises,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -507,7 +510,7 @@ class QuickReplaceProgressDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Replacing $total exercise${total > 1 ? 's' : ''} for available equipment...',
+              l.workoutDetailReplacingExercises(total),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,

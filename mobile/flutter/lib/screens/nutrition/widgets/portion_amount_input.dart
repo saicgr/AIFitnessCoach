@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Available units for portion measurement
 enum PortionUnit {
@@ -132,7 +133,7 @@ class _PortionAmountInputState extends State<PortionAmountInput> {
               Icon(Icons.tune, color: teal, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Adjust Portion',
+                AppLocalizations.of(context).portionAmountInputAdjustPortion,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -190,7 +191,7 @@ class _PortionAmountInputState extends State<PortionAmountInput> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Custom amount',
+                  AppLocalizations.of(context).portionAmountInputCustomAmount,
                   style: TextStyle(fontSize: 13, color: textMuted),
                 ),
               ],
@@ -261,7 +262,7 @@ class _PortionAmountInputState extends State<PortionAmountInput> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NutrientPreview(label: 'Cal', value: currentCalories, isDark: widget.isDark),
+                _NutrientPreview(label: AppLocalizations.of(context).portionAmountInputCal, value: currentCalories, isDark: widget.isDark),
                 _NutrientPreview(label: 'P', value: currentProtein, unit: 'g', isDark: widget.isDark, color: macroProtein),
                 _NutrientPreview(label: 'C', value: currentCarbs, unit: 'g', isDark: widget.isDark, color: macroCarbs),
                 _NutrientPreview(label: 'F', value: currentFat, unit: 'g', isDark: widget.isDark, color: macroFat),

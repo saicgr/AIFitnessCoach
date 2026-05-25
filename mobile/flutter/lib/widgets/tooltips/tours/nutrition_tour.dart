@@ -16,6 +16,8 @@ class NutritionTour {
 
   static const id = TooltipIds.nutrition;
 
+  // TODO(i18n): static method — no BuildContext available.
+  // Refactor to instance method accepting BuildContext to enable l10n.
   static List<EmptyStateTip> steps() => [
         EmptyStateTip(
           icon: Icons.add_circle_outline_rounded,

@@ -127,8 +127,8 @@ class _AllLevelsSheet extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('All Levels', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColorStrong)),
-                            Text('Level $currentLevel • 249 levels total', style: TextStyle(fontSize: 12, color: textMutedStrong)),
+                            Text(AppLocalizations.of(context)!.xpGoalsScreenAllLevels, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColorStrong)),
+                            Text(AppLocalizations.of(context)!.xpGoalsScreenLevelCurrentTotal(currentLevel), style: TextStyle(fontSize: 12, color: textMutedStrong)),
                           ],
                         ),
                       ),
@@ -140,11 +140,11 @@ class _AllLevelsSheet extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     children: [
-                      _buildLegendItem('🎁', 'Milestone', textMutedStrong),
+                      _buildLegendItem('🎁', AppLocalizations.of(context)!.xpGoalsScreenMilestoneLegend, textMutedStrong),
                       const SizedBox(width: 16),
-                      _buildLegendItem('⚡', 'XP Bonus', textMutedStrong),
+                      _buildLegendItem('⚡', AppLocalizations.of(context)!.xpGoalsScreenXpBonusLegend, textMutedStrong),
                       const SizedBox(width: 16),
-                      _buildLegendItem('🛡️', 'Consumable', textMutedStrong),
+                      _buildLegendItem('🛡️', AppLocalizations.of(context)!.xpGoalsScreenConsumableLegend, textMutedStrong),
                     ],
                   ),
                 ),
@@ -168,12 +168,12 @@ class _AllLevelsSheet extends ConsumerWidget {
                             Icon(Icons.error_outline, size: 48, color: textMutedStrong),
                             const SizedBox(height: 12),
                             Text(
-                              'Failed to load levels',
+                              AppLocalizations.of(context)!.xpGoalsScreenFailedToLoadLevels,
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textColorStrong),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Check your connection and try again',
+                              AppLocalizations.of(context)!.xpGoalsScreenCheckYourConnectionAnd,
                               style: TextStyle(fontSize: 13, color: textMutedStrong),
                               textAlign: TextAlign.center,
                             ),
@@ -181,7 +181,7 @@ class _AllLevelsSheet extends ConsumerWidget {
                             TextButton.icon(
                               onPressed: () => ref.invalidate(allLevelsProvider),
                               icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Retry'),
+                              label: Text(AppLocalizations.of(context)!.buttonRetry),
                             ),
                           ],
                         ),
@@ -196,7 +196,7 @@ class _AllLevelsSheet extends ConsumerWidget {
 
                       if (levels.isEmpty) {
                         return Center(
-                          child: Text('No levels available', style: TextStyle(color: textMutedStrong)),
+                          child: Text(AppLocalizations.of(context)!.xpGoalsScreenNoLevelsAvailable, style: TextStyle(color: textMutedStrong)),
                         );
                       }
 
@@ -313,8 +313,8 @@ class _AllLevelsSheet extends ConsumerWidget {
                     Row(
                       children: [
                         Flexible(child: Text(level.levelName, style: TextStyle(fontSize: isBigMilestone ? 15 : 14, fontWeight: FontWeight.w600, color: isDark ? textColor : Colors.black87), overflow: TextOverflow.ellipsis)),
-                        if (isCurrentLevel) ...[const SizedBox(width: 6), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(4)), child: const Text('YOU', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white)))],
-                        if (isBigMilestone && !isCurrentLevel) ...[const SizedBox(width: 6), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.amber.shade600, Colors.orange.shade600]), borderRadius: BorderRadius.circular(4)), child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.star, size: 10, color: Colors.white), const SizedBox(width: 2), Text(level.level == 250 ? 'LEGENDARY' : 'MILESTONE', style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white))]))],
+                        if (isCurrentLevel) ...[const SizedBox(width: 6), Builder(builder: (ctx) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(4)), child: Text(AppLocalizations.of(ctx)!.xpGoalsScreenYouBadge, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white))))],
+                        if (isBigMilestone && !isCurrentLevel) ...[const SizedBox(width: 6), Builder(builder: (ctx) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.amber.shade600, Colors.orange.shade600]), borderRadius: BorderRadius.circular(4)), child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.star, size: 10, color: Colors.white), const SizedBox(width: 2), Text(level.level == 250 ? AppLocalizations.of(ctx)!.xpGoalsScreenLegendary : AppLocalizations.of(ctx)!.xpGoalsScreenMilestone, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white))])))],
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -358,15 +358,15 @@ class _AllLevelsSheet extends ConsumerWidget {
                 border: Border.all(color: rewardColor.withValues(alpha: isDark ? 0.4 : 0.5), width: 1.5),
                 boxShadow: isDark ? null : [BoxShadow(color: rewardColor.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
               ),
-              child: Row(
+              child: Builder(builder: (ctx) => Row(
                 children: [
                   Container(width: 40, height: 40, decoration: BoxDecoration(color: rewardColor.withValues(alpha: isDark ? 0.25 : 0.15), borderRadius: BorderRadius.circular(10), border: Border.all(color: rewardColor.withValues(alpha: 0.3))), child: Center(child: Text(level.rewardIcon ?? '🎁', style: const TextStyle(fontSize: 22)))),
                   const SizedBox(width: 12),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('REWARD', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: rewardColor, letterSpacing: 1)), const SizedBox(height: 2), Text(level.reward!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? textColor : Colors.black87))])),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(AppLocalizations.of(ctx)!.xpGoalsScreenReward, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: rewardColor, letterSpacing: 1)), const SizedBox(height: 2), Text(level.reward!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? textColor : Colors.black87))])),
                   if (!isCompleted) Icon(Icons.lock_outline, size: 18, color: isDark ? textMuted.withValues(alpha: 0.5) : Colors.grey.shade500),
                   if (isCompleted) const Icon(Icons.check_circle, size: 18, color: AppColors.green),
                 ],
-              ),
+              )),
             ),
           ],
         ],

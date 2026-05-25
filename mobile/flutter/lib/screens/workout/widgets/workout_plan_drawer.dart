@@ -11,6 +11,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Show the workout plan drawer as a bottom sheet
 Future<void> showWorkoutPlanDrawer({
@@ -96,6 +97,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l = AppLocalizations.of(context)!;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
@@ -115,7 +117,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Workout Plan',
+                  l.workoutPlanDrawerTitle,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -124,7 +126,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
                 ),
                 const Spacer(),
                 Text(
-                  '${_exercises.length} exercises',
+                  l.workoutPlanDrawerExerciseCount(_exercises.length),
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -229,7 +231,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
                     widget.onAddExercise();
                   },
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add Exercise'),
+                  label: Text(l.exerciseAddSheetAddExercise),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.cyan,
                     foregroundColor: Colors.white,
@@ -254,6 +256,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
     bool isDark,
   ) {
     final completedSets = widget.completedSetsPerExercise[index] ?? 0;
+    final l = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
@@ -261,14 +264,14 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
         backgroundColor: isDark ? AppColors.elevated : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Remove ${exercise.name}?',
+          l.workoutPlanDrawerRemoveExercise(exercise.name),
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black,
           ),
         ),
         content: completedSets > 0
             ? Text(
-                'You have $completedSets set${completedSets > 1 ? 's' : ''} logged. They will be deleted.',
+                l.workoutPlanDrawerSetsLogged(completedSets),
                 style: TextStyle(
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                 ),
@@ -278,7 +281,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              l.commonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -291,9 +294,9 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
               widget.onDeleteExercise(index);
               HapticFeedback.heavyImpact();
             },
-            child: const Text(
-              'Remove',
-              style: TextStyle(color: AppColors.error),
+            child: Text(
+              l.workoutPlanDrawerRemove,
+              style: const TextStyle(color: AppColors.error),
             ),
           ),
         ],
@@ -334,6 +337,7 @@ class _ExerciseRow extends StatelessWidget {
     final exerciseImageUrl = exercise.imageS3Path ?? exercise.gifUrl;
     final hasImage = exerciseImageUrl != null && exerciseImageUrl.isNotEmpty;
     final screenWidth = MediaQuery.of(context).size.width;
+    final l = AppLocalizations.of(context)!;
     // Compact mode for narrow screens
     final isCompact = screenWidth < 360;
 
@@ -478,7 +482,7 @@ class _ExerciseRow extends StatelessWidget {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              isCompact ? 'Now' : 'Current',
+                              isCompact ? l.workoutPlanDrawerNow : l.workoutPlanDrawerCurrent,
                               style: TextStyle(
                                 fontSize: isCompact ? 9 : 10,
                                 fontWeight: FontWeight.bold,
@@ -523,7 +527,7 @@ class _ExerciseRow extends StatelessWidget {
                       size: isCompact ? 18 : 20,
                       color: AppColors.purple,
                     ),
-                    tooltip: 'Swap exercise',
+                    tooltip: l.workoutPlanDrawerSwapExercise,
                   ),
                   // Delete button
                   IconButton(
@@ -537,7 +541,7 @@ class _ExerciseRow extends StatelessWidget {
                       size: isCompact ? 18 : 20,
                       color: AppColors.error.withOpacity(0.7),
                     ),
-                    tooltip: 'Remove exercise',
+                    tooltip: l.workoutPlanDrawerRemoveExerciseTooltip,
                   ),
                 ],
               ),

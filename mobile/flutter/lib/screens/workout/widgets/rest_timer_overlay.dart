@@ -18,6 +18,7 @@ import '../../../data/models/rest_suggestion.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../widgets/coach_avatar.dart';
 import 'rest_suggestion_card.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 part 'rest_timer_overlay_ui.dart';
 
@@ -167,7 +168,7 @@ class RestTimerOverlay extends StatelessWidget {
               child: Column(
                 children: [
                   SizedBox(height: isCompactScreen ? 8 : 16),
-                  _buildRestLabel(isDark),
+                  _buildRestLabel(context, isDark),
                   const SizedBox(height: 8),
                   _buildTimer(textColor),
                   const SizedBox(height: 12),
@@ -266,7 +267,7 @@ class RestTimerOverlay extends StatelessWidget {
             // Fixed footer: Skip Rest button
             Padding(
               padding: EdgeInsets.fromLTRB(24, 8, 24, isCompactScreen ? 12 : 24),
-              child: _buildSkipButton(isDark),
+              child: _buildSkipButton(context, isDark),
             ),
           ],
         ),
@@ -274,10 +275,11 @@ class RestTimerOverlay extends StatelessWidget {
     ).animate().fadeIn(duration: 200.ms);
   }
 
-  Widget _buildRestLabel(bool isDark) {
+  Widget _buildRestLabel(BuildContext context, bool isDark) {
+    final l = AppLocalizations.of(context)!;
     final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
     return Text(
-      'REST',
+      l.restTimerRest,
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
@@ -706,7 +708,8 @@ class RestTimerOverlay extends StatelessWidget {
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  Widget _buildSkipButton(bool isDark) {
+  Widget _buildSkipButton(BuildContext context, bool isDark) {
+    final l = AppLocalizations.of(context)!;
     final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
     // Glassmorphic pill: frosted blur + translucent tint + subtle border +
     // hairline purple glow so the CTA reads against the video/image strip
@@ -745,7 +748,7 @@ class RestTimerOverlay extends StatelessWidget {
             ),
             icon: Icon(Icons.skip_next, color: purple, size: 20),
             label: Text(
-              'Skip Rest',
+              l.restTimerSkipRest,
               style: TextStyle(
                 color: purple,
                 fontWeight: FontWeight.w600,
@@ -816,7 +819,7 @@ class RestTimerOverlay extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Got it',
+              AppLocalizations.of(context)!.exerciseDetailGotIt,
               style: TextStyle(
                 color: cyan,
                 fontWeight: FontWeight.w600,

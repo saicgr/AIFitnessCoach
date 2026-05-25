@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 // Conversion factor: 1 kg = 2.20462 lb. Used to reconcile a backend payload
 // that ships in kg when the user's `workout_weight_unit` is lbs (B1 fix).
@@ -717,6 +718,7 @@ class FatigueAlertModal extends ConsumerWidget {
 
   Widget _buildActionButtons(BuildContext context, bool isDark, bool isSmallScreen) {
     final isCritical = alertData.severity == FatigueSeverity.critical;
+    final l = AppLocalizations.of(context)!;
 
     return Column(
       children: [
@@ -741,7 +743,7 @@ class FatigueAlertModal extends ConsumerWidget {
             ),
             icon: const Icon(Icons.check, size: 20),
             label: Text(
-              'Accept Suggestion',
+              l.fatigueAlertAcceptSuggestion,
               style: TextStyle(
                 fontSize: isSmallScreen ? 15 : 16,
                 fontWeight: FontWeight.bold,
@@ -777,7 +779,7 @@ class FatigueAlertModal extends ConsumerWidget {
               ),
             ),
             child: Text(
-              'Continue as Planned',
+              l.fatigueAlertContinueAsPlanned,
               style: TextStyle(
                 fontSize: isSmallScreen ? 14 : 15,
                 fontWeight: FontWeight.w600,
@@ -804,7 +806,7 @@ class FatigueAlertModal extends ConsumerWidget {
               ),
               icon: const Icon(Icons.stop_circle_outlined, size: 20),
               label: Text(
-                'Stop Exercise',
+                l.fatigueAlertStopExercise,
                 style: TextStyle(
                   fontSize: isSmallScreen ? 14 : 15,
                   fontWeight: FontWeight.w600,

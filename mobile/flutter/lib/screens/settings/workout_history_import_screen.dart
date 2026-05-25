@@ -11,6 +11,7 @@ import '../../data/repositories/workout_history_import_file_repository.dart';
 import '../../data/repositories/workout_history_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'widgets/unresolved_exercises_bulk_sheet.dart';
@@ -134,7 +135,7 @@ class _WorkoutHistoryImportScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(AppLocalizations.of(context).workoutHistoryImportError('$e')),
             backgroundColor: Colors.red,
           ),
         );
@@ -158,7 +159,7 @@ class _WorkoutHistoryImportScreenState
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Entry deleted')),
+        SnackBar(content: Text(AppLocalizations.of(context).workoutHistoryImportEntryDeleted)),
       );
       _loadData();
     }
@@ -190,7 +191,7 @@ class _WorkoutHistoryImportScreenState
     if (bytes == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not read that file.')),
+        SnackBar(content: Text(AppLocalizations.of(context).workoutHistoryImportCouldNotReadThat)),
       );
       return;
     }
@@ -266,7 +267,7 @@ class _WorkoutHistoryImportScreenState
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import failed: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context).workoutHistoryImportImportFailed('$e'))),
       );
     }
   }
@@ -289,7 +290,7 @@ class _WorkoutHistoryImportScreenState
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: const PillAppBar(title: 'Import Workout History'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).workoutHistoryImportImportWorkoutHistory),
       body: _isInitialLoad
           // Cache-first: layout-matched skeleton on the cold first load only.
           // File-import card + info card + a few history rows mirror the real
@@ -333,7 +334,7 @@ class _WorkoutHistoryImportScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Add your past workout data so the AI can generate workouts with weights that match your strength level.',
+                              AppLocalizations.of(context).workoutHistoryImportAddYourPastWorkout,
                               style: TextStyle(
                                 color: colorScheme.onPrimaryContainer,
                               ),
@@ -347,7 +348,7 @@ class _WorkoutHistoryImportScreenState
 
                   // Import form
                   Text(
-                    'Add Exercise',
+                    AppLocalizations.of(context).workoutHistoryImportAddExercise,
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
@@ -357,15 +358,15 @@ class _WorkoutHistoryImportScreenState
                       children: [
                         TextFormField(
                           controller: _exerciseController,
-                          decoration: const InputDecoration(
-                            labelText: 'Exercise Name',
-                            hintText: 'e.g., Bench Press, Squat',
-                            prefixIcon: Icon(Icons.fitness_center),
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context).workoutHistoryImportExerciseName,
+                            hintText: AppLocalizations.of(context).workoutHistoryImportEGBenchPress,
+                            prefixIcon: const Icon(Icons.fitness_center),
                           ),
                           textCapitalization: TextCapitalization.words,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Please enter an exercise name';
+                              return AppLocalizations.of(context).workoutHistoryImportPleaseEnterExerciseName;
                             }
                             return null;
                           },
@@ -376,10 +377,10 @@ class _WorkoutHistoryImportScreenState
                             Expanded(
                               child: TextFormField(
                                 controller: _weightController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Weight (kg)',
-                                  hintText: 'e.g., 60',
-                                  prefixIcon: Icon(Icons.monitor_weight),
+                                decoration: InputDecoration(
+                                  labelText: AppLocalizations.of(context).workoutHistoryImportWeightKg,
+                                  hintText: AppLocalizations.of(context).workoutHistoryImportEG60,
+                                  prefixIcon: const Icon(Icons.monitor_weight),
                                 ),
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
@@ -390,11 +391,11 @@ class _WorkoutHistoryImportScreenState
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Required';
+                                    return AppLocalizations.of(context).workoutHistoryImportRequired;
                                   }
                                   final weight = double.tryParse(value);
                                   if (weight == null || weight < 0) {
-                                    return 'Invalid';
+                                    return AppLocalizations.of(context).workoutHistoryImportInvalid;
                                   }
                                   return null;
                                 },
@@ -404,10 +405,10 @@ class _WorkoutHistoryImportScreenState
                             Expanded(
                               child: TextFormField(
                                 controller: _repsController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Reps',
-                                  hintText: 'e.g., 10',
-                                  prefixIcon: Icon(Icons.repeat),
+                                decoration: InputDecoration(
+                                  labelText: AppLocalizations.of(context).workoutHistoryImportReps,
+                                  hintText: AppLocalizations.of(context).workoutHistoryImportEG10,
+                                  prefixIcon: const Icon(Icons.repeat),
                                 ),
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
@@ -415,11 +416,11 @@ class _WorkoutHistoryImportScreenState
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Required';
+                                    return AppLocalizations.of(context).workoutHistoryImportRequired;
                                   }
                                   final reps = int.tryParse(value);
                                   if (reps == null || reps < 1) {
-                                    return 'Invalid';
+                                    return AppLocalizations.of(context).workoutHistoryImportInvalid;
                                   }
                                   return null;
                                 },
@@ -429,10 +430,10 @@ class _WorkoutHistoryImportScreenState
                             Expanded(
                               child: TextFormField(
                                 controller: _setsController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Sets',
-                                  hintText: 'e.g., 3',
-                                  prefixIcon: Icon(Icons.format_list_numbered),
+                                decoration: InputDecoration(
+                                  labelText: AppLocalizations.of(context).workoutHistoryImportSets,
+                                  hintText: AppLocalizations.of(context).workoutHistoryImportEG3,
+                                  prefixIcon: const Icon(Icons.format_list_numbered),
                                 ),
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
@@ -440,7 +441,7 @@ class _WorkoutHistoryImportScreenState
                                 ],
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Required';
+                                    return AppLocalizations.of(context).workoutHistoryImportRequired;
                                   }
                                   return null;
                                 },
@@ -454,7 +455,7 @@ class _WorkoutHistoryImportScreenState
                           child: FilledButton.icon(
                             onPressed: _isLoading ? null : _submitEntry,
                             icon: const Icon(Icons.add),
-                            label: const Text('Add to History'),
+                            label: Text(AppLocalizations.of(context).workoutHistoryImportAddToHistory),
                           ),
                         ),
                       ],
@@ -465,12 +466,12 @@ class _WorkoutHistoryImportScreenState
                   // Strength summary
                   if (_strengthSummary.isNotEmpty) ...[
                     Text(
-                      'Your Strength Data',
+                      AppLocalizations.of(context).workoutHistoryImportYourStrengthData,
                       style: theme.textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'The AI uses this data to set appropriate weights',
+                      AppLocalizations.of(context).workoutHistoryImportTheAiUsesThis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -494,14 +495,14 @@ class _WorkoutHistoryImportScreenState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Recent Imports',
+                          AppLocalizations.of(context).workoutHistoryImportRecentImports,
                           style: theme.textTheme.titleLarge,
                         ),
                         TextButton(
                           onPressed: () {
                             // Could navigate to full history
                           },
-                          child: const Text('View All'),
+                          child: Text(AppLocalizations.of(context).workoutHistoryImportViewAll),
                         ),
                       ],
                     ),
@@ -534,12 +535,12 @@ class _WorkoutHistoryImportScreenState
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'No workout history yet',
+                              AppLocalizations.of(context).workoutHistoryImportNoWorkoutHistoryYet,
                               style: theme.textTheme.titleMedium,
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Add your past workout data above to help the AI generate better workouts for you.',
+                              AppLocalizations.of(context).workoutHistoryImportAddYourPastWorkout2,
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
@@ -607,7 +608,7 @@ class _FileImportSection extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Import from file',
+                  AppLocalizations.of(context).workoutHistoryImportImportFromFile,
                   style: theme.textTheme.titleLarge
                       ?.copyWith(fontWeight: FontWeight.w800),
                 ),
@@ -616,14 +617,12 @@ class _FileImportSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Export from Hevy, Strong, Fitbod, Jeff Nippard, Renaissance '
-            'Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, '
-            'Peloton, and more.',
+            AppLocalizations.of(context).workoutHistoryImportExportFromHevy,
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 6),
           Text(
-            'Supports CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP.',
+            AppLocalizations.of(context).workoutHistoryImportSupportsCsvXlsxXlsm,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -635,7 +634,7 @@ class _FileImportSection extends StatelessWidget {
               style: FilledButton.styleFrom(backgroundColor: accent),
               onPressed: onPickFile,
               icon: const Icon(Icons.upload_file_rounded),
-              label: const Text('Choose File'),
+              label: Text(AppLocalizations.of(context).workoutHistoryImportChooseFile),
             ),
           ),
         ],
@@ -704,22 +703,22 @@ class _ImportOptionsSheetState extends State<_ImportOptionsSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Before we parse…', style: theme.textTheme.titleLarge),
+          Text(AppLocalizations.of(context).workoutHistoryImportBeforeWeParse, style: theme.textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
-            'Which unit is the weight column in? And if you know the source app, select it — helps disambiguate sibling formats (Hevy vs. Strong CSVs).',
+            AppLocalizations.of(context).workoutHistoryImportWhichUnitIsThe,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
-          Text('Weight unit', style: theme.textTheme.titleSmall),
+          Text(AppLocalizations.of(context).workoutHistoryImportWeightUnit, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: RadioListTile<String>(
-                  title: const Text('Pounds (lb)'),
+                  title: Text(AppLocalizations.of(context).workoutHistoryImportPoundsLb),
                   value: 'lb',
                   groupValue: _unit,
                   onChanged: (v) => setState(() => _unit = v ?? 'lb'),
@@ -727,7 +726,7 @@ class _ImportOptionsSheetState extends State<_ImportOptionsSheet> {
               ),
               Expanded(
                 child: RadioListTile<String>(
-                  title: const Text('Kilograms (kg)'),
+                  title: Text(AppLocalizations.of(context).workoutHistoryImportKilogramsKg),
                   value: 'kg',
                   groupValue: _unit,
                   onChanged: (v) => setState(() => _unit = v ?? 'kg'),
@@ -736,7 +735,7 @@ class _ImportOptionsSheetState extends State<_ImportOptionsSheet> {
             ],
           ),
           const SizedBox(height: 8),
-          Text('Source app', style: theme.textTheme.titleSmall),
+          Text(AppLocalizations.of(context).workoutHistoryImportSourceApp, style: theme.textTheme.titleSmall),
           const SizedBox(height: 4),
           Flexible(
             child: SingleChildScrollView(
@@ -766,14 +765,14 @@ class _ImportOptionsSheetState extends State<_ImportOptionsSheet> {
                   sourceAppHint: _hint == 'auto' ? null : _hint,
                 ));
               },
-              child: const Text('Preview import'),
+              child: Text(AppLocalizations.of(context).workoutHistoryImportPreviewImport),
             ),
           ),
           const SizedBox(height: 4),
           Center(
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context).buttonCancel),
             ),
           ),
         ],
@@ -804,7 +803,7 @@ class _StrengthSummaryTile extends StatelessWidget {
         ),
         title: Text(summary.exerciseName),
         subtitle: Text(
-          '${summary.sourceDescription}  •  ${summary.totalSessions} sessions',
+          AppLocalizations.of(context).workoutHistoryImportNSessions(summary.sourceDescription, summary.totalSessions),
           style: TextStyle(color: colorScheme.onSurfaceVariant),
         ),
         trailing: Column(
@@ -818,7 +817,7 @@ class _StrengthSummaryTile extends StatelessWidget {
               ),
             ),
             Text(
-              'Max: ${summary.maxWeightKg.toStringAsFixed(1)} kg',
+              AppLocalizations.of(context).workoutHistoryImportMaxWeightKg(summary.maxWeightKg.toStringAsFixed(1)),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -860,20 +859,19 @@ class _HistoryRecordTile extends StatelessWidget {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('Delete Entry?'),
-                content: Text(
-                    'Remove ${record.exerciseName} from your workout history?'),
+                title: Text(AppLocalizations.of(context).workoutHistoryImportDeleteEntry),
+                content: Text(AppLocalizations.of(context).workoutHistoryImportRemoveExercise(record.exerciseName)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context).buttonCancel),
                   ),
                   FilledButton(
                     onPressed: () {
                       Navigator.pop(context);
                       onDelete();
                     },
-                    child: const Text('Delete'),
+                    child: Text(AppLocalizations.of(context).buttonDelete),
                   ),
                 ],
               ),

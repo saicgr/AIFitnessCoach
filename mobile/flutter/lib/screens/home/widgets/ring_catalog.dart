@@ -13,11 +13,13 @@ library;
 import 'dart:convert';
 
 import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart' show BuildContext;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/providers/auth_provider.dart';
 import '../../../data/services/health_service.dart' show healthSyncProvider;
+import '../../../l10n/generated/app_localizations.dart';
 
 /// All rings the home screen knows how to render. Order = catalogue order
 /// (not display order — display order lives in [RingVisibilityNotifier]).
@@ -165,6 +167,24 @@ extension RingKindX on RingKind {
   String get label => spec.label;
   Color get color => spec.color;
   bool get isCore => spec.isCore;
+
+  /// Localized display label for use in UI widgets.
+  String localizedLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (this) {
+      case RingKind.train: return l10n.ringLabelTrain;
+      case RingKind.nourish: return l10n.ringLabelNourish;
+      case RingKind.move: return l10n.ringLabelMove;
+      case RingKind.sleep: return l10n.ringLabelSleep;
+      case RingKind.cycle: return l10n.ringLabelCycleDay;
+      case RingKind.heartRate: return l10n.ringLabelHeartRate;
+      case RingKind.hrv: return l10n.ringLabelHrv;
+      case RingKind.stress: return l10n.ringLabelStress;
+      case RingKind.hydration: return l10n.ringLabelHydration;
+      case RingKind.weight: return l10n.ringLabelWeight;
+      case RingKind.recovery: return l10n.ringLabelRecovery;
+    }
+  }
 
   static RingKind? fromId(String id) {
     for (final entry in kRingCatalog.entries) {

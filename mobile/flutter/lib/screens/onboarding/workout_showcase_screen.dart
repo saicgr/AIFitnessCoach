@@ -9,6 +9,7 @@ import '../../core/services/posthog_service.dart';
 import 'demo_tasks_screen.dart';
 import 'pre_auth_quiz_data.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Workout Showcase — Onboarding v5
 ///
@@ -34,29 +35,29 @@ class WorkoutShowcaseScreen extends ConsumerStatefulWidget {
 enum _DemoProgression { linear, step, undulating, custom }
 
 extension _DemoProgressionDetails on _DemoProgression {
-  String get label {
+  String localizedLabel(AppLocalizations l10n) {
     switch (this) {
       case _DemoProgression.linear:
-        return 'Linear';
+        return l10n.workoutShowcaseLinearLabel;
       case _DemoProgression.step:
-        return 'Pyramid';
+        return l10n.workoutShowcasePyramidLabel;
       case _DemoProgression.undulating:
-        return 'Undulating';
+        return l10n.workoutShowcaseUndulatingLabel;
       case _DemoProgression.custom:
-        return 'Auto';
+        return l10n.workoutShowcaseAutoLabel;
     }
   }
 
-  String get description {
+  String localizedDescription(AppLocalizations l10n) {
     switch (this) {
       case _DemoProgression.linear:
-        return 'Same weight each set. Add reps week-to-week.';
+        return l10n.workoutShowcaseLinearDesc;
       case _DemoProgression.step:
-        return '+10 lb each set, fewer reps. Classic strength.';
+        return l10n.workoutShowcasePyramidDesc;
       case _DemoProgression.undulating:
-        return 'Heavy / light / medium across the session.';
+        return l10n.workoutShowcaseUndulatingDesc;
       case _DemoProgression.custom:
-        return 'Progressive overload tuned by your AI coach.';
+        return l10n.workoutShowcaseAutoDesc;
     }
   }
 
@@ -129,20 +130,21 @@ class _WorkoutShowcaseScreenState
 
   /// CTA label — verbs change so each tap feels like the natural next
   /// action, not a generic "continue".
-  String get _ctaLabel {
+  String _ctaLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     switch (_frame) {
       case 0:
-        return 'Log all sets →';
+        return l10n.workoutShowcaseLogAllSets;
       case 1:
-        return 'Finish workout →';
+        return l10n.workoutShowcaseFinishWorkout;
       case 2:
-        return 'Continue →';
+        return l10n.workoutShowcaseContinue;
       case 3:
       default:
         // Reserve "I'm in" for the canonical commit-pact screen so the
         // commitment moment lands harder. Earlier showcase screens use
         // a quieter "Continue" so the verb doesn't get diluted.
-        return 'Continue →';
+        return l10n.workoutShowcaseContinue;
     }
   }
 
@@ -245,9 +247,9 @@ class _WorkoutShowcaseScreenState
                   ),
                   TextButton(
                     onPressed: _skip,
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(
+                    child: Text(
+                      AppLocalizations.of(context)!.onboardingSkip,
+                      style: const TextStyle(
                         color: AppColors.onboardingAccent,
                         fontWeight: FontWeight.w600,
                       ),
@@ -290,7 +292,7 @@ class _WorkoutShowcaseScreenState
                     ),
                     child: Center(
                       child: Text(
-                        _ctaLabel,
+                        _ctaLabel(context),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -380,7 +382,7 @@ class _WorkoutShowcaseScreenState
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Progression model',
+                    AppLocalizations.of(sheetCtx)!.workoutShowcaseProgressionModel,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -391,7 +393,7 @@ class _WorkoutShowcaseScreenState
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'How your weight + reps progress across sets.',
+                    AppLocalizations.of(sheetCtx)!.workoutShowcaseHowYourWeightReps,
                     style: TextStyle(
                       fontSize: 13,
                       color: isDark
@@ -450,7 +452,7 @@ class _WorkoutShowcaseScreenState
                                       CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      p.label,
+                                      p.localizedLabel(AppLocalizations.of(sheetCtx)!),
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800,
@@ -461,7 +463,7 @@ class _WorkoutShowcaseScreenState
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      p.description,
+                                      p.localizedDescription(AppLocalizations.of(sheetCtx)!),
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isDark
@@ -564,13 +566,16 @@ class _ModeToggle extends StatelessWidget {
         color: trackColor,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _seg('Easy', !advanced, () => onChanged(false), inactive),
-          _seg('Advanced', advanced, () => onChanged(true), inactive),
-        ],
-      ),
+      child: Builder(builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx)!;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _seg(l10n.workoutShowcaseEasy, !advanced, () => onChanged(false), inactive),
+            _seg(l10n.workoutShowcaseAdvanced, advanced, () => onChanged(true), inactive),
+          ],
+        );
+      }),
     );
   }
 
@@ -733,7 +738,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
           // Top bar: Warmup E badge + toggle + heart + PiP + timer
           Row(
             children: [
-              Text('Warmup',
+              Text(AppLocalizations.of(context)!.workoutShowcaseWarmup,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -767,16 +772,19 @@ class _AdvancedActiveLayout extends StatelessWidget {
           ).animate().fadeIn(),
           const SizedBox(height: 8),
           // Stats strip
-          Row(
-            children: [
-              _statPill('Duration', '21s',
-                  const Color(0xFF22C55E), isDark),
-              const SizedBox(width: 8),
-              _statPill('Calories', '3 kcal', null, isDark),
-              const SizedBox(width: 8),
-              _statPill('Volume', '0 lb', null, isDark),
-            ],
-          ).animate(delay: 100.ms).fadeIn(),
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return Row(
+              children: [
+                _statPill(l10n.workoutShowcaseDuration, '21s',
+                    const Color(0xFF22C55E), isDark),
+                const SizedBox(width: 8),
+                _statPill(l10n.workoutShowcaseCalories, '3 kcal', null, isDark),
+                const SizedBox(width: 8),
+                _statPill(l10n.workoutShowcaseVolume, '0 lb', null, isDark),
+              ],
+            );
+          }).animate(delay: 100.ms).fadeIn(),
           const SizedBox(height: 10),
           // Exercise title + Info chip
           Row(
@@ -814,7 +822,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
                             : AppColorsLight.textPrimary),
                     const SizedBox(width: 4),
                     Text(
-                      'Info',
+                      AppLocalizations.of(context)!.workoutShowcaseInfo,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -832,7 +840,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Set 1 of 4',
+                AppLocalizations.of(context)!.workoutShowcaseSet1Of4,
                 style: TextStyle(
                   fontSize: 13,
                   color: isDark
@@ -841,44 +849,55 @@ class _AdvancedActiveLayout extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const _OutlinedChip(
-                  icon: Icons.air_rounded, label: 'Breathing'),
-              const SizedBox(width: 8),
-              const _OutlinedChip(
-                icon: Icons.skip_next_rounded,
-                label: 'Skip',
-                accent: AppColors.onboardingAccent,
-              ),
+              Builder(builder: (ctx) {
+                final l10n = AppLocalizations.of(ctx)!;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _OutlinedChip(
+                        icon: Icons.air_rounded, label: l10n.workoutShowcaseBreathing),
+                    const SizedBox(width: 8),
+                    _OutlinedChip(
+                      icon: Icons.skip_next_rounded,
+                      label: l10n.onboardingSkip,
+                      accent: AppColors.onboardingAccent,
+                    ),
+                  ],
+                );
+              }),
             ],
           ).animate(delay: 200.ms).fadeIn(),
           const SizedBox(height: 8),
           // Action chips row
-          SizedBox(
-            height: 34,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                const _OutlinedChip(
-                    icon: Icons.tune_rounded, label: 'Adjust'),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: onProgressionTap,
-                  child: _OutlinedChip(
-                    icon: progression.icon,
-                    label: progression.label,
-                    accent: AppColors.onboardingAccent,
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return SizedBox(
+              height: 34,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _OutlinedChip(
+                      icon: Icons.tune_rounded, label: l10n.workoutShowcaseAdjust),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: onProgressionTap,
+                    child: _OutlinedChip(
+                      icon: progression.icon,
+                      label: progression.localizedLabel(l10n),
+                      accent: AppColors.onboardingAccent,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                const _OutlinedChip(
-                    icon: Icons.compare_arrows_rounded,
-                    label: 'Superset'),
-                const SizedBox(width: 8),
-                const _OutlinedChip(
-                    icon: Icons.swap_horiz_rounded, label: 'L/R'),
-              ],
-            ),
-          ).animate(delay: 280.ms).fadeIn(),
+                  const SizedBox(width: 8),
+                  _OutlinedChip(
+                      icon: Icons.compare_arrows_rounded,
+                      label: l10n.workoutShowcaseSuperset),
+                  const SizedBox(width: 8),
+                  _OutlinedChip(
+                      icon: Icons.swap_horiz_rounded, label: l10n.workoutShowcaseLR),
+                ],
+              ),
+            );
+          }).animate(delay: 280.ms).fadeIn(),
           const SizedBox(height: 8),
           // Set tracking table — renders at natural height (no internal
           // scroll). All 4 sets + RIR scale always visible at once.
@@ -918,36 +937,39 @@ class _AdvancedActiveLayout extends StatelessWidget {
             ),
           ).animate(delay: 420.ms).fadeIn(),
           // Bottom action chips (pinned, tap-to-toast)
-          Row(
-            children: [
-              _toastChip(
-                context,
-                icon: Icons.menu_book_rounded,
-                label: 'Instructions',
-                accent: const Color(0xFF22C55E),
-                toast:
-                    'Step-by-step form cues + setup tips for ${progression.label} progression.',
-              ),
-              const SizedBox(width: 8),
-              _toastChip(
-                context,
-                icon: Icons.play_circle_outline_rounded,
-                label: 'Video',
-                accent: const Color(0xFFA855F7),
-                toast:
-                    'Demo videos play here — slow-mo angles, common mistakes, fixes.',
-              ),
-              const SizedBox(width: 8),
-              _toastChip(
-                context,
-                icon: Icons.water_drop_outlined,
-                label: 'Log Drink',
-                accent: const Color(0xFF06B6D4),
-                toast:
-                    'One-tap hydration log — counts toward your daily target.',
-              ),
-            ],
-          ).animate(delay: 480.ms).fadeIn(),
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return Row(
+              children: [
+                _toastChip(
+                  ctx,
+                  icon: Icons.menu_book_rounded,
+                  label: l10n.workoutShowcaseInstructions,
+                  accent: const Color(0xFF22C55E),
+                  toast:
+                      'Step-by-step form cues + setup tips for ${progression.localizedLabel(l10n)} progression.',
+                ),
+                const SizedBox(width: 8),
+                _toastChip(
+                  ctx,
+                  icon: Icons.play_circle_outline_rounded,
+                  label: l10n.workoutShowcaseVideo,
+                  accent: const Color(0xFFA855F7),
+                  toast:
+                      'Demo videos play here — slow-mo angles, common mistakes, fixes.',
+                ),
+                const SizedBox(width: 8),
+                _toastChip(
+                  ctx,
+                  icon: Icons.water_drop_outlined,
+                  label: l10n.workoutShowcaseLogDrink,
+                  accent: const Color(0xFF06B6D4),
+                  toast:
+                      'One-tap hydration log — counts toward your daily target.',
+                ),
+              ],
+            );
+          }).animate(delay: 480.ms).fadeIn(),
           // Push the footer to the bottom — fills the dead space that
           // appeared after we hid the global "Tap to continue" CTA on
           // Frame 0.
@@ -986,7 +1008,7 @@ class _AdvancedActiveLayout extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Up next: Bench Press',
+                          AppLocalizations.of(context)!.workoutShowcaseUpNextBenchPress,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -1019,13 +1041,13 @@ class _AdvancedActiveLayout extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.auto_awesome_rounded,
+                  children: [
+                    const Icon(Icons.auto_awesome_rounded,
                         color: AppColors.orange, size: 14),
-                    SizedBox(width: 5),
+                    const SizedBox(width: 5),
                     Text(
-                      'Ask coach',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.workoutShowcaseAskCoach,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: AppColors.orange,
@@ -1271,14 +1293,17 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
             ],
           ).animate().fadeIn(),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _stat('Duration', '46s', textPrimary, textSecondary),
-              _stat('Calories', '6 kcal', textPrimary, textSecondary),
-              _stat('Volume', '0 lb', textPrimary, textSecondary),
-            ],
-          ).animate(delay: 100.ms).fadeIn(),
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _stat(l10n.workoutShowcaseDuration, '46s', textPrimary, textSecondary),
+                _stat(l10n.workoutShowcaseCalories, '6 kcal', textPrimary, textSecondary),
+                _stat(l10n.workoutShowcaseVolume, '0 lb', textPrimary, textSecondary),
+              ],
+            );
+          }).animate(delay: 100.ms).fadeIn(),
           const SizedBox(height: 8),
           Text(
             'Barbell Squat',
@@ -1291,12 +1316,15 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
           const SizedBox(height: 4),
           // Set label — tracks which working set the user is currently
           // logging (1 → 2 → 3 → done).
-          Text(
-            _setsLogged >= 3
-                ? 'All 3 sets done'
-                : 'Set ${_setsLogged + 1} of 3',
-            style: TextStyle(fontSize: 13, color: textSecondary),
-          ).animate(delay: 180.ms).fadeIn(),
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return Text(
+              _setsLogged >= 3
+                  ? l10n.workoutShowcaseAll3SetsDone
+                  : l10n.workoutShowcaseSetNOf3(_setsLogged + 1),
+              style: TextStyle(fontSize: 13, color: textSecondary),
+            );
+          }).animate(delay: 180.ms).fadeIn(),
           const SizedBox(height: 8),
           const _ExerciseIllustrationCard(size: 110)
               .animate(delay: 220.ms)
@@ -1304,19 +1332,22 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
               .scale(begin: const Offset(0.92, 0.92)),
           const SizedBox(height: 8),
           // Sub action row — tap-to-toast
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _action(Icons.play_circle_outline_rounded, 'Video',
-                  textPrimary, () => _toast('Demo videos play here.')),
-              _action(Icons.menu_book_rounded, 'Instructions',
-                  textPrimary, () => _toast('Step-by-step form cues.')),
-              _action(Icons.list_alt_rounded, 'Plan', textPrimary,
-                  () => _toast('Your full plan for the week.')),
-              _action(Icons.edit_note_rounded, 'Note', textPrimary,
-                  () => _toast('Add a note to this set.')),
-            ],
-          ).animate(delay: 280.ms).fadeIn(),
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _action(Icons.play_circle_outline_rounded, l10n.workoutShowcaseVideo,
+                    textPrimary, () => _toast('Demo videos play here.')),
+                _action(Icons.menu_book_rounded, l10n.workoutShowcaseInstructions,
+                    textPrimary, () => _toast('Step-by-step form cues.')),
+                _action(Icons.list_alt_rounded, l10n.workoutShowcasePlan, textPrimary,
+                    () => _toast('Your full plan for the week.')),
+                _action(Icons.edit_note_rounded, l10n.workoutShowcaseNote, textPrimary,
+                    () => _toast('Add a note to this set.')),
+              ],
+            );
+          }).animate(delay: 280.ms).fadeIn(),
           const SizedBox(height: 8),
           // Progress dots — reflect the live `_setsLogged` counter so
           // the user can see set 1 / set 2 / set 3 marching forward.
@@ -1363,7 +1394,7 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
           }).animate(delay: 320.ms).fadeIn(),
           const SizedBox(height: 10),
           _stepper(
-            label: 'Weight',
+            label: AppLocalizations.of(context)!.workoutShowcaseWeight,
             value: _weight.toStringAsFixed(_weight == _weight.roundToDouble() ? 0 : 1),
             unit: _useKg ? 'kg' : 'lb',
             showUnitToggle: true,
@@ -1382,7 +1413,7 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
           ).animate(delay: 360.ms).fadeIn(),
           const SizedBox(height: 8),
           _stepper(
-            label: 'Reps',
+            label: AppLocalizations.of(context)!.workoutShowcaseReps,
             value: '$_reps',
             unit: 'reps',
             showUnitToggle: false,
@@ -1421,7 +1452,7 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
                       ],
                     ),
                     child: Text(
-                      'Tap to log set ${_setsLogged + 1}',
+                      AppLocalizations.of(context)!.workoutShowcaseTapToLogSet(_setsLogged + 1),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -1471,16 +1502,19 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
-                child: Text(
-                  _setsLogged >= 3
-                      ? '✓ All sets logged'
-                      : '✓ Log set ${_setsLogged + 1}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
+                child: Builder(builder: (ctx) {
+                  final l10n = AppLocalizations.of(ctx)!;
+                  return Text(
+                    _setsLogged >= 3
+                        ? l10n.workoutShowcaseAllSetsLogged
+                        : l10n.workoutShowcaseLogSet(_setsLogged + 1),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  );
+                }),
               ),
             ),
           ).animate(delay: 440.ms).fadeIn(),
@@ -1501,13 +1535,13 @@ class _EasyActiveLayoutState extends State<_EasyActiveLayout> {
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.water_drop_rounded,
+                children: [
+                  const Icon(Icons.water_drop_rounded,
                       color: Color(0xFF06B6D4), size: 14),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
-                    'Log water',
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.workoutShowcaseLogWater,
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF06B6D4),
@@ -2112,20 +2146,26 @@ class _Frame2SetLogged extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 8),
-          Text(
-            'All sets logged — progression in action',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: textPrimary,
-              letterSpacing: -0.4,
-            ),
-          ).animate().fadeIn(),
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return Text(
+              l10n.workoutShowcaseAllSetsLoggedProgression,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: textPrimary,
+                letterSpacing: -0.4,
+              ),
+            );
+          }).animate().fadeIn(),
           const SizedBox(height: 6),
-          Text(
-            "${progression.label} — ${progression.description}",
-            style: TextStyle(fontSize: 13, color: textSecondary),
-          ).animate(delay: 100.ms).fadeIn(),
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return Text(
+              "${progression.localizedLabel(l10n)} — ${progression.localizedDescription(l10n)}",
+              style: TextStyle(fontSize: 13, color: textSecondary),
+            );
+          }).animate(delay: 100.ms).fadeIn(),
           const SizedBox(height: 18),
           // ── Every set checked off. The progression deltas show how
           // weight + reps moved across the full session — what makes
@@ -2153,7 +2193,7 @@ class _Frame2SetLogged extends StatelessWidget {
                   isUp: w[1] > w[0],
                 ),
                 _progressionRow(
-                  label: 'Set 1',
+                  label: AppLocalizations.of(context)!.workoutShowcaseSet1,
                   weight: '${w[1]} lb',
                   reps: '${r[1]} reps',
                   delta: null,
@@ -2169,7 +2209,7 @@ class _Frame2SetLogged extends StatelessWidget {
                   isUp: w[2] > w[1],
                 ),
                 _progressionRow(
-                  label: 'Set 2',
+                  label: AppLocalizations.of(context)!.workoutShowcaseSet2,
                   weight: '${w[2]} lb',
                   reps: '${r[2]} reps',
                   delta: null,
@@ -2185,7 +2225,7 @@ class _Frame2SetLogged extends StatelessWidget {
                   isUp: w[3] >= w[2],
                 ),
                 _progressionRow(
-                  label: 'Set 3',
+                  label: AppLocalizations.of(context)!.workoutShowcaseSet3,
                   weight: '${w[3]} lb',
                   reps: '${r[3]} reps',
                   delta: null,
@@ -2218,7 +2258,7 @@ class _Frame2SetLogged extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Plan auto-adjusts next session — weight + reps recalibrate from your real performance.',
+                    AppLocalizations.of(context)!.workoutShowcasePlanAutoAdjustsNext,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -2230,10 +2270,9 @@ class _Frame2SetLogged extends StatelessWidget {
             ),
           ).animate(delay: 500.ms).fadeIn(),
           const Spacer(),
-          _Annotation(
-            text:
-                'Every set you log feeds the next workout — no spreadsheet, no guessing.',
-          ).animate(delay: 700.ms).fadeIn(),
+          Builder(builder: (ctx) => _Annotation(
+            text: AppLocalizations.of(ctx)!.workoutShowcaseEverySetYouLog,
+          )).animate(delay: 700.ms).fadeIn(),
         ],
       ),
     );
@@ -2410,7 +2449,7 @@ class _Frame3Complete extends StatelessWidget {
           ).animate().scale(curve: Curves.elasticOut, duration: 500.ms),
           const SizedBox(height: 18),
           Text(
-            'Workout complete',
+            AppLocalizations.of(context)!.workoutShowcaseWorkoutComplete,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -2418,36 +2457,39 @@ class _Frame3Complete extends StatelessWidget {
             ),
           ).animate(delay: 200.ms).fadeIn(),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              _StatTile(
-                icon: Icons.timer_rounded,
-                value: '44:12',
-                label: 'Time',
-                color: AppColors.onboardingAccent,
-                bg: cardBg,
-                isDark: isDark,
-              ),
-              const SizedBox(width: 8),
-              _StatTile(
-                icon: Icons.local_fire_department_rounded,
-                value: '320',
-                label: 'Cal',
-                color: const Color(0xFFE74C3C),
-                bg: cardBg,
-                isDark: isDark,
-              ),
-              const SizedBox(width: 8),
-              _StatTile(
-                icon: Icons.scale_rounded,
-                value: '12,450',
-                label: 'Volume',
-                color: const Color(0xFF2ECC71),
-                bg: cardBg,
-                isDark: isDark,
-              ),
-            ],
-          ).animate(delay: 400.ms).fadeIn().slideY(begin: 0.1),
+          Builder(builder: (ctx) {
+            final l10n = AppLocalizations.of(ctx)!;
+            return Row(
+              children: [
+                _StatTile(
+                  icon: Icons.timer_rounded,
+                  value: '44:12',
+                  label: l10n.workoutShowcaseTime,
+                  color: AppColors.onboardingAccent,
+                  bg: cardBg,
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 8),
+                _StatTile(
+                  icon: Icons.local_fire_department_rounded,
+                  value: '320',
+                  label: l10n.workoutShowcaseCal,
+                  color: const Color(0xFFE74C3C),
+                  bg: cardBg,
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 8),
+                _StatTile(
+                  icon: Icons.scale_rounded,
+                  value: '12,450',
+                  label: l10n.workoutShowcaseVolume,
+                  color: const Color(0xFF2ECC71),
+                  bg: cardBg,
+                  isDark: isDark,
+                ),
+              ],
+            );
+          }).animate(delay: 400.ms).fadeIn().slideY(begin: 0.1),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -2457,13 +2499,13 @@ class _Frame3Complete extends StatelessWidget {
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.local_fire_department_rounded,
+              children: [
+                const Icon(Icons.local_fire_department_rounded,
                     color: Color(0xFFE67E22), size: 16),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Text(
-                  '3 PRs · 14-day streak',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.workoutShowcase3Prs14Day,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFFE67E22),
@@ -2473,8 +2515,8 @@ class _Frame3Complete extends StatelessWidget {
             ),
           ).animate(delay: 600.ms).fadeIn(),
           const Spacer(),
-          _Annotation(
-                  text: 'Every workout flows into your progress automatically.')
+          Builder(builder: (ctx) => _Annotation(
+                  text: AppLocalizations.of(ctx)!.workoutShowcaseEveryWorkoutFlows))
               .animate(delay: 800.ms)
               .fadeIn(),
         ],
@@ -2508,40 +2550,40 @@ enum _ShareFormat {
 }
 
 extension _ShareFormatMeta on _ShareFormat {
-  String get label {
+  String localizedLabel(AppLocalizations l10n) {
     switch (this) {
       case _ShareFormat.card:
-        return 'Card';
+        return l10n.workoutShowcaseFormatCard;
       case _ShareFormat.receipt:
-        return 'Receipt';
+        return l10n.workoutShowcaseFormatReceipt;
       case _ShareFormat.newspaper:
-        return 'Newspaper';
+        return l10n.workoutShowcaseFormatNewspaper;
       case _ShareFormat.flightTicket:
-        return 'Boarding';
+        return l10n.workoutShowcaseFormatBoarding;
       case _ShareFormat.instaStory:
-        return 'IG Story';
+        return l10n.workoutShowcaseFormatIgStory;
       case _ShareFormat.tradingCard:
-        return 'Trading';
+        return l10n.workoutShowcaseFormatTrading;
       case _ShareFormat.polaroid:
-        return 'Polaroid';
+        return l10n.workoutShowcaseFormatPolaroid;
       case _ShareFormat.wrapped:
-        return 'Wrapped';
+        return l10n.workoutShowcaseFormatWrapped;
       case _ShareFormat.trophy:
-        return 'Trophy';
+        return l10n.workoutShowcaseFormatTrophy;
       case _ShareFormat.prCard:
-        return 'PR Card';
+        return l10n.workoutShowcaseFormatPrCard;
       case _ShareFormat.oneRm:
-        return '1RM';
+        return l10n.workoutShowcaseFormat1Rm;
       case _ShareFormat.fullWorkout:
-        return 'Full';
+        return l10n.workoutShowcaseFormatFull;
       case _ShareFormat.vinyl:
-        return 'Vinyl';
+        return l10n.workoutShowcaseFormatVinyl;
       case _ShareFormat.discord:
-        return 'Discord';
+        return l10n.workoutShowcaseFormatDiscord;
       case _ShareFormat.quote:
-        return 'Quote';
+        return l10n.workoutShowcaseFormatQuote;
       case _ShareFormat.passport:
-        return 'Passport';
+        return l10n.workoutShowcaseFormatPassport;
     }
   }
 }
@@ -2577,7 +2619,7 @@ class _Frame4ShareableState extends State<_Frame4Shareable> {
         children: [
           const SizedBox(height: 4),
           Text(
-            'Share your workout',
+            AppLocalizations.of(context)!.workoutShowcaseShareYourWorkout,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -2587,7 +2629,7 @@ class _Frame4ShareableState extends State<_Frame4Shareable> {
           ).animate().fadeIn(),
           const SizedBox(height: 4),
           Text(
-            '15 viral formats — tap any to preview',
+            AppLocalizations.of(context)!.workoutShowcase15ViralFormatsTap,
             style: TextStyle(fontSize: 13, color: textSecondary),
           ).animate(delay: 100.ms).fadeIn(),
           const SizedBox(height: 14),
@@ -2665,7 +2707,7 @@ class _Frame4ShareableState extends State<_Frame4Shareable> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Text(
-                            f.label,
+                            f.localizedLabel(AppLocalizations.of(context)!),
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: selected

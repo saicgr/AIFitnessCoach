@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
 
 /// Motivational Template - Workout name and streak with inspiring design
@@ -22,6 +23,7 @@ class MotivationalTemplate extends StatelessWidget {
     this.showWatermark = true,
   });
 
+  // TODO(i18n): motivationalQuote getter has no BuildContext — phrases used in share image card
   String get _motivationalQuote {
     if (currentStreak != null && currentStreak! >= 30) {
       return 'UNSTOPPABLE';
@@ -75,6 +77,7 @@ class MotivationalTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     // Calculate responsive height based on available space
     final screenHeight = MediaQuery.of(context).size.height;
     final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);
@@ -167,7 +170,7 @@ class MotivationalTemplate extends StatelessWidget {
                         const SizedBox(height: 12),
 
                         // Stats row
-                        _buildQuickStats(),
+                        _buildQuickStats(context),
 
                         const SizedBox(height: 40),
 
@@ -263,7 +266,8 @@ class MotivationalTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickStats() {
+  Widget _buildQuickStats(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -284,7 +288,7 @@ class MotivationalTemplate extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            'COMPLETED',
+            l10n.shareMotivationalCompleted,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 14,

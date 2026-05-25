@@ -7,6 +7,7 @@ import '../../data/providers/model_download_provider.dart';
 import '../../services/device_capability_service.dart';
 import '../../services/model_download_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Dedicated screen for managing on-device AI model downloads.
 ///
@@ -54,7 +55,7 @@ class _AiModelDownloadScreenState
     if (mounted) {
       setState(() => _tokenSaved = true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('HuggingFace token saved')),
+        SnackBar(content: Text(AppLocalizations.of(context).aiModelDownloadHuggingfaceTokenSaved)),
       );
     }
   }
@@ -64,7 +65,7 @@ class _AiModelDownloadScreenState
     if (mounted) {
       setState(() => _tokenSaved = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('HuggingFace token removed')),
+        SnackBar(content: Text(AppLocalizations.of(context).aiModelDownloadHuggingfaceTokenRemoved)),
       );
     }
   }
@@ -91,8 +92,8 @@ class _AiModelDownloadScreenState
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.background : AppColorsLight.background,
-      appBar: const PillAppBar(
-        title: 'On-Device AI Model',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).aiModelDownloadOnDeviceAiModel,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -109,7 +110,7 @@ class _AiModelDownloadScreenState
               children: [
                 Row(
                   children: [
-                    Text('HuggingFace Token',
+                    Text(AppLocalizations.of(context).aiModelDownloadHuggingfaceToken,
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -127,8 +128,7 @@ class _AiModelDownloadScreenState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Required to download models from HuggingFace. '
-                  'You must also accept the Gemma license on HuggingFace before downloading.',
+                  AppLocalizations.of(context).aiModelDownloadRequiredToDownload,
                   style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
                 ),
                 const SizedBox(height: 12),
@@ -138,7 +138,7 @@ class _AiModelDownloadScreenState
                       const Icon(Icons.vpn_key_rounded,
                           color: Colors.green, size: 16),
                       const SizedBox(width: 8),
-                      Text('Token saved securely',
+                      Text(AppLocalizations.of(context).aiModelDownloadTokenSavedSecurely,
                           style: TextStyle(
                               fontSize: 13,
                               color: textPrimary,
@@ -146,7 +146,7 @@ class _AiModelDownloadScreenState
                       const Spacer(),
                       TextButton(
                         onPressed: _clearToken,
-                        child: const Text('Remove',
+                        child: Text(AppLocalizations.of(context).aiModelDownloadRemove,
                             style: TextStyle(color: Colors.red, fontSize: 13)),
                       ),
                     ],
@@ -157,7 +157,7 @@ class _AiModelDownloadScreenState
                     obscureText: _tokenObscured,
                     style: TextStyle(fontSize: 13, color: textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'hf_...',
+                      hintText: AppLocalizations.of(context).aiModelDownloadHf,
                       hintStyle: TextStyle(color: textMuted, fontSize: 13),
                       filled: true,
                       fillColor: isDark
@@ -195,7 +195,7 @@ class _AiModelDownloadScreenState
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: const Text('Save Token',
+                          child: Text(AppLocalizations.of(context).aiModelDownloadSaveToken,
                               style: TextStyle(fontSize: 13)),
                         ),
                       ),
@@ -209,7 +209,7 @@ class _AiModelDownloadScreenState
                     mode: LaunchMode.externalApplication,
                   ),
                   child: Text(
-                    'Get your token at huggingface.co/settings/tokens',
+                    AppLocalizations.of(context).aiModelDownloadGetYourTokenAt,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.blue.shade400,
@@ -234,7 +234,7 @@ class _AiModelDownloadScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Device Compatibility',
+                Text(AppLocalizations.of(context).aiModelDownloadDeviceCompatibility,
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -242,36 +242,43 @@ class _AiModelDownloadScreenState
                 const SizedBox(height: 12),
                 ramAsync.when(
                   data: (ram) => _CompatibilityRow(
-                    label: 'RAM',
+                    label: AppLocalizations.of(context).aiModelDownloadRam,
                     value: '${ram.toStringAsFixed(1)} GB',
                     isGood: ram >= 2.0,
                   ),
-                  loading: () => const _CompatibilityRow(
-                      label: 'RAM', value: 'Checking...', isGood: true),
+                  loading: () => _CompatibilityRow(
+                      label: AppLocalizations.of(context).aiModelDownloadRam,
+                      value: AppLocalizations.of(context).aiModelDownloadChecking,
+                      isGood: true),
                   error: (e, _) => _CompatibilityRow(
-                      label: 'RAM', value: 'Unknown', isGood: false),
+                      label: AppLocalizations.of(context).aiModelDownloadRam,
+                      value: AppLocalizations.of(context).aiModelDownloadUnknown,
+                      isGood: false),
                 ),
                 const SizedBox(height: 8),
                 capabilityAsync.when(
                   data: (cap) {
+                    final l10n = AppLocalizations.of(context);
                     final label = switch (cap) {
-                      DeviceCapability.incompatible => 'Not compatible',
-                      DeviceCapability.basic => 'Basic (270M + embeddings)',
-                      DeviceCapability.standard => 'Standard (up to Gemma 3n E2B)',
-                      DeviceCapability.optimal => 'Optimal (all models)',
+                      DeviceCapability.incompatible => l10n.aiModelDownloadNotCompatible,
+                      DeviceCapability.basic => l10n.aiModelDownloadBasic,
+                      DeviceCapability.standard => l10n.aiModelDownloadStandard,
+                      DeviceCapability.optimal => l10n.aiModelDownloadOptimal,
                     };
                     return _CompatibilityRow(
-                      label: 'Capability',
+                      label: AppLocalizations.of(context).aiModelDownloadCapability,
                       value: label,
                       isGood: cap != DeviceCapability.incompatible,
                     );
                   },
-                  loading: () => const _CompatibilityRow(
-                      label: 'Capability',
-                      value: 'Checking...',
+                  loading: () => _CompatibilityRow(
+                      label: AppLocalizations.of(context).aiModelDownloadCapability,
+                      value: AppLocalizations.of(context).aiModelDownloadChecking,
                       isGood: true),
-                  error: (e, _) => const _CompatibilityRow(
-                      label: 'Capability', value: 'Unknown', isGood: false),
+                  error: (e, _) => _CompatibilityRow(
+                      label: AppLocalizations.of(context).aiModelDownloadCapability,
+                      value: AppLocalizations.of(context).aiModelDownloadUnknown,
+                      isGood: false),
                 ),
               ],
             ),
@@ -295,9 +302,7 @@ class _AiModelDownloadScreenState
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'On-device AI models run intensive computations on your phone. '
-                    'This may increase battery drain and cause the device to warm up '
-                    'during workout generation. Larger models use more resources.',
+                    AppLocalizations.of(context).aiModelDownloadBatteryWarning,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,
@@ -321,7 +326,7 @@ class _AiModelDownloadScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Model Options',
+                Text(AppLocalizations.of(context).aiModelDownloadModelOptions,
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -360,7 +365,7 @@ class _AiModelDownloadScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Downloading... ${(downloadState.progress * 100).toInt()}%',
+                    AppLocalizations.of(context).aiModelDownloadDownloadingProgress((downloadState.progress * 100).toInt()),
                     style: TextStyle(fontSize: 13, color: textMuted),
                   ),
                   if (downloadState.progressDisplay.isNotEmpty) ...[
@@ -374,7 +379,7 @@ class _AiModelDownloadScreenState
                   TextButton(
                     onPressed: () =>
                         ref.read(modelDownloadProvider.notifier).cancelDownload(),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context).aiModelDownloadCancel),
                   ),
                 ],
               ),
@@ -388,7 +393,7 @@ class _AiModelDownloadScreenState
                         ref.read(modelDownloadProvider.notifier).deleteModel(),
                     icon: const Icon(Icons.delete_outline, size: 18),
                     label: Text(
-                        'Delete Model (Free ${downloadState.model?.formattedSize ?? ""})',
+                        AppLocalizations.of(context).aiModelDownloadDeleteModelFree(downloadState.model?.formattedSize ?? ''),
                         style: const TextStyle(fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red.withOpacity(0.15),
@@ -412,7 +417,7 @@ class _AiModelDownloadScreenState
                     : null,
                 icon: const Icon(Icons.download_rounded, size: 18),
                 label: Text(
-                    'Download ${downloadState.model?.displayName ?? "Select a model"}'),
+                    AppLocalizations.of(context).aiModelDownloadDownloadModel(downloadState.model?.displayName ?? AppLocalizations.of(context).aiModelDownloadSelectAModel)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.orange,
                   foregroundColor: Colors.white,
@@ -636,8 +641,8 @@ class _ModelOptionTile extends StatelessWidget {
                               color: Colors.blue.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text('Images',
-                                style: TextStyle(
+                            child: Text(AppLocalizations.of(context).aiModelDownloadImages,
+                                style: const TextStyle(
                                     fontSize: 9,
                                     color: Colors.blue,
                                     fontWeight: FontWeight.w600)),
@@ -656,7 +661,7 @@ class _ModelOptionTile extends StatelessWidget {
                             color: isEnabled ? textMuted : Colors.orange.shade700),
                         const SizedBox(width: 4),
                         Text(
-                          'Requires $ramLabel RAM',
+                          AppLocalizations.of(context).aiModelDownloadRequiresRam(ramLabel),
                           style: TextStyle(
                             fontSize: 11,
                             color: isEnabled ? textMuted : Colors.orange.shade700,
@@ -668,7 +673,7 @@ class _ModelOptionTile extends StatelessWidget {
                             color: isEnabled ? textMuted : Colors.orange.shade700),
                         const SizedBox(width: 4),
                         Text(
-                          '$size storage',
+                          AppLocalizations.of(context).aiModelDownloadSizeStorage(size),
                           style: TextStyle(
                             fontSize: 11,
                             color: isEnabled ? textMuted : Colors.orange.shade700,
@@ -679,7 +684,7 @@ class _ModelOptionTile extends StatelessWidget {
                     if (!isEnabled)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: Text('Not supported on this device',
+                        child: Text(AppLocalizations.of(context).aiModelDownloadNotSupportedOnThis,
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -708,22 +713,29 @@ class _BadgeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final Color color;
+    final String displayLabel;
     switch (label) {
       case 'Recommended':
         color = Colors.green;
+        displayLabel = l10n.aiModelDownloadRecommended;
         break;
       case 'Multimodal':
         color = Colors.blue;
+        displayLabel = l10n.aiModelDownloadMultimodal;
         break;
       case 'Best Quality':
         color = Colors.purple;
+        displayLabel = l10n.aiModelDownloadBestQuality;
         break;
       case 'Search':
         color = Colors.teal;
+        displayLabel = l10n.aiModelDownloadSearch;
         break;
       default:
         color = Colors.grey;
+        displayLabel = label;
     }
 
     return Container(
@@ -732,7 +744,7 @@ class _BadgeChip extends StatelessWidget {
         color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label,
+      child: Text(displayLabel,
           style: TextStyle(
               fontSize: 9,
               color: color,

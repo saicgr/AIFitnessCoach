@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 class CollapsibleFoodItemsSection extends StatefulWidget {
   final List<FoodItemRanking> foodItems;
@@ -72,11 +73,13 @@ class _CollapsibleFoodItemsSectionState extends State<CollapsibleFoodItemsSectio
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${widget.foodItems.length} Food Items',
+                          AppLocalizations.of(context).foodItemRankingNFoodItems(widget.foodItems.length),
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
                         ),
                         Text(
-                          'Tap to ${_isExpanded ? 'hide' : 'see'} details',
+                          _isExpanded
+                              ? AppLocalizations.of(context).foodItemRankingTapToHideDetails
+                              : AppLocalizations.of(context).foodItemRankingTapToSeeDetails,
                           style: TextStyle(fontSize: 12, color: textMuted),
                         ),
                       ],
@@ -121,7 +124,7 @@ class _CollapsibleFoodItemsSectionState extends State<CollapsibleFoodItemsSectio
                           Icon(Icons.add_circle_outline, color: teal, size: 18),
                           const SizedBox(width: 8),
                           Text(
-                            'Add food',
+                            AppLocalizations.of(context).foodItemRankingAddFood,
                             style: TextStyle(
                               color: teal,
                               fontWeight: FontWeight.w600,
@@ -365,7 +368,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
               if (widget.item.goalScore != null)
                 Column(
                   children: [
-                    Text('Score', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w500, color: scoreColor.withValues(alpha: 0.7))),
+                    Text(AppLocalizations.of(context).foodItemRankingScore, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w500, color: scoreColor.withValues(alpha: 0.7))),
                     const SizedBox(height: 2),
                     Container(
                       width: 42,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/repositories/fasting_repository.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Card showing fasting statistics, score, and streak
 class FastingStatsCard extends StatelessWidget {
@@ -26,6 +27,7 @@ class FastingStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -49,13 +51,13 @@ class FastingStatsCard extends StatelessWidget {
               children: [
                 // Current Streak
                 Expanded(
-                  child: _buildStreakSection(textPrimary, textMuted),
+                  child: _buildStreakSection(textPrimary, textMuted, l10n),
                 ),
                 const SizedBox(width: 12),
                 // Score
                 if (score != null)
                   Expanded(
-                    child: _buildScoreSection(textPrimary, textMuted),
+                    child: _buildScoreSection(textPrimary, textMuted, l10n),
                   ),
               ],
             ),
@@ -66,7 +68,7 @@ class FastingStatsCard extends StatelessWidget {
             Divider(color: cardBorder, height: 1),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: _buildWeeklyProgress(textPrimary, textMuted, accentColor),
+              child: _buildWeeklyProgress(textPrimary, textMuted, accentColor, l10n),
             ),
           ],
 
@@ -74,7 +76,7 @@ class FastingStatsCard extends StatelessWidget {
           Divider(color: cardBorder, height: 1),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: _buildStatsGrid(textPrimary, textMuted),
+            child: _buildStatsGrid(textPrimary, textMuted, l10n),
           ),
 
           // Weight Correlation (if available)
@@ -83,7 +85,7 @@ class FastingStatsCard extends StatelessWidget {
             Divider(color: cardBorder, height: 1),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: _buildWeightCorrelation(textPrimary, textMuted),
+              child: _buildWeightCorrelation(textPrimary, textMuted, l10n),
             ),
           ],
         ],
@@ -91,7 +93,7 @@ class FastingStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStreakSection(Color textPrimary, Color textMuted) {
+  Widget _buildStreakSection(Color textPrimary, Color textMuted, AppLocalizations l10n) {
     final currentStreak = streak?.currentStreak ?? 0;
 
     return Container(
@@ -116,7 +118,7 @@ class FastingStatsCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$currentStreak day${currentStreak != 1 ? 's' : ''}',
+                  l10n.fastingStatsCardStreakDays(currentStreak),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -124,7 +126,7 @@ class FastingStatsCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Current Streak',
+                  l10n.fastingStatsCardCurrentStreak,
                   style: TextStyle(
                     fontSize: 11,
                     color: textMuted,
@@ -138,7 +140,7 @@ class FastingStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreSection(Color textPrimary, Color textMuted) {
+  Widget _buildScoreSection(Color textPrimary, Color textMuted, AppLocalizations l10n) {
     return GestureDetector(
       onTap: onScoreTap,
       child: Container(
@@ -200,7 +202,7 @@ class FastingStatsCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    'Fasting Score',
+                    l10n.fastingStatsCardFastingScore,
                     style: TextStyle(
                       fontSize: 11,
                       color: textMuted,
@@ -220,7 +222,7 @@ class FastingStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildWeeklyProgress(Color textPrimary, Color textMuted, Color accentColor) {
+  Widget _buildWeeklyProgress(Color textPrimary, Color textMuted, Color accentColor, AppLocalizations l10n) {
     final fastsThisWeek = streak?.fastsThisWeek ?? 0;
     final weeklyGoal = streak?.weeklyGoalFasts ?? 5;
     final progress = weeklyGoal > 0 ? (fastsThisWeek / weeklyGoal).clamp(0.0, 1.0) : 0.0;
@@ -237,7 +239,7 @@ class FastingStatsCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'This Week',
+              l10n.fastingStatsCardThisWeek,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -246,7 +248,7 @@ class FastingStatsCard extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              '$fastsThisWeek / $weeklyGoal fasts',
+              l10n.fastingStatsCardFastsProgress(fastsThisWeek, weeklyGoal),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -279,12 +281,12 @@ class FastingStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsGrid(Color textPrimary, Color textMuted) {
+  Widget _buildStatsGrid(Color textPrimary, Color textMuted, AppLocalizations l10n) {
     return Row(
       children: [
         Expanded(
           child: _MiniStat(
-            label: 'Total',
+            label: l10n.fastingStatsCardTotal,
             value: '${stats.totalFasts}',
             isDark: isDark,
           ),
@@ -292,7 +294,7 @@ class FastingStatsCard extends StatelessWidget {
         _buildDivider(),
         Expanded(
           child: _MiniStat(
-            label: 'Avg',
+            label: l10n.fastingStatsCardAvg,
             value: _formatDuration(stats.avgDurationMinutes.toInt()),
             isDark: isDark,
           ),
@@ -300,7 +302,7 @@ class FastingStatsCard extends StatelessWidget {
         _buildDivider(),
         Expanded(
           child: _MiniStat(
-            label: 'Longest',
+            label: l10n.fastingStatsCardLongest,
             value: _formatDuration(stats.longestFastMinutes),
             isDark: isDark,
           ),
@@ -308,7 +310,7 @@ class FastingStatsCard extends StatelessWidget {
         _buildDivider(),
         Expanded(
           child: _MiniStat(
-            label: 'Hours',
+            label: l10n.fastingStatsCardHours,
             value: '${stats.totalFastingHours}',
             isDark: isDark,
           ),
@@ -326,7 +328,7 @@ class FastingStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildWeightCorrelation(Color textPrimary, Color textMuted) {
+  Widget _buildWeightCorrelation(Color textPrimary, Color textMuted, AppLocalizations l10n) {
     final avgFasting = weightCorrelation!.avgWeightFastingDays;
     final avgNonFasting = weightCorrelation!.avgWeightNonFastingDays;
     final monoAccent = isDark ? AppColors.accent : AppColorsLight.accent;
@@ -339,20 +341,20 @@ class FastingStatsCard extends StatelessWidget {
     if (avgFasting != null && avgNonFasting != null) {
       final diff = avgFasting - avgNonFasting;
       if (diff < -0.1) {
-        correlationText = 'Fasting helps';
+        correlationText = l10n.fastingStatsCardFastingHelps;
         correlationColor = AppColors.success;
         correlationIcon = Icons.trending_down_rounded;
       } else if (diff > 0.1) {
-        correlationText = 'Mixed results';
+        correlationText = l10n.fastingStatsCardMixedResults;
         correlationColor = AppColors.warning;
         correlationIcon = Icons.trending_flat_rounded;
       } else {
-        correlationText = 'Neutral';
+        correlationText = l10n.fastingStatsCardNeutral;
         correlationColor = textMuted;
         correlationIcon = Icons.trending_flat_rounded;
       }
     } else {
-      correlationText = 'Need more data';
+      correlationText = l10n.fastingStatsCardNeedMoreData;
       correlationColor = textMuted;
       correlationIcon = Icons.help_outline;
     }
@@ -369,7 +371,7 @@ class FastingStatsCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Weight & Fasting',
+              l10n.fastingStatsCardWeightFasting,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -407,7 +409,7 @@ class FastingStatsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _WeightStat(
-                  label: 'Fasting days',
+                  label: l10n.fastingStatsCardFastingDays,
                   value: avgFasting,
                   isPositive: avgFasting < avgNonFasting,
                   isDark: isDark,
@@ -416,7 +418,7 @@ class FastingStatsCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _WeightStat(
-                  label: 'Non-fasting',
+                  label: l10n.fastingStatsCardNonFasting,
                   value: avgNonFasting,
                   isPositive: false,
                   isDark: isDark,

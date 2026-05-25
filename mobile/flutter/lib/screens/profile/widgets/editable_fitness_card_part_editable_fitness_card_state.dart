@@ -164,8 +164,8 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _isSaving = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Fitness settings updated - workouts will regenerate'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).editableFitnessCardFitnessSettingsUpdatedWor),
             backgroundColor: AppColors.success,
           ),
         );
@@ -176,7 +176,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update: $e'),
+            content: Text(AppLocalizations.of(context).editableFitnessCardFailedToUpdate(e.toString())),
             backgroundColor: AppColors.error,
           ),
         );
@@ -187,6 +187,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -224,7 +225,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _buildEditableRow(
             icon: Icons.timer_outlined,
             iconColor: AppColors.cyan,
-            label: 'Duration',
+            label: l10n.editableFitnessCardDuration,
             value: _formatDurationDisplay(),
             isEditing: _isEditing,
             editWidget: _buildDurationRangeSelector(AppColors.cyan),
@@ -237,7 +238,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _buildEditableRow(
             icon: Icons.whatshot_outlined,
             iconColor: AppColors.orange,
-            label: 'Warmup',
+            label: l10n.editableFitnessCardWarmup,
             value: '$_selectedWarmupDuration min',
             isEditing: _isEditing,
             editWidget: _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
@@ -250,7 +251,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _buildEditableRow(
             icon: Icons.self_improvement_outlined,
             iconColor: AppColors.purple,
-            label: 'Stretch',
+            label: l10n.editableFitnessCardStretch,
             value: '$_selectedStretchDuration min',
             isEditing: _isEditing,
             editWidget: _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
@@ -263,7 +264,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _buildEditableRow(
             icon: Icons.flag,
             iconColor: AppColors.green,
-            label: 'Goal',
+            label: l10n.editableFitnessCardGoal,
             value: _selectedGoal,
             isEditing: _isEditing,
             editWidget: _buildGoalSelector(AppColors.green, cardBorder, textSecondary),
@@ -276,7 +277,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _buildEditableRow(
             icon: Icons.signal_cellular_alt,
             iconColor: AppColors.info,
-            label: 'Level',
+            label: l10n.editableFitnessCardLevel,
             value: _selectedLevel,
             isEditing: _isEditing,
             editWidget: _buildLevelSelector(AppColors.info, cardBorder, textSecondary),
@@ -289,9 +290,9 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _buildEditableRow(
             icon: Icons.calendar_today,
             iconColor: AppColors.yellow,
-            label: 'Workout Days',
+            label: l10n.editableFitnessCardWorkoutDays,
             value: _selectedDays.isEmpty
-                ? 'Not set'
+                ? l10n.editableFitnessCardNotSet
                 : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
             isEditing: _isEditing,
             editWidget: _buildDaysSelector(AppColors.yellow, cardBorder, textSecondary),
@@ -304,7 +305,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _buildEditableRow(
             icon: Icons.directions_walk,
             iconColor: AppColors.green,
-            label: 'Daily Steps',
+            label: l10n.editableFitnessCardDailySteps,
             value: _formatStepGoal(_selectedStepGoal),
             isEditing: _isEditing,
             editWidget: _buildStepGoalSelector(AppColors.green, cardBorder, textSecondary),
@@ -317,8 +318,8 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           _buildEditableRow(
             icon: Icons.healing,
             iconColor: AppColors.error,
-            label: 'Injuries',
-            value: _selectedInjuries.isEmpty ? 'None' : _selectedInjuries.join(', '),
+            label: l10n.editableFitnessCardInjuries,
+            value: _selectedInjuries.isEmpty ? l10n.editableFitnessCardNone : _selectedInjuries.join(', '),
             isEditing: _isEditing,
             editWidget: _buildInjurySelector(cardBorder, textSecondary),
             isDark: isDark,
@@ -527,21 +528,21 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     final result = await showDialog<int>(
       context: context,
       builder: (dctx) => AlertDialog(
-        title: const Text('Custom daily steps'),
+        title: Text(AppLocalizations.of(context).editableFitnessCardCustomDailySteps),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: const InputDecoration(
-            hintText: 'e.g. 8500',
-            suffixText: 'steps',
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context).editableFitnessCardEG8500,
+            suffixText: AppLocalizations.of(context).editableFitnessCardSteps,
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dctx).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -550,7 +551,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
                 Navigator.of(dctx).pop(value);
               }
             },
-            child: const Text('Set'),
+            child: Text(AppLocalizations.of(context).editableFitnessCardSet),
           ),
         ],
       ),
@@ -654,7 +655,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
       children: _warmupStretchOptions.map((duration) {
         final isSelected = _selectedWarmupDuration == duration;
         return _buildChip(
-          label: '$duration min',
+          label: '$duration min', // TODO(i18n): editableFitnessCardDurationMin(duration)
           isSelected: isSelected,
           color: color,
           borderColor: cardBorder,
@@ -672,7 +673,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
       children: _warmupStretchOptions.map((duration) {
         final isSelected = _selectedStretchDuration == duration;
         return _buildChip(
-          label: '$duration min',
+          label: '$duration min', // TODO(i18n): editableFitnessCardDurationMin(duration)
           isSelected: isSelected,
           color: color,
           borderColor: cardBorder,

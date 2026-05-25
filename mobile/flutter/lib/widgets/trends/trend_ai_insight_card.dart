@@ -5,6 +5,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import 'trend_correlation.dart';
 
 /// =========================================================================
@@ -156,7 +157,7 @@ class TrendAiInsightCard extends ConsumerWidget {
                     size: 16, color: colors.accent),
               ),
               const SizedBox(width: 10),
-              Text('AI Insight',
+              Text(AppLocalizations.of(context).trendAiInsightAiInsight,
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -175,8 +176,8 @@ class TrendAiInsightCard extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           async.when(
-            loading: () => _loading(colors),
-            error: (e, _) => _error(colors, ref),
+            loading: () => _loading(context, colors),
+            error: (e, _) => _error(context, colors, ref),
             data: (insight) => Text(
               insight,
               style: TextStyle(
@@ -191,7 +192,7 @@ class TrendAiInsightCard extends ConsumerWidget {
     );
   }
 
-  Widget _loading(ThemeColors colors) {
+  Widget _loading(BuildContext context, ThemeColors colors) {
     return Row(
       children: [
         SizedBox(
@@ -203,18 +204,18 @@ class TrendAiInsightCard extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Text('Reading your trends…',
+        Text(AppLocalizations.of(context)!.trendAiInsightReadingYourTrends,
             style: TextStyle(fontSize: 13, color: colors.textMuted)),
       ],
     );
   }
 
-  Widget _error(ThemeColors colors, WidgetRef ref) {
+  Widget _error(BuildContext context, ThemeColors colors, WidgetRef ref) {
     return Row(
       children: [
         Expanded(
           child: Text(
-            "Couldn't generate an insight right now.",
+            AppLocalizations.of(context)!.trendAiInsightCouldnTGenerateAn,
             style: TextStyle(fontSize: 13, color: colors.textMuted),
           ),
         ),
@@ -224,7 +225,7 @@ class TrendAiInsightCard extends ConsumerWidget {
             ref.invalidate(_trendInsightProvider(request));
           },
           style: TextButton.styleFrom(foregroundColor: colors.accent),
-          child: const Text('Retry'),
+          child: Text(AppLocalizations.of(context)!.buttonRetry),
         ),
       ],
     );

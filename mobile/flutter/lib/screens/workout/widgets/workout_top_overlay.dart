@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../controllers/workout_timer_controller.dart';
 
 /// Top overlay with workout controls - simplified design
@@ -57,6 +58,7 @@ class WorkoutTopOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Positioned(
@@ -82,7 +84,7 @@ class WorkoutTopOverlay extends StatelessWidget {
                   const Spacer(),
 
                   // Timer - centered and prominent
-                  _buildTimer(isDark),
+                  _buildTimer(isDark, l),
 
                   const Spacer(),
 
@@ -107,7 +109,7 @@ class WorkoutTopOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildTimer(bool isDark) {
+  Widget _buildTimer(bool isDark, AppLocalizations l) {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -167,9 +169,9 @@ class WorkoutTopOverlay extends StatelessWidget {
                   color: AppColors.orange.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  'PAUSED',
-                  style: TextStyle(
+                child: Text(
+                  l.workoutTopOverlayPaused,
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: AppColors.orange,

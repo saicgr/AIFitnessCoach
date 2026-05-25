@@ -9,6 +9,7 @@ import 'package:dio/dio.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/services/posthog_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import 'pre_auth_quiz_data.dart';
 
 /// Plan Analyzing Screen — Onboarding v5 / Cal AI pattern
@@ -33,19 +34,8 @@ class PlanAnalyzingScreen extends ConsumerStatefulWidget {
 class _PlanAnalyzingScreenState extends ConsumerState<PlanAnalyzingScreen>
     with TickerProviderStateMixin {
   // Each step shows in order: idle → checking → done.
-  final List<_AnalysisStep> _steps = const [
-    _AnalysisStep(icon: Icons.flag_rounded, label: 'Reviewing your goals'),
-    _AnalysisStep(
-        icon: Icons.accessibility_new_rounded,
-        label: 'Matching your body type'),
-    _AnalysisStep(
-        icon: Icons.calendar_today_rounded, label: 'Calibrating your schedule'),
-    _AnalysisStep(
-        icon: Icons.fitness_center_rounded, label: 'Pulling from 1,700+ exercises'),
-    _AnalysisStep(
-        icon: Icons.trending_up_rounded,
-        label: 'Calculating your goal date'),
-  ];
+  // Labels are deferred to build() so AppLocalizations.of(context) can be used.
+  List<_AnalysisStep> _steps = const [];
 
   int _currentStep = 0;
   Timer? _stepTimer;
@@ -130,11 +120,24 @@ class _PlanAnalyzingScreenState extends ConsumerState<PlanAnalyzingScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    // Build localised steps on first render (idiomatic: rebuild-safe because
+    // labels are constant English strings; locale changes recreate the widget).
+    if (_steps.isEmpty) {
+      _steps = [
+        _AnalysisStep(icon: Icons.flag_rounded, label: l10n.planAnalyzingReviewingYourGoals),
+        _AnalysisStep(icon: Icons.accessibility_new_rounded, label: l10n.planAnalyzingMatchingYourBodyType),
+        _AnalysisStep(icon: Icons.calendar_today_rounded, label: l10n.planAnalyzingCalibratingYourSchedule),
+        _AnalysisStep(icon: Icons.fitness_center_rounded, label: l10n.planAnalyzingPullingFrom1700),
+        _AnalysisStep(icon: Icons.trending_up_rounded, label: l10n.planAnalyzingCalculatingYourGoalDate),
+      ];
+    }
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -148,7 +151,7 @@ class _PlanAnalyzingScreenState extends ConsumerState<PlanAnalyzingScreen>
               _PulsingAiOrb(),
               const SizedBox(height: 28),
               Text(
-                'Building your plan',
+                l10n.planAnalyzingBuildingYourPlan,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -158,7 +161,7 @@ class _PlanAnalyzingScreenState extends ConsumerState<PlanAnalyzingScreen>
               ).animate().fadeIn(),
               const SizedBox(height: 6),
               Text(
-                'This will take a few seconds…',
+                l10n.planAnalyzingThisWillTakeA,
                 style: TextStyle(fontSize: 14, color: textSecondary),
               ).animate().fadeIn(delay: 200.ms),
 

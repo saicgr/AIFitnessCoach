@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/progress_charts.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/trends/trend_chart.dart';
 import '../../../../widgets/trends/trend_correlation.dart';
 
@@ -15,6 +16,7 @@ class VolumeChart extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = ref.colors(context);
     final sortedData = data.sortedData;
 
@@ -38,7 +40,7 @@ class VolumeChart extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _header(colors),
+            _header(colors, l10n),
             const SizedBox(height: 24),
             Center(
               child: Padding(
@@ -51,7 +53,7 @@ class VolumeChart extends ConsumerWidget {
                         color: colors.textMuted.withValues(alpha: 0.5)),
                     const SizedBox(height: 12),
                     Text(
-                      'No weighted volume yet',
+                      l10n.volumeChartNoWeightedVolumeYet,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -60,7 +62,7 @@ class VolumeChart extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Log a few weighted sets to see your volume trend.',
+                      l10n.volumeChartLogAFewWeighted,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,
@@ -92,13 +94,13 @@ class VolumeChart extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _header(colors),
+          _header(colors, l10n),
           const SizedBox(height: 16),
           RepaintBoundary(
             child: TrendChart(
               accent: colors.accent,
               primary: TrendChartSeries(
-                label: 'Volume Trends',
+                label: l10n.volumeChartVolumeTrends,
                 unit: 'kg',
                 points: points,
               ),
@@ -109,13 +111,13 @@ class VolumeChart extends ConsumerWidget {
     );
   }
 
-  Widget _header(ThemeColors colors) {
+  Widget _header(ThemeColors colors, AppLocalizations l10n) {
     return Row(
       children: [
         Icon(Icons.bar_chart, color: colors.accent),
         const SizedBox(width: 8),
         Text(
-          'Volume Trends',
+          l10n.volumeChartVolumeTrends,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '_share_common.dart';
 
 /// Exercise Breakdown — numbered list of exercises with set × rep.
@@ -27,6 +28,7 @@ class ExerciseBreakdownTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final useKg = weightUnit == 'kg';
     final shown = exercises.take(8).toList();
 
@@ -39,7 +41,7 @@ class ExerciseBreakdownTemplate extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ShareTrackedCaps(
-            'TODAY\'S LIFTS',
+            l.shareBreakdownTodaysLifts,
             size: 10,
             color: Colors.white.withValues(alpha: 0.6),
             letterSpacing: 3,
@@ -60,7 +62,7 @@ class ExerciseBreakdownTemplate extends StatelessWidget {
             child: shown.isEmpty
                 ? Center(
                     child: Text(
-                      '${exercises.isEmpty ? '—' : exercises.length} exercises',
+                      exercises.isEmpty ? '—' : l.shareBreakdownNExercises(exercises.length),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 14,
@@ -131,7 +133,7 @@ class ExerciseBreakdownTemplate extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(
-                '+${exercises.length - 8} more',
+                l.shareBreakdownNMore(exercises.length - 8),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.4),
                   fontSize: 11,
@@ -143,7 +145,7 @@ class ExerciseBreakdownTemplate extends StatelessWidget {
           ShareFooterStrip(
             parts: [
               formatShareDurationLong(durationSeconds),
-              '$totalSets SETS',
+              l.shareBreakdownNSets(totalSets),
               if (totalVolumeKg != null)
                 formatShareWeight(totalVolumeKg, useKg: useKg),
             ],

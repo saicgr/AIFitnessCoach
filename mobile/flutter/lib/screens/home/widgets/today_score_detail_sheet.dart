@@ -5,9 +5,16 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/today_score.dart';
 import '../../../data/providers/today_score_provider.dart';
 import '../../../services/score_history_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'ring_catalog.dart';
 import 'score_colors.dart';
 import 'segmented_score_ring.dart';
+
+/// Localization helper for [ContributorKind] labels.
+extension ContributorKindI18n on ContributorKind {
+  String localizedLabel(BuildContext context) => label;
+}
 
 /// Open the Today Score breakdown as a modal bottom sheet.
 void showTodayScoreDetailSheet(BuildContext context) {
@@ -24,6 +31,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final c = ref.colors(context);
     final score = ref.watch(todayScoreProvider);
     final history = ref.watch(scoreHistoryProvider);
@@ -45,7 +53,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
               Text(
-                'Today Score',
+                l10n.todayScoreDetailTodayScore,
                 style: TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
@@ -54,7 +62,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 18),
               if (score.isSetupState)
-                _setup(c)
+                _setup(c, l10n)
               else ...[
                 Center(
                   child: SegmentedScoreRing(
@@ -88,30 +96,30 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Center(child: _momentumLine(c, history)),
+                Center(child: _momentumLine(c, history, l10n)),
                 const SizedBox(height: 18),
-                for (final cc in score.contributors) _contributorTile(c, cc),
+                for (final cc in score.contributors) _contributorTile(context, c, cc, l10n),
                 const SizedBox(height: 14),
-                _howItWorks(c, score),
+                _howItWorks(context, c, score, l10n),
               ],
         ],
       ),
     );
   }
 
-  Widget _momentumLine(ThemeColors c, ScoreHistory history) {
+  Widget _momentumLine(ThemeColors c, ScoreHistory history, AppLocalizations l10n) {
     final delta = history.todayDelta;
     final avg = history.recentAverage();
     final String momentum;
     if (delta > 0) {
-      momentum = '▲ Up $delta since this morning';
+      momentum = l10n.todayScoreDetailUp(delta);
     } else if (delta < 0) {
-      momentum = '▼ Down ${-delta} since this morning';
+      momentum = l10n.todayScoreDetailDown(-delta);
     } else {
-      momentum = 'Steady since this morning';
+      momentum = l10n.todayScoreDetailSteady;
     }
     return Text(
-      avg != null ? '$momentum  ·  7-day average $avg' : momentum,
+      avg != null ? l10n.todayScoreDetailMomentumWithAvg(momentum, avg) : momentum,
       style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
@@ -120,7 +128,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
     );
   }
 
-  Widget _contributorTile(ThemeColors c, ScoreContributor cc) {
+  Widget _contributorTile(BuildContext context, ThemeColors c, ScoreContributor cc, AppLocalizations l10n) {
     final color = colorForContributor(cc.kind);
     final weightPct = (cc.effectiveWeight * 100).round();
     final earned = cc.points.round();
@@ -148,7 +156,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  cc.kind.label,
+                  cc.kind.localizedLabel(context),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -165,7 +173,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
           ),
           const SizedBox(width: 10),
           Text(
-            cc.applicable ? '$earned / $weightPct pts' : 'Not counted',
+            cc.applicable ? l10n.todayScoreDetailEarnedPts(earned, weightPct) : l10n.todayScoreDetailNotCounted,
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w800,
@@ -177,17 +185,14 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
     );
   }
 
-  Widget _howItWorks(ThemeColors c, TodayScore score) {
+  Widget _howItWorks(BuildContext context, ThemeColors c, TodayScore score, AppLocalizations l10n) {
     final inactive = score.contributors.where((cc) => !cc.applicable).toList();
     final String body;
     if (inactive.isEmpty) {
-      body = 'Train, Fuel and Move each carry a share of 100 points. '
-          'Your score is how much of today you have done.';
+      body = l10n.todayScoreDetailHowItWorks;
     } else {
-      final names = inactive.map((cc) => cc.kind.label).join(' and ');
-      body = '$names ${inactive.length == 1 ? "isn't" : "aren't"} counted '
-          'today, so the rest share the full 100 points. Your score always '
-          'reflects only what actually applies today.';
+      final names = inactive.map((cc) => cc.kind.localizedLabel(context)).join(' and ');
+      body = l10n.todayScoreDetailInactiveExplanation(names, inactive.length);
     }
     return Container(
       padding: const EdgeInsets.all(13),
@@ -215,7 +220,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
     );
   }
 
-  Widget _setup(ThemeColors c) {
+  Widget _setup(ThemeColors c, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -224,9 +229,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
         border: Border.all(color: c.cardBorder),
       ),
       child: Text(
-        'Add a workout plan, set nutrition targets, or connect Health to '
-        'start scoring your day. Your score builds from what you do — not '
-        'from a sensor.',
+        l10n.todayScoreDetailSetupText,
         style: TextStyle(fontSize: 12.5, height: 1.45, color: c.textSecondary),
       ),
     );

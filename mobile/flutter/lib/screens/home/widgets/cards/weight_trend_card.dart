@@ -11,6 +11,7 @@ import '../../../../data/providers/hormonal_health_provider.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/charts/cycle_phase_chart_overlay.dart';
 
 // ════════════════════════════════════════════════════════════════════════
@@ -284,10 +285,11 @@ class WeightTrendCard extends ConsumerWidget {
             : AppColors.orange;
 
     // Format change for display
+    final l10n = AppLocalizations.of(context)!;
     final changeLbs = (changeKg.abs() * 2.20462);
     final changeText = changeLbs >= 0.1
         ? '${changeLbs.toStringAsFixed(1)} lbs'
-        : 'No change';
+        : l10n.weightTrendCardNoChange;
 
     // Build the appropriate layout based on size
     if (size == TileSize.compact) {
@@ -341,9 +343,9 @@ class WeightTrendCard extends ConsumerWidget {
           ],
         ),
         child: isLoading
-            ? _buildLoadingState(textMuted)
+            ? _buildLoadingState(context, textMuted)
             : weightHistory.isEmpty
-                ? _buildEmptyState(textMuted, trendColor)
+                ? _buildEmptyState(context, textMuted, trendColor)
                 : _buildContentState(
                     context: context,
                     textColor: textColor,
@@ -424,7 +426,7 @@ class WeightTrendCard extends ConsumerWidget {
                   ? '...'
                   : hasData
                       ? changeText
-                      : 'No data',
+                      : AppLocalizations.of(context)!.weightTrendCardNoData,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -437,7 +439,7 @@ class WeightTrendCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
+  Widget _buildLoadingState(BuildContext context, Color textMuted) {
     return Row(
       children: [
         SizedBox(
@@ -450,7 +452,7 @@ class WeightTrendCard extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          'Loading weight...',
+          AppLocalizations.of(context)!.weightTrendCardLoadingWeight,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -460,7 +462,8 @@ class WeightTrendCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted, Color trendColor) {
+  Widget _buildEmptyState(BuildContext context, Color textMuted, Color trendColor) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -469,7 +472,7 @@ class WeightTrendCard extends ConsumerWidget {
             Icon(Icons.scale, color: trendColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Weight Trends',
+              l10n.weightTrendCardWeightTrends,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -480,7 +483,7 @@ class WeightTrendCard extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Log your weight to see trends',
+          l10n.weightTrendCardLogYourWeightTo,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -494,7 +497,7 @@ class WeightTrendCard extends ConsumerWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'Tap to log weight',
+            l10n.weightTrendCardTapToLogWeight,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -521,13 +524,14 @@ class WeightTrendCard extends ConsumerWidget {
     required CyclePrediction? prediction,
   }) {
     // Format the message based on direction
+    final l10n = AppLocalizations.of(context)!;
     String getMessage() {
       if (isLosing) {
-        return 'Down $changeText this week!';
+        return l10n.weightTrendCardDownThisWeek(changeText);
       } else if (isGaining) {
-        return 'Up $changeText this week';
+        return l10n.weightTrendCardUpThisWeek(changeText);
       } else {
-        return 'Weight stable this week';
+        return l10n.weightTrendCardWeightStableThisWeek;
       }
     }
 
@@ -560,7 +564,7 @@ class WeightTrendCard extends ConsumerWidget {
                     builder: (context, animatedValue, _) {
                       final displayText = animatedValue >= 0.1
                           ? '${animatedValue.toStringAsFixed(1)} lbs'
-                          : 'No change';
+                          : AppLocalizations.of(context)!.weightTrendCardNoChange;
                       return Text(
                         displayText,
                         style: TextStyle(
@@ -620,10 +624,10 @@ class WeightTrendCard extends ConsumerWidget {
                 ),
                 child: Text(
                   direction == 'losing'
-                      ? 'On track'
+                      ? l10n.weightTrendCardOnTrack
                       : direction == 'gaining'
-                          ? 'Review goals'
-                          : 'Maintaining',
+                          ? l10n.weightTrendCardReviewGoals
+                          : l10n.weightTrendCardMaintaining,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -806,9 +810,12 @@ class _SamePointLastCycleRow extends StatelessWidget {
             ? AppColors.error
             : textMuted;
     final magnitude = diffLbs.abs().toStringAsFixed(1);
-    final label = (down || up)
-        ? '${down ? 'Down' : 'Up'} $magnitude lbs vs same cycle day last month'
-        : 'Same as this cycle day last month';
+    final l10n = AppLocalizations.of(context)!;
+    final label = down
+        ? l10n.weightTrendCardDownVsLastCycle(magnitude)
+        : up
+            ? l10n.weightTrendCardUpVsLastCycle(magnitude)
+            : l10n.weightTrendCardSameAsLastCycle;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -848,10 +855,11 @@ class _TargetHeldMarker extends StatelessWidget {
     // Phase D — surface the hold as a tight one-liner directly under the
     // weight-change number. When the backend supplies a window label (e.g.
     // "until May 26") splice it inline; otherwise use the static copy.
+    final l10n = AppLocalizations.of(context)!;
     final label = (windowLabel.isNotEmpty &&
             windowLabel.toLowerCase() != 'period week')
-        ? 'Target held $windowLabel — luteal water smoothing'
-        : 'Target held — luteal water smoothing';
+        ? l10n.weightTrendCardTargetHeldWindow(windowLabel)
+        : l10n.weightTrendCardTargetHeld;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Container(

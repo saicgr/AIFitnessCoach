@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Data class for next set preview from the backend
 class NextSetPreviewData {
@@ -94,6 +95,7 @@ class NextSetPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 380;
@@ -131,8 +133,8 @@ class NextSetPreviewCard extends StatelessWidget {
             ],
           ),
           child: isCompact
-              ? _buildCompactContent(isDark, isSmallScreen)
-              : _buildFullContent(isDark, isSmallScreen),
+              ? _buildCompactContent(isDark, isSmallScreen, l)
+              : _buildFullContent(isDark, isSmallScreen, l),
         ),
       ),
     )
@@ -141,7 +143,7 @@ class NextSetPreviewCard extends StatelessWidget {
         .slideY(begin: 0.1, end: 0, duration: 300.ms);
   }
 
-  Widget _buildCompactContent(bool isDark, bool isSmallScreen) {
+  Widget _buildCompactContent(bool isDark, bool isSmallScreen, AppLocalizations l) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -177,7 +179,7 @@ class NextSetPreviewCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'NEXT SET',
+                      l.nextSetPreviewNextSet,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -197,7 +199,7 @@ class NextSetPreviewCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'FINAL',
+                          l.nextSetPreviewFinal,
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
@@ -276,9 +278,9 @@ class NextSetPreviewCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Use',
-                style: TextStyle(
+              child: Text(
+                l.nextSetPreviewUse,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -289,7 +291,7 @@ class NextSetPreviewCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFullContent(bool isDark, bool isSmallScreen) {
+  Widget _buildFullContent(bool isDark, bool isSmallScreen, AppLocalizations l) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -338,7 +340,7 @@ class NextSetPreviewCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'AI RECOMMENDATION',
+                          l.nextSetPreviewAiRecommendation,
                           style: TextStyle(
                             fontSize: isSmallScreen ? 10 : 11,
                             fontWeight: FontWeight.w600,
@@ -592,7 +594,7 @@ class NextSetPreviewCard extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.check, size: 20),
                 label: Text(
-                  'Use This',
+                  l.nextSetPreviewUseThis,
                   style: TextStyle(
                     fontSize: isSmallScreen ? 15 : 16,
                     fontWeight: FontWeight.bold,
@@ -624,6 +626,7 @@ class NextSetPreviewLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ClipRRect(
@@ -676,7 +679,7 @@ class NextSetPreviewLoading extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'ANALYZING PERFORMANCE',
+                      l.nextSetPreviewAnalyzing,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -686,7 +689,7 @@ class NextSetPreviewLoading extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Calculating optimal next set...',
+                      l.nextSetPreviewCalculating,
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark

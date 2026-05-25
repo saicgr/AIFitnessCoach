@@ -86,7 +86,7 @@ class _CustomProgramInputSheetState extends State<_CustomProgramInputSheet> {
                   Icon(Icons.tune, color: colors.purple, size: 24),
                   const SizedBox(width: 12),
                   Text(
-                    'Custom Program',
+                    AppLocalizations.of(context)!.editProgramSheetCustomProgram,
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: 20,
@@ -97,7 +97,7 @@ class _CustomProgramInputSheetState extends State<_CustomProgramInputSheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Describe what you want to train for and AI will create a personalized program.',
+                AppLocalizations.of(context)!.editProgramSheetDescribeWhatYouWant,
                 style: TextStyle(
                   color: colors.textSecondary,
                   fontSize: 14,
@@ -138,7 +138,7 @@ class _CustomProgramInputSheetState extends State<_CustomProgramInputSheet> {
 
               // Examples
               Text(
-                'Examples',
+                AppLocalizations.of(context)!.editProgramSheetExamples,
                 style: TextStyle(
                   color: colors.textMuted,
                   fontSize: 12,
@@ -194,9 +194,9 @@ class _CustomProgramInputSheetState extends State<_CustomProgramInputSheet> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Save Custom Program',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  child: Text(
+                    AppLocalizations.of(context)!.editProgramSheetSaveCustomProgram,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -238,7 +238,7 @@ class _ProgramHistorySheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Program History',
+                        AppLocalizations.of(context)!.editProgramSheetProgramHistory,
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontSize: 20,
@@ -247,7 +247,7 @@ class _ProgramHistorySheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Restore a previous program configuration',
+                        AppLocalizations.of(context)!.editProgramSheetRestoreAPreviousProgram,
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: 13,
@@ -297,18 +297,19 @@ class _ProgramHistorySheet extends StatelessWidget {
         ? program.selectedDays.length
         : (program.daysPerWeek ?? 3);
 
-    String dateText = 'Unknown date';
+    final l10n = AppLocalizations.of(context)!;
+    String dateText = l10n.editProgramSheetUnknownDate;
     if (createdAt != null) {
       final now = DateTime.now();
       final diff = now.difference(createdAt);
       if (diff.inDays == 0) {
-        dateText = 'Today';
+        dateText = l10n.editProgramSheetToday;
       } else if (diff.inDays == 1) {
-        dateText = 'Yesterday';
+        dateText = l10n.editProgramSheetYesterday;
       } else if (diff.inDays < 7) {
-        dateText = '${diff.inDays} days ago';
+        dateText = l10n.editProgramSheetDaysAgo(diff.inDays);
       } else if (diff.inDays < 30) {
-        dateText = '${(diff.inDays / 7).floor()} weeks ago';
+        dateText = l10n.editProgramSheetWeeksAgo((diff.inDays / 7).floor());
       } else {
         dateText = '${createdAt.day}/${createdAt.month}/${createdAt.year}';
       }
@@ -373,9 +374,9 @@ class _ProgramHistorySheet extends StatelessWidget {
                               color: colors.cyan,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              'CURRENT',
-                              style: TextStyle(
+                            child: Text(
+                              AppLocalizations.of(context)!.editProgramSheetCurrent,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -406,7 +407,7 @@ class _ProgramHistorySheet extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildDetailChip('$workoutDays days/week', Icons.calendar_today, colors),
+              _buildDetailChip(l10n.editProgramSheetDaysPerWeek(workoutDays), Icons.calendar_today, colors),
               _buildDetailChip(_capitalize(difficulty), Icons.speed, colors),
               if (program.equipment.isNotEmpty)
                 _buildDetailChip(
@@ -433,7 +434,7 @@ class _ProgramHistorySheet extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.restore, size: 18),
-                label: const Text('Restore This Program'),
+                label: Text(l10n.editProgramSheetRestoreThisProgram),
               ),
             ),
           ],

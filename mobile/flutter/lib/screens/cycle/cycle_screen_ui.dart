@@ -130,7 +130,7 @@ extension _CycleScreenUi on _CycleScreenState {
         Expanded(
           child: _QuickLogButton(
             icon: Icons.water_drop_rounded,
-            label: 'Log period',
+            label: AppLocalizations.of(context).cycleScreenUiLogPeriod,
             color: CyclePhaseColors.menstrual,
             onTap: _openLogPeriod,
           ),
@@ -139,7 +139,7 @@ extension _CycleScreenUi on _CycleScreenState {
         Expanded(
           child: _QuickLogButton(
             icon: Icons.add_chart_rounded,
-            label: 'Daily check-in',
+            label: AppLocalizations.of(context).cycleScreenUiDailyCheckIn,
             color: accent,
             onTap: _openCheckIn,
           ),
@@ -402,7 +402,7 @@ class _CyclePhaseGuidanceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${phase?.displayName ?? 'Cycle'} phase',
+                  AppLocalizations.of(context).cycleScreenUiPhaseLabel(phase?.displayName ?? AppLocalizations.of(context).cycleCycle),
                   style: TextStyle(
                     color: color,
                     fontSize: 13,
@@ -421,7 +421,7 @@ class _CyclePhaseGuidanceCard extends StatelessWidget {
                 if (phase != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'Suggested training: ${phase.workoutIntensity}',
+                    AppLocalizations.of(context).cycleScreenUiSuggestedTraining(phase.workoutIntensity),
                     style: TextStyle(
                       color: fg.withValues(alpha: 0.5),
                       fontSize: 11,
@@ -495,9 +495,7 @@ class _CycleDisclaimer extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       child: Text(
-        'Predictions are estimates based on your logged data, not a '
-        'birth-control method and not medical advice. See a clinician for '
-        'any health concern.',
+        AppLocalizations.of(context).cycleScreenUiPredictionsAreEstimates,
         textAlign: TextAlign.center,
         style: TextStyle(
           color: fg.withValues(alpha: 0.38),
@@ -554,7 +552,7 @@ class _CycleError extends StatelessWidget {
               size: 40, color: fg.withValues(alpha: 0.4)),
           const SizedBox(height: 12),
           Text(
-            "Couldn't load your cycle data",
+            AppLocalizations.of(context).cycleScreenUiCouldnTLoadYour,
             style: TextStyle(
               color: fg,
               fontSize: 14,
@@ -563,7 +561,7 @@ class _CycleError extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Check your connection and try again.',
+            AppLocalizations.of(context).cycleScreenUiCheckYourConnectionAnd,
             style: TextStyle(
               color: fg.withValues(alpha: 0.55),
               fontSize: 12,
@@ -573,7 +571,7 @@ class _CycleError extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: accent),
             onPressed: onRetry,
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context).cycleScreenUiRetry),
           ),
         ],
       ),
@@ -602,7 +600,7 @@ class _CycleEmptyToday extends StatelessWidget {
         prediction?.trackingMode == CycleTrackingMode.pregnancy;
     final note = prediction?.notes.isNotEmpty == true
         ? prediction!.notes.first
-        : 'Log your first period to start predictions.';
+        : AppLocalizations.of(context).cycleScreenUiLogYourFirstPeriod;
 
     return Container(
       margin: const EdgeInsets.only(top: 32),
@@ -623,7 +621,7 @@ class _CycleEmptyToday extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            isPregnancy ? 'Pregnancy mode is on' : 'Start tracking',
+            isPregnancy ? AppLocalizations.of(context).cycleScreenUiPregnancyModeIsOn : AppLocalizations.of(context).cycleScreenUiStartTracking,
             style: TextStyle(
               color: fg,
               fontSize: 17,
@@ -646,7 +644,7 @@ class _CycleEmptyToday extends StatelessWidget {
               style: FilledButton.styleFrom(backgroundColor: accent),
               onPressed: onLogPeriod,
               icon: const Icon(Icons.water_drop_rounded, size: 18),
-              label: const Text('Log a period'),
+              label: Text(AppLocalizations.of(context).cycleScreenUiLogAPeriod),
             ),
           ],
         ],

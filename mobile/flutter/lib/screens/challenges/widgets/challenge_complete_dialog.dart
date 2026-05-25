@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Dialog shown after completing a challenge workout
 /// Displays victory/attempt result with stats comparison
@@ -113,7 +114,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
 
           // Victory or attempt message
           Text(
-            didBeat ? 'VICTORY!' : 'CHALLENGE ATTEMPTED',
+            didBeat ? AppLocalizations.of(context).challengeCompleteVictory : AppLocalizations.of(context).challengeCompleteChallengeAttempted,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -184,7 +185,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Performance Comparison',
+                AppLocalizations.of(context).challengeCompletePerformanceComparison,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -199,7 +200,9 @@ class ChallengeCompleteDialog extends StatelessWidget {
           if (yourDuration != null && theirDuration != null) ...[
             _buildStatRow(
               emoji: '⏱️',
-              label: 'Time',
+              label: AppLocalizations.of(context).challengeCompleteTime,
+              yourLabel: AppLocalizations.of(context).challengeCompleteYou,
+              themLabel: AppLocalizations.of(context).challengeCompleteThem,
               yourValue: '$yourDuration min',
               theirValue: '$theirDuration min',
               youWon: didBeat && yourDuration <= theirDuration,
@@ -211,7 +214,9 @@ class ChallengeCompleteDialog extends StatelessWidget {
           if (yourVolume != null && theirVolume != null)
             _buildStatRow(
               emoji: '💪',
-              label: 'Volume',
+              label: AppLocalizations.of(context).challengeCompleteVolume,
+              yourLabel: AppLocalizations.of(context).challengeCompleteYou,
+              themLabel: AppLocalizations.of(context).challengeCompleteThem,
               yourValue: '${yourVolume.toStringAsFixed(0)} lbs',
               theirValue: '${theirVolume.toStringAsFixed(0)} lbs',
               youWon: didBeat && yourVolume >= theirVolume,
@@ -224,6 +229,8 @@ class ChallengeCompleteDialog extends StatelessWidget {
   Widget _buildStatRow({
     required String emoji,
     required String label,
+    required String yourLabel,
+    required String themLabel,
     required String yourValue,
     required String theirValue,
     required bool youWon,
@@ -252,7 +259,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'You: ',
+                        yourLabel,
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textMuted,
@@ -281,7 +288,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'Them: ',
+                        themLabel,
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textMuted,
@@ -321,7 +328,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Your victory has been shared with your friends! 🎉',
+              AppLocalizations.of(context).challengeCompleteYourVictoryHasBeen,
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textMuted,
@@ -347,9 +354,9 @@ class ChallengeCompleteDialog extends StatelessWidget {
                 onViewFeed?.call();
               },
               icon: const Icon(Icons.feed, size: 18),
-              label: const Text(
-                'View in Feed',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              label: Text(
+                AppLocalizations.of(context).challengeCompleteViewInFeed,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cyan,
@@ -374,9 +381,9 @@ class ChallengeCompleteDialog extends StatelessWidget {
                 onViewDetails?.call();
               },
               icon: const Icon(Icons.compare_arrows_rounded, size: 18),
-              label: const Text(
-                'View Full Comparison',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              label: Text(
+                AppLocalizations.of(context).challengeCompleteViewFullComparison,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange,
@@ -405,9 +412,9 @@ class ChallengeCompleteDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Continue',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            child: Text(
+              AppLocalizations.of(context).challengeCompleteContinue,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ),

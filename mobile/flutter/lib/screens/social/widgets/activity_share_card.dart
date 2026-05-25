@@ -36,6 +36,8 @@ class ActivityShareCard extends StatelessWidget {
     this.editedCaption,
   });
 
+  // TODO(i18n): static const map — no BuildContext available for defaultHeadline strings.
+  // Refactor _typeConfigs to a non-const factory method accepting AppLocalizations.
   // Activity type configurations
   static const _typeConfigs = <String, _ActivityTypeConfig>{
     'workout_completed': _ActivityTypeConfig(

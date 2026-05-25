@@ -4,6 +4,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../widgets/trends/trend_chart.dart';
 import '../../../widgets/trends/trend_correlation.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Model for a single history data point
 class GoalHistoryDataPoint {
@@ -55,7 +56,7 @@ class GoalHistoryChart extends ConsumerWidget {
     final colors = ref.colors(context);
 
     if (data.isEmpty) {
-      return _buildEmptyState(colors);
+      return _buildEmptyState(context, colors);
     }
 
     // Sort + build TrendPoints, skipping any unparseable week_start.
@@ -72,7 +73,7 @@ class GoalHistoryChart extends ConsumerWidget {
     ];
 
     if (points.length < 2) {
-      return _buildEmptyState(colors);
+      return _buildEmptyState(context, colors);
     }
 
     return Container(
@@ -92,7 +93,7 @@ class GoalHistoryChart extends ConsumerWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Goal Trends',
+                  AppLocalizations.of(context).goalHistoryChartGoalTrends,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -115,7 +116,7 @@ class GoalHistoryChart extends ConsumerWidget {
                           size: 14, color: colors.warning),
                       const SizedBox(width: 4),
                       Text(
-                        'Best: $allTimeBest',
+                        AppLocalizations.of(context).goalHistoryChartBestValue(allTimeBest!),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -132,14 +133,14 @@ class GoalHistoryChart extends ConsumerWidget {
             child: TrendChart(
               accent: colors.accent,
               primary: TrendChartSeries(
-                label: 'Goal Trends',
+                label: AppLocalizations.of(context).goalHistoryChartGoalTrends,
                 unit: 'reps',
                 points: points,
                 zoneBands: [
                   if (allTimeBest != null)
                     TrendZoneBand(
                       value: allTimeBest!.toDouble(),
-                      label: 'All-Time Best',
+                      label: AppLocalizations.of(context).goalHistoryChartAllTimeBest,
                       color: colors.warning,
                     ),
                 ],
@@ -151,7 +152,7 @@ class GoalHistoryChart extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ThemeColors colors) {
+  Widget _buildEmptyState(BuildContext context, ThemeColors colors) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -169,7 +170,7 @@ class GoalHistoryChart extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'No History Yet',
+            AppLocalizations.of(context).goalHistoryChartNoHistoryYet,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -178,7 +179,7 @@ class GoalHistoryChart extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Complete more weeks to see your goal trends over time',
+            AppLocalizations.of(context).goalHistoryChartCompleteMoreWeeksTo,
             style: TextStyle(
               fontSize: 13,
               color: colors.textMuted,

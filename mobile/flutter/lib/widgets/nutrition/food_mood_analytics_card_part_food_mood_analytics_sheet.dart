@@ -45,7 +45,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
                 ),
                 const SizedBox(width: 16),
                 Text(
-                  'Food & Mood Insights',
+                  AppLocalizations.of(context).foodMoodAnalyticsFoodMoodInsights,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -64,9 +64,10 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
             child: analyticsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, __) => Center(
-                child: Text('Unable to load data', style: TextStyle(color: textMuted)),
+                child: Text(AppLocalizations.of(context).foodMoodAnalyticsUnableToLoadData, style: TextStyle(color: textMuted)),
               ),
               data: (analytics) => _buildDetailedAnalytics(
+                context,
                 analytics,
                 elevated,
                 textPrimary,
@@ -82,6 +83,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
   }
 
   Widget _buildDetailedAnalytics(
+    BuildContext context,
     FoodMoodAnalytics analytics,
     Color elevated,
     Color textPrimary,
@@ -89,6 +91,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
     Color cardBorder,
     Color purple,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (!analytics.hasData) {
       return Center(
         child: Column(
@@ -97,7 +100,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
             Icon(Icons.mood, size: 64, color: textMuted.withOpacity(0.3)),
             const SizedBox(height: 16),
             Text(
-              'No mood data yet',
+              l10n.foodMoodAnalyticsNoMoodDataYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -106,7 +109,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Track your mood when logging meals\nto see patterns and insights',
+              l10n.foodMoodAnalyticsTrackYourMoodWhen,
               style: TextStyle(fontSize: 14, color: textMuted.withOpacity(0.7)),
               textAlign: TextAlign.center,
             ),
@@ -121,12 +124,12 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Overview Stats
-          _buildOverviewCard(analytics, elevated, textPrimary, textMuted, cardBorder),
+          _buildOverviewCard(context, analytics, elevated, textPrimary, textMuted, cardBorder),
           const SizedBox(height: 24),
 
           // Mood Distribution
           Text(
-            'MOOD AFTER EATING',
+            l10n.foodMoodAnalyticsMoodAfterEating,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -140,7 +143,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
 
           // Energy Levels
           Text(
-            'ENERGY LEVELS',
+            l10n.foodMoodAnalyticsEnergyLevels,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -149,13 +152,13 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _buildEnergyChart(analytics.energyDistribution, analytics.averageEnergy, elevated, textPrimary, textMuted, cardBorder),
+          _buildEnergyChart(context, analytics.energyDistribution, analytics.averageEnergy, elevated, textPrimary, textMuted, cardBorder),
           const SizedBox(height: 24),
 
           // Foods that boost mood
           if (analytics.positiveCorrelations.isNotEmpty) ...[
             Text(
-              'FOODS THAT BOOST YOUR MOOD',
+              l10n.foodMoodAnalyticsFoodsThatBoostYour,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -178,7 +181,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
           // Foods to watch
           if (analytics.negativeCorrelations.isNotEmpty) ...[
             Text(
-              'FOODS TO WATCH',
+              l10n.foodMoodAnalyticsFoodsToWatch,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -201,7 +204,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
           // Meal type insights
           if (analytics.mealTypeMoods.isNotEmpty) ...[
             Text(
-              'BY MEAL TYPE',
+              l10n.foodMoodAnalyticsByMealType,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -220,12 +223,14 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
   }
 
   Widget _buildOverviewCard(
+    BuildContext context,
     FoodMoodAnalytics analytics,
     Color elevated,
     Color textPrimary,
     Color textMuted,
     Color cardBorder,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -238,21 +243,21 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
         children: [
           _buildOverviewStat(
             '${(analytics.moodImprovementRate * 100).toStringAsFixed(0)}%',
-            'Mood improved',
+            l10n.foodMoodAnalyticsMoodImproved,
             const Color(0xFF6BCB77),
             textMuted,
           ),
           Container(width: 1, height: 50, color: cardBorder),
           _buildOverviewStat(
             '${(analytics.moodTrackingRate * 100).toStringAsFixed(0)}%',
-            'Tracking rate',
+            l10n.foodMoodAnalyticsTrackingRate,
             const Color(0xFF3498DB),
             textMuted,
           ),
           Container(width: 1, height: 50, color: cardBorder),
           _buildOverviewStat(
             '${analytics.logsWithMood}',
-            'Meals tracked',
+            l10n.foodMoodAnalyticsMealsTracked,
             const Color(0xFF9B59B6),
             textMuted,
           ),
@@ -336,6 +341,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
   }
 
   Widget _buildEnergyChart(
+    BuildContext context,
     Map<int, int> distribution,
     double average,
     Color elevated,
@@ -353,7 +359,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
           border: Border.all(color: cardBorder),
         ),
         child: Text(
-          'No energy data recorded yet',
+          AppLocalizations.of(context).foodMoodAnalyticsNoEnergyDataRecorded,
           style: TextStyle(color: textMuted),
         ),
       );
@@ -404,7 +410,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Average: ',
+                AppLocalizations.of(context).foodMoodAnalyticsAverage,
                 style: TextStyle(fontSize: 14, color: textMuted),
               ),
               Text(

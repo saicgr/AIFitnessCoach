@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/cardio_pr.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../cardio/cardio_pr_history_sheet.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Shows a bottom sheet displaying trophies and achievements earned from the workout.
 ///
@@ -55,6 +56,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l = AppLocalizations.of(context)!;
     final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -104,7 +106,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Trophies & Achievements',
+                            l.trophiesEarnedTitle,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -112,7 +114,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Your session highlights',
+                            l.trophiesEarnedSessionHighlights,
                             style: TextStyle(
                               fontSize: 14,
                               color: textSecondary,
@@ -141,8 +143,8 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                         _buildSectionHeader(
                           context,
                           icon: Icons.trending_up_rounded,
-                          title: 'Personal Records',
-                          subtitle: '${newPRs.length} new PRs!',
+                          title: l.trophiesEarnedPersonalRecords,
+                          subtitle: l.trophiesEarnedNewPRs(newPRs.length),
                           color: AppColors.orange,
                         ),
                         const SizedBox(height: 12),
@@ -163,8 +165,8 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                         _buildSectionHeader(
                           context,
                           icon: Icons.directions_run_rounded,
-                          title: 'Cardio Achievements',
-                          subtitle: '${cardioPrs!.length} new cardio ${cardioPrs!.length == 1 ? "PR" : "PRs"}',
+                          title: l.trophiesEarnedCardioAchievements,
+                          subtitle: l.trophiesEarnedNewCardioPRs(cardioPrs!.length),
                           color: AppColors.cyan,
                         ),
                         const SizedBox(height: 12),
@@ -197,7 +199,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                             icon: Icon(Icons.timeline_rounded,
                                 size: 18, color: AppColors.cyan),
                             label: Text(
-                              'View all cardio PRs',
+                              l.trophiesEarnedViewAllCardioPRs,
                               style: TextStyle(
                                 color: AppColors.cyan,
                                 fontWeight: FontWeight.w600,
@@ -213,8 +215,8 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                         _buildSectionHeader(
                           context,
                           icon: Icons.military_tech_rounded,
-                          title: 'Achievements Unlocked',
-                          subtitle: '${newAchievements.length} new badges',
+                          title: l.trophiesEarnedAchievementsUnlocked,
+                          subtitle: l.trophiesEarnedNewBadges(newAchievements.length),
                           color: AppColors.purple,
                         ),
                         const SizedBox(height: 12),
@@ -233,8 +235,8 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                       _buildSectionHeader(
                         context,
                         icon: Icons.flag_rounded,
-                        title: 'Milestones',
-                        subtitle: 'Your fitness journey',
+                        title: l.trophiesEarnedMilestones,
+                        subtitle: l.trophiesEarnedYourFitnessJourney,
                         color: AppColors.cyan,
                       ),
                       const SizedBox(height: 12),
@@ -394,7 +396,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'ALL-TIME',
+                          AppLocalizations.of(context)!.trophiesEarnedAllTime,
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
@@ -535,7 +537,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'FIRST TIME!',
+                          AppLocalizations.of(context)!.trophiesEarnedFirstTime,
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
@@ -552,7 +554,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'NEW PR',
+                          AppLocalizations.of(context)!.trophiesEarnedNewPR,
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
@@ -825,7 +827,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Total Workouts',
+                  AppLocalizations.of(context)!.trophiesEarnedTotalWorkouts,
                   style: TextStyle(
                     fontSize: 11,
                     color: textSecondary,
@@ -870,7 +872,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Day Streak',
+                  AppLocalizations.of(context)!.trophiesEarnedDayStreak,
                   style: TextStyle(
                     fontSize: 11,
                     color: textSecondary,
@@ -909,6 +911,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
     final streak = currentStreak ?? 0;
     final nextStreakMilestone = _nextMilestone(streak, streakMilestones);
 
+    final l = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -923,7 +926,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
               Icon(Icons.flag_rounded, size: 20, color: AppColors.orange),
               const SizedBox(width: 8),
               Text(
-                'Next Milestones',
+                l.trophiesEarnedNextMilestones,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -934,7 +937,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            "No new records this session — here's what you're working toward:",
+            l.trophiesEarnedNoNewRecords,
             style: TextStyle(fontSize: 12, color: textMuted),
           ),
           const SizedBox(height: 16),
@@ -967,7 +970,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
           if (nextWorkoutMilestone == null && nextStreakMilestone == null) ...[
             const SizedBox(height: 8),
             Text(
-              "You've cleared every milestone — stay consistent and new ones will appear!",
+              l.trophiesEarnedAllMilestonesCleared,
               style: TextStyle(fontSize: 13, color: textSecondary),
               textAlign: TextAlign.center,
             ),
@@ -1099,8 +1102,8 @@ class _MilestoneProgressRow extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           remaining == 0
-              ? 'Milestone reached — nice!'
-              : '$remaining more $unit to unlock',
+              ? AppLocalizations.of(context)!.trophiesEarnedMilestoneReached
+              : AppLocalizations.of(context)!.trophiesEarnedRemainingToUnlock(remaining, unit),
           style: TextStyle(fontSize: 11, color: textSecondary),
         ),
       ],

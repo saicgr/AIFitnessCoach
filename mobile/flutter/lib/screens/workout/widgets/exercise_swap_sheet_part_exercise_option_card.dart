@@ -31,6 +31,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBackground =
         isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -141,18 +142,18 @@ class _ExerciseOptionCard extends ConsumerWidget {
                       color: AppColors.cyan,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.swap_horiz,
                           color: Colors.white,
                           size: 18,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
-                          'Swap',
-                          style: TextStyle(
+                          l.exerciseSwapOptionSwap,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,

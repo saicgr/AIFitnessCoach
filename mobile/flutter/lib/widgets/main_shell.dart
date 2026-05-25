@@ -50,6 +50,7 @@ import '../data/models/user_xp.dart';
 import '../data/models/weekly_recap.dart';
 import 'weekly_recap_dialog.dart';
 import '../core/accessibility/accessibility_provider.dart';
+import '../l10n/generated/app_localizations.dart';
 // Tab-prewarm provider imports — warmed in build() so each tab paints from
 // cache instead of a cold network skeleton on first open.
 import '../data/providers/today_workout_provider.dart' show todayWorkoutProvider;

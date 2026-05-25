@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../widgets/section_header.dart';
 
 /// The Wear OS section for connecting to smartwatch.
@@ -18,10 +19,10 @@ class WearOSSection extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'WEAR OS'),
-        SizedBox(height: 12),
-        _WearOSComingSoonCard(),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).wearOsWearOs),
+        const SizedBox(height: 12),
+        const _WearOSComingSoonCard(),
       ],
     );
   }
@@ -71,7 +72,7 @@ class _WearOSComingSoonCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Smartwatch',
+                        AppLocalizations.of(context).wearOsSmartwatch,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
@@ -80,7 +81,7 @@ class _WearOSComingSoonCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Track workouts from your wrist',
+                        AppLocalizations.of(context).wearOsTrackWorkoutsFromYour,
                         style: TextStyle(
                           fontSize: 12,
                           color: textMuted,
@@ -106,7 +107,7 @@ class _WearOSComingSoonCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Coming features:',
+                    AppLocalizations.of(context).wearOsComingFeatures,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -114,13 +115,13 @@ class _WearOSComingSoonCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _buildFeatureRow(Icons.fitness_center, 'Log sets directly from watch', textMuted),
+                  _buildFeatureRow(Icons.fitness_center, AppLocalizations.of(context).wearOsLogSetsDirectlyFromWatch, textMuted),
                   const SizedBox(height: 6),
-                  _buildFeatureRow(Icons.favorite, 'Real-time heart rate tracking', textMuted),
+                  _buildFeatureRow(Icons.favorite, AppLocalizations.of(context).wearOsRealTimeHeartRateTracking, textMuted),
                   const SizedBox(height: 6),
-                  _buildFeatureRow(Icons.restaurant, 'Quick food logging via voice', textMuted),
+                  _buildFeatureRow(Icons.restaurant, AppLocalizations.of(context).wearOsQuickFoodLoggingViaVoice, textMuted),
                   const SizedBox(height: 6),
-                  _buildFeatureRow(Icons.sync, 'Automatic data sync', textMuted),
+                  _buildFeatureRow(Icons.sync, AppLocalizations.of(context).wearOsAutomaticDataSync, textMuted),
                 ],
               ),
             ),

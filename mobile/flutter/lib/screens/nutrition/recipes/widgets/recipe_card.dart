@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/recipe.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 class RecipeCard extends StatelessWidget {
   final RecipeSummary summary;
@@ -42,8 +43,9 @@ class RecipeCard extends StatelessWidget {
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final l10n = AppLocalizations.of(context);
 
-    final badge = showSourceBadge ? _resolveSourceBadge(summary) : null;
+    final badge = showSourceBadge ? _resolveSourceBadge(summary, l10n) : null;
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -167,13 +169,13 @@ class RecipeCard extends StatelessWidget {
 
   /// Decide which source pill (if any) to show. Returns null for vanilla
   /// "manual" recipes — they don't need a badge since they're the default.
-  _SourceBadge? _resolveSourceBadge(RecipeSummary s) {
+  _SourceBadge? _resolveSourceBadge(RecipeSummary s, AppLocalizations l10n) {
     // Curated takes top priority — the shared/community library tag.
     if (s.isCurated) {
-      return const _SourceBadge(
-        label: 'Curated',
+      return _SourceBadge(
+        label: l10n.recipeCardCurated,
         icon: Icons.verified_rounded,
-        color: Color(0xFFFFB020), // warm gold
+        color: const Color(0xFFFFB020), // warm gold
       );
     }
 
@@ -181,28 +183,28 @@ class RecipeCard extends StatelessWidget {
 
     // Improvized / cloned — user cloned and tweaked someone else's recipe.
     if (srcType == 'improvized' || s.sourceRecipeId != null) {
-      return const _SourceBadge(
-        label: 'Improvized',
+      return _SourceBadge(
+        label: l10n.recipeCardImprovized,
         icon: Icons.auto_awesome_rounded,
-        color: Color(0xFFB388FF), // purple
+        color: const Color(0xFFB388FF), // purple
       );
     }
 
     // Imported URL / text / handwritten etc.
     if (srcType.startsWith('imported')) {
-      return const _SourceBadge(
-        label: 'Imported',
+      return _SourceBadge(
+        label: l10n.recipeCardImported,
         icon: Icons.download_rounded,
-        color: Color(0xFF40C4FF), // blue
+        color: const Color(0xFF40C4FF), // blue
       );
     }
 
     // AI-generated
     if (srcType == 'ai_generated') {
-      return const _SourceBadge(
-        label: 'AI',
+      return _SourceBadge(
+        label: l10n.recipeCardAi,
         icon: Icons.auto_awesome,
-        color: Color(0xFF69F0AE), // green
+        color: const Color(0xFF69F0AE), // green
       );
     }
 
@@ -218,7 +220,7 @@ class _SourceBadge {
   final String label;
   final IconData icon;
   final Color color;
-  const _SourceBadge({
+  _SourceBadge({
     required this.label,
     required this.icon,
     required this.color,

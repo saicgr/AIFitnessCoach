@@ -66,29 +66,29 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
     }
   }
 
-  String get _title {
+  String _title(BuildContext context) {
     switch (widget.type) {
       case ExercisePickerType.favorite:
-        return 'Add Favorite Exercise';
+        return AppLocalizations.of(context).exercisePickerSheetAddFavoriteExercise;
       case ExercisePickerType.staple:
-        return 'Add Staple Exercise';
+        return AppLocalizations.of(context).exercisePickerSheetAddStapleExercise;
       case ExercisePickerType.queue:
-        return 'Add to Exercise Queue';
+        return AppLocalizations.of(context).exercisePickerSheetAddToExerciseQueue;
       case ExercisePickerType.avoided:
-        return 'Add Exercise to Avoid';
+        return AppLocalizations.of(context).exercisePickerSheetAddExerciseToAvoid;
     }
   }
 
-  String get _subtitle {
+  String _subtitle(BuildContext context) {
     switch (widget.type) {
       case ExercisePickerType.favorite:
-        return 'Search for exercises to add to your favorites';
+        return AppLocalizations.of(context).exercisePickerSheetSearchForExercisesToAdd;
       case ExercisePickerType.staple:
-        return 'Search for core lifts to lock in your workouts';
+        return AppLocalizations.of(context).exercisePickerSheetSearchForCoreLifts;
       case ExercisePickerType.queue:
-        return 'Search for exercises to include in your next workout';
+        return AppLocalizations.of(context).exercisePickerSheetSearchForExercisesToInclude;
       case ExercisePickerType.avoided:
-        return 'Search for exercises you want to skip';
+        return AppLocalizations.of(context).exercisePickerSheetSearchForExercisesToSkip;
     }
   }
 
@@ -539,7 +539,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _title,
+                      _title(context),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: textPrimary,
@@ -554,7 +554,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                _subtitle,
+                _subtitle(context),
                 style: TextStyle(fontSize: 14, color: textSecondary),
               ),
             ],
@@ -573,7 +573,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
-                    label: Text('Clear all', style: TextStyle(fontSize: 12, color: textMuted)),
+                    label: Text(AppLocalizations.of(context).exercisePickerSheetClearAll, style: TextStyle(fontSize: 12, color: textMuted)),
                     avatar: Icon(Icons.clear_all, size: 16, color: textMuted),
                     onPressed: _clearAllFilters,
                     backgroundColor: cardBackground,
@@ -604,7 +604,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                     text: TextSpan(
                       style: TextStyle(fontSize: 13, color: textSecondary),
                       children: [
-                        const TextSpan(text: 'Showing results for '),
+                        TextSpan(text: AppLocalizations.of(context).exercisePickerSheetShowingResultsFor),
                         TextSpan(
                           text: _searchCorrection,
                           style: TextStyle(
@@ -634,7 +634,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                     children: [
                       CircularProgressIndicator(color: _accentColor),
                       const SizedBox(height: 16),
-                      Text('Searching...', style: TextStyle(color: textMuted)),
+                      Text(AppLocalizations.of(context).exercisePickerSheetSearching, style: TextStyle(color: textMuted)),
                     ],
                   ),
                 )
@@ -647,10 +647,10 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                             children: [
                               Icon(Icons.search_off, size: 48, color: textMuted.withValues(alpha: 0.5)),
                               const SizedBox(height: 16),
-                              Text('No exercises found', style: TextStyle(fontSize: 16, color: textMuted)),
+                              Text(AppLocalizations.of(context).exercisePickerSheetNoExercisesFound, style: TextStyle(fontSize: 16, color: textMuted)),
                               const SizedBox(height: 8),
                               Text(
-                                'Try a different search or filter',
+                                AppLocalizations.of(context).exercisePickerSheetTryADifferentSearch,
                                 style: TextStyle(fontSize: 13, color: textMuted.withValues(alpha: 0.7)),
                               ),
                               if (_searchController.text.trim().isNotEmpty) ...[
@@ -658,7 +658,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                                 OutlinedButton.icon(
                                   onPressed: () => _addCustomExercise(_searchController.text.trim()),
                                   icon: const Icon(Icons.add, size: 18),
-                                  label: Text('Add "${_searchController.text.trim()}" as custom'),
+                                  label: Text(AppLocalizations.of(context).exercisePickerSheetAddAsCustom(_searchController.text.trim())),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: _accentColor,
                                     side: BorderSide(color: _accentColor.withValues(alpha: 0.5)),
@@ -710,7 +710,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                                       Icon(Icons.add, size: 16, color: _accentColor),
                                       const SizedBox(width: 4),
                                       Text(
-                                        "Can't find your exercise? Add it as custom",
+                                        AppLocalizations.of(context).exercisePickerSheetCanTFindYour,
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: _accentColor,
@@ -750,8 +750,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                 Expanded(
                   child: Text(
                     _multiPicked.isEmpty
-                        ? 'Tap exercises to select multiple'
-                        : '${_multiPicked.length} selected',
+                        ? AppLocalizations.of(context).exercisePickerSheetTapExercisesToSelect
+                        : AppLocalizations.of(context).exercisePickerSheetNSelected(_multiPicked.length),
                     style: TextStyle(
                       fontSize: 13,
                       color: _multiPicked.isEmpty ? textMuted : textPrimary,
@@ -778,8 +778,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                   ),
                   child: Text(
                     _multiPicked.isEmpty
-                        ? 'Save'
-                        : 'Save (${_multiPicked.length})',
+                        ? AppLocalizations.of(context).exercisePickerSheetSave
+                        : AppLocalizations.of(context).exercisePickerSheetSaveN(_multiPicked.length),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -812,7 +812,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                   autofocus: true,
                   style: TextStyle(color: textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Search — try "push", "row", "squat"',
+                    hintText: AppLocalizations.of(context).exercisePickerSheetSearchTryPushRow,
                     hintStyle: TextStyle(color: textMuted),
                     prefixIcon: Icon(Icons.search, color: textMuted),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -982,7 +982,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                   Icon(Icons.tune, size: 16, color: _accentColor),
                   const SizedBox(width: 6),
                   Text(
-                    'Custom only',
+                    AppLocalizations.of(context).exercisePickerSheetCustomOnly,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -1011,7 +1011,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
             const SizedBox(height: 8),
             // Body Parts
             if (_filterOptions['body_parts']?.isNotEmpty == true) ...[
-              _buildFilterSectionHeader('Body Part', Icons.accessibility_new, textPrimary),
+              _buildFilterSectionHeader(AppLocalizations.of(context).exercisePickerSheetBodyPart, Icons.accessibility_new, textPrimary),
               const SizedBox(height: 8),
               _buildFilterChips(
                 _filterOptions['body_parts']!,
@@ -1023,7 +1023,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
             ],
             // Equipment
             if (_filterOptions['equipment']?.isNotEmpty == true) ...[
-              _buildFilterSectionHeader('Equipment', Icons.fitness_center, textPrimary),
+              _buildFilterSectionHeader(AppLocalizations.of(context).exercisePickerSheetEquipment, Icons.fitness_center, textPrimary),
               const SizedBox(height: 8),
               _buildFilterChips(
                 _filterOptions['equipment']!,
@@ -1035,7 +1035,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
             ],
             // Exercise Types
             if (_filterOptions['exercise_types']?.isNotEmpty == true) ...[
-              _buildFilterSectionHeader('Type', Icons.category, textPrimary),
+              _buildFilterSectionHeader(AppLocalizations.of(context).exercisePickerSheetType, Icons.category, textPrimary),
               const SizedBox(height: 8),
               _buildFilterChips(
                 _filterOptions['exercise_types']!,
@@ -1129,7 +1129,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
     final createButton = OutlinedButton.icon(
       onPressed: _openCreateExerciseSheet,
       icon: const Icon(Icons.add_circle_outline, size: 18),
-      label: const Text('Create Custom Exercise'),
+      label: Text(AppLocalizations.of(context).exercisePickerSheetCreateCustomExercise),
       style: OutlinedButton.styleFrom(
         foregroundColor: _accentColor,
         side: BorderSide(color: _accentColor.withValues(alpha: 0.5)),
@@ -1148,12 +1148,12 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
             Icon(Icons.search, size: 48, color: textMuted.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              'Search for exercises',
+              AppLocalizations.of(context).exercisePickerSheetSearchForExercises,
               style: TextStyle(fontSize: 16, color: textMuted),
             ),
             const SizedBox(height: 8),
             Text(
-              'Type to search or use filters to browse',
+              AppLocalizations.of(context).exercisePickerSheetTypeToSearchOr,
               style: TextStyle(fontSize: 13, color: textMuted.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 24),
@@ -1171,7 +1171,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
             Icon(Icons.tune, size: 16, color: textMuted),
             const SizedBox(width: 6),
             Text(
-              'YOUR CUSTOM EXERCISES',
+              AppLocalizations.of(context).exercisePickerSheetYourCustomExercises,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -1210,7 +1210,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
         // Light hint reminding the user they can also browse the full library.
         Center(
           child: Text(
-            'Or type above to search the full exercise library',
+            AppLocalizations.of(context).exercisePickerSheetOrTypeAboveTo,
             style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
           ),
         ),

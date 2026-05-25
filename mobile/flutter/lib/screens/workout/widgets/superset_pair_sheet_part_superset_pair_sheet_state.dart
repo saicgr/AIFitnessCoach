@@ -163,6 +163,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
+    final l = AppLocalizations.of(context)!;
     final canCreate = _exercise1 != null && _exercise2 != null;
 
     return Column(
@@ -191,14 +192,14 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Create Superset Pair',
+                        l.supersetCreatePair,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: textPrimary,
                             ),
                       ),
                       Text(
-                        'Pair two exercises for efficient training',
+                        l.supersetPairSubtitle,
                         style: TextStyle(
                           fontSize: 12,
                           color: textSecondary,
@@ -296,7 +297,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
 
                   // Superset Type Selector
                   Text(
-                    'Superset Type',
+                    l.supersetType,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -324,7 +325,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Suggested Pairs',
+                          l.supersetSuggestedPairs,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -347,7 +348,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
 
                   // Rest Settings
                   Text(
-                    'Rest Settings',
+                    l.supersetRestSettings,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -358,7 +359,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
 
                   // Rest between exercises
                   _buildRestSlider(
-                    label: 'Rest between exercises',
+                    label: l.supersetRestBetween,
                     value: _restBetweenExercises,
                     min: 0,
                     max: 30,
@@ -374,7 +375,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
 
                   // Rest after superset
                   _buildRestSlider(
-                    label: 'Rest after superset',
+                    label: l.supersetRestAfter,
                     value: _restAfterSuperset,
                     min: 60,
                     max: 180,
@@ -408,14 +409,14 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Save to Favorites',
+                                l.supersetSaveToFavorites,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: textPrimary,
                                 ),
                               ),
                               Text(
-                                'Reuse this pair in future workouts',
+                                l.supersetSaveToFavoritesSubtitle,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: textSecondary,
@@ -460,7 +461,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                     TextButton(
                       onPressed: _clearSelection,
                       child: Text(
-                        'Clear',
+                        l.commonClear,
                         style: TextStyle(color: textMuted),
                       ),
                     ),
@@ -488,7 +489,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Create Superset',
+                            l.supersetCreate,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -609,7 +610,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Exercise $index',
+                        AppLocalizations.of(context)!.supersetExerciseN(index),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: textPrimary,
@@ -617,7 +618,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Tap to select',
+                        AppLocalizations.of(context)!.supersetTapToSelect,
                         style: TextStyle(
                           fontSize: 12,
                           color: textMuted,
@@ -848,6 +849,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
   }) {
     final displayValue = value.toInt();
     String valueText;
+    // TODO(i18n): 'No rest' computed in _buildRestSlider which has no BuildContext param — cannot use AppLocalizations here
     if (displayValue == 0) {
       valueText = 'No rest';
     } else if (displayValue >= 60) {

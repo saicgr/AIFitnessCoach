@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import 'onboarding_theme.dart';
 
 /// Motivation multi-select widget for quiz screens.
@@ -18,19 +19,21 @@ class QuizMotivation extends StatelessWidget {
     this.showHeader = true,
   });
 
-  static const _motivations = [
-    {'id': 'look_better', 'label': 'Look better', 'icon': Icons.auto_awesome, 'color': AppColors.onboardingAccent},
-    {'id': 'feel_stronger', 'label': 'Feel stronger', 'icon': Icons.fitness_center, 'color': AppColors.purple},
-    {'id': 'more_energy', 'label': 'Have more energy', 'icon': Icons.bolt, 'color': AppColors.electricBlue},
-    {'id': 'mental_health', 'label': 'Improve mental health', 'icon': Icons.psychology, 'color': AppColors.green},
-    {'id': 'sleep_better', 'label': 'Sleep better', 'icon': Icons.nightlight_round, 'color': AppColors.electricBlue},
-    {'id': 'be_healthier', 'label': 'Be healthier overall', 'icon': Icons.favorite, 'color': AppColors.pink},
-    {'id': 'sports_performance', 'label': 'Sports performance', 'icon': Icons.sports_basketball, 'color': AppColors.onboardingAccent},
-    {'id': 'confidence', 'label': 'Build confidence', 'icon': Icons.star, 'color': AppColors.onboardingAccent},
+  static List<Map<String, Object>> _buildMotivations(AppLocalizations l10n) => [
+    {'id': 'look_better', 'label': l10n.quizMotivationLookBetter, 'icon': Icons.auto_awesome, 'color': AppColors.onboardingAccent},
+    {'id': 'feel_stronger', 'label': l10n.quizMotivationFeelStronger, 'icon': Icons.fitness_center, 'color': AppColors.purple},
+    {'id': 'more_energy', 'label': l10n.quizMotivationHaveMoreEnergy, 'icon': Icons.bolt, 'color': AppColors.electricBlue},
+    {'id': 'mental_health', 'label': l10n.quizMotivationImproveMentalHealth, 'icon': Icons.psychology, 'color': AppColors.green},
+    {'id': 'sleep_better', 'label': l10n.quizMotivationSleepBetter, 'icon': Icons.nightlight_round, 'color': AppColors.electricBlue},
+    {'id': 'be_healthier', 'label': l10n.quizMotivationBeHealthierOverall, 'icon': Icons.favorite, 'color': AppColors.pink},
+    {'id': 'sports_performance', 'label': l10n.quizMotivationSportsPerformance, 'icon': Icons.sports_basketball, 'color': AppColors.onboardingAccent},
+    {'id': 'confidence', 'label': l10n.quizMotivationBuildConfidence, 'icon': Icons.star, 'color': AppColors.onboardingAccent},
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final motivations = _buildMotivations(l10n);
     final t = OnboardingTheme.of(context);
 
     return Padding(
@@ -39,17 +42,17 @@ class QuizMotivation extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showHeader) ...[
-            _buildTitle(t),
+            _buildTitle(context, t),
             const SizedBox(height: 8),
-            _buildSubtitle(t),
+            _buildSubtitle(context, t),
             const SizedBox(height: 24),
           ],
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 16),
-              itemCount: _motivations.length,
+              itemCount: motivations.length,
               itemBuilder: (context, index) {
-                final motivation = _motivations[index];
+                final motivation = motivations[index];
                 return _MotivationCard(
                   motivation: motivation,
                   isSelected: selectedMotivations.contains(motivation['id'] as String),
@@ -67,9 +70,9 @@ class QuizMotivation extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(OnboardingTheme t) {
+  Widget _buildTitle(BuildContext context, OnboardingTheme t) {
     return Text(
-      "What's driving you to work out?",
+      AppLocalizations.of(context)!.quizMotivationWhatSDrivingYou,
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
@@ -79,9 +82,9 @@ class QuizMotivation extends StatelessWidget {
     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
   }
 
-  Widget _buildSubtitle(OnboardingTheme t) {
+  Widget _buildSubtitle(BuildContext context, OnboardingTheme t) {
     return Text(
-      'Select all that resonate with you',
+      AppLocalizations.of(context)!.quizMotivationSelectAllThatResonate,
       style: TextStyle(
         fontSize: 14,
         color: t.textSecondary,

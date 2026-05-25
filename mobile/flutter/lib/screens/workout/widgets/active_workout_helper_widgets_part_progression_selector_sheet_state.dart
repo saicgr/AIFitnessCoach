@@ -7,6 +7,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final textPrimary = widget.isDark ? Colors.white : Colors.grey.shade900;
     final textSecondary = widget.isDark ? Colors.grey.shade400 : Colors.grey.shade600;
     final cardBg = widget.isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50;
@@ -41,7 +42,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
 
           // Title
           Text(
-            'Set Progression',
+            l.progressionSelectorTitle,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -50,7 +51,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Choose how weight changes across sets',
+            l.progressionSelectorSubtitle,
             style: TextStyle(fontSize: 14, color: textSecondary),
           ),
           const SizedBox(height: 20),
@@ -64,7 +65,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
-              'ADVANCED',
+              l.progressionSelectorAdvanced,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -268,6 +269,7 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
                       ),
                       const SizedBox(height: 12),
                       // When to use
+                      // TODO(i18n): _buildPatternTile has no BuildContext param — 'When to use' cannot use l here; refactor to pass l
                       Text(
                         'When to use',
                         style: TextStyle(

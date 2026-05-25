@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/wrapped_data.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
 /// Card 8: Summary card - 2x3 stat grid, motivational quote, share CTA
@@ -69,9 +70,9 @@ class WrappedSummaryCard extends StatelessWidget {
                   const Spacer(flex: 2),
 
                   // Header
-                  const Text(
-                    'YOUR MONTH IN REVIEW',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context).wrappedSummaryYourMonthInReview,
+                    style: const TextStyle(
                       color: Color(0xFFC084FC),
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -91,7 +92,7 @@ class WrappedSummaryCard extends StatelessWidget {
                   const Spacer(),
 
                   // 2x3 stats grid
-                  _buildStatsGrid(),
+                  _buildStatsGrid(context),
 
                   const Spacer(),
 
@@ -137,7 +138,7 @@ class WrappedSummaryCard extends StatelessWidget {
 
                   // Share CTA
                   Text(
-                    'Share Your Wrapped',
+                    AppLocalizations.of(context).wrappedSummaryShareYourWrapped,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.4),
                       fontSize: 14,
@@ -161,42 +162,43 @@ class WrappedSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsGrid() {
+  Widget _buildStatsGrid(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final stats = [
       _StatItem(
         icon: Icons.fitness_center,
         value: '${data.totalWorkouts}',
-        label: 'Workouts',
+        label: l10n.wrappedSummaryStatWorkouts,
         color: const Color(0xFFA855F7),
       ),
       _StatItem(
         icon: Icons.scale,
         value: NumberFormat.compact().format(data.totalVolumeLbs),
-        label: 'Volume (lbs)',
+        label: l10n.wrappedSummaryStatVolumeLbs,
         color: const Color(0xFF3B82F6),
       ),
       _StatItem(
         icon: Icons.emoji_events,
         value: '${data.personalRecordsCount}',
-        label: 'PRs',
+        label: l10n.wrappedSummaryStatPrs,
         color: const Color(0xFFFFD700),
       ),
       _StatItem(
         icon: Icons.local_fire_department,
         value: '${data.streakBest}',
-        label: 'Best Streak',
+        label: l10n.wrappedSummaryStatBestStreak,
         color: const Color(0xFFF97316),
       ),
       _StatItem(
         icon: Icons.schedule,
         value: _formattedHours,
-        label: 'Hours',
+        label: l10n.wrappedSummaryStatHours,
         color: const Color(0xFF6366F1),
       ),
       _StatItem(
         icon: Icons.sports_gymnastics,
         value: '${data.totalExercises}',
-        label: 'Exercises',
+        label: l10n.wrappedSummaryStatExercises,
         color: const Color(0xFF14B8A6),
       ),
     ];

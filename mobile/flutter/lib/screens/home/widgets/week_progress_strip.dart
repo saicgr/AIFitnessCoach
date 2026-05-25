@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/week_start_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Compact week progress strip showing day circles and completion count
 /// Displays M T W T F S S with visual states for completed/today/upcoming
@@ -13,6 +14,7 @@ class WeekProgressStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -89,7 +91,7 @@ class WeekProgressStrip extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'This Week',
+                        l10n.weekProgressStripThisWeek,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -99,7 +101,7 @@ class WeekProgressStrip extends ConsumerWidget {
                       Row(
                         children: [
                           Text(
-                            'View All',
+                            l10n.weekProgressStripViewAll,
                             style: TextStyle(
                               fontSize: 12,
                               color: textSecondary,
@@ -133,8 +135,8 @@ class WeekProgressStrip extends ConsumerWidget {
                   // Progress text
                   Text(
                     totalScheduled > 0
-                        ? '$completedCount of $totalScheduled workouts completed'
-                        : 'No workouts scheduled this week',
+                        ? l10n.weekProgressStripCompletedCount(completedCount, totalScheduled)
+                        : l10n.weekProgressStripNoWorkoutsScheduled,
                     style: TextStyle(
                       fontSize: 13,
                       color: textSecondary,
@@ -143,15 +145,15 @@ class WeekProgressStrip extends ConsumerWidget {
                 ],
               );
             },
-            loading: () => _buildLoading(textSecondary),
-            error: (_, __) => _buildError(textSecondary),
+            loading: () => _buildLoading(textSecondary, l10n),
+            error: (_, __) => _buildError(textSecondary, l10n),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLoading(Color textColor) {
+  Widget _buildLoading(Color textColor, AppLocalizations l10n) {
     return Column(
       children: [
         Row(
@@ -169,16 +171,16 @@ class WeekProgressStrip extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Loading...',
+          l10n.weekProgressStripLoading,
           style: TextStyle(fontSize: 13, color: textColor),
         ),
       ],
     );
   }
 
-  Widget _buildError(Color textColor) {
+  Widget _buildError(Color textColor, AppLocalizations l10n) {
     return Text(
-      'Could not load progress',
+      l10n.weekProgressStripCouldNotLoadProgress,
       style: TextStyle(fontSize: 13, color: textColor),
     );
   }

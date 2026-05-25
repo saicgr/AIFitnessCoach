@@ -45,12 +45,12 @@ class _PhotoHeroCard extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
         content: Row(
           children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('Uploading photo...'),
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Text(AppLocalizations.of(context)!.heroActionCardUploadingPhoto),
           ],
         ),
       ),
@@ -132,7 +132,7 @@ class _PhotoHeroCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Track Your Progress',
+                      AppLocalizations.of(context)!.heroActionCardTrackYourProgress,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -141,7 +141,7 @@ class _PhotoHeroCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Take a progress photo to see your transformation',
+                      AppLocalizations.of(context)!.heroActionCardTakeProgressPhoto,
                       style: TextStyle(
                         fontSize: 11,
                         color: textMuted,
@@ -235,7 +235,7 @@ class _FastingHeroCard extends ConsumerWidget {
                     Row(
                       children: [
                         Text(
-                          'Fasting',
+                          AppLocalizations.of(context)!.heroActionCardFasting,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -252,7 +252,7 @@ class _FastingHeroCard extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Active',
+                            AppLocalizations.of(context)!.heroActionCardActive,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -333,7 +333,7 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
               children: [
                 const Icon(Icons.check_circle, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
-                const Text('Fast ended successfully'),
+                Text(AppLocalizations.of(context)!.heroActionCardFastEndedSuccessfully),
               ],
             ),
             backgroundColor: const Color(0xFF2D2D2D),
@@ -381,7 +381,7 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
                 ),
               )
             : Text(
-                'End',
+                AppLocalizations.of(context)!.heroActionCardEnd,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -438,19 +438,22 @@ typedef _GridActionTile = _DeboxedActionTile;
 /// refills (gym water jugs, Stanley-style mugs). The 250ml–1L range stays
 /// on the main sheet; this list deliberately omits those four to avoid
 /// duplicating affordances.
-const List<({int ml, String label, String hint, IconData icon})>
-    _customWaterPresets = [
-  (ml: 30, label: 'Sip', hint: '30 ml', icon: Icons.water_drop_outlined),
-  (ml: 60, label: 'Small sip', hint: '60 ml', icon: Icons.opacity_outlined),
-  (ml: 100, label: 'Mouthful', hint: '100 ml', icon: Icons.local_cafe_outlined),
-  (ml: 150, label: 'Small cup', hint: '150 ml', icon: Icons.local_cafe_rounded),
-  (ml: 200, label: 'Glass', hint: '200 ml', icon: Icons.wine_bar_outlined),
-  (ml: 350, label: 'Tall glass', hint: '350 ml', icon: Icons.wine_bar_rounded),
-  (ml: 1250, label: 'Big bottle', hint: '1.25 L', icon: Icons.sports_bar_outlined),
-  (ml: 1500, label: 'Sports bottle', hint: '1.5 L', icon: Icons.sports_bar_rounded),
-  (ml: 2000, label: 'Large jug', hint: '2 L', icon: Icons.propane_tank_outlined),
-  (ml: 2500, label: 'XL jug', hint: '2.5 L', icon: Icons.propane_tank_rounded),
-];
+List<({int ml, String label, String hint, IconData icon})>
+    _customWaterPresets(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+  return [
+    (ml: 30, label: l10n.heroActionCardPresetSip, hint: '30 ml', icon: Icons.water_drop_outlined),
+    (ml: 60, label: l10n.heroActionCardPresetSmallSip, hint: '60 ml', icon: Icons.opacity_outlined),
+    (ml: 100, label: l10n.heroActionCardPresetMouthful, hint: '100 ml', icon: Icons.local_cafe_outlined),
+    (ml: 150, label: l10n.heroActionCardPresetSmallCup, hint: '150 ml', icon: Icons.local_cafe_rounded),
+    (ml: 200, label: l10n.heroActionCardPresetGlass, hint: '200 ml', icon: Icons.wine_bar_outlined),
+    (ml: 350, label: l10n.heroActionCardPresetTallGlass, hint: '350 ml', icon: Icons.wine_bar_rounded),
+    (ml: 1250, label: l10n.heroActionCardPresetBigBottle, hint: '1.25 L', icon: Icons.sports_bar_outlined),
+    (ml: 1500, label: l10n.heroActionCardPresetSportsBottle, hint: '1.5 L', icon: Icons.sports_bar_rounded),
+    (ml: 2000, label: l10n.heroActionCardPresetLargeJug, hint: '2 L', icon: Icons.propane_tank_outlined),
+    (ml: 2500, label: l10n.heroActionCardPresetXlJug, hint: '2.5 L', icon: Icons.propane_tank_rounded),
+  ];
+}
 
 /// Shared custom-amount picker. Returns the chosen ml value, or null if the
 /// user cancelled. Same visual language as the main Log Water sheet so the
@@ -497,7 +500,7 @@ Future<int?> showCustomWaterAmountPicker(
                   children: [
                     const SizedBox(height: 16),
                     Text(
-                      'Custom amount',
+                      AppLocalizations.of(ctx)!.heroActionCardCustomAmount,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -506,7 +509,7 @@ Future<int?> showCustomWaterAmountPicker(
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Sip to XL jug, or type exactly',
+                      AppLocalizations.of(ctx)!.heroActionCardSipToXlJug,
                       style: TextStyle(fontSize: 14, color: textMuted),
                     ),
                     const SizedBox(height: 16),
@@ -560,7 +563,7 @@ Future<int?> showCustomWaterAmountPicker(
                               Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
-                                  'Enter 1–5000 ml',
+                                  AppLocalizations.of(ctx)!.heroActionCardEnter1To5000Ml,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.error,
@@ -578,7 +581,7 @@ Future<int?> showCustomWaterAmountPicker(
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 8),
                                   child: Text(
-                                    'or pick a preset',
+                                    AppLocalizations.of(ctx)!.heroActionCardOrPickAPreset,
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: textMuted,
@@ -596,7 +599,7 @@ Future<int?> showCustomWaterAmountPicker(
                             GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _customWaterPresets.length,
+                              itemCount: _customWaterPresets(ctx).length,
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 3,
@@ -605,7 +608,7 @@ Future<int?> showCustomWaterAmountPicker(
                                 childAspectRatio: 1.05,
                               ),
                               itemBuilder: (_, i) {
-                                final p = _customWaterPresets[i];
+                                final p = _customWaterPresets(ctx)[i];
                                 final isSelected = selectedPresetMl == p.ml &&
                                     !typedValid;
                                 return _CustomWaterPresetTile(
@@ -632,7 +635,7 @@ Future<int?> showCustomWaterAmountPicker(
                             child: TextButton(
                               onPressed: () => Navigator.pop(sheetContext),
                               child: Text(
-                                'Cancel',
+                                AppLocalizations.of(ctx)!.heroActionCardCancel,
                                 style: TextStyle(color: textMuted),
                               ),
                             ),
@@ -655,8 +658,8 @@ Future<int?> showCustomWaterAmountPicker(
                               ),
                               child: Text(
                                 resolvedMl == null
-                                    ? 'Log'
-                                    : 'Log $resolvedMl ml',
+                                    ? AppLocalizations.of(ctx)!.heroActionCardLog
+                                    : AppLocalizations.of(ctx)!.heroActionCardLogMl(resolvedMl),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -710,7 +713,7 @@ Future<void> showWaterQuickAddSheet(BuildContext context, WidgetRef ref) async {
             children: [
               const SizedBox(height: 16),
               Text(
-                'Log Water',
+                AppLocalizations.of(context)!.heroActionCardLogWater,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -719,7 +722,7 @@ Future<void> showWaterQuickAddSheet(BuildContext context, WidgetRef ref) async {
               ),
               const SizedBox(height: 8),
               Text(
-                'Select amount to log',
+                AppLocalizations.of(context)!.heroActionCardSelectAmountToLog,
                 style: TextStyle(fontSize: 14, color: textMuted),
               ),
               const SizedBox(height: 20),
@@ -756,7 +759,7 @@ Future<void> showWaterQuickAddSheet(BuildContext context, WidgetRef ref) async {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: _WaterSizeOption(
                           ml: 0,
-                          label: 'Custom',
+                          label: AppLocalizations.of(context)!.heroActionCardCustom,
                           icon: Icons.tune_rounded,
                           isDark: isDark,
                           onTap: () async {
@@ -788,7 +791,7 @@ Future<void> showWaterQuickAddSheet(BuildContext context, WidgetRef ref) async {
                   context.go('/nutrition?tab=3&fuelSection=water');
                 },
                 child: Text(
-                  'Open Hydration Tracker',
+                  AppLocalizations.of(context)!.heroActionCardOpenHydrationTracker,
                   style: TextStyle(
                     color: quickActionRegistry['water']!.color,
                     fontWeight: FontWeight.w500,
@@ -839,8 +842,8 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
       if (userId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please log in to track hydration'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.heroActionCardPleaseLogIn),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -863,7 +866,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
                 children: [
                   const Icon(Icons.check_circle, color: Colors.white, size: 20),
                   const SizedBox(width: 8),
-                  Text('+${amountMl}ml water logged'),
+                  Text(AppLocalizations.of(context)!.heroActionCardWaterLogged(amountMl)),
                 ],
               ),
               backgroundColor: quickActionRegistry['water']!.color,
@@ -874,10 +877,10 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to log water. Please try again.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.heroActionCardFailedToLogWater),
               behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(bottom: 80, left: 16, right: 16),
+              margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
             ),
           );
         }
@@ -916,7 +919,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
             children: [
               const SizedBox(height: 16),
               Text(
-                'Log Water',
+                AppLocalizations.of(context)!.heroActionCardLogWater,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -925,7 +928,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Select amount to log',
+                AppLocalizations.of(context)!.heroActionCardSelectAmountToLog,
                 style: TextStyle(
                   fontSize: 14,
                   color: textMuted,
@@ -958,7 +961,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: _WaterSizeOption(
                           ml: 0,
-                          label: 'Custom',
+                          label: AppLocalizations.of(context)!.heroActionCardCustom,
                           icon: Icons.tune_rounded,
                           isDark: isDark,
                           onTap: () async {
@@ -985,7 +988,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
                   context.go('/nutrition?tab=3&fuelSection=water');
                 },
                 child: Text(
-                  'Open Hydration Tracker',
+                  AppLocalizations.of(context)!.heroActionCardOpenHydrationTracker,
                   style: TextStyle(
                     color: quickActionRegistry['water']!.color,
                     fontWeight: FontWeight.w500,
@@ -1009,7 +1012,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
       isDark: widget.isDark,
       onTap: _showWaterSizeOptions,
       onLongPress: () => _quickAddWater(_defaultWaterMl),
-      label: 'Water',
+      label: AppLocalizations.of(context)!.heroActionCardWaterLabel,
       iconColor: waterColor,
       iconChild: _isLoading
           ? SizedBox(
@@ -1083,7 +1086,7 @@ class _FastGridActionItem extends ConsumerWidget {
     final hasFast = fastingState.hasFast;
     final fastColor = quickActionRegistry['fasting']!.color;
 
-    String label = 'Fasting';
+    String label = AppLocalizations.of(context)!.heroActionCardFastingLabel;
     if (hasFast && fastingState.activeFast != null) {
       final elapsed = fastingState.activeFast!.elapsedMinutes;
       final hours = elapsed ~/ 60;
@@ -1219,7 +1222,7 @@ Future<void> _logWaterWithFeedback({
         children: [
           const Icon(Icons.check_circle, color: Colors.white, size: 20),
           const SizedBox(width: 8),
-          Text('+${amountMl}ml water logged'),
+          Text(AppLocalizations.of(context)!.heroActionCardWaterLogged(amountMl)),
         ],
       ),
       backgroundColor: quickActionRegistry['water']!.color,

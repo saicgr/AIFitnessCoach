@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Pause duration option
 class PauseDuration {
@@ -157,7 +158,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pause ${widget.planName}',
+                        AppLocalizations.of(context).pauseSubscriptionPausePlan(widget.planName),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -165,7 +166,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                         ),
                       ),
                       Text(
-                        'Take a break without losing your data',
+                        AppLocalizations.of(context).pauseSubscriptionTakeABreakWithout,
                         style: TextStyle(
                           fontSize: 14,
                           color: textSecondary,
@@ -209,7 +210,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'What happens when you pause',
+                              AppLocalizations.of(context).pauseSubscriptionWhatHappensWhenYou,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -220,22 +221,22 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                         ),
                         const SizedBox(height: 12),
                         _buildInfoItem(
-                          'Billing is paused',
-                          'You won\'t be charged during the pause',
+                          AppLocalizations.of(context).pauseSubscriptionBillingIsPaused,
+                          AppLocalizations.of(context).pauseSubscriptionYouWontBeCharged,
                           Icons.money_off,
                           AppColors.green,
                           textSecondary,
                         ),
                         _buildInfoItem(
-                          'Data is preserved',
-                          'Your workout history & progress remain safe',
+                          AppLocalizations.of(context).pauseSubscriptionDataIsPreserved,
+                          AppLocalizations.of(context).pauseSubscriptionYourWorkoutHistory,
                           Icons.save_alt,
                           AppColors.cyan,
                           textSecondary,
                         ),
                         _buildInfoItem(
-                          'Limited access',
-                          'Premium features are temporarily unavailable',
+                          AppLocalizations.of(context).pauseSubscriptionLimitedAccess,
+                          AppLocalizations.of(context).pauseSubscriptionPremiumFeaturesAre,
                           Icons.lock_outline,
                           Colors.amber.shade700,
                           textSecondary,
@@ -248,7 +249,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
 
                   // Duration selector
                   Text(
-                    'How long do you need?',
+                    AppLocalizations.of(context).pauseSubscriptionHowLongDoYou,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -297,7 +298,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Auto-resume date',
+                                  AppLocalizations.of(context).pauseSubscriptionAutoResumeDate,
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: textSecondary,
@@ -360,8 +361,8 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                             )
                           : Text(
                               _selectedDuration != null
-                                  ? 'Pause for ${_selectedDuration!.label}'
-                                  : 'Select a duration',
+                                  ? AppLocalizations.of(context).pauseSubscriptionPauseForDuration(_selectedDuration!.label)
+                                  : AppLocalizations.of(context).pauseSubscriptionSelectADuration,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -373,7 +374,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      'Cancel',
+                      AppLocalizations.of(context).buttonCancel,
                       style: TextStyle(
                         fontSize: 14,
                         color: textSecondary,

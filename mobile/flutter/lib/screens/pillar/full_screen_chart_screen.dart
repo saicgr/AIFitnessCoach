@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/pillar_history_provider.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/trends/metric_picker_sheet.dart';
 import 'widgets/ask_coach_button.dart';
@@ -133,12 +134,12 @@ class _FullScreenChartScreenState extends State<FullScreenChartScreen> {
                           child: CircularProgressIndicator());
                     }
                     if (snap.hasError) {
-                      return _emptyText('Could not load chart.', isDark);
+                      return _emptyText(AppLocalizations.of(context)!.fullScreenChartCouldNotLoad, isDark);
                     }
                     final points = snap.data ?? const <PillarDayScore>[];
                     if (points.length < 2) {
                       return _emptyText(
-                        'Not enough history yet — log a few more days.',
+                        AppLocalizations.of(context)!.fullScreenChartNotEnoughHistory,
                         isDark,
                       );
                     }
@@ -173,7 +174,7 @@ class _FullScreenChartScreenState extends State<FullScreenChartScreen> {
                         );
                       },
                       icon: const Icon(Icons.compare_arrows_rounded, size: 18),
-                      label: const Text('Compare with…'),
+                      label: Text(AppLocalizations.of(context)!.fullScreenChartCompareWith),
                     ),
                   ),
                 ],

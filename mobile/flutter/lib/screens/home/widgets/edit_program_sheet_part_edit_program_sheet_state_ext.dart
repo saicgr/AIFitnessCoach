@@ -13,7 +13,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
         children: [
           // Info text
           Text(
-            'Choose a training split that fits your schedule and goals',
+            AppLocalizations.of(context)!.editProgramSheetChooseATrainingSplit,
             style: TextStyle(fontSize: 14, color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
@@ -159,7 +159,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'This step is optional. You can skip it if you have no injuries to report.',
+                    AppLocalizations.of(context)!.editProgramSheetThisStepIsOptional,
                     style: TextStyle(fontSize: 13, color: colors.success),
                   ),
                 ),
@@ -202,7 +202,7 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Summary',
+                  AppLocalizations.of(context)!.editProgramSheetSummary,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
@@ -211,18 +211,18 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                 const SizedBox(height: 12),
                 _buildSummaryRow(
                   colors,
-                  'Days',
+                  AppLocalizations.of(context)!.editProgramSheetDays,
                   _selectedDays.map((i) => dayNames[i]).join(', '),
                 ),
                 _buildSummaryRow(
                   colors,
-                  'Difficulty',
+                  AppLocalizations.of(context)!.editProgramSheetDifficulty,
                   _selectedDifficulty[0].toUpperCase() +
                       _selectedDifficulty.substring(1),
                 ),
                 _buildSummaryRow(
                   colors,
-                  'Duration',
+                  AppLocalizations.of(context)!.editProgramSheetDuration,
                   _selectedDurationMin.round() == _selectedDurationMax.round()
                       ? '${_selectedDurationMin.round()} minutes'
                       : '${_selectedDurationMin.round()}-${_selectedDurationMax.round()} minutes',
@@ -231,9 +231,9 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                 if (_selectedProgramId != null)
                   _buildSummaryRow(
                     colors,
-                    'Program',
+                    AppLocalizations.of(context)!.editProgramSheetProgram,
                     _selectedProgramId == 'custom' && _customProgramDescription.isNotEmpty
-                        ? 'Custom: $_customProgramDescription'
+                        ? AppLocalizations.of(context)!.editProgramSheetCustomValue(_customProgramDescription)
                         : defaultTrainingPrograms
                             .firstWhere(
                               (p) => p.id == _selectedProgramId,
@@ -244,19 +244,19 @@ extension __EditProgramSheetStateExt on _EditProgramSheetState {
                 if (_selectedEquipment.isNotEmpty)
                   _buildSummaryRow(
                     colors,
-                    'Equipment',
+                    AppLocalizations.of(context)!.editProgramSheetEquipmentLabel,
                     _selectedEquipment.join(', '),
                   ),
                 if (_selectedFocusAreas.isNotEmpty)
                   _buildSummaryRow(
                     colors,
-                    'Focus',
+                    AppLocalizations.of(context)!.editProgramSheetFocus,
                     _selectedFocusAreas.join(', '),
                   ),
                 if (_selectedInjuries.isNotEmpty)
                   _buildSummaryRow(
                     colors,
-                    'Injuries',
+                    AppLocalizations.of(context)!.editProgramSheetInjuries,
                     _selectedInjuries.join(', '),
                   ),
               ],

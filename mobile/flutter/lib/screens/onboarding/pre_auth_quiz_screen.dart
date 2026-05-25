@@ -34,6 +34,7 @@ import 'widgets/did_you_know_chip.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/onboarding_theme.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 // Re-export so existing imports of PreAuthQuizData/preAuthQuizProvider from this file still work
 export 'pre_auth_quiz_data.dart';

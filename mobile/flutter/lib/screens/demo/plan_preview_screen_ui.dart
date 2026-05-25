@@ -42,7 +42,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
             const SizedBox(height: 32),
 
             Text(
-              'Building Your 4-Week Plan...',
+              AppLocalizations.of(context)!.planPreviewScreenBuildingYour4Week,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -55,7 +55,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 48),
               child: Text(
-                'Analyzing your goals, fitness level, and equipment to create the perfect program',
+                AppLocalizations.of(context)!.planPreviewScreenAnalyzingYourGoalsFitness,
                 style: TextStyle(
                   fontSize: 15,
                   color: textSecondary,
@@ -121,7 +121,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'This is YOUR Personalized Plan',
+                      AppLocalizations.of(context)!.planPreviewScreenThisIsYourPersonalized,
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -130,7 +130,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Designed based on your quiz answers',
+                      AppLocalizations.of(context)!.planPreviewScreenDesignedBasedOnYour,
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,
@@ -149,9 +149,9 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
             runSpacing: 8,
             children: [
               _buildSummaryChip(Icons.flag_outlined, goalDisplay, AppColors.cyan),
-              _buildSummaryChip(Icons.calendar_today, '${quizData.daysPerWeek ?? 3} days/week', AppColors.purple),
+              _buildSummaryChip(Icons.calendar_today, AppLocalizations.of(context)!.planPreviewScreenDaysPerWeek(quizData.daysPerWeek ?? 3), AppColors.purple),
               _buildSummaryChip(Icons.trending_up, _formatLevel(quizData.fitnessLevel ?? 'intermediate'), AppColors.orange),
-              _buildSummaryChip(Icons.fitness_center, '${quizData.equipment?.length ?? 3} equipment', AppColors.teal),
+              _buildSummaryChip(Icons.fitness_center, AppLocalizations.of(context)!.planPreviewScreenEquipmentCount(quizData.equipment?.length ?? 3), AppColors.teal),
             ],
           ),
         ],
@@ -214,7 +214,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
         ],
       ),
       subtitle: Text(
-        '${exercises.length} exercises - ${workout['duration']} min',
+        AppLocalizations.of(context)!.planPreviewScreenExercisesMin(exercises.length, workout['duration'] as int),
         style: TextStyle(
           fontSize: 12,
           color: textSecondary,
@@ -293,11 +293,12 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
     Color elevatedColor,
     Color borderColor,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final achievements = [
-      {'week': 1, 'text': 'Master the movement patterns', 'icon': Icons.school},
-      {'week': 2, 'text': 'Build strength foundation', 'icon': Icons.foundation},
-      {'week': 3, 'text': 'Increase intensity & volume', 'icon': Icons.trending_up},
-      {'week': 4, 'text': 'Peak performance week', 'icon': Icons.emoji_events},
+      {'week': 1, 'text': l10n.planPreviewScreenMasterTheMovement, 'icon': Icons.school},
+      {'week': 2, 'text': l10n.planPreviewScreenBuildStrengthFoundation, 'icon': Icons.foundation},
+      {'week': 3, 'text': l10n.planPreviewScreenIncreaseIntensityVolume, 'icon': Icons.trending_up},
+      {'week': 4, 'text': l10n.planPreviewScreenPeakPerformanceWeek, 'icon': Icons.emoji_events},
     ];
 
     return Container(
@@ -315,7 +316,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
               Icon(Icons.flag_outlined, color: AppColors.cyan, size: 20),
               const SizedBox(width: 10),
               Text(
-                'What You\'ll Achieve',
+                AppLocalizations.of(context)!.planPreviewScreenWhatYouLlAchieve,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -352,7 +353,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Week ${achievement['week']}',
+                          AppLocalizations.of(context)!.planPreviewScreenWeekNumber(achievement['week'] as int),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -378,7 +379,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'VIEWING',
+                        AppLocalizations.of(context)!.planPreviewScreenViewing,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
@@ -432,9 +433,9 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                 ),
                 elevation: 0,
               ),
-              child: const Text(
-                'Continue',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              child: Text(
+                AppLocalizations.of(context)!.buttonContinue,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -466,9 +467,9 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                 context.push('/demo-workout');
               },
               icon: const Icon(Icons.play_circle_filled, size: 22),
-              label: const Text(
-                'Try One Workout Free',
-                style: TextStyle(
+              label: Text(
+                AppLocalizations.of(context)!.planPreviewScreenTryOneWorkoutFree,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -504,8 +505,8 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                       ),
                     ),
                     child: Text(
-                      'Subscribe for Full Access',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.planPreviewScreenSubscribeForFullAccess,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors.cyan,
@@ -530,8 +531,8 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                     backgroundColor: Colors.green.withOpacity(0.08),
                   ),
                   child: Text(
-                    'Continue Free',
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.planPreviewScreenContinueFree,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Colors.green,

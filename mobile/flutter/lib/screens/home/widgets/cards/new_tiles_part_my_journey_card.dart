@@ -36,7 +36,7 @@ class MyJourneyCard extends ConsumerWidget {
     final targetWorkoutsPerWeek = 4; // Could be personalized
 
     // Journey milestones
-    final milestones = _getJourneyMilestones(totalCompleted);
+    final milestones = _getJourneyMilestones(context, totalCompleted);
     final currentMilestone = milestones.lastWhere(
       (m) => (m['threshold'] as num).toInt() <= totalCompleted,
       orElse: () => milestones.first,
@@ -110,7 +110,7 @@ class MyJourneyCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'My Journey',
+                        AppLocalizations.of(context)!.myJourneyCardMyJourney,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -118,7 +118,7 @@ class MyJourneyCard extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Week $weekNumber',
+                        AppLocalizations.of(context)!.myJourneyCardWeekNumber(weekNumber),
                         style: TextStyle(
                           fontSize: 12,
                           color: textMuted,
@@ -167,7 +167,7 @@ class MyJourneyCard extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Next: ${nextMilestone['title']}',
+                      AppLocalizations.of(context)!.myJourneyCardNext(nextMilestone['title'] as String),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -175,7 +175,7 @@ class MyJourneyCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      '$totalCompleted / ${nextMilestone['threshold']} workouts',
+                      AppLocalizations.of(context)!.myJourneyCardWorkoutsProgress(totalCompleted, (nextMilestone['threshold'] as num).toInt()),
                       style: TextStyle(
                         fontSize: 12,
                         color: textMuted,
@@ -204,7 +204,7 @@ class MyJourneyCard extends ConsumerWidget {
                 _buildStatChip(
                   icon: Icons.local_fire_department,
                   value: '$currentStreak',
-                  label: 'day streak',
+                  label: AppLocalizations.of(context)!.myJourneyCardDayStreak,
                   color: AppColors.orange,
                   textMuted: textMuted,
                   textColor: textColor,
@@ -213,7 +213,7 @@ class MyJourneyCard extends ConsumerWidget {
                 _buildStatChip(
                   icon: Icons.check_circle,
                   value: '$workoutsThisWeek/$targetWorkoutsPerWeek',
-                  label: 'this week',
+                  label: AppLocalizations.of(context)!.myJourneyCardThisWeek,
                   color: AppColors.green,
                   textMuted: textMuted,
                   textColor: textColor,
@@ -222,7 +222,7 @@ class MyJourneyCard extends ConsumerWidget {
                 _buildStatChip(
                   icon: Icons.emoji_events,
                   value: '$totalCompleted',
-                  label: 'total',
+                  label: AppLocalizations.of(context)!.myJourneyCardTotal,
                   color: const Color(0xFFFFD700),
                   textMuted: textMuted,
                   textColor: textColor,
@@ -248,7 +248,7 @@ class MyJourneyCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _getNextStepMessage(workoutsThisWeek, targetWorkoutsPerWeek),
+                          _getNextStepMessage(context, workoutsThisWeek, targetWorkoutsPerWeek),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -257,7 +257,7 @@ class MyJourneyCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _getMotivationMessage(currentStreak, totalCompleted),
+                          _getMotivationMessage(context, currentStreak, totalCompleted),
                           style: TextStyle(
                             fontSize: 11,
                             color: textMuted,
@@ -306,7 +306,7 @@ class MyJourneyCard extends ConsumerWidget {
                 Icon(Icons.route, color: accentColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'My Journey',
+                  AppLocalizations.of(context)!.myJourneyCardMyJourney,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -337,7 +337,7 @@ class MyJourneyCard extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Week $weekNumber',
+                        AppLocalizations.of(context)!.myJourneyCardWeekNumber(weekNumber),
                         style: TextStyle(fontSize: 11, color: textMuted),
                       ),
                     ],
@@ -357,7 +357,7 @@ class MyJourneyCard extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Tap to see your full journey',
+              AppLocalizations.of(context)!.myJourneyCardTapToSeeFullJourney,
               style: TextStyle(fontSize: 10, color: textMuted),
             ),
           ],
@@ -409,81 +409,84 @@ class MyJourneyCard extends ConsumerWidget {
     );
   }
 
-  List<Map<String, dynamic>> _getJourneyMilestones(int totalWorkouts) {
+  List<Map<String, dynamic>> _getJourneyMilestones(BuildContext context, int totalWorkouts) {
+    final l10n = AppLocalizations.of(context)!;
     return [
       {
         'threshold': 0,
-        'title': 'Getting Started',
+        'title': l10n.myJourneyCardMilestoneGettingStarted,
         'icon': Icons.flag,
         'color': 0xFF9E9E9E,
       },
       {
         'threshold': 5,
-        'title': 'Beginner',
+        'title': l10n.myJourneyCardMilestoneBeginner,
         'icon': Icons.directions_walk,
         'color': 0xFF4CAF50,
       },
       {
         'threshold': 15,
-        'title': 'Building Habit',
+        'title': l10n.myJourneyCardMilestoneBuildingHabit,
         'icon': Icons.trending_up,
         'color': 0xFF2196F3,
       },
       {
         'threshold': 30,
-        'title': 'Consistent',
+        'title': l10n.myJourneyCardMilestoneConsistent,
         'icon': Icons.check_circle,
         'color': 0xFF9C27B0,
       },
       {
         'threshold': 50,
-        'title': 'Dedicated',
+        'title': l10n.myJourneyCardMilestoneDedicated,
         'icon': Icons.star,
         'color': 0xFFFF9800,
       },
       {
         'threshold': 100,
-        'title': 'Athlete',
+        'title': l10n.myJourneyCardMilestoneAthlete,
         'icon': Icons.sports_gymnastics,
         'color': 0xFFE91E63,
       },
       {
         'threshold': 200,
-        'title': 'Champion',
+        'title': l10n.myJourneyCardMilestoneChampion,
         'icon': Icons.emoji_events,
         'color': 0xFFFFD700,
       },
       {
         'threshold': 365,
-        'title': 'Legend',
+        'title': l10n.myJourneyCardMilestoneLegend,
         'icon': Icons.military_tech,
         'color': 0xFF00BCD4,
       },
     ];
   }
 
-  String _getNextStepMessage(int workoutsThisWeek, int target) {
+  String _getNextStepMessage(BuildContext context, int workoutsThisWeek, int target) {
+    final l10n = AppLocalizations.of(context)!;
     final remaining = target - workoutsThisWeek;
     if (remaining <= 0) {
-      return 'Weekly goal complete!';
+      return l10n.myJourneyCardWeeklyGoalComplete;
     } else if (remaining == 1) {
-      return '1 workout left this week';
+      return l10n.myJourneyCardOneWorkoutLeft;
     } else {
-      return '$remaining workouts left this week';
+      return l10n.myJourneyCardWorkoutsLeft(remaining);
     }
   }
 
-  String _getMotivationMessage(int streak, int total) {
+  String _getMotivationMessage(BuildContext context, int streak, int total) {
+    final l10n = AppLocalizations.of(context)!;
     if (streak >= 7) {
-      return 'Amazing streak! You\'re unstoppable!';
+      return l10n.myJourneyCardAmazingStreak;
     } else if (streak >= 3) {
-      return 'Keep the momentum going!';
+      return l10n.myJourneyCardKeepMomentum;
     } else if (total >= 50) {
-      return 'You\'ve come so far. Keep pushing!';
+      return l10n.myJourneyCardComesoFar;
     } else if (total >= 10) {
-      return 'Building great habits!';
+      return l10n.myJourneyCardBuildingGreatHabits;
     } else {
-      return 'Every workout counts. Let\'s go!';
+      return l10n.myJourneyCardEveryWorkoutCounts;
     }
   }
 }
@@ -527,13 +530,13 @@ class ProgressChartsTile extends ConsumerWidget {
           border: Border.all(color: cardBorder),
         ),
         child: size == TileSize.half
-            ? _buildHalfContent(textColor, textMuted, accentColor)
-            : _buildFullContent(textColor, textMuted, accentColor),
+            ? _buildHalfContent(context, textColor, textMuted, accentColor)
+            : _buildFullContent(context, textColor, textMuted, accentColor),
       ),
     );
   }
 
-  Widget _buildHalfContent(Color textColor, Color textMuted, Color accentColor) {
+  Widget _buildHalfContent(BuildContext context, Color textColor, Color textMuted, Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -554,7 +557,7 @@ class ProgressChartsTile extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Progress',
+          AppLocalizations.of(context)!.myJourneyCardProgress,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -562,7 +565,7 @@ class ProgressChartsTile extends ConsumerWidget {
           ),
         ),
         Text(
-          'View charts',
+          AppLocalizations.of(context)!.myJourneyCardViewCharts,
           style: TextStyle(
             fontSize: 12,
             color: textMuted,
@@ -572,7 +575,7 @@ class ProgressChartsTile extends ConsumerWidget {
     );
   }
 
-  Widget _buildFullContent(Color textColor, Color textMuted, Color accentColor) {
+  Widget _buildFullContent(BuildContext context, Color textColor, Color textMuted, Color accentColor) {
     return Row(
       children: [
         Container(
@@ -589,7 +592,7 @@ class ProgressChartsTile extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Progress Charts',
+                AppLocalizations.of(context)!.myJourneyCardProgressCharts,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -598,7 +601,7 @@ class ProgressChartsTile extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'View strength and volume trends over time',
+                AppLocalizations.of(context)!.myJourneyCardViewStrengthAndVolume,
                 style: TextStyle(
                   fontSize: 13,
                   color: textMuted,

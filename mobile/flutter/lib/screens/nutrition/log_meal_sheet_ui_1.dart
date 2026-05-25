@@ -58,7 +58,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       }
       if (!_speechAvailable) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Speech recognition not available')),
+          SnackBar(content: Text(AppLocalizations.of(context).logMealSheetSpeechRecognitionNotAvailab)),
         );
         return;
       }
@@ -151,7 +151,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       _showLoadingIndicator = false;
       _error = null;
       _currentStep = 0;
-      _progressMessage = 'Starting analysis...';
+      _progressMessage = AppLocalizations.of(context).logMealSheetStartingAnalysis;
       _progressDetail = null;
       _analysisElapsedMs = null;
       _previousResponse = null;
@@ -259,7 +259,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         setState(() {
           _isAnalyzing = false;
           _showLoadingIndicator = false;
-          _error = 'Analysis failed. Please try again.';
+          _error = AppLocalizations.of(context).logMealSheetAnalysisFailed;
         });
       }
     } catch (e) {
@@ -543,8 +543,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           AppTourStep(
             id: 'log_meal_button',
             targetKey: AppTourKeys.logMealButtonKey,
-            title: 'Log This Meal',
-            description: 'Tap here to save your meal to your daily log. Analyzing alone doesn\'t log it!',
+            title: AppLocalizations.of(context).logMealSheetLogThisMeal,
+            description: AppLocalizations.of(context).logMealSheetTapHereToSave,
             position: TooltipPosition.above,
           ),
         ],
@@ -677,10 +677,10 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     if (messenger == null) return;
     messenger.showSnackBar(
       SnackBar(
-        content: const Text("Couldn't save your meal. Check your connection."),
+        content: Text(AppLocalizations.of(context).logMealSheetCouldnTSaveYour),
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
-          label: 'Retry',
+          label: AppLocalizations.of(context).buttonRetry,
           onPressed: () {
             // Re-arm and re-run the log with the same analyzed response.
             _hasLoggedThisSession = false;
@@ -716,7 +716,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         final bottomPadding = MediaQuery.of(context).padding.bottom;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(children: [Icon(Icons.star, color: Colors.white, size: 20), SizedBox(width: 8), Text('Saved to favorites!')]),
+            content: Row(children: [const Icon(Icons.star, color: Colors.white, size: 20), const SizedBox(width: 8), Text(AppLocalizations.of(context).logMealSheetSavedToFavorites)]),
             backgroundColor: AppColors.textMuted,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -729,7 +729,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       if (mounted) {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(AppLocalizations.of(context).logMealSheetFailedToSaveError(e.toString())), backgroundColor: Colors.red),
         );
       }
     }
@@ -1057,7 +1057,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
                       child: Text(
-                        '$count $noun${count == 1 ? '' : 's'} captured',
+                        '$count $noun${count == 1 ? '' : 's'} captured', // TODO(i18n): noun is a runtime-injected English word; migrate at call-site with ICU plural
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -1076,7 +1076,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                       style: TextStyle(color: colors.textPrimary, fontSize: 14),
                       decoration: InputDecoration(
                         hintText:
-                            'Anything else in the photos? (e.g. flax seeds, whey protein)',
+                            AppLocalizations.of(ctx).logMealSheetAnythingElseInThe,
                         hintStyle:
                             TextStyle(color: colors.textSecondary, fontSize: 13),
                         isDense: true,
@@ -1090,7 +1090,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                     const SizedBox(height: 14),
                     _GlassMenuOption(
                       icon: Icons.add_a_photo_outlined,
-                      label: 'Add another $noun',
+                      label: 'Add another $noun', // TODO(i18n): noun is a runtime-injected English word; migrate at call-site
                       color: amber,
                       isDark: isDark,
                       onTap: () => Navigator.pop(
@@ -1104,7 +1104,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                     const SizedBox(height: 10),
                     _GlassMenuOption(
                       icon: Icons.check_circle_outline,
-                      label: 'Done — Analyze $count $noun${count == 1 ? '' : 's'}',
+                      label: 'Done — Analyze $count $noun${count == 1 ? '' : 's'}', // TODO(i18n): noun is a runtime-injected English word; migrate at call-site with ICU plural
                       color: const Color(0xFF16A34A),
                       isDark: isDark,
                       onTap: () => Navigator.pop(
@@ -1164,7 +1164,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Scan Food',
+                            AppLocalizations.of(ctx).logMealSheetScanFood,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -1177,8 +1177,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   ),
                   _GlassMenuOption(
                     icon: Icons.camera_alt_outlined,
-                    label: 'Take Food Photo',
-                    subtitle: 'Up to 5 shots — add another between photos',
+                    label: AppLocalizations.of(ctx).logMealSheetTakeFoodPhoto,
+                    subtitle: AppLocalizations.of(ctx).logMealSheetUpTo5Shots,
                     color: green,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.camera),
@@ -1186,8 +1186,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   const SizedBox(height: 10),
                   _GlassMenuOption(
                     icon: Icons.collections_outlined,
-                    label: 'Choose Food Photos',
-                    subtitle: 'Pick up to 5 from your library',
+                    label: AppLocalizations.of(ctx).logMealSheetChooseFoodPhotos,
+                    subtitle: AppLocalizations.of(ctx).logMealSheetPickUpTo5,
                     color: green,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.gallery),
@@ -1254,7 +1254,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Scan Menu',
+                            AppLocalizations.of(ctx).logMealSheetScanMenu,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -1267,7 +1267,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   ),
                   _GlassMenuOption(
                     icon: Icons.camera_alt_outlined,
-                    label: 'Take Menu Photo',
+                    label: AppLocalizations.of(ctx).logMealSheetTakeMenuPhoto,
                     color: amber,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.camera),
@@ -1275,8 +1275,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   const SizedBox(height: 10),
                   _GlassMenuOption(
                     icon: Icons.collections_outlined,
-                    label: 'Choose Menu Photos',
-                    subtitle: 'Up to 5 pages of the same menu',
+                    label: AppLocalizations.of(ctx).logMealSheetChooseMenuPhotos,
+                    subtitle: AppLocalizations.of(ctx).logMealSheetUpTo5Pages,
                     color: amber,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.gallery),
@@ -1359,7 +1359,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Scan & Import',
+                            AppLocalizations.of(ctx).logMealSheetScanImport,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -1372,8 +1372,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   ),
                   _GlassMenuOption(
                     icon: Icons.qr_code_2_outlined,
-                    label: 'Scan nutrition label',
-                    subtitle: 'Read macros off a packaged food label',
+                    label: AppLocalizations.of(ctx).logMealSheetScanNutritionLabel,
+                    subtitle: AppLocalizations.of(ctx).logMealSheetReadMacrosOffA,
                     color: cyan,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, 'label'),
@@ -1381,8 +1381,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   const SizedBox(height: 10),
                   _GlassMenuOption(
                     icon: Icons.screenshot_outlined,
-                    label: 'Scan app screenshot',
-                    subtitle: 'Import a log from MyFitnessPal, Cronometer…',
+                    label: AppLocalizations.of(ctx).logMealSheetScanAppScreenshot,
+                    subtitle: AppLocalizations.of(ctx).logMealSheetImportALogFrom,
                     color: cyan,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, 'screenshot'),
@@ -1433,7 +1433,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   ),
                   _GlassMenuOption(
                     icon: Icons.camera_alt_outlined,
-                    label: 'Take a photo',
+                    label: AppLocalizations.of(ctx).logMealSheetTakeAPhoto,
                     color: color,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.camera),
@@ -1441,7 +1441,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   const SizedBox(height: 10),
                   _GlassMenuOption(
                     icon: Icons.collections_outlined,
-                    label: 'Choose from library',
+                    label: AppLocalizations.of(ctx).logMealSheetChooseFromLibrary,
                     color: color,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.gallery),
@@ -1605,7 +1605,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                             style: TextStyle(
                                 color: colors.textPrimary, fontSize: 14),
                             decoration: InputDecoration(
-                              hintText: 'Custom (e.g. 1.25)',
+                              hintText: AppLocalizations.of(context).logMealSheetCustomEG1,
                               hintStyle: TextStyle(
                                   color: colors.textSecondary, fontSize: 13),
                               isDense: true,
@@ -1628,7 +1628,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text('Use'),
+                          child: Text(AppLocalizations.of(context).logMealSheetUse),
                         ),
                       ],
                     ),
@@ -1738,10 +1738,10 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         // C4: screenshot is actually a recipe — offer the recipe importer.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-                'That looks like a recipe — paste it into the recipe importer.'),
+            content: Text(
+                AppLocalizations.of(context).logMealSheetThatLooksLikeA),
             action: SnackBarAction(
-              label: 'OK',
+              label: AppLocalizations.of(context).buttonCancel,
               onPressed: () {},
             ),
           ),
@@ -1895,7 +1895,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
               );
               if (ok && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
+                  SnackBar(content: Text(AppLocalizations.of(context).logMealSheetLoggedItems(selected.length))),
                 );
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
@@ -2132,8 +2132,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Logged ${files.length} photo${files.length == 1 ? '' : 's'} '
-                  '(${payload['total_calories'] ?? 0} kcal)'),
+              content: Text(AppLocalizations.of(context).logMealSheetLoggedPhotos(files.length, (payload['total_calories'] ?? 0) as num)),
             ),
           );
           Navigator.of(context).pop();
@@ -2182,7 +2181,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             );
             if (ok && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
+                SnackBar(content: Text(AppLocalizations.of(context).logMealSheetLoggedItems(selected.length))),
               );
               Navigator.of(context).pop(); // close MenuAnalysisSheet
               Navigator.of(context).pop(); // close LogMealSheet
@@ -2282,11 +2281,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         );
         messenger?.showSnackBar(
           SnackBar(
-            content: const Text(
-                "Couldn't log those items. Check your connection."),
+            content: Text(
+                AppLocalizations.of(context).logMealSheetCouldnTLogThose),
             behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
-              label: 'Retry',
+              label: AppLocalizations.of(context).buttonRetry,
               onPressed: () => _logMenuSelectedItems(
                 selected: selected,
                 analysisType: analysisType,
@@ -2413,7 +2412,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     final restaurantAddress = updatedRow['address'] as String?;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Menu updated')),
+      SnackBar(content: Text(AppLocalizations.of(context).logMealSheetMenuUpdated)),
     );
 
     await showGlassSheet<void>(
@@ -2441,7 +2440,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           );
           if (ok && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
+              SnackBar(content: Text(AppLocalizations.of(context).logMealSheetLoggedItems(selected.length))),
             );
             Navigator.of(context).pop(); // close MenuAnalysisSheet
             Navigator.of(context).pop(); // close LogMealSheet
@@ -2891,10 +2890,10 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                           color: Theme.of(sheetCtx).colorScheme.primary,
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Barcode scan',
-                            style: TextStyle(
+                            AppLocalizations.of(sheetCtx).logMealSheetBarcodeScan,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
@@ -2913,7 +2912,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(sheetCtx),
-                            child: const Text('Try again'),
+                            child: Text(AppLocalizations.of(sheetCtx).logMealSheetTryAgain),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -2929,7 +2928,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                                 });
                               }
                             },
-                            child: const Text('Log manually'),
+                            child: Text(AppLocalizations.of(sheetCtx).logMealSheetLogManually),
                           ),
                         ),
                       ],
@@ -3039,7 +3038,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         if (!mounted) return;
         if (progress.hasError) {
           messenger.showSnackBar(
-            SnackBar(content: Text('Couldn\'t add food: ${progress.message}')),
+            SnackBar(content: Text(AppLocalizations.of(context).logMealSheetCouldnTAddFood(progress.message ?? ''))),
           );
           return;
         }
@@ -3052,8 +3051,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       if (!mounted) return;
       if (streamed == null || streamed.foodItems.isEmpty) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text("Couldn't recognize any food in that description."),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).logMealSheetCouldnTRecognizeAny),
           ),
         );
         return;
@@ -3080,7 +3079,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     } catch (e) {
       if (mounted) {
         messenger.showSnackBar(
-          SnackBar(content: Text('Couldn\'t add food: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).logMealSheetCouldnTAddFood(e.toString()))),
         );
       }
     } finally {
@@ -3158,7 +3157,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // gentle no-op rather than destroying the current analysis.
     if (note.trim().length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add a bit more detail to refine.')),
+        SnackBar(content: Text(AppLocalizations.of(context).logMealSheetAddABitMore)),
       );
       return;
     }
@@ -3196,7 +3195,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         if (progress.hasError) {
           // RE7: keep the previous analysis intact on failure.
           messenger.showSnackBar(
-            SnackBar(content: Text("Couldn't refine: ${progress.message}")),
+            SnackBar(content: Text(AppLocalizations.of(context).logMealSheetCouldnTRefineError(progress.message ?? ''))),
           );
           return;
         }
@@ -3215,8 +3214,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       // RE5/RE13: refine returned nothing usable — keep the prior analysis.
       if (streamed == null || streamed.foodItems.isEmpty) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text("Couldn't apply that correction — meal unchanged."),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).logMealSheetCouldnTApplyThat),
           ),
         );
         return;
@@ -3272,9 +3271,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
       messenger.showSnackBar(
         SnackBar(
-          content: const Text('Meal refined'),
+          content: Text(AppLocalizations.of(context).logMealSheetMealRefined),
           action: SnackBarAction(
-            label: 'Undo',
+            label: AppLocalizations.of(context).logMealSheetUndo,
             onPressed: () {
               if (!mounted) return;
               setState(() {
@@ -3294,7 +3293,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       // RE7: network/timeout mid-refine — previous analysis is still in state.
       if (mounted) {
         messenger.showSnackBar(
-          SnackBar(content: Text("Couldn't refine: $e")),
+          SnackBar(content: Text(AppLocalizations.of(context).logMealSheetCouldnTRefineError(e.toString()))),
         );
       }
     } finally {

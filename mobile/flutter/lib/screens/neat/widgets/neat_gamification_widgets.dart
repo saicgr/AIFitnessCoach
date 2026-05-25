@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 
 part 'neat_gamification_widgets_part_neat_level.dart';
@@ -141,7 +142,7 @@ class _NeatLevelBadgeState extends State<NeatLevelBadge>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        widget.level.displayName,
+                        widget.level.localizedName(AppLocalizations.of(context)!),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,

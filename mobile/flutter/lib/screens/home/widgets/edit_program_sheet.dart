@@ -8,6 +8,7 @@ import '../../../models/program_history.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'components/components.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 
 part 'edit_program_sheet_part_edit_program_sheet_state.dart';

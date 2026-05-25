@@ -67,7 +67,7 @@ class HeartRateSummaryCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Heart Rate',
+                        AppLocalizations.of(context).heartRateChartHeartRate,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -76,8 +76,8 @@ class HeartRateSummaryCard extends StatelessWidget {
                       ),
                       Text(
                         hasData
-                            ? '${readings.length} readings'
-                            : 'No data recorded',
+                            ? AppLocalizations.of(context).heartRateChartSummaryReadings(readings.length)
+                            : AppLocalizations.of(context).heartRateChartSummaryNoDataRecorded,
                         style: TextStyle(
                           fontSize: 12,
                           color: textSecondary,
@@ -101,11 +101,11 @@ class HeartRateSummaryCard extends StatelessWidget {
               // Stats row
               Row(
                 children: [
-                  _buildStat('Avg', avgBpm, textPrimary, textSecondary),
+                  _buildStat(context, AppLocalizations.of(context).heartRateChartSummaryAvg, avgBpm, textPrimary, textSecondary),
                   const SizedBox(width: 24),
-                  _buildStat('Max', maxBpm, textPrimary, textSecondary),
+                  _buildStat(context, AppLocalizations.of(context).heartRateChartSummaryMax, maxBpm, textPrimary, textSecondary),
                   const SizedBox(width: 24),
-                  _buildStat('Min', minBpm, textPrimary, textSecondary),
+                  _buildStat(context, AppLocalizations.of(context).heartRateChartSummaryMin, minBpm, textPrimary, textSecondary),
                 ],
               ),
 
@@ -123,7 +123,7 @@ class HeartRateSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStat(String label, int? value, Color textPrimary, Color textSecondary) {
+  Widget _buildStat(BuildContext context, String label, int? value, Color textPrimary, Color textSecondary) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -136,7 +136,9 @@ class HeartRateSummaryCard extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          value != null ? '$value bpm' : '--',
+          value != null
+              ? AppLocalizations.of(context).heartRateChartSummaryBpm(value)
+              : '--',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -260,12 +262,12 @@ class HeartRateWorkoutChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Stats chips row
-        _buildStatsRow(stats, textPrimary),
+        _buildStatsRow(context, stats, textPrimary),
         const SizedBox(height: 16),
 
         // Zone breakdown bar
         if (showZoneBreakdown) ...[
-          _buildZoneBreakdown(stats, isDark, textPrimary, textSecondary),
+          _buildZoneBreakdown(context, stats, isDark, textPrimary, textSecondary),
           const SizedBox(height: 16),
         ],
 
@@ -292,32 +294,33 @@ class HeartRateWorkoutChart extends StatelessWidget {
         // Fat Burn Metrics
         if (showFatBurnMetrics && totalCalories != null) ...[
           const SizedBox(height: 16),
-          _buildFatBurnCard(stats, isDark, textPrimary, textSecondary),
+          _buildFatBurnCard(context, stats, isDark, textPrimary, textSecondary),
         ],
 
         // Training Effect
         if (showTrainingEffect) ...[
           const SizedBox(height: 16),
-          _buildTrainingEffectCard(stats, isDark, textPrimary, textSecondary),
+          _buildTrainingEffectCard(context, stats, isDark, textPrimary, textSecondary),
         ],
 
         // VO2 Max
         if (showVO2Max) ...[
           const SizedBox(height: 16),
-          _buildVO2MaxCard(stats, isDark, textPrimary, textSecondary),
+          _buildVO2MaxCard(context, stats, isDark, textPrimary, textSecondary),
         ],
       ],
     );
   }
 
-  Widget _buildStatsRow(ExtendedHeartRateStats stats, Color textPrimary) {
+  Widget _buildStatsRow(BuildContext context, ExtendedHeartRateStats stats, Color textPrimary) {
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        _buildStatChip('Avg', stats.avg, const Color(0xFF2196F3)),
-        _buildStatChip('Peak', stats.max, const Color(0xFFF44336), icon: Icons.arrow_upward),
-        _buildStatChip('Min', stats.min, const Color(0xFF4CAF50), icon: Icons.arrow_downward),
+        _buildStatChip(l10n.heartRateChartSummaryAvg, stats.avg, const Color(0xFF2196F3)),
+        _buildStatChip(l10n.heartRateChartSummaryPeak, stats.max, const Color(0xFFF44336), icon: Icons.arrow_upward),
+        _buildStatChip(l10n.heartRateChartSummaryMin, stats.min, const Color(0xFF4CAF50), icon: Icons.arrow_downward),
       ],
     );
   }
@@ -348,6 +351,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
   }
 
   Widget _buildZoneBreakdown(
+    BuildContext context,
     ExtendedHeartRateStats stats,
     bool isDark,
     Color textPrimary,
@@ -367,7 +371,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Zone Breakdown',
+          AppLocalizations.of(context).heartRateChartZoneBreakdown,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -590,6 +594,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
   }
 
   Widget _buildFatBurnCard(
+    BuildContext context,
     ExtendedHeartRateStats stats,
     bool isDark,
     Color textPrimary,
@@ -630,7 +635,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Fat Burning',
+                  AppLocalizations.of(context).heartRateChartFatBurning,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -639,7 +644,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$fatBurnMinutes min in optimal fat burn zone',
+                  AppLocalizations.of(context).heartRateChartFatBurnMinutes(fatBurnMinutes),
                   style: TextStyle(
                     fontSize: 13,
                     color: textSecondary,
@@ -648,7 +653,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
                 if (fatCalories != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    '~$fatCalories calories from fat',
+                    AppLocalizations.of(context).heartRateChartFatCalories(fatCalories),
                     style: TextStyle(
                       fontSize: 12,
                       color: const Color(0xFF4CAF50),
@@ -665,6 +670,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
   }
 
   Widget _buildTrainingEffectCard(
+    BuildContext context,
     ExtendedHeartRateStats stats,
     bool isDark,
     Color textPrimary,
@@ -699,7 +705,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Text(
-                'Training Effect',
+                AppLocalizations.of(context).heartRateChartTrainingEffect,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -713,7 +719,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildTEBox(
-                  'Aerobic',
+                  AppLocalizations.of(context).heartRateChartAerobic,
                   stats.aerobicTE,
                   stats.aerobicTELabel,
                   const Color(0xFF2196F3),
@@ -723,7 +729,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildTEBox(
-                  'Anaerobic',
+                  AppLocalizations.of(context).heartRateChartAnaerobic,
                   stats.anaerobicTE,
                   stats.anaerobicTELabel,
                   const Color(0xFFFF9800),
@@ -777,6 +783,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
   }
 
   Widget _buildVO2MaxCard(
+    BuildContext context,
     ExtendedHeartRateStats stats,
     bool isDark,
     Color textPrimary,
@@ -815,7 +822,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Estimated VO2 Max',
+                  AppLocalizations.of(context).heartRateChartEstimatedVo2Max,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -854,7 +861,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
                   ),
                 ] else ...[
                   Text(
-                    'Add resting heart rate for estimation',
+                    AppLocalizations.of(context).heartRateChartAddRestingHeartRate,
                     style: TextStyle(
                       fontSize: 13,
                       color: textSecondary,
@@ -900,7 +907,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'No heart rate data recorded',
+              AppLocalizations.of(context).heartRateChartNoHeartRateData,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
@@ -909,7 +916,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Connect a smartwatch to track heart rate',
+              AppLocalizations.of(context).heartRateChartConnectASmartwatchTo,
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.grey[500],

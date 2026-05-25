@@ -44,6 +44,7 @@ class SetRowVisuals {
   }) {
     if (!progressiveOverloadEnabled) return null;
     if (isFirstSetEver) {
+      // TODO(i18n): 'Starter weight' is in a static method with no BuildContext — cannot use AppLocalizations here
       return const Text(
         'Starter weight',
         style: TextStyle(
@@ -147,6 +148,7 @@ class SetRowVisuals {
 
   /// Small "Edited" chip rendered next to the trend pill when the user
   /// manually overrode the planned target. Returns null when not edited.
+  // TODO(i18n): 'Edited' chip text is in a static method with no BuildContext — cannot use AppLocalizations here
   static Widget? buildEditedChip({required bool isEdited}) {
     if (!isEdited) return null;
     return Container(
@@ -179,6 +181,7 @@ class SetRowVisuals {
     required bool isFailureType,
     required int? targetRir,
   }) {
+    // TODO(i18n): 'Push to failure', '1 RIR (near max)', 'Target RIR N' are in a static method with no BuildContext — cannot use AppLocalizations here
     if (isAmrap || isFailureType || targetRir == 0) return 'Push to failure';
     if (targetRir == 1) return '1 RIR (near max)';
     if (targetRir != null) return 'Target RIR $targetRir';

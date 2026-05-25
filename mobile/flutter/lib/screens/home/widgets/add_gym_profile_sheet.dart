@@ -244,8 +244,8 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     // both day-dot indicators and the 14-day pre-generation.
     if (_currentStep == 2 && _selectedWorkoutDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pick at least one workout day for this gym.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.addGymSheetPickAtLeastOneDay),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -292,8 +292,8 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   Future<void> _openImportSheet() async {
     if (_name.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a name for your gym first (step 1).'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.addGymSheetEnterNameFirst),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -360,7 +360,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         child: GymEquipmentSheet(
           selectedEquipment: _selectedEquipment,
           equipmentDetails: equipmentItems,
-          title: 'Equipment',
+          title: AppLocalizations.of(context)!.addGymSheetEquipment,
           onSave: (equipment, details) {
             setState(() {
               _selectedEquipment = equipment;
@@ -397,6 +397,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
@@ -404,7 +405,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          followUp.title,
+          _followUpTitle(followUp.suggest, l10n),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 17,
@@ -412,7 +413,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
           ),
         ),
         content: Text(
-          followUp.subtitle,
+          _followUpSubtitle(followUp.suggest, l10n),
           style: TextStyle(
             fontSize: 14,
             color: textSecondary,
@@ -422,7 +423,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
-              'Skip',
+              l10n.addGymSheetSkip,
               style: TextStyle(color: textSecondary),
             ),
           ),
@@ -440,18 +441,35 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Yes, Add It'),
+            child: Text(l10n.addGymSheetYesAddIt),
           ),
         ],
       ),
     );
   }
 
+  String _followUpTitle(String suggest, AppLocalizations l10n) {
+    switch (suggest) {
+      case 'bench': return l10n.addGymSheetFollowUpBenchTitle;
+      case 'squat_rack': return l10n.addGymSheetFollowUpSquatRackTitle;
+      default: return suggest;
+    }
+  }
+
+  String _followUpSubtitle(String suggest, AppLocalizations l10n) {
+    switch (suggest) {
+      case 'bench': return l10n.addGymSheetFollowUpBenchSubtitle;
+      case 'squat_rack': return l10n.addGymSheetFollowUpSquatRackSubtitle;
+      default: return '';
+    }
+  }
+
   Future<void> _createProfile() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please enter a name for your gym'),
+          content: Text(l10n.addGymSheetEnterGymName),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
         ),
@@ -478,10 +496,11 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
       HapticService.success();
 
       if (mounted) {
+        final successL10n = AppLocalizations.of(context)!;
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✓ Created "$_name" gym profile'),
+            content: Text(successL10n.addGymSheetCreatedProfile(_name)),
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
             duration: const Duration(seconds: 3),
@@ -491,9 +510,10 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
       }
     } catch (e) {
       if (mounted) {
+        final errorL10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to create profile: $e'),
+            content: Text(errorL10n.addGymSheetFailedToCreate(e.toString())),
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
             backgroundColor: Colors.red.shade700,
@@ -564,7 +584,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Add New Gym',
+                          AppLocalizations.of(context)!.addGymSheetAddNewGym,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -572,7 +592,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                           ),
                         ),
                         Text(
-                          'Step ${_currentStep + 1} of 4',
+                          AppLocalizations.of(context)!.addGymSheetStepOf(_currentStep + 1, 4),
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -645,7 +665,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                       TextButton(
                         onPressed: _previousStep,
                         child: Text(
-                          'Back',
+                          AppLocalizations.of(context)!.addGymSheetBack,
                           style: TextStyle(color: textSecondary),
                         ),
                       ),
@@ -673,7 +693,9 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                               ),
                             )
                           : Text(
-                              _currentStep == 3 ? 'Create Gym' : 'Next',
+                              _currentStep == 3
+                                  ? AppLocalizations.of(context)!.addGymSheetCreateGym
+                                  : AppLocalizations.of(context)!.addGymSheetNext,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -699,7 +721,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
           onChanged: (value) => setState(() => _name = value),
           style: TextStyle(color: textPrimary, fontSize: 16),
           decoration: InputDecoration(
-            hintText: 'e.g., Home Gym, Planet Fitness, Hotel',
+            hintText: AppLocalizations.of(context)!.addGymSheetGymNameHint,
             hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.5)),
             filled: true,
             fillColor: isDark
@@ -720,7 +742,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
 
         // Environment section
         Text(
-          'Workout Environment',
+          AppLocalizations.of(context)!.addGymSheetWorkoutEnvironment,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -729,7 +751,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         ),
         const SizedBox(height: 4),
         Text(
-          'This helps us suggest the right equipment',
+          AppLocalizations.of(context)!.addGymSheetHelpsUsSuggest,
           style: TextStyle(
             fontSize: 13,
             color: textSecondary,
@@ -795,7 +817,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                preset['name'] as String,
+                                _presetName(entry.key),
                                 maxLines: 1,
                                 softWrap: false,
                                 style: TextStyle(
@@ -809,7 +831,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          preset['description'] as String,
+                          _presetDescription(entry.key),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -835,5 +857,29 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         }),
       ],
     );
+  }
+
+  String _presetName(String key) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (key) {
+      case 'commercial_gym': return l10n.addGymSheetCommercialGym;
+      case 'home_gym': return l10n.addGymSheetHomeGym;
+      case 'home': return l10n.addGymSheetHomeMinimal;
+      case 'hotel': return l10n.addGymSheetHotelTravel;
+      case 'outdoors': return l10n.addGymSheetOutdoors;
+      default: return key;
+    }
+  }
+
+  String _presetDescription(String key) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (key) {
+      case 'commercial_gym': return l10n.addGymSheetCommercialGymDesc;
+      case 'home_gym': return l10n.addGymSheetHomeGymDesc;
+      case 'home': return l10n.addGymSheetHomeMinimalDesc;
+      case 'hotel': return l10n.addGymSheetHotelTravelDesc;
+      case 'outdoors': return l10n.addGymSheetOutdoorsDesc;
+      default: return '';
+    }
   }
 }

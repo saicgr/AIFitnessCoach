@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Card that displays a structured form comparison result from the AI.
 class FormComparisonResultCard extends StatelessWidget {
@@ -20,6 +21,7 @@ class FormComparisonResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = ThemeColors.of(context);
     final isDark = colors.isDark;
 
@@ -40,13 +42,13 @@ class FormComparisonResultCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          _buildHeader(colors, isDark),
+          _buildHeader(colors, isDark, l10n),
 
           // Score badges
           if (videos.isNotEmpty) _buildScoreBadges(colors, isDark, videos),
 
           // Score trend chart (3+ videos)
-          if (videos.length >= 3) _buildScoreTrendChart(colors, isDark, videos),
+          if (videos.length >= 3) _buildScoreTrendChart(colors, isDark, videos, l10n),
 
           // Divider
           Padding(
@@ -61,42 +63,42 @@ class FormComparisonResultCard extends StatelessWidget {
           if (comparison != null) ...[
             _buildComparisonSection(
               colors, isDark,
-              label: 'Improved',
+              label: l10n.formComparisonResultImproved,
               icon: Icons.check_circle,
               color: AppColors.success,
               items: (comparison['improved'] as List?)?.cast<String>() ?? [],
             ),
             _buildComparisonSection(
               colors, isDark,
-              label: 'Regressed',
+              label: l10n.formComparisonResultRegressed,
               icon: Icons.warning_amber_rounded,
               color: const Color(0xFFFF9800),
               items: (comparison['regressed'] as List?)?.cast<String>() ?? [],
             ),
             _buildComparisonSection(
               colors, isDark,
-              label: 'Consistent',
+              label: l10n.formComparisonResultConsistent,
               icon: Icons.info_outline,
               color: AppColors.info,
               items: (comparison['consistent'] as List?)?.cast<String>() ?? [],
             ),
 
             // Overall trend
-            _buildOverallTrend(colors, isDark, comparison),
+            _buildOverallTrend(colors, isDark, comparison, l10n),
           ],
 
           // Recommendations
           if (recommendations.isNotEmpty)
-            _buildRecommendations(colors, recommendations),
+            _buildRecommendations(colors, recommendations, l10n),
 
           // Disclaimer
-          _buildDisclaimer(colors),
+          _buildDisclaimer(colors, l10n),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(ThemeColors colors, bool isDark) {
+  Widget _buildHeader(ThemeColors colors, bool isDark, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
@@ -113,7 +115,7 @@ class FormComparisonResultCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Form Comparison',
+              l10n.formComparisonResultFormComparison,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -127,9 +129,9 @@ class FormComparisonResultCard extends StatelessWidget {
               color: AppColors.orange.withOpacity(0.15),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text(
-              'BETA',
-              style: TextStyle(
+            child: Text(
+              l10n.formComparisonResultBeta,
+              style: const TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
                 color: AppColors.orange,
@@ -229,7 +231,7 @@ class FormComparisonResultCard extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreTrendChart(ThemeColors colors, bool isDark, List<Map<String, dynamic>> videos) {
+  Widget _buildScoreTrendChart(ThemeColors colors, bool isDark, List<Map<String, dynamic>> videos, AppLocalizations l10n) {
     final spots = <FlSpot>[];
     final labels = <String>[];
     for (var i = 0; i < videos.length; i++) {
@@ -248,15 +250,15 @@ class FormComparisonResultCard extends StatelessWidget {
     if (diff > 0.5) {
       trendIcon = Icons.trending_up;
       trendColor = AppColors.success;
-      trendLabel = 'Improving';
+      trendLabel = l10n.formComparisonResultImproving;
     } else if (diff < -0.5) {
       trendIcon = Icons.trending_down;
       trendColor = AppColors.error;
-      trendLabel = 'Regressing';
+      trendLabel = l10n.formComparisonResultRegressing;
     } else {
       trendIcon = Icons.trending_flat;
       trendColor = AppColors.info;
-      trendLabel = 'Stable';
+      trendLabel = l10n.formComparisonResultStable;
     }
 
     final maxY = spots.map((s) => s.y).reduce(max);
@@ -272,7 +274,7 @@ class FormComparisonResultCard extends StatelessWidget {
               Icon(Icons.show_chart, size: 14, color: colors.textMuted),
               const SizedBox(width: 6),
               Text(
-                'Score Trend',
+                l10n.formComparisonResultScoreTrend,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -443,7 +445,7 @@ class FormComparisonResultCard extends StatelessWidget {
     );
   }
 
-  Widget _buildOverallTrend(ThemeColors colors, bool isDark, Map<String, dynamic> comparison) {
+  Widget _buildOverallTrend(ThemeColors colors, bool isDark, Map<String, dynamic> comparison, AppLocalizations l10n) {
     final trend = comparison['overall_trend'] as String?;
     if (trend == null || trend.isEmpty) return const SizedBox.shrink();
 
@@ -471,7 +473,7 @@ class FormComparisonResultCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Overall Trend',
+                  l10n.formComparisonResultOverallTrend,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -495,7 +497,7 @@ class FormComparisonResultCard extends StatelessWidget {
     );
   }
 
-  Widget _buildRecommendations(ThemeColors colors, List<String> recommendations) {
+  Widget _buildRecommendations(ThemeColors colors, List<String> recommendations, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
       child: Column(
@@ -506,7 +508,7 @@ class FormComparisonResultCard extends StatelessWidget {
               Icon(Icons.lightbulb_outline, size: 14, color: colors.textMuted),
               const SizedBox(width: 6),
               Text(
-                'Recommendations',
+                l10n.formComparisonResultRecommendations,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -551,11 +553,11 @@ class FormComparisonResultCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDisclaimer(ThemeColors colors) {
+  Widget _buildDisclaimer(ThemeColors colors, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
       child: Text(
-        'AI form analysis is for educational purposes only. Consult a qualified trainer for personalized guidance.',
+        l10n.formComparisonResultAiFormAnalysisIs,
         style: TextStyle(
           fontSize: 10,
           fontStyle: FontStyle.italic,

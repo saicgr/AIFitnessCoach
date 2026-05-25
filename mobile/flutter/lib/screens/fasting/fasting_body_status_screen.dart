@@ -4,6 +4,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/fasting_provider.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import 'widgets/fasting_stage_model.dart';
 
@@ -125,13 +126,14 @@ class _FastingBodyStatusScreenState
 
   Widget _header(ThemeColors colors, bool isLive, FastingStage currentStage,
       double elapsedHours) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 56, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Body Status',
+            l10n.fastingBodyStatusBodyStatus,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -141,8 +143,8 @@ class _FastingBodyStatusScreenState
           const SizedBox(height: 6),
           Text(
             isLive
-                ? 'Your live metabolic journey — ${_formatElapsed(elapsedHours)} in.'
-                : 'A preview of the metabolic stages of a fast.',
+                ? l10n.fastingBodyStatusLiveSubtitle(_formatElapsed(elapsedHours))
+                : l10n.fastingBodyStatusPreviewSubtitle,
             style: TextStyle(
               fontSize: 14,
               height: 1.4,
@@ -166,8 +168,7 @@ class _FastingBodyStatusScreenState
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Start a fast to see your live timeline with the '
-                      'exact clock time each stage is reached.',
+                      l10n.fastingBodyStatusStartFastHint,
                       style: TextStyle(
                         fontSize: 12.5,
                         height: 1.35,
@@ -503,7 +504,7 @@ class _StageCard extends StatelessWidget {
             ),
             if (isCurrent || beyondGoal) ...[
               const SizedBox(height: 8),
-              _badge(colors),
+              _badge(context, colors),
             ],
             // Animated expand: description + milestones.
             AnimatedSize(
@@ -513,7 +514,7 @@ class _StageCard extends StatelessWidget {
                 duration: const Duration(milliseconds: 220),
                 opacity: expanded ? 1 : 0,
                 child: expanded
-                    ? _expandedBody(colors)
+                    ? _expandedBody(context, colors)
                     : const SizedBox(width: double.infinity),
               ),
             ),
@@ -523,10 +524,11 @@ class _StageCard extends StatelessWidget {
     );
   }
 
-  Widget _badge(ThemeColors colors) {
+  Widget _badge(BuildContext context, ThemeColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     final bool current = isCurrent;
     final color = current ? stageColor : colors.warning;
-    final text = current ? 'You are here' : 'Beyond your goal';
+    final text = current ? l10n.fastingBodyStatusYouAreHere : l10n.fastingBodyStatusBeyondGoal;
     final icon =
         current ? Icons.my_location_rounded : Icons.flag_outlined;
     return Container(
@@ -553,7 +555,8 @@ class _StageCard extends StatelessWidget {
     );
   }
 
-  Widget _expandedBody(ThemeColors colors) {
+  Widget _expandedBody(BuildContext context, ThemeColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: Column(
@@ -570,7 +573,7 @@ class _StageCard extends StatelessWidget {
           if (stage.milestones.isNotEmpty) ...[
             const SizedBox(height: 14),
             Text(
-              'KEY MOMENTS',
+              l10n.fastingBodyStatusKeyMoments,
               style: TextStyle(
                 fontSize: 10.5,
                 letterSpacing: 1,

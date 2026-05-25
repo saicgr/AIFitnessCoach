@@ -7,6 +7,7 @@ import '../../../data/models/muscle_analytics.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
 import '../../../utils/share_report_helper.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import 'widgets/muscle_heatmap_widget.dart';
@@ -72,9 +73,10 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
     final theme = Theme.of(context);
     final timeRange = ref.watch(muscleAnalyticsTimeRangeProvider);
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Muscle Trends',
+        title: l10n.muscleAnalyticsMuscleTrends,
         actions: [
           PillAppBarAction(
             icon: Icons.ios_share_rounded,
@@ -119,10 +121,10 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
           SegmentedTabBar(
             controller: _tabController,
             showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Heatmap'),
-              SegmentedTabItem(label: 'Frequency'),
-              SegmentedTabItem(label: 'Balance'),
+            tabs: [
+              SegmentedTabItem(label: l10n.muscleAnalyticsHeatmap),
+              SegmentedTabItem(label: l10n.muscleAnalyticsFrequency),
+              SegmentedTabItem(label: l10n.muscleAnalyticsBalance),
             ],
           ),
           Expanded(
@@ -162,6 +164,7 @@ class _HeatmapTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final heatmapAsync = ref.watch(muscleHeatmapProvider);
 
@@ -178,10 +181,10 @@ class _HeatmapTab extends ConsumerWidget {
       ),
       contentBuilder: (context, heatmap) {
         if (!heatmap.hasData) {
-          return const _EmptyWidget(
+          return _EmptyWidget(
             icon: Icons.fitness_center_outlined,
-            title: 'No Training Data',
-            message: 'Complete some workouts to see your muscle training heatmap.',
+            title: l10n.muscleAnalyticsNoTrainingData,
+            message: l10n.muscleAnalyticsCompleteSomeWorkoutsTo,
           );
         }
 
@@ -202,7 +205,7 @@ class _HeatmapTab extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _StatCard(
-                        title: 'Most Trained',
+                        title: l10n.muscleAnalyticsMostTrained,
                         value: _formatMuscleName(sorted.first.muscleId),
                         icon: Icons.local_fire_department,
                         color: Colors.orange,
@@ -211,7 +214,7 @@ class _HeatmapTab extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _StatCard(
-                        title: 'Least Trained',
+                        title: l10n.muscleAnalyticsLeastTrained,
                         value: _formatMuscleName(sorted.last.muscleId),
                         icon: Icons.warning_outlined,
                         color: Colors.blue,
@@ -223,7 +226,7 @@ class _HeatmapTab extends ConsumerWidget {
 
                 // Muscle heatmap visualization
                 Text(
-                  'Training Intensity',
+                  l10n.muscleAnalyticsTrainingIntensity,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -240,7 +243,7 @@ class _HeatmapTab extends ConsumerWidget {
 
                 // Top muscles list
                 Text(
-                  'Muscle Breakdown',
+                  l10n.muscleAnalyticsMuscleBreakdown,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -276,6 +279,7 @@ class _FrequencyTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final frequencyAsync = ref.watch(muscleFrequencyProvider);
 
@@ -291,10 +295,10 @@ class _FrequencyTab extends ConsumerWidget {
       ),
       contentBuilder: (context, frequency) {
         if (!frequency.hasData) {
-          return const _EmptyWidget(
+          return _EmptyWidget(
             icon: Icons.calendar_today,
-            title: 'No Frequency Data',
-            message: 'Complete workouts over multiple weeks to see training frequency.',
+            title: l10n.muscleAnalyticsNoFrequencyData,
+            message: l10n.muscleAnalyticsCompleteWorkoutsOverMultipl,
           );
         }
 
@@ -313,7 +317,7 @@ class _FrequencyTab extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _StatCard(
-                        title: 'Undertrained',
+                        title: l10n.muscleAnalyticsUndertrained,
                         value: '${undertrained.length}',
                         subtitle: 'muscles',
                         icon: Icons.arrow_downward,
@@ -323,7 +327,7 @@ class _FrequencyTab extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _StatCard(
-                        title: 'Overtrained',
+                        title: l10n.muscleAnalyticsOvertrained,
                         value: '${overtrained.length}',
                         subtitle: 'muscles',
                         icon: Icons.arrow_upward,
@@ -336,7 +340,7 @@ class _FrequencyTab extends ConsumerWidget {
 
                 // Frequency chart
                 Text(
-                  'Weekly Training Frequency',
+                  l10n.muscleAnalyticsWeeklyTrainingFrequency,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -349,7 +353,7 @@ class _FrequencyTab extends ConsumerWidget {
                 // Recommendations
                 if (undertrained.isNotEmpty || overtrained.isNotEmpty) ...[
                   Text(
-                    'Recommendations',
+                    l10n.muscleAnalyticsRecommendations,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -357,14 +361,14 @@ class _FrequencyTab extends ConsumerWidget {
                   const SizedBox(height: 12),
                   if (undertrained.isNotEmpty)
                     _RecommendationCard(
-                      title: 'Train More',
+                      title: l10n.muscleAnalyticsTrainMore,
                       muscles: undertrained.map((f) => f.formattedMuscleGroup).toList(),
                       icon: Icons.add_circle_outline,
                       color: Colors.orange,
                     ),
                   if (overtrained.isNotEmpty)
                     _RecommendationCard(
-                      title: 'Allow Recovery',
+                      title: l10n.muscleAnalyticsAllowRecovery,
                       muscles: overtrained.map((f) => f.formattedMuscleGroup).toList(),
                       icon: Icons.remove_circle_outline,
                       color: Colors.red,
@@ -385,6 +389,7 @@ class _BalanceTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final balanceAsync = ref.watch(muscleBalanceProvider);
 
@@ -400,10 +405,10 @@ class _BalanceTab extends ConsumerWidget {
       ),
       contentBuilder: (context, balance) {
         if (!balance.hasData) {
-          return const _EmptyWidget(
+          return _EmptyWidget(
             icon: Icons.balance,
-            title: 'No Balance Data',
-            message: 'Complete more workouts to see your muscle balance analysis.',
+            title: l10n.muscleAnalyticsNoBalanceData,
+            message: l10n.muscleAnalyticsCompleteMoreWorkoutsTo,
           );
         }
 
@@ -418,14 +423,14 @@ class _BalanceTab extends ConsumerWidget {
                 _BalanceScoreCard(
                   score: balance.balanceScore ?? 0,
                   status: balance.isPushPullBalanced && balance.isUpperLowerBalanced
-                      ? 'Balanced'
-                      : 'Needs Work',
+                      ? l10n.muscleAnalyticsBalanced
+                      : l10n.muscleAnalyticsNeedsWork,
                 ),
                 const SizedBox(height: 24),
 
                 // Balance ratios
                 Text(
-                  'Balance Ratios',
+                  l10n.muscleAnalyticsBalanceRatios,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -437,21 +442,21 @@ class _BalanceTab extends ConsumerWidget {
 
                 // Detailed ratios
                 _RatioCard(
-                  title: 'Push / Pull',
+                  title: l10n.muscleAnalyticsPushPull,
                   ratio: balance.formattedPushPullRatio,
-                  side1Label: 'Push',
+                  side1Label: l10n.muscleBalanceChartPush,
                   side1Value: balance.formattedPushVolume,
-                  side2Label: 'Pull',
+                  side2Label: l10n.muscleBalanceChartPull,
                   side2Value: balance.formattedPullVolume,
                   isBalanced: balance.isPushPullBalanced,
                 ),
                 const SizedBox(height: 12),
                 _RatioCard(
-                  title: 'Upper / Lower',
+                  title: l10n.muscleAnalyticsUpperLower,
                   ratio: balance.formattedUpperLowerRatio,
-                  side1Label: 'Upper',
+                  side1Label: l10n.muscleBalanceChartUpper,
                   side1Value: balance.upperVolumeKg != null ? '${balance.upperVolumeKg!.toInt()} kg' : '-',
-                  side2Label: 'Lower',
+                  side2Label: l10n.muscleBalanceChartLower,
                   side2Value: balance.lowerVolumeKg != null ? '${balance.lowerVolumeKg!.toInt()} kg' : '-',
                   isBalanced: balance.isUpperLowerBalanced,
                 ),
@@ -460,7 +465,7 @@ class _BalanceTab extends ConsumerWidget {
                 if (balance.recommendations != null && balance.recommendations!.isNotEmpty) ...[
                   const SizedBox(height: 24),
                   Text(
-                    'Recommendations',
+                    l10n.muscleAnalyticsRecommendations,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -719,7 +724,7 @@ class _BalanceScoreCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Balance Score',
+                    AppLocalizations.of(context)!.muscleAnalyticsBalanceScore,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -786,7 +791,7 @@ class _RatioCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    isBalanced ? 'Balanced' : 'Imbalanced',
+                    isBalanced ? AppLocalizations.of(context)!.muscleAnalyticsBalanced : AppLocalizations.of(context)!.muscleAnalyticsImbalanced,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: isBalanced ? Colors.green : Colors.orange,
                       fontWeight: FontWeight.bold,

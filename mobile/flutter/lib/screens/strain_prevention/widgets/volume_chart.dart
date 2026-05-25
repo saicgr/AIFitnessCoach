@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../data/models/strain_prevention.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Line chart showing weekly volume trends for strain prevention
 class StrainVolumeChart extends StatelessWidget {
@@ -21,7 +22,7 @@ class StrainVolumeChart extends StatelessWidget {
     final sortedWeeks = data.sortedWeeks;
 
     if (sortedWeeks.isEmpty) {
-      return _buildEmptyState(colorScheme);
+      return _buildEmptyState(context, colorScheme);
     }
 
     // Calculate max value for Y axis
@@ -50,8 +51,8 @@ class StrainVolumeChart extends StatelessWidget {
               Expanded(
                 child: Text(
                   selectedMuscleGroup != null
-                      ? '${_formatMuscleGroup(selectedMuscleGroup!)} Volume'
-                      : 'Weekly Volume Trend',
+                      ? AppLocalizations.of(context).volumeChartMuscleGroupVolume(_formatMuscleGroup(selectedMuscleGroup!))
+                      : AppLocalizations.of(context).volumeChartWeeklyVolumeTrend,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -79,7 +80,7 @@ class StrainVolumeChart extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${data.dangerousWeeksCount} risky',
+                        AppLocalizations.of(context).volumeChartNRisky(data.dangerousWeeksCount),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -249,9 +250,9 @@ class StrainVolumeChart extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem('Volume', chartColor, colorScheme),
+              _buildLegendItem(AppLocalizations.of(context).volumeChartVolume, chartColor, colorScheme),
               const SizedBox(width: 20),
-              _buildLegendItem('Dangerous Increase', Colors.red, colorScheme),
+              _buildLegendItem(AppLocalizations.of(context).volumeChartDangerousIncrease, Colors.red, colorScheme),
             ],
           ),
           const SizedBox(height: 12),
@@ -260,17 +261,17 @@ class StrainVolumeChart extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatItem(
-                'Average',
+                AppLocalizations.of(context).volumeChartAverage,
                 '${data.avgWeeklyVolume.toStringAsFixed(0)} kg',
                 colorScheme,
               ),
               _buildStatItem(
-                'Peak',
+                AppLocalizations.of(context).volumeChartPeak,
                 '${data.peakVolume.toStringAsFixed(0)} kg',
                 colorScheme,
               ),
               _buildStatItem(
-                'Weeks',
+                AppLocalizations.of(context).volumeChartWeeks,
                 '${sortedWeeks.length}',
                 colorScheme,
               ),
@@ -281,7 +282,7 @@ class StrainVolumeChart extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(BuildContext context, ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -298,7 +299,7 @@ class StrainVolumeChart extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No Volume Data',
+            AppLocalizations.of(context).volumeChartNoVolumeData,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -307,7 +308,7 @@ class StrainVolumeChart extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Complete some workouts to see your volume trends.',
+            AppLocalizations.of(context).volumeChartCompleteSomeWorkoutsTo,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

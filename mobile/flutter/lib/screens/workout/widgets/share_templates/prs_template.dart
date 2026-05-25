@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
 
 /// PRs Template - Showcases personal records achieved in the workout
@@ -27,6 +28,7 @@ class PrsTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO(i18n): pass AppLocalizations to _buildTrophyHeader, _buildPrsList, _buildPrCard, _buildAchievementsRow (no context there)
     // Calculate responsive height based on available space
     final screenHeight = MediaQuery.of(context).size.height;
     final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);

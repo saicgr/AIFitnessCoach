@@ -16,6 +16,7 @@ import '../../../widgets/segmented_tab_bar.dart';
 import '../../../widgets/main_shell.dart';
 import 'components/components.dart';
 import 'workout_review_sheet.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 part 'regenerate_workout_sheet_part_regenerate_workout_sheet.dart';
 part 'regenerate_workout_sheet_part_regenerate_workout_sheet_state.dart';

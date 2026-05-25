@@ -4,6 +4,7 @@ import '../core/constants/app_colors.dart';
 import '../data/providers/cosmetics_provider.dart';
 import '../data/services/haptic_service.dart';
 import '../data/services/tts_service.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 
 /// Coach voice selector.
@@ -65,7 +66,7 @@ class CoachVoicePicker extends ConsumerWidget {
               Icon(Icons.record_voice_over, color: textMuted, size: 18),
               const SizedBox(width: 8),
               Text(
-                'Coach voice',
+                AppLocalizations.of(context).coachVoicePickerCoachVoice,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -76,7 +77,7 @@ class CoachVoicePicker extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Plays during workout announcements',
+            AppLocalizations.of(context).coachVoicePickerPlaysDuringWorkoutAnnouncem,
             style: TextStyle(fontSize: 12, color: textMuted),
           ),
           const SizedBox(height: 12),
@@ -84,6 +85,7 @@ class CoachVoicePicker extends ConsumerWidget {
             final isSelected = selected == opt.id;
             final isLocked = opt.cosmeticId != null && !cosmetics.ownsCosmetic(opt.cosmeticId!);
             return _buildVoiceRow(
+              context: context,
               opt: opt,
               selected: isSelected,
               locked: isLocked,
@@ -95,8 +97,8 @@ class CoachVoicePicker extends ConsumerWidget {
                 if (isLocked) {
                   HapticService.light();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Unlocks at Level 50 — keep leveling up!'),
+                    SnackBar(
+                      content: Text(AppLocalizations.of(context).coachVoicePickerUnlocksAtLevel50),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -112,7 +114,7 @@ class CoachVoicePicker extends ConsumerWidget {
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to switch voice: $e')),
+                      SnackBar(content: Text(AppLocalizations.of(context).coachVoicePickerFailedToSwitchVoice('$e'))),
                     );
                   }
                 }
@@ -125,6 +127,7 @@ class CoachVoicePicker extends ConsumerWidget {
   }
 
   Widget _buildVoiceRow({
+    required BuildContext context,
     required _VoiceOption opt,
     required bool selected,
     required bool locked,
@@ -178,7 +181,7 @@ class CoachVoicePicker extends ConsumerWidget {
                     ],
                   ),
                   Text(
-                    locked ? 'Unlocks at Level 50' : opt.subtitle,
+                    locked ? AppLocalizations.of(context).coachVoicePickerUnlocksAtLevel502 : opt.subtitle,
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
                 ],

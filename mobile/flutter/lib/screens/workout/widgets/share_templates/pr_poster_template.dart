@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '_share_common.dart';
 
 /// PR Poster — single giant PR weight with a delta chip. Renders the
@@ -24,6 +25,7 @@ class PrPosterTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final useKg = weightUnit == 'kg';
 
     // Pick the biggest weight PR by absolute delta.
@@ -63,7 +65,7 @@ class PrPosterTemplate extends StatelessWidget {
       child: Column(
         children: [
           ShareTrackedCaps(
-            'NEW PR',
+            l.sharePrNewPr,
             size: 11,
             color: const Color(0xFFF97316),
             letterSpacing: 4,

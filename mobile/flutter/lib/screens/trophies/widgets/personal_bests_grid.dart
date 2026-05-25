@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/personal_bests_provider.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// 3-tile grid of Personal Bests (Heaviest Lift / Longest Session / Most
 /// Volume). Each tile renders either real data from `PersonalBests` or a
@@ -20,10 +21,11 @@ class PersonalBestsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final l10n = AppLocalizations.of(context)!;
     final tiles = <_PbTileData>[
-      _buildHeaviestTile(data?.heaviestLift),
-      _buildLongestTile(data?.longestSession),
-      _buildVolumeTile(data?.mostVolume),
+      _buildHeaviestTile(l10n, data?.heaviestLift),
+      _buildLongestTile(l10n, data?.longestSession),
+      _buildVolumeTile(l10n, data?.mostVolume),
     ];
 
     return GridView.builder(
@@ -44,17 +46,17 @@ class PersonalBestsGrid extends StatelessWidget {
     );
   }
 
-  _PbTileData _buildHeaviestTile(HeaviestLift? hl) {
+  _PbTileData _buildHeaviestTile(AppLocalizations l10n, HeaviestLift? hl) {
     if (hl == null || hl.weightLb <= 0) {
-      return const _PbTileData(
-        label: 'Heaviest Lift',
+      return _PbTileData(
+        label: l10n.personalBestsGridHeaviestLift,
         emoji: '💪',
         primary: null,
         secondary: null,
       );
     }
     return _PbTileData(
-      label: 'Heaviest Lift',
+      label: l10n.personalBestsGridHeaviestLift,
       emoji: '💪',
       primary: '${hl.weightLb.toStringAsFixed(hl.weightLb % 1 == 0 ? 0 : 1)} lb'
           '${hl.reps > 0 ? ' × ${hl.reps}' : ''}',
@@ -62,10 +64,10 @@ class PersonalBestsGrid extends StatelessWidget {
     );
   }
 
-  _PbTileData _buildLongestTile(LongestSession? ls) {
+  _PbTileData _buildLongestTile(AppLocalizations l10n, LongestSession? ls) {
     if (ls == null || ls.durationMinutes <= 0) {
-      return const _PbTileData(
-        label: 'Longest Session',
+      return _PbTileData(
+        label: l10n.personalBestsGridLongestSession,
         emoji: '⏱️',
         primary: null,
         secondary: null,
@@ -76,17 +78,17 @@ class PersonalBestsGrid extends StatelessWidget {
         ? '${(minutes / 60).toStringAsFixed(minutes % 60 == 0 ? 0 : 1)}h'
         : '${minutes}m';
     return _PbTileData(
-      label: 'Longest Session',
+      label: l10n.personalBestsGridLongestSession,
       emoji: '⏱️',
       primary: primary,
       secondary: _composeSecondary(ls.workoutName, ls.date),
     );
   }
 
-  _PbTileData _buildVolumeTile(MostVolume? mv) {
+  _PbTileData _buildVolumeTile(AppLocalizations l10n, MostVolume? mv) {
     if (mv == null || mv.totalVolumeLb <= 0) {
-      return const _PbTileData(
-        label: 'Most Volume',
+      return _PbTileData(
+        label: l10n.personalBestsGridMostVolume,
         emoji: '📈',
         primary: null,
         secondary: null,
@@ -97,7 +99,7 @@ class PersonalBestsGrid extends StatelessWidget {
         ? '${(v / 1000).toStringAsFixed(v >= 100000 ? 0 : 1)}k lb'
         : '${v.toStringAsFixed(0)} lb';
     return _PbTileData(
-      label: 'Most Volume',
+      label: l10n.personalBestsGridMostVolume,
       emoji: '📈',
       primary: primary,
       secondary: _composeSecondary(mv.workoutName, mv.date),
@@ -213,7 +215,7 @@ class _PbTile extends StatelessWidget {
             child: Text(
               loading
                   ? '…'
-                  : (data.primary ?? 'No data'),
+                  : (data.primary ?? AppLocalizations.of(context)!.unifiedHomeWidgetsNoData),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

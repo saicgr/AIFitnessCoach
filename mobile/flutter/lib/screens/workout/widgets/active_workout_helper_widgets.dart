@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/models/set_progression.dart';
 import '../../../core/services/exercise_info_service.dart';
 import '../../../core/theme/accent_color_provider.dart';

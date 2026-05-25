@@ -27,7 +27,7 @@ class _CustomExercisesSection extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'My Exercises',
+                AppLocalizations.of(context).myLibraryTabMyExercises,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -53,7 +53,7 @@ class _CustomExercisesSection extends ConsumerWidget {
                     Icon(Icons.add, size: 16, color: orange),
                     const SizedBox(width: 4),
                     Text(
-                      'Create',
+                      AppLocalizations.of(context).myLibraryTabCreate,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -154,14 +154,14 @@ class _CustomExercisesSection extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Create your first custom exercise',
+              AppLocalizations.of(context).myLibraryTabCreateYourFirstCustom,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Build supersets, combos, or unique movements',
+              AppLocalizations.of(context).myLibraryTabBuildSupersetsCombosOr,
               style: TextStyle(
                 fontSize: 13,
                 color: textMuted,
@@ -174,8 +174,8 @@ class _CustomExercisesSection extends ConsumerWidget {
                 color: orange,
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Text(
-                'Get Started',
+              child: Text(
+                AppLocalizations.of(context).myLibraryTabGetStarted,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -412,7 +412,7 @@ class _FavoritesSection extends ConsumerWidget {
                   // View All could navigate to a full favorites screen
                 },
                 child: Text(
-                  'View All',
+                  AppLocalizations.of(context).myLibraryTabViewAll,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -426,14 +426,14 @@ class _FavoritesSection extends ConsumerWidget {
 
         // Content
         if (favoriteNames.isEmpty)
-          _buildEmptyState(textMuted)
+          _buildEmptyState(context, textMuted)
         else
           categoryAsync.when(
             loading: () => const SizedBox(
               height: 110,
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            error: (_, __) => _buildEmptyState(textMuted),
+            error: (_, __) => _buildEmptyState(context, textMuted),
             data: (categoryData) {
               // Cross-reference favorite names with full exercise data
               final allExercises = categoryData.allExercisesSorted;
@@ -447,7 +447,7 @@ class _FavoritesSection extends ConsumerWidget {
               }
 
               if (favoriteExercises.isEmpty) {
-                return _buildEmptyState(textMuted);
+                return _buildEmptyState(context, textMuted);
               }
 
               return SizedBox(
@@ -478,12 +478,12 @@ class _FavoritesSection extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted) {
+  Widget _buildEmptyState(BuildContext context, Color textMuted) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Text(
-        'Heart exercises to save them here',
+        AppLocalizations.of(context).myLibraryTabHeartExercisesToSave,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 14,
@@ -530,7 +530,7 @@ class _StaplesSection extends ConsumerWidget {
         ).animate().fadeIn().slideY(begin: 0.05),
         const SizedBox(height: 2),
         Text(
-          'AI prioritizes these in your workouts',
+          AppLocalizations.of(context).myLibraryTabAiPrioritizesTheseIn,
           style: TextStyle(
             fontSize: 12,
             color: textMuted,
@@ -545,14 +545,14 @@ class _StaplesSection extends ConsumerWidget {
             child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           )
         else if (staples.isEmpty)
-          _buildEmptyState(textMuted)
+          _buildEmptyState(context, textMuted)
         else
           categoryAsync.when(
             loading: () => const SizedBox(
               height: 130,
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            error: (_, __) => _buildEmptyState(textMuted),
+            error: (_, __) => _buildEmptyState(context, textMuted),
             data: (categoryData) {
               // Cross-reference staple names with full exercise data
               final allExercises = categoryData.allExercisesSorted;
@@ -616,12 +616,12 @@ class _StaplesSection extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted) {
+  Widget _buildEmptyState(BuildContext context, Color textMuted) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Text(
-        'Mark exercises as staples for AI to prioritize',
+        AppLocalizations.of(context).myLibraryTabMarkExercisesAsStaples,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 14,
@@ -850,7 +850,7 @@ class _RecentActivitySection extends ConsumerWidget {
             Icon(Icons.history, size: 20, color: cyan),
             const SizedBox(width: 8),
             Text(
-              'Recent Activity',
+              AppLocalizations.of(context).myLibraryTabRecentActivity,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -865,7 +865,7 @@ class _RecentActivitySection extends ConsumerWidget {
                           // Navigate to full history view (My Stats tab)
                         },
                         child: Text(
-                          'View All',
+                          AppLocalizations.of(context).myLibraryTabViewAll,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -892,14 +892,14 @@ class _RecentActivitySection extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(
-              'Failed to load activity',
+              AppLocalizations.of(context).myLibraryTabFailedToLoadActivity,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: textMuted),
             ),
           ),
           data: (history) {
             if (history.isEmpty) {
-              return _buildEmptyState(textMuted);
+              return _buildEmptyState(context, textMuted);
             }
 
             final displayItems = history.take(5).toList();
@@ -920,12 +920,12 @@ class _RecentActivitySection extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted) {
+  Widget _buildEmptyState(BuildContext context, Color textMuted) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Text(
-        'Complete workouts to see your exercise history',
+        AppLocalizations.of(context).myLibraryTabCompleteWorkoutsToSee,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 14,

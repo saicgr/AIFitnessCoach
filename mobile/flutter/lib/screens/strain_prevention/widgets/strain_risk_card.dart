@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/strain_prevention.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Card showing risk level for a muscle group with volume progress bar
 class StrainRiskCard extends StatelessWidget {
@@ -83,7 +84,7 @@ class StrainRiskCard extends StatelessWidget {
             // Weekly increase if present
             if (risk.weeklyIncreasePercent != 0) ...[
               const SizedBox(height: 8),
-              _buildWeeklyIncrease(colorScheme),
+              _buildWeeklyIncrease(context, colorScheme),
             ],
 
             // Alert message if present
@@ -206,34 +207,36 @@ class StrainRiskCard extends StatelessWidget {
             ],
           ),
         ),
-        // Over cap indicator
+        // Over cap indicator — rendered via context at build() site only
         if (risk.isOverCap) ...[
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Icon(
-                Icons.warning_amber,
-                size: 12,
-                color: riskColor,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '${(risk.volumeUtilization - 100).toStringAsFixed(0)}% over cap',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+          Builder(
+            builder: (context) => Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(
+                  Icons.warning_amber,
+                  size: 12,
                   color: riskColor,
                 ),
-              ),
-            ],
+                const SizedBox(width: 4),
+                Text(
+                  AppLocalizations.of(context).strainRiskCardPercentOverCap((risk.volumeUtilization - 100).toStringAsFixed(0)),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: riskColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ],
     );
   }
 
-  Widget _buildWeeklyIncrease(ColorScheme colorScheme) {
+  Widget _buildWeeklyIncrease(BuildContext context, ColorScheme colorScheme) {
     final isIncrease = risk.weeklyIncreasePercent > 0;
     final isDangerous = risk.weeklyIncreasePercent > risk.recommendedMaxIncrease;
     final color = isDangerous
@@ -251,7 +254,7 @@ class StrainRiskCard extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          '${isIncrease ? '+' : ''}${risk.weeklyIncreasePercent.toStringAsFixed(0)}% vs last week',
+          AppLocalizations.of(context).strainRiskCardPercentVsLastWeek('${isIncrease ? '+' : ''}${risk.weeklyIncreasePercent.toStringAsFixed(0)}'),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
@@ -267,7 +270,7 @@ class StrainRiskCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              'Too fast',
+              AppLocalizations.of(context).strainRiskCardTooFast,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,

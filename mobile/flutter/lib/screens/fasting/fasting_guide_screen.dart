@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/theme/theme_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import 'widgets/collapsible_intro_card.dart';
 import 'widgets/fasting_timeline_pager.dart';
@@ -21,6 +22,7 @@ class FastingGuideScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -34,8 +36,7 @@ class FastingGuideScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 48),
                 children: [
                   Text(
-                    'Everything you need to fast confidently — what it is, '
-                    'how it works, and what happens in your body.',
+                    l10n.fastingGuideSubtitle,
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.4,
@@ -95,7 +96,7 @@ class FastingGuideScreen extends StatelessWidget {
 
                   // ── (2) Swipeable educational timeline pager ─────────
                   const SizedBox(height: 16),
-                  _timelineHeader(colors),
+                  _timelineHeader(context, colors),
                   const SizedBox(height: 12),
                   const FastingTimelinePager(),
 
@@ -126,12 +127,13 @@ class FastingGuideScreen extends StatelessWidget {
     );
   }
 
-  Widget _timelineHeader(ThemeColors colors) {
+  Widget _timelineHeader(BuildContext context, ThemeColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'The fasting timeline',
+          l10n.fastingGuideTheFastingTimeline,
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -140,8 +142,7 @@ class FastingGuideScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Swipe through what happens hour by hour — from your last meal '
-          'all the way to a 30-day fast.',
+          l10n.fastingGuideSwipeTimeline,
           style: TextStyle(
             fontSize: 13,
             height: 1.4,
@@ -162,6 +163,7 @@ class _CompactHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
       child: Row(
@@ -170,7 +172,7 @@ class _CompactHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Fasting Guide',
+              l10n.fastingGuideFastingGuide,
               style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.bold,
@@ -189,6 +191,7 @@ class _ProtocolExplainer extends StatelessWidget {
   final ThemeColors colors;
   const _ProtocolExplainer({required this.colors});
 
+  // TODO(i18n): static const field initializer — cannot access BuildContext.
   static const _protocols = [
     ('14:10', 'For beginners', 'A 14-hour fast — an easy on-ramp.'),
     ('16:8', 'Most popular', 'A 16-hour fast; balances results and ease.'),
@@ -199,6 +202,7 @@ class _ProtocolExplainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -210,7 +214,7 @@ class _ProtocolExplainer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Common protocols',
+            l10n.fastingGuideCommonProtocols,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -279,6 +283,8 @@ class _BeginnerTips extends StatelessWidget {
   final ThemeColors colors;
   const _BeginnerTips({required this.colors});
 
+  // TODO(i18n): static const field initializer — cannot access BuildContext.
+  // Migrate to build-time list or separate ARB keys when refactoring.
   static const _tips = [
     ('Start gentle', 'Begin with 12:12 or 14:10 and extend as it feels easy.'),
     ('Drink water', 'Water, black coffee and plain tea keep you hydrated and '
@@ -294,6 +300,7 @@ class _BeginnerTips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -305,7 +312,7 @@ class _BeginnerTips extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Beginner tips',
+            l10n.fastingGuideBeginnerTips,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -360,6 +367,7 @@ class _Faq extends StatelessWidget {
   final ThemeColors colors;
   const _Faq({required this.colors});
 
+  // TODO(i18n): static const field initializer — cannot access BuildContext.
   static const _faqs = [
     ('Does black coffee break my fast?',
         'No. Black coffee, plain tea and water have effectively no calories '
@@ -381,6 +389,7 @@ class _Faq extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
@@ -389,7 +398,7 @@ class _Faq extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             child: Text(
-              'FAQ',
+              l10n.fastingGuideFaq,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -454,6 +463,7 @@ class _SafetyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -469,7 +479,7 @@ class _SafetyCard extends StatelessWidget {
               Icon(Icons.shield_outlined, size: 20, color: colors.warning),
               const SizedBox(width: 8),
               Text(
-                'Stay safe',
+                l10n.fastingGuideStaySafe,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -480,11 +490,7 @@ class _SafetyCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Stop fasting and eat if you feel dizzy, faint, shaky, or unwell. '
-            'Fasts beyond 24 hours need extra attention to electrolytes, and '
-            'fasts beyond 72 hours should only be done under medical '
-            'supervision. Fasting is not a substitute for medical care — '
-            'this guide is educational and not medical advice.',
+            l10n.fastingGuideSafetyBody,
             style: TextStyle(
               fontSize: 13,
               height: 1.5,

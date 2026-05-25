@@ -20,6 +20,7 @@ import '../../../core/constants/workout_design.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../shared/unit_chip.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// MacroFactor-style workout top bar
 class WorkoutTopBarV2 extends ConsumerWidget {
@@ -225,7 +226,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                               ? WorkoutDesign.textSecondary
                               : Colors.grey.shade700,
                         ),
-                        tooltip: 'More',
+                        tooltip: AppLocalizations.of(context)!.workoutTopBarMore,
                         onSelected: (v) {
                           HapticFeedback.selectionClick();
                           if (v == 'skip_exercise') {
@@ -234,26 +235,29 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                             onCompleteWorkoutNow?.call();
                           }
                         },
-                        itemBuilder: (ctx) => [
-                          if (onSkipExercise != null)
-                            const PopupMenuItem<String>(
-                              value: 'skip_exercise',
-                              child: Row(children: [
-                                Icon(Icons.skip_next_rounded, size: 18),
-                                SizedBox(width: 10),
-                                Text('Skip exercise'),
-                              ]),
-                            ),
-                          if (onCompleteWorkoutNow != null)
-                            const PopupMenuItem<String>(
-                              value: 'complete_now',
-                              child: Row(children: [
-                                Icon(Icons.check_circle_rounded, size: 18),
-                                SizedBox(width: 10),
-                                Text('Complete workout'),
-                              ]),
-                            ),
-                        ],
+                        itemBuilder: (ctx) {
+                          final l = AppLocalizations.of(ctx)!;
+                          return [
+                            if (onSkipExercise != null)
+                              PopupMenuItem<String>(
+                                value: 'skip_exercise',
+                                child: Row(children: [
+                                  const Icon(Icons.skip_next_rounded, size: 18),
+                                  const SizedBox(width: 10),
+                                  Text(l.workoutTopBarSkipExercise),
+                                ]),
+                              ),
+                            if (onCompleteWorkoutNow != null)
+                              PopupMenuItem<String>(
+                                value: 'complete_now',
+                                child: Row(children: [
+                                  const Icon(Icons.check_circle_rounded, size: 18),
+                                  const SizedBox(width: 10),
+                                  Text(l.workoutTopBarCompleteWorkout),
+                                ]),
+                              ),
+                          ];
+                        },
                       ),
                     ),
                   ],

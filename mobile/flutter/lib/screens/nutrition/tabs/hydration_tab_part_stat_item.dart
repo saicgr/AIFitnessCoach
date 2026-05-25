@@ -93,7 +93,7 @@ class _QuickAddSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'QUICK ADD WATER', isDark: isDark),
+        _SectionHeader(title: AppLocalizations.of(context).hydrationTabPartQuickAddWater, isDark: isDark),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -132,7 +132,7 @@ class _QuickAddSection extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Custom',
+                          AppLocalizations.of(context).hydrationTabPartCustom,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -140,7 +140,7 @@ class _QuickAddSection extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Any ml',
+                          AppLocalizations.of(context).hydrationTabPartAnyMl,
                           style: TextStyle(
                             fontSize: 10,
                             color: textMuted,
@@ -236,7 +236,7 @@ class _DrinkTypeSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'OTHER DRINKS', isDark: isDark),
+        _SectionHeader(title: AppLocalizations.of(context).hydrationTabPartOtherDrinks, isDark: isDark),
         const SizedBox(height: 12),
         Row(
           children: DrinkType.values
@@ -306,7 +306,7 @@ class _TodayBreakdown extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'BREAKDOWN',
+            AppLocalizations.of(context).hydrationTabPartBreakdown,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -317,7 +317,7 @@ class _TodayBreakdown extends StatelessWidget {
           const SizedBox(height: 12),
           _BreakdownRow(
             emoji: '💧',
-            label: 'Water',
+            label: AppLocalizations.of(context).hydrationTabPartWater,
             value: summary.waterMl,
             total: summary.totalMl,
             unit: unit,
@@ -325,7 +325,7 @@ class _TodayBreakdown extends StatelessWidget {
           ),
           _BreakdownRow(
             emoji: '🥤',
-            label: 'Protein Shake',
+            label: AppLocalizations.of(context).hydrationTabPartProteinShake,
             value: summary.proteinShakeMl,
             total: summary.totalMl,
             unit: unit,
@@ -333,7 +333,7 @@ class _TodayBreakdown extends StatelessWidget {
           ),
           _BreakdownRow(
             emoji: '⚡',
-            label: 'Sports Drink',
+            label: AppLocalizations.of(context).hydrationTabPartSportsDrink,
             value: summary.sportsDrinkMl,
             total: summary.totalMl,
             unit: unit,
@@ -341,7 +341,7 @@ class _TodayBreakdown extends StatelessWidget {
           ),
           _BreakdownRow(
             emoji: '🥛',
-            label: 'Other',
+            label: AppLocalizations.of(context).hydrationTabPartOther,
             value: summary.otherMl,
             total: summary.totalMl,
             unit: unit,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../widgets/glass_card.dart';
 import '../../../widgets/glow_button.dart';

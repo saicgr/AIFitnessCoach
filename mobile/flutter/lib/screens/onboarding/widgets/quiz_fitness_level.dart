@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import 'onboarding_theme.dart';
 
 /// Glassmorphic combined fitness level, training experience, and activity level widget.
@@ -26,43 +27,43 @@ class QuizFitnessLevel extends StatelessWidget {
     this.showHeader = true,
   });
 
-  static const _levels = [
+  static List<Map<String, Object>> _buildLevels(AppLocalizations l10n) => [
     {
       'id': 'beginner',
-      'label': 'Beginner',
+      'label': l10n.quizFitnessLevelBeginner,
       'icon': Icons.eco_outlined,
       'color': AppColors.green,
-      'description': 'New to fitness or returning after a break',
+      'description': l10n.quizFitnessLevelBeginnerDesc,
     },
     {
       'id': 'intermediate',
-      'label': 'Intermediate',
+      'label': l10n.quizFitnessLevelIntermediate,
       'icon': Icons.trending_up,
       'color': AppColors.onboardingAccent,
-      'description': 'Workout regularly, familiar with exercises',
+      'description': l10n.quizFitnessLevelIntermediateDesc,
     },
     {
       'id': 'advanced',
-      'label': 'Advanced',
+      'label': l10n.quizFitnessLevelAdvanced,
       'icon': Icons.rocket_launch_outlined,
       'color': AppColors.purple,
-      'description': 'Experienced athlete, seeking new challenges',
+      'description': l10n.quizFitnessLevelAdvancedDesc,
     },
   ];
 
-  static const _experienceOptions = [
-    {'id': 'never', 'label': 'Never', 'description': 'Brand new to lifting'},
-    {'id': 'less_than_6_months', 'label': '< 6 months', 'description': 'Just getting started'},
-    {'id': '6_months_to_2_years', 'label': '6mo - 2yrs', 'description': 'Building consistency'},
-    {'id': '2_to_5_years', 'label': '2 - 5 years', 'description': 'Solid foundation'},
-    {'id': '5_plus_years', 'label': '5+ years', 'description': 'Veteran lifter'},
+  static List<Map<String, String>> _buildExperienceOptions(AppLocalizations l10n) => [
+    {'id': 'never', 'label': l10n.quizFitnessLevelNever, 'description': l10n.quizFitnessLevelBrandNewToLifting},
+    {'id': 'less_than_6_months', 'label': l10n.quizFitnessLevelLessThan6Months, 'description': l10n.quizFitnessLevelJustGettingStarted},
+    {'id': '6_months_to_2_years', 'label': l10n.quizFitnessLevel6MonTo2Yrs, 'description': l10n.quizFitnessLevelBuildingConsistency},
+    {'id': '2_to_5_years', 'label': l10n.quizFitnessLevel2To5Years, 'description': l10n.quizFitnessLevelSolidFoundation},
+    {'id': '5_plus_years', 'label': l10n.quizFitnessLevel5PlusYears, 'description': l10n.quizFitnessLevelVeteranLifter},
   ];
 
-  static const _activityLevelOptions = [
-    {'id': 'sedentary', 'emoji': '🪑', 'label': 'Sedentary', 'description': 'Desk job, minimal movement'},
-    {'id': 'lightly_active', 'emoji': '🚶', 'label': 'Light', 'description': 'Some walking, light activity'},
-    {'id': 'moderately_active', 'emoji': '🏃', 'label': 'Moderate', 'description': 'On feet often, regular activity'},
-    {'id': 'very_active', 'emoji': '⚡', 'label': 'Very Active', 'description': 'Physical job, always moving'},
+  static List<Map<String, String>> _buildActivityLevelOptions(AppLocalizations l10n) => [
+    {'id': 'sedentary', 'emoji': '\u{1FA91}', 'label': l10n.quizFitnessLevelSedentary, 'description': l10n.quizFitnessLevelSedentaryDesc},
+    {'id': 'lightly_active', 'emoji': '\u{1F6B6}', 'label': l10n.quizFitnessLevelLight, 'description': l10n.quizFitnessLevelLightDesc},
+    {'id': 'moderately_active', 'emoji': '\u{1F3C3}', 'label': l10n.quizFitnessLevelModerate, 'description': l10n.quizFitnessLevelModerateDesc},
+    {'id': 'very_active', 'emoji': '\u{26A1}', 'label': l10n.quizFitnessLevelVeryActive, 'description': l10n.quizFitnessLevelVeryActiveDesc},
   ];
 
   @override
@@ -77,7 +78,7 @@ class QuizFitnessLevel extends StatelessWidget {
           children: [
             if (showHeader) ...[
               Text(
-                "What's your current fitness level?",
+                AppLocalizations.of(context)!.quizFitnessLevelWhatSYourCurrent,
                 maxLines: 1,
                 overflow: TextOverflow.visible,
                 style: TextStyle(
@@ -90,7 +91,7 @@ class QuizFitnessLevel extends StatelessWidget {
               ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
               const SizedBox(height: 6),
               Text(
-                "Be honest - we'll adjust as you progress",
+                AppLocalizations.of(context)!.quizFitnessLevelBeHonestWeLl,
                 style: TextStyle(
                   fontSize: 14,
                   color: t.textSecondary,
@@ -98,14 +99,14 @@ class QuizFitnessLevel extends StatelessWidget {
               ).animate().fadeIn(delay: 200.ms),
               const SizedBox(height: 16),
             ],
-            ..._buildLevelCards(t),
+            ..._buildLevelCards(context, t),
             if (selectedLevel != null) ...[
               const SizedBox(height: 20),
-              _buildExperienceSection(t),
+              _buildExperienceSection(context, t),
             ],
             if (selectedExperience != null && onActivityLevelChanged != null) ...[
               const SizedBox(height: 20),
-              _buildActivityLevelSection(t),
+              _buildActivityLevelSection(context, t),
             ],
             const SizedBox(height: 16),
           ],
@@ -114,8 +115,9 @@ class QuizFitnessLevel extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildLevelCards(OnboardingTheme t) {
-    return _levels.asMap().entries.map((entry) {
+  List<Widget> _buildLevelCards(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
+    return _buildLevels(l10n).asMap().entries.map((entry) {
       final index = entry.key;
       final level = entry.value;
       final isSelected = selectedLevel == level['id'];
@@ -203,24 +205,26 @@ class QuizFitnessLevel extends StatelessWidget {
     }).toList();
   }
 
-  Widget _buildExperienceSection(OnboardingTheme t) {
+  Widget _buildExperienceSection(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
+    final experienceOptions = _buildExperienceOptions(l10n);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'How long have you been lifting weights?',
+          l10n.quizFitnessLevelHowLongHaveYou,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: t.textPrimary),
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 4),
         Text(
-          'This helps us pick the right exercises',
+          l10n.quizFitnessLevelThisHelpsUsPick,
           style: TextStyle(fontSize: 12, color: t.textMuted),
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _experienceOptions.asMap().entries.map((entry) {
+          children: experienceOptions.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;
             final isSelected = selectedExperience == option['id'];
@@ -268,24 +272,26 @@ class QuizFitnessLevel extends StatelessWidget {
     );
   }
 
-  Widget _buildActivityLevelSection(OnboardingTheme t) {
+  Widget _buildActivityLevelSection(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
+    final activityLevelOptions = _buildActivityLevelOptions(l10n);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Daily activity level (outside gym)?',
+          l10n.quizFitnessLevelDailyActivityLevelOutside,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: t.textPrimary),
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 4),
         Text(
-          'Helps calculate your calorie needs',
+          l10n.quizFitnessLevelHelpsCalculateYourCalorie,
           style: TextStyle(fontSize: 12, color: t.textMuted),
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _activityLevelOptions.asMap().entries.map((entry) {
+          children: activityLevelOptions.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;
             final isSelected = selectedActivityLevel == option['id'];

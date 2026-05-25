@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/menu_item.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 
 /// Reusable bottom sheet that explains what a health-related score means
@@ -100,7 +101,7 @@ class ScoreExplainSheet extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    final content = _content();
+    final content = _content(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -208,7 +209,8 @@ class ScoreExplainSheet extends StatelessWidget {
     );
   }
 
-  _SheetContent _content() {
+  _SheetContent _content(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     switch (kind) {
       case ScoreKind.rating:
         final r = value as String?;
@@ -220,10 +222,8 @@ class ScoreExplainSheet extends StatelessWidget {
         };
         return _SheetContent(
           icon: Icons.verified_rounded,
-          title: 'How this dish rates for you',
-          subtitle:
-              "AI picks a traffic-light rating based on your goals (cutting, bulking, balanced) — then checks macros, "
-              "processing level, and inflammation to place each dish on the scale.",
+          title: l10n.scoreExplainHowThisDishRates,
+          subtitle: l10n.scoreExplainAiPicksATrafficLight,
           accent: switch (r) {
             'green' => AppColors.success,
             'yellow' => AppColors.orange,
@@ -231,30 +231,30 @@ class ScoreExplainSheet extends StatelessWidget {
             _ => AppColors.orange,
           },
           currentLabel: switch (r) {
-            'green' => 'GOOD',
-            'yellow' => 'MODERATE',
-            'red' => 'SKIP',
+            'green' => l10n.scoreExplainCurrentLabelGood,
+            'yellow' => l10n.scoreExplainCurrentLabelModerate,
+            'red' => l10n.scoreExplainCurrentLabelSkip,
             _ => null,
           },
           activeIndex: idx,
-          levels: const [
+          levels: [
             _Level(
               color: AppColors.success,
-              label: 'Good',
-              body: 'Hits your goal macros, mostly whole foods, low-to-moderate inflammation. Pick freely.',
+              label: l10n.scoreExplainGood,
+              body: l10n.scoreExplainHitsYourGoalMacros,
             ),
             _Level(
               color: AppColors.orange,
-              label: 'Moderate',
-              body: "Reasonable choice with a trade-off — watch portion or pair with a cleaner side.",
+              label: l10n.scoreExplainModerate,
+              body: l10n.scoreExplainReasonableChoiceWithA,
             ),
             _Level(
               color: AppColors.error,
-              label: 'Skip',
-              body: 'High inflammation, ultra-processed, or way off your macros. Swap to a Good option if possible.',
+              label: l10n.scoreExplainSkip,
+              body: l10n.scoreExplainHighInflammationUltraProce,
             ),
           ],
-          footer: 'Ratings are personalised — the same dish can be Good for one goal and Skip for another.',
+          footer: l10n.scoreExplainRatingsArePersonalised,
         );
 
       case ScoreKind.inflammation:
@@ -268,10 +268,8 @@ class ScoreExplainSheet extends StatelessWidget {
                     : 2;
         return _SheetContent(
           icon: Icons.local_fire_department_rounded,
-          title: 'Inflammation score: $v / 10',
-          subtitle:
-              "Chronic low-grade inflammation is linked to joint pain, fatigue, acne, and worse recovery. "
-              "We rank every dish on a 0–10 scale using the foods it contains.",
+          title: l10n.scoreExplainInflammationScoreValue(v),
+          subtitle: l10n.scoreExplainChronicLowGradeInflammation,
           accent: v >= 7
               ? AppColors.error
               : v >= 4
@@ -280,29 +278,29 @@ class ScoreExplainSheet extends StatelessWidget {
           currentLabel: v < 0
               ? null
               : v <= 3
-                  ? 'ANTI-INFL.'
+                  ? l10n.scoreExplainCurrentLabelAntiInfl
                   : v <= 6
-                      ? 'MILD'
-                      : 'HIGH',
+                      ? l10n.scoreExplainCurrentLabelMild
+                      : l10n.scoreExplainCurrentLabelHigh,
           activeIndex: idx,
-          levels: const [
+          levels: [
             _Level(
               color: AppColors.success,
-              label: '0 – 3  Anti-inflammatory',
-              body: 'Leafy greens, berries, wild salmon, turmeric, extra-virgin olive oil, nuts, legumes.',
+              label: l10n.scoreExplain03AntiInflammatory,
+              body: l10n.scoreExplainLeafyGreensBerriesWild,
             ),
             _Level(
               color: AppColors.orange,
-              label: '4 – 6  Neutral / mild',
-              body: 'White rice, plain eggs, hard cheese, lean red meat in small portions.',
+              label: l10n.scoreExplain46NeutralMild,
+              body: l10n.scoreExplainWhiteRicePlainEggs,
             ),
             _Level(
               color: AppColors.error,
-              label: '7 – 10  Highly inflammatory',
-              body: 'Fried foods, processed meats, sugary drinks, refined seed oils, packaged snacks.',
+              label: l10n.scoreExplain710HighlyInflammatory,
+              body: l10n.scoreExplainFriedFoodsProcessedMeats,
             ),
           ],
-          footer: 'Aim for a daily average under 5 if you care about recovery or skin.',
+          footer: l10n.scoreExplainAimForADailyAverage,
         );
 
       case ScoreKind.glycemicLoad:
@@ -316,10 +314,8 @@ class ScoreExplainSheet extends StatelessWidget {
                     : 2;
         return _SheetContent(
           icon: Icons.show_chart_rounded,
-          title: 'Glycemic load: $v',
-          subtitle:
-              "Glycemic Load combines how fast a food raises blood sugar (GI) with how much of it you're actually eating. "
-              "More useful than GI alone — it reflects real portions.",
+          title: l10n.scoreExplainGlycemicLoadValue(v),
+          subtitle: l10n.scoreExplainGlycemicLoadCombines,
           accent: v >= 20
               ? AppColors.error
               : v >= 10
@@ -328,30 +324,29 @@ class ScoreExplainSheet extends StatelessWidget {
           currentLabel: v < 0
               ? null
               : v < 10
-                  ? 'LOW'
+                  ? l10n.scoreExplainCurrentLabelLow
                   : v < 20
-                      ? 'MEDIUM'
-                      : 'HIGH',
+                      ? l10n.scoreExplainCurrentLabelMedium
+                      : l10n.scoreExplainCurrentLabelHigh,
           activeIndex: idx,
-          levels: const [
+          levels: [
             _Level(
               color: AppColors.success,
-              label: 'Low  (under 10)',
-              body: 'Minimal blood-sugar spike. Non-starchy vegetables, eggs, meat, berries, most dairy.',
+              label: l10n.scoreExplainLowUnder10,
+              body: l10n.scoreExplainMinimalBloodSugarSpike,
             ),
             _Level(
               color: AppColors.orange,
-              label: 'Medium  (10 – 19)',
-              body: 'Moderate spike. Oats, whole-wheat bread, banana, sweet potato, basmati rice.',
+              label: l10n.scoreExplainMedium1019,
+              body: l10n.scoreExplainModerateSpikeOatsWhole,
             ),
             _Level(
               color: AppColors.error,
-              label: 'High  (20+)',
-              body: 'Steep spike + crash. White rice bowls, sugary drinks, pastries, large pasta plates.',
+              label: l10n.scoreExplainHigh20,
+              body: l10n.scoreExplainSteepSpikeCrashWhite,
             ),
           ],
-          footer:
-              'Important if you have diabetes or pre-diabetes, or if you want steady energy. Pairing with protein + fibre blunts the spike.',
+          footer: l10n.scoreExplainImportantIfYouHaveDiabetes,
         );
 
       case ScoreKind.fodmap:
@@ -364,10 +359,8 @@ class ScoreExplainSheet extends StatelessWidget {
         };
         return _SheetContent(
           icon: Icons.health_and_safety_rounded,
-          title: 'FODMAP rating',
-          subtitle:
-              "FODMAPs are short-chain carbs that can trigger bloating, gas, and IBS flare-ups. The low-FODMAP approach "
-              "(Monash University) groups foods into three tiers.",
+          title: l10n.scoreExplainFodmapRating,
+          subtitle: l10n.scoreExplainFodmapsAreShortChain,
           accent: switch (r) {
             'low' => AppColors.success,
             'medium' => AppColors.orange,
@@ -375,57 +368,54 @@ class ScoreExplainSheet extends StatelessWidget {
             _ => AppColors.orange,
           },
           currentLabel: switch (r) {
-            'low' => 'LOW',
-            'medium' => 'MEDIUM',
-            'high' => 'HIGH',
+            'low' => l10n.scoreExplainCurrentLabelLow,
+            'medium' => l10n.scoreExplainCurrentLabelMedium,
+            'high' => l10n.scoreExplainCurrentLabelHigh,
             _ => null,
           },
           activeIndex: idx,
-          levels: const [
+          levels: [
             _Level(
               color: AppColors.success,
-              label: 'Low',
-              body: 'Meat, eggs, rice, oats, lactose-free dairy, carrots, zucchini, spinach, berries, oranges.',
+              label: l10n.scoreExplainLow,
+              body: l10n.scoreExplainMeatEggsRiceOats,
             ),
             _Level(
               color: AppColors.orange,
-              label: 'Medium',
-              body: 'Certain portions of avocado, sweet potato, almonds — OK in small servings, rough in large.',
+              label: l10n.scoreExplainMedium,
+              body: l10n.scoreExplainCertainPortionsOfAvocado,
             ),
             _Level(
               color: AppColors.error,
-              label: 'High',
-              body: 'Onion, garlic, wheat, rye, milk/ice cream, apples, pears, honey, beans, cauliflower.',
+              label: l10n.scoreExplainHigh,
+              body: l10n.scoreExplainOnionGarlicWheatRye,
             ),
           ],
-          footer:
-              'Only relevant if you have IBS or known FODMAP sensitivity. If your gut is happy, ignore this rating.',
+          footer: l10n.scoreExplainOnlyRelevantIfYouHaveIbs,
         );
 
       case ScoreKind.ultraProcessed:
         final v = value as bool?;
         return _SheetContent(
           icon: Icons.science_rounded,
-          title: v == true ? 'Ultra-processed' : 'Whole / minimally processed',
-          subtitle:
-              "We use the NOVA classification — Group 4 = ultra-processed (industrial recipes with emulsifiers, "
-              "hydrogenated oils, artificial sweeteners, HFCS, protein isolates, modified starches).",
+          title: v == true ? l10n.scoreExplainUltraProcessed : l10n.scoreExplainWholeMinimallyProcessed,
+          subtitle: l10n.scoreExplainWeUseTheNovaClassification,
           accent: v == true ? AppColors.error : AppColors.success,
-          currentLabel: v == true ? 'NOVA 4' : 'WHOLE',
+          currentLabel: v == true ? l10n.scoreExplainCurrentLabelNova4 : l10n.scoreExplainCurrentLabelWhole,
           activeIndex: v == true ? 1 : 0,
-          levels: const [
+          levels: [
             _Level(
               color: AppColors.success,
-              label: 'Whole / minimally processed',
-              body: 'Raw or basic-cooked foods: meat, eggs, vegetables, plain yoghurt, cheese, whole grains.',
+              label: l10n.scoreExplainWholeMinimallyProcessed,
+              body: l10n.scoreExplainRawOrBasicCooked,
             ),
             _Level(
               color: AppColors.error,
-              label: 'Ultra-processed (NOVA 4)',
-              body: 'Engineered food products: chips, sodas, instant noodles, packaged sweets, most fast food.',
+              label: l10n.scoreExplainUltraProcessedNova4,
+              body: l10n.scoreExplainEngineeredFoodProductsChip,
             ),
           ],
-          footer: 'Large population studies link >30% daily calories from NOVA 4 to worse cardiometabolic health.',
+          footer: l10n.scoreExplainLargePopulationStudies,
         );
 
       case ScoreKind.addedSugar:
@@ -442,15 +432,12 @@ class ScoreExplainSheet extends StatelessWidget {
                     : 2;
         final pctDay = g < 0 ? null : ((g / 25.0) * 100).round();
         final footerText = pctDay == null
-            ? 'WHO recommends adults cap added sugar at 25 g/day (about 6 teaspoons). This excludes whole-fruit sugar.'
-            : 'That is about $pctDay% of WHO\'s 25 g/day limit for adults. Whole-fruit sugar is NOT counted here.';
+            ? l10n.scoreExplainWhoRecommendsAdults
+            : l10n.scoreExplainThatIsAboutPctDay(pctDay);
         return _SheetContent(
           icon: Icons.icecream_rounded,
-          title: g < 0 ? 'Added sugar' : 'Added sugar: ${_fmtGrams(g)}',
-          subtitle:
-              "Added sugar is sugar the kitchen added during cooking (syrups, honey, cane sugar, HFCS) — "
-              "NOT the sugar that lives naturally in whole fruit, milk, or plain yoghurt. "
-              "It's the single most actionable lever for weight, energy, and skin.",
+          title: g < 0 ? l10n.scoreExplainAddedSugar : l10n.scoreExplainAddedSugarValue(_fmtGrams(g)),
+          subtitle: l10n.scoreExplainAddedSugarIsThe,
           accent: g >= 15
               ? AppColors.error
               : g >= 5
@@ -459,26 +446,26 @@ class ScoreExplainSheet extends StatelessWidget {
           currentLabel: g < 0
               ? null
               : g < 5
-                  ? 'LOW'
+                  ? l10n.scoreExplainCurrentLabelLow
                   : g < 15
-                      ? 'MODERATE'
-                      : 'HIGH',
+                      ? l10n.scoreExplainCurrentLabelModerate
+                      : l10n.scoreExplainCurrentLabelHigh,
           activeIndex: idx,
-          levels: const [
+          levels: [
             _Level(
               color: AppColors.success,
-              label: 'Low  (under 5 g)',
-              body: 'Most savoury dishes, plain dairy, whole fruit. No meaningful blood-sugar impact.',
+              label: l10n.scoreExplainLowUnder5G,
+              body: l10n.scoreExplainMostSavouryDishesPlain,
             ),
             _Level(
               color: AppColors.orange,
-              label: 'Moderate  (5 – 14 g)',
-              body: 'Sweetened yogurt, a small pastry, half a sports drink. A reasonable treat — not daily.',
+              label: l10n.scoreExplainModerate514G,
+              body: l10n.scoreExplainSweetenedYogurtASmall,
             ),
             _Level(
               color: AppColors.error,
-              label: 'High  (15 g+)',
-              body: 'Desserts, sugary drinks, candy, many breakfast cereals. Spikes insulin, crashes energy.',
+              label: l10n.scoreExplainHigh15G,
+              body: l10n.scoreExplainDessertsSugaryDrinksCandy,
             ),
           ],
           footer: footerText,
@@ -503,11 +490,10 @@ class ScoreExplainSheet extends StatelessWidget {
             hasReasons && triggers!.length == 1 && triggers!.first == 'ai_unavailable';
         return _SheetContent(
           icon: Icons.favorite_rounded,
-          title: v < 0 ? 'Health score' : 'Health score: $v / 10',
+          title: v < 0 ? l10n.scoreExplainHealthScore : l10n.scoreExplainHealthScoreValue(v),
           subtitle: onlyUnavailable
-              ? 'Score detail is unavailable for this meal. Newly logged meals will include a full reason breakdown.'
-              : "Each meal gets a 1–10 health score based on protein, fiber, processing level, added sugar, "
-                  "sodium, and inflammation. Tags below show WHY this meal landed where it did.",
+              ? l10n.scoreExplainScoreDetailUnavailable
+              : l10n.scoreExplainEachMealGets,
           // 3-tier scheme matching the legend bands: >=7 GOOD (green),
           // >=4 AVERAGE (orange), else POOR (error). Keeping the badge
           // colour and the highlighted legend band in lock-step.
@@ -519,29 +505,29 @@ class ScoreExplainSheet extends StatelessWidget {
           currentLabel: v < 0
               ? null
               : v >= 7
-                  ? 'GOOD'
+                  ? l10n.scoreExplainCurrentLabelGood
                   : v >= 4
-                      ? 'AVERAGE'
-                      : 'POOR',
+                      ? l10n.scoreExplainCurrentLabelAverage
+                      : l10n.scoreExplainCurrentLabelPoor,
           activeIndex: idx,
-          levels: const [
+          levels: [
             _Level(
               color: AppColors.success,
-              label: '7 – 10  Good / Excellent',
-              body: 'High protein or fiber, whole foods, low added sugar, anti-inflammatory ingredients.',
+              label: l10n.scoreExplain710GoodExcellent,
+              body: l10n.scoreExplainHighProteinOrFiber,
             ),
             _Level(
               color: AppColors.orange,
-              label: '4 – 6  Average',
-              body: 'Reasonable choice — could be improved on one or two axes (more fiber, less processing).',
+              label: l10n.scoreExplain46Average,
+              body: l10n.scoreExplainReasonableChoiceCouldBe,
             ),
             _Level(
               color: AppColors.error,
-              label: '1 – 3  Poor',
-              body: 'Ultra-processed, deep-fried, low fiber, or very high added sugar / sodium.',
+              label: l10n.scoreExplain13Poor,
+              body: l10n.scoreExplainUltraProcessedDeepFried,
             ),
           ],
-          footer: 'Daily average above 6 means you\'re mostly eating to support your goals.',
+          footer: l10n.scoreExplainDailyAverageAbove6,
         );
     }
   }
@@ -580,7 +566,7 @@ class _TriggersBox extends StatelessWidget {
               Icon(Icons.auto_awesome, size: 14, color: accent),
               const SizedBox(width: 6),
               Text(
-                'Why this score',
+                AppLocalizations.of(context).scoreExplainWhyThisScore,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,

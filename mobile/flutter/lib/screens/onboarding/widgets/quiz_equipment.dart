@@ -10,6 +10,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/equipment_snap_flow.dart';
 import 'onboarding_theme.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// One-tap equipment preset that replaces the user's current selection.
 ///
@@ -99,34 +100,34 @@ class QuizEquipment extends StatefulWidget {
     this.onPresetSelected,
   });
 
-  static const _environments = [
+  static List<_WorkoutEnvironmentOption> _buildEnvironments(AppLocalizations l10n) => [
     _WorkoutEnvironmentOption(
       id: 'commercial_gym',
-      label: 'Gym',
+      label: l10n.quizEquipmentGym,
       emoji: '\u{1F3E2}',
-      description: 'Full gym with machines, cables, and free weights',
-      defaultEquipment: ['full_gym'],
+      description: l10n.quizEquipmentFullGymWithMachines,
+      defaultEquipment: const ['full_gym'],
     ),
     _WorkoutEnvironmentOption(
       id: 'home',
-      label: 'Home',
+      label: l10n.quizEquipmentHome,
       emoji: '\u{1F3E1}',
-      description: 'Minimal equipment - bodyweight, mat',
-      defaultEquipment: ['bodyweight'],
+      description: l10n.quizEquipmentMinimalEquipmentBodyweight,
+      defaultEquipment: const ['bodyweight'],
     ),
     _WorkoutEnvironmentOption(
       id: 'home_gym',
-      label: 'Home Gym',
+      label: l10n.quizEquipmentHomeGym,
       emoji: '\u{1F3E0}',
-      description: 'Dedicated space with dumbbells, barbell, bench',
-      defaultEquipment: ['bodyweight', 'dumbbells', 'barbell', 'resistance_bands', 'pull_up_bar', 'kettlebell'],
+      description: l10n.quizEquipmentDedicatedSpaceWithDumbbells,
+      defaultEquipment: const ['bodyweight', 'dumbbells', 'barbell', 'resistance_bands', 'pull_up_bar', 'kettlebell'],
     ),
     _WorkoutEnvironmentOption(
       id: 'hotel',
-      label: 'Hotel',
+      label: l10n.quizEquipmentHotel,
       emoji: '\u{1F9F3}',
-      description: 'Travel-friendly - dumbbells, cardio machines',
-      defaultEquipment: ['bodyweight', 'dumbbells', 'resistance_bands'],
+      description: l10n.quizEquipmentTravelFriendlyDumbbellsC,
+      defaultEquipment: const ['bodyweight', 'dumbbells', 'resistance_bands'],
     ),
   ];
 
@@ -137,50 +138,62 @@ class QuizEquipment extends StatefulWidget {
   ///
   /// Order matters: the first preset that exact-matches the current
   /// selection gets the active highlight (see `_activePresetId`).
-  static const _presets = [
+  static List<_EquipmentPreset> _buildPresets(AppLocalizations l10n) => [
     _EquipmentPreset(
       id: 'preset_bodyweight_only',
-      label: 'Bodyweight only',
+      label: l10n.quizEquipmentBodyweightOnly,
       icon: Icons.accessibility_new,
-      equipmentIds: ['bodyweight'],
+      equipmentIds: const ['bodyweight'],
     ),
     _EquipmentPreset(
       id: 'preset_bodyweight_pullup',
-      label: 'Bodyweight + Pull-up Bar',
+      label: l10n.quizEquipmentBodyweightPullUpBar,
       icon: Icons.sports_gymnastics,
-      equipmentIds: ['bodyweight', 'pull_up_bar'],
+      equipmentIds: const ['bodyweight', 'pull_up_bar'],
     ),
     _EquipmentPreset(
       id: 'preset_bodyweight_bands',
-      label: 'Bodyweight + Bands',
+      label: l10n.quizEquipmentBodyweightBands,
       icon: Icons.cable,
-      equipmentIds: ['bodyweight', 'resistance_bands'],
+      equipmentIds: const ['bodyweight', 'resistance_bands'],
     ),
     _EquipmentPreset(
       id: 'preset_home_dumbbells_bench',
-      label: 'Home + Dumbbells & Bench',
+      label: l10n.quizEquipmentHomeDumbbellsBench,
       icon: Icons.fitness_center,
-      equipmentIds: ['bodyweight', 'dumbbells', 'bench'],
+      equipmentIds: const ['bodyweight', 'dumbbells', 'bench'],
     ),
     _EquipmentPreset(
       id: 'preset_home_kettlebell',
-      label: 'Home + Kettlebell',
+      label: l10n.quizEquipmentHomeKettlebell,
       icon: Icons.sports_handball,
-      equipmentIds: ['bodyweight', 'kettlebell'],
+      equipmentIds: const ['bodyweight', 'kettlebell'],
     ),
     _EquipmentPreset(
       id: 'preset_apartment_minimal',
-      label: 'Apartment-friendly',
+      label: l10n.quizEquipmentApartmentFriendly,
       icon: Icons.home_outlined,
-      equipmentIds: ['bodyweight', 'resistance_bands', 'kettlebell'],
+      equipmentIds: const ['bodyweight', 'resistance_bands', 'kettlebell'],
     ),
     _EquipmentPreset(
       id: 'preset_full_gym',
-      label: 'Full Gym',
+      label: l10n.quizEquipmentFullGym,
       icon: Icons.store,
-      equipmentIds: ['full_gym'],
+      equipmentIds: const ['full_gym'],
     ),
   ];
+
+  /// Pure-data preset map used for logic (e.g. `_activePresetId`) that needs
+  /// no BuildContext / l10n. Mirrors the order of `_buildPresets`.
+  static const _presetEquipmentIds = <String, List<String>>{
+    'preset_bodyweight_only': ['bodyweight'],
+    'preset_bodyweight_pullup': ['bodyweight', 'pull_up_bar'],
+    'preset_bodyweight_bands': ['bodyweight', 'resistance_bands'],
+    'preset_home_dumbbells_bench': ['bodyweight', 'dumbbells', 'bench'],
+    'preset_home_kettlebell': ['bodyweight', 'kettlebell'],
+    'preset_apartment_minimal': ['bodyweight', 'resistance_bands', 'kettlebell'],
+    'preset_full_gym': ['full_gym'],
+  };
 
   static const _allEquipmentIds = [
     'bodyweight',
@@ -196,37 +209,37 @@ class QuizEquipment extends StatefulWidget {
     'trx',
   ];
 
-  static const _equipment = [
-    {'id': 'full_gym', 'label': 'Full Gym Access', 'icon': Icons.store},
-    {'id': 'bodyweight', 'label': 'Bodyweight Only', 'icon': Icons.accessibility_new},
-    {'id': 'dumbbells', 'label': 'Dumbbells', 'icon': Icons.fitness_center, 'hasQuantity': true},
-    {'id': 'barbell', 'label': 'Barbell', 'icon': Icons.line_weight},
-    {'id': 'bench', 'label': 'Flat Bench', 'icon': Icons.weekend, 'subtitle': 'Enables chest press, rows & more'},
-    {'id': 'squat_rack', 'label': 'Squat Rack', 'icon': Icons.fitness_center, 'subtitle': 'Needed for barbell squats & press'},
-    {'id': 'resistance_bands', 'label': 'Resistance Bands', 'icon': Icons.cable},
-    {'id': 'pull_up_bar', 'label': 'Pull-up Bar', 'icon': Icons.sports_gymnastics},
-    {'id': 'kettlebell', 'label': 'Kettlebell', 'icon': Icons.sports_handball, 'hasQuantity': true},
-    {'id': 'cable_machine', 'label': 'Cable Machine', 'icon': Icons.settings_ethernet},
-    {'id': 'medicine_ball', 'label': 'Medicine Ball', 'icon': Icons.circle},
-    {'id': 'trx', 'label': 'TRX / Suspension', 'icon': Icons.swap_vert},
+  static List<Map<String, Object>> _buildEquipment(AppLocalizations l10n) => [
+    {'id': 'full_gym', 'label': l10n.quizEquipmentFullGymAccess, 'icon': Icons.store},
+    {'id': 'bodyweight', 'label': l10n.quizEquipmentBodyweightOnly2, 'icon': Icons.accessibility_new},
+    {'id': 'dumbbells', 'label': l10n.quizEquipmentDumbbells, 'icon': Icons.fitness_center, 'hasQuantity': true},
+    {'id': 'barbell', 'label': l10n.quizEquipmentBarbell, 'icon': Icons.line_weight},
+    {'id': 'bench', 'label': l10n.quizEquipmentFlatBench, 'icon': Icons.weekend, 'subtitle': l10n.quizEquipmentEnablesChestPress},
+    {'id': 'squat_rack', 'label': l10n.quizEquipmentSquatRack, 'icon': Icons.fitness_center, 'subtitle': l10n.quizEquipmentNeededForBarbell},
+    {'id': 'resistance_bands', 'label': l10n.quizEquipmentResistanceBands, 'icon': Icons.cable},
+    {'id': 'pull_up_bar', 'label': l10n.quizEquipmentPullUpBar, 'icon': Icons.sports_gymnastics},
+    {'id': 'kettlebell', 'label': l10n.quizEquipmentKettlebell, 'icon': Icons.sports_handball, 'hasQuantity': true},
+    {'id': 'cable_machine', 'label': l10n.quizEquipmentCableMachine, 'icon': Icons.settings_ethernet},
+    {'id': 'medicine_ball', 'label': l10n.quizEquipmentMedicineBall, 'icon': Icons.circle},
+    {'id': 'trx', 'label': l10n.quizEquipmentTrxSuspension, 'icon': Icons.swap_vert},
   ];
 
   /// Follow-up suggestions: selecting a primary equipment suggests a secondary
-  static const _equipmentFollowUps = {
+  static Map<String, _FollowUp> _buildEquipmentFollowUps(AppLocalizations l10n) => {
     'dumbbells': _FollowUp(
       suggest: 'bench',
-      title: 'Do you have a weight bench?',
-      subtitle: 'Unlocks: Bench Press, Incline Press, Pullover, Chest-Supported Rows',
+      title: l10n.quizEquipmentDoYouHaveA,
+      subtitle: l10n.quizEquipmentUnlocksBenchPressIncline,
     ),
     'kettlebell': _FollowUp(
       suggest: 'bench',
-      title: 'Do you have a weight bench?',
-      subtitle: 'Unlocks: Chest-Supported KB Row, KB Floor Press alternatives',
+      title: l10n.quizEquipmentDoYouHaveA,
+      subtitle: l10n.quizEquipmentUnlocksChestSupportedKb,
     ),
     'barbell': _FollowUp(
       suggest: 'squat_rack',
-      title: 'Do you have a squat rack?',
-      subtitle: 'Required for: Barbell Squat, Overhead Press, Barbell Bench Press',
+      title: l10n.quizEquipmentDoYouHaveA2,
+      subtitle: l10n.quizEquipmentRequiredForBarbellSquat,
     ),
   };
 
@@ -237,6 +250,13 @@ class QuizEquipment extends StatefulWidget {
 class _QuizEquipmentState extends State<QuizEquipment> {
   final _shownFollowUps = <String>{};
 
+  // Maps equipment ID → suggested follow-up equipment ID (for logic only, no i18n needed).
+  static const _followUpSuggest = {
+    'dumbbells': 'bench',
+    'kettlebell': 'bench',
+    'barbell': 'squat_rack',
+  };
+
   bool get _hasFullGym =>
       widget.selectedEquipment.contains('full_gym') ||
       QuizEquipment._allEquipmentIds.every((id) => widget.selectedEquipment.contains(id));
@@ -244,8 +264,8 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   /// Check if a chip should show the "Recommended" badge
   bool _isRecommended(String chipId) {
     if (_hasFullGym || widget.selectedEquipment.contains(chipId)) return false;
-    for (final entry in QuizEquipment._equipmentFollowUps.entries) {
-      if (entry.value.suggest == chipId && widget.selectedEquipment.contains(entry.key)) {
+    for (final entry in _followUpSuggest.entries) {
+      if (entry.value == chipId && widget.selectedEquipment.contains(entry.key)) {
         return true;
       }
     }
@@ -263,7 +283,8 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   }
 
   void _checkFollowUp(BuildContext context, String itemId) {
-    final followUp = QuizEquipment._equipmentFollowUps[itemId];
+    final followUps = QuizEquipment._buildEquipmentFollowUps(AppLocalizations.of(context)!);
+    final followUp = followUps[itemId];
     if (followUp == null) return;
     if (widget.selectedEquipment.contains(followUp.suggest)) return;
     if (_hasFullGym) return;
@@ -317,7 +338,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                           ),
                           child: Center(
                             child: Text(
-                              'Skip',
+                              AppLocalizations.of(context)!.onboardingSkip,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -343,7 +364,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                           ),
                           child: Center(
                             child: Text(
-                              'Yes, Add It',
+                              AppLocalizations.of(context)!.quizEquipmentYesAddIt,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -374,9 +395,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.showHeader) ...[
-            _buildTitle(t),
+            _buildTitle(context, t),
             const SizedBox(height: 6),
-            _buildSubtitle(t),
+            _buildSubtitle(context, t),
             const SizedBox(height: 12),
           ],
           // Environment quick selection chips
@@ -410,7 +431,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                   if (widget.selectedEquipment.contains('dumbbells') && !_hasFullGym) ...[
                     const SizedBox(height: 12),
                     _QuantityRow(
-                      label: 'Dumbbells',
+                      label: AppLocalizations.of(context)!.quizEquipmentDumbbells,
                       isSingle: widget.dumbbellCount == 1,
                       onSingle: () => widget.onDumbbellCountChanged(1),
                       onMultiple: () => widget.onDumbbellCountChanged(2),
@@ -421,7 +442,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                   if (widget.selectedEquipment.contains('kettlebell') && !_hasFullGym) ...[
                     const SizedBox(height: 8),
                     _QuantityRow(
-                      label: 'Kettlebell',
+                      label: AppLocalizations.of(context)!.quizEquipmentKettlebell,
                       isSingle: widget.kettlebellCount == 1,
                       onSingle: () => widget.onKettlebellCountChanged(1),
                       onMultiple: () => widget.onKettlebellCountChanged(2),
@@ -498,7 +519,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
       if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Couldn't open the camera. Pick your equipment below."),
+          content: Text(AppLocalizations.of(context)!.quizEquipmentCouldnTOpenThe),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -530,9 +551,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         // why the grid didn't update, and falls through to manual.
         if (!mounted || !context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No equipment identified. Pick from the list below.'),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.quizEquipmentNoEquipmentIdentifiedPick),
+            duration: const Duration(seconds: 3),
           ),
         );
         return;
@@ -553,7 +574,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Identified ${selection.length} ${selection.length == 1 ? "item" : "items"}. Tap any to deselect.',
+            AppLocalizations.of(context)!.quizEquipmentIdentifiedCount(selection.length),
           ),
           duration: const Duration(seconds: 3),
         ),
@@ -562,9 +583,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
       if (!mounted) return;
       // Don't block onboarding — keep the user moving via the manual grid.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Couldn't load identified equipment. Pick from the list below."),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.quizEquipmentCouldnTLoadIdentified),
+          duration: const Duration(seconds: 3),
         ),
       );
     }
@@ -621,9 +642,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                         children: [
                           Row(
                             children: [
-                              const Text(
-                                '\u{1F4F8} Snap your gym',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)!.quizEquipmentU1f4f8SnapYour,
+                                style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -639,7 +660,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  'Recommended',
+                                  AppLocalizations.of(context)!.quizEquipmentRecommended,
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700,
@@ -651,7 +672,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Take a few photos and our AI identifies your equipment.',
+                            AppLocalizations.of(context)!.quizEquipmentTakeAFewPhotos,
                             style: TextStyle(
                               fontSize: 12,
                               color: t.textSecondary,
@@ -678,13 +699,15 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   }
 
   Widget _buildEnvironmentSection(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
+    final environments = QuizEquipment._buildEnvironments(l10n);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              'Where do you workout?',
+              l10n.quizEquipmentWhereDoYouWorkout,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -706,7 +729,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: QuizEquipment._environments.map((env) {
+            children: environments.map((env) {
               final isSelected = widget.selectedEnvironment == env.id;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -766,7 +789,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         if (widget.selectedEnvironment != null) ...[
           const SizedBox(height: 8),
           Text(
-            QuizEquipment._environments.firstWhere((e) => e.id == widget.selectedEnvironment).description,
+            environments.firstWhere((e) => e.id == widget.selectedEnvironment).description,
             style: TextStyle(
               fontSize: 12,
               color: t.textSecondary,
@@ -784,16 +807,18 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   /// — that's the "Custom" state and no preset chip highlights.
   String? get _activePresetId {
     final current = widget.selectedEquipment;
-    for (final preset in QuizEquipment._presets) {
-      final presetSet = preset.equipmentIds.toSet();
+    for (final entry in QuizEquipment._presetEquipmentIds.entries) {
+      final presetSet = entry.value.toSet();
       if (presetSet.length == current.length && presetSet.containsAll(current)) {
-        return preset.id;
+        return entry.key;
       }
     }
     return null;
   }
 
   Widget _buildPresetSection(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
+    final presets = QuizEquipment._buildPresets(l10n);
     final activeId = _activePresetId;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -801,7 +826,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: Text(
-            'Quick presets',
+            l10n.quizEquipmentQuickPresets,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -813,10 +838,10 @@ class _QuizEquipmentState extends State<QuizEquipment> {
           height: 40,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: QuizEquipment._presets.length,
+            itemCount: presets.length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
-              final preset = QuizEquipment._presets[index];
+              final preset = presets[index];
               final isActive = preset.id == activeId;
               return _PresetChip(
                 preset: preset,
@@ -830,8 +855,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                   // "do you have a bench?"). Skip presets that ALREADY
                   // include the follow-up's `suggest` to avoid asking
                   // about something that's already selected.
+                  final followUpsMap = QuizEquipment._buildEquipmentFollowUps(AppLocalizations.of(context)!);
                   for (final id in preset.equipmentIds) {
-                    final followUp = QuizEquipment._equipmentFollowUps[id];
+                    final followUp = followUpsMap[id];
                     if (followUp != null &&
                         !preset.equipmentIds.contains(followUp.suggest) &&
                         !_shownFollowUps.contains(id)) {
@@ -853,6 +879,8 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   }
 
   void _showEnvironmentInfo(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
+    final environments = QuizEquipment._buildEnvironments(l10n);
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
@@ -864,7 +892,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
               Text(
-                'Workout Environment',
+                l10n.quizEquipmentWorkoutEnvironment,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -873,14 +901,14 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Selecting your workout environment helps us recommend the right exercises and equipment for your setup.',
+                l10n.quizEquipmentSelectingYourWorkoutEnviron,
                 style: TextStyle(
                   fontSize: 14,
                   color: t.textSecondary,
                 ),
               ),
               const SizedBox(height: 20),
-              ...QuizEquipment._environments.map((env) => Padding(
+              ...environments.map((env) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -915,7 +943,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               )),
               const SizedBox(height: 8),
               Text(
-                'You can customize equipment after selecting an environment, or skip this and select equipment manually.',
+                l10n.quizEquipmentYouCanCustomizeEquipment,
                 style: TextStyle(
                   fontSize: 12,
                   color: t.textSecondary,
@@ -930,9 +958,10 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  Widget _buildTitle(OnboardingTheme t) {
+  Widget _buildTitle(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
     return Text(
-      'What equipment do you have access to?',
+      l10n.quizEquipmentWhatEquipmentDoYou,
       style: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.bold,
@@ -942,9 +971,10 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
   }
 
-  Widget _buildSubtitle(OnboardingTheme t) {
+  Widget _buildSubtitle(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
     return Text(
-      "Select all that apply - we'll design workouts around what you have",
+      l10n.quizEquipmentSelectAllThatApply,
       style: TextStyle(
         fontSize: 13,
         color: t.textSecondary,
@@ -953,8 +983,9 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   }
 
   Widget _buildTwoColumnGrid(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
     final chips = [
-      ...QuizEquipment._equipment.map((item) =>
+      ...QuizEquipment._buildEquipment(l10n).map((item) =>
         _buildEquipmentChip(context, item, t),
       ),
       _buildOtherChip(context, t),
@@ -1097,7 +1128,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                     ),
                   ),
                   child: Text(
-                    'Recommended',
+                    AppLocalizations.of(context)!.quizEquipmentRecommended,
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
@@ -1153,8 +1184,8 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 Flexible(
                   child: Text(
                     hasOtherSelected
-                        ? 'Other (${widget.otherSelectedEquipment.length})'
-                        : 'Other Equipment',
+                        ? AppLocalizations.of(context)!.quizEquipmentOtherCount(widget.otherSelectedEquipment.length)
+                        : AppLocalizations.of(context)!.quizEquipmentOtherEquipment,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,

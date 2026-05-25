@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
 
 /// Stats Template - Shows workout duration, exercises, volume, calories
@@ -71,6 +72,7 @@ class StatsTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     // Calculate responsive height based on available space
     final screenHeight = MediaQuery.of(context).size.height;
     final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);
@@ -153,7 +155,7 @@ class StatsTemplate extends StatelessWidget {
                         const SizedBox(height: 4),
 
                         Text(
-                          'WORKOUT COMPLETE',
+                          l.shareStatsWorkoutComplete,
                           style: TextStyle(
                             color: AppColors.cyan,
                             fontSize: 11,
@@ -165,7 +167,7 @@ class StatsTemplate extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         // Stats grid
-                        _buildStatsGrid(),
+                        _buildStatsGrid(l),
 
                         if (showWatermark) ...[
                           const SizedBox(height: 12),
@@ -184,7 +186,7 @@ class StatsTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsGrid() {
+  Widget _buildStatsGrid(AppLocalizations l) {
     return Column(
       children: [
         Row(
@@ -193,7 +195,7 @@ class StatsTemplate extends StatelessWidget {
               child: _buildStatCard(
                 icon: Icons.timer_outlined,
                 value: _formattedDuration,
-                label: 'Duration',
+                label: l.shareStatsDuration,
                 color: AppColors.cyan,
               ),
             ),
@@ -202,7 +204,7 @@ class StatsTemplate extends StatelessWidget {
               child: _buildStatCard(
                 icon: Icons.fitness_center,
                 value: '$exercisesCount',
-                label: 'Exercises',
+                label: l.shareStatsExercises,
                 color: AppColors.purple,
               ),
             ),
@@ -215,7 +217,7 @@ class StatsTemplate extends StatelessWidget {
               child: _buildStatCard(
                 icon: Icons.scale_outlined,
                 value: _formattedVolume,
-                label: 'Volume',
+                label: l.shareStatsVolume,
                 color: AppColors.orange,
               ),
             ),
@@ -224,7 +226,7 @@ class StatsTemplate extends StatelessWidget {
               child: _buildStatCard(
                 icon: Icons.local_fire_department_outlined,
                 value: calories != null ? '$calories' : '--',
-                label: 'Calories',
+                label: l.shareStatsCalories,
                 color: AppColors.coral,
               ),
             ),

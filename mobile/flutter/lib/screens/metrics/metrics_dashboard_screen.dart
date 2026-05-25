@@ -8,6 +8,7 @@ import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/metrics_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 class MetricsDashboardScreen extends ConsumerStatefulWidget {
   const MetricsDashboardScreen({super.key});
@@ -22,7 +23,7 @@ class _MetricsDashboardScreenState
   String _selectedPeriod = '1d';
   String _selectedMetric = 'weight';
 
-  final _periods = [
+  static const _periods = [
     {'label': '1D', 'value': '1d'},
     {'label': '7D', 'value': '7d'},
     {'label': '30D', 'value': '30d'},
@@ -30,13 +31,13 @@ class _MetricsDashboardScreenState
     {'label': 'All', 'value': 'all'},
   ];
 
-  final _metrics = [
-    {'label': 'Weight', 'value': 'weight', 'icon': Icons.monitor_weight, 'unit': 'kg'},
-    {'label': 'Body Fat', 'value': 'body_fat', 'icon': Icons.percent, 'unit': '%'},
-    {'label': 'Muscle Mass', 'value': 'muscle_mass', 'icon': Icons.fitness_center, 'unit': 'kg'},
-    {'label': 'BMI', 'value': 'bmi', 'icon': Icons.speed, 'unit': ''},
-    {'label': 'Heart Rate', 'value': 'resting_heart_rate', 'icon': Icons.favorite, 'unit': 'bpm'},
-    {'label': 'Calories', 'value': 'calories_burned', 'icon': Icons.local_fire_department, 'unit': 'kcal'},
+  List<Map<String, Object>> _buildMetrics(AppLocalizations l10n) => [
+    {'label': l10n.metricsDashboardWeight, 'value': 'weight', 'icon': Icons.monitor_weight, 'unit': 'kg'},
+    {'label': l10n.metricsDashboardBodyFat, 'value': 'body_fat', 'icon': Icons.percent, 'unit': '%'},
+    {'label': l10n.metricsDashboardMuscleMass, 'value': 'muscle_mass', 'icon': Icons.fitness_center, 'unit': 'kg'},
+    {'label': l10n.metricsDashboardBmi, 'value': 'bmi', 'icon': Icons.speed, 'unit': ''},
+    {'label': l10n.metricsDashboardHeartRate, 'value': 'resting_heart_rate', 'icon': Icons.favorite, 'unit': 'bpm'},
+    {'label': l10n.metricsDashboardCalories, 'value': 'calories_burned', 'icon': Icons.local_fire_department, 'unit': 'kcal'},
   ];
 
   @override
@@ -60,10 +61,12 @@ class _MetricsDashboardScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final metricsState = ref.watch(metricsProvider);
-    final selectedMetricInfo = _metrics.firstWhere(
+    final metrics = _buildMetrics(l10n);
+    final selectedMetricInfo = metrics.firstWhere(
       (m) => m['value'] == _selectedMetric,
-      orElse: () => _metrics.first,
+      orElse: () => metrics.first,
     );
 
     return Scaffold(
@@ -82,14 +85,14 @@ class _MetricsDashboardScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Health Metrics',
+                        l10n.metricsDashboardHealthMetrics,
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Track your progress over time',
+                        l10n.metricsDashboardTrackYourProgressOver,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -174,9 +177,9 @@ class _MetricsDashboardScreenState
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _metrics.length,
+                    itemCount: metrics.length,
                     itemBuilder: (context, index) {
-                      final metric = _metrics[index];
+                      final metric = metrics[index];
                       final isSelected = _selectedMetric == metric['value'];
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
@@ -256,7 +259,7 @@ class _MetricsDashboardScreenState
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
-                                    'No ${selectedMetricInfo['label']} data yet',
+                                    l10n.metricsDashboardNoMetricDataYet(selectedMetricInfo['label'] as String),
                                     style: const TextStyle(
                                       color: AppColors.textMuted,
                                     ),
@@ -264,7 +267,7 @@ class _MetricsDashboardScreenState
                                   const SizedBox(height: 8),
                                   TextButton(
                                     onPressed: () => _showAddMetricSheet(context),
-                                    child: const Text('Add Entry'),
+                                    child: Text(l10n.metricsDashboardAddEntry),
                                   ),
                                 ],
                               ),
@@ -282,9 +285,9 @@ class _MetricsDashboardScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'QUICK STATS',
-                        style: TextStyle(
+                      Text(
+                        l10n.metricsDashboardQuickStats,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
@@ -296,7 +299,7 @@ class _MetricsDashboardScreenState
                         children: [
                           Expanded(
                             child: _QuickStatCard(
-                              title: 'Workouts This Week',
+                              title: l10n.metricsDashboardWorkoutsThisWeek,
                               value: '${metricsState.latestMetrics?.workoutsCompleted ?? 0}',
                               icon: Icons.fitness_center,
                               color: AppColors.cyan,
@@ -305,7 +308,7 @@ class _MetricsDashboardScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: _QuickStatCard(
-                              title: 'Active Streak',
+                              title: l10n.metricsDashboardActiveStreak,
                               value: '${metricsState.latestMetrics?.streak ?? 0} days',
                               icon: Icons.local_fire_department,
                               color: AppColors.orange,
@@ -318,7 +321,7 @@ class _MetricsDashboardScreenState
                         children: [
                           Expanded(
                             child: _QuickStatCard(
-                              title: 'Total Time',
+                              title: l10n.metricsDashboardTotalTime,
                               value: '${(metricsState.latestMetrics?.totalMinutes ?? 0) ~/ 60}h',
                               icon: Icons.timer,
                               color: AppColors.purple,
@@ -327,7 +330,7 @@ class _MetricsDashboardScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: _QuickStatCard(
-                              title: 'Calories Burned',
+                              title: l10n.metricsDashboardCaloriesBurned,
                               value: '${metricsState.latestMetrics?.caloriesBurned ?? 0}',
                               icon: Icons.local_fire_department,
                               color: AppColors.success,
@@ -357,13 +360,14 @@ class _MetricsDashboardScreenState
   }
 
   Widget _buildCurrentMetricsGrid(HealthMetrics metrics) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Row(
           children: [
             Expanded(
               child: _MetricCard(
-                label: 'Weight',
+                label: l10n.metricsDashboardWeight,
                 value: metrics.weightKg?.toStringAsFixed(1) ?? '--',
                 unit: 'kg',
                 icon: Icons.monitor_weight,
@@ -374,7 +378,7 @@ class _MetricsDashboardScreenState
             const SizedBox(width: 12),
             Expanded(
               child: _MetricCard(
-                label: 'Body Fat',
+                label: l10n.metricsDashboardBodyFat,
                 value: metrics.bodyFatPercent?.toStringAsFixed(1) ?? '--',
                 unit: '%',
                 icon: Icons.percent,
@@ -389,7 +393,7 @@ class _MetricsDashboardScreenState
           children: [
             Expanded(
               child: _MetricCard(
-                label: 'BMI',
+                label: l10n.metricsDashboardBmi,
                 value: metrics.bmi?.toStringAsFixed(1) ?? '--',
                 unit: '',
                 icon: Icons.speed,
@@ -400,7 +404,7 @@ class _MetricsDashboardScreenState
             const SizedBox(width: 12),
             Expanded(
               child: _MetricCard(
-                label: 'Resting HR',
+                label: l10n.metricsDashboardRestingHr,
                 value: '${metrics.restingHeartRate ?? '--'}',
                 unit: 'bpm',
                 icon: Icons.favorite,
@@ -416,8 +420,8 @@ class _MetricsDashboardScreenState
 
   Widget _buildChart(List<MetricHistoryEntry> history) {
     if (history.isEmpty) {
-      return const Center(
-        child: Text('No data available', style: TextStyle(color: AppColors.textMuted)),
+      return Center(
+        child: Text(AppLocalizations.of(context)!.metricsDashboardNoDataAvailable, style: const TextStyle(color: AppColors.textMuted)),
       );
     }
 
@@ -795,13 +799,13 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
   String _selectedMetric = 'weight';
   final _valueController = TextEditingController();
 
-  final _metricOptions = [
-    {'label': 'Weight', 'value': 'weight', 'unit': 'kg'},
-    {'label': 'Body Fat %', 'value': 'body_fat', 'unit': '%'},
-    {'label': 'Muscle Mass', 'value': 'muscle_mass', 'unit': 'kg'},
-    {'label': 'Waist', 'value': 'waist', 'unit': 'cm'},
-    {'label': 'Hip', 'value': 'hip', 'unit': 'cm'},
-    {'label': 'Resting Heart Rate', 'value': 'resting_heart_rate', 'unit': 'bpm'},
+  List<Map<String, String>> _buildMetricOptions(AppLocalizations l10n) => [
+    {'label': l10n.metricsDashboardWeight, 'value': 'weight', 'unit': 'kg'},
+    {'label': l10n.metricsDashboardBodyFatPct, 'value': 'body_fat', 'unit': '%'},
+    {'label': l10n.metricsDashboardMuscleMass, 'value': 'muscle_mass', 'unit': 'kg'},
+    {'label': l10n.metricsDashboardWaist, 'value': 'waist', 'unit': 'cm'},
+    {'label': l10n.metricsDashboardHip, 'value': 'hip', 'unit': 'cm'},
+    {'label': l10n.metricsDashboardRestingHeartRate, 'value': 'resting_heart_rate', 'unit': 'bpm'},
   ];
 
   @override
@@ -812,7 +816,9 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedOption = _metricOptions.firstWhere(
+    final l10n = AppLocalizations.of(context)!;
+    final metricOptions = _buildMetricOptions(l10n);
+    final selectedOption = metricOptions.firstWhere(
       (m) => m['value'] == _selectedMetric,
     );
 
@@ -827,9 +833,9 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title
-            const Text(
-              'Add Metric',
-              style: TextStyle(
+            Text(
+              l10n.metricsDashboardAddMetric,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -837,8 +843,8 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
             const SizedBox(height: 20),
 
             // Metric type selector
-            const Text(
-              'METRIC TYPE',
+            Text(
+              l10n.metricsDashboardMetricType,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -850,10 +856,10 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _metricOptions.map((option) {
+              children: metricOptions.map((option) {
                 final isSelected = _selectedMetric == option['value'];
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedMetric = option['value']!),
+                  onTap: () => setState(() => _selectedMetric = option['value'] ?? _selectedMetric),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -883,9 +889,9 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
             const SizedBox(height: 24),
 
             // Value input
-            const Text(
-              'VALUE',
-              style: TextStyle(
+            Text(
+              l10n.metricsDashboardValue,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textMuted,
@@ -897,7 +903,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
               controller: _valueController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                hintText: 'Enter value',
+                hintText: l10n.metricsDashboardEnterValue,
                 suffixText: selectedOption['unit'],
                 filled: true,
                 fillColor: AppColors.elevated,
@@ -927,9 +933,9 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Save',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                child: Text(
+                  l10n.metricsDashboardSave,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ),

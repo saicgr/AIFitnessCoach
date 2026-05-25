@@ -88,7 +88,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${_selectedEquipment.length} Equipment Selected',
+                        AppLocalizations.of(context).addGymSheetEquipmentSelected(_selectedEquipment.length),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -239,7 +239,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  '$totalCount items',
+                                  AppLocalizations.of(context).addGymSheetItems(totalCount),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
@@ -324,8 +324,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
         ),
         const SizedBox(height: 8),
         Text(
-          'Pick the days you\'ll train at this gym. We\'ll pre-generate 14 days '
-          'of workouts for these days the moment you switch to this profile.',
+          AppLocalizations.of(context).addGymSheetPickDaysDesc,
           style: TextStyle(fontSize: 13, color: textSecondary),
         ),
         const SizedBox(height: 16),
@@ -337,7 +336,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
           children: [
             if (activeDays.isNotEmpty)
               _scheduleQuickFillChip(
-                label: 'Same as ${activeProfile?.name ?? 'current'}',
+                label: AppLocalizations.of(context).addGymSheetSameAs(activeProfile?.name ?? AppLocalizations.of(context).addGymSheetCurrent),
                 icon: Icons.copy_rounded,
                 accent: accentColor,
                 isDark: isDark,
@@ -440,7 +439,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                             top: 4,
                             right: 4,
                             child: Tooltip(
-                              message: 'Also at: ${(conflictsByDay[i] ?? const []).join(", ")}',
+                              message: AppLocalizations.of(context).addGymSheetAlsoAt((conflictsByDay[i] ?? const []).join(', ')),
                               child: Icon(
                                 Icons.warning_amber_rounded,
                                 size: 12,
@@ -539,7 +538,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          split['label'] as String,
+                          _splitLabel(split['id'] as String, AppLocalizations.of(context)),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
@@ -547,7 +546,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                           ),
                         ),
                         Text(
-                          split['desc'] as String,
+                          _splitDesc(split['id'] as String, AppLocalizations.of(context)),
                           style: TextStyle(
                             fontSize: 10,
                             color: isSelected
@@ -607,14 +606,15 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
   }
 
   String _buildConflictMessage(Map<int, List<String>> conflictsByDay) {
+    final l10n = AppLocalizations.of(context);
     final parts = <String>[];
     for (final d in _selectedWorkoutDays) {
       final names = conflictsByDay[d];
       if (names != null && names.isNotEmpty) {
-        parts.add('${_AddGymProfileSheetState._dayNames[d]} also at "${names.join('", "')}"');
+        parts.add(l10n.addGymSheetConflictDay(_AddGymProfileSheetState._dayNames[d], names.join('", "')));
       }
     }
-    return 'Schedule overlap: ${parts.join(' · ')}. Whichever profile is active that day will own the workout.';
+    return l10n.addGymSheetConflictMessage(parts.join(' · '));
   }
 
   Widget _buildStyleStep(bool isDark, Color textPrimary, Color textSecondary) {
@@ -671,7 +671,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                 ),
               ),
               Text(
-                '${_selectedEquipment.length} equipment',
+                AppLocalizations.of(context).addGymSheetEquipmentCount(_selectedEquipment.length),
                 style: TextStyle(fontSize: 12, color: textSecondary),
               ),
             ],
@@ -891,6 +891,30 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
         ],
       ],
     );
+  }
+
+  String _splitLabel(String id, AppLocalizations l10n) {
+    switch (id) {
+      case 'nothing_structured': return l10n.addGymSheetSplitLetAiDecide;
+      case 'full_body': return l10n.addGymSheetSplitFullBody;
+      case 'upper_lower': return l10n.addGymSheetSplitUpperLower;
+      case 'push_pull_legs': return l10n.addGymSheetSplitPushPullLegs;
+      case 'phul': return l10n.addGymSheetSplitPhul;
+      case 'body_part': return l10n.addGymSheetSplitBodyPart;
+      default: return id;
+    }
+  }
+
+  String _splitDesc(String id, AppLocalizations l10n) {
+    switch (id) {
+      case 'nothing_structured': return l10n.addGymSheetSplitDescFlexible;
+      case 'full_body': return l10n.addGymSheetSplitDesc3Days;
+      case 'upper_lower': return l10n.addGymSheetSplitDesc4Days;
+      case 'push_pull_legs': return l10n.addGymSheetSplitDesc6Days;
+      case 'phul': return l10n.addGymSheetSplitDesc4Days;
+      case 'body_part': return l10n.addGymSheetSplitDesc56Days;
+      default: return '';
+    }
   }
 
 }

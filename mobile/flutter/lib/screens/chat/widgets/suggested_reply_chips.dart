@@ -52,6 +52,8 @@ class SuggestedReplyChip {
 ///
 /// [extraPayload] is merged into every action-bearing chip — pass
 /// `{'workout_id': '...'}` to scope an action to a specific workout.
+// TODO(i18n): top-level function — no BuildContext available.
+// Refactor to accept AppLocalizations to enable l10n for chip label strings.
 List<SuggestedReplyChip> chipsForWorkoutMode(
   String? mode, {
   Map<String, dynamic>? extraPayload,

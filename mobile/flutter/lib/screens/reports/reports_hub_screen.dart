@@ -19,6 +19,7 @@ import '../../widgets/pill_app_bar.dart';
 import 'report_thumbnail_provider.dart';
 import 'widgets/report_share_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Reports Hub — one catalog of every shareable report in the app.
 ///
@@ -89,7 +90,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Reports & Insights',
+        title: AppLocalizations.of(context).reportsHubReportsInsights,
         actions: [
           PillAppBarAction(
             icon: _view == _HubView.carousel
@@ -407,7 +408,7 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Couldn't build share — ${e.toString()}"),
+          content: Text(AppLocalizations.of(context).reportsHubCouldntBuildShare(e.toString())),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -417,8 +418,7 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
     if (shareable == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              'No ${report.title.toLowerCase()} data for ${DateFormat('MMM yyyy').format(month)} yet — try a different month'),
+          content: Text(AppLocalizations.of(context).reportsHubNoDataForMonth(report.title.toLowerCase(), DateFormat('MMM yyyy').format(month))),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -915,7 +915,7 @@ class _SquircleCard extends ConsumerWidget {
                         ] else ...[
                           const SizedBox(height: 4),
                           Text(
-                            'View report',
+                            AppLocalizations.of(context).reportsHubViewReport,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.75),
                               fontSize: 12,
@@ -982,12 +982,12 @@ class _SharePill extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.ios_share_rounded, color: Colors.white, size: 16),
-              SizedBox(width: 6),
+            children: [
+              const Icon(Icons.ios_share_rounded, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
               Text(
-                'Share',
-                style: TextStyle(
+                AppLocalizations.of(context).commonShare,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -1247,9 +1247,8 @@ class _ListView extends ConsumerWidget {
         final messenger = ScaffoldMessenger.of(context);
         messenger.hideCurrentSnackBar();
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Not enough data yet — try again after your next workout'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).reportsHubNotEnoughDataYet),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1263,7 +1262,7 @@ class _ListView extends ConsumerWidget {
         16, 8, 16, MediaQuery.of(context).padding.bottom + 24,
       ),
       children: [
-        _SectionLabel(title: 'TRAINING', isDark: isDark),
+        _SectionLabel(title: AppLocalizations.of(context).reportsHubTraining, isDark: isDark),
         const SizedBox(height: 8),
         ...inSection(_Section.training).asMap().entries.map(
               (e) => _ListCard(
@@ -1278,7 +1277,7 @@ class _ListView extends ConsumerWidget {
                   .slideY(begin: 0.08),
             ),
         const SizedBox(height: 20),
-        _SectionLabel(title: 'BODY & RECOVERY', isDark: isDark),
+        _SectionLabel(title: AppLocalizations.of(context).reportsHubBodyRecovery, isDark: isDark),
         const SizedBox(height: 8),
         ...inSection(_Section.body).asMap().entries.map(
               (e) => _ListCard(
@@ -1293,7 +1292,7 @@ class _ListView extends ConsumerWidget {
                   .slideY(begin: 0.08),
             ),
         const SizedBox(height: 20),
-        _SectionLabel(title: 'LIFESTYLE', isDark: isDark),
+        _SectionLabel(title: AppLocalizations.of(context).reportsHubLifestyle, isDark: isDark),
         const SizedBox(height: 8),
         ...inSection(_Section.lifestyle).asMap().entries.map(
               (e) => _ListCard(

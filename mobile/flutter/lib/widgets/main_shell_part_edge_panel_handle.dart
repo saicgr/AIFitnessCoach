@@ -239,7 +239,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     child: _ExpandableNavItem(
                       icon: Icons.home_outlined,
                       selectedIcon: Icons.home_rounded,
-                      label: 'Home',
+                      label: AppLocalizations.of(context).navHome,
                       isSelected: selectedIndex == 0,
                       onTap: () => onItemTapped(0),
                       accentColor: accentColor,
@@ -259,7 +259,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       child: _ExpandableNavItem(
                         icon: Icons.fitness_center_outlined,
                         selectedIcon: Icons.fitness_center,
-                        label: 'Workout',
+                        label: AppLocalizations.of(context).navWorkout,
                         isSelected: selectedIndex == 1,
                         onTap: () => onItemTapped(1),
                         accentColor: accentColor,
@@ -274,7 +274,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       child: _ExpandableNavItem(
                         icon: Icons.restaurant_outlined,
                         selectedIcon: Icons.restaurant,
-                        label: 'Nutrition',
+                        label: AppLocalizations.of(context).navNutrition,
                         isSelected: selectedIndex == 2,
                         onTap: () => onItemTapped(2),
                         accentColor: accentColor,
@@ -288,7 +288,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     child: _ExpandableNavItem(
                       icon: Icons.public_outlined,
                       selectedIcon: Icons.public,
-                      label: 'Discover',
+                      label: AppLocalizations.of(context).navDiscover,
                       isSelected: selectedIndex == 3,
                       onTap: () => onItemTapped(3),
                       accentColor: accentColor,
@@ -308,7 +308,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       child: _ExpandableNavItem(
                         icon: Icons.stars_outlined,
                         selectedIcon: Icons.stars_rounded,
-                        label: 'You',
+                        label: AppLocalizations.of(context).navYou,
                         isSelected: selectedIndex == 4,
                         onTap: () => onItemTapped(4),
                         accentColor: accentColor,
@@ -725,7 +725,7 @@ class _PlusButton extends StatelessWidget {
     final purpleColor = isDark ? AppColors.purple : AppColorsLight.purple;
 
     return Semantics(
-      label: 'Quick Actions',
+      label: AppLocalizations.of(context).mainShellPartQuickActions,
       button: true,
       child: GestureDetector(
         onTap: () {
@@ -853,7 +853,7 @@ class _AnchoredPlusButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Semantics(
-      label: 'Quick Actions',
+      label: AppLocalizations.of(context).mainShellPartQuickActions,
       button: true,
       child: GestureDetector(
         onTap: () {
@@ -900,7 +900,7 @@ class _ElevatedFAB extends StatelessWidget {
     final fabColor = isDark ? AppColors.purple : AppColorsLight.purple;
 
     return Semantics(
-      label: 'Quick Actions',
+      label: AppLocalizations.of(context).mainShellPartQuickActions,
       button: true,
       child: GestureDetector(
         onTap: () {
@@ -965,7 +965,7 @@ class _AnchoredBackButton extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              'Back',
+              AppLocalizations.of(context).commonBack,
               style: TextStyle(
                 color: cyanColor,
                 fontSize: 10,

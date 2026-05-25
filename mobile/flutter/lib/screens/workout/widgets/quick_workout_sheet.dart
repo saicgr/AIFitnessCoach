@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../services/dup_rotation.dart';
 import '../../../services/mesocycle_planner.dart';
 import '../../../services/muscle_recovery_tracker.dart';

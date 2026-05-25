@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import 'onboarding_theme.dart';
 
 /// Callback for duration range selection (min, max)
@@ -31,14 +32,16 @@ class QuizDaysSelector extends StatelessWidget {
     this.showHeader = true,
   });
 
-  static const _dayInfo = [
-    {'index': 0, 'short': 'Mon', 'full': 'Monday'},
-    {'index': 1, 'short': 'Tue', 'full': 'Tuesday'},
-    {'index': 2, 'short': 'Wed', 'full': 'Wednesday'},
-    {'index': 3, 'short': 'Thu', 'full': 'Thursday'},
-    {'index': 4, 'short': 'Fri', 'full': 'Friday'},
-    {'index': 5, 'short': 'Sat', 'full': 'Saturday'},
-    {'index': 6, 'short': 'Sun', 'full': 'Sunday'},
+  static const _dayIndexes = [0, 1, 2, 3, 4, 5, 6];
+
+  static List<Map<String, Object>> _buildDayInfo(AppLocalizations l10n) => [
+    {'index': 0, 'short': l10n.quizDaysSelectorMon, 'full': l10n.settingsCardPartMonday},
+    {'index': 1, 'short': l10n.quizDaysSelectorTue, 'full': l10n.settingsCardPartTuesday},
+    {'index': 2, 'short': l10n.quizDaysSelectorWed, 'full': l10n.settingsCardPartWednesday},
+    {'index': 3, 'short': l10n.quizDaysSelectorThu, 'full': l10n.settingsCardPartThursday},
+    {'index': 4, 'short': l10n.quizDaysSelectorFri, 'full': l10n.settingsCardPartFriday},
+    {'index': 5, 'short': l10n.quizDaysSelectorSat, 'full': l10n.settingsCardPartSaturday},
+    {'index': 6, 'short': l10n.quizDaysSelectorSun, 'full': l10n.settingsCardPartSunday},
   ];
 
   static const _durationOptions = [
@@ -63,15 +66,15 @@ class QuizDaysSelector extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (showHeader) ...[
-              _buildTitle(t),
+              _buildTitle(context, t),
               const SizedBox(height: 6),
-              _buildSubtitle(t),
+              _buildSubtitle(context, t),
               const SizedBox(height: 16),
             ],
-            _buildDaysPerWeekSelector(t),
+            _buildDaysPerWeekSelector(context, t),
             const SizedBox(height: 20),
             if (selectedDays != null) ...[
-              _buildWhichDaysSection(t, requiredDays, selectedCount),
+              _buildWhichDaysSection(context, t, requiredDays, selectedCount),
             ],
 
             // Workout Duration Section (only show if callback is provided)
@@ -90,7 +93,7 @@ class QuizDaysSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'How long are your workouts?',
+          AppLocalizations.of(context)!.quizDaysSelectorHowLongAreYour,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -100,7 +103,7 @@ class QuizDaysSelector extends StatelessWidget {
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 4),
         Text(
-          'AI generates workouts within your chosen range',
+          AppLocalizations.of(context)!.quizDaysSelectorAiGeneratesWorkoutsWithin,
           style: TextStyle(
             fontSize: 12,
             color: t.textSecondary,
@@ -191,7 +194,7 @@ class QuizDaysSelector extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'min',
+                                    AppLocalizations.of(context)!.quizDaysSelectorMin,
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w500,
@@ -231,15 +234,15 @@ class QuizDaysSelector extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.star_rounded,
                                   size: 9, color: Colors.white),
                               SizedBox(width: 3),
                               Text(
-                                'BEST',
-                                style: TextStyle(
+                                AppLocalizations.of(context)!.quizDaysSelectorBest,
+                                style: const TextStyle(
                                   fontSize: 8,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
@@ -278,9 +281,9 @@ class QuizDaysSelector extends StatelessWidget {
     }
   }
 
-  Widget _buildTitle(OnboardingTheme t) {
+  Widget _buildTitle(BuildContext context, OnboardingTheme t) {
     return Text(
-      'How many days per week can you train?',
+      AppLocalizations.of(context)!.quizDaysSelectorHowManyDaysPer,
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
@@ -290,9 +293,9 @@ class QuizDaysSelector extends StatelessWidget {
     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
   }
 
-  Widget _buildSubtitle(OnboardingTheme t) {
+  Widget _buildSubtitle(BuildContext context, OnboardingTheme t) {
     return Text(
-      'Consistency beats intensity - pick what you can maintain',
+      AppLocalizations.of(context)!.quizDaysSelectorConsistencyBeatsIntensity,
       style: TextStyle(
         fontSize: 14,
         color: t.textSecondary,
@@ -300,7 +303,8 @@ class QuizDaysSelector extends StatelessWidget {
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildDaysPerWeekSelector(OnboardingTheme t) {
+  Widget _buildDaysPerWeekSelector(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(7, (index) {
@@ -360,7 +364,7 @@ class QuizDaysSelector extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          day == 1 ? 'day' : 'days',
+                          l10n.quizDaysSelectorDays(day),
                           style: TextStyle(
                             fontSize: 10,
                             color: t.textSecondary,
@@ -389,15 +393,18 @@ class QuizDaysSelector extends StatelessWidget {
   }
 
   Widget _buildWhichDaysSection(
+    BuildContext context,
     OnboardingTheme t,
     int requiredDays,
     int selectedCount,
   ) {
+    final l10n = AppLocalizations.of(context)!;
+    final dayInfo = _buildDayInfo(l10n);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Which days work best?',
+          l10n.quizDaysSelectorWhichDaysWorkBest,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -406,7 +413,7 @@ class QuizDaysSelector extends StatelessWidget {
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 6),
         Text(
-          'Select $selectedDays day${selectedDays == 1 ? '' : 's'} for your workouts',
+          l10n.quizDaysSelectorSelectNDays(selectedDays ?? 0),
           style: TextStyle(
             fontSize: 13,
             color: t.textSecondary,
@@ -415,7 +422,7 @@ class QuizDaysSelector extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: _dayInfo.map((day) {
+          children: dayInfo.map((day) {
             final index = (day['index'] as num).toInt();
             final isSelected = selectedWorkoutDays.contains(index);
             final isDisabled = !isSelected && selectedCount >= requiredDays;
@@ -502,12 +509,12 @@ class QuizDaysSelector extends StatelessWidget {
           }).toList(),
         ),
         const SizedBox(height: 12),
-        _buildSelectionCounter(t, requiredDays, selectedCount),
+        _buildSelectionCounter(context, t, requiredDays, selectedCount),
       ],
     );
   }
 
-  Widget _buildSelectionCounter(OnboardingTheme t, int requiredDays, int selectedCount) {
+  Widget _buildSelectionCounter(BuildContext context, OnboardingTheme t, int requiredDays, int selectedCount) {
     final isComplete = selectedCount >= requiredDays;
 
     return Center(
@@ -551,7 +558,7 @@ class QuizDaysSelector extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '$selectedCount / $requiredDays days selected',
+                  AppLocalizations.of(context)!.quizDaysSelectorDaysSelected(selectedCount, requiredDays),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,

@@ -5,6 +5,7 @@ import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
 import '../data/models/level_reward.dart';
 import '../data/services/haptic_service.dart';
+import '../l10n/generated/app_localizations.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// Dialog shown when user reaches a streak milestone
@@ -94,6 +95,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
+    final l10n = AppLocalizations.of(context)!;
     final accentEnum = ref.watch(accentColorProvider);
     final accentColor = accentEnum.getColor(isDark);
     final milestoneColor = _getMilestoneColor();
@@ -176,8 +178,8 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                         shaderCallback: (bounds) => const LinearGradient(
                           colors: [Colors.orange, Colors.red, Colors.orange],
                         ).createShader(bounds),
-                        child: const Text(
-                          'STREAK MILESTONE!',
+                        child: Text(
+                          l10n.streakMilestoneStreakMilestone,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -240,9 +242,9 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                               color: Colors.orange,
                             ),
                           ),
-                          const Text(
-                            'DAYS',
-                            style: TextStyle(
+                          Text(
+                            l10n.streakMilestoneDays,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
@@ -303,7 +305,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
 
                   // Rewards section
                   Text(
-                    'REWARDS',
+                    l10n.streakMilestoneRewards,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -386,9 +388,9 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                         elevation: 4,
                         shadowColor: Colors.orange.withValues(alpha: 0.5),
                       ),
-                      child: const Text(
-                        'Keep the Streak Going!',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.streakMilestoneKeepTheStreakGoing,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -440,9 +442,9 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                           color: Colors.amber.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
-                          'RARE',
-                          style: TextStyle(
+                        child: Text(
+                          AppLocalizations.of(context)!.streakMilestoneRare,
+                          style: const TextStyle(
                             fontSize: 8,
                             fontWeight: FontWeight.bold,
                             color: Colors.amber,
@@ -493,7 +495,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'You\'ve reached the ultimate streak milestone!',
+                AppLocalizations.of(context)!.streakMilestoneYouVeReachedThe,
                 style: TextStyle(
                   fontSize: 13,
                   color: textPrimary,
@@ -523,7 +525,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Next: ${nextMilestone.badgeName}',
+                  AppLocalizations.of(context)!.streakMilestoneNextBadgeName(nextMilestone.badgeName),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -531,7 +533,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                   ),
                 ),
                 Text(
-                  '$daysUntil day${daysUntil > 1 ? 's' : ''} to go!',
+                  AppLocalizations.of(context)!.streakMilestoneDaysToGo(daysUntil),
                   style: TextStyle(
                     fontSize: 11,
                     color: textSecondary,
@@ -547,7 +549,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '${nextMilestone.days} days',
+              AppLocalizations.of(context)!.streakMilestonePreviewDays(nextMilestone.days),
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,

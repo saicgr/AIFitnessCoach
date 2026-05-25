@@ -526,8 +526,8 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           // Main message (AnimatedSwitcher so changes fade rather than pop).
           // Rotates through phase labels when the backend goes quiet so the
           // headline never feels frozen on a single sentence.
-          Builder(builder: (_) {
-            final mainMessage = _displayMainMessage();
+          Builder(builder: (ctx) {
+            final mainMessage = _displayMainMessage(ctx);
             return AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               child: Text(
@@ -544,8 +544,8 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           const SizedBox(height: 4),
           // Substatus — either backend detail or a rotating phase hint so the
           // UI always looks alive during the long AI call.
-          Builder(builder: (_) {
-            final detail = _displayDetail();
+          Builder(builder: (ctx) {
+            final detail = _displayDetail(ctx);
             return AnimatedSwitcher(
               duration: const Duration(milliseconds: 350),
               transitionBuilder: (child, anim) => FadeTransition(
@@ -610,7 +610,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
                   color: colors.textMuted.withOpacity(0.3),
                 ),
                 Text(
-                  'Step $_currentStep of $_totalSteps',
+                  AppLocalizations.of(context)!.regenerateSheetStepOf(_currentStep, _totalSteps),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -657,7 +657,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
               Icon(Icons.info_outline, size: 13, color: colors.textMuted),
               const SizedBox(width: 4),
               Text(
-                'AI generation typically takes 15-30s',
+                AppLocalizations.of(context)!.regenerateSheetAiGenerationTakes,
                 style: TextStyle(
                   fontSize: 12,
                   color: colors.textMuted,

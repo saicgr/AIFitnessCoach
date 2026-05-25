@@ -330,6 +330,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -340,6 +341,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
     return Stack(
       children: [
         _buildAddSheetBody(
+          l: l,
           isDark: isDark,
           textPrimary: textPrimary,
           textSecondary: textSecondary,
@@ -374,6 +376,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   }
 
   Widget _buildAddSheetBody({
+    required AppLocalizations l,
     required bool isDark,
     required Color textPrimary,
     required Color textSecondary,
@@ -394,7 +397,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Add Exercise',
+                      l.exerciseAddSheetAddExercise,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: textPrimary,
@@ -402,7 +405,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Find the perfect exercise to add to your workout',
+                      l.exerciseAddSheetSubtitle,
                       style: TextStyle(fontSize: 13, color: textSecondary),
                     ),
                   ],
@@ -420,11 +423,11 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         SegmentedTabBar(
           controller: _tabController,
           showIcons: false,
-          tabs: const [
-            SegmentedTabItem(label: 'Library'),
-            SegmentedTabItem(label: 'Snapped'),
-            SegmentedTabItem(label: 'Mine'),
-            SegmentedTabItem(label: 'AI Picks'),
+          tabs: [
+            SegmentedTabItem(label: l.exerciseAddSheetTabLibrary),
+            SegmentedTabItem(label: l.exerciseAddSheetTabSnapped),
+            SegmentedTabItem(label: l.exerciseAddSheetTabMine),
+            SegmentedTabItem(label: l.exerciseAddSheetTabAiPicks),
           ],
         ),
 

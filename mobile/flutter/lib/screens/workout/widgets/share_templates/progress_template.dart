@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
 
 /// Progress Template - Shows workout progression and milestone achievements
@@ -72,6 +73,7 @@ class ProgressTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO(i18n): pass AppLocalizations to _buildTotalWorkoutsDisplay, _buildProgressGrid, _buildStatCard, _buildTodaysWorkout (no context in those methods)
     final screenHeight = MediaQuery.of(context).size.height;
     final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);
 

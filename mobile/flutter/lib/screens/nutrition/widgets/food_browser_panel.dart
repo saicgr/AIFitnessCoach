@@ -199,7 +199,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       if (!mounted) return;
       setState(() => _logStates.remove(itemKey));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to log: $e'), behavior: SnackBarBehavior.floating),
+        SnackBar(content: Text(AppLocalizations.of(context).foodBrowserPanelFailedToLog(e.toString())), behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -227,7 +227,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       if (!mounted) return;
       setState(() => _logStates.remove(key));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to log: $e'), behavior: SnackBarBehavior.floating),
+        SnackBar(content: Text(AppLocalizations.of(context).foodBrowserPanelFailedToLog(e.toString())), behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -330,7 +330,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       setState(() => _logStates.remove(key));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to log: $e'),
+          content: Text(AppLocalizations.of(context).foodBrowserPanelFailedToLog(e.toString())),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -380,7 +380,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       setState(() => _logStates.remove(stateKey));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to log: $e'),
+          content: Text(AppLocalizations.of(context).foodBrowserPanelFailedToLog(e.toString())),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -455,7 +455,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       setState(() => _logStates.remove(stateKey));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to log: $e'),
+          content: Text(AppLocalizations.of(context).foodBrowserPanelFailedToLog(e.toString())),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -603,7 +603,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                   onPressed: () {
                     ref.read(search.foodSearchServiceProvider).analyzeNaturalLanguage(widget.searchQuery);
                   },
-                  child: Text('Retry', style: TextStyle(color: teal)),
+                  child: Text(AppLocalizations.of(context).buttonRetry, style: TextStyle(color: teal)),
                 ),
               ],
             ),
@@ -634,7 +634,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                     final cachedLogs = ref.read(nutritionProvider).recentLogs;
                     ref.read(search.foodSearchServiceProvider).search(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
                   },
-                  child: Text('Retry', style: TextStyle(color: teal)),
+                  child: Text(AppLocalizations.of(context).buttonRetry, style: TextStyle(color: teal)),
                 ),
               ],
             ),
@@ -651,13 +651,13 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                     Icon(Icons.search_off, color: textMuted, size: 36),
                     const SizedBox(height: 8),
                     Text(
-                      'No foods found for "${state.query}"',
+                      AppLocalizations.of(context).foodBrowserPanelNoFoodsFound(state.query),
                       style: TextStyle(color: textMuted, fontSize: 13),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Use Analyze for AI estimation',
+                      AppLocalizations.of(context).foodBrowserPanelUseAnalyzeForAi,
                       style: TextStyle(color: textMuted.withValues(alpha: 0.7), fontSize: 12),
                     ),
                   ],
@@ -699,7 +699,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                     if (personalResults.isNotEmpty) ...[
                       _BrowseSectionHeader(
                         icon: Icons.person_outline,
-                        title: 'YOUR FOODS',
+                        title: AppLocalizations.of(context).foodBrowserPanelYourFoods,
                         count: personalResults.length,
                         isDark: widget.isDark,
                       ),
@@ -790,7 +790,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                       onPressed: _logSelectedItems,
                       icon: const Icon(Icons.playlist_add_check, size: 18),
                       label: Text(
-                        'Log Selected (${_selectedSearchKeys.length} items)',
+                        AppLocalizations.of(context).foodBrowserPanelLogSelectedItems(_selectedSearchKeys.length),
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -813,7 +813,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         children: _buildShimmerRows(5),
       ),
       error: (e, _) => Center(
-        child: Text('Search error', style: TextStyle(color: textMuted)),
+        child: Text(AppLocalizations.of(context).foodBrowserPanelSearchError, style: TextStyle(color: textMuted)),
       ),
     );
   }
@@ -825,8 +825,8 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     final hasGroups = dbResults.any((r) => r.matchedQuery != null);
     if (!hasGroups) {
       final title = _selectedDbSource != null
-          ? 'Food Database (${_sourceLabel(_selectedDbSource!)})'
-          : 'Food Database';
+          ? '${AppLocalizations.of(context).foodSearchResultsFoodDatabase} (${_sourceLabel(_selectedDbSource!)})'
+          : AppLocalizations.of(context).foodSearchResultsFoodDatabase;
       return [_FoodGroup(label: title, results: dbResults)];
     }
 
@@ -894,7 +894,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
             children: [
               Icon(Icons.search_off, color: textMuted, size: 36),
               const SizedBox(height: 8),
-              Text('Could not parse any food items', style: TextStyle(color: textMuted, fontSize: 13)),
+              Text(AppLocalizations.of(context).foodBrowserPanelCouldNotParseAny, style: TextStyle(color: textMuted, fontSize: 13)),
             ],
           ),
         ),
@@ -1099,7 +1099,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       if (!mounted) return;
       setState(() => _logStates.remove(key));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to log: $e'), behavior: SnackBarBehavior.floating),
+        SnackBar(content: Text(AppLocalizations.of(context).foodBrowserPanelFailedToLog(e.toString())), behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -1140,7 +1140,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       if (!mounted) return;
       setState(() => _logStates.remove(key));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to log: $e'), behavior: SnackBarBehavior.floating),
+        SnackBar(content: Text(AppLocalizations.of(context).foodBrowserPanelFailedToLog(e.toString())), behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -1176,22 +1176,22 @@ List<_GoalTag> _buildGoalTags({
   final hasWeightLossGoal = goals.any((g) => g.contains('lose_weight') || g.contains('lose_fat'));
 
   if (hasMuscleGoal && protein > 20) {
-    tags.add(_GoalTag(label: 'High protein', color: green, isDark: isDark));
+    tags.add(_GoalTag(label: 'High protein', color: green, isDark: isDark)); // TODO(i18n): foodBrowserPanelHighProtein
   }
   if (hasWeightLossGoal && calories > 300) {
-    tags.add(_GoalTag(label: 'Calorie-dense', color: orange, isDark: isDark));
+    tags.add(_GoalTag(label: 'Calorie-dense', color: orange, isDark: isDark)); // TODO(i18n): foodBrowserPanelCalorieDense
   }
   if (hasWeightLossGoal && calories < 100) {
-    tags.add(_GoalTag(label: 'Low cal', color: green, isDark: isDark));
+    tags.add(_GoalTag(label: 'Low cal', color: green, isDark: isDark)); // TODO(i18n): foodBrowserPanelLowCal
   }
   if (fiber != null && fiber > 5) {
-    tags.add(_GoalTag(label: 'High fiber', color: green, isDark: isDark));
+    tags.add(_GoalTag(label: 'High fiber', color: green, isDark: isDark)); // TODO(i18n): foodBrowserPanelHighFiber
   }
   if (fat > 30 && !hasMuscleGoal) {
-    tags.add(_GoalTag(label: 'High fat', color: orange, isDark: isDark));
+    tags.add(_GoalTag(label: 'High fat', color: orange, isDark: isDark)); // TODO(i18n): foodBrowserPanelHighFat
   }
   if (protein < 1 && carbs < 1 && fat > 90) {
-    tags.add(_GoalTag(label: 'Pure fat', color: orange, isDark: isDark));
+    tags.add(_GoalTag(label: 'Pure fat', color: orange, isDark: isDark)); // TODO(i18n): foodBrowserPanelPureFat
   }
   return tags;
 }

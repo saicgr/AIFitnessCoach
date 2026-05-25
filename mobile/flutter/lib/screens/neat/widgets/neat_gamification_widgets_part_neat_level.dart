@@ -32,6 +32,21 @@ enum NeatLevel {
     }
   }
 
+  String localizedName(AppLocalizations l10n) {
+    switch (this) {
+      case NeatLevel.couchPotato:
+        return l10n.neatGamificationWidgetsCouchPotato;
+      case NeatLevel.casualMover:
+        return l10n.neatGamificationWidgetsCasualMover;
+      case NeatLevel.activeWalker:
+        return l10n.neatGamificationWidgetsActiveWalker;
+      case NeatLevel.neatEnthusiast:
+        return l10n.neatGamificationWidgetsNeatEnthusiast;
+      case NeatLevel.neatChampion:
+        return l10n.neatGamificationWidgetsNeatChampion;
+    }
+  }
+
   String get emoji {
     switch (this) {
       case NeatLevel.couchPotato:
@@ -201,6 +216,7 @@ class _NeatProgressBarState extends State<NeatProgressBar>
         ? nextLevel.minXP - widget.currentXP
         : 0;
 
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -209,7 +225,7 @@ class _NeatProgressBarState extends State<NeatProgressBar>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${widget.currentXP} XP',
+                l10n.neatGamificationWidgetsCurrentXp(widget.currentXP),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -218,7 +234,7 @@ class _NeatProgressBarState extends State<NeatProgressBar>
               ),
               if (nextLevel != null)
                 Text(
-                  '$xpToNext XP to ${nextLevel.displayName}',
+                  l10n.neatGamificationWidgetsXpToNext(xpToNext, nextLevel.localizedName(l10n)),
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -226,8 +242,8 @@ class _NeatProgressBarState extends State<NeatProgressBar>
                 )
               else
                 Text(
-                  'Max Level!',
-                  style: TextStyle(
+                  l10n.neatGamificationWidgetsMaxLevel,
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.yellow,
@@ -344,7 +360,7 @@ class NeatLeaderboardCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Weekly Leaderboard',
+                    AppLocalizations.of(context)!.neatGamificationWidgetsWeeklyLeaderboard,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -360,7 +376,7 @@ class NeatLeaderboardCard extends StatelessWidget {
                     onViewAll!();
                   },
                   child: Text(
-                    'View All',
+                    AppLocalizations.of(context)!.neatGamificationWidgetsViewAll,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -378,7 +394,7 @@ class NeatLeaderboardCard extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No rankings yet this week',
+                  AppLocalizations.of(context)!.neatGamificationWidgetsNoRankingsYetThis,
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -477,23 +493,24 @@ class _DailyChallengeState extends State<DailyChallenge>
     super.dispose();
   }
 
-  String _formatTimeRemaining() {
+  String _formatTimeRemaining(AppLocalizations l10n) {
     final now = DateTime.now();
     final diff = widget.expiresAt.difference(now);
 
-    if (diff.isNegative) return 'Expired';
+    if (diff.isNegative) return l10n.neatGamificationWidgetsExpired;
 
     final hours = diff.inHours;
     final minutes = diff.inMinutes % 60;
 
     if (hours > 0) {
-      return '${hours}h ${minutes}m left';
+      return l10n.neatGamificationWidgetsHoursMinutesLeft(hours, minutes);
     }
-    return '${minutes}m left';
+    return l10n.neatGamificationWidgetsMinutesLeft(minutes);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final progress = (widget.currentValue / widget.targetValue).clamp(0.0, 1.0);
     final isCompleted = widget.currentValue >= widget.targetValue;
@@ -546,7 +563,7 @@ class _DailyChallengeState extends State<DailyChallenge>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Daily Challenge',
+                      AppLocalizations.of(context)!.neatGamificationWidgetsDailyChallenge,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -582,7 +599,7 @@ class _DailyChallengeState extends State<DailyChallenge>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _formatTimeRemaining(),
+                      _formatTimeRemaining(l10n),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -712,9 +729,9 @@ class _DailyChallengeState extends State<DailyChallenge>
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: const Text(
-                    'Claim Reward',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    AppLocalizations.of(context)!.neatGamificationWidgetsClaimReward,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 )
               else if (widget.onAccept != null && widget.currentValue == 0)
@@ -734,9 +751,9 @@ class _DailyChallengeState extends State<DailyChallenge>
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: const Text(
-                    'Accept',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    AppLocalizations.of(context)!.neatGamificationWidgetsAccept,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
             ],

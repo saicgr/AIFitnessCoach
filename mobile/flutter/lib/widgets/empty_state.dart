@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 import 'lottie_animations.dart';
 
 /// Reusable empty state widget with illustration and message
@@ -24,52 +25,57 @@ class EmptyState extends StatelessWidget {
   });
 
   // Pre-defined empty states for common scenarios
-  factory EmptyState.noWorkouts({VoidCallback? onAction}) {
+  factory EmptyState.noWorkouts(BuildContext context, {VoidCallback? onAction}) {
+    final l10n = AppLocalizations.of(context)!;
     return EmptyState(
       icon: Icons.fitness_center,
-      title: 'No workouts yet',
-      subtitle: 'Your workout schedule is empty.\nStart by creating a program!',
-      actionLabel: 'Create Program',
+      title: l10n.emptyStateNoWorkoutsYet,
+      subtitle: l10n.emptyStateYourWorkoutScheduleIs,
+      actionLabel: l10n.emptyStateCreateProgram,
       onAction: onAction,
       iconColor: AppColors.cyan,
     );
   }
 
-  factory EmptyState.noExercises({VoidCallback? onAction}) {
+  factory EmptyState.noExercises(BuildContext context, {VoidCallback? onAction}) {
+    final l10n = AppLocalizations.of(context)!;
     return EmptyState(
       icon: Icons.search_off,
-      title: 'No exercises found',
-      subtitle: 'Try adjusting your filters\nor search for something else.',
-      actionLabel: 'Clear Filters',
+      title: l10n.emptyStateNoExercisesFound,
+      subtitle: l10n.emptyStateTryAdjustingYourFilters,
+      actionLabel: l10n.emptyStateClearFilters,
       onAction: onAction,
       iconColor: AppColors.purple,
     );
   }
 
-  factory EmptyState.noHistory() {
-    return const EmptyState(
+  factory EmptyState.noHistory(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return EmptyState(
       icon: Icons.history,
-      title: 'No workout history',
-      subtitle: 'Complete your first workout\nto start tracking progress!',
+      title: l10n.emptyStateNoWorkoutHistory,
+      subtitle: l10n.emptyStateCompleteYourFirstWorkout,
       iconColor: AppColors.orange,
     );
   }
 
-  factory EmptyState.noResults() {
-    return const EmptyState(
+  factory EmptyState.noResults(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return EmptyState(
       icon: Icons.search,
-      title: 'No results',
-      subtitle: 'We couldn\'t find what you\'re looking for.\nTry different keywords.',
+      title: l10n.emptyStateNoResults,
+      subtitle: l10n.emptyStateWeCouldnTFind,
       iconColor: AppColors.textMuted,
     );
   }
 
-  factory EmptyState.offline({VoidCallback? onRetry}) {
+  factory EmptyState.offline(BuildContext context, {VoidCallback? onRetry}) {
+    final l10n = AppLocalizations.of(context)!;
     return EmptyState(
       icon: Icons.wifi_off,
-      title: 'No connection',
-      subtitle: 'Please check your internet connection\nand try again.',
-      actionLabel: 'Retry',
+      title: l10n.emptyStateNoConnection,
+      subtitle: l10n.emptyStatePleaseCheckYourInternet,
+      actionLabel: l10n.buttonRetry,
       onAction: onRetry,
       iconColor: AppColors.error,
     );

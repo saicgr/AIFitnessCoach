@@ -9,6 +9,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../utils/time_formatters.dart';
 import '../../../widgets/fullscreen_image_viewer.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -401,12 +402,12 @@ class LoggedMealsSection extends StatelessWidget {
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: 16),
         color: accent.withValues(alpha: 0.9),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.edit, color: Colors.white, size: 18),
-            SizedBox(width: 4),
-            Text('Edit', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            const Icon(Icons.edit, color: Colors.white, size: 18),
+            const SizedBox(width: 4),
+            Text(AppLocalizations.of(context).loggedMealsEdit, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -414,13 +415,13 @@ class LoggedMealsSection extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
         color: AppColors.error.withValues(alpha: 0.9),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Delete', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-            SizedBox(width: 4),
-            Icon(Icons.delete_outline, color: Colors.white, size: 18),
+            Text(AppLocalizations.of(context).buttonDelete, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 4),
+            const Icon(Icons.delete_outline, color: Colors.white, size: 18),
           ],
         ),
       ),
@@ -889,7 +890,7 @@ class LoggedMealsSection extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    Text('Inflammation Score',
+                                    Text(AppLocalizations.of(context).loggedMealsInflammationScore,
                                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
                                     const SizedBox(width: 4),
                                     GestureDetector(
@@ -946,8 +947,8 @@ class LoggedMealsSection extends StatelessWidget {
                             Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text('Contains ultra-processed items',
-                                style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w500)),
+                              child: Text(AppLocalizations.of(context).loggedMealsContainsUltraProcessedItems,
+                                style: const TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w500)),
                             ),
                             Icon(Icons.info_outline, size: 16, color: Colors.red.withValues(alpha: 0.7)),
                           ],
@@ -1096,7 +1097,7 @@ class LoggedMealsSection extends StatelessWidget {
                   // Micronutrients
                   if (meal.hasMicronutrients) ...[
                     const SizedBox(height: 8),
-                    _buildMicronutrientsSection(meal, textPrimary, textMuted, teal, cardBorder),
+                    _buildMicronutrientsSection(context, meal, textPrimary, textMuted, teal, cardBorder),
                   ],
                 ],
               ),
@@ -1585,8 +1586,8 @@ class LoggedMealsSection extends StatelessWidget {
     messenger.clearSnackBars();
     messenger.showSnackBar(
       SnackBar(
-        content: Text('Removed ${parent.foodItems[itemIdx].name}'),
-        action: SnackBarAction(label: 'Undo', onPressed: () { undone = true; }),
+        content: Text(AppLocalizations.of(context).loggedMealsRemovedItem(parent.foodItems[itemIdx].name)),
+        action: SnackBarAction(label: AppLocalizations.of(context).logMealSheetUndo, onPressed: () { undone = true; }),
         duration: const Duration(seconds: 4),
       ),
     );
@@ -1747,7 +1748,7 @@ class LoggedMealsSection extends StatelessWidget {
                     children: [
                       Icon(Icons.tune, color: accent, size: 20),
                       const SizedBox(width: 8),
-                      Text('Adjust Portion', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
+                      Text(AppLocalizations.of(context).loggedMealsAdjustPortion2, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1765,7 +1766,7 @@ class LoggedMealsSection extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Serving presets with size labels
-                  Text('Servings', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
+                  Text(AppLocalizations.of(context).loggedMealsServings, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -1820,7 +1821,7 @@ class LoggedMealsSection extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Weight', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
+                                Text(AppLocalizations.of(context).loggedMealsWeight, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
                                 const SizedBox(height: 8),
                                 TextField(
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1881,7 +1882,7 @@ class LoggedMealsSection extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Quantity', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
+                                Text(AppLocalizations.of(context).loggedMealsQuantity, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
                                 const SizedBox(height: 8),
                                 Row(
                                   children: [
@@ -2080,7 +2081,7 @@ class LoggedMealsSection extends StatelessWidget {
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      child: Text(AppLocalizations.of(context).buttonSave, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -2210,7 +2211,7 @@ class LoggedMealsSection extends StatelessWidget {
                     children: [
                       Icon(Icons.tune, color: accent, size: 20),
                       const SizedBox(width: 8),
-                      Text('Adjust Portion', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
+                      Text(AppLocalizations.of(context).loggedMealsAdjustPortion2, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
                       const Spacer(),
                       Flexible(
                         child: Container(
@@ -2232,7 +2233,7 @@ class LoggedMealsSection extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Serving presets
-                  Text('Servings', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
+                  Text(AppLocalizations.of(context).loggedMealsServings, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -2283,7 +2284,7 @@ class LoggedMealsSection extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Weight', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
+                                Text(AppLocalizations.of(context).loggedMealsWeight, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
                                 const SizedBox(height: 8),
                                 TextField(
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -2338,7 +2339,7 @@ class LoggedMealsSection extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Quantity', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
+                                Text(AppLocalizations.of(context).loggedMealsQuantity, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
                                 const SizedBox(height: 8),
                                 Row(
                                   children: [
@@ -2499,7 +2500,7 @@ class LoggedMealsSection extends StatelessWidget {
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      child: Text(AppLocalizations.of(context).buttonSave, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -2566,7 +2567,7 @@ class LoggedMealsSection extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 tileColor: meal.mealType == type['id'] ? accent.withValues(alpha: 0.1) : null,
                 trailing: meal.mealType == type['id']
-                    ? Text('Current', style: TextStyle(fontSize: 12, color: accent))
+                    ? Text(AppLocalizations.of(ctx).loggedMealsCurrent, style: TextStyle(fontSize: 12, color: accent))
                     : null,
                 onTap: () {
                   Navigator.pop(ctx);
@@ -2627,7 +2628,7 @@ class LoggedMealsSection extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Add Note', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
+              Text(AppLocalizations.of(ctx).loggedMealsAddNote2, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
@@ -2658,7 +2659,7 @@ class LoggedMealsSection extends StatelessWidget {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Save', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  child: Text(AppLocalizations.of(context).buttonSave, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -2697,11 +2698,11 @@ class LoggedMealsSection extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('How did you feel?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(AppLocalizations.of(ctx).loggedMealsHowDidYouFeel, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
                 const SizedBox(height: 16),
 
                 // Before eating
-                Text('Before eating', style: TextStyle(fontSize: 13, color: textMuted)),
+                Text(AppLocalizations.of(ctx).loggedMealsBeforeEating, style: TextStyle(fontSize: 13, color: textMuted)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -2727,7 +2728,7 @@ class LoggedMealsSection extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // After eating
-                Text('After eating', style: TextStyle(fontSize: 13, color: textMuted)),
+                Text(AppLocalizations.of(ctx).loggedMealsAfterEating, style: TextStyle(fontSize: 13, color: textMuted)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -2755,7 +2756,7 @@ class LoggedMealsSection extends StatelessWidget {
                 // Energy level
                 Row(
                   children: [
-                    Text('Energy level', style: TextStyle(fontSize: 13, color: textMuted)),
+                    Text(AppLocalizations.of(ctx).loggedMealsEnergyLevel, style: TextStyle(fontSize: 13, color: textMuted)),
                     const Spacer(),
                     Text('$energyLevel/5', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: accent)),
                   ],
@@ -2797,7 +2798,7 @@ class LoggedMealsSection extends StatelessWidget {
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Save', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    child: Text(AppLocalizations.of(context).buttonSave, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -2831,7 +2832,7 @@ class LoggedMealsSection extends StatelessWidget {
   // Micronutrients Section
   // ============================================
 
-  Widget _buildMicronutrientsSection(FoodLog meal, Color textPrimary, Color textMuted, Color teal, Color cardBorder) {
+  Widget _buildMicronutrientsSection(BuildContext context, FoodLog meal, Color textPrimary, Color textMuted, Color teal, Color cardBorder) {
     final nutrients = <MapEntry<String, String>>[];
     if (meal.sodiumMg != null) nutrients.add(MapEntry('Sodium', '${meal.sodiumMg!.round()}mg'));
     if (meal.sugarG != null) nutrients.add(MapEntry('Sugar', '${meal.sugarG!.toStringAsFixed(1)}g'));
@@ -2859,7 +2860,7 @@ class LoggedMealsSection extends StatelessWidget {
             children: [
               Icon(Icons.science_outlined, size: 14, color: teal),
               const SizedBox(width: 6),
-              Text('Micronutrients', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary)),
+              Text(AppLocalizations.of(context).loggedMealsMicronutrients, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -2915,12 +2916,13 @@ class LoggedMealsSection extends StatelessWidget {
   }
 
   String _inflammationLabel(int score) {
-    if (score <= 2) return 'Anti-inflammatory';
-    if (score <= 4) return 'Mildly anti-inflammatory';
-    if (score == 5) return 'Neutral';
-    if (score <= 7) return 'Mildly inflammatory';
-    if (score <= 9) return 'Inflammatory';
-    return 'Highly inflammatory';
+    // TODO(i18n): pass BuildContext to use AppLocalizations for these labels
+    if (score <= 2) return 'Anti-inflammatory'; // TODO(i18n): loggedMealsAntiInflammatory
+    if (score <= 4) return 'Mildly anti-inflammatory'; // TODO(i18n): loggedMealsMildlyAntiInflammatory
+    if (score == 5) return 'Neutral'; // TODO(i18n): loggedMealsNeutral
+    if (score <= 7) return 'Mildly inflammatory'; // TODO(i18n): loggedMealsMildlyInflammatory
+    if (score <= 9) return 'Inflammatory'; // TODO(i18n): loggedMealsInflammatory
+    return 'Highly inflammatory'; // TODO(i18n): loggedMealsHighlyInflammatory
   }
 
   void _showInflammationInfo(BuildContext context) {
@@ -2938,20 +2940,20 @@ class LoggedMealsSection extends StatelessWidget {
                 children: [
                   Icon(Icons.local_fire_department, color: Colors.orange),
                   const SizedBox(width: 8),
-                  Text('Inflammation Score', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                  Text(AppLocalizations.of(context).loggedMealsInflammationScore, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black)),
                 ],
               ),
               const SizedBox(height: 16),
-              Text('Rates how inflammatory a food is based on processing level, fat profile, sugar content, fiber, and antioxidant properties.',
+              Text(AppLocalizations.of(context).loggedMealsRatesHowInflammatoryA,
                 style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
               const SizedBox(height: 16),
-              _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green),
-              _buildInfoRow('4-5', 'Neutral', Colors.teal),
-              _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange),
-              _buildInfoRow('8-10', 'Inflammatory', Colors.red),
+              _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green), // TODO(i18n): loggedMealsAntiInflammatory
+              _buildInfoRow('4-5', 'Neutral', Colors.teal), // TODO(i18n): loggedMealsNeutral
+              _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange), // TODO(i18n): loggedMealsMildlyInflammatory
+              _buildInfoRow('8-10', 'Inflammatory', Colors.red), // TODO(i18n): loggedMealsInflammatory
               const SizedBox(height: 16),
-              Text('Lower is better for reducing body inflammation and gut health.',
+              Text(AppLocalizations.of(context).loggedMealsLowerIsBetterFor,
                 style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
               const SizedBox(height: 8),
             ],
@@ -2998,18 +3000,18 @@ class LoggedMealsSection extends StatelessWidget {
                 children: [
                   Icon(Icons.warning_amber_rounded, color: Colors.red),
                   const SizedBox(width: 8),
-                  Text('Ultra-Processed Foods', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                  Text(AppLocalizations.of(context).loggedMealsUltraProcessedFoods, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black)),
                 ],
               ),
               const SizedBox(height: 16),
-              Text('Ultra-processed foods (NOVA Group 4) contain industrial additives like emulsifiers, hydrogenated oils, artificial sweeteners, and protein isolates — substances not found in home cooking.',
+              Text(AppLocalizations.of(context).loggedMealsUltraProcessedFoodsNova,
                 style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
               const SizedBox(height: 12),
-              Text('Research links regular consumption to increased inflammation, obesity, heart disease, and digestive issues.',
+              Text(AppLocalizations.of(context).loggedMealsResearchLinksRegularConsump,
                 style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
               const SizedBox(height: 12),
-              Text('Examples: soft drinks, instant noodles, packaged snacks, chicken nuggets, most breakfast cereals.',
+              Text(AppLocalizations.of(context).loggedMealsExamplesSoftDrinksInstant,
                 style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
               const SizedBox(height: 8),
             ],

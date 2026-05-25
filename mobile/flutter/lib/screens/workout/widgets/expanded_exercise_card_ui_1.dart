@@ -370,7 +370,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
-                                  'NEW',
+                                  AppLocalizations.of(context)!.commonNew,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -564,6 +564,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         showHandle: true,
         child: Consumer(
           builder: (ctx, sheetRef, _) {
+            final l = AppLocalizations.of(ctx)!;
             final isDark = Theme.of(ctx).brightness == Brightness.dark;
             final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
             final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -603,7 +604,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     context: ctx,
                     icon: isFavorite ? Icons.favorite : Icons.favorite_border,
                     iconColor: isFavorite ? AppColors.error : textPrimary,
-                    label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                    label: isFavorite ? l.exerciseMenuRemoveFromFavorites : l.exerciseMenuAddToFavorites,
                     trailingCheck: isFavorite ? AppColors.error : null,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'favorite'),
@@ -612,7 +613,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     context: ctx,
                     icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
                     iconColor: isQueued ? AppColors.cyan : textPrimary,
-                    label: isQueued ? 'Remove from Queue' : 'Repeat Next Time',
+                    label: isQueued ? l.exerciseMenuRemoveFromQueue : l.exerciseMenuRepeatNextTime,
                     trailingCheck: isQueued ? AppColors.cyan : null,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'queue'),
@@ -621,7 +622,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     context: ctx,
                     icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
                     iconColor: isStaple ? AppColors.purple : textPrimary,
-                    label: isStaple ? 'Remove as Staple' : 'Mark as Staple',
+                    label: isStaple ? l.exerciseMenuRemoveAsStaple : l.exerciseMenuMarkAsStaple,
                     trailingCheck: isStaple ? AppColors.purple : null,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'staple'),
@@ -635,7 +636,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       context: ctx,
                       icon: Icons.history_rounded,
                       iconColor: textPrimary,
-                      label: 'View History',
+                      label: l.exerciseMenuViewHistory,
                       textPrimary: textPrimary,
                       onTap: () => _handleSheetAction(sheetCtx, 'history'),
                     ),
@@ -644,7 +645,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       context: ctx,
                       icon: Icons.swap_horiz,
                       iconColor: textPrimary,
-                      label: 'Swap Exercise',
+                      label: l.exerciseMenuSwapExercise,
                       textPrimary: textPrimary,
                       onTap: () => _handleSheetAction(sheetCtx, 'swap'),
                     ),
@@ -653,7 +654,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       context: ctx,
                       icon: Icons.link,
                       iconColor: textPrimary,
-                      label: 'Link as Superset',
+                      label: l.exerciseMenuLinkAsSuperset,
                       textPrimary: textPrimary,
                       onTap: () => _handleSheetAction(sheetCtx, 'superset'),
                     ),
@@ -666,7 +667,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       context: ctx,
                       icon: Icons.delete_outline,
                       iconColor: AppColors.error,
-                      label: 'Remove from Workout',
+                      label: l.exerciseMenuRemoveFromWorkout,
                       labelColor: AppColors.error,
                       textPrimary: textPrimary,
                       onTap: () => _handleSheetAction(sheetCtx, 'remove'),
@@ -676,7 +677,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                       context: ctx,
                       icon: Icons.block_rounded,
                       iconColor: AppColors.error,
-                      label: 'Never Recommend',
+                      label: l.exerciseMenuNeverRecommend,
                       labelColor: AppColors.error,
                       textPrimary: textPrimary,
                       onTap: () => _handleSheetAction(sheetCtx, 'never_recommend'),
@@ -689,7 +690,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     context: ctx,
                     icon: Icons.help_outline,
                     iconColor: textMuted,
-                    label: 'What do these mean?',
+                    label: l.exerciseMenuWhatDoTheseMean,
                     labelColor: textMuted,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'info'),
@@ -762,7 +763,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         final newState = ref.read(favoritesProvider).isFavorite(exerciseName);
         _showActionSnackBar(
           icon: newState ? Icons.favorite : Icons.favorite_border,
-          text: newState ? 'Added to favorites' : 'Removed from favorites',
+          text: newState ? AppLocalizations.of(context)!.exerciseMenuAddedToFavorites : AppLocalizations.of(context)!.exerciseMenuRemovedFromFavorites,
           color: AppColors.success,
         );
         break;
@@ -777,7 +778,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         final newState = ref.read(exerciseQueueProvider).isQueued(exerciseName);
         _showActionSnackBar(
           icon: newState ? Icons.playlist_add_check : Icons.playlist_add,
-          text: newState ? 'Queued for next workout' : 'Removed from queue',
+          text: newState ? AppLocalizations.of(context)!.exerciseMenuQueuedForNext : AppLocalizations.of(context)!.exerciseMenuRemovedFromQueue,
           color: AppColors.cyan,
         );
         break;
@@ -792,7 +793,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         final newState = ref.read(staplesProvider).isStaple(exerciseName);
         _showActionSnackBar(
           icon: newState ? Icons.push_pin : Icons.push_pin_outlined,
-          text: newState ? 'Marked as staple - updating workout...' : 'Removed from staples',
+          text: newState ? AppLocalizations.of(context)!.exerciseMenuMarkedAsStaple : AppLocalizations.of(context)!.exerciseMenuRemovedFromStaples,
           color: AppColors.purple,
         );
         break;
@@ -841,6 +842,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
 
 
   Widget _buildTableHeader(Color glassSurface, Color textMuted, Color accentColor) {
+    final l = AppLocalizations.of(context)!;
     final isBarbell = _isBarbellExercise();
     final bool useKg = _useKgOverride ?? ref.read(useKgForWorkoutProvider);
 
@@ -858,7 +860,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
               SizedBox(
                 width: 50,
                 child: Text(
-                  'SET',
+                  l.exerciseTableHeaderSet,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -873,7 +875,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: Text(
-                    'LAST',
+                    l.exerciseTableHeaderLast,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -887,7 +889,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
               Expanded(
                 flex: 3,
                 child: Text(
-                  'TARGET',
+                  l.exerciseTableHeaderTarget,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -980,7 +982,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
             Icon(Icons.air, size: 12, color: displayColor),
             const SizedBox(width: 4),
             Text(
-              'Breathing',
+              AppLocalizations.of(context)!.exerciseDetailsBreathing,
               style: TextStyle(
                 fontSize: 11,
                 color: displayColor,

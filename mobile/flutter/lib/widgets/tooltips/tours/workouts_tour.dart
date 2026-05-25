@@ -12,6 +12,8 @@ class WorkoutsTour {
 
   static const id = TooltipIds.workouts;
 
+  // TODO(i18n): static method — no BuildContext available.
+  // Refactor to instance method accepting BuildContext to enable l10n.
   static List<EmptyStateTip> steps() => [
         EmptyStateTip(
           icon: Icons.play_circle_outline_rounded,

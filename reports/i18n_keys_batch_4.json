@@ -1,0 +1,670 @@
+{
+  "newKeys": [
+    {
+      "key": "aiModelDownloadDownloadModel",
+      "value": "Download {modelName}",
+      "description": "Primary download button label in the AI model download screen. {modelName} is the model's display name or 'Select a model' placeholder.",
+      "placeholders": {
+        "modelName": { "type": "String" }
+      }
+    },
+    {
+      "key": "merchClaimsClaimYour",
+      "value": "Claim your {displayName}?",
+      "description": "Confirmation dialog title when accepting a merch reward. {displayName} is the reward's display name.",
+      "placeholders": {
+        "displayName": { "type": "String" }
+      }
+    },
+    {
+      "key": "merchClaimsYouWillForfeit",
+      "value": "You'll forfeit the {displayName} (level {level}). This can't be undone.",
+      "description": "Confirmation dialog body when cancelling a merch reward. {displayName} is the reward name; {level} is the level it was unlocked at.",
+      "placeholders": {
+        "displayName": { "type": "String" },
+        "level": { "type": "int" }
+      }
+    },
+    {
+      "key": "aiModelDownloadBatteryWarning",
+      "value": "On-device AI models run intensive computations on your phone. This may increase battery drain and cause the device to warm up during workout generation. Larger models use more resources.",
+      "description": "Warning text shown about battery and thermal impact of on-device AI models."
+    },
+    {
+      "key": "aiModelDownloadCancel",
+      "value": "Cancel",
+      "description": "Cancel button label in the AI model download screen."
+    },
+    {
+      "key": "aiModelDownloadDeleteModelFree",
+      "value": "Delete Model (Free {size})",
+      "description": "Button label to delete a downloaded model and free storage. {size} is a formatted storage size like '1.2 GB'.",
+      "placeholders": {
+        "size": { "type": "String" }
+      }
+    },
+    {
+      "key": "aiModelDownloadDownloadingProgress",
+      "value": "Downloading... {percent}%",
+      "description": "Progress label while downloading an AI model. {percent} is 0-100.",
+      "placeholders": {
+        "percent": { "type": "int" }
+      }
+    },
+    {
+      "key": "aiModelDownloadRam",
+      "value": "RAM",
+      "description": "Label for the RAM row in device compatibility section."
+    },
+    {
+      "key": "aiModelDownloadRequiredToDownload",
+      "value": "Required to download models from HuggingFace. Get your free token at huggingface.co/settings/tokens",
+      "description": "Helper text below the HuggingFace token input field."
+    },
+    {
+      "key": "aiModelDownloadRequiresRam",
+      "value": "Requires {ramLabel} RAM",
+      "description": "Chip label showing minimum RAM required for a model. {ramLabel} is a formatted size like '4 GB'.",
+      "placeholders": {
+        "ramLabel": { "type": "String" }
+      }
+    },
+    {
+      "key": "aiModelDownloadSelectAModel",
+      "value": "Select a model",
+      "description": "Placeholder text in the download button when no model is selected."
+    },
+    {
+      "key": "aiModelDownloadSizeStorage",
+      "value": "{size} storage",
+      "description": "Chip label showing storage required for a model. {size} is a formatted size like '2.0 GB'.",
+      "placeholders": {
+        "size": { "type": "String" }
+      }
+    },
+    {
+      "key": "beastModeAlgorithmInspector",
+      "value": "ALGORITHM INSPECTOR",
+      "description": "Section title in Beast Mode screen for the algorithm inspector feature group."
+    },
+    {
+      "key": "beastModeAlgorithmInspectorSubtitle",
+      "value": "See the math behind your workouts",
+      "description": "Subtitle under the Algorithm Inspector section title in Beast Mode."
+    },
+    {
+      "key": "beastModeRecoveryAndProgression",
+      "value": "RECOVERY & PROGRESSION",
+      "description": "Section title in Beast Mode screen for recovery and progression feature group."
+    },
+    {
+      "key": "beastModeRecoveryAndProgressionSubtitle",
+      "value": "Visualize your body's recovery and forecast growth",
+      "description": "Subtitle under the Recovery & Progression section title in Beast Mode."
+    },
+    {
+      "key": "beastModeCustomizationLab",
+      "value": "CUSTOMIZATION LAB",
+      "description": "Section title in Beast Mode screen for the customization lab feature group."
+    },
+    {
+      "key": "beastModeCustomizationLabSubtitle",
+      "value": "Advanced color and font controls",
+      "description": "Subtitle under the Customization Lab section title in Beast Mode."
+    },
+    {
+      "key": "beastModeWorkoutAlgorithm",
+      "value": "WORKOUT ALGORITHM",
+      "description": "Section title in Beast Mode screen for the workout algorithm feature group."
+    },
+    {
+      "key": "beastModeWorkoutAlgorithmSubtitle",
+      "value": "Deep control over workout generation",
+      "description": "Subtitle under the Workout Algorithm section title in Beast Mode."
+    },
+    {
+      "key": "beastModeDataAndSyncTools",
+      "value": "DATA & SYNC TOOLS",
+      "description": "Section title in Beast Mode screen for data and sync tools feature group."
+    },
+    {
+      "key": "beastModeDataAndSyncToolsSubtitle",
+      "value": "Debug sync issues and manage your data",
+      "description": "Subtitle under the Data & Sync Tools section title in Beast Mode."
+    },
+    {
+      "key": "beastModeWorkoutTemplates",
+      "value": "WORKOUT TEMPLATES",
+      "description": "Section title in Beast Mode screen for the workout templates feature group."
+    },
+    {
+      "key": "beastModeWorkoutTemplatesSubtitle",
+      "value": "Custom workout structure presets",
+      "description": "Subtitle under the Workout Templates section title in Beast Mode."
+    },
+    {
+      "key": "beastModeAboutBeastMode",
+      "value": "ABOUT BEAST MODE",
+      "description": "Section title in Beast Mode screen for the about / build-info feature group."
+    },
+    {
+      "key": "beastModeAboutBeastModeSubtitle",
+      "value": "Build information and controls",
+      "description": "Subtitle under the About Beast Mode section title."
+    },
+    {
+      "key": "challengeCardYouChallengedToBeat",
+      "value": "You challenged to beat",
+      "description": "Label shown on a challenge card when the current user issued the challenge."
+    },
+    {
+      "key": "challengeCompleteContinue",
+      "value": "Continue",
+      "description": "Continue button at the bottom of the challenge complete dialog."
+    },
+    {
+      "key": "coachVoicePickerFailedToSwitchVoice",
+      "value": "Failed to switch voice: {error}",
+      "description": "Snackbar shown when applying a new coach voice fails. {error} is the exception message.",
+      "placeholders": {
+        "error": { "type": "String" }
+      }
+    },
+    {
+      "key": "cycleScreenUiPhaseLabel",
+      "value": "{displayName} phase",
+      "description": "Phase label shown on the cycle screen. {displayName} is the localized phase name e.g. 'Follicular'.",
+      "placeholders": {
+        "displayName": { "type": "String" }
+      }
+    },
+    {
+      "key": "cycleScreenUiSuggestedTraining",
+      "value": "Suggested training: {intensity}",
+      "description": "Training intensity suggestion shown under the cycle phase. {intensity} is e.g. 'Moderate'.",
+      "placeholders": {
+        "intensity": { "type": "String" }
+      }
+    },
+    {
+      "key": "cycleScreenUiPredictionsAreEstimates",
+      "value": "Predictions are estimates based on your logged data, not a birth-control method and not medical advice. See a clinician for any health concern.",
+      "description": "Disclaimer text at the bottom of the cycle predictions section."
+    },
+    {
+      "key": "cycleScreenUiRetry",
+      "value": "Retry",
+      "description": "Retry button label on the cycle screen error state."
+    },
+    {
+      "key": "cycleScreenUiLogYourFirstPeriod",
+      "value": "Log your first period to start predictions.",
+      "description": "Empty state message shown when the user has not yet logged any period data."
+    },
+    {
+      "key": "exercisePickerSheetAddFavoriteExercise",
+      "value": "Add Favorite Exercise",
+      "description": "Sheet title / header when the picker is in 'favorite' mode."
+    },
+    {
+      "key": "exercisePickerSheetAddStapleExercise",
+      "value": "Add Staple Exercise",
+      "description": "Sheet title / header when the picker is in 'staple' mode."
+    },
+    {
+      "key": "exercisePickerSheetAddToExerciseQueue",
+      "value": "Add to Exercise Queue",
+      "description": "Sheet title / header when the picker is in 'queue' mode."
+    },
+    {
+      "key": "exercisePickerSheetAddExerciseToAvoid",
+      "value": "Add Exercise to Avoid",
+      "description": "Sheet title / header when the picker is in 'avoided' mode."
+    },
+    {
+      "key": "exercisePickerSheetSearchForExercisesToAdd",
+      "value": "Search for exercises to add to your favorites",
+      "description": "Search hint text when the picker is in 'favorite' mode."
+    },
+    {
+      "key": "exercisePickerSheetSearchForCoreLifts",
+      "value": "Search for core lifts to lock in your workouts",
+      "description": "Search hint text when the picker is in 'staple' mode."
+    },
+    {
+      "key": "exercisePickerSheetSearchForExercisesToInclude",
+      "value": "Search for exercises to include in your next workout",
+      "description": "Search hint text when the picker is in 'queue' mode."
+    },
+    {
+      "key": "exercisePickerSheetSearchForExercisesToSkip",
+      "value": "Search for exercises you want to skip",
+      "description": "Search hint text when the picker is in 'avoided' mode."
+    },
+    {
+      "key": "exercisePickerSheetShowingResultsFor",
+      "value": "Showing results for ",
+      "description": "Prefix text before a highlighted search term in the exercise picker results header. Trailing space is intentional."
+    },
+    {
+      "key": "exercisePickerSheetAddAsCustom",
+      "value": "Add \"{name}\" as custom",
+      "description": "Button label to create a custom exercise when no library match is found. {name} is the search query.",
+      "placeholders": {
+        "name": { "type": "String" }
+      }
+    },
+    {
+      "key": "exercisePickerSheetNSelected",
+      "value": "{n} selected",
+      "description": "Counter chip label showing how many exercises are selected in multi-select mode. {n} is the count.",
+      "placeholders": {
+        "n": { "type": "int" }
+      }
+    },
+    {
+      "key": "exercisePickerSheetSave",
+      "value": "Save",
+      "description": "Save button label in the exercise picker when no multi-pick selection is pending."
+    },
+    {
+      "key": "exercisePickerSheetSaveN",
+      "value": "Save ({n})",
+      "description": "Save button label in the exercise picker showing the count of items to save. {n} is the count.",
+      "placeholders": {
+        "n": { "type": "int" }
+      }
+    },
+    {
+      "key": "exercisePickerSheetBodyPart",
+      "value": "Body Part",
+      "description": "Filter section header label for body part filters in the exercise picker."
+    },
+    {
+      "key": "exercisePickerSheetEquipment",
+      "value": "Equipment",
+      "description": "Filter section header label for equipment filters in the exercise picker."
+    },
+    {
+      "key": "exercisePickerSheetType",
+      "value": "Type",
+      "description": "Filter section header label for exercise type filters in the exercise picker."
+    },
+    {
+      "key": "freshnessDecayCardUsedSessionsAgo",
+      "value": "{sessions, plural, one{Used 1 session ago} other{Used {sessions} sessions ago}}",
+      "description": "Row label in the freshness decay live preview showing how many sessions ago an exercise was performed.",
+      "placeholders": {
+        "sessions": { "type": "int" }
+      }
+    },
+    {
+      "key": "merchClaimsUnlockedAtLevel",
+      "value": "Unlocked at Level {level}",
+      "description": "Badge label on a merch claim card showing which level unlocked this reward. {level} is an integer.",
+      "placeholders": {
+        "level": { "type": "int" }
+      }
+    },
+    {
+      "key": "merchClaimsAcceptedWeWillBeIn",
+      "value": "{displayName} accepted! We'll be in touch.",
+      "description": "Success snackbar shown after accepting a merch reward. {displayName} is the reward's display name.",
+      "placeholders": {
+        "displayName": { "type": "String" }
+      }
+    },
+    {
+      "key": "merchClaimsFailedToAccept",
+      "value": "Failed to accept: {error}",
+      "description": "Error snackbar shown when accepting a merch reward fails. {error} is the exception message.",
+      "placeholders": {
+        "error": { "type": "String" }
+      }
+    },
+    {
+      "key": "merchClaimsFailedToCancel",
+      "value": "Failed to cancel: {error}",
+      "description": "Error snackbar shown when cancelling a merch reward fails. {error} is the exception message.",
+      "placeholders": {
+        "error": { "type": "String" }
+      }
+    },
+    {
+      "key": "myExercisesAreYouSureDelete",
+      "value": "Are you sure you want to delete \"{exercise}\"? This cannot be undone.",
+      "description": "Confirmation dialog body when deleting a custom exercise. {exercise} is the exercise name.",
+      "placeholders": {
+        "exercise": { "type": "String" }
+      }
+    },
+    {
+      "key": "pauseSubscriptionPausePlan",
+      "value": "Pause {planName}",
+      "description": "Sheet title showing the plan name being paused. {planName} is e.g. 'Zealova Premium'.",
+      "placeholders": {
+        "planName": { "type": "String" }
+      }
+    },
+    {
+      "key": "pauseSubscriptionBillingIsPaused",
+      "value": "Billing is paused",
+      "description": "Info item title in the pause subscription sheet explaining billing stops."
+    },
+    {
+      "key": "pauseSubscriptionYouWontBeCharged",
+      "value": "You won't be charged during the pause",
+      "description": "Info item subtitle in the pause subscription sheet explaining no charges during pause."
+    },
+    {
+      "key": "pauseSubscriptionDataIsPreserved",
+      "value": "Data is preserved",
+      "description": "Info item title in the pause subscription sheet explaining data is kept."
+    },
+    {
+      "key": "pauseSubscriptionYourWorkoutHistory",
+      "value": "Your workout history & progress remain safe",
+      "description": "Info item subtitle in the pause subscription sheet explaining history is preserved."
+    },
+    {
+      "key": "pauseSubscriptionLimitedAccess",
+      "value": "Limited access",
+      "description": "Info item title in the pause subscription sheet explaining premium features are restricted."
+    },
+    {
+      "key": "pauseSubscriptionPremiumFeaturesAre",
+      "value": "Premium features are temporarily unavailable",
+      "description": "Info item subtitle in the pause subscription sheet explaining premium feature restriction."
+    },
+    {
+      "key": "pauseSubscriptionPauseForDuration",
+      "value": "Pause for {duration}",
+      "description": "Primary action button label when a pause duration is selected. {duration} is the label e.g. '1 Month'.",
+      "placeholders": {
+        "duration": { "type": "String" }
+      }
+    },
+    {
+      "key": "pauseSubscriptionSelectADuration",
+      "value": "Select a duration",
+      "description": "Primary action button placeholder text when no pause duration is selected yet."
+    },
+    {
+      "key": "progressionPaceProgressionSpeed",
+      "value": "Progression Speed",
+      "description": "Section header in the Progression Pace settings screen for the speed control group."
+    },
+    {
+      "key": "progressionPaceFineTuneSettings",
+      "value": "Fine-Tune Settings",
+      "description": "Section header in the Progression Pace settings screen for the fine-tune control group."
+    },
+    {
+      "key": "progressionPaceDeloadSettings",
+      "value": "Deload Settings",
+      "description": "Section header in the Progression Pace settings screen for the deload control group."
+    },
+    {
+      "key": "reportsHubCouldntBuildShare",
+      "value": "Couldn't build share — {error}",
+      "description": "Snackbar shown when generating a shareable report image fails. {error} is the exception message.",
+      "placeholders": {
+        "error": { "type": "String" }
+      }
+    },
+    {
+      "key": "reportsHubNoDataForMonth",
+      "value": "No {reportName} data for {month} yet — try a different month",
+      "description": "Snackbar shown when a report has no data for the selected month. {reportName} is the report title; {month} is e.g. 'Apr 2026'.",
+      "placeholders": {
+        "reportName": { "type": "String" },
+        "month": { "type": "String" }
+      }
+    },
+    {
+      "key": "settingsCardPleaseSelectAtLeastOne",
+      "value": "Please select at least one workout day",
+      "description": "Inline validation error shown when the user tries to save zero workout days."
+    },
+    {
+      "key": "settingsCardWorkoutDaysUpdatedTo",
+      "value": "Workout days updated to {days}",
+      "description": "Success snackbar after saving updated workout days. {days} is a comma-separated list of day names.",
+      "placeholders": {
+        "days": { "type": "String" }
+      }
+    },
+    {
+      "key": "settingsCardWorkoutDays",
+      "value": "Workout Days",
+      "description": "Sheet title for the workout days selector sheet."
+    },
+    {
+      "key": "settingsCardSelectWhichDaysYou",
+      "value": "Select which days you want to work out",
+      "description": "Subtitle below the sheet title in the workout days selector sheet."
+    },
+    {
+      "key": "settingsCardNDaysSelected",
+      "value": "{n, plural, one{1 day selected} other{{n} days selected}}",
+      "description": "Counter label showing how many days are currently selected in the workout days selector sheet.",
+      "placeholders": {
+        "n": { "type": "int" }
+      }
+    },
+    {
+      "key": "settingsCardChangingDaysWillReschedule",
+      "value": "Changing days will reschedule your upcoming workouts automatically.",
+      "description": "Info note in the workout days selector sheet warning about automatic rescheduling."
+    },
+    {
+      "key": "settingsCardSaveChanges",
+      "value": "Save Changes",
+      "description": "Save button label in the workout days selector sheet when changes have been made."
+    },
+    {
+      "key": "settingsCardNoChanges",
+      "value": "No Changes",
+      "description": "Disabled save button label in the workout days selector sheet when nothing has changed."
+    },
+    {
+      "key": "strainRiskCardPercentOverCap",
+      "value": "{percent}% over cap",
+      "description": "Overflow indicator label on a strain risk card when volume exceeds the weekly cap. {percent} is a formatted integer string.",
+      "placeholders": {
+        "percent": { "type": "String" }
+      }
+    },
+    {
+      "key": "strainRiskCardPercentVsLastWeek",
+      "value": "{signedPercent}% vs last week",
+      "description": "Weekly change label on a strain risk card. {signedPercent} is a signed integer string e.g. '+12' or '-5'.",
+      "placeholders": {
+        "signedPercent": { "type": "String" }
+      }
+    },
+    {
+      "key": "volumeChartMuscleGroupVolume",
+      "value": "{muscleGroup} Volume",
+      "description": "Chart title when a specific muscle group is selected in the volume chart. {muscleGroup} is e.g. 'Chest'.",
+      "placeholders": {
+        "muscleGroup": { "type": "String" }
+      }
+    },
+    {
+      "key": "volumeChartWeeklyVolumeTrend",
+      "value": "Weekly Volume Trend",
+      "description": "Chart title when no specific muscle group is selected in the volume chart (all-muscle view)."
+    },
+    {
+      "key": "volumeChartNRisky",
+      "value": "{count} risky",
+      "description": "Badge label on the volume chart showing the number of risky weeks. {count} is an integer.",
+      "placeholders": {
+        "count": { "type": "int" }
+      }
+    },
+    {
+      "key": "volumeChartVolume",
+      "value": "Volume",
+      "description": "Legend item label for the volume line/bar in the volume chart."
+    },
+    {
+      "key": "volumeChartDangerousIncrease",
+      "value": "Dangerous Increase",
+      "description": "Legend item label for weeks marked as dangerously high volume increase in the volume chart."
+    },
+    {
+      "key": "volumeChartAverage",
+      "value": "Average",
+      "description": "Reference line label for the average volume in the volume chart."
+    },
+    {
+      "key": "volumeChartPeak",
+      "value": "Peak",
+      "description": "Reference line label for the peak volume in the volume chart."
+    },
+    {
+      "key": "volumeChartWeeks",
+      "value": "Weeks",
+      "description": "X-axis label in the volume chart."
+    },
+    {
+      "key": "wearOsLogSetsDirectlyFromWatch",
+      "value": "Log sets directly from watch",
+      "description": "Coming-soon feature bullet in the Wear OS settings section."
+    },
+    {
+      "key": "wearOsRealTimeHeartRateTracking",
+      "value": "Real-time heart rate tracking",
+      "description": "Coming-soon feature bullet in the Wear OS settings section."
+    },
+    {
+      "key": "wearOsQuickFoodLoggingViaVoice",
+      "value": "Quick food logging via voice",
+      "description": "Coming-soon feature bullet in the Wear OS settings section."
+    },
+    {
+      "key": "wearOsAutomaticDataSync",
+      "value": "Automatic data sync",
+      "description": "Coming-soon feature bullet in the Wear OS settings section."
+    },
+    {
+      "key": "workoutHistoryImportError",
+      "value": "Error: {error}",
+      "description": "Snackbar shown when deleting a workout history entry fails. {error} is the exception message.",
+      "placeholders": {
+        "error": { "type": "String" }
+      }
+    },
+    {
+      "key": "workoutHistoryImportImportFailed",
+      "value": "Import failed: {error}",
+      "description": "Snackbar shown when a file import fails. {error} is the exception message.",
+      "placeholders": {
+        "error": { "type": "String" }
+      }
+    },
+    {
+      "key": "workoutHistoryImportPleaseEnterExerciseName",
+      "value": "Please enter an exercise name",
+      "description": "Form validator message for the exercise name field in the manual history entry form."
+    },
+    {
+      "key": "workoutHistoryImportRequired",
+      "value": "Required",
+      "description": "Form validator message for required numeric fields (weight, reps, sets) in the manual history entry form."
+    },
+    {
+      "key": "workoutHistoryImportInvalid",
+      "value": "Invalid",
+      "description": "Form validator message for invalid numeric values in the manual history entry form."
+    },
+    {
+      "key": "workoutHistoryImportExportFromHevy",
+      "value": "Export from Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton, and more.",
+      "description": "Helper text in the file import section listing supported source apps."
+    },
+    {
+      "key": "workoutHistoryImportRemoveExercise",
+      "value": "Remove {exerciseName} from your workout history?",
+      "description": "Confirmation dialog body when removing an exercise entry from workout history. {exerciseName} is the exercise name.",
+      "placeholders": {
+        "exerciseName": { "type": "String" }
+      }
+    },
+    {
+      "key": "workoutHistoryImportNSessions",
+      "value": "{sourceDescription}  •  {count} sessions",
+      "description": "Summary tile label showing the data source and session count. {sourceDescription} is e.g. 'Hevy'; {count} is an integer.",
+      "placeholders": {
+        "sourceDescription": { "type": "String" },
+        "count": { "type": "int" }
+      }
+    },
+    {
+      "key": "workoutHistoryImportMaxWeightKg",
+      "value": "Max: {weight} kg",
+      "description": "Summary tile label showing the maximum weight lifted. {weight} is a formatted decimal string like '120.5'.",
+      "placeholders": {
+        "weight": { "type": "String" }
+      }
+    },
+    {
+      "key": "xpProgressCardLvlN",
+      "value": "Lvl {level}",
+      "description": "Compact level label in the XP progress card compact layout. {level} is the current level integer.",
+      "placeholders": {
+        "level": { "type": "int" }
+      }
+    },
+    {
+      "key": "xpProgressCardLevelN",
+      "value": "Level {level}",
+      "description": "Full level label in the XP progress card expanded layout. {level} is the current level integer.",
+      "placeholders": {
+        "level": { "type": "int" }
+      }
+    },
+    {
+      "key": "xpProgressCardXpTotal",
+      "value": "{xp} XP Total",
+      "description": "Total XP label in the XP progress card. {xp} is a formatted XP string like '12,400'.",
+      "placeholders": {
+        "xp": { "type": "String" }
+      }
+    },
+    {
+      "key": "xpProgressCardPercentToLevel",
+      "value": "{percent}% to Level {level}",
+      "description": "Progress label showing percentage completion towards the next level. {percent} is 0-99; {level} is the next level integer.",
+      "placeholders": {
+        "percent": { "type": "int" },
+        "level": { "type": "int" }
+      }
+    },
+    {
+      "key": "xpProgressCardPrestigeN",
+      "value": "Prestige {level}",
+      "description": "Prestige indicator label shown for users who have reached max level. {level} is the prestige level integer.",
+      "placeholders": {
+        "level": { "type": "int" }
+      }
+    },
+    {
+      "key": "xpProgressCardDaily",
+      "value": "Daily",
+      "description": "Label for the daily goals row in the XP progress card goals preview."
+    },
+    {
+      "key": "xpProgressCardDays",
+      "value": "days",
+      "description": "Unit label next to the streak count in the XP progress card when there is an active streak."
+    },
+    {
+      "key": "xpProgressCardNone",
+      "value": "none",
+      "description": "Streak value shown in the XP progress card when the user has no current streak."
+    }
+  ]
+}

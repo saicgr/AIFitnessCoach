@@ -8649,7 +8649,7 @@
   "workoutPlanDrawerLoggedTheyWillBe": ") logged. They will be deleted.",
   "workoutPlanDrawerNow": "Now",
   "workoutPlanDrawerRemove": "Remove",
-  "workoutPlanDrawerRemoveExercise": "Remove exercise",
+  "workoutPlanDrawerRemoveExercise": "Remove exercise {arg0}",
   "workoutPlanDrawerSwapExercise": "Swap exercise",
   "workoutPlanDrawerWorkoutPlan": "Workout Plan",
   "workoutPlannerCalendarDisplayOptions": "Calendar display options",
@@ -9027,5 +9027,327 @@
   "youHubStatsScores": "Stats & Scores",
   "youSkills": "Kemahiran",
   "youTrophies": "Trofi",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "complianceRingCardGreatPace": "Compliance ring card great pace {arg0}",
+  "@complianceRingCardGreatPace": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "complianceRingCardOnTrack": "Compliance ring card on track {arg0}",
+  "@complianceRingCardOnTrack": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "complianceRingCardWorkoutsRemaining": "Compliance ring card workouts remaining {arg0}",
+  "@complianceRingCardWorkoutsRemaining": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "habitsCardDayStreak": "Habits card day streak {arg0}",
+  "@habitsCardDayStreak": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "muscleHeatmapTileMostTrained": "Muscle heatmap tile most trained {arg0}",
+  "@muscleHeatmapTileMostTrained": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "quickLogMeasurementsUpdatedDaysAgo": "Quick log measurements updated days ago {arg0}",
+  "@quickLogMeasurementsUpdatedDaysAgo": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "weightTrendCardDownThisWeek": "Weight trend card down this week {arg0}",
+  "@weightTrendCardDownThisWeek": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "weightTrendCardUpThisWeek": "Weight trend card up this week {arg0}",
+  "@weightTrendCardUpThisWeek": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "weightTrendCardDownVsLastCycle": "Weight trend card down vs last cycle {arg0}",
+  "@weightTrendCardDownVsLastCycle": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "weightTrendCardUpVsLastCycle": "Weight trend card up vs last cycle {arg0}",
+  "@weightTrendCardUpVsLastCycle": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "weightTrendCardTargetHeldWindow": "Weight trend card target held window {arg0}",
+  "@weightTrendCardTargetHeldWindow": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "safetyDisclaimerBannerInjuriesFlagged": "Safety disclaimer banner injuries flagged {arg0}",
+  "@safetyDisclaimerBannerInjuriesFlagged": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "todayScoreDetailUp": "Today score detail up {arg0}",
+  "@todayScoreDetailUp": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "todayScoreDetailDown": "Today score detail down {arg0}",
+  "@todayScoreDetailDown": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "todayScoreDetailMomentumWithAvg": "Today score detail momentum with avg {arg0} {arg1}",
+  "@todayScoreDetailMomentumWithAvg": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      },
+      "arg1": {
+        "type": "Object"
+      }
+    }
+  },
+  "todayScoreDetailEarnedPts": "Today score detail earned pts {arg0} {arg1}",
+  "@todayScoreDetailEarnedPts": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      },
+      "arg1": {
+        "type": "Object"
+      }
+    }
+  },
+  "todayScoreDetailInactiveExplanation": "Today score detail inactive explanation {arg0} {arg1}",
+  "@todayScoreDetailInactiveExplanation": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      },
+      "arg1": {
+        "type": "Object"
+      }
+    }
+  },
+  "weekProgressStripCompletedCount": "Week progress strip completed count {arg0} {arg1}",
+  "@weekProgressStripCompletedCount": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      },
+      "arg1": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricsDashboardNoMetricDataYet": "Metrics dashboard no metric data yet {arg0}",
+  "@metricsDashboardNoMetricDataYet": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "neatGamificationWidgetsCurrentXp": "Neat gamification widgets current xp {arg0}",
+  "@neatGamificationWidgetsCurrentXp": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "localizedName": "Localized name {arg0}",
+  "@localizedName": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "neatGamificationWidgetsHoursMinutesLeft": "Neat gamification widgets hours minutes left {arg0} {arg1}",
+  "@neatGamificationWidgetsHoursMinutesLeft": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      },
+      "arg1": {
+        "type": "Object"
+      }
+    }
+  },
+  "neatGamificationWidgetsMinutesLeft": "Neat gamification widgets minutes left {arg0}",
+  "@neatGamificationWidgetsMinutesLeft": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "neatGamificationWidgetsStepGoal": "Neat gamification widgets step goal {arg0}",
+  "@neatGamificationWidgetsStepGoal": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "neatGamificationWidgetsTargetActiveHours": "Neat gamification widgets target active hours {arg0}",
+  "@neatGamificationWidgetsTargetActiveHours": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "programSummaryNItems": "Program summary n items {arg0}",
+  "@programSummaryNItems": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "quizDaysSelectorDays": "Quiz days selector days {arg0}",
+  "@quizDaysSelectorDays": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "workoutShowcaseSetNOf3": "Workout showcase set n of {arg0}",
+  "@workoutShowcaseSetNOf3": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "workoutShowcaseLogSet": "Workout showcase log set {arg0}",
+  "@workoutShowcaseLogSet": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "restSuggestionSaveTime": "Rest suggestion save time {arg0}",
+  "@restSuggestionSaveTime": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "trophiesEarnedNewPRs": "Trophies earned new p rs {arg0}",
+  "@trophiesEarnedNewPRs": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "trophiesEarnedNewCardioPRs": "Trophies earned new cardio p rs {arg0}",
+  "@trophiesEarnedNewCardioPRs": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "trophiesEarnedNewBadges": "Trophies earned new badges {arg0}",
+  "@trophiesEarnedNewBadges": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "workoutDetailReplacingExercises": "Workout detail replacing exercises {arg0}",
+  "@workoutDetailReplacingExercises": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "workoutPlanDrawerExerciseCount": "Workout plan drawer exercise count {arg0}",
+  "@workoutPlanDrawerExerciseCount": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "@workoutPlanDrawerRemoveExercise": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "workoutPlanDrawerSetsLogged": "Workout plan drawer sets logged {arg0}",
+  "@workoutPlanDrawerSetsLogged": {
+    "placeholders": {
+      "arg0": {
+        "type": "Object"
+      }
+    }
+  },
+  "@neatGamificationWidgetsXpToNext": {
+    "placeholders": {
+      "xpToNext": {
+        "type": "Object"
+      },
+      "levelName": {
+        "type": "Object"
+      }
+    }
+  },
+  "shareMotivationalCompleted": "COMPLETED",
+  "workoutBottomBarSkip": "Skip"
 }

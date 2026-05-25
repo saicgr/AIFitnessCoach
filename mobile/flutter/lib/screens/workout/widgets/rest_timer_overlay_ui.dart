@@ -34,6 +34,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // TODO(i18n): 'NEXT SET' is in _buildNextSetCard which has no BuildContext param — cannot use AppLocalizations here
                 Text(
                   'NEXT SET',
                   style: TextStyle(
@@ -138,6 +139,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
     final suggestion = weightSuggestion!;
 
     // Determine colors and labels based on suggestion type
+    // TODO(i18n): actionLabel/actionDescription are computed in _buildWeightSuggestionCard which has no BuildContext param — cannot use AppLocalizations here
     Color accentColor;
     IconData icon;
     String actionLabel;
@@ -704,7 +706,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
               ),
               const SizedBox(width: 10),
               Text(
-                'Rate Last Set',
+                AppLocalizations.of(context)!.restRateLastSet,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -713,7 +715,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
               ),
               const Spacer(),
               Text(
-                'optional',
+                AppLocalizations.of(context)!.restRateLastSetOptional,
                 style: TextStyle(
                   fontSize: 11,
                   color: subtitleColor,

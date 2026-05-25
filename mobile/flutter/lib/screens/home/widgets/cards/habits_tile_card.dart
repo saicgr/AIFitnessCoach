@@ -7,6 +7,7 @@ import '../../../../data/models/habit.dart';
 import '../../../../data/providers/habit_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Habits Tile Card - Shows today's habits with quick toggle
 /// Displays habit checklist with completion progress
@@ -32,7 +33,7 @@ class HabitsTileCard extends ConsumerWidget {
     final userId = authState.user?.id;
 
     if (userId == null) {
-      return _buildNotLoggedIn(elevatedColor, textMuted, cardBorder);
+      return _buildNotLoggedIn(context, elevatedColor, textMuted, cardBorder);
     }
 
     final habitsState = ref.watch(habitsProvider(userId));
@@ -66,7 +67,7 @@ class HabitsTileCard extends ConsumerWidget {
         border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
       ),
       child: isLoading
-          ? _buildLoadingState(textMuted)
+          ? _buildLoadingState(context, textMuted)
           : habits.isEmpty
               ? _buildEmptyState(context, textMuted)
               : _buildContentState(
@@ -82,7 +83,7 @@ class HabitsTileCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildNotLoggedIn(Color elevatedColor, Color textMuted, Color cardBorder) {
+  Widget _buildNotLoggedIn(BuildContext context, Color elevatedColor, Color textMuted, Color cardBorder) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -95,7 +96,7 @@ class HabitsTileCard extends ConsumerWidget {
           Icon(Icons.check_circle_outline, color: textMuted, size: 20),
           const SizedBox(width: 8),
           Text(
-            'Sign in to track habits',
+            AppLocalizations.of(context)!.habitsTileCardSignInToTrack,
             style: TextStyle(fontSize: 14, color: textMuted),
           ),
         ],
@@ -146,7 +147,7 @@ class HabitsTileCard extends ConsumerWidget {
                   ? '...'
                   : totalCount > 0
                       ? '$completedCount/$totalCount'
-                      : 'No habits',
+                      : AppLocalizations.of(context)!.habitsTileCardNoHabits,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -159,7 +160,7 @@ class HabitsTileCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
+  Widget _buildLoadingState(BuildContext context, Color textMuted) {
     return Row(
       children: [
         SizedBox(
@@ -172,7 +173,7 @@ class HabitsTileCard extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          'Loading habits...',
+          AppLocalizations.of(context)!.habitsTileCardLoadingHabits,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -183,6 +184,7 @@ class HabitsTileCard extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, Color textMuted) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -191,7 +193,7 @@ class HabitsTileCard extends ConsumerWidget {
             Icon(Icons.check_circle_outline, color: AppColors.success, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Habits',
+              l10n.habitsTileCardHabits,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -202,7 +204,7 @@ class HabitsTileCard extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Build healthy habits',
+          l10n.habitsTileCardBuildHealthyHabits,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -215,7 +217,7 @@ class HabitsTileCard extends ConsumerWidget {
             context.push('/habits');
           },
           icon: Icon(Icons.add, size: 18),
-          label: Text('Add Habit'),
+          label: Text(l10n.habitsTileCardAddHabit),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.success,
             foregroundColor: Colors.white,
@@ -267,7 +269,7 @@ class HabitsTileCard extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                "Today's Habits",
+                AppLocalizations.of(context)!.habitsTileCardTodaySHabits,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -366,7 +368,7 @@ class HabitsTileCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'All habits done today!',
+                    AppLocalizations.of(context)!.habitsTileCardAllHabitsDoneToday,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

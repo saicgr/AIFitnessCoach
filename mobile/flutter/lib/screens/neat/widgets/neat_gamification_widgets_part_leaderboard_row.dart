@@ -65,7 +65,7 @@ class _LeaderboardRow extends StatelessWidget {
                     ),
                     if (isCurrentUser)
                       Text(
-                        ' (You)',
+                        ' (${AppLocalizations.of(context)!.commonYou})',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.cyan,
@@ -74,7 +74,7 @@ class _LeaderboardRow extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  entry.level.displayName,
+                  entry.level.localizedName(AppLocalizations.of(context)!),
                   style: TextStyle(
                     fontSize: 11,
                     color: entry.level.color,
@@ -97,7 +97,7 @@ class _LeaderboardRow extends StatelessWidget {
                 ),
               ),
               Text(
-                'NEAT pts',
+                AppLocalizations.of(context)!.neatGamificationWidgetsNeatPts,
                 style: TextStyle(
                   fontSize: 10,
                   color: colorScheme.onSurfaceVariant,

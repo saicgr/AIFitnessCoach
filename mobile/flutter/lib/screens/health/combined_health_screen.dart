@@ -9,6 +9,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/health_goals_service.dart';
 import '../../data/services/health_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/date_strip.dart';
 import '../../widgets/glass_back_button.dart';
 import 'widgets/metric_history_card.dart';
@@ -52,6 +53,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
     final sync = ref.watch(healthSyncProvider);
     final historyAsync = ref.watch(combinedHealthHistoryProvider);
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
@@ -64,7 +66,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
                   const GlassBackButton(),
                   const SizedBox(width: 12),
                   Text(
-                    'Health',
+                    l10n.combinedHealthHealth,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -97,6 +99,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
     bool isDark,
     CombinedHealthHistory history,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final day = history.dayFor(_selectedDate);
 
     return ListView(
@@ -117,7 +120,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         const SizedBox(height: 12),
         // ── Per-metric sections
         MetricHistoryCard(
-          title: 'Steps',
+          title: l10n.combinedHealthSteps,
           icon: Icons.directions_walk_rounded,
           color: AppColors.success,
           valueText: day != null && day.steps > 0
@@ -128,7 +131,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         ),
         const SizedBox(height: 12),
         MetricHistoryCard(
-          title: 'Active Energy',
+          title: l10n.combinedHealthActiveEnergy,
           icon: Icons.local_fire_department_rounded,
           color: AppColors.orange,
           valueText: day != null && day.caloriesBurned > 0
@@ -139,7 +142,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         ),
         const SizedBox(height: 12),
         MetricHistoryCard(
-          title: 'Resting Heart Rate',
+          title: l10n.combinedHealthRestingHeartRate,
           icon: Icons.favorite_rounded,
           color: AppColors.error,
           valueText: day?.restingHeartRate != null
@@ -151,7 +154,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         ),
         const SizedBox(height: 12),
         MetricHistoryCard(
-          title: 'Sleep',
+          title: l10n.combinedHealthSleep,
           icon: Icons.bedtime_rounded,
           color: AppColors.purple,
           valueText: day?.sleepMinutes != null && day!.sleepMinutes! > 0
@@ -163,7 +166,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         const SizedBox(height: 12),
         // Water has no trend metric source — value only, no fabricated chart.
         MetricHistoryCard(
-          title: 'Water',
+          title: l10n.combinedHealthWater,
           icon: Icons.water_drop_rounded,
           color: AppColors.cyan,
           valueText: day?.waterMl != null && day!.waterMl! > 0
@@ -340,6 +343,7 @@ class _ActivityStreakCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -376,7 +380,7 @@ class _ActivityStreakCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Activity streak',
+                  l10n.combinedHealthActivityStreak,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -385,10 +389,8 @@ class _ActivityStreakCard extends ConsumerWidget {
                 ),
                 Text(
                   streak == 0
-                      ? 'Hit your step goal to start a streak.'
-                      : streak == 1
-                          ? '1 day at or above your step goal.'
-                          : '$streak days in a row at or above your step goal.',
+                      ? l10n.combinedHealthHitYourStepGoal
+                      : l10n.combinedHealthActivityStreakDays(streak),
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
               ],
@@ -444,7 +446,7 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save goal.')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.combinedHealthCouldNotSaveGoal)),
         );
       }
     } finally {
@@ -454,6 +456,7 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = widget.isDark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder =
@@ -489,7 +492,7 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
               ),
               const SizedBox(width: 10),
               Text(
-                'Daily goals',
+                l10n.combinedHealthDailyGoals,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -500,7 +503,7 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
           ),
           const SizedBox(height: 14),
           Text(
-            'Step goal',
+            l10n.combinedHealthStepGoal,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -523,7 +526,7 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Active minutes goal',
+            l10n.combinedHealthActiveMinutesGoal,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -554,7 +557,7 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 const SizedBox(width: 8),
-                Text('Saving…',
+                Text(l10n.combinedHealthSaving,
                     style: TextStyle(fontSize: 11, color: textMuted)),
               ],
             ),
@@ -626,6 +629,7 @@ class _ConnectHealthEmpty extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -638,7 +642,7 @@ class _ConnectHealthEmpty extends ConsumerWidget {
             Icon(Icons.favorite_outline_rounded, size: 48, color: textMuted),
             const SizedBox(height: 16),
             Text(
-              'Connect Health to see your activity',
+              l10n.combinedHealthConnectHealthToSee,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -648,8 +652,7 @@ class _ConnectHealthEmpty extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Steps, heart rate, sleep and more sync from Health Connect '
-              'on Android and the Health app on iOS.',
+              l10n.combinedHealthConnectHealthBody,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
             ),
@@ -659,7 +662,7 @@ class _ConnectHealthEmpty extends ConsumerWidget {
                 HapticService.light();
                 ref.read(healthSyncProvider.notifier).connect();
               },
-              child: const Text('Connect Health'),
+              child: Text(AppLocalizations.of(context)!.combinedHealthConnectHealth),
             ),
           ],
         ),
@@ -684,7 +687,7 @@ class _ErrorEmpty extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 40, color: textMuted),
             const SizedBox(height: 12),
             Text(
-              'Could not load your health data. Pull back and try again.',
+              AppLocalizations.of(context)!.combinedHealthCouldNotLoadYour,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: textMuted),
             ),

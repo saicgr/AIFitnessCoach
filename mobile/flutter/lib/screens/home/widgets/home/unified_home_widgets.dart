@@ -27,6 +27,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 import '../../../../data/services/image_url_cache.dart';
 import '../../../../widgets/health_connect_sheet.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 import '../week_calendar_strip.dart';
 import '../workout_options_sheet.dart';
@@ -236,8 +237,8 @@ class HomeWorkoutCard extends ConsumerWidget {
           c,
           key: const ValueKey('wk-empty'),
           msg: isFuture
-              ? 'Rest day — nothing scheduled'
-              : 'No workout was scheduled this day',
+              ? AppLocalizations.of(context)!.unifiedHomeWidgetsRestDayNothingScheduled
+              : AppLocalizations.of(context)!.unifiedHomeWidgetsNoWorkoutWasScheduled,
           accent: c.textMuted,
           iconName: 'sleep',
         );
@@ -299,7 +300,7 @@ class HomeWorkoutCard extends ConsumerWidget {
           (todayWorkout != null && todayWorkout.isCompleted == true)) {
         content = _heroStatus(context, c,
             key: const ValueKey('today-complete'),
-            msg: 'Workout complete — great job today!',
+            msg: AppLocalizations.of(context)!.unifiedHomeWidgetsWorkoutCompleteGreatJob,
             accent: c.success,
             iconName: 'check');
       } else {
@@ -308,7 +309,7 @@ class HomeWorkoutCard extends ConsumerWidget {
           // Rest day / nothing scheduled.
           content = _heroStatus(context, c,
               key: const ValueKey('today-rest'),
-              msg: 'Rest day — no workout scheduled',
+              msg: AppLocalizations.of(context)!.unifiedHomeWidgetsRestDayNoWorkoutScheduled,
               accent: c.textMuted,
               iconName: 'sleep');
         } else {
@@ -917,7 +918,7 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
               children: [
                 LineIcon('nutrition', size: 15, color: c.textMuted),
                 const SizedBox(width: 6),
-                Text('NUTRITION',
+                Text(AppLocalizations.of(context)!.unifiedHomeWidgetsNutrition,
                     style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
@@ -925,13 +926,13 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                         color: c.textMuted)),
                 const Spacer(),
                 Text(
-                  over ? '${-calLeft} over' : '$calLeft',
+                  over ? '${-calLeft} ${AppLocalizations.of(context)!.unifiedHomeWidgetsOver}' : '$calLeft',
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       color: over ? c.warning : c.textPrimary),
                 ),
-                Text(over ? ' kcal' : ' kcal left',
+                Text(over ? AppLocalizations.of(context)!.unifiedHomeWidgetsKcal : AppLocalizations.of(context)!.unifiedHomeWidgetsKcalLeft,
                     style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
@@ -992,21 +993,21 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
             ],
             const SizedBox(height: 11),
             _MacroBar(
-                label: 'Protein',
+                label: AppLocalizations.of(context)!.unifiedHomeWidgetsProtein,
                 eaten: eatenP,
                 goal: proteinTarget,
                 color: AppColors.macroProtein,
                 c: c),
             const SizedBox(height: 7),
             _MacroBar(
-                label: 'Carbs',
+                label: AppLocalizations.of(context)!.unifiedHomeWidgetsCarbs,
                 eaten: eatenC,
                 goal: carbsTarget,
                 color: AppColors.macroCarbs,
                 c: c),
             const SizedBox(height: 7),
             _MacroBar(
-                label: 'Fat',
+                label: AppLocalizations.of(context)!.unifiedHomeWidgetsFat,
                 eaten: eatenF,
                 goal: fatTarget,
                 color: AppColors.macroFat,
@@ -1027,7 +1028,7 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                     const Text('💧', style: TextStyle(fontSize: 12)),
                     const SizedBox(width: 6),
                     Text(
-                      'End the day at goal — $cupsLeftLateDay cups left',
+                      AppLocalizations.of(context)!.unifiedHomeWidgetsEndTheDayAtGoal(cupsLeftLateDay),
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -1052,7 +1053,7 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                       c: c,
                       iconName: 'water',
                       tint: AppColors.cyan,
-                      label: 'Water',
+                      label: AppLocalizations.of(context)!.unifiedHomeWidgetsWater,
                       fraction: cupGoal > 0 ? cups / cupGoal : 0,
                       onTap: () => context.go('/nutrition'),
                       trailing: _PlusButton(
@@ -1121,7 +1122,7 @@ class _NutritionFastingTile extends ConsumerWidget {
               fontWeight: FontWeight.w800,
               color: c.textPrimary));
     } else {
-      value = Text('Start a fast →',
+      value = Text(AppLocalizations.of(context)!.unifiedHomeWidgetsStartAFast,
           style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
@@ -1132,7 +1133,7 @@ class _NutritionFastingTile extends ConsumerWidget {
       c: c,
       iconName: 'fasting',
       tint: AppColors.cyan,
-      label: 'Fasting',
+      label: AppLocalizations.of(context)!.unifiedHomeWidgetsFasting,
       fraction: fraction,
       value: value,
       onTap: () {
@@ -1187,10 +1188,11 @@ class _HydrationResetRow extends StatelessWidget {
   Widget build(BuildContext context) {
     // Distinct title + subtitle copy for the two contexts so the user knows
     // why the row appeared (wake-state vs. just-finished-workout).
-    final title = isPostWorkout ? 'Refuel hydration' : 'Wake hydration';
+    final l10n = AppLocalizations.of(context)!;
+    final title = isPostWorkout ? l10n.unifiedHomeWidgetsRefuelHydration : l10n.unifiedHomeWidgetsWakeHydration;
     final subtitle = isPostWorkout
-        ? 'Drink 16oz in the next 30 min to lock in the work.'
-        : 'Overnight you lose 1-2lb water. 16-20oz now resets you.';
+        ? l10n.unifiedHomeWidgetsDrink16ozPostWorkout
+        : l10n.unifiedHomeWidgetsOvernightWaterReset;
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
@@ -1219,7 +1221,7 @@ class _HydrationResetRow extends StatelessWidget {
                         height: 1.3,
                         color: c.textSecondary)),
                 const SizedBox(height: 3),
-                Text('$cups / $cupGoal cups today',
+                Text(AppLocalizations.of(context)!.unifiedHomeWidgetsCupsToday(cups, cupGoal),
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1239,10 +1241,9 @@ class _HydrationResetRow extends StatelessWidget {
               ),
             ),
             onPressed: onLog16oz,
-            child: const Text(
-              'Log 16oz',
-              style:
-                  TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+            child: Text(
+              AppLocalizations.of(context)!.unifiedHomeWidgetsLog16oz,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -1299,7 +1300,7 @@ class _BreakfastSlotRow extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Breakfast suggestion',
+                Text(AppLocalizations.of(context)!.unifiedHomeWidgetsBreakfastSuggestion,
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
@@ -1321,7 +1322,7 @@ class _BreakfastSlotRow extends ConsumerWidget {
                       const SizedBox(width: 4),
                     ],
                     Text(
-                      'Breakfast logged $breakfastLast7 of last 7 mornings',
+                      AppLocalizations.of(context)!.unifiedHomeWidgetsBreakfastLogged(breakfastLast7),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1345,10 +1346,9 @@ class _BreakfastSlotRow extends ConsumerWidget {
               ),
             ),
             onPressed: onQuickLog,
-            child: const Text(
-              'Quick log',
-              style:
-                  TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+            child: Text(
+              AppLocalizations.of(context)!.unifiedHomeWidgetsQuickLog,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -1555,9 +1555,9 @@ class HomeMetricTrio extends ConsumerWidget {
               c: c,
               iconName: 'activity',
               tint: AppColors.success,
-              label: 'ACTIVITY',
+              label: AppLocalizations.of(context)!.unifiedHomeWidgetsActivity,
               value: _fmt(steps),
-              sub: '$burned kcal burned',
+              sub: AppLocalizations.of(context)!.unifiedHomeWidgetsKcalBurned(burned),
               onTap: () {
                 try {
                   context.push('/neat');
@@ -1600,41 +1600,42 @@ class _SleepTile extends StatelessWidget {
       },
       behavior: HitTestBehavior.opaque,
       child: sleepAsync.when(
-        data: (snapshot) => _content(snapshot),
+        data: (snapshot) => _content(snapshot, context),
         loading: () => _MetricTile(
           c: c,
           iconName: 'sleep',
           tint: AppColors.macroProtein,
-          label: 'SLEEP',
+          label: AppLocalizations.of(context)!.unifiedHomeWidgetsSleep,
           value: '…',
-          sub: 'last night',
+          sub: AppLocalizations.of(context)!.unifiedHomeWidgetsLastNight,
           onTap: null,
         ),
         error: (_, __) => _MetricTile(
           c: c,
           iconName: 'sleep',
           tint: AppColors.macroProtein,
-          label: 'SLEEP',
-          value: 'No data',
-          sub: 'last night',
+          label: AppLocalizations.of(context)!.unifiedHomeWidgetsSleep,
+          value: AppLocalizations.of(context)!.unifiedHomeWidgetsNoData,
+          sub: AppLocalizations.of(context)!.unifiedHomeWidgetsLastNight,
           onTap: null,
         ),
       ),
     );
   }
 
-  Widget _content(SleepScoreSnapshot? snapshot) {
+  Widget _content(SleepScoreSnapshot? snapshot, BuildContext context) {
     final score = snapshot?.score;
     final summary = snapshot?.summary;
+    final l10n = AppLocalizations.of(context)!;
 
     if (score == null || (summary?.totalMinutes ?? 0) == 0) {
       return _MetricTile(
         c: c,
         iconName: 'sleep',
         tint: AppColors.macroProtein,
-        label: 'SLEEP',
-        value: 'No data',
-        sub: 'last night',
+        label: l10n.unifiedHomeWidgetsSleep,
+        value: l10n.unifiedHomeWidgetsNoData,
+        sub: l10n.unifiedHomeWidgetsLastNight,
         onTap: null,
       );
     }
@@ -1651,14 +1652,14 @@ class _SleepTile extends StatelessWidget {
         : '';
     final sub = bedString.isNotEmpty
         ? '${h}h ${m}m · $bedString'
-        : '${h}h ${m}m last night';
+        : '${h}h ${m}m ${l10n.unifiedHomeWidgetsLastNight}';
 
     return _MetricTile(
       c: c,
       iconName: 'sleep',
       tint: tier.color,
-      label: 'SLEEP',
-      value: '${score.total} / ${tier.label}',
+      label: l10n.unifiedHomeWidgetsSleep,
+      value: '${score.total} / ${localizedTierLabel(context, score.total)}',
       sub: sub,
       onTap: null,
     );
@@ -1705,7 +1706,7 @@ class _HealthConnectPrompt extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Connect Apple Health',
+                    AppLocalizations.of(context)!.unifiedHomeWidgetsConnectAppleHealth,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -1714,7 +1715,7 @@ class _HealthConnectPrompt extends ConsumerWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'See your steps, calories & sleep on your home screen',
+                    AppLocalizations.of(context)!.unifiedHomeWidgetsSeeYourStepsCalories,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -1739,9 +1740,9 @@ class _HealthConnectPrompt extends ConsumerWidget {
                 ),
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: const Text(
-                'Connect',
-                style: TextStyle(
+              child: Text(
+                AppLocalizations.of(context)!.unifiedHomeWidgetsConnect,
+                style: const TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,

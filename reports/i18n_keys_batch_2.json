@@ -1,0 +1,397 @@
+{
+  "editProgramSheetCustomProgram": "Custom Program",
+  "editProgramSheetDescribeWhatYouWant": "Describe what you want...",
+  "editProgramSheetExamples": "Examples",
+  "editProgramSheetSaveCustomProgram": "Save Custom Program",
+  "editProgramSheetProgramHistory": "Program History",
+  "editProgramSheetRestoreAPreviousProgram": "Restore a previous program configuration",
+  "editProgramSheetCurrent": "CURRENT",
+  "editProgramSheetUnknownDate": "Unknown date",
+  "editProgramSheetToday": "Today",
+  "editProgramSheetYesterday": "Yesterday",
+  "@editProgramSheetDaysAgo": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "editProgramSheetDaysAgo": "{days} days ago",
+  "@editProgramSheetWeeksAgo": {
+    "placeholders": {
+      "weeks": { "type": "int" }
+    }
+  },
+  "editProgramSheetWeeksAgo": "{weeks} weeks ago",
+  "@editProgramSheetDaysPerWeek": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "editProgramSheetDaysPerWeek": "{days} days/week",
+  "editProgramSheetRestoreThisProgram": "Restore This Program",
+
+  "regenerateSheetStartingRegeneration": "Starting regeneration…",
+  "regenerateSheetAnalyzingYourPreferences": "Analyzing your preferences…",
+  "regenerateSheetBuildingYourWorkout": "Building your workout…",
+  "regenerateSheetFinalizingDetails": "Finalizing details…",
+  "regenerateSheetAlmostThere": "Almost there…",
+  "regenerateSheetRegenerationComplete": "Regeneration complete!",
+  "regenerateSheetHoldingYourSchedule": "Holding your schedule",
+  "regenerateSheetSchedulingYourWorkout": "Scheduling your workout",
+  "regenerateSheetOptimizingForYourGoals": "Optimizing for your goals",
+  "regenerateSheetPersonalizingExercises": "Personalizing exercises",
+  "regenerateSheetCheckingEquipment": "Checking equipment",
+  "regenerateSheetGettingCreative": "Getting creative",
+  "regenerateSheetWhen": "WHEN?",
+  "@regenerateSheetKeepDate": {
+    "placeholders": {
+      "weekday": { "type": "String" },
+      "month": { "type": "String" },
+      "day": { "type": "int" }
+    }
+  },
+  "regenerateSheetKeepDate": "Keep {weekday}, {month} {day}",
+  "regenerateSheetDoThisToday": "Do this today",
+  "regenerateSheetTodayNotInSchedule": "Today isn't in your usual workout days",
+  "regenerateSheetCustomize": "Customize",
+  "regenerateSheetAiSuggestions": "AI Suggestions",
+  "regenerateSheetRegenerateCurrentWorkout": "Regenerate Current Workout",
+  "regenerateSheetCustomizeOrLetAi": "Customize or let AI suggest",
+  "regenerateSheetGeneratingSuggestions": "Generating suggestions…",
+  "regenerateSheetDescribeYourIdealWorkout": "Describe your ideal workout",
+  "regenerateSheetNoSuggestionsYet": "No suggestions yet",
+  "regenerateSheetEnterAPromptAbove": "Enter a prompt above…",
+  "regenerateSheetGetSuggestions": "Get Suggestions",
+  "regenerateSheetRestoredFromLastRegeneration": "Restored from your last regeneration",
+  "regenerateSheetReset": "Reset",
+  "regenerateSheetApply": "Apply",
+  "regenerateSheetKeepCurrent": "Keep Current",
+  "regenerateSheetUseThisSuggestion": "Use This",
+  "@regenerateSheetStepOf": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "regenerateSheetStepOf": "Step {current} of {total}",
+  "regenerateSheetAiGenerationTakes": "AI generation typically takes 15–30s",
+
+  "myJourneyCardMyJourney": "My Journey",
+  "@myJourneyCardWeekNumber": {
+    "placeholders": {
+      "week": { "type": "int" }
+    }
+  },
+  "myJourneyCardWeekNumber": "Week {week}",
+  "@myJourneyCardNext": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
+  "myJourneyCardNext": "Next: {title}",
+  "@myJourneyCardWorkoutsProgress": {
+    "placeholders": {
+      "completed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "myJourneyCardWorkoutsProgress": "{completed} / {total} workouts",
+  "myJourneyCardDayStreak": "day streak",
+  "myJourneyCardThisWeek": "this week",
+  "myJourneyCardTotal": "total",
+  "myJourneyCardWeeklyGoalComplete": "Weekly goal complete!",
+  "myJourneyCardOneWorkoutLeft": "1 workout left this week",
+  "@myJourneyCardWorkoutsLeft": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "myJourneyCardWorkoutsLeft": "{count} workouts left this week",
+  "myJourneyCardAmazingStreak": "Amazing streak! Keep going!",
+  "myJourneyCardKeepMomentum": "Keep the momentum going!",
+  "myJourneyCardComesoFar": "You've come so far. Keep pushing!",
+  "myJourneyCardBuildingGreatHabits": "You're building great habits!",
+  "myJourneyCardEveryWorkoutCounts": "Every workout counts. You've got this!",
+  "myJourneyCardTapToSeeFullJourney": "Tap to see your full journey",
+  "myJourneyCardMilestoneGettingStarted": "Getting Started",
+  "myJourneyCardMilestoneBeginner": "Beginner",
+  "myJourneyCardMilestoneBuildingHabit": "Building Habit",
+  "myJourneyCardMilestoneConsistent": "Consistent",
+  "myJourneyCardMilestoneDedicated": "Dedicated",
+  "myJourneyCardMilestoneAthlete": "Athlete",
+  "myJourneyCardMilestoneChampion": "Champion",
+  "myJourneyCardMilestoneLegend": "Legend",
+  "myJourneyCardProgress": "Progress",
+  "myJourneyCardViewCharts": "View charts",
+  "myJourneyCardProgressCharts": "Progress Charts",
+  "myJourneyCardViewStrengthAndVolume": "View strength and volume trends over time",
+
+  "personalRecordsCardPersonalRecords": "Personal Records",
+  "personalRecordsCardViewAll": "View All",
+  "personalRecordsCardCompleteWorkoutsToPR": "Complete workouts to set personal records",
+  "personalRecordsCardToday": "Today",
+  "personalRecordsCardYesterday": "Yesterday",
+  "@personalRecordsCardDaysAgo": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "personalRecordsCardDaysAgo": "{days} days ago",
+  "personalRecordsCard1WeekAgo": "1 week ago",
+  "@personalRecordsCardWeeksAgo": {
+    "placeholders": {
+      "weeks": { "type": "int" }
+    }
+  },
+  "personalRecordsCardWeeksAgo": "{weeks} weeks ago",
+  "personalRecordsCard1MonthAgo": "1 month ago",
+  "@personalRecordsCardMonthsAgo": {
+    "placeholders": {
+      "months": { "type": "int" }
+    }
+  },
+  "personalRecordsCardMonthsAgo": "{months} months ago",
+  "personalRecordsCardCoachTip": "Coach Tip",
+  "personalRecordsCardAskCoachForMore": "Ask coach for more tips",
+  "personalRecordsCardGettingPersonalizedTip": "Getting personalized tip…",
+  "personalRecordsCardMorningTip": "Start your workout with a 5-minute dynamic warm-up to improve performance and reduce injury risk.",
+  "personalRecordsCardAfternoonTip": "Stay hydrated! Aim for at least 500ml of water before your workout.",
+  "personalRecordsCardEveningTip": "Evening workouts can boost mood. Stick to moderate intensity if you want to sleep well tonight.",
+  "personalRecordsCardWeight": "Weight",
+  "personalRecordsCardRank": "Rank",
+  "@personalRecordsCardTopPercentile": {
+    "placeholders": {
+      "percentile": { "type": "int" }
+    }
+  },
+  "personalRecordsCardTopPercentile": "Top {percentile}%",
+  "@personalRecordsCardOfUsers": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "personalRecordsCardOfUsers": "of {count} users",
+  "personalRecordsCardWater": "Water",
+  "@personalRecordsCardGlasses": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "goal": { "type": "int" }
+    }
+  },
+  "personalRecordsCardGlasses": "{current}/{goal} glasses",
+  "personalRecordsCardSleep": "Sleep",
+  "@personalRecordsCardQualitySleep": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
+  "personalRecordsCardQualitySleep": "{duration} quality sleep",
+  "personalRecordsCardConnectHealthToTrack": "Connect Health to track",
+
+  "heroActionCardUploadingPhoto": "Uploading photo…",
+  "heroActionCardTrackYourProgress": "Track Your Progress",
+  "heroActionCardTakeProgressPhoto": "Take a progress photo to track your transformation",
+  "heroActionCardFasting": "Fasting",
+  "heroActionCardActive": "Active",
+  "heroActionCardFastEndedSuccessfully": "Fast ended successfully",
+  "heroActionCardEnd": "End",
+  "heroActionCardLogWater": "Log Water",
+  "heroActionCardSelectAmountToLog": "Select amount to log",
+  "heroActionCardCustom": "Custom",
+  "heroActionCardOpenHydrationTracker": "Open hydration tracker",
+  "heroActionCardPleaseLogIn": "Please log in",
+  "@heroActionCardWaterLogged": {
+    "placeholders": {
+      "ml": { "type": "int" }
+    }
+  },
+  "heroActionCardWaterLogged": "{ml} ml logged",
+  "heroActionCardFailedToLogWater": "Failed to log water",
+  "heroActionCardCustomAmount": "Custom Amount",
+  "heroActionCardSipToXlJug": "Sip to XL jug",
+  "heroActionCardEnter1To5000Ml": "Enter 1–5000 ml",
+  "heroActionCardOrPickAPreset": "Or pick a preset:",
+  "heroActionCardCancel": "Cancel",
+  "heroActionCardLog": "Log",
+  "@heroActionCardLogMl": {
+    "placeholders": {
+      "ml": { "type": "int" }
+    }
+  },
+  "heroActionCardLogMl": "Log {ml} ml",
+  "heroActionCardWaterLabel": "Water",
+  "heroActionCardFastingLabel": "Fasting",
+  "heroActionCardPresetSip": "Sip",
+  "heroActionCardPresetSmallSip": "Small Sip",
+  "heroActionCardPresetMouthful": "Mouthful",
+  "heroActionCardPresetSmallCup": "Small Cup",
+  "heroActionCardPresetGlass": "Glass",
+  "heroActionCardPresetTallGlass": "Tall Glass",
+  "heroActionCardPresetBigBottle": "Big Bottle",
+  "heroActionCardPresetSportsBottle": "Sports Bottle",
+  "heroActionCardPresetLargeJug": "Large Jug",
+  "heroActionCardPresetXlJug": "XL Jug",
+
+  "homeScreenTourTopbarTitle": "Your Profile",
+  "homeScreenTourTopbarDesc": "Tap to view and edit your fitness profile",
+  "homeScreenTourCarouselTitle": "Today's Workout",
+  "homeScreenTourCarouselDesc": "Swipe to see your workout plan. Tap to start!",
+  "homeScreenTourQuicklogTitle": "Quick Log",
+  "homeScreenTourQuicklogDesc": "Quickly log meals, water, and workouts",
+  "homeScreenTourWorkoutTitle": "Workout Tab",
+  "homeScreenTourWorkoutDesc": "Access your full workout plan and history",
+  "homeScreenTourNutritionTitle": "Nutrition Tab",
+  "homeScreenTourNutritionDesc": "Track your macros and daily nutrition",
+  "homeScreenTourProfileTitle": "Profile Tab",
+  "homeScreenTourProfileDesc": "View your progress and settings",
+  "@homeScreenImportedWorkouts": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeScreenImportedWorkouts": "Imported {count} workouts",
+  "homeScreenDailyStepsGoal": "Daily Steps Goal",
+  "@homeScreenApplyPreset": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "homeScreenApplyPreset": "Apply \"{name}\"?",
+  "@homeScreenApplyPresetBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "homeScreenApplyPresetBody": "This will replace your current layout with the \"{name}\" preset.",
+  "homeScreenCancel": "Cancel",
+  "@homeScreenPresetApplied": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "homeScreenPresetApplied": "\"{name}\" applied",
+  "homeScreenApply": "Apply",
+  "homeScreenResetToDefault": "Reset to Default?",
+  "homeScreenResetToDefaultBody": "This will restore your home screen to the default layout.",
+  "homeScreenDefaultRestored": "Default layout restored",
+  "homeScreenReset": "Reset",
+
+  "addGymSheetCommercialGym": "Commercial Gym",
+  "addGymSheetHomeGym": "Home Gym",
+  "addGymSheetHomeMinimal": "Home (Minimal)",
+  "addGymSheetHotelTravel": "Hotel / Travel",
+  "addGymSheetOutdoors": "Outdoors",
+  "addGymSheetCommercialGymDesc": "Full access to all machines and equipment",
+  "addGymSheetHomeGymDesc": "Dedicated workout space with your equipment",
+  "addGymSheetHomeMinimalDesc": "Bodyweight exercises only",
+  "addGymSheetHotelTravelDesc": "Limited space and equipment while traveling",
+  "addGymSheetOutdoorsDesc": "Parks, outdoor gyms, and open spaces",
+  "addGymSheetPickAtLeastOneDay": "Please pick at least one workout day",
+  "addGymSheetEnterNameFirst": "Please enter a gym name first",
+  "addGymSheetEquipment": "Equipment",
+  "addGymSheetSkip": "Skip",
+  "addGymSheetYesAddIt": "Yes, Add It",
+  "addGymSheetFollowUpBenchTitle": "Do you have a weight bench?",
+  "addGymSheetFollowUpBenchSubtitle": "Unlocks: Bench Press, Incline Press, Pullover, Chest-Supported Rows",
+  "addGymSheetFollowUpSquatRackTitle": "Do you have a squat rack?",
+  "addGymSheetFollowUpSquatRackSubtitle": "Required for: Barbell Squat, Overhead Press, Barbell Bench Press",
+  "addGymSheetEnterGymName": "Please enter a name for your gym",
+  "@addGymSheetCreatedProfile": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "addGymSheetCreatedProfile": "✓ Created \"{name}\" gym profile",
+  "@addGymSheetFailedToCreate": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "addGymSheetFailedToCreate": "Failed to create profile: {error}",
+  "addGymSheetAddNewGym": "Add New Gym",
+  "@addGymSheetStepOf": {
+    "placeholders": {
+      "step": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "addGymSheetStepOf": "Step {step} of {total}",
+  "addGymSheetBack": "Back",
+  "addGymSheetCreateGym": "Create Gym",
+  "addGymSheetNext": "Next",
+  "addGymSheetWorkoutEnvironment": "Workout Environment",
+  "addGymSheetHelpsUsSuggest": "This helps us suggest the right equipment",
+  "addGymSheetGymNameHint": "e.g., Home Gym, Planet Fitness, Hotel",
+  "@addGymSheetEquipmentSelected": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "addGymSheetEquipmentSelected": "{count} Equipment Selected",
+  "@addGymSheetItems": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "addGymSheetItems": "{count} items",
+  "addGymSheetPickDaysDesc": "Pick the days you'll train at this gym. We'll pre-generate 14 days of workouts for these days the moment you switch to this profile.",
+  "@addGymSheetSameAs": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "addGymSheetSameAs": "Same as {name}",
+  "addGymSheetCurrent": "current",
+  "@addGymSheetAlsoAt": {
+    "placeholders": {
+      "names": { "type": "String" }
+    }
+  },
+  "addGymSheetAlsoAt": "Also at: {names}",
+  "@addGymSheetConflictDay": {
+    "placeholders": {
+      "day": { "type": "String" },
+      "names": { "type": "String" }
+    }
+  },
+  "addGymSheetConflictDay": "{day} also at \"{names}\"",
+  "@addGymSheetConflictMessage": {
+    "placeholders": {
+      "details": { "type": "String" }
+    }
+  },
+  "addGymSheetConflictMessage": "Schedule overlap: {details}. Whichever profile is active that day will own the workout.",
+  "addGymSheetSplitLetAiDecide": "Let AI Decide",
+  "addGymSheetSplitFullBody": "Full Body",
+  "addGymSheetSplitUpperLower": "Upper/Lower",
+  "addGymSheetSplitPushPullLegs": "Push/Pull/Legs",
+  "addGymSheetSplitPhul": "PHUL",
+  "addGymSheetSplitBodyPart": "Body Part",
+  "addGymSheetSplitDescFlexible": "Flexible",
+  "addGymSheetSplitDesc3Days": "3 days",
+  "addGymSheetSplitDesc4Days": "4 days",
+  "addGymSheetSplitDesc6Days": "6 days",
+  "addGymSheetSplitDesc56Days": "5-6 days",
+  "@addGymSheetEquipmentCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "addGymSheetEquipmentCount": "{count} equipment",
+
+  "ringLabelTrain": "Train",
+  "ringLabelNourish": "Nourish",
+  "ringLabelMove": "Move",
+  "ringLabelSleep": "Sleep",
+  "ringLabelCycleDay": "Cycle day",
+  "ringLabelHeartRate": "Heart rate",
+  "ringLabelHrv": "HRV",
+  "ringLabelStress": "Stress",
+  "ringLabelHydration": "Hydration",
+  "ringLabelWeight": "Weight",
+  "ringLabelRecovery": "Recovery",
+
+  "tierExcellent": "Excellent",
+  "tierGood": "Good",
+  "tierFair": "Fair",
+  "tierLow": "Low"
+}

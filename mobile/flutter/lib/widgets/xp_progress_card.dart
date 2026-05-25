@@ -7,6 +7,7 @@ import '../data/models/home_layout.dart';
 import '../data/models/user_xp.dart';
 import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
+import '../l10n/generated/app_localizations.dart';
 
 /// XP and Level progress card for home screen
 /// Shows current level, XP progress bar, and title
@@ -69,9 +70,9 @@ class XPProgressCard extends ConsumerWidget {
           border: Border.all(color: cardBorder),
         ),
         child: isLoading
-            ? _buildLoadingState(textMuted)
+            ? _buildLoadingState(context, textMuted)
             : userXp == null
-                ? _buildEmptyState(textMuted, accentColor)
+                ? _buildEmptyState(context, textMuted, accentColor)
                 : _buildContentState(
                     context,
                     ref,
@@ -128,7 +129,7 @@ class XPProgressCard extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isLoading ? '...' : 'Lvl ${userXp?.currentLevel ?? 1}',
+                  isLoading ? '...' : AppLocalizations.of(context).xpProgressCardLvlN(userXp?.currentLevel ?? 1),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -136,7 +137,7 @@ class XPProgressCard extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  userXp?.title ?? 'Novice',
+                  userXp?.title ?? AppLocalizations.of(context).xpProgressCardNovice,
                   style: TextStyle(
                     fontSize: 10,
                     color: textMuted,
@@ -150,7 +151,7 @@ class XPProgressCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
+  Widget _buildLoadingState(BuildContext context, Color textMuted) {
     return Row(
       children: [
         SizedBox(
@@ -163,7 +164,7 @@ class XPProgressCard extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          'Loading XP...',
+          AppLocalizations.of(context).xpProgressCardLoadingXp,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -173,7 +174,7 @@ class XPProgressCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted, Color accentColor) {
+  Widget _buildEmptyState(BuildContext context, Color textMuted, Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -186,7 +187,7 @@ class XPProgressCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Level 1 • Novice',
+                    AppLocalizations.of(context).xpProgressCardLevel1Novice,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -195,7 +196,7 @@ class XPProgressCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Start your fitness journey!',
+                    AppLocalizations.of(context).xpProgressCardStartYourFitnessJourney,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,
@@ -237,7 +238,7 @@ class XPProgressCard extends ConsumerWidget {
                   Row(
                     children: [
                       Text(
-                        'Level ${userXp.currentLevel}',
+                        AppLocalizations.of(context).xpProgressCardLevelN(userXp.currentLevel),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -270,7 +271,7 @@ class XPProgressCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${userXp.formattedTotalXp} XP Total',
+                    AppLocalizations.of(context).xpProgressCardXpTotal(userXp.formattedTotalXp),
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,
@@ -297,7 +298,7 @@ class XPProgressCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Next Level',
+                  AppLocalizations.of(context).xpProgressCardNextLevel,
                   style: TextStyle(
                     fontSize: 12,
                     color: textMuted,
@@ -359,7 +360,7 @@ class XPProgressCard extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${userXp.progressPercent}% to Level ${userXp.currentLevel + 1}',
+              AppLocalizations.of(context).xpProgressCardPercentToLevel(userXp.progressPercent, userXp.currentLevel + 1),
               style: TextStyle(
                 fontSize: 10,
                 color: textMuted,
@@ -393,7 +394,7 @@ class XPProgressCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Prestige ${userXp.prestigeLevel}',
+                  AppLocalizations.of(context).xpProgressCardPrestigeN(userXp.prestigeLevel),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -641,7 +642,7 @@ class _GoalsPreviewRow extends ConsumerWidget {
           Expanded(
             child: _buildGoalItem(
               icon: Icons.today,
-              label: 'Daily',
+              label: AppLocalizations.of(context).xpProgressCardDaily,
               value: '$dailyCompleted/$dailyTotal',
               color: accentColor,
               progress: dailyCompleted / dailyTotal,
@@ -659,7 +660,7 @@ class _GoalsPreviewRow extends ConsumerWidget {
           Expanded(
             child: _buildGoalItem(
               icon: Icons.date_range,
-              label: 'Weekly',
+              label: AppLocalizations.of(context).xpProgressCardWeekly,
               value: '$weeklyCompleted/$weeklyTotal',
               color: AppColors.orange,
               progress: weeklyTotal > 0 ? weeklyCompleted / weeklyTotal : 0,
@@ -676,6 +677,7 @@ class _GoalsPreviewRow extends ConsumerWidget {
           // Streak
           Expanded(
             child: _buildStreakItem(
+              context: context,
               streak: currentStreak,
               hasDoubleXP: hasDoubleXP,
             ),
@@ -738,6 +740,7 @@ class _GoalsPreviewRow extends ConsumerWidget {
   }
 
   Widget _buildStreakItem({
+    required BuildContext context,
     required int streak,
     required bool hasDoubleXP,
   }) {
@@ -755,7 +758,7 @@ class _GoalsPreviewRow extends ConsumerWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              'Streak',
+              AppLocalizations.of(context).xpProgressCardStreak,
               style: TextStyle(
                 fontSize: 10,
                 color: textMuted,
@@ -804,7 +807,7 @@ class _GoalsPreviewRow extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          streak > 0 ? 'days' : 'none',
+          streak > 0 ? AppLocalizations.of(context).xpProgressCardDays : AppLocalizations.of(context).xpProgressCardNone,
           style: TextStyle(
             fontSize: 9,
             color: textMuted,

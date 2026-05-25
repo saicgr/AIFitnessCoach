@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../data/services/haptic_service.dart';
+import '../../../../../l10n/generated/app_localizations.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
@@ -46,10 +47,10 @@ class _FreshnessDecayCardState extends ConsumerState<FreshnessDecayCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Freshness Decay Tuner',
+          Text(AppLocalizations.of(context).freshnessDecayCardFreshnessDecayTuner,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: t.textPrimary)),
           const SizedBox(height: 4),
-          Text('Controls how quickly exercise freshness decays: e^(-k * sessions)',
+          Text(AppLocalizations.of(context).freshnessDecayCardControlsHowQuicklyExercise,
               style: TextStyle(fontSize: 11, color: t.textMuted)),
           const SizedBox(height: 12),
           Row(
@@ -57,7 +58,7 @@ class _FreshnessDecayCardState extends ConsumerState<FreshnessDecayCard> {
               Text('k = ${_freshnessDecay.toStringAsFixed(2)}',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.orange, fontFamily: 'monospace')),
               const Spacer(),
-              Text('Range: 0.10 - 0.60', style: TextStyle(fontSize: 11, color: t.textMuted)),
+              Text(AppLocalizations.of(context).freshnessDecayCardRange0100, style: TextStyle(fontSize: 11, color: t.textMuted)),
             ],
           ),
           SliderTheme(
@@ -91,7 +92,7 @@ class _FreshnessDecayCardState extends ConsumerState<FreshnessDecayCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Live Preview', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t.textMuted)),
+                Text(AppLocalizations.of(context).freshnessDecayCardLivePreview, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t.textMuted)),
                 const SizedBox(height: 6),
                 ...List.generate(4, (i) {
                   final sessions = i + 1;
@@ -102,7 +103,7 @@ class _FreshnessDecayCardState extends ConsumerState<FreshnessDecayCard> {
                       children: [
                         SizedBox(
                           width: 160,
-                          child: Text('Used $sessions session${sessions > 1 ? 's' : ''} ago',
+                          child: Text(AppLocalizations.of(context).freshnessDecayCardUsedSessionsAgo(sessions),
                               style: TextStyle(fontSize: 12, color: t.textPrimary, fontFamily: 'monospace')),
                         ),
                         Text('freshness: ${(1 - freshness).toStringAsFixed(3)}',

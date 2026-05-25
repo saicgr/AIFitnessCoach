@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Card widget for displaying a challenge
@@ -110,8 +111,8 @@ class ChallengeCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       isReceived
-                          ? 'Challenged you to beat'
-                          : 'You challenged to beat',
+                          ? AppLocalizations.of(context).challengeCardChallengedYouToBeat
+                          : AppLocalizations.of(context).challengeCardYouChallengedToBeat,
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textMuted,
@@ -178,7 +179,7 @@ class ChallengeCard extends StatelessWidget {
               // Expiry countdown for pending challenges
               if (status == 'pending' && challenge['expires_at'] != null) ...[
                 const SizedBox(height: 12),
-                _buildExpiryCountdown(DateTime.parse(challenge['expires_at'] as String)),
+                _buildExpiryCountdown(context, DateTime.parse(challenge['expires_at'] as String)),
               ],
 
               // Action buttons for pending challenges
@@ -197,7 +198,7 @@ class ChallengeCard extends StatelessWidget {
                           side: BorderSide(color: Colors.red.withValues(alpha: 0.5)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
-                        child: const Text('Decline'),
+                        child: Text(AppLocalizations.of(context).challengeCardDecline),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -213,9 +214,9 @@ class ChallengeCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text(
-                          'Accept Challenge',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        label: Text(
+                          AppLocalizations.of(context).challengeCardAcceptChallenge,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -352,7 +353,7 @@ class ChallengeCard extends StatelessWidget {
     }
   }
 
-  Widget _buildExpiryCountdown(DateTime expiresAt) {
+  Widget _buildExpiryCountdown(BuildContext context, DateTime expiresAt) {
     final now = DateTime.now();
     final remaining = expiresAt.difference(now);
 
@@ -362,7 +363,7 @@ class ChallengeCard extends StatelessWidget {
           Icon(Icons.timer_off, size: 14, color: Colors.red),
           const SizedBox(width: 4),
           Text(
-            'Expired',
+            AppLocalizations.of(context).challengeCardExpired,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,

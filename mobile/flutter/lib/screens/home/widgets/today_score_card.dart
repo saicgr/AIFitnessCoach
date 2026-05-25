@@ -431,7 +431,7 @@ class _RingCell extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              spec.label.toUpperCase(),
+              spec.kind.localizedLabel(context).toUpperCase(),
               style: TextStyle(
                 fontSize: 9.5,
                 fontWeight: FontWeight.w800,

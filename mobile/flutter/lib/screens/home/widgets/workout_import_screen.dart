@@ -9,6 +9,7 @@ import '../../../data/providers/health_import_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_import_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import '../../../core/services/posthog_service.dart';
@@ -130,17 +131,18 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
   }
 
   String _activityLabel(String type) {
+    final l10n = AppLocalizations.of(context)!;
     switch (type) {
       case 'strength':
-        return 'Strength Training';
+        return l10n.workoutImportStrengthTraining;
       case 'cardio':
-        return 'Cardio';
+        return l10n.workoutImportCardio;
       case 'flexibility':
-        return 'Flexibility';
+        return l10n.workoutImportFlexibility;
       case 'hiit':
-        return 'HIIT';
+        return l10n.workoutImportHiit;
       default:
-        return 'Workout';
+        return l10n.workoutImportWorkout;
     }
   }
 
@@ -220,7 +222,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
         SheetHeader(
           icon: Icons.download_rounded,
           iconColor: AppColors.orange,
-          title: 'Workout Detected',
+          title: AppLocalizations.of(context)!.workoutImportWorkoutDetected,
           subtitle: pending.length > 1
               ? '${_currentIndex + 1} of ${pending.length}'
               : null,
@@ -293,7 +295,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
 
                       // -------- Activity type selector --------
                       Text(
-                        'What type of exercise?',
+                        AppLocalizations.of(context)!.workoutImportWhatTypeOfExercise,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -313,7 +315,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
 
                       // -------- Effort rating --------
                       Text(
-                        'How hard was this workout?',
+                        AppLocalizations.of(context)!.workoutImportHowHardWasThis,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -357,14 +359,14 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                           ),
                           const SizedBox(height: 8),
                           _buildSecondaryButton(
-                            label: 'Import as separate workout',
+                            label: AppLocalizations.of(context)!.workoutImportImportAsSeparateWorkout,
                             onPressed: () => _handleImport(current),
                             isDark: isDark,
                             textSecondary: textSecondary,
                           ),
                         ] else ...[
                           _buildPrimaryButton(
-                            label: 'Import Workout',
+                            label: AppLocalizations.of(context)!.workoutImportImportWorkout,
                             onPressed: () => _handleImport(current),
                             isDark: isDark,
                           ),
@@ -372,7 +374,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
 
                         const SizedBox(height: 8),
                         _buildTextButton(
-                          label: 'Skip',
+                          label: AppLocalizations.of(context)!.workoutImportSkip,
                           onPressed: () => _handleSkip(current),
                           textSecondary: textSecondary,
                         ),
@@ -476,7 +478,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                     ),
                     if (workout.sourceName != null)
                       Text(
-                        'from ${workout.sourceName}',
+                        AppLocalizations.of(context)!.workoutImportFromSource(workout.sourceName!),
                         style: TextStyle(fontSize: 13, color: textMuted),
                       ),
                   ],
@@ -509,7 +511,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                   if (workout.distanceMeters != null && workout.distanceMeters! > 0)
                     Expanded(
                       child: _StatColumn(
-                        label: 'Distance',
+                        label: AppLocalizations.of(context)!.workoutImportDistance,
                         value: workout.distanceMeters! >= 1000
                             ? '${(workout.distanceMeters! / 1000).toStringAsFixed(1)} km'
                             : '${workout.distanceMeters!.round()} m',
@@ -521,7 +523,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                     VerticalDivider(width: 1, thickness: 1, color: cardBorder),
                   Expanded(
                     child: _StatColumn(
-                      label: 'Duration',
+                      label: AppLocalizations.of(context)!.workoutImportDuration,
                       value: _formatDuration(workout.durationMinutes),
                       textPrimary: textPrimary,
                       textMuted: textMuted,
@@ -531,7 +533,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                     VerticalDivider(width: 1, thickness: 1, color: cardBorder),
                     Expanded(
                       child: _StatColumn(
-                        label: 'Calories',
+                        label: AppLocalizations.of(context)!.workoutImportCalories,
                         value: '${workout.caloriesBurned!.round()}',
                         suffix: 'kcal',
                         textPrimary: textPrimary,
@@ -623,17 +625,6 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
   // ACTIVITY TYPE SELECTOR
   // ===================================================================
 
-  static const _activityTypes = [
-    ('walking', Icons.directions_walk, 'Walking'),
-    ('running', Icons.directions_run, 'Running'),
-    ('cycling', Icons.directions_bike, 'Cycling'),
-    ('strength', Icons.fitness_center, 'Weights'),
-    ('hiit', Icons.local_fire_department, 'HIIT'),
-    ('flexibility', Icons.self_improvement, 'Yoga'),
-    ('swimming', Icons.pool, 'Swimming'),
-    ('cardio', Icons.favorite, 'Other'),
-  ];
-
   Widget _buildActivityTypeSelector(
     String detectedType, {
     required bool isDark,
@@ -641,13 +632,24 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
     required Color textMuted,
     required Color cardBorder,
   }) {
+    final l10n = AppLocalizations.of(context)!;
+    final activityTypes = [
+      ('walking', Icons.directions_walk, l10n.workoutImportWalking),
+      ('running', Icons.directions_run, l10n.workoutImportRunning),
+      ('cycling', Icons.directions_bike, l10n.workoutImportCycling),
+      ('strength', Icons.fitness_center, l10n.workoutImportWeights),
+      ('hiit', Icons.local_fire_department, l10n.workoutImportHiit),
+      ('flexibility', Icons.self_improvement, l10n.workoutImportYoga),
+      ('swimming', Icons.pool, l10n.workoutImportSwimming),
+      ('cardio', Icons.favorite, l10n.workoutImportOther),
+    ];
     final activeType = _overrideActivityType ?? detectedType;
     final accentColor = AppColors.getWorkoutTypeColor(activeType);
 
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _activityTypes.map((entry) {
+      children: activityTypes.map((entry) {
         final (type, icon, label) = entry;
         final isSelected = activeType == type;
         return GestureDetector(
@@ -697,10 +699,11 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
 
   Widget _buildEffortButtons(
       bool isDark, Color textPrimary, Color cardBorder) {
-    const efforts = [
-      ('Easy', 'beginner', AppColors.green),
-      ('Medium', 'intermediate', AppColors.warning),
-      ('Hard', 'advanced', AppColors.orange),
+    final l10n = AppLocalizations.of(context)!;
+    final efforts = [
+      (l10n.workoutImportEasy, 'beginner', AppColors.green),
+      (l10n.workoutImportMedium, 'intermediate', AppColors.warning),
+      (l10n.workoutImportHard, 'advanced', AppColors.orange),
     ];
 
     return Row(

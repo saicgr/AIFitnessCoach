@@ -6,6 +6,7 @@ import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
@@ -64,7 +65,7 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Exercise Preferences'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).myExercisesExercisePreferences),
       body: Stack(
         children: [
           // The full-screen tab body fills behind the floating pill bar so
@@ -133,12 +134,12 @@ class _FloatingPillTabs extends StatelessWidget {
     required this.textPrimary,
   });
 
-  static const _items = <_PillItem>[
-    _PillItem(icon: Icons.favorite_border, selectedIcon: Icons.favorite, label: 'Favorites', accent: AppColors.error),
-    _PillItem(icon: Icons.push_pin_outlined, selectedIcon: Icons.push_pin, label: 'Staples', accent: AppColors.cyan),
-    _PillItem(icon: Icons.block_outlined, selectedIcon: Icons.block, label: 'Avoided', accent: AppColors.orange),
-    _PillItem(icon: Icons.bookmark_border, selectedIcon: Icons.bookmark, label: 'Queue', accent: AppColors.cyan),
-    _PillItem(icon: Icons.tune, selectedIcon: Icons.tune, label: 'Custom', accent: AppColors.cyan),
+  static List<_PillItem> _items(BuildContext context) => [
+    _PillItem(icon: Icons.favorite_border, selectedIcon: Icons.favorite, label: AppLocalizations.of(context).myExercisesFavorites, accent: AppColors.error),
+    _PillItem(icon: Icons.push_pin_outlined, selectedIcon: Icons.push_pin, label: AppLocalizations.of(context).myExercisesStaples, accent: AppColors.cyan),
+    _PillItem(icon: Icons.block_outlined, selectedIcon: Icons.block, label: AppLocalizations.of(context).myExercisesAvoided, accent: AppColors.orange),
+    _PillItem(icon: Icons.bookmark_border, selectedIcon: Icons.bookmark, label: AppLocalizations.of(context).myExercisesQueue, accent: AppColors.cyan),
+    _PillItem(icon: Icons.tune, selectedIcon: Icons.tune, label: AppLocalizations.of(context).myExercisesCustom, accent: AppColors.cyan),
   ];
 
   @override
@@ -165,12 +166,12 @@ class _FloatingPillTabs extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
-            children: List.generate(_items.length, (i) {
-              final item = _items[i];
+            children: List.generate(_items(context).length, (i) {
+              final item = _items(context)[i];
               final isSelected = i == selectedIndex;
               return Expanded(
                 child: Semantics(
-                  label: '${item.label} tab, ${i + 1} of ${_items.length}',
+                  label: '${item.label} tab, ${i + 1} of ${_items(context).length}',
                   selected: isSelected,
                   button: true,
                   child: InkWell(
@@ -310,7 +311,7 @@ class _AvoidedTabState extends ConsumerState<_AvoidedTab>
             child: Row(
               children: [
                 _buildSegmentButton(
-                  label: 'Exercises',
+                  label: AppLocalizations.of(context).authIntroExercises,
                   icon: Icons.block,
                   isSelected: _selectedSegment == 0,
                   color: AppColors.error,
@@ -319,7 +320,7 @@ class _AvoidedTabState extends ConsumerState<_AvoidedTab>
                 ),
                 const SizedBox(width: 4),
                 _buildSegmentButton(
-                  label: 'Muscles',
+                  label: AppLocalizations.of(context).myExercisesMuscles,
                   icon: Icons.accessibility_new,
                   isSelected: _selectedSegment == 1,
                   color: AppColors.orange,
@@ -450,13 +451,12 @@ class _CustomTabState extends ConsumerState<_CustomTab>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Exercise'),
-        content: Text(
-            'Are you sure you want to delete "${exercise.name}"? This cannot be undone.'),
+        title: Text(AppLocalizations.of(context).myExercisesDeleteExercise),
+        content: Text(AppLocalizations.of(context).myExercisesAreYouSureDelete(exercise.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () {
@@ -466,7 +466,7 @@ class _CustomTabState extends ConsumerState<_CustomTab>
                   .deleteExercise(exercise.id);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -526,12 +526,12 @@ class _CustomTabState extends ConsumerState<_CustomTab>
                 size: 48, color: textMuted.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              'No custom exercises yet',
+              AppLocalizations.of(context).myExercisesNoCustomExercisesYet,
               style: TextStyle(fontSize: 16, color: textMuted),
             ),
             const SizedBox(height: 8),
             Text(
-              'Create your own exercises to use in workouts',
+              AppLocalizations.of(context).myExercisesCreateYourOwnExercises,
               style: TextStyle(
                   fontSize: 13, color: textMuted.withValues(alpha: 0.7)),
             ),
@@ -539,7 +539,7 @@ class _CustomTabState extends ConsumerState<_CustomTab>
             FilledButton.icon(
               onPressed: _showCreateSheet,
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Create Exercise'),
+              label: Text(AppLocalizations.of(context).myExercisesCreateExercise),
               style: FilledButton.styleFrom(
                 backgroundColor: cyan,
                 foregroundColor: Colors.black,
@@ -583,9 +583,9 @@ class _CustomTabState extends ConsumerState<_CustomTab>
             onPressed: _showCreateSheet,
             backgroundColor: cyan,
             icon: const Icon(Icons.add, color: Colors.black),
-            label: const Text(
-              'Create',
-              style: TextStyle(
+            label: Text(
+              AppLocalizations.of(context).myExercisesCreate,
+              style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.w600,
               ),

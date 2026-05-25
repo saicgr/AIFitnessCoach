@@ -7,6 +7,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : AppColorsLight.textPrimary;
     final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -45,7 +46,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'How hard was that set?',
+                      l.rpeRirHowHardWasThatSet,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -53,7 +54,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
                       ),
                     ),
                     Text(
-                      'This helps us adjust your next set',
+                      l.rpeRirHelpsAdjustNextSet,
                       style: TextStyle(
                         fontSize: 13,
                         color: mutedColor,
@@ -68,8 +69,8 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
 
           // RPE Section
           _buildSectionHeader(
-            title: 'RPE',
-            subtitle: 'Rate of Perceived Exertion',
+            title: l.rpeRirRpe,
+            subtitle: l.rpeRirRateOfPerceivedExertion,
             showHelp: _showRpeHelp,
             onHelpTap: () => setState(() => _showRpeHelp = !_showRpeHelp),
             textColor: textColor,
@@ -83,8 +84,8 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
 
           // RIR Section
           _buildSectionHeader(
-            title: 'RIR',
-            subtitle: 'Reps in Reserve',
+            title: l.rpeRirRir,
+            subtitle: l.rpeRirRepsInReserve,
             showHelp: _showRirHelp,
             onHelpTap: () => setState(() => _showRirHelp = !_showRirHelp),
             textColor: textColor,
@@ -110,9 +111,9 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Done',
-                  style: TextStyle(
+                child: Text(
+                  l.commonDone,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -173,6 +174,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
                   color: AppColors.purple,
                 ),
                 const SizedBox(width: 4),
+                // TODO(i18n): _buildSectionHeader has no BuildContext — 'Hide'/'What\'s this?' cannot be localized without refactor
                 Text(
                   showHelp ? 'Hide' : 'What\'s this?',
                   style: const TextStyle(

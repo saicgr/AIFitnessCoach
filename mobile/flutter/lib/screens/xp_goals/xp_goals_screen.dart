@@ -84,13 +84,14 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     // Tab bar widget used in both the sliver header and for measuring height
+    final l10n = AppLocalizations.of(context)!;
     final tabBar = SegmentedTabBar(
       controller: _tabController,
       showIcons: false,
-      tabs: const [
-        SegmentedTabItem(label: 'Daily', icon: Icons.today),
-        SegmentedTabItem(label: 'Weekly', icon: Icons.date_range),
-        SegmentedTabItem(label: 'Monthly', icon: Icons.calendar_month),
+      tabs: [
+        SegmentedTabItem(label: l10n.xpGoalsDaily, icon: Icons.today),
+        SegmentedTabItem(label: l10n.xpGoalsWeekly, icon: Icons.date_range),
+        SegmentedTabItem(label: l10n.xpGoalsMonthly, icon: Icons.calendar_month),
       ],
     );
 
@@ -135,7 +136,7 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'XP Goals',
+                            l10n.xpGoalsXpGoals,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -152,7 +153,7 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
-                                  '${multiplier.toInt()}x XP Active!',
+                                  AppLocalizations.of(context)!.xpGoalsXpMultiplierActive(multiplier.toInt()),
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -369,7 +370,7 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                 const SizedBox(height: 16),
                 // First-Time Bonuses section
                 _buildSectionHeader(
-                  'First-Time Bonuses',
+                  AppLocalizations.of(context)!.xpGoalsFirstTimeBonuses,
                   Icons.star_outline,
                   textColor,
                   textMuted,
@@ -534,9 +535,9 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Login Streak',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.xpGoalsLoginStreak,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -544,8 +545,8 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                 ),
                 Text(
                   hasLoggedInToday
-                      ? '+$dailyLoginXP XP earned today'
-                      : '+$dailyLoginXP XP available',
+                      ? AppLocalizations.of(context)!.xpGoalsXpEarnedToday(dailyLoginXP)
+                      : AppLocalizations.of(context)!.xpGoalsXpAvailable(dailyLoginXP),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.9),
@@ -723,7 +724,7 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                'Trophy Room',
+                AppLocalizations.of(context)!.xpGoalsTrophyRoom,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -761,7 +762,7 @@ void _showXPInfoDialog(BuildContext context, bool isDark) {
           ),
           const SizedBox(width: 8),
           Text(
-            'How XP Works',
+            AppLocalizations.of(context)!.xpGoalsHowXpWorks,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -776,37 +777,37 @@ void _showXPInfoDialog(BuildContext context, bool isDark) {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildXPInfoSection(
-              'Daily Goals (6 total)',
+              AppLocalizations.of(context)!.xpGoalsDialogDailyGoals,
               [
-                'Login: +5 XP',
-                'Complete Workout: +100 XP',
-                'Log Meal: +25 XP',
-                'Log Weight: +15 XP',
-                'Hit Protein Goal: +50 XP',
-                'Log Body Measurements: +20 XP',
+                AppLocalizations.of(context)!.xpGoalsDialogLoginXp,
+                AppLocalizations.of(context)!.xpGoalsDialogCompleteWorkoutXp,
+                AppLocalizations.of(context)!.xpGoalsDialogLogMealXp,
+                AppLocalizations.of(context)!.xpGoalsDialogLogWeightXp,
+                AppLocalizations.of(context)!.xpGoalsDialogHitProteinGoalXp,
+                AppLocalizations.of(context)!.xpGoalsDialogLogBodyMeasurementsXp,
               ],
               isDark,
             ),
             const SizedBox(height: 16),
             _buildXPInfoSection(
-              'First-Time Bonuses',
+              AppLocalizations.of(context)!.xpGoalsFirstTimeBonuses,
               [
-                'First Workout: +150 XP',
-                'First Protein Goal: +100 XP',
-                'First PR: +100 XP',
-                'First Progress Photo: +75 XP',
-                'First Meal/Weight/Measurements: +50 XP each',
-                'First Chat with AI Coach: +15 XP',
+                AppLocalizations.of(context)!.xpGoalsDialogFirstWorkoutXp,
+                AppLocalizations.of(context)!.xpGoalsDialogFirstProteinGoalXp,
+                AppLocalizations.of(context)!.xpGoalsDialogFirstPrXp,
+                AppLocalizations.of(context)!.xpGoalsDialogFirstProgressPhotoXp,
+                AppLocalizations.of(context)!.xpGoalsDialogFirstMealWeightMeasurementsXp,
+                AppLocalizations.of(context)!.xpGoalsDialogFirstChatWithAiCoachXp,
               ],
               isDark,
             ),
             const SizedBox(height: 16),
             _buildXPInfoSection(
-              'Levels',
+              AppLocalizations.of(context)!.xpGoalsDialogLevels,
               [
-                '250 levels across 11 tiers',
-                'Beginner (1-10) to Transcendent (226-250)',
-                'Milestone rewards at key levels',
+                AppLocalizations.of(context)!.xpGoalsDialog250LevelsAcross11Tiers,
+                AppLocalizations.of(context)!.xpGoalsDialogBeginnerToTranscendent,
+                AppLocalizations.of(context)!.xpGoalsDialogMilestoneRewards,
               ],
               isDark,
             ),
@@ -817,7 +818,7 @@ void _showXPInfoDialog(BuildContext context, bool isDark) {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Got it!',
+            AppLocalizations.of(context)!.xpGoalsGotIt,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: isDark ? const Color(0xFF00D9FF) : const Color(0xFF0099CC),

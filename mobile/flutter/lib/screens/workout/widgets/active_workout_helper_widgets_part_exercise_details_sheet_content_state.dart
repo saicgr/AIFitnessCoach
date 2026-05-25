@@ -48,6 +48,8 @@ class ExerciseDetailsSheetContentState
     final accentEnum = AccentColorScope.of(context);
     final accentColor = accentEnum.getColor(isDark);
 
+    final l = AppLocalizations.of(context)!;
+
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       child: BackdropFilter(
@@ -93,7 +95,7 @@ class ExerciseDetailsSheetContentState
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Exercise Info',
+                        l.exerciseDetailsExerciseInfo,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: textPrimary,
@@ -135,7 +137,7 @@ class ExerciseDetailsSheetContentState
                           _buildActionPill(
                             context: context,
                             icon: Icons.play_circle_outline,
-                            label: 'Video',
+                            label: l.exerciseDetailsVideo,
                             onTap: () {
                               Navigator.pop(context);
                               showExerciseInfoSheet(
@@ -152,7 +154,7 @@ class ExerciseDetailsSheetContentState
                           _buildActionPill(
                             context: context,
                             icon: Icons.air,
-                            label: 'Breathing',
+                            label: l.exerciseDetailsBreathing,
                             onTap: () {
                               Navigator.pop(context);
                               showBreathingGuide(
@@ -169,7 +171,7 @@ class ExerciseDetailsSheetContentState
                       const SizedBox(height: 20),
 
                       // === EXERCISE DETAILS ===
-                      _buildSectionHeader('Details', Icons.list_alt_rounded, accentColor, textPrimary),
+                      _buildSectionHeader(l.exerciseDetailsDetails, Icons.list_alt_rounded, accentColor, textPrimary),
                       const SizedBox(height: 12),
 
                       // Details card
@@ -188,8 +190,8 @@ class ExerciseDetailsSheetContentState
                             // Primary Muscle
                             _buildDetailRow(
                               icon: Icons.fitness_center,
-                              label: 'Primary Muscle',
-                              value: exercise.primaryMuscle ?? exercise.muscleGroup ?? 'Not specified',
+                              label: l.exerciseDetailsPrimaryMuscle,
+                              value: exercise.primaryMuscle ?? exercise.muscleGroup ?? l.exerciseDetailsNotSpecified,
                               color: accentColor,
                               isDark: isDark,
                               textPrimary: textPrimary,
@@ -211,7 +213,7 @@ class ExerciseDetailsSheetContentState
                                   }
                                   return _buildDetailRow(
                                     icon: Icons.accessibility_new,
-                                    label: 'Secondary Muscles',
+                                    label: l.exerciseDetailsSecondaryMuscles,
                                     value: value,
                                     color: accentColor,
                                     isDark: isDark,
@@ -224,8 +226,8 @@ class ExerciseDetailsSheetContentState
                             // Equipment
                             _buildDetailRow(
                               icon: Icons.hardware,
-                              label: 'Equipment',
-                              value: exercise.equipment ?? 'Bodyweight',
+                              label: l.exerciseDetailsEquipment,
+                              value: exercise.equipment ?? l.exerciseDetailsBodyweight,
                               color: accentColor,
                               isDark: isDark,
                               textPrimary: textPrimary,
@@ -251,7 +253,7 @@ class ExerciseDetailsSheetContentState
                                     );
                                   },
                                   child: Text(
-                                    "Don't have this equipment?",
+                                    l.exerciseDetailsDontHaveEquipment,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: accentColor,
@@ -265,7 +267,7 @@ class ExerciseDetailsSheetContentState
                             if (exercise.difficulty != null)
                               _buildDetailRow(
                                 icon: Icons.speed,
-                                label: 'Difficulty',
+                                label: l.exerciseDetailsDifficulty,
                                 value: exercise.difficulty!,
                                 color: accentColor,
                                 isDark: isDark,
@@ -279,14 +281,14 @@ class ExerciseDetailsSheetContentState
 
                       // === SETUP & INSTRUCTIONS ===
                       const SizedBox(height: 24),
-                      _buildSectionHeader('Setup', Icons.checklist_rounded, accentColor, textPrimary),
+                      _buildSectionHeader(l.exerciseDetailsSetup, Icons.checklist_rounded, accentColor, textPrimary),
                       const SizedBox(height: 12),
                       _buildSetupInstructionsList(exercise, isDark, textPrimary, accentColor, cardBackground),
 
                       const SizedBox(height: 24),
 
                       // === AI COACH TIPS (loaded in background) ===
-                      _buildAiInsightsSection(isDark, textPrimary, textSecondary, accentColor, cardBackground),
+                      _buildAiInsightsSection(l, isDark, textPrimary, textSecondary, accentColor, cardBackground),
 
                       // Tip about Video button
                       Container(
@@ -309,7 +311,7 @@ class ExerciseDetailsSheetContentState
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Tap "Video" to watch form demonstration',
+                                l.exerciseDetailsTapVideoHint,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: textSecondary,
@@ -404,7 +406,7 @@ class ExerciseDetailsSheetContentState
     );
   }
 
-  Widget _buildAiInsightsSection(bool isDark, Color textPrimary, Color textSecondary, Color accentColor, Color cardBackground) {
+  Widget _buildAiInsightsSection(AppLocalizations l, bool isDark, Color textPrimary, Color textSecondary, Color accentColor, Color cardBackground) {
     if (_isLoadingInsights) {
       return Container(
         margin: const EdgeInsets.only(bottom: 20),
@@ -449,7 +451,7 @@ class ExerciseDetailsSheetContentState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Section header
-        _buildSectionHeader('AI Coach Tips', Icons.auto_awesome, accentColor, textPrimary),
+        _buildSectionHeader(l.exerciseDetailsAiCoachTips, Icons.auto_awesome, accentColor, textPrimary),
         const SizedBox(height: 12),
 
         // Tips card
@@ -471,7 +473,7 @@ class ExerciseDetailsSheetContentState
               if (_aiInsights!.formCues != null) ...[
                 _buildInsightItem(
                   icon: Icons.check_circle_outline,
-                  title: 'Form Cues',
+                  title: l.exerciseDetailsFormCues,
                   content: _aiInsights!.formCues!,
                   color: const Color(0xFF22C55E), // Green for success
                   isDark: isDark,
@@ -484,7 +486,7 @@ class ExerciseDetailsSheetContentState
               if (_aiInsights!.commonMistakes != null) ...[
                 _buildInsightItem(
                   icon: Icons.warning_amber_outlined,
-                  title: 'Watch Out For',
+                  title: l.exerciseDetailsWatchOutFor,
                   content: _aiInsights!.commonMistakes!,
                   color: const Color(0xFFF59E0B), // Amber for warnings
                   isDark: isDark,
@@ -497,7 +499,7 @@ class ExerciseDetailsSheetContentState
               if (_aiInsights!.proTip != null)
                 _buildInsightItem(
                   icon: Icons.lightbulb_outline,
-                  title: 'Pro Tip',
+                  title: l.exerciseDetailsProTip,
                   content: _aiInsights!.proTip!,
                   color: accentColor,
                   isDark: isDark,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Non-blocking safety disclaimer card shown at the top of the workout review
 /// sheet whenever the user has flagged a significant injury load (≥3) or the
@@ -25,8 +26,6 @@ import '../../../../data/services/haptic_service.dart';
 /// Returns `SizedBox.shrink()` when nothing needs to be shown so parents
 /// can include it unconditionally.
 ///
-/// TODO(i18n): all copy is English-only for v1. Wrap with localization
-/// lookups once the app introduces `AppLocalizations`.
 class SafetyDisclaimerBanner extends StatefulWidget {
   /// Number of injuries flagged by the user for this regeneration.
   /// Banner is hidden if `< 3` AND `safetyMode` is false.
@@ -129,15 +128,14 @@ class _SafetyDisclaimerBannerState extends State<SafetyDisclaimerBanner>
         ? Icons.health_and_safety_outlined
         : Icons.info_outline;
 
+    final l10n = AppLocalizations.of(context)!;
     final String headline = isSafetyMode
-        ? 'Safety mode active'
-        : '${widget.injuryCount} injuries flagged';
+        ? l10n.safetyDisclaimerBannerSafetyModeActive
+        : l10n.safetyDisclaimerBannerInjuriesFlagged(widget.injuryCount);
 
     final String body = isSafetyMode
-        ? "With the injuries you've selected, we've built a gentler plan. "
-            'We strongly recommend consulting a physical therapist before training.'
-        : "This AI plan aims to avoid aggravating those areas, but it's not "
-            'a substitute for medical advice. Consider consulting a physical therapist.';
+        ? l10n.safetyDisclaimerBannerSafetyModeBody
+        : l10n.safetyDisclaimerBannerInjuryBody;
 
     // Optional injury label strip — only shown if the caller passed labels.
     final bool hasLabels =
@@ -240,7 +238,7 @@ class _SafetyDisclaimerBannerState extends State<SafetyDisclaimerBanner>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Learn more',
+                              AppLocalizations.of(context)!.safetyDisclaimerBannerLearnMore,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -264,7 +262,7 @@ class _SafetyDisclaimerBannerState extends State<SafetyDisclaimerBanner>
 
             // Dismiss — per-session only. Accessible tooltip + semantics.
             Tooltip(
-              message: 'Dismiss disclaimer',
+              message: AppLocalizations.of(context)!.safetyDisclaimerBannerDismissDisclaimer,
               child: IconButton(
                 onPressed: _handleDismiss,
                 icon: Icon(

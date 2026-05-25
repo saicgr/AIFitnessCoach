@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../data/providers/beast_mode_provider.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../../widgets/pill_app_bar.dart';
@@ -53,8 +54,8 @@ class BeastModeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
-        title: 'Beast Mode',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).beastModeBeastMode,
       ),
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -64,16 +65,16 @@ class BeastModeScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // === ALGORITHM INSPECTOR ===
-              _sectionTitle('ALGORITHM INSPECTOR',
-                  'See the math behind your workouts', t),
+              _sectionTitle(AppLocalizations.of(context).beastModeAlgorithmInspector,
+                  AppLocalizations.of(context).beastModeAlgorithmInspectorSubtitle, t),
               const SizedBox(height: 12),
-              _premiumGatedCard(ScoringCard(theme: t), isPremium, t),
+              _premiumGatedCard(ScoringCard(theme: t), isPremium, t, context),
               const SizedBox(height: 12),
               FreshnessDecayCard(theme: t),
               const SizedBox(height: 12),
               DifficultyCard(theme: t),
               const SizedBox(height: 12),
-              _premiumGatedCard(MoodCard(theme: t), isPremium, t),
+              _premiumGatedCard(MoodCard(theme: t), isPremium, t, context),
               const SizedBox(height: 12),
               RestTimerCard(theme: t),
 
@@ -81,21 +82,21 @@ class BeastModeScreen extends ConsumerWidget {
 
               // === RECOVERY & PROGRESSION ===
               _sectionTitle(
-                  'RECOVERY & PROGRESSION',
-                  "Visualize your body's recovery and forecast growth",
+                  AppLocalizations.of(context).beastModeRecoveryAndProgression,
+                  AppLocalizations.of(context).beastModeRecoveryAndProgressionSubtitle,
                   t),
               const SizedBox(height: 12),
               RecoverySection(theme: t),
               const SizedBox(height: 12),
-              _premiumGatedCard(VolumeProgressionCard(theme: t), isPremium, t),
+              _premiumGatedCard(VolumeProgressionCard(theme: t), isPremium, t, context),
               const SizedBox(height: 12),
-              _premiumGatedCard(RpeCard(theme: t), isPremium, t),
+              _premiumGatedCard(RpeCard(theme: t), isPremium, t, context),
 
               const SizedBox(height: 24),
 
               // === CUSTOMIZATION LAB ===
-              _sectionTitle('CUSTOMIZATION LAB',
-                  'Advanced color and font controls', t),
+              _sectionTitle(AppLocalizations.of(context).beastModeCustomizationLab,
+                  AppLocalizations.of(context).beastModeCustomizationLabSubtitle, t),
               const SizedBox(height: 12),
               CustomColorLabCard(theme: t),
               const SizedBox(height: 12),
@@ -106,8 +107,8 @@ class BeastModeScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // === WORKOUT ALGORITHM ===
-              _sectionTitle('WORKOUT ALGORITHM',
-                  'Deep control over workout generation', t),
+              _sectionTitle(AppLocalizations.of(context).beastModeWorkoutAlgorithm,
+                  AppLocalizations.of(context).beastModeWorkoutAlgorithmSubtitle, t),
               const SizedBox(height: 12),
               SupersetAlgorithmCard(theme: t),
               const SizedBox(height: 12),
@@ -120,24 +121,24 @@ class BeastModeScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // === DATA & SYNC TOOLS ===
-              _sectionTitle('DATA & SYNC TOOLS',
-                  'Debug sync issues and manage your data', t),
+              _sectionTitle(AppLocalizations.of(context).beastModeDataAndSyncTools,
+                  AppLocalizations.of(context).beastModeDataAndSyncToolsSubtitle, t),
               const SizedBox(height: 12),
               DataSyncSection(theme: t),
 
               const SizedBox(height: 24),
 
               // === WORKOUT TEMPLATES ===
-              _sectionTitle('WORKOUT TEMPLATES',
-                  'Custom workout structure presets', t),
+              _sectionTitle(AppLocalizations.of(context).beastModeWorkoutTemplates,
+                  AppLocalizations.of(context).beastModeWorkoutTemplatesSubtitle, t),
               const SizedBox(height: 12),
               TemplateSection(theme: t),
 
               const SizedBox(height: 24),
 
               // === ABOUT BEAST MODE ===
-              _sectionTitle('ABOUT BEAST MODE',
-                  'Build information and controls', t),
+              _sectionTitle(AppLocalizations.of(context).beastModeAboutBeastMode,
+                  AppLocalizations.of(context).beastModeAboutBeastModeSubtitle, t),
               const SizedBox(height: 12),
               AboutSection(theme: t),
 
@@ -149,7 +150,7 @@ class BeastModeScreen extends ConsumerWidget {
   }
 
   /// Wraps a card with a premium overlay when user is on free tier.
-  Widget _premiumGatedCard(Widget card, bool isPremium, BeastThemeData t) {
+  Widget _premiumGatedCard(Widget card, bool isPremium, BeastThemeData t, BuildContext context) {
     if (isPremium) return card;
     return Stack(
       children: [
@@ -169,8 +170,8 @@ class BeastModeScreen extends ConsumerWidget {
                 const Icon(Icons.lock_rounded, size: 12, color: Colors.white),
                 const SizedBox(width: 4),
                 Text(
-                  'Premium',
-                  style: TextStyle(
+                  AppLocalizations.of(context).beastModePremium,
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,

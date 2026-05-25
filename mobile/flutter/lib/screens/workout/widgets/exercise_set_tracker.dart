@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/default_weights.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/exercise.dart';
 
@@ -768,6 +769,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.cardBorder, style: BorderStyle.solid),
         ),
+        // TODO(i18n): 'Add Set' is inside a const Row in a method without BuildContext — refactor to pass AppLocalizations
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

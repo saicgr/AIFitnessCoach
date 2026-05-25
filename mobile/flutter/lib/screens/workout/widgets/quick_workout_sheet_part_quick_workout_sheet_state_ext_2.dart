@@ -4,6 +4,7 @@ part of 'quick_workout_sheet.dart';
 extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
 
   void _showDiscoverSheet() {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -23,7 +24,7 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
                   Icon(Icons.auto_awesome, color: accentColor, size: 22),
                   const SizedBox(width: 8),
                   Text(
-                    'Discover Workouts',
+                    l.quickWorkoutDiscoverWorkouts,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -36,7 +37,7 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Personalized suggestions based on your profile',
+                  l.quickWorkoutDiscoverSubtitle,
                   style: TextStyle(fontSize: 13, color: textSecondary),
                 ),
               ),
@@ -45,7 +46,7 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Text(
-                    'No additional suggestions available.',
+                    l.quickWorkoutNoSuggestions,
                     style: TextStyle(color: textSecondary),
                   ),
                 )
@@ -230,6 +231,7 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
 
   /// Show the conflict resolution dialog.
   Future<_ConflictAction> _showConflictDialog(String existingWorkoutName) async {
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final result = await showDialog<_ConflictAction>(
       context: context,
@@ -237,14 +239,14 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'Workout Already Scheduled',
+          l.quickWorkoutConflictTitle,
           style: TextStyle(
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : Colors.black87,
           ),
         ),
         content: Text(
-          'You already have "$existingWorkoutName" scheduled for today. What would you like to do?',
+          l.quickWorkoutConflictBody(existingWorkoutName),
           style: TextStyle(
             color: isDark ? Colors.white70 : Colors.black54,
           ),
@@ -252,15 +254,15 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, _ConflictAction.changeDate),
-            child: const Text('Change Date'),
+            child: Text(l.quickWorkoutConflictChangeDate),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, _ConflictAction.addAnyway),
-            child: const Text('Add Anyway'),
+            child: Text(l.quickWorkoutConflictAddAnyway),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, _ConflictAction.replace),
-            child: const Text('Replace'),
+            child: Text(l.quickWorkoutConflictReplace),
           ),
         ],
       ),

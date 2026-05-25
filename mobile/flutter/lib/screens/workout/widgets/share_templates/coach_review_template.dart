@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/coach_persona.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
 
 /// Coach Review Template - Shows the AI coach's review/opinion of the workout
@@ -112,6 +113,7 @@ class CoachReviewTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final screenHeight = MediaQuery.of(context).size.height;
     final templateHeight = (screenHeight * 0.48).clamp(360.0, 480.0);
 
@@ -157,7 +159,7 @@ class CoachReviewTemplate extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Coach header
-                        _buildCoachHeader(),
+                        _buildCoachHeader(l),
 
                         const SizedBox(height: 10),
 
@@ -201,7 +203,7 @@ class CoachReviewTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildCoachHeader() {
+  Widget _buildCoachHeader(AppLocalizations l) {
     final coachName = coach?.name ?? 'AI Coach';
     final coachEmoji = coach?.emoji ?? '🤖';
     final coachImage = coach?.imagePath;
@@ -258,7 +260,7 @@ class CoachReviewTemplate extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'WORKOUT REVIEW',
+                l.shareCoachWorkoutReview,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 10,

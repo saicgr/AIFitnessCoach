@@ -8,6 +8,7 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/xp_repository.dart'
     show UnclaimedCrate, CrateRewardResult;
 import '../../../data/services/haptic_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// A crate option card in the 3x3 grid.
 class _CrateOption {
@@ -23,14 +24,15 @@ class _CrateOption {
 
   String get id => '${crateType}_${crateDate.toIso8601String().split('T').first}';
 
-  String get typeLabel {
+  String typeLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     switch (crateType) {
       case 'activity':
-        return 'Activity Crate';
+        return l10n.openAllCratesActivityCrate;
       case 'streak':
-        return 'Streak Crate';
+        return l10n.openAllCratesStreakCrate;
       default:
-        return 'Daily Crate';
+        return l10n.openAllCratesDailyCrate;
     }
   }
 
@@ -144,13 +146,18 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
 
     for (final crate in widget.unclaimedCrates) {
       final date = DateTime(crate.crateDate.year, crate.crateDate.month, crate.crateDate.day);
-      final dayLabel = _formatDayLabel(date, today);
+      // dayLabel is set to a placeholder; it is re-computed with l10n at render time
+      final diff = today.difference(date).inDays;
+      final rawDayLabel = diff == 0 ? '__today__'
+          : diff == 1 ? '__yesterday__'
+          : diff < 7 ? DateFormat('EEEE').format(date)
+          : DateFormat('MMM d').format(date);
 
       for (final type in crate.availableTypes) {
         options.add(_CrateOption(
           crateType: type,
           crateDate: crate.crateDate,
-          dayLabel: dayLabel,
+          dayLabel: rawDayLabel,
         ));
       }
     }
@@ -166,10 +173,11 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
     _allOptions = options.take(9).toList();
   }
 
-  String _formatDayLabel(DateTime date, DateTime today) {
+  String _formatDayLabel(DateTime date, DateTime today, BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final diff = today.difference(date).inDays;
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Yesterday';
+    if (diff == 0) return l10n.openAllCratesToday;
+    if (diff == 1) return l10n.openAllCratesYesterday;
     if (diff < 7) return DateFormat('EEEE').format(date); // e.g. "Wednesday"
     return DateFormat('MMM d').format(date); // e.g. "Apr 2"
   }
@@ -277,8 +285,8 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
           Navigator.of(context).maybePop();
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to open crates. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.openAllCratesFailedToOpenCrates),
             backgroundColor: Colors.red,
           ),
         );
@@ -340,10 +348,10 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                   children: [
                     Text(
                       _showRewards
-                          ? '\uD83C\uDF89 Rewards!'
+                          ? AppLocalizations.of(context)!.openAllCratesUd83cUdf89Rewards
                           : (autoFlow
-                              ? '\uD83C\uDF81 Opening your crates\u2026'
-                              : '\uD83C\uDF81 Open Your Crates'),
+                              ? AppLocalizations.of(context)!.openAllCratesOpeningYourCrates
+                              : AppLocalizations.of(context)!.openAllCratesOpenYourCrates),
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -357,8 +365,8 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                         children: [
                           Text(
                             _requiredSelections > 1
-                                ? 'Pick 1 reward per day \u2022 ${_selectedByDate.length}/$_requiredSelections picked'
-                                : 'Pick your reward \u2022 ${_selectedByDate.length}/$_requiredSelections picked',
+                                ? AppLocalizations.of(context)!.openAllCratesPickRewardPerDay(_selectedByDate.length, _requiredSelections)
+                                : AppLocalizations.of(context)!.openAllCratesPickYourReward(_selectedByDate.length, _requiredSelections),
                             style: TextStyle(fontSize: 14, color: textSecondary),
                           ),
                           if (_selectedByDate.length < _requiredSelections && !_isCollecting) ...[
@@ -366,7 +374,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                             GestureDetector(
                               onTap: _selectAll,
                               child: Text(
-                                'Select All',
+                                AppLocalizations.of(context)!.openAllCratesSelectAll,
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -427,9 +435,9 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
-                            'Done',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          child: Text(
+                            AppLocalizations.of(context)!.openAllCratesDone,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         )
                       : ElevatedButton(
@@ -455,7 +463,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                                   ),
                                 )
                               : Text(
-                                  'Collect (${_selectedByDate.length}/$_requiredSelections)',
+                                  AppLocalizations.of(context)!.openAllCratesCollect(_selectedByDate.length, _requiredSelections),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -576,7 +584,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                         const SizedBox(height: 8),
                         // Type label
                         Text(
-                          option.typeLabel,
+                          option.typeLabel(context),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -586,7 +594,11 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                         const SizedBox(height: 2),
                         // Day label
                         Text(
-                          option.dayLabel,
+                          option.dayLabel == '__today__'
+                              ? AppLocalizations.of(context)!.openAllCratesToday
+                              : option.dayLabel == '__yesterday__'
+                                  ? AppLocalizations.of(context)!.openAllCratesYesterday
+                                  : option.dayLabel,
                           style: TextStyle(
                             fontSize: 11,
                             color: textSecondary,
@@ -684,7 +696,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
     return Column(
       children: [
         Text(
-          '$successCount crate${successCount > 1 ? 's' : ''} opened!',
+          AppLocalizations.of(context)!.openAllCratesCratesOpened(successCount),
           style: TextStyle(fontSize: 14, color: textSecondary),
         ),
         const SizedBox(height: 16),
@@ -733,7 +745,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '+$gainedXp XP',
+                      AppLocalizations.of(context)!.openAllCratesGainedXp(gainedXp),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -741,7 +753,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                       ),
                     ),
                     Text(
-                      'Total: ${userXp.formattedTotalXp} XP • Level $level',
+                      AppLocalizations.of(context)!.openAllCratesTotalXpLevel(userXp.formattedTotalXp, level),
                       style: TextStyle(fontSize: 12, color: textSecondary),
                     ),
                   ],
@@ -764,13 +776,13 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isMax ? 'Max level' : '$xpInLevel / $xpToNext XP',
+                isMax ? AppLocalizations.of(context)!.openAllCratesMaxLevel : AppLocalizations.of(context)!.openAllCratesXpInLevel(xpInLevel, xpToNext),
                 style: TextStyle(fontSize: 11, color: textSecondary),
               ),
               Text(
                 isMax
-                    ? '${userXp.formattedTotalXp} total'
-                    : '$remaining XP to Lvl ${level + 1}',
+                    ? AppLocalizations.of(context)!.openAllCratesTotalXpFormatted(userXp.formattedTotalXp)
+                    : AppLocalizations.of(context)!.openAllCratesXpToNextLevel(remaining, level + 1),
                 style: TextStyle(
                   fontSize: 11,
                   color: textSecondary,
@@ -835,26 +847,28 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
   }
 
   String _itemLabel(String type) {
+    final l10n = AppLocalizations.of(context)!;
     switch (type) {
       case 'streak_shield':
-        return 'Streak Shield';
+        return l10n.openAllCratesStreakShield;
       case 'xp_token_2x':
-        return 'Double XP Token';
+        return l10n.openAllCratesDoubleXpToken;
       case 'fitness_crate':
-        return 'Fitness Crate';
+        return l10n.openAllCratesFitnessCrate;
       default:
         return type.replaceAll('_', ' ');
     }
   }
 
   String _itemDesc(String type) {
+    final l10n = AppLocalizations.of(context)!;
     switch (type) {
       case 'streak_shield':
-        return 'Protect your streak';
+        return l10n.openAllCratesProtectYourStreak;
       case 'xp_token_2x':
-        return '24 hours of 2x XP';
+        return l10n.openAllCrates24HoursOf2xXp;
       case 'fitness_crate':
-        return 'Bonus crate to open';
+        return l10n.openAllCratesBonusCrateToOpen;
       default:
         return '';
     }

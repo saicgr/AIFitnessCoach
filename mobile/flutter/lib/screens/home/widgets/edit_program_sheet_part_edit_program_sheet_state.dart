@@ -162,8 +162,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   Future<void> _updateProgram() async {
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one workout day'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.editProgramSheetPleaseSelectAtLeast),
           backgroundColor: AppColors.error,
         ),
       );
@@ -172,7 +172,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
     setState(() {
       _isUpdating = true;
-      _updateStatus = 'Saving preferences...';
+      _updateStatus = AppLocalizations.of(context)!.editProgramSheetSavingPreferences;
       _generatingWorkout = 0;
       _totalWorkoutsToGenerate = 0;
       _generatingDetail = null;
@@ -230,7 +230,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
           _generatingDetail = null;
         });
 
-        String errorMessage = 'Failed to update program';
+        String errorMessage = AppLocalizations.of(context)!.editProgramSheetFailedToUpdateProgram;
         final errorStr = e.toString().toLowerCase();
         if (errorStr.contains('timeout') || errorStr.contains('timed out')) {
           errorMessage =
@@ -254,8 +254,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   void _nextStep() {
     if (_currentStep == 0 && _selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one workout day'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.editProgramSheetPleaseSelectAtLeast),
           backgroundColor: AppColors.error,
         ),
       );
@@ -278,7 +278,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to view program history')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.editProgramSheetPleaseLogInTo)),
       );
       return;
     }
@@ -299,7 +299,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
       if (history.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No program history found')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.editProgramSheetNoProgramHistoryFound)),
         );
         return;
       }
@@ -321,7 +321,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load history: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.editProgramSheetFailedToLoadHistory(e.toString()))),
       );
     }
   }
@@ -341,8 +341,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Program restored! Regenerate workouts to apply changes.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.editProgramSheetProgramRestoredRegenerateW),
             backgroundColor: Colors.green,
           ),
         );
@@ -351,7 +351,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to restore: $e'),
+            content: Text(AppLocalizations.of(context)!.editProgramSheetFailedToRestore(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -396,7 +396,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   }
 
   Widget _buildHeader(SheetColors colors) {
-    final stepTitles = ['Schedule', 'Training Program', 'Equipment', 'Health'];
+    final l10n = AppLocalizations.of(context)!;
+    final stepTitles = [l10n.editProgramSheetSchedule, l10n.editProgramSheetTrainingProgram, l10n.editProgramSheetEquipment, l10n.editProgramSheetHealth];
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
       child: Column(
@@ -418,7 +419,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Customize Program',
+                      l10n.editProgramSheetCustomizeProgram,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
@@ -461,7 +462,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Change your weekly schedule, equipment, or difficulty. Your workouts will be regenerated based on your new settings.',
+                    l10n.editProgramSheetChangeYourWeeklySchedule,
                     style: TextStyle(
                       fontSize: 12,
                       color: colors.cyan,
@@ -725,7 +726,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                       ),
                     ),
                     child:
-                        Text('Back', style: TextStyle(color: colors.textSecondary)),
+                        Text(AppLocalizations.of(context)!.editProgramSheetBack, style: TextStyle(color: colors.textSecondary)),
                   ),
                 ),
               if (_currentStep > 0) const SizedBox(width: 12),
@@ -761,7 +762,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                                     ? _updateStatus
                                     : (_updateStatus.isNotEmpty
                                         ? _updateStatus
-                                        : 'Updating...'),
+                                        : AppLocalizations.of(context)!.editProgramSheetUpdating),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w500,
                                   fontSize: 13,
@@ -773,8 +774,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                         )
                       : Text(
                           _currentStep < _totalSteps - 1
-                              ? 'Continue'
-                              : 'Update & Regenerate',
+                              ? AppLocalizations.of(context)!.editProgramSheetContinue
+                              : AppLocalizations.of(context)!.editProgramSheetUpdateAndRegenerate,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                 ),

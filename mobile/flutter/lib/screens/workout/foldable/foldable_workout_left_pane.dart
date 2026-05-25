@@ -14,6 +14,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/exercise_image.dart';
 import '../widgets/exercise_thumbnail_strip_v2.dart';
@@ -130,7 +131,7 @@ class FoldableWorkoutLeftPane extends StatelessWidget {
 
                 // "Up Next" section
                 SliverToBoxAdapter(
-                  child: _buildUpNextSection(isDark),
+                  child: _buildUpNextSection(isDark, AppLocalizations.of(context)!),
                 ),
               ],
             ),
@@ -303,7 +304,7 @@ class FoldableWorkoutLeftPane extends StatelessWidget {
   }
 
   /// "Up Next" horizontal chip list showing upcoming exercises
-  Widget _buildUpNextSection(bool isDark) {
+  Widget _buildUpNextSection(bool isDark, AppLocalizations l) {
     // Get exercises after the current one
     final upcomingStartIndex = currentExerciseIndex + 1;
     if (upcomingStartIndex >= exercises.length) return const SizedBox.shrink();
@@ -321,7 +322,7 @@ class FoldableWorkoutLeftPane extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'UP NEXT',
+            l.warmupControllerUpNext,
             style: WorkoutDesign.labelStyle.copyWith(
               color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
             ),

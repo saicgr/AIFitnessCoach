@@ -33,7 +33,7 @@ class _WeeklySummaryCard extends StatelessWidget {
               Icon(Icons.calendar_today, size: 20, color: textMuted),
               const SizedBox(width: 12),
               Text(
-                'This Week',
+                AppLocalizations.of(context).weeklyCheckinSheetThisWeek,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -47,7 +47,7 @@ class _WeeklySummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _SummaryMetric(
-                  label: 'Days Logged',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetDaysLogged,
                   value: '${summary.daysLogged}/7',
                   icon: Icons.check_circle,
                   color: isDark ? AppColors.green : AppColorsLight.green,
@@ -57,7 +57,7 @@ class _WeeklySummaryCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _SummaryMetric(
-                  label: 'Avg Calories',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetAvgCalories,
                   value: '${summary.avgCalories}',
                   icon: Icons.local_fire_department,
                   color: isDark ? AppColors.orange : AppColorsLight.orange,
@@ -71,7 +71,7 @@ class _WeeklySummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _SummaryMetric(
-                  label: 'Avg Protein',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetAvgProtein,
                   value: '${summary.avgProtein}g',
                   icon: Icons.fitness_center,
                   color: isDark ? AppColors.cyan : AppColorsLight.cyan,
@@ -81,7 +81,7 @@ class _WeeklySummaryCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _SummaryMetric(
-                  label: 'Weight Change',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetWeightChange,
                   value: _formatWeightChange(summary.weightChange),
                   icon: Icons.trending_flat,
                   color: _getWeightChangeColor(summary.weightChange),
@@ -192,7 +192,7 @@ class _DetailedTdeeCard extends StatelessWidget {
 
     // Show insufficient data state for first-time users
     if (hasInsufficientData) {
-      return _buildInsufficientDataState(textPrimary, textMuted, textSecondary, teal);
+      return _buildInsufficientDataState(context, textPrimary, textMuted, textSecondary, teal);
     }
 
     return Container(
@@ -228,7 +228,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Your Adaptive TDEE',
+                      AppLocalizations.of(context).weeklyCheckinSheetYourAdaptiveTdee,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -236,7 +236,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'EMA-smoothed calculation',
+                      AppLocalizations.of(context).weeklyCheckinSheetEmaSmoothedCalculation,
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                   ],
@@ -274,7 +274,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'calories/day',
+                  AppLocalizations.of(context).weeklyCheckinSheetCaloriesDay,
                   style: TextStyle(fontSize: 14, color: textSecondary),
                 ),
               ],
@@ -299,7 +299,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                     Text(
-                      'Confidence Range',
+                      AppLocalizations.of(context).weeklyCheckinSheetConfidenceRange,
                       style: TextStyle(fontSize: 12, color: textSecondary),
                     ),
                     Text(
@@ -345,6 +345,7 @@ class _DetailedTdeeCard extends StatelessWidget {
   }
 
   Widget _buildInsufficientDataState(
+    BuildContext context,
     Color textPrimary,
     Color textMuted,
     Color textSecondary,
@@ -372,7 +373,7 @@ class _DetailedTdeeCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Building Your Profile',
+            AppLocalizations.of(context).weeklyCheckinSheetBuildingYourProfile,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -381,7 +382,7 @@ class _DetailedTdeeCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Keep logging your meals and weight to unlock personalized TDEE calculations.',
+            AppLocalizations.of(context).weeklyCheckinSheetKeepLoggingYourMeals,
             style: TextStyle(fontSize: 14, color: textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -398,7 +399,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Data Quality', style: TextStyle(fontSize: 13, color: textPrimary)),
+                    Text(AppLocalizations.of(context).weeklyCheckinSheetDataQuality, style: TextStyle(fontSize: 13, color: textPrimary)),
                     Text(
                       '$dataQualityPercent%',
                       style: TextStyle(
@@ -423,7 +424,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Need 60% data quality for accurate calculations',
+                  AppLocalizations.of(context).weeklyCheckinSheetNeed60DataQuality,
                   style: TextStyle(fontSize: 11, color: textMuted),
                 ),
               ],
@@ -437,7 +438,7 @@ class _DetailedTdeeCard extends StatelessWidget {
               Icon(Icons.lightbulb_outline, size: 16, color: teal),
               const SizedBox(width: 8),
               Text(
-                'Log meals consistently for best results',
+                AppLocalizations.of(context).weeklyCheckinSheetLogMealsConsistentlyFor,
                 style: TextStyle(
                   fontSize: 13,
                   color: teal,
@@ -502,8 +503,8 @@ class _MetabolicAdaptationAlert extends StatelessWidget {
               Expanded(
                 child: Text(
                   adaptation.isPlateau
-                      ? 'Plateau Detected'
-                      : 'Metabolic Adaptation Detected',
+                      ? AppLocalizations.of(context).weeklyCheckinSheetPlateauDetected
+                      : AppLocalizations.of(context).weeklyCheckinSheetMetabolicAdaptationDetected,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -531,7 +532,7 @@ class _MetabolicAdaptationAlert extends StatelessWidget {
                 Icon(Icons.lightbulb_outline, size: 16, color: alertColor),
                 const SizedBox(width: 8),
                 Text(
-                  'Suggested: ${adaptation.actionDisplayName}',
+                  AppLocalizations.of(context).weeklyCheckinSheetSuggestedAction(adaptation.actionDisplayName),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -594,7 +595,7 @@ class _AdherenceCard extends StatelessWidget {
               Icon(Icons.analytics_outlined, size: 20, color: textMuted),
               const SizedBox(width: 12),
               Text(
-                'Adherence & Sustainability',
+                AppLocalizations.of(context).weeklyCheckinSheetAdherenceSustainability,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -610,7 +611,7 @@ class _AdherenceCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _ScoreCircle(
-                  label: 'Adherence',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetAdherence,
                   value: adherence.averageAdherence,
                   color: AppColors.textSecondary,
                   isDark: isDark,
@@ -619,7 +620,7 @@ class _AdherenceCard extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: _ScoreCircle(
-                  label: 'Sustainability',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetSustainability,
                   value: adherence.sustainabilityScore * 100,
                   color: sustainColor,
                   isDark: isDark,
@@ -647,7 +648,7 @@ class _AdherenceCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${adherence.sustainabilityRating.toUpperCase()} SUSTAINABILITY',
+                    AppLocalizations.of(context).weeklyCheckinSheetSustainabilityRating(adherence.sustainabilityRating.toUpperCase()),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -801,7 +802,7 @@ class _MultiOptionRecommendationCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Choose Your Path',
+                      AppLocalizations.of(context).weeklyCheckinSheetChooseYourPath,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -809,7 +810,7 @@ class _MultiOptionRecommendationCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Select a recommendation based on your preference',
+                      AppLocalizations.of(context).weeklyCheckinSheetSelectARecommendationBased,
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                   ],

@@ -11,6 +11,8 @@ class MenuAnalysisTour {
 
   static const id = TooltipIds.menuAnalysis;
 
+  // TODO(i18n): static method — no BuildContext available.
+  // Refactor to instance method accepting BuildContext to enable l10n.
   static List<EmptyStateTip> steps() => [
         EmptyStateTip(
           icon: Icons.swap_vert_rounded,

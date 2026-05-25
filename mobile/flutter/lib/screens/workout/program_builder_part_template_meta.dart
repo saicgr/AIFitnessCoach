@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/program_template.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Settings strip surfaced inside the program builder (plan B.3 / B.3.2).
 ///
@@ -36,6 +37,8 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO(i18n): _label, _infoNote, _buildStrategyChips, _buildDeloadSlider have no BuildContext — refactor to accept AppLocalizations
+    final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
@@ -58,7 +61,7 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
               Icon(Icons.tune_rounded, size: 16, color: accent),
               const SizedBox(width: 6),
               Text(
-                'Program settings',
+                l.programMetaProgramSettings,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
@@ -71,20 +74,19 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Progression strategy.
-          _label('Progression', textSecondary),
+          _label(l.programMetaProgression, textSecondary),
           const SizedBox(height: 6),
           _buildStrategyChips(isDark, accent),
           const SizedBox(height: 14),
 
           if (_progressionMeaningless)
             _infoNote(
-              'This program type uses fixed loads — progression and deloads '
-              'are off.',
+              l.programMetaFixedLoadsNote,
               textSecondary,
             )
           else ...[
             // Deload frequency.
-            _label('Deload every', textSecondary),
+            _label(l.programMetaDeloadEvery, textSecondary),
             const SizedBox(height: 4),
             _buildDeloadSlider(isDark, accent, textPrimary, textSecondary),
             const SizedBox(height: 14),
@@ -98,7 +100,7 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
             activeThumbColor: accent,
             onChanged: (v) => onChanged(template.copyWith(applyStaples: v)),
             title: Text(
-              'Apply my staple exercises',
+              l.programMetaApplyStaples,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -106,7 +108,7 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              'Add your warm-up and stretch staples into each session.',
+              l.programMetaApplyStaplesSubtitle,
               style: TextStyle(fontSize: 11.5, color: textSecondary),
             ),
           ),
@@ -146,6 +148,7 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
   }
 
   /// The four supported progression strategies, each with a friendly label.
+  // TODO(i18n): _strategies is a static const — values 'Linear'/'Wave'/'Double'/'None' cannot be localized here
   static const _strategies = <String, String>{
     'linear': 'Linear',
     'wave': 'Wave',
@@ -185,6 +188,7 @@ class ProgramTemplateMetaStrip extends StatelessWidget {
     );
   }
 
+  // TODO(i18n): _buildDeloadSlider has no BuildContext — 'No scheduled deload', 'Every $n weeks', 'Off', '$n wk' can't be localized here
   Widget _buildDeloadSlider(
     bool isDark,
     Color accent,

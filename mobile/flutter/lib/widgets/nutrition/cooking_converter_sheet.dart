@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../glass_sheet.dart';
 
 /// Shows the cooking weight converter sheet
@@ -313,7 +314,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Cooking Converter',
+                        AppLocalizations.of(context).cookingConverterCookingConverter,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -321,7 +322,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                         ),
                       ),
                       Text(
-                        'Convert between raw and cooked weights',
+                        AppLocalizations.of(context).cookingConverterConvertBetweenRawAnd,
                         style: TextStyle(fontSize: 13, color: textMuted),
                       ),
                     ],
@@ -354,7 +355,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                       children: [
                         Expanded(
                           child: _DirectionButton(
-                            label: 'Raw → Cooked',
+                            label: AppLocalizations.of(context).cookingConverterRawCooked,
                             isSelected: _isRawToCooked,
                             onTap: () {
                               HapticService.light();
@@ -365,7 +366,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                         ),
                         Expanded(
                           child: _DirectionButton(
-                            label: 'Cooked → Raw',
+                            label: AppLocalizations.of(context).cookingConverterCookedRaw,
                             isSelected: !_isRawToCooked,
                             onTap: () {
                               HapticService.light();
@@ -382,7 +383,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
 
                   // Food selector
                   Text(
-                    'Select Food',
+                    AppLocalizations.of(context).cookingConverterSelectFood,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -396,7 +397,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                     onChanged: (value) => setState(() => _searchQuery = value),
                     style: TextStyle(color: textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Search foods...',
+                      hintText: AppLocalizations.of(context).cookingConverterSearchFoods,
                       hintStyle: TextStyle(color: textMuted),
                       prefixIcon: Icon(Icons.search, color: textMuted),
                       filled: true,
@@ -422,7 +423,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                   // Amount input
                   if (_selectedFood != null) ...[
                     Text(
-                      'Enter ${_isRawToCooked ? 'Raw' : 'Cooked'} Weight',
+                      AppLocalizations.of(context).cookingConverterEnterWeight(_isRawToCooked ? AppLocalizations.of(context).cookingConverterRaw : AppLocalizations.of(context).cookingConverterCooked),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -502,9 +503,9 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
-                            'Use This Value',
-                            style: TextStyle(
+                          child: Text(
+                            AppLocalizations.of(context).cookingConverterUseThisValue,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -541,7 +542,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
         padding: const EdgeInsets.all(24),
         child: Center(
           child: Text(
-            'No foods found',
+            AppLocalizations.of(context).cookingConverterNoFoodsFound,
             style: TextStyle(color: textMuted),
           ),
         ),
@@ -629,7 +630,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _isRawToCooked ? 'Raw' : 'Cooked',
+                      _isRawToCooked ? AppLocalizations.of(context).cookingConverterRaw : AppLocalizations.of(context).cookingConverterCooked,
                       style: TextStyle(
                         fontSize: 12,
                         color: textMuted,
@@ -661,7 +662,7 @@ class _CookingConverterSheetState extends State<CookingConverterSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _isRawToCooked ? 'Cooked' : 'Raw',
+                      _isRawToCooked ? AppLocalizations.of(context).cookingConverterCooked : AppLocalizations.of(context).cookingConverterRaw,
                       style: TextStyle(
                         fontSize: 12,
                         color: textMuted,

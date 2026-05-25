@@ -9,6 +9,7 @@ import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../utils/tz.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/gradient_circular_progress_indicator.dart';
 import 'pre_auth_quiz_screen.dart';
@@ -39,32 +40,31 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
   double _progress = 0.0;
   Workout? _generatedWorkout; // Store the generated workout
 
-  // Steps with their completion status
-  final List<_GenerationStep> _steps = [
-    _GenerationStep(
-      title: 'Analyzing your fitness profile',
-      icon: Icons.person_search,
-    ),
-    _GenerationStep(
-      title: 'Designing your training split',
-      icon: Icons.calendar_today,
-    ),
-    _GenerationStep(
-      title: 'Selecting exercises for your goals',
-      icon: Icons.fitness_center,
-    ),
-    _GenerationStep(
-      title: 'Optimizing workout structure',
-      icon: Icons.auto_awesome,
-    ),
-    _GenerationStep(
-      title: 'Generating your personalized plan',
-      icon: Icons.rocket_launch,
-    ),
-  ];
+  // Steps with their completion status — titles set in didChangeDependencies
+  // so AppLocalizations.of(context) is available.
+  late List<_GenerationStep> _steps;
 
   late AnimationController _progressController;
   StreamSubscription<WorkoutGenerationProgress>? _generationSubscription;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l10n = AppLocalizations.of(context)!;
+    // Only initialise once — _steps may have isComplete mutations after init.
+    if (!_stepsInitialised) {
+      _stepsInitialised = true;
+      _steps = [
+        _GenerationStep(title: l10n.workoutGenerationAnalyzingYourFitnessProfile, icon: Icons.person_search),
+        _GenerationStep(title: l10n.workoutGenerationDesigningYourTrainingSplit, icon: Icons.calendar_today),
+        _GenerationStep(title: l10n.workoutGenerationSelectingExercisesForYour, icon: Icons.fitness_center),
+        _GenerationStep(title: l10n.workoutGenerationOptimizingWorkoutStructure, icon: Icons.auto_awesome),
+        _GenerationStep(title: l10n.workoutGenerationGeneratingYourPersonalizedP, icon: Icons.rocket_launch),
+      ];
+    }
+  }
+
+  bool _stepsInitialised = false;
 
   @override
   void initState() {
@@ -100,7 +100,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
 
       if (userId == null) {
         setState(() {
-          _errorMessage = 'User not found. Please try again.';
+          _errorMessage = AppLocalizations.of(context)!.workoutGenerationSomethingWentWrong;
           _isGenerating = false;
         });
         return;
@@ -178,7 +178,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
           debugPrint('❌ [WorkoutGeneration] Error: $error');
           if (mounted) {
             setState(() {
-              _errorMessage = 'Failed to generate workout. Please try again.';
+              _errorMessage = AppLocalizations.of(context)!.workoutGenerationSomethingWentWrong;
               _isGenerating = false;
             });
           }
@@ -230,7 +230,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       debugPrint('❌ [WorkoutGeneration] Exception: $e');
       if (mounted) {
         setState(() {
-          _errorMessage = 'Something went wrong. Please try again.';
+          _errorMessage = AppLocalizations.of(context)!.workoutGenerationSomethingWentWrong;
           _isGenerating = false;
         });
       }
@@ -317,9 +317,10 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
   Widget _buildGeneratingState(bool isDark, Color textPrimary, Color textSecondary, Color accentColor, Color accentColorLight) {
 
     // Current step label
+    final l10n = AppLocalizations.of(context)!;
     final stepLabel = _currentStep < _steps.length
         ? _steps[_currentStep].title
-        : 'Finalizing your plan';
+        : l10n.workoutGenerationFinalizingYourPlan;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -422,7 +423,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
 
         // Title
         Text(
-          _progress >= 1.0 ? 'Workout Ready!' : 'Generating Your Plan',
+          _progress >= 1.0 ? l10n.workoutGenerationWorkoutReady : l10n.workoutGenerationGeneratingYourPlan,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
@@ -450,6 +451,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
   }
 
   Widget _buildErrorState(bool isDark, Color textPrimary, Color textSecondary) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -470,7 +472,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             ),
             const SizedBox(height: 24),
             Text(
-              'Generation Failed',
+              l10n.workoutGenerationGenerationFailed,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -479,7 +481,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'Something went wrong',
+              _errorMessage ?? l10n.workoutGenerationSomethingWentWrong,
               style: TextStyle(
                 fontSize: 15,
                 color: textSecondary,
@@ -490,7 +492,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             ElevatedButton.icon(
               onPressed: _retry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(l10n.workoutGenerationTryAgain),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,

@@ -646,6 +646,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBackground = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -660,6 +661,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     return Stack(
       children: [
         _buildSheetBody(
+          l: l,
           isDark: isDark,
           cardBackground: cardBackground,
           textPrimary: textPrimary,
@@ -700,6 +702,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   }
 
   Widget _buildSheetBody({
+    required AppLocalizations l,
     required bool isDark,
     required Color cardBackground,
     required Color textPrimary,
@@ -722,7 +725,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Swap Exercise',
+                            l.exerciseSwapSheetTitle,
                             style:
                                 Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
@@ -757,9 +760,9 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                             size: 16,
                             color: AppColors.cyan,
                           ),
-                          label: const Text(
-                            'Import',
-                            style: TextStyle(
+                          label: Text(
+                            l.exerciseSwapSheetImport,
+                            style: const TextStyle(
                               color: AppColors.cyan,
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
@@ -805,7 +808,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'REPLACING',
+                                  l.exerciseSwapSheetReplacing,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -877,12 +880,12 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                 controller: _tabController,
                 showIcons: false,
                 tabs: [
-                  SegmentedTabItem(label: 'Similar'),
-                  SegmentedTabItem(label: 'Recent'),
-                  SegmentedTabItem(label: 'Snapped'),
-                  SegmentedTabItem(label: 'Library'),
-                  SegmentedTabItem(label: 'Any Equipment'),
-                  SegmentedTabItem(label: 'AI Picks'),
+                  SegmentedTabItem(label: l.exerciseSwapSheetTabSimilar),
+                  SegmentedTabItem(label: l.exerciseSwapSheetTabRecent),
+                  SegmentedTabItem(label: l.exerciseSwapSheetTabSnapped),
+                  SegmentedTabItem(label: l.exerciseAddSheetTabLibrary),
+                  SegmentedTabItem(label: l.exerciseSwapSheetTabAnyEquipment),
+                  SegmentedTabItem(label: l.exerciseAddSheetTabAiPicks),
                 ],
               ),
 

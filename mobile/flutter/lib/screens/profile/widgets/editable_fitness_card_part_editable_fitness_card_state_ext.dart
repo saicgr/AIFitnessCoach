@@ -18,7 +18,8 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
     required Color elevated,
     required Color textMuted,
   }) {
-    final gymName = activeGymProfile?.name ?? 'No gym';
+    final l10n = AppLocalizations.of(context);
+    final gymName = activeGymProfile?.name ?? l10n.editableFitnessCardNoGym;
     final gymColor = activeGymProfile?.profileColor ?? Colors.grey;
     final gymIcon = _getGymIconData(activeGymProfile?.icon ?? 'fitness_center');
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -26,14 +27,14 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
 
     // Format workout days for compact display
     final daysDisplay = _selectedDays.isEmpty
-        ? 'Not set'
+        ? l10n.editableFitnessCardNotSet
         : _selectedDays.map((d) => ['M', 'T', 'W', 'T', 'F', 'S', 'S'][d]).join(',');
 
     final injuriesDisplay = _selectedInjuries.isEmpty
-        ? 'None'
+        ? l10n.editableFitnessCardNone
         : _selectedInjuries.length == 1
             ? _selectedInjuries.first
-            : '${_selectedInjuries.length} areas';
+            : l10n.editableFitnessCardNAreas(_selectedInjuries.length);
 
     return GridView.count(
       // 4 columns × 2 rows = 8 tiles. Warmup + Stretch were merged into a
@@ -50,7 +51,7 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
         _FitnessTile(
           icon: gymIcon,
           iconColor: gymColor,
-          label: 'Gym',
+          label: l10n.editableFitnessCardGym,
           value: gymName,
           backgroundColor: elevated,
           textMutedColor: textMuted,
@@ -66,12 +67,12 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
         _FitnessTile(
           icon: Icons.flag,
           iconColor: AppColors.green,
-          label: 'Goal',
+          label: l10n.editableFitnessCardGoal,
           value: _displayTitleCase(_selectedGoal),
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
-            title: 'Fitness Goal',
+            title: l10n.editableFitnessCardFitnessGoal,
             icon: Icons.flag,
             iconColor: AppColors.green,
             isDark: isDark,
@@ -83,12 +84,12 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
         _FitnessTile(
           icon: Icons.signal_cellular_alt,
           iconColor: AppColors.info,
-          label: 'Level',
+          label: l10n.editableFitnessCardLevel,
           value: _displayTitleCase(_selectedLevel),
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
-            title: 'Fitness Level',
+            title: l10n.editableFitnessCardFitnessLevel,
             icon: Icons.signal_cellular_alt,
             iconColor: AppColors.info,
             isDark: isDark,
@@ -100,12 +101,12 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
         _FitnessTile(
           icon: Icons.timer_outlined,
           iconColor: AppColors.cyan,
-          label: 'Duration',
+          label: l10n.editableFitnessCardDuration,
           value: _formatDurationDisplay(),
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
-            title: 'Workout Duration',
+            title: l10n.editableFitnessCardWorkoutDuration,
             icon: Icons.timer_outlined,
             iconColor: AppColors.cyan,
             isDark: isDark,
@@ -117,12 +118,12 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
         _FitnessTile(
           icon: Icons.self_improvement_outlined,
           iconColor: AppColors.orange,
-          label: 'Prep',
+          label: l10n.editableFitnessCardPrep,
           value: '$_selectedWarmupDuration+$_selectedStretchDuration min',
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
-            title: 'Warmup + Stretch',
+            title: l10n.editableFitnessCardWarmupStretch,
             icon: Icons.self_improvement_outlined,
             iconColor: AppColors.orange,
             isDark: isDark,
@@ -137,7 +138,7 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
                         size: 16, color: AppColors.orange),
                     const SizedBox(width: 6),
                     Text(
-                      'Warmup',
+                      l10n.editableFitnessCardWarmup,
                       style: TextStyle(
                         fontSize: 13, color: textSecondary,
                         fontWeight: FontWeight.w700,
@@ -154,7 +155,7 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
                         size: 16, color: AppColors.purple),
                     const SizedBox(width: 6),
                     Text(
-                      'Stretch',
+                      l10n.editableFitnessCardStretch,
                       style: TextStyle(
                         fontSize: 13, color: textSecondary,
                         fontWeight: FontWeight.w700,
@@ -171,12 +172,12 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
         _FitnessTile(
           icon: Icons.calendar_today,
           iconColor: AppColors.yellow,
-          label: 'Days',
+          label: l10n.editableFitnessCardDays,
           value: daysDisplay,
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
-            title: 'Workout Days',
+            title: l10n.editableFitnessCardWorkoutDays,
             icon: Icons.calendar_today,
             iconColor: AppColors.yellow,
             isDark: isDark,
@@ -188,12 +189,12 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
         _FitnessTile(
           icon: Icons.healing,
           iconColor: AppColors.error,
-          label: 'Injuries',
+          label: l10n.editableFitnessCardInjuries,
           value: injuriesDisplay,
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
-            title: 'Active Injuries',
+            title: l10n.editableFitnessCardActiveInjuries,
             icon: Icons.healing,
             iconColor: AppColors.error,
             isDark: isDark,
@@ -205,12 +206,12 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
         _FitnessTile(
           icon: Icons.directions_walk,
           iconColor: AppColors.green,
-          label: 'Steps',
+          label: l10n.editableFitnessCardSteps,
           value: _shortStepLabel(_selectedStepGoal),
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
-            title: 'Daily Steps Goal',
+            title: l10n.editableFitnessCardDailyStepsGoal,
             icon: Icons.directions_walk,
             iconColor: AppColors.green,
             isDark: isDark,

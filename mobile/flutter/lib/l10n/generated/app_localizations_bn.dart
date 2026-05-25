@@ -9,503 +9,508 @@ class AppLocalizationsBn extends AppLocalizations {
   AppLocalizationsBn([String locale = 'bn']) : super(locale);
 
   @override
-  String get aboutDisableBeastMode => 'Disable Beast Mode';
+  String get aboutDisableBeastMode => 'বিস্ট মোড অক্ষম করুন';
 
   @override
-  String get aboutLoadingBuildInfo => 'Loading build info...';
+  String get aboutLoadingBuildInfo => 'বিল্ড তথ্য লোড হচ্ছে...';
 
   @override
-  String get accessibilityAccessibility => 'ACCESSIBILITY';
+  String get accessibilityAccessibility => 'সহায়ক প্রযুক্তি';
 
   @override
-  String get accessibilityAppMode => 'APP MODE';
+  String get accessibilityAppMode => 'অ্যাপ মোড';
 
   @override
-  String get accessibilityCardAccessibility => 'Accessibility';
+  String get accessibilityCardAccessibility => 'সহায়ক প্রযুক্তি';
 
   @override
   String get accessibilityCardBiggerTouchTargetsFor =>
-      'Bigger touch targets for easier tapping';
+      'সহজ ট্যাপিংয়ের জন্য আরও বড় স্পর্শ লক্ষ্যমাত্রা';
 
   @override
-  String get accessibilityCardHighContrast => 'High Contrast';
+  String get accessibilityCardHighContrast => 'উচ্চ পার্থক্য';
 
   @override
   String get accessibilityCardIncreaseColorContrastFor =>
-      'Increase color contrast for better visibility';
+      'আরও ভাল দৃশ্যমানতার জন্য রঙের বৈসাদৃশ্য বাড়ান';
 
   @override
-  String get accessibilityCardLargeButtons => 'Large Buttons';
+  String get accessibilityCardLargeButtons => 'বড় বোতাম';
 
   @override
-  String get accessibilityCardMinimizeMotionEffects =>
-      'Minimize motion effects';
+  String get accessibilityCardMinimizeMotionEffects => 'গতির প্রভাব কমান';
 
   @override
-  String get accessibilityCardReduceAnimations => 'Reduce Animations';
+  String get accessibilityCardReduceAnimations => 'অ্যানিমেশন হ্রাস করুন';
 
   @override
   String get accessibilityCardVisualAndInteractionAdjustm =>
-      'Visual and interaction adjustments';
+      'ভিজ্যুয়াল এবং ইন্টারঅ্যাকশন অ্যাডজাস্টমেন্ট';
 
   @override
-  String get accessibilityCurrentMode => 'Current Mode';
+  String get accessibilityCurrentMode => 'বর্তমান মুড';
 
   @override
-  String get accessibilityFontSize => 'Font Size';
+  String get accessibilityFontSize => 'ফন্ট সাইজ';
 
   @override
-  String get accessibilityHighContrast => 'High Contrast';
+  String get accessibilityHighContrast => 'উচ্চ পার্থক্য';
 
   @override
-  String get accessibilityLargeButtons => 'Large Buttons';
+  String get accessibilityLargeButtons => 'বড় বোতাম';
 
   @override
-  String get accessibilityLevelUpProgression => 'Level-Up Progression';
+  String get accessibilityLevelUpProgression => 'লেভেল-আপ প্রগতি';
 
   @override
-  String get accessibilityReduceAnimations => 'Reduce Animations';
+  String get accessibilityReduceAnimations => 'অ্যানিমেশন হ্রাস করুন';
 
   @override
-  String get accessibilitySenior => 'Senior';
+  String get accessibilitySenior => 'সিনিয়র';
 
   @override
-  String get accessibilityStandard => 'Standard';
+  String get accessibilityStandard => 'স্ট্যান্ডার্ড';
 
   @override
-  String get accuracyFeedbackSnackbarAccurate => 'Accurate?';
+  String get accuracyFeedbackSnackbarAccurate => 'নির্ভুল';
 
   @override
-  String get achievementsBadges => 'Badges';
+  String get achievementsBadges => 'ব্যাজ';
 
   @override
-  String get achievementsByCategory => 'BY CATEGORY';
+  String get achievementsByCategory => 'শ্রেণী অনুসারে';
 
   @override
   String get achievementsCardCompleteWorkoutsToUnlock =>
-      'Complete workouts to unlock badges!';
+      'ব্যাজ আনলক করতে ওয়ার্কআউট সম্পূর্ণ করুন!';
 
   @override
-  String get achievementsCardLoadingAchievements => 'Loading achievements...';
+  String get achievementsCardLoadingAchievements =>
+      'অর্জনগুলি লোড করা হচ্ছে...';
 
   @override
-  String get achievementsCardNext => 'Next: ';
+  String get achievementsCardNext => 'পরবর্তী:';
 
   @override
-  String get achievementsCardStartYourJourney => 'Start your journey';
+  String get achievementsCardStartYourJourney =>
+      'এখান থেকে আপনার সফর শুরু করুন!';
 
   @override
   String get achievementsCompleteWorkoutsToEarn =>
-      'Complete workouts to earn achievements!';
+      'অর্জন অর্জনের জন্য ওয়ার্কআউট সম্পূর্ণ করুন!';
 
   @override
-  String get achievementsCurrentStreaks => 'CURRENT STREAKS';
+  String get achievementsCurrentStreaks => 'বর্তমান ধারা';
 
   @override
   String get achievementsKeepWorkingOutTo =>
-      'Keep working out to unlock badges!';
+      'ব্যাজগুলি আনলক করতে কাজ চালিয়ে যান!';
 
   @override
-  String get achievementsLiftHeavierToSet => 'Lift heavier to set new PRs!';
+  String get achievementsLiftHeavierToSet =>
+      'নতুন PR সেট করতে আরও ভারি উত্তোলন করুন!';
 
   @override
-  String get achievementsNoAchievementsYet => 'No achievements yet';
+  String get achievementsNoAchievementsYet => 'এখনও কোনও অর্জন নেই';
 
   @override
-  String get achievementsNoBadgesEarned => 'No badges earned';
+  String get achievementsNoBadgesEarned => 'কোনও ব্যাজ অর্জিত হয়নি';
 
   @override
-  String get achievementsNoPersonalRecords => 'No personal records';
+  String get achievementsNoPersonalRecords => 'কোনও ব্যক্তিগত রেকর্ড নেই';
 
   @override
   String get achievementsPrs => 'PRs';
 
   @override
-  String get achievementsRecentAchievements => 'RECENT ACHIEVEMENTS';
+  String get achievementsRecentAchievements => 'সাম্প্রতিক অর্জনসমূহ';
 
   @override
-  String get achievementsSeeAll => 'See All';
+  String get achievementsSeeAll => 'সব দেখুন';
 
   @override
-  String get achievementsSummary => 'Summary';
+  String get achievementsSummary => 'সারসংক্ষেপ';
 
   @override
-  String get achievementsTotalPoints => 'Total Points';
+  String get achievementsTotalPoints => 'সংখ্যা:';
 
   @override
-  String get achievementsUnlocked => 'Unlocked';
+  String get achievementsUnlocked => 'আনলক করা হয়েছে';
 
   @override
-  String get actionChipsRowAdjust => 'Adjust';
+  String get actionChipsRowAdjust => 'সামঞ্জস্যবিধান করুন';
 
   @override
-  String get actionChipsRowIncrements => 'Increments';
+  String get actionChipsRowIncrements => 'বাড়ান';
 
   @override
-  String get actionChipsRowInfo => 'Info';
+  String get actionChipsRowInfo => 'তথ্য';
 
   @override
-  String get actionChipsRowLR => 'L/R';
+  String get actionChipsRowLR => 'এল/আর';
 
   @override
-  String get actionChipsRowNote => 'Note';
+  String get actionChipsRowNote => 'দ্রষ্টব্য:';
 
   @override
-  String get actionChipsRowReorder => 'Reorder';
+  String get actionChipsRowReorder => 'রিঅর্ডার';
 
   @override
-  String get actionChipsRowSuperset => 'Superset';
+  String get actionChipsRowSuperset => 'সুপারসেট';
 
   @override
-  String get actionChipsRowSwap => 'Swap';
+  String get actionChipsRowSwap => 'বিনিময়';
 
   @override
-  String get actionChipsRowTargets => 'Targets';
+  String get actionChipsRowTargets => 'লক্ষ্যসমূহ';
 
   @override
-  String get actionChipsRowTimer => 'Timer';
+  String get actionChipsRowTimer => 'টাইমার';
 
   @override
-  String get actionChipsRowVideo => 'Video';
+  String get actionChipsRowVideo => 'ভিডিও';
 
   @override
-  String get actionChipsRowWarmUp => 'Warm Up';
+  String get actionChipsRowWarmUp => 'গা গরম করা';
 
   @override
-  String get activeFilterChipsClearAll => 'Clear all';
+  String get activeFilterChipsClearAll => 'সব পরিষ্কার করুন';
 
   @override
-  String get activeWorkoutHelperAdvanced => 'ADVANCED';
+  String get activeWorkoutHelperAdvanced => 'অ্যাডভান্সড';
 
   @override
-  String get activeWorkoutHelperAutoAdjusts => 'Auto-adjusts';
+  String get activeWorkoutHelperAutoAdjusts => 'অটো-অ্যাডজাস্ট';
 
   @override
-  String get activeWorkoutHelperBodyweight => 'Bodyweight';
+  String get activeWorkoutHelperBodyweight => 'শরীরের ওজন';
 
   @override
-  String get activeWorkoutHelperBreathing => 'Breathing';
+  String get activeWorkoutHelperBreathing => 'শ্বাস প্রশ্বাস';
 
   @override
   String get activeWorkoutHelperChooseHowWeightChanges =>
-      'Choose how weight changes across sets';
+      'সেট জুড়ে ওজন কীভাবে পরিবর্তিত হয় তা বেছে নিন';
 
   @override
-  String get activeWorkoutHelperDifficulty => 'Difficulty';
+  String get activeWorkoutHelperDifficulty => 'অসুবিধা';
 
   @override
-  String get activeWorkoutHelperDonTHaveThis => 'Don\'t have this equipment?';
+  String get activeWorkoutHelperDonTHaveThis => 'এই সরঞ্জামগুলি নেই?';
 
   @override
-  String get activeWorkoutHelperEquipment => 'Equipment';
+  String get activeWorkoutHelperEquipment => 'যন্ত্রপাতি';
 
   @override
-  String get activeWorkoutHelperExerciseInfo => 'Exercise Info';
+  String get activeWorkoutHelperExerciseInfo => 'অনুশীলনের তথ্য';
 
   @override
-  String get activeWorkoutHelperFormCues => 'Form Cues';
+  String get activeWorkoutHelperFormCues => 'ফর্মের সূত্র';
 
   @override
   String get activeWorkoutHelperLoadingAiCoachTips =>
-      'Loading AI coach tips...';
+      'AI কোচের বকশিস লোড করা হচ্ছে...';
 
   @override
-  String get activeWorkoutHelperPrimaryMuscle => 'Primary Muscle';
+  String get activeWorkoutHelperPrimaryMuscle => 'প্রাথমিক পেশী';
 
   @override
-  String get activeWorkoutHelperProTip => 'Pro Tip';
+  String get activeWorkoutHelperProTip => 'পেশাদার পরামর্শ:';
 
   @override
-  String get activeWorkoutHelperSecondaryMuscles => 'Secondary Muscles';
+  String get activeWorkoutHelperSecondaryMuscles => 'সেকেন্ডারি পেশী';
 
   @override
-  String get activeWorkoutHelperSetProgression => 'Set Progression';
+  String get activeWorkoutHelperSetProgression => 'অগ্রগতি সেট করুন';
 
   @override
   String get activeWorkoutHelperTapVideoToWatch =>
-      'Tap \"Video\" to watch form demonstration';
+      'ফর্ম প্রদর্শন দেখতে \"ভিডিও\" -এ ট্যাপ করুন';
 
   @override
-  String get activeWorkoutHelperVideo => 'Video';
+  String get activeWorkoutHelperVideo => 'ভিডিও';
 
   @override
-  String get activeWorkoutHelperWatchOutFor => 'Watch Out For';
+  String get activeWorkoutHelperWatchOutFor => 'সতর্ক থাকুন';
 
   @override
-  String get activeWorkoutHelperWhenToUse => 'When to use';
+  String get activeWorkoutHelperWhenToUse => 'কখন ব্যবহার করতে হবে';
 
   @override
   String get activeWorkoutScreenExerciseSwappedSuccessfully =>
-      'Exercise swapped successfully';
+      'অনুশীলন সফলভাবে অদলবদল করা হয়েছে';
 
   @override
-  String get activeWorkoutScreenUndo => 'Undo';
+  String get activeWorkoutScreenUndo => 'পূর্ববর্তী অবস্থায় ফেরান';
 
   @override
-  String get activeWorkoutScreenWorkoutAdapted => 'Workout adapted.';
+  String get activeWorkoutScreenWorkoutAdapted => 'ওয়ার্কআউট অভিযোজিত ।';
 
   @override
-  String get activityCardAdditionalDetailsOptional =>
-      'Additional details (optional)';
+  String get activityCardAdditionalDetailsOptional => 'অতিরিক্ত বিবরণ (ঐচ্ছিক)';
 
   @override
   String get activityCardAreYouSureYou =>
-      'Are you sure you want to delete this post? This action cannot be undone.';
+      'আপনি কি নিশ্চিত যে আপনি এই পোস্টটি মুছে ফেলতে চান? এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না ।';
 
   @override
-  String get activityCardCopyLink => 'Copy Link';
+  String get activityCardCopyLink => 'লিঙ্ক কপি করুন';
 
   @override
-  String get activityCardDeletePost => 'Delete Post';
+  String get activityCardDeletePost => 'Verwijder';
 
   @override
-  String get activityCardEditPost => 'Edit Post';
+  String get activityCardEditPost => 'পোস্ট সম্পাদনা করুন';
 
   @override
   String get activityCardFailedToSubmitReport =>
-      'Failed to submit report. Please try again.';
+      'রিপোর্ট জমা দিতে ব্যর্থ হয়েছে । অনুগ্রহ করে আবার চেষ্টা করুন ।';
 
   @override
-  String get activityCardLinkCopiedToClipboard => 'Link copied to clipboard';
+  String get activityCardLinkCopiedToClipboard =>
+      'লিঙ্কটি ক্লিপবোর্ডে অনুলিপি করা হয়েছে।';
 
   @override
-  String get activityCardPartLeaderboard => 'Leaderboard';
+  String get activityCardPartLeaderboard => 'লিডারবোর্ড';
 
   @override
-  String get activityCardPinToTop => 'Pin to Top';
+  String get activityCardPinToTop => 'পিন থেকে শীর্ষে';
 
   @override
-  String get activityCardPinnedPost => 'Pinned Post';
+  String get activityCardPinnedPost => 'পিনযুক্ত পোস্ট';
 
   @override
-  String get activityCardReport => 'Report';
+  String get activityCardReport => 'রিপোর্ট';
 
   @override
-  String get activityCardReportPost => 'Report Post';
+  String get activityCardReportPost => 'রিপোর্ট পোস্ট';
 
   @override
   String get activityCardReportSubmittedThankYou =>
-      'Report submitted. Thank you for helping keep our community safe.';
+      'রিপোর্ট জমা দেওয়া হয়েছে । আমাদের সম্প্রদায়কে সুরক্ষিত রাখতে সহায়তা করার জন্য আপনাকে ধন্যবাদ ।';
 
   @override
-  String get activityCardSubmit => 'Submit';
+  String get activityCardSubmit => 'জমা দিন';
 
   @override
-  String get activityCardUiChallengeAttempted => 'CHALLENGE ATTEMPTED';
+  String get activityCardUiChallengeAttempted =>
+      'চ্যালেঞ্জের চেষ্টা করা হয়েছে';
 
   @override
-  String get activityCardUiEarnedAnAchievement => 'earned an achievement';
+  String get activityCardUiEarnedAnAchievement => 'একটি অর্জন অর্জন করেছেন';
 
   @override
   String get activityCardUiKeepTrainingEveryAttempt =>
-      'Keep training! Every attempt makes you stronger';
+      'প্রশিক্ষণ চালিয়ে যান! প্রতিটি প্রচেষ্টা আপনাকে শক্তিশালী করে তোলে';
 
   @override
-  String get activityCardUiTarget => 'Target: ';
+  String get activityCardUiTarget => 'টার্গেট:';
 
   @override
-  String get activityCardUiThem => 'Them';
+  String get activityCardUiThem => 'তাহাদিগকে';
 
   @override
-  String get activityCardUiTime => 'Time';
+  String get activityCardUiTime => 'সময়';
 
   @override
-  String get activityCardUiVictory => 'VICTORY!';
+  String get activityCardUiVictory => 'বিজয়!';
 
   @override
-  String get activityCardUiVolume => 'Volume';
+  String get activityCardUiVolume => 'ভলিউম';
 
   @override
-  String get activityCardUiYou => 'You: ';
+  String get activityCardUiYou => 'আপনি';
 
   @override
-  String get activityCardUnpinPost => 'Unpin Post';
+  String get activityCardUnpinPost => 'পোস্ট আনপিন করুন';
 
   @override
   String get activityCardWhyAreYouReporting =>
-      'Why are you reporting this post?';
+      'কেন আপনি এই পোস্টে রিপোর্ট করছেন?';
 
   @override
-  String get activityHeatmapActivity => 'Activity';
+  String get activityHeatmapActivity => 'কার্যকলাপ';
 
   @override
-  String get activityHeatmapFailedToLoadActivity => 'Failed to load activity';
+  String get activityHeatmapFailedToLoadActivity =>
+      'অ্যাক্টিভিটি লোড করতে ব্যর্থ হয়েছে';
 
   @override
-  String get activityHeatmapMissed => 'Missed';
+  String get activityHeatmapMissed => 'মিস হয়েছে';
 
   @override
-  String get activityHeatmapRest => 'Rest';
+  String get activityHeatmapRest => 'বিশ্রাম';
 
   @override
-  String get activityHeatmapSearchExercise => 'Search exercise...';
+  String get activityHeatmapSearchExercise => 'অনুশীলন অনুসন্ধান করুন...';
 
   @override
-  String get activityShareAddACaption => 'Add a caption...';
+  String get activityShareAddACaption => 'একটি ক্যাপশন যোগ করুন...';
 
   @override
-  String get activityShareCardConsistencyIsKey => 'Consistency is key';
+  String get activityShareCardConsistencyIsKey => 'সংগতি হল মূল চাবিকাঠি';
 
   @override
-  String get activityShareCardSharedAnUpdate => 'Shared an update';
+  String get activityShareCardSharedAnUpdate => 'একটি আপডেট শেয়ার করা হয়েছে';
 
   @override
-  String get activityShareCopyText => 'Copy Text';
+  String get activityShareCopyText => 'টেক্সট & কপি করো';
 
   @override
-  String get activityShareInstagram => 'Instagram';
+  String get activityShareInstagram => 'ইনস্টাগ্রাম';
 
   @override
-  String get activityShareSaveImage => 'Save Image';
+  String get activityShareSaveImage => 'ছবি সেভ করুন';
 
   @override
-  String get activityShareSharePost => 'Share Post';
+  String get activityShareSharePost => 'পোস্ট শেয়ার করুন';
 
   @override
-  String get activityShareShowWatermark => 'Show Watermark';
+  String get activityShareShowWatermark => 'ওয়াটারমার্ক দেখান';
 
   @override
-  String get activityShareTapToAddA => 'Tap to add a caption...';
+  String get activityShareTapToAddA => 'একটি ক্যাপশন যোগ করতে ট্যাপ করুন...';
 
   @override
   String get addFoodEGMadeWith =>
-      'e.g. \'made with olive oil, no whole grain\' or \'I only ate half\'';
+      'যেমন \'অলিভ অয়েল দিয়ে তৈরি, পুরো শস্য নয়\' বা \'আমি কেবল অর্ধেক খেয়েছি\'';
 
   @override
-  String get addFoodRefineWithAi => 'Refine with AI';
+  String get addFoodRefineWithAi => 'AI দিয়ে পরিমার্জন করুন';
 
   @override
-  String get addGymProfileAccountDefault => 'Account default';
+  String get addGymProfileAccountDefault => 'অ্যাকাউন্ট ডিফল্ট করুন';
 
   @override
-  String get addGymProfileAddNewGym => 'Add New Gym';
+  String get addGymProfileAddNewGym => 'নতুন জিম যোগ করুন';
 
   @override
-  String get addGymProfileAvailableEquipment => 'Available Equipment';
+  String get addGymProfileAvailableEquipment => 'উপলভ্য সরঞ্জাম';
 
   @override
-  String get addGymProfileClear => 'Clear';
+  String get addGymProfileClear => 'পরিষ্কার করুন';
 
   @override
-  String get addGymProfileColor => 'Color';
+  String get addGymProfileColor => 'রং';
 
   @override
-  String get addGymProfileCreateGym => 'Create Gym';
+  String get addGymProfileCreateGym => 'জিম তৈরি করুন';
 
   @override
   String get addGymProfileCustomizeTheEquipmentAvaila =>
-      'Customize the equipment available at this gym, including weight ranges';
+      'ওজনের সীমা সহ এই জিমে উপলব্ধ সরঞ্জামগুলি কাস্টমাইজ করুন';
 
   @override
-  String get addGymProfileDoYouHaveA => 'Do you have a weight bench?';
+  String get addGymProfileDoYouHaveA => 'আপনার কি ওজনের বেঞ্চ আছে?';
 
   @override
-  String get addGymProfileDoYouHaveA2 => 'Do you have a squat rack?';
+  String get addGymProfileDoYouHaveA2 => 'আপনার কি স্কোয়াট র্যাক আছে?';
 
   @override
-  String get addGymProfileEGHomeGym => 'e.g., Home Gym, Planet Fitness, Hotel';
+  String get addGymProfileEGHomeGym => 'যেমন, হোম জিম, প্ল্যানেট ফিটনেস, হোটেল';
 
   @override
   String get addGymProfileEnterANameFor =>
-      'Enter a name for your gym first (step 1).';
+      'প্রথমে আপনার জিমের জন্য একটি নাম লিখুন (ধাপ 1) ।';
 
   @override
-  String get addGymProfileEquipment => 'Equipment';
+  String get addGymProfileEquipment => 'যন্ত্রপাতি';
 
   @override
-  String get addGymProfileGymName => 'Gym Name';
+  String get addGymProfileGymName => 'জিমের নাম';
 
   @override
-  String get addGymProfileIcon => 'Icon';
+  String get addGymProfileIcon => 'আইকন';
 
   @override
   String get addGymProfileImportFromPdfPhoto =>
-      'Import from PDF, photo, or URL';
+      'পিডিএফ, ফটো বা URL থেকে আমদানি করুন';
 
   @override
-  String get addGymProfileMatchAppTheme => 'Match app theme';
+  String get addGymProfileMatchAppTheme => 'অ্যাপ থিমের সাথে ম্যাচ করুন';
 
   @override
   String get addGymProfileOptionalLeaveOnLet =>
-      'Optional — leave on \"Let AI Decide\" if unsure.';
+      'ঐচ্ছিক — অনিশ্চিত হলে \"AI সিদ্ধান্ত নিতে দিন\" -এ ছেড়ে দিন ।';
 
   @override
   String get addGymProfilePickAtLeastOne =>
-      'Pick at least one workout day for this gym.';
+      'এই জিমের জন্য কমপক্ষে একটি ওয়ার্কআউট দিন বেছে নিন ।';
 
   @override
   String get addGymProfilePleaseEnterAName =>
-      'Please enter a name for your gym';
+      'অনুগ্রহ করে আপনার জিমের জন্য একটি নাম লিখুন';
 
   @override
   String get addGymProfileRequiredForBarbellSquat =>
-      'Required for: Barbell Squat, Overhead Press, Barbell Bench Press';
+      'জন্য প্রয়োজন: বারবেল স্কোয়াট, ওভারহেড প্রেস, বারবেল বেঞ্চ প্রেস';
 
   @override
-  String get addGymProfileResetAll => 'Reset All';
+  String get addGymProfileResetAll => 'সব পুনরায় সেট করুন';
 
   @override
   String get addGymProfileTapToAddRemove =>
-      'Tap to add, remove, or edit weights';
+      'ওজন যোগ করতে, সরাতে বা সম্পাদনা করতে ট্যাপ করুন';
 
   @override
   String get addGymProfileThisHelpsUsSuggest =>
-      'This helps us suggest the right equipment';
+      'এটি আমাদের সঠিক সরঞ্জামের পরামর্শ দিতে সহায়তা করে';
 
   @override
-  String get addGymProfileTrainingSplit => 'Training Split';
+  String get addGymProfileTrainingSplit => 'প্রশিক্ষণ স্প্লিট';
 
   @override
   String get addGymProfileUnlocksBenchPressIncline =>
-      'Unlocks: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+      'আনলক: বেঞ্চ প্রেস, ইনক্লাইন প্রেস, পুলওভার, বুকে সমর্থিত সারি';
 
   @override
   String get addGymProfileUnlocksChestSupportedKb =>
-      'Unlocks: Chest-Supported KB Row, KB Floor Press alternatives';
+      'আনলক: বুক-সমর্থিত KB সারি, KB ফ্লোর প্রেস বিকল্প';
 
   @override
-  String get addGymProfileWorkoutEnvironment => 'Workout Environment';
+  String get addGymProfileWorkoutEnvironment => 'ওয়ার্কআউট পরিবেশ';
 
   @override
-  String get addGymProfileWorkoutSchedule => 'Workout Schedule';
+  String get addGymProfileWorkoutSchedule => 'ওয়ার্কআউটের সময়সূচী';
 
   @override
-  String get addGymProfileYesAddIt => 'Yes, Add It';
+  String get addGymProfileYesAddIt => 'হ্যাঁ, এটি যোগ করুন';
 
   @override
-  String get addScheduleItemAddToGoogleCalendar => 'Add to Google Calendar';
+  String get addScheduleItemAddToGoogleCalendar =>
+      'Google ক্যালেন্ডারে যোগ করুন';
 
   @override
-  String get addScheduleItemAddToSchedule => 'Add to Schedule';
+  String get addScheduleItemAddToSchedule => 'সময় নির্ধারণের সময়';
 
   @override
-  String get addScheduleItemEditItem => 'Edit Item';
+  String get addScheduleItemEditItem => 'আইটেম সম্পাদনা করুন';
 
   @override
-  String get addScheduleItemSaveChanges => 'Save Changes';
+  String get addScheduleItemSaveChanges => 'পরিবর্তনগুলো সেভ করুন';
 
   @override
   String get advancedAudioCountdownRestTimerVoice =>
-      'Countdown, rest timer, voice announcements';
+      'কাউন্টডাউন, রেস্ট টাইমার, ভয়েস ঘোষণা';
 
   @override
   String get advancedAudioSoundEffectsWorkoutAudio =>
-      'Sound effects & workout audio';
+      'সাউন্ড এফেক্ট এবং ওয়ার্কআউট অডিও';
 
   @override
-  String get agentInfoHeaderConnectedToSupport => 'Connected to support';
+  String get agentInfoHeaderConnectedToSupport => 'সমর্থনের সাথে সংযুক্ত';
 
   @override
-  String get agentInfoHeaderOffline => 'Offline';
+  String get agentInfoHeaderOffline => 'অফলাইন';
 
   @override
-  String get agentInfoHeaderOnline => 'Online';
+  String get agentInfoHeaderOnline => 'অনলাইন';
 
   @override
-  String get agentInfoHeaderTyping => 'Typing';
+  String get agentInfoHeaderTyping => 'টাইপিং';
 
   @override
-  String get aiCoachAdvancedSettings => 'Advanced settings';
+  String get aiCoachAdvancedSettings => 'অ্যাডভান্সড সেটিংস';
 
   @override
   String get aiCoachAiPersonalizedMessages => 'AI-ব্যক্তিগত বার্তা';
@@ -514,7 +519,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiCoachBalanced => 'সুষম';
 
   @override
-  String get aiCoachCelebrateStreakMilestones => 'Celebrate streak milestones';
+  String get aiCoachCelebrateStreakMilestones => 'স্ট্রেক মাইলফলক উদযাপন করুন';
 
   @override
   String get aiCoachCoachNotifications => 'কোচ বিজ্ঞপ্তি';
@@ -523,7 +528,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiCoachCoachVoicePersonality => 'প্রশিক্ষক ভয়েস এবং ব্যক্তিত্ব';
 
   @override
-  String get aiCoachEveningCheckInFor => 'Evening check-in for habits';
+  String get aiCoachEveningCheckInFor => 'অভ্যাসের জন্য সান্ধ্য চেক-ইন';
 
   @override
   String get aiCoachFloatingAiChatBubble => 'ভাসমান এআই চ্যাট বাবল';
@@ -533,16 +538,16 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiCoachGetNotifiedWhenYour =>
-      'Get notified when your crate is ready';
+      'আপনার ক্রেট প্রস্তুত হলে নোটিফিকেশন পান';
 
   @override
   String get aiCoachHabitReminders => 'অভ্যাস অনুস্মারক';
 
   @override
-  String get aiCoachHowMuchYourAi => 'How much your AI coach pushes you';
+  String get aiCoachHowMuchYourAi => 'আপনার AI কোচ আপনাকে কতটা ধাক্কা দেয়';
 
   @override
-  String get aiCoachMatchYourCoachS => 'Match your coach\'s personality';
+  String get aiCoachMatchYourCoachS => 'আপনার কোচের ব্যক্তিত্বের সাথে মেলে';
 
   @override
   String get aiCoachMealAnalyzingYourDay => 'আপনার দিন বিশ্লেষণ করা হচ্ছে...';
@@ -554,7 +559,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiCoachMealAnxiousCalmingPick => 'উদ্বিগ্ন — শান্ত বাছাই?';
 
   @override
-  String get aiCoachMealAnythingHealthy => 'Anything healthy';
+  String get aiCoachMealAnythingHealthy => 'যে কোনও স্বাস্থ্যকর';
 
   @override
   String get aiCoachMealAsian => 'এশিয়ান';
@@ -563,7 +568,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiCoachMealAsianInspiredPick => 'এশিয়ান-অনুপ্রাণিত বাছাই?';
 
   @override
-  String get aiCoachMealAskTheCoach => 'Ask the coach';
+  String get aiCoachMealAskTheCoach => 'কোচকে জিজ্ঞাসা করুন';
 
   @override
   String get aiCoachMealBalanceMyMacros => 'আমার ম্যাক্রো ভারসাম্য?';
@@ -594,7 +599,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiCoachMealCuttingFriendlyMeal => 'কাটিং-বান্ধব খাবার?';
 
   @override
-  String get aiCoachMealFastFood => 'Fast food';
+  String get aiCoachMealFastFood => 'ফাস্ট ফুড';
 
   @override
   String get aiCoachMealFastFoodPick => 'ফাস্ট ফুড পিক?';
@@ -633,7 +638,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiCoachMealLateNightSnack => 'গভীর রাতের জলখাবার?';
 
   @override
-  String get aiCoachMealLogThisMeal => 'Log this meal';
+  String get aiCoachMealLogThisMeal => 'এই খাবারটি লগ ইন করুন';
 
   @override
   String get aiCoachMealLookingAtTodayS =>
@@ -671,7 +676,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiCoachMealNoCookOption => 'নো-কুক বিকল্প?';
 
   @override
-  String get aiCoachMealOpenFullChat => 'Open full chat';
+  String get aiCoachMealOpenFullChat => 'সম্পূর্ণ চ্যাট খুলুন';
 
   @override
   String get aiCoachMealPoorSleepLastNight => 'গত রাতে খারাপ ঘুম?';
@@ -734,10 +739,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiCoachRefuelReminderAfterTraining =>
-      'Refuel reminder after training';
+      'প্রশিক্ষণের পরে রিফুয়েল রিমাইন্ডার';
 
   @override
-  String get aiCoachRemindByEveningIf => 'Remind by evening if you skip';
+  String get aiCoachRemindByEveningIf =>
+      'আপনি যদি এড়িয়ে যান তাহলে সন্ধ্যার মধ্যে মনে করিয়ে দিন';
 
   @override
   String get aiCoachReportGreatWorkoutKeepUp =>
@@ -760,11 +766,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiCoachShowFloatingBubbleFor =>
-      'Show floating bubble for quick AI Coach access';
+      'দ্রুত AI কোচ অ্যাক্সেসের জন্য ভাসমান বুদবুদ দেখান';
 
   @override
   String get aiCoachShowFloatingChatBubble =>
-      'Show floating chat bubble, niche notifications, and privacy controls';
+      'ফ্লোটিং চ্যাট বুদ্বুদ, কুলুঙ্গি বিজ্ঞপ্তি এবং গোপনীয়তা নিয়ন্ত্রণগুলি দেখান';
 
   @override
   String get aiCoachStreakCelebrations => 'স্ট্রিক উদযাপন';
@@ -773,11 +779,11 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiCoachTough => 'শক্ত';
 
   @override
-  String get aiDataUsageDataWeDoNot => 'Data we do not share with the models';
+  String get aiDataUsageDataWeDoNot => 'ডেটা আমরা মডেলদের সাথে শেয়ার করি না';
 
   @override
   String get aiDataUsageEverythingNeededToCoach =>
-      'Everything needed to coach you';
+      'আপনাকে প্রশিক্ষণ দেওয়ার জন্য প্রয়োজনীয় সবকিছু';
 
   @override
   String get aiDataUsageHowDataIsProtected => 'কিভাবে ডেটা সুরক্ষিত হয়';
@@ -787,7 +793,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiDataUsageTechnicalSafeguardsInPlace =>
-      'Technical safeguards in place';
+      'কারিগরি সুরক্ষা চালু আছে';
 
   @override
   String get aiDataUsageWhatModelsReceive => 'কি মডেল প্রাপ্ত';
@@ -796,7 +802,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiDataUsageWhatNeverLeavesOur => 'কি আমাদের সার্ভার ছেড়ে না';
 
   @override
-  String get aiDataUsageYouAreInCharge => 'You are in charge of your data';
+  String get aiDataUsageYouAreInCharge => 'আপনি আপনার ডেটার দায়িত্বে আছেন';
 
   @override
   String get aiDataUsageYourControls => 'আপনার নিয়ন্ত্রণ';
@@ -808,13 +814,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiInputPreviewBodyweight => 'শরীরের ওজন';
 
   @override
-  String get aiInputPreviewDeselectAll => 'Deselect all';
+  String get aiInputPreviewDeselectAll => 'সব গুলো অনির্বাচিত করুন';
 
   @override
   String get aiInputPreviewEditSet => 'সম্পাদনা সেট';
 
   @override
-  String get aiInputPreviewSelectAll => 'Select all';
+  String get aiInputPreviewSelectAll => 'সবগুলি নির্বাচন করুন';
 
   @override
   String get aiInputPreviewWarmup => 'ওয়ার্মআপ';
@@ -829,17 +835,17 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiIntegrationsCopied => 'অনুলিপি করা হয়েছে!';
 
   @override
-  String get aiIntegrationsCopyConfig => 'Copy config';
+  String get aiIntegrationsCopyConfig => 'কনফিগারেশন কপি করুন';
 
   @override
-  String get aiIntegrationsCopyTokenOnly => 'Copy token only';
+  String get aiIntegrationsCopyTokenOnly => 'শুধুমাত্র টোকেন কপি করুন';
 
   @override
   String get aiIntegrationsCouldNotCreateConnection => 'সংযোগ তৈরি করা যায়নি।';
 
   @override
   String get aiIntegrationsCouldNotLoadIntegrations =>
-      'Could not load integrations';
+      'ইন্টিগ্রেশন লোড করা যায়নি';
 
   @override
   String get aiIntegrationsCreateConnection => 'সংযোগ তৈরি করুন';
@@ -865,7 +871,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'এই সংযোগটি প্রথমে একটি নাম দিন।';
 
   @override
-  String get aiIntegrationsGrantedPermissions => 'Granted permissions';
+  String get aiIntegrationsGrantedPermissions => 'মঞ্জুর করা অনুমতি';
 
   @override
   String get aiIntegrationsIVeSavedMy =>
@@ -878,7 +884,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiIntegrationsName => 'নাম';
 
   @override
-  String get aiIntegrationsNoConnectionsYet => 'No connections yet';
+  String get aiIntegrationsNoConnectionsYet => 'এখনও কোনও সংযোগ নেই';
 
   @override
   String get aiIntegrationsOauth => 'OAuth';
@@ -894,10 +900,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiIntegrationsQuickSetup => 'দ্রুত সেটআপ';
 
   @override
-  String get aiIntegrationsSetupGuide => 'Setup guide';
+  String get aiIntegrationsSetupGuide => 'সেটআপ গাইড';
 
   @override
-  String get aiIntegrationsTryAgain => 'Try again';
+  String get aiIntegrationsTryAgain => 'আবার চেষ্টা করুন';
 
   @override
   String get aiIntegrationsUncheckAnythingYouWant =>
@@ -924,10 +930,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiModelDownloadHuggingfaceTokenRemoved =>
-      'HuggingFace token removed';
+      'HuggingFace টোকেন সরানো হয়েছে';
 
   @override
-  String get aiModelDownloadHuggingfaceTokenSaved => 'HuggingFace token saved';
+  String get aiModelDownloadHuggingfaceTokenSaved =>
+      'HuggingFace টোকেন সেভ করা হয়েছে';
 
   @override
   String get aiModelDownloadImages => 'ছবি';
@@ -936,8 +943,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiModelDownloadModelOptions => 'মডেল অপশন';
 
   @override
-  String get aiModelDownloadNotSupportedOnThis =>
-      'Not supported on this device';
+  String get aiModelDownloadNotSupportedOnThis => 'এই ডিভাইসে সমর্থিত নয়';
 
   @override
   String get aiModelDownloadOnDeviceAiModel => 'অন-ডিভাইস এআই মডেল';
@@ -949,7 +955,8 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiModelDownloadSaveToken => 'টোকেন সংরক্ষণ করুন';
 
   @override
-  String get aiModelDownloadTokenSavedSecurely => 'Token saved securely';
+  String get aiModelDownloadTokenSavedSecurely =>
+      'টোকেন নিরাপদে সেভ করা হয়েছে';
 
   @override
   String get aiModelDownloadUnknown => 'অজানা';
@@ -960,7 +967,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiModelsCouldNotDetectDevice =>
-      'Could not detect device capability';
+      'ডিভাইসের ক্ষমতা সনাক্ত করা যায়নি';
 
   @override
   String get aiModelsGetTokenAtHuggingface =>
@@ -974,13 +981,13 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiModelsManageGemmaModelsFor =>
-      'Manage Gemma models for offline workout generation';
+      'অফলাইন ওয়ার্কআউট প্রজন্মের জন্য জেমা মডেলগুলি পরিচালনা করুন';
 
   @override
   String get aiModelsModelLibrary => 'মডেল লাইব্রেরি';
 
   @override
-  String get aiModelsNotSupportedOnThis => 'Not supported on this device';
+  String get aiModelsNotSupportedOnThis => 'এই ডিভাইসে সমর্থিত নয়';
 
   @override
   String get aiModelsOnDeviceAiModels => 'অন-ডিভাইস এআই মডেল';
@@ -996,14 +1003,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiModelsSaveToken => 'টোকেন সংরক্ষণ করুন';
 
   @override
-  String get aiModelsTokenSavedSecurely => 'Token saved securely';
+  String get aiModelsTokenSavedSecurely => 'টোকেন নিরাপদে সেভ করা হয়েছে';
 
   @override
   String get aiPrivacyContributeToWomenS =>
       'মহিলাদের স্বাস্থ্য গবেষণায় অবদান রাখুন';
 
   @override
-  String get aiPrivacyControlHowYourData => 'Control how your data is used';
+  String get aiPrivacyControlHowYourData =>
+      'আপনার ডেটা কীভাবে ব্যবহার করা হয় তা নিয়ন্ত্রণ করুন';
 
   @override
   String get aiPrivacyCouldnTUpdateConsent =>
@@ -1014,14 +1022,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiPrivacyImportantHealthInformation =>
-      'Important health information';
+      'গুরুত্বপূর্ণ স্বাস্থ্য তথ্য';
 
   @override
   String get aiPrivacyMedicalDisclaimer => 'মেডিকেল ডিসক্লেমার';
 
   @override
   String get aiPrivacyMessagesAreStoredSo =>
-      'Messages are stored so your coach remembers context';
+      'মেসেজগুলি সংরক্ষণ করা হয় যাতে আপনার কোচ প্রসঙ্গটি মনে রাখেন';
 
   @override
   String get aiPrivacyPersonalization => 'ব্যক্তিগতকরণ';
@@ -1033,14 +1041,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiPrivacySaveChatHistory => 'চ্যাট ইতিহাস সংরক্ষণ করুন';
 
   @override
-  String get aiPrivacySeeWhatDataIs => 'See what data is processed and how';
+  String get aiPrivacySeeWhatDataIs =>
+      'কোন ডেটা প্রক্রিয়া করা হয় এবং কীভাবে তা দেখুন';
 
   @override
   String get aiPrivacyYourCoachPersonalizesWorkou =>
-      'Your coach personalizes workouts and chat';
+      'আপনার কোচ ওয়ার্কআউট এবং চ্যাটকে ব্যক্তিগতকৃত করেছেন';
 
   @override
-  String get aiSettingsAdvancedSettings => 'Advanced settings';
+  String get aiSettingsAdvancedSettings => 'অ্যাডভান্সড সেটিংস';
 
   @override
   String get aiSettingsAiAgents => 'এআই এজেন্ট';
@@ -1071,11 +1080,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiSettingsResponsePreferences => 'প্রতিক্রিয়া PREFERENCES';
 
   @override
-  String get aiSettingsScreenAddEmojisToAi => 'Add emojis to AI responses';
+  String get aiSettingsScreenAddEmojisToAi =>
+      'AI প্রতিক্রিয়াগুলিতে ইমোজি যোগ করুন';
 
   @override
   String get aiSettingsScreenAddHelpfulTipsIn =>
-      'Add helpful tips in responses';
+      'প্রতিক্রিয়ায় সহায়ক পরামর্শ যোগ করুন';
 
   @override
   String get aiSettingsScreenAiCoachDuringWorkouts =>
@@ -1092,7 +1102,8 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiSettingsScreenAvailableAgents => 'উপলব্ধ এজেন্ট';
 
   @override
-  String get aiSettingsScreenChatHistoryCleared => 'Chat history cleared';
+  String get aiSettingsScreenChatHistoryCleared =>
+      'চ্যাটের ইতিহাস মুছে ফেলা হয়েছে';
 
   @override
   String get aiSettingsScreenClear => 'পরিষ্কার';
@@ -1104,7 +1115,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiSettingsScreenClearChatHistory2 => 'চ্যাটের ইতিহাস সাফ করবেন?';
 
   @override
-  String get aiSettingsScreenCoachName => 'Coach name';
+  String get aiSettingsScreenCoachName => 'কোচের নাম';
 
   @override
   String get aiSettingsScreenCoachingStyle => 'কোচিং স্টাইল';
@@ -1114,11 +1125,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiSettingsScreenConsiderYourInjuriesWhen =>
-      'Consider your injuries when giving advice';
+      'পরামর্শ দেওয়ার সময় আপনার আঘাতের বিষয়টি বিবেচনা করুন';
 
   @override
   String get aiSettingsScreenCustomizeHowYourAi =>
-      'Customize how your AI coach interacts with you';
+      'আপনার AI কোচ কীভাবে আপনার সাথে যোগাযোগ করে তা কাস্টমাইজ করুন';
 
   @override
   String get aiSettingsScreenDefaultAgent => 'ডিফল্ট এজেন্ট';
@@ -1135,15 +1146,15 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiSettingsScreenGetRemindersAboutProper =>
-      'Get reminders about proper exercise form';
+      'সঠিক ব্যায়ামের ফর্ম সম্পর্কে অনুস্মারক পান';
 
   @override
   String get aiSettingsScreenGetSuggestionsForRest =>
-      'Get suggestions for rest and recovery';
+      'বিশ্রাম এবং পুনরুদ্ধারের জন্য পরামর্শ পান';
 
   @override
   String get aiSettingsScreenIncludeNutritionAdviceIn =>
-      'Include nutrition advice in workout discussions';
+      'ওয়ার্কআউট আলোচনায় পুষ্টির পরামর্শ অন্তর্ভুক্ত করুন';
 
   @override
   String get aiSettingsScreenIncludeTips => 'টিপস অন্তর্ভুক্ত করুন';
@@ -1159,7 +1170,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiSettingsScreenRenameYourCoachPreset =>
-      'Rename your coach — preset stays the same';
+      'আপনার কোচের নাম পরিবর্তন করুন — প্রিসেট একই থাকে';
 
   @override
   String get aiSettingsScreenResponseLength => 'প্রতিক্রিয়া দৈর্ঘ্য';
@@ -1172,96 +1183,95 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get aiSettingsScreenShowAiCoachAssistant =>
-      'Show AI coach assistant while exercising';
+      'অনুশীলনের সময় AI কোচ সহকারী দেখান';
 
   @override
   String get aiSettingsScreenStoreConversationsForContex =>
-      'Store conversations for context';
+      'প্রেক্ষাপটের জন্য কথোপকথন সংরক্ষণ করুন';
 
   @override
   String get aiSettingsScreenThisAgentRespondsWhen =>
-      'This agent responds when you don\\\'t @mention a specific one';
+      'আপনি যখন একটি নির্দিষ্ট উল্লেখ না করেন তখন এই এজেন্ট সাড়া দেন';
 
   @override
   String get aiSettingsScreenThisWillDeleteAll =>
-      'This will delete all your chat history';
+      'এটি আপনার সমস্ত চ্যাটের ইতিহাস মুছে ফেলবে';
 
   @override
   String get aiSettingsScreenThisWillPermanentlyDelete =>
       'এটি AI কোচের সাথে আপনার সমস্ত কথোপকথন স্থায়ীভাবে মুছে ফেলবে। এই ক্রিয়াটি পূর্বাবস্থায় ফেরানো যাবে না৷';
 
   @override
-  String get aiSettingsScreenUseEmojis => 'Use Emojis';
+  String get aiSettingsScreenUseEmojis => 'ইমোজি ব্যবহার করুন';
 
   @override
-  String get aiSettingsScreenUsePreviousConversations =>
-      'Use Previous Conversations';
+  String get aiSettingsScreenUsePreviousConversations => 'পূর্ববর্তী আলাপন';
 
   @override
   String get aiSettingsShowAiAgentsFitness =>
-      'Show AI agents, fitness coaching toggles, and privacy controls';
+      'AI এজেন্ট, ফিটনেস কোচিং টগল এবং গোপনীয়তা নিয়ন্ত্রণগুলি দেখান';
 
   @override
-  String get aiSettingsSuggestions => 'Suggestions';
+  String get aiSettingsSuggestions => 'পরামর্শ';
 
   @override
   String get aiSettingsTellTheAiWhat =>
-      'Tell the AI what matters most this block. Up to 5 things, each weighted 1–5.';
+      'এই ব্লকটি সবচেয়ে গুরুত্বপূর্ণ কী তা AI কে বলুন । 5 টি পর্যন্ত জিনিস, প্রতিটি ওজন 1–5 ।';
 
   @override
-  String get aiSettingsTrainingSplit => 'TRAINING SPLIT';
+  String get aiSettingsTrainingSplit => 'প্রশিক্ষণ বিভাজন';
 
   @override
-  String get aiSettingsWhatToFocusOn => 'WHAT TO FOCUS ON';
+  String get aiSettingsWhatToFocusOn => 'কি ফোকাস অন';
 
   @override
-  String get aiSettingsYourCoach => 'YOUR COACH';
+  String get aiSettingsYourCoach => 'আপনার কোচ';
 
   @override
-  String get aiSplitPresetBenefits => 'Benefits';
+  String get aiSplitPresetBenefits => 'সুবিধাদি';
 
   @override
-  String get aiSplitPresetFlexible => 'Flexible';
+  String get aiSplitPresetFlexible => 'নমনীয়';
 
   @override
-  String get aiSplitPresetSchedule => 'Schedule';
+  String get aiSplitPresetSchedule => 'সময়সূচি';
 
   @override
-  String get aiSuggestionCardExercisesPreview => 'Exercises Preview';
+  String get aiSuggestionCardExercisesPreview => 'অনুশীলনের প্রাকদর্শন';
 
   @override
   String get aiSuggestionCoachIsReviewingYour =>
-      'Coach is reviewing your meal…';
+      'কোচ আপনার খাবার পর্যালোচনা করছেন...';
 
   @override
-  String get aiTextInputAddExercisesWithAi => 'Add exercises with AI...';
+  String get aiTextInputAddExercisesWithAi => 'AI-এর সাথে অনুশীলন যোগ করুন...';
 
   @override
-  String get aiTextInputAddNewExercises => '➕ Add new exercises:';
+  String get aiTextInputAddNewExercises => 'নতুন অনুশীলন ➕ যোগ করুন:';
 
   @override
-  String get aiTextInputAiExerciseInput => 'AI Exercise Input';
+  String get aiTextInputAiExerciseInput => 'AI অনুশীলনের ইনপুট';
 
   @override
-  String get aiTextInputGotIt => 'Got it';
+  String get aiTextInputGotIt => 'বুঝতে পেরেছি।';
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Log sets: 135*8, 145*6, +10...\\nAdd exercise: 3x10 deadlift at 135';
+      'লগ সেট: 135*8, 145*6, +10...\\ n ব্যায়াম যোগ করুন: 3x10 ডেডলিফ্ট 135 এ';
 
   @override
-  String get aiTextInputLogSetsAddExercises => 'Log sets / Add exercises';
+  String get aiTextInputLogSetsAddExercises => 'লগ সেট /ব্যায়াম যোগ করুন';
 
   @override
   String get aiTextInputLogSetsForCurrent =>
-      '📝 Log sets for current exercise:';
+      'বর্তমান ব্যায়ামের জন্য 📝 লগ সেট:';
 
   @override
-  String get aiTextInputOpenAiExerciseInput => 'Open AI exercise input';
+  String get aiTextInputOpenAiExerciseInput => 'AI অনুশীলনের ইনপুট খুলুন';
 
   @override
   String get aiTextInputPhotoOfWorkoutLog =>
-      'Photo of workout log, whiteboard, or barbell';
+      'ওয়ার্কআউট লগ, হোয়াইটবোর্ড বা বার্বেলের ছবি';
 
   @override
   String get aiTextInputSpeakNaturallyDid135 =>
@@ -1274,7 +1284,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get allSplitsTrainingSplits => 'Training Splits';
 
   @override
-  String get appName => 'Zealova';
+  String get appName => '000';
 
   @override
   String get appTourTooltipGotIt => 'Got it!';
@@ -11220,7 +11230,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'Start from a ready-made layout, then fine-tune it in Customize.';
 
   @override
-  String get homeQuickActions => 'Quick Actions';
+  String get homeQuickActions => 'দ্রুত পদক্ষেপ';
 
   @override
   String get homeQuickWorkoutGenerationWeig =>
@@ -27845,7 +27855,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutPlanDrawerRemove => 'সরান';
 
   @override
-  String get workoutPlanDrawerRemoveExercise => 'Remove exercise';
+  String workoutPlanDrawerRemoveExercise(Object arg0) {
+    return 'Remove exercise $arg0';
+  }
 
   @override
   String get workoutPlanDrawerSwapExercise => 'Swap exercise';
@@ -29052,4 +29064,4139 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get youWrapped => 'বর্ষপঞ্জি';
+
+  @override
+  String get exerciseSwapListeningNow => 'Listening... speak now';
+
+  @override
+  String get exerciseSwapFindingAlternatives =>
+      'Finding your best alternatives';
+
+  @override
+  String get exerciseSwapMatchingEquipment =>
+      'Matching equipment, muscles, and your training history';
+
+  @override
+  String get exerciseSwapAskAiTitle => 'Ask AI for suggestions';
+
+  @override
+  String get exerciseSwapAskAiHint => 'e.g. something for my bad shoulder...';
+
+  @override
+  String get exerciseSwapGetAiSuggestions => 'Get AI Suggestions';
+
+  @override
+  String get exerciseSwapAiUnavailable => 'AI suggestions unavailable';
+
+  @override
+  String get exerciseSwapNoAlternatives => 'No alternatives found';
+
+  @override
+  String get exerciseSwapTryRephrasing => 'Try rephrasing your request';
+
+  @override
+  String get commonTryAgain => 'Try Again';
+
+  @override
+  String get exerciseSwapBadgeBestMatch => 'Best Match';
+
+  @override
+  String get exerciseSwapBadgeTopPick => 'Top Pick';
+
+  @override
+  String get exerciseSwapInstructions => 'Instructions';
+
+  @override
+  String get exerciseSwapSwapToThis => 'Swap to this exercise';
+
+  @override
+  String get exerciseAddSearchMine => 'Search my exercises...';
+
+  @override
+  String get exerciseAddNoMineYet => 'No personal exercises yet';
+
+  @override
+  String get exerciseAddNoMineYetHint =>
+      'Add favorites, staples, or custom exercises to see them here';
+
+  @override
+  String get exerciseAddSectionCustom => 'Custom Exercises';
+
+  @override
+  String get exerciseAddSectionFavorites => 'Favorites';
+
+  @override
+  String get exerciseAddSectionStaples => 'Staples';
+
+  @override
+  String get exerciseAddBadgeCustom => 'Custom';
+
+  @override
+  String get exerciseAddBadgeFav => 'Fav';
+
+  @override
+  String get exerciseAddBadgeStaple => 'Staple';
+
+  @override
+  String get commonNew => 'NEW';
+
+  @override
+  String get exerciseMenuRemoveFromFavorites => 'Remove from Favorites';
+
+  @override
+  String get exerciseMenuAddToFavorites => 'Add to Favorites';
+
+  @override
+  String get exerciseMenuRemoveFromQueue => 'Remove from Queue';
+
+  @override
+  String get exerciseMenuRepeatNextTime => 'Repeat Next Time';
+
+  @override
+  String get exerciseMenuRemoveAsStaple => 'Remove as Staple';
+
+  @override
+  String get exerciseMenuMarkAsStaple => 'Mark as Staple';
+
+  @override
+  String get exerciseMenuViewHistory => 'View History';
+
+  @override
+  String get exerciseMenuSwapExercise => 'Swap Exercise';
+
+  @override
+  String get exerciseMenuLinkAsSuperset => 'Link as Superset';
+
+  @override
+  String get exerciseMenuRemoveFromWorkout => 'Remove from Workout';
+
+  @override
+  String get exerciseMenuNeverRecommend => 'Never Recommend';
+
+  @override
+  String get exerciseMenuWhatDoTheseMean => 'What do these mean?';
+
+  @override
+  String get exerciseMenuAddedToFavorites => 'Added to favorites';
+
+  @override
+  String get exerciseMenuRemovedFromFavorites => 'Removed from favorites';
+
+  @override
+  String get exerciseMenuQueuedForNext => 'Queued for next workout';
+
+  @override
+  String get exerciseMenuRemovedFromQueue => 'Removed from queue';
+
+  @override
+  String get exerciseMenuMarkedAsStaple => 'Marked as staple';
+
+  @override
+  String get exerciseMenuRemovedFromStaples => 'Removed from staples';
+
+  @override
+  String get exerciseTableHeaderSet => 'Set';
+
+  @override
+  String get exerciseTableHeaderLast => 'Last';
+
+  @override
+  String get exerciseTableHeaderTarget => 'Target';
+
+  @override
+  String get supersetCreatePair => 'Create Superset Pair';
+
+  @override
+  String get supersetPairSubtitle =>
+      'Pair two exercises to alternate between them with minimal rest';
+
+  @override
+  String get supersetType => 'Superset Type';
+
+  @override
+  String get supersetSuggestedPairs => 'Suggested Pairs';
+
+  @override
+  String get supersetRestSettings => 'Rest Settings';
+
+  @override
+  String get supersetRestBetween => 'Rest between exercises';
+
+  @override
+  String get supersetRestAfter => 'Rest after superset';
+
+  @override
+  String get supersetSaveToFavorites => 'Save to Favorites';
+
+  @override
+  String get supersetSaveToFavoritesSubtitle =>
+      'Save this combination to quickly use it again';
+
+  @override
+  String get commonClear => 'Clear';
+
+  @override
+  String get supersetCreate => 'Create Superset';
+
+  @override
+  String supersetExerciseN(int n) {
+    return 'Exercise $n';
+  }
+
+  @override
+  String get supersetTapToSelect => 'Tap to select';
+
+  @override
+  String get sessionDetailSet => 'Set';
+
+  @override
+  String get sessionDetailTime => 'Time';
+
+  @override
+  String get sessionDetailReps => 'Reps';
+
+  @override
+  String get sessionDetailWeight => 'Weight';
+
+  @override
+  String sessionDetailSetCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sets',
+      one: '1 set',
+    );
+    return '$_temp0 · top set highlighted';
+  }
+
+  @override
+  String get restRateLastSet => 'Rate Last Set';
+
+  @override
+  String get restRateLastSetOptional => 'optional';
+
+  @override
+  String get nextSetPreviewFinal => 'Final Set';
+
+  @override
+  String get nextSetPreviewAnalyzing => 'Analyzing your performance...';
+
+  @override
+  String get nextSetPreviewCalculating => 'Calculating next set...';
+
+  @override
+  String get quickWorkoutAvailableWeights => 'Available Weights';
+
+  @override
+  String get quickWorkoutTapToAddPairs => 'Tap to add dumbbell pairs';
+
+  @override
+  String get quickWorkoutWithPlates => 'With plates';
+
+  @override
+  String get quickWorkoutFocus => 'Focus';
+
+  @override
+  String get quickWorkoutAllEquipment => 'All Equipment';
+
+  @override
+  String get quickWorkoutUnfavorite => 'Unfavorite';
+
+  @override
+  String get quickWorkoutFavorite => 'Favorite';
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
+  String get quickWorkoutDiscoverWorkouts => 'Discover Workouts';
+
+  @override
+  String get quickWorkoutDiscoverSubtitle =>
+      'Personalized suggestions based on your profile';
+
+  @override
+  String get quickWorkoutNoSuggestions => 'No suggestions available';
+
+  @override
+  String get quickWorkoutConflictTitle => 'Workout Already Scheduled';
+
+  @override
+  String quickWorkoutConflictBody(String workoutName) {
+    return 'You already have \"$workoutName\" scheduled for today. What would you like to do?';
+  }
+
+  @override
+  String get quickWorkoutConflictChangeDate => 'Change Date';
+
+  @override
+  String get quickWorkoutConflictAddAnyway => 'Add Anyway';
+
+  @override
+  String get quickWorkoutConflictReplace => 'Replace';
+
+  @override
+  String get completeUnableToChallenge => 'Unable to start challenge';
+
+  @override
+  String get completeNoFriendsYet => 'No friends yet — invite some!';
+
+  @override
+  String get completeViewGoals => 'View Goals';
+
+  @override
+  String get completeNoShareData => 'No workout data to share yet';
+
+  @override
+  String get completeUnableToExtend => 'Unable to extend workout';
+
+  @override
+  String get completeExtendFailed =>
+      'Failed to extend workout. Please try again.';
+
+  @override
+  String get completePleaseRateWorkout => 'Please rate your workout';
+
+  @override
+  String get summaryVolume => 'Volume';
+
+  @override
+  String get summaryDuration => 'Duration';
+
+  @override
+  String get summarySets => 'Sets';
+
+  @override
+  String get summaryReps => 'Reps';
+
+  @override
+  String get summaryPerformanceComparison => 'Performance Comparison';
+
+  @override
+  String summaryVsDaysAgo(int days) {
+    return 'vs $days days ago';
+  }
+
+  @override
+  String get summaryPerExercise => 'Per Exercise';
+
+  @override
+  String get summaryWarmupStretching => 'Warmup & Stretching';
+
+  @override
+  String get summaryWarmup => 'Warmup';
+
+  @override
+  String get summaryStretching => 'Stretching';
+
+  @override
+  String get summaryRestAnalysis => 'Rest Analysis';
+
+  @override
+  String get summaryTotalRest => 'Total Rest';
+
+  @override
+  String get summaryAvgSets => 'Avg (Sets)';
+
+  @override
+  String get summaryAvgExercises => 'Avg (Exercises)';
+
+  @override
+  String get summaryHydration => 'Hydration';
+
+  @override
+  String get summaryAiInteractions => 'AI Interactions';
+
+  @override
+  String get summaryAiWeightSuggestions => 'Weight Suggestions';
+
+  @override
+  String get summaryAiCoachOpened => 'Coach Opened';
+
+  @override
+  String get summaryAiMessagesSent => 'Messages Sent';
+
+  @override
+  String get summaryAiCoachTips => 'Coach Tips';
+
+  @override
+  String get summaryAiTipsDismissed => 'Tips Dismissed';
+
+  @override
+  String get summaryAiFatigueAlerts => 'Fatigue Alerts';
+
+  @override
+  String get summaryAiRestSuggestions => 'Rest Suggestions';
+
+  @override
+  String get summaryAiInfoOpened => 'Info Opened';
+
+  @override
+  String get summaryAiVideosWatched => 'Videos Watched';
+
+  @override
+  String get summaryAiBreathingGuide => 'Breathing Guide';
+
+  @override
+  String get summaryAiExerciseSwaps => 'Exercise Swaps';
+
+  @override
+  String get summaryHowYouFelt => 'How You Felt';
+
+  @override
+  String get summaryFeedbackMood => 'Mood';
+
+  @override
+  String get summaryFeedbackEnergy => 'Energy';
+
+  @override
+  String get summaryFeedbackConfidence => 'Confidence';
+
+  @override
+  String get summaryFeedbackFeelingStronger => 'Feeling Stronger';
+
+  @override
+  String get summaryWeightUnit => 'Weight Unit';
+
+  @override
+  String summaryEquipmentIncrement(String name) {
+    return '$name Increment';
+  }
+
+  @override
+  String get summarySettingsUsed => 'Settings Used';
+
+  @override
+  String get summaryPerExerciseDeepDive => 'Per-Exercise Deep Dive';
+
+  @override
+  String get summaryNoCompletedSets =>
+      'No completed sets logged for this workout.';
+
+  @override
+  String get summaryTiming => 'TIMING';
+
+  @override
+  String get summaryHydrationLabel => 'HYDRATION';
+
+  @override
+  String summaryEst1RM(String value) {
+    return 'Est. 1RM: $value lb';
+  }
+
+  @override
+  String get summaryColSet => 'Set';
+
+  @override
+  String get summaryColPrev => 'Prev';
+
+  @override
+  String get summaryColTarget => 'Target';
+
+  @override
+  String get summaryColWeight => 'Weight';
+
+  @override
+  String get summaryColReps => 'Reps';
+
+  @override
+  String get summaryColRir => 'RIR';
+
+  @override
+  String get summaryColRpe => 'RPE';
+
+  @override
+  String get summarySupersetDetails => 'Superset Details';
+
+  @override
+  String summarySupersetN(String id) {
+    return 'Superset $id';
+  }
+
+  @override
+  String get summaryExerciseOrderAndTime => 'Exercise Order & Time';
+
+  @override
+  String get summaryWorkoutEndedEarly => 'Workout Ended Early';
+
+  @override
+  String get summaryExitProgress => 'Progress';
+
+  @override
+  String get summaryExitExercisesDone => 'Exercises Done';
+
+  @override
+  String get summaryExitTimeSpent => 'Time Spent';
+
+  @override
+  String get summaryVolumeBreakdown => 'Volume Breakdown';
+
+  @override
+  String get summaryTotalVolumeLabel => 'Total Volume: ';
+
+  @override
+  String get summaryIntensityAnalysis => 'Intensity Analysis';
+
+  @override
+  String get summaryAvgRpe => 'Avg RPE';
+
+  @override
+  String get summaryPeakRpe => 'Peak RPE';
+
+  @override
+  String get summaryAvgRir => 'Avg RIR';
+
+  @override
+  String summaryRepsLeft(String count) {
+    return '$count reps left';
+  }
+
+  @override
+  String get summaryRpeDistribution => 'RPE Distribution';
+
+  @override
+  String get summaryIntensityEasy => 'Easy';
+
+  @override
+  String get summaryIntensityModerate => 'Moderate';
+
+  @override
+  String get summaryIntensityHard => 'Hard';
+
+  @override
+  String get summaryIntensityVeryHard => 'Very Hard';
+
+  @override
+  String get summaryIntensityMaximal => 'Maximal';
+
+  @override
+  String get summaryEstimated1RM => 'Estimated 1RM';
+
+  @override
+  String get summaryEpleyFormula =>
+      'Based on Epley formula from your best sets';
+
+  @override
+  String summaryBestSet(String weight, int reps) {
+    return 'Best set: $weight lb x $reps';
+  }
+
+  @override
+  String get summarySetTypeDistribution => 'Set Type Distribution';
+
+  @override
+  String get summaryNoDetailedData =>
+      'Detailed tracking data is not available for this workout.';
+
+  @override
+  String get summaryCoachLabel => 'COACH';
+
+  @override
+  String get summarySessionScore => 'SESSION SCORE';
+
+  @override
+  String get summaryOutOf100 => 'out of 100';
+
+  @override
+  String get summaryRingPlan => 'Plan';
+
+  @override
+  String get summaryRingEffort => 'Effort';
+
+  @override
+  String get summaryRingRest => 'Rest';
+
+  @override
+  String get summaryNoPlanData => 'No plan data';
+
+  @override
+  String get summaryNoWorkingSets => 'No working sets';
+
+  @override
+  String get summaryEverySetRated => 'Every set rated';
+
+  @override
+  String get summaryNoRestData => 'No rest data';
+
+  @override
+  String get summaryDonutRestCompliance => 'REST COMPLIANCE';
+
+  @override
+  String get summaryDonutOnTarget => 'on target';
+
+  @override
+  String get summaryDonutIntensity => 'INTENSITY';
+
+  @override
+  String summaryNSets(int count) {
+    return '$count sets';
+  }
+
+  @override
+  String get summaryNoRirLogged => 'No RIR logged';
+
+  @override
+  String get summaryDonutPlanAdherence => 'PLAN ADHERENCE';
+
+  @override
+  String get summaryAllExercisesCompleted => 'All exercises completed';
+
+  @override
+  String summaryNSkipped(int count) {
+    return '$count skipped';
+  }
+
+  @override
+  String get summarySessionTimeline => 'SESSION TIMELINE';
+
+  @override
+  String get summaryMusclesHit => 'MUSCLES HIT';
+
+  @override
+  String get summaryCardioSession => 'Cardio session';
+
+  @override
+  String get summaryMuscleMapNotApplicable => 'Muscle map not applicable';
+
+  @override
+  String get summaryNoVolumeData => 'No volume data yet';
+
+  @override
+  String summaryTagMuscles(String exercises) {
+    return 'Tag muscles · $exercises';
+  }
+
+  @override
+  String get summaryPerExerciseDeepDiveLabel => 'PER-EXERCISE DEEP DIVE';
+
+  @override
+  String get summaryAtlasFront => 'FRONT';
+
+  @override
+  String get summaryAtlasBack => 'BACK';
+
+  @override
+  String get summaryHideDetails => 'Hide details';
+
+  @override
+  String get summaryMoreDetails => 'More details';
+
+  @override
+  String setRowSetN(int n) {
+    return 'SET $n';
+  }
+
+  @override
+  String setRowSetNCompact(int n) {
+    return 'Set $n';
+  }
+
+  @override
+  String get setRowHidePrevious => 'Hide previous';
+
+  @override
+  String setRowPreviousData(String weight, String unit, String reps) {
+    return 'Previous: $weight $unit × $reps reps';
+  }
+
+  @override
+  String setRowNReps(int count) {
+    return '$count reps';
+  }
+
+  @override
+  String shareBreakdownNExercises(int count) {
+    return '$count exercises';
+  }
+
+  @override
+  String shareBreakdownNMore(int count) {
+    return '+$count more';
+  }
+
+  @override
+  String shareBreakdownNSets(int count) {
+    return '$count SETS';
+  }
+
+  @override
+  String get editProgramSheetUnknownDate => 'Unknown date';
+
+  @override
+  String get editProgramSheetToday => 'Today';
+
+  @override
+  String get editProgramSheetYesterday => 'Yesterday';
+
+  @override
+  String editProgramSheetDaysAgo(int days) {
+    return '$days days ago';
+  }
+
+  @override
+  String editProgramSheetWeeksAgo(int weeks) {
+    return '$weeks weeks ago';
+  }
+
+  @override
+  String editProgramSheetDaysPerWeek(int days) {
+    return '$days days/week';
+  }
+
+  @override
+  String get regenerateSheetStartingRegeneration => 'Starting regeneration…';
+
+  @override
+  String get regenerateSheetAnalyzingYourPreferences =>
+      'Analyzing your preferences…';
+
+  @override
+  String get regenerateSheetBuildingYourWorkout => 'Building your workout…';
+
+  @override
+  String get regenerateSheetFinalizingDetails => 'Finalizing details…';
+
+  @override
+  String get regenerateSheetAlmostThere => 'Almost there…';
+
+  @override
+  String get regenerateSheetRegenerationComplete => 'Regeneration complete!';
+
+  @override
+  String get regenerateSheetHoldingYourSchedule => 'Holding your schedule';
+
+  @override
+  String get regenerateSheetSchedulingYourWorkout => 'Scheduling your workout';
+
+  @override
+  String get regenerateSheetOptimizingForYourGoals =>
+      'Optimizing for your goals';
+
+  @override
+  String get regenerateSheetPersonalizingExercises => 'Personalizing exercises';
+
+  @override
+  String get regenerateSheetCheckingEquipment => 'Checking equipment';
+
+  @override
+  String get regenerateSheetGettingCreative => 'Getting creative';
+
+  @override
+  String get regenerateSheetWhen => 'WHEN?';
+
+  @override
+  String regenerateSheetKeepDate(String weekday, String month, int day) {
+    return 'Keep $weekday, $month $day';
+  }
+
+  @override
+  String get regenerateSheetDoThisToday => 'Do this today';
+
+  @override
+  String get regenerateSheetTodayNotInSchedule =>
+      'Today isn\'t in your usual workout days';
+
+  @override
+  String get regenerateSheetCustomize => 'Customize';
+
+  @override
+  String get regenerateSheetAiSuggestions => 'AI Suggestions';
+
+  @override
+  String get regenerateSheetRegenerateCurrentWorkout =>
+      'Regenerate Current Workout';
+
+  @override
+  String get regenerateSheetCustomizeOrLetAi => 'Customize or let AI suggest';
+
+  @override
+  String get regenerateSheetGeneratingSuggestions => 'Generating suggestions…';
+
+  @override
+  String get regenerateSheetDescribeYourIdealWorkout =>
+      'Describe your ideal workout';
+
+  @override
+  String get regenerateSheetNoSuggestionsYet => 'No suggestions yet';
+
+  @override
+  String get regenerateSheetEnterAPromptAbove => 'Enter a prompt above…';
+
+  @override
+  String get regenerateSheetGetSuggestions => 'Get Suggestions';
+
+  @override
+  String get regenerateSheetRestoredFromLastRegeneration =>
+      'Restored from your last regeneration';
+
+  @override
+  String get regenerateSheetReset => 'Reset';
+
+  @override
+  String get regenerateSheetApply => 'Apply';
+
+  @override
+  String get regenerateSheetKeepCurrent => 'Keep Current';
+
+  @override
+  String get regenerateSheetUseThisSuggestion => 'Use This';
+
+  @override
+  String regenerateSheetStepOf(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get regenerateSheetAiGenerationTakes =>
+      'AI generation typically takes 15–30s';
+
+  @override
+  String get myJourneyCardMyJourney => 'My Journey';
+
+  @override
+  String myJourneyCardWeekNumber(int week) {
+    return 'Week $week';
+  }
+
+  @override
+  String myJourneyCardNext(String title) {
+    return 'Next: $title';
+  }
+
+  @override
+  String myJourneyCardWorkoutsProgress(int completed, int total) {
+    return '$completed / $total workouts';
+  }
+
+  @override
+  String get myJourneyCardDayStreak => 'day streak';
+
+  @override
+  String get myJourneyCardThisWeek => 'this week';
+
+  @override
+  String get myJourneyCardTotal => 'total';
+
+  @override
+  String get myJourneyCardWeeklyGoalComplete => 'Weekly goal complete!';
+
+  @override
+  String get myJourneyCardOneWorkoutLeft => '1 workout left this week';
+
+  @override
+  String myJourneyCardWorkoutsLeft(int count) {
+    return '$count workouts left this week';
+  }
+
+  @override
+  String get myJourneyCardAmazingStreak => 'Amazing streak! Keep going!';
+
+  @override
+  String get myJourneyCardKeepMomentum => 'Keep the momentum going!';
+
+  @override
+  String get myJourneyCardComesoFar => 'You\'ve come so far. Keep pushing!';
+
+  @override
+  String get myJourneyCardBuildingGreatHabits =>
+      'You\'re building great habits!';
+
+  @override
+  String get myJourneyCardEveryWorkoutCounts =>
+      'Every workout counts. You\'ve got this!';
+
+  @override
+  String get myJourneyCardTapToSeeFullJourney => 'Tap to see your full journey';
+
+  @override
+  String get myJourneyCardMilestoneGettingStarted => 'Getting Started';
+
+  @override
+  String get myJourneyCardMilestoneBeginner => 'Beginner';
+
+  @override
+  String get myJourneyCardMilestoneBuildingHabit => 'Building Habit';
+
+  @override
+  String get myJourneyCardMilestoneConsistent => 'Consistent';
+
+  @override
+  String get myJourneyCardMilestoneDedicated => 'Dedicated';
+
+  @override
+  String get myJourneyCardMilestoneAthlete => 'Athlete';
+
+  @override
+  String get myJourneyCardMilestoneChampion => 'Champion';
+
+  @override
+  String get myJourneyCardMilestoneLegend => 'Legend';
+
+  @override
+  String get myJourneyCardProgress => 'Progress';
+
+  @override
+  String get myJourneyCardViewCharts => 'View charts';
+
+  @override
+  String get myJourneyCardProgressCharts => 'Progress Charts';
+
+  @override
+  String get myJourneyCardViewStrengthAndVolume =>
+      'View strength and volume trends over time';
+
+  @override
+  String get personalRecordsCardPersonalRecords => 'Personal Records';
+
+  @override
+  String get personalRecordsCardViewAll => 'View All';
+
+  @override
+  String get personalRecordsCardCompleteWorkoutsToPR =>
+      'Complete workouts to set personal records';
+
+  @override
+  String get personalRecordsCardToday => 'Today';
+
+  @override
+  String get personalRecordsCardYesterday => 'Yesterday';
+
+  @override
+  String personalRecordsCardDaysAgo(int days) {
+    return '$days days ago';
+  }
+
+  @override
+  String get personalRecordsCard1WeekAgo => '1 week ago';
+
+  @override
+  String personalRecordsCardWeeksAgo(int weeks) {
+    return '$weeks weeks ago';
+  }
+
+  @override
+  String get personalRecordsCard1MonthAgo => '1 month ago';
+
+  @override
+  String personalRecordsCardMonthsAgo(int months) {
+    return '$months months ago';
+  }
+
+  @override
+  String get personalRecordsCardCoachTip => 'Coach Tip';
+
+  @override
+  String get personalRecordsCardAskCoachForMore => 'Ask coach for more tips';
+
+  @override
+  String get personalRecordsCardGettingPersonalizedTip =>
+      'Getting personalized tip…';
+
+  @override
+  String get personalRecordsCardMorningTip =>
+      'Start your workout with a 5-minute dynamic warm-up to improve performance and reduce injury risk.';
+
+  @override
+  String get personalRecordsCardAfternoonTip =>
+      'Stay hydrated! Aim for at least 500ml of water before your workout.';
+
+  @override
+  String get personalRecordsCardEveningTip =>
+      'Evening workouts can boost mood. Stick to moderate intensity if you want to sleep well tonight.';
+
+  @override
+  String get personalRecordsCardWeight => 'Weight';
+
+  @override
+  String get personalRecordsCardRank => 'Rank';
+
+  @override
+  String personalRecordsCardTopPercentile(int percentile) {
+    return 'Top $percentile%';
+  }
+
+  @override
+  String personalRecordsCardOfUsers(int count) {
+    return 'of $count users';
+  }
+
+  @override
+  String get personalRecordsCardWater => 'Water';
+
+  @override
+  String personalRecordsCardGlasses(int current, int goal) {
+    return '$current/$goal glasses';
+  }
+
+  @override
+  String get personalRecordsCardSleep => 'Sleep';
+
+  @override
+  String personalRecordsCardQualitySleep(String duration) {
+    return '$duration quality sleep';
+  }
+
+  @override
+  String get personalRecordsCardConnectHealthToTrack =>
+      'Connect Health to track';
+
+  @override
+  String get heroActionCardUploadingPhoto => 'Uploading photo…';
+
+  @override
+  String get heroActionCardTrackYourProgress => 'Track Your Progress';
+
+  @override
+  String get heroActionCardTakeProgressPhoto =>
+      'Take a progress photo to track your transformation';
+
+  @override
+  String get heroActionCardFasting => 'Fasting';
+
+  @override
+  String get heroActionCardActive => 'Active';
+
+  @override
+  String get heroActionCardFastEndedSuccessfully => 'Fast ended successfully';
+
+  @override
+  String get heroActionCardEnd => 'End';
+
+  @override
+  String get heroActionCardLogWater => 'Log Water';
+
+  @override
+  String get heroActionCardSelectAmountToLog => 'Select amount to log';
+
+  @override
+  String get heroActionCardCustom => 'Custom';
+
+  @override
+  String get heroActionCardOpenHydrationTracker => 'Open hydration tracker';
+
+  @override
+  String get heroActionCardPleaseLogIn => 'Please log in';
+
+  @override
+  String heroActionCardWaterLogged(int ml) {
+    return '$ml ml logged';
+  }
+
+  @override
+  String get heroActionCardFailedToLogWater => 'Failed to log water';
+
+  @override
+  String get heroActionCardCustomAmount => 'Custom Amount';
+
+  @override
+  String get heroActionCardSipToXlJug => 'Sip to XL jug';
+
+  @override
+  String get heroActionCardEnter1To5000Ml => 'Enter 1–5000 ml';
+
+  @override
+  String get heroActionCardOrPickAPreset => 'Or pick a preset:';
+
+  @override
+  String get heroActionCardCancel => 'Cancel';
+
+  @override
+  String get heroActionCardLog => 'Log';
+
+  @override
+  String heroActionCardLogMl(int ml) {
+    return 'Log $ml ml';
+  }
+
+  @override
+  String get heroActionCardWaterLabel => 'Water';
+
+  @override
+  String get heroActionCardFastingLabel => 'Fasting';
+
+  @override
+  String get heroActionCardPresetSip => 'Sip';
+
+  @override
+  String get heroActionCardPresetSmallSip => 'Small Sip';
+
+  @override
+  String get heroActionCardPresetMouthful => 'Mouthful';
+
+  @override
+  String get heroActionCardPresetSmallCup => 'Small Cup';
+
+  @override
+  String get heroActionCardPresetGlass => 'Glass';
+
+  @override
+  String get heroActionCardPresetTallGlass => 'Tall Glass';
+
+  @override
+  String get heroActionCardPresetBigBottle => 'Big Bottle';
+
+  @override
+  String get heroActionCardPresetSportsBottle => 'Sports Bottle';
+
+  @override
+  String get heroActionCardPresetLargeJug => 'Large Jug';
+
+  @override
+  String get heroActionCardPresetXlJug => 'XL Jug';
+
+  @override
+  String get homeScreenTourTopbarTitle => 'Your Profile';
+
+  @override
+  String get homeScreenTourTopbarDesc =>
+      'Tap to view and edit your fitness profile';
+
+  @override
+  String get homeScreenTourCarouselTitle => 'Today\'s Workout';
+
+  @override
+  String get homeScreenTourCarouselDesc =>
+      'Swipe to see your workout plan. Tap to start!';
+
+  @override
+  String get homeScreenTourQuicklogTitle => 'Quick Log';
+
+  @override
+  String get homeScreenTourQuicklogDesc =>
+      'Quickly log meals, water, and workouts';
+
+  @override
+  String get homeScreenTourWorkoutTitle => 'Workout Tab';
+
+  @override
+  String get homeScreenTourWorkoutDesc =>
+      'Access your full workout plan and history';
+
+  @override
+  String get homeScreenTourNutritionTitle => 'Nutrition Tab';
+
+  @override
+  String get homeScreenTourNutritionDesc =>
+      'Track your macros and daily nutrition';
+
+  @override
+  String get homeScreenTourProfileTitle => 'Profile Tab';
+
+  @override
+  String get homeScreenTourProfileDesc => 'View your progress and settings';
+
+  @override
+  String homeScreenImportedWorkouts(int count) {
+    return 'Imported $count workouts';
+  }
+
+  @override
+  String get homeScreenDailyStepsGoal => 'Daily Steps Goal';
+
+  @override
+  String homeScreenApplyPreset(String name) {
+    return 'Apply \"$name\"?';
+  }
+
+  @override
+  String homeScreenApplyPresetBody(String name) {
+    return 'This will replace your current layout with the \"$name\" preset.';
+  }
+
+  @override
+  String get homeScreenCancel => 'Cancel';
+
+  @override
+  String homeScreenPresetApplied(String name) {
+    return '\"$name\" applied';
+  }
+
+  @override
+  String get homeScreenApply => 'Apply';
+
+  @override
+  String get homeScreenResetToDefault => 'Reset to Default?';
+
+  @override
+  String get homeScreenResetToDefaultBody =>
+      'This will restore your home screen to the default layout.';
+
+  @override
+  String get homeScreenDefaultRestored => 'Default layout restored';
+
+  @override
+  String get homeScreenReset => 'Reset';
+
+  @override
+  String get addGymSheetCommercialGym => 'Commercial Gym';
+
+  @override
+  String get addGymSheetHomeGym => 'Home Gym';
+
+  @override
+  String get addGymSheetHomeMinimal => 'Home (Minimal)';
+
+  @override
+  String get addGymSheetHotelTravel => 'Hotel / Travel';
+
+  @override
+  String get addGymSheetOutdoors => 'Outdoors';
+
+  @override
+  String get addGymSheetCommercialGymDesc =>
+      'Full access to all machines and equipment';
+
+  @override
+  String get addGymSheetHomeGymDesc =>
+      'Dedicated workout space with your equipment';
+
+  @override
+  String get addGymSheetHomeMinimalDesc => 'Bodyweight exercises only';
+
+  @override
+  String get addGymSheetHotelTravelDesc =>
+      'Limited space and equipment while traveling';
+
+  @override
+  String get addGymSheetOutdoorsDesc => 'Parks, outdoor gyms, and open spaces';
+
+  @override
+  String get addGymSheetPickAtLeastOneDay =>
+      'Please pick at least one workout day';
+
+  @override
+  String get addGymSheetEnterNameFirst => 'Please enter a gym name first';
+
+  @override
+  String get addGymSheetEquipment => 'Equipment';
+
+  @override
+  String get addGymSheetSkip => 'Skip';
+
+  @override
+  String get addGymSheetYesAddIt => 'Yes, Add It';
+
+  @override
+  String get addGymSheetFollowUpBenchTitle => 'Do you have a weight bench?';
+
+  @override
+  String get addGymSheetFollowUpBenchSubtitle =>
+      'Unlocks: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+
+  @override
+  String get addGymSheetFollowUpSquatRackTitle => 'Do you have a squat rack?';
+
+  @override
+  String get addGymSheetFollowUpSquatRackSubtitle =>
+      'Required for: Barbell Squat, Overhead Press, Barbell Bench Press';
+
+  @override
+  String get addGymSheetEnterGymName => 'Please enter a name for your gym';
+
+  @override
+  String addGymSheetCreatedProfile(String name) {
+    return '✓ Created \"$name\" gym profile';
+  }
+
+  @override
+  String addGymSheetFailedToCreate(String error) {
+    return 'Failed to create profile: $error';
+  }
+
+  @override
+  String get addGymSheetAddNewGym => 'Add New Gym';
+
+  @override
+  String addGymSheetStepOf(int step, int total) {
+    return 'Step $step of $total';
+  }
+
+  @override
+  String get addGymSheetBack => 'Back';
+
+  @override
+  String get addGymSheetCreateGym => 'Create Gym';
+
+  @override
+  String get addGymSheetNext => 'Next';
+
+  @override
+  String get addGymSheetWorkoutEnvironment => 'Workout Environment';
+
+  @override
+  String get addGymSheetHelpsUsSuggest =>
+      'This helps us suggest the right equipment';
+
+  @override
+  String get addGymSheetGymNameHint => 'e.g., Home Gym, Planet Fitness, Hotel';
+
+  @override
+  String addGymSheetEquipmentSelected(int count) {
+    return '$count Equipment Selected';
+  }
+
+  @override
+  String addGymSheetItems(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get addGymSheetPickDaysDesc =>
+      'Pick the days you\'ll train at this gym. We\'ll pre-generate 14 days of workouts for these days the moment you switch to this profile.';
+
+  @override
+  String addGymSheetSameAs(String name) {
+    return 'Same as $name';
+  }
+
+  @override
+  String get addGymSheetCurrent => 'current';
+
+  @override
+  String addGymSheetAlsoAt(String names) {
+    return 'Also at: $names';
+  }
+
+  @override
+  String addGymSheetConflictDay(String day, String names) {
+    return '$day also at \"$names\"';
+  }
+
+  @override
+  String addGymSheetConflictMessage(String details) {
+    return 'Schedule overlap: $details. Whichever profile is active that day will own the workout.';
+  }
+
+  @override
+  String get addGymSheetSplitLetAiDecide => 'Let AI Decide';
+
+  @override
+  String get addGymSheetSplitFullBody => 'Full Body';
+
+  @override
+  String get addGymSheetSplitUpperLower => 'Upper/Lower';
+
+  @override
+  String get addGymSheetSplitPushPullLegs => 'Push/Pull/Legs';
+
+  @override
+  String get addGymSheetSplitPhul => 'PHUL';
+
+  @override
+  String get addGymSheetSplitBodyPart => 'Body Part';
+
+  @override
+  String get addGymSheetSplitDescFlexible => 'Flexible';
+
+  @override
+  String get addGymSheetSplitDesc3Days => '3 days';
+
+  @override
+  String get addGymSheetSplitDesc4Days => '4 days';
+
+  @override
+  String get addGymSheetSplitDesc6Days => '6 days';
+
+  @override
+  String get addGymSheetSplitDesc56Days => '5-6 days';
+
+  @override
+  String addGymSheetEquipmentCount(int count) {
+    return '$count equipment';
+  }
+
+  @override
+  String get ringLabelTrain => 'Train';
+
+  @override
+  String get ringLabelNourish => 'Nourish';
+
+  @override
+  String get ringLabelMove => 'Move';
+
+  @override
+  String get ringLabelSleep => 'Sleep';
+
+  @override
+  String get ringLabelCycleDay => 'Cycle day';
+
+  @override
+  String get ringLabelHeartRate => 'Heart rate';
+
+  @override
+  String get ringLabelHrv => 'HRV';
+
+  @override
+  String get ringLabelStress => 'Stress';
+
+  @override
+  String get ringLabelHydration => 'Hydration';
+
+  @override
+  String get ringLabelWeight => 'Weight';
+
+  @override
+  String get ringLabelRecovery => 'Recovery';
+
+  @override
+  String get tierExcellent => 'Excellent';
+
+  @override
+  String get tierGood => 'Good';
+
+  @override
+  String get tierFair => 'Fair';
+
+  @override
+  String get tierLow => 'Low';
+
+  @override
+  String get logMealSheetStartingAnalysis => 'Starting analysis...';
+
+  @override
+  String get logMealSheetAnalysisFailed => 'Analysis failed. Please try again.';
+
+  @override
+  String logMealSheetFailedToSaveError(Object error) {
+    return 'Failed to save: $error';
+  }
+
+  @override
+  String logMealSheetLoggedItems(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Logged $count items',
+      one: 'Logged 1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String logMealSheetLoggedPhotos(num count, Object kcal) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Logged $count photos ($kcal kcal)',
+      one: 'Logged 1 photo ($kcal kcal)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String logMealSheetCouldnTAddFood(Object message) {
+    return 'Couldn\'t add food: $message';
+  }
+
+  @override
+  String logMealSheetCouldnTRefineError(Object message) {
+    return 'Couldn\'t refine: $message';
+  }
+
+  @override
+  String get recipeCardAi => 'AI';
+
+  @override
+  String heartRateChartSummaryReadings(Object count) {
+    return '$count readings';
+  }
+
+  @override
+  String get heartRateChartSummaryNoDataRecorded => 'No data recorded';
+
+  @override
+  String get heartRateChartSummaryAvg => 'Avg';
+
+  @override
+  String get heartRateChartSummaryMax => 'Max';
+
+  @override
+  String get heartRateChartSummaryMin => 'Min';
+
+  @override
+  String heartRateChartSummaryBpm(Object value) {
+    return '$value bpm';
+  }
+
+  @override
+  String get heartRateChartSummaryPeak => 'Peak';
+
+  @override
+  String heartRateChartFatBurnMinutes(num minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes min in fat-burn zone',
+      one: '1 min in fat-burn zone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String heartRateChartFatCalories(Object calories) {
+    return '$calories fat-burn cal';
+  }
+
+  @override
+  String get heartRateChartAerobic => 'Aerobic';
+
+  @override
+  String get heartRateChartAnaerobic => 'Anaerobic';
+
+  @override
+  String get wrappedSummaryYourMonthInReview => 'YOUR MONTH IN REVIEW';
+
+  @override
+  String get wrappedSummaryShareYourWrapped => 'Share Your Wrapped';
+
+  @override
+  String get wrappedSummaryStatWorkouts => 'Workouts';
+
+  @override
+  String get wrappedSummaryStatVolumeLbs => 'Volume (lbs)';
+
+  @override
+  String get wrappedSummaryStatPrs => 'PRs';
+
+  @override
+  String get wrappedSummaryStatBestStreak => 'Best Streak';
+
+  @override
+  String get wrappedSummaryStatHours => 'Hours';
+
+  @override
+  String get wrappedSummaryStatExercises => 'Exercises';
+
+  @override
+  String get weeklyCheckinSheetCaloriesDay => 'calories/day';
+
+  @override
+  String get weeklyCheckinSheetMetabolicAdaptationDetected =>
+      'Metabolic Adaptation Detected';
+
+  @override
+  String weeklyCheckinSheetSustainabilityRating(Object rating) {
+    return '$rating SUSTAINABILITY';
+  }
+
+  @override
+  String weeklyCheckinSheetSuggestedAction(Object action) {
+    return 'Suggested: $action';
+  }
+
+  @override
+  String foodItemRankingNFoodItems(Object count) {
+    return '$count Food Items';
+  }
+
+  @override
+  String get foodItemRankingTapToHideDetails => 'Tap to hide details';
+
+  @override
+  String get foodItemRankingTapToSeeDetails => 'Tap to see details';
+
+  @override
+  String get loggedMealsEdit => 'Edit';
+
+  @override
+  String loggedMealsRemovedItem(Object name) {
+    return 'Removed $name';
+  }
+
+  @override
+  String foodBrowserPanelFailedToLog(Object error) {
+    return 'Failed to log: $error';
+  }
+
+  @override
+  String foodBrowserPanelNoFoodsFound(Object query) {
+    return 'No foods found for \"$query\"';
+  }
+
+  @override
+  String foodBrowserPanelLogSelectedItems(Object count) {
+    return 'Log Selected ($count items)';
+  }
+
+  @override
+  String get scoreExplainAiPicksATrafficLight =>
+      'AI picks a traffic-light grade for each meal based on your personal health goals.';
+
+  @override
+  String get scoreExplainCurrentLabelGood => 'GOOD';
+
+  @override
+  String get scoreExplainCurrentLabelModerate => 'MODERATE';
+
+  @override
+  String get scoreExplainCurrentLabelSkip => 'SKIP';
+
+  @override
+  String get scoreExplainRatingsArePersonalised =>
+      'Ratings are personalised to your goals, intolerances and eating history.';
+
+  @override
+  String get scoreExplainSkip => 'Skip';
+
+  @override
+  String scoreExplainInflammationScoreValue(Object v) {
+    return 'Inflammation score: $v / 10';
+  }
+
+  @override
+  String get scoreExplainChronicLowGradeInflammation =>
+      'Chronic low-grade inflammation from diet is linked to metabolic disease, joint pain, and cognitive decline.';
+
+  @override
+  String get scoreExplainCurrentLabelAntiInfl => 'ANTI-INFL.';
+
+  @override
+  String get scoreExplainCurrentLabelMild => 'MILD';
+
+  @override
+  String get scoreExplainCurrentLabelHigh => 'HIGH';
+
+  @override
+  String get scoreExplainAimForADailyAverage =>
+      'Aim for a daily average below 4. Anti-inflammatory foods score 1–3; high-inflammation foods score 7–10.';
+
+  @override
+  String scoreExplainGlycemicLoadValue(Object v) {
+    return 'Glycemic load: $v';
+  }
+
+  @override
+  String get scoreExplainGlycemicLoadCombines =>
+      'Glycemic load combines carbohydrate quantity and quality. It predicts how much a meal raises blood sugar.';
+
+  @override
+  String get scoreExplainCurrentLabelLow => 'LOW';
+
+  @override
+  String get scoreExplainCurrentLabelMedium => 'MEDIUM';
+
+  @override
+  String get scoreExplainImportantIfYouHaveDiabetes =>
+      'Important if you have diabetes, insulin resistance, or are managing energy levels.';
+
+  @override
+  String get scoreExplainFodmapsAreShortChain =>
+      'FODMAPs are short-chain carbohydrates that are poorly absorbed and fermented by gut bacteria.';
+
+  @override
+  String get scoreExplainOnlyRelevantIfYouHaveIbs =>
+      'Only relevant if you have IBS or a diagnosed gut condition. Safe to ignore otherwise.';
+
+  @override
+  String get scoreExplainWeUseTheNovaClassification =>
+      'We use the NOVA classification system developed at the University of São Paulo.';
+
+  @override
+  String get scoreExplainCurrentLabelNova4 => 'NOVA 4';
+
+  @override
+  String get scoreExplainCurrentLabelWhole => 'WHOLE';
+
+  @override
+  String get scoreExplainLargePopulationStudies =>
+      'Large population studies link ultra-processed food consumption to cancer, cardiovascular disease, and early mortality.';
+
+  @override
+  String get scoreExplainWhoRecommendsAdults =>
+      'WHO recommends adults limit added sugar to < 25 g/day (5% of total energy).';
+
+  @override
+  String scoreExplainThatIsAboutPctDay(Object pctDay) {
+    return 'That is about $pctDay% of WHO\'s 25 g/day limit. Added sugars drive dental decay, insulin spikes, and non-alcoholic fatty liver disease.';
+  }
+
+  @override
+  String get scoreExplainAddedSugar => 'Added sugar';
+
+  @override
+  String scoreExplainAddedSugarValue(Object value) {
+    return 'Added sugar: $value';
+  }
+
+  @override
+  String get scoreExplainAddedSugarIsThe =>
+      'Added sugar is the single strongest dietary predictor of metabolic syndrome in Western diets.';
+
+  @override
+  String get scoreExplainScoreDetailUnavailable =>
+      'Score detail unavailable for this meal.';
+
+  @override
+  String get scoreExplainEachMealGets =>
+      'Each meal gets a 1–10 health score based on nutrient density, processing level, and alignment with your goals.';
+
+  @override
+  String scoreExplainHealthScoreValue(Object v) {
+    return 'Health score: $v / 10';
+  }
+
+  @override
+  String get scoreExplainCurrentLabelAverage => 'AVERAGE';
+
+  @override
+  String get scoreExplainCurrentLabelPoor => 'POOR';
+
+  @override
+  String get scoreExplainDailyAverageAbove6 =>
+      'A daily average above 6 is associated with better long-term metabolic health.';
+
+  @override
+  String cookingConverterEnterWeight(Object type) {
+    return 'Enter $type Weight';
+  }
+
+  @override
+  String get foodMoodAnalyticsMoodImproved => 'Mood improved';
+
+  @override
+  String get foodMoodAnalyticsAvgEnergy => 'Avg energy';
+
+  @override
+  String get foodMoodAnalyticsTrackedMeals => 'Tracked meals';
+
+  @override
+  String foodMoodAnalyticsOftenImprovesYourMood(Object food) {
+    return '$food often improves your mood';
+  }
+
+  @override
+  String get foodMoodAnalyticsTrackingRate => 'Tracking rate';
+
+  @override
+  String get foodMoodAnalyticsMealsTracked => 'Meals tracked';
+
+  @override
+  String get healthMetricsCardInRange => 'In range';
+
+  @override
+  String get healthMetricsCardNoBloodGlucoseReadings =>
+      'No blood glucose readings';
+
+  @override
+  String get healthMetricsCardConnectAGlucoseMonitor =>
+      'Connect a glucose monitor via Health Connect';
+
+  @override
+  String get healthMetricsCardNoInsulinData => 'No insulin data';
+
+  @override
+  String get healthMetricsCardInsulinDeliveryData =>
+      'Insulin delivery data from connected devices will appear here';
+
+  @override
+  String get healthMetricsCardNoDataForToday => 'No data for today';
+
+  @override
+  String get healthMetricsCardBloodGlucoseReadingsWill =>
+      'Blood glucose readings will appear here';
+
+  @override
+  String get healthMetricsCardAverage => 'Average';
+
+  @override
+  String get healthMetricsCardMin => 'Min';
+
+  @override
+  String get healthMetricsCardMax => 'Max';
+
+  @override
+  String get healthMetricsCardBelow => 'Below';
+
+  @override
+  String get healthMetricsCardAbove => 'Above';
+
+  @override
+  String get healthMetricsCardUnits => 'units';
+
+  @override
+  String editableFitnessCardFailedToUpdate(Object error) {
+    return 'Failed to update: $error';
+  }
+
+  @override
+  String get editableFitnessCardGoal => 'Goal';
+
+  @override
+  String get editableFitnessCardNotSet => 'Not set';
+
+  @override
+  String get editableFitnessCardNoGym => 'No gym';
+
+  @override
+  String editableFitnessCardNAreas(Object count) {
+    return '$count areas';
+  }
+
+  @override
+  String get cardioHistoryHiit => 'HIIT';
+
+  @override
+  String get cardioHistoryRpe => 'RPE';
+
+  @override
+  String cardioHistoryRouteRecordedPts(Object count) {
+    return 'Route recorded ($count pts)';
+  }
+
+  @override
+  String cardioHistoryNSessions(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sessions',
+      one: '1 session',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cardioHistoryNActivities(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count activities',
+      one: '1 activity',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cardioHistoryNoCardioSessionsYet => 'No cardio sessions yet.';
+
+  @override
+  String get cardioHistoryImportFromStravaPeloton =>
+      'Import from Strava, Peloton, Garmin, Apple Health, or Fitbit to see your history here.';
+
+  @override
+  String get cardioHistoryCouldNotLoadCardio => 'Could not load cardio history';
+
+  @override
+  String goalHistoryChartBestValue(Object value) {
+    return 'Best: $value';
+  }
+
+  @override
+  String aiModelDownloadDownloadModel(String modelName) {
+    return 'Download $modelName';
+  }
+
+  @override
+  String merchClaimsClaimYour(String displayName) {
+    return 'Claim your $displayName?';
+  }
+
+  @override
+  String merchClaimsYouWillForfeit(String displayName, int level) {
+    return 'You\'ll forfeit the $displayName (level $level). This can\'t be undone.';
+  }
+
+  @override
+  String get aiModelDownloadBatteryWarning =>
+      'On-device AI models run intensive computations on your phone. This may increase battery drain and cause the device to warm up during workout generation. Larger models use more resources.';
+
+  @override
+  String get aiModelDownloadCancel => 'Cancel';
+
+  @override
+  String aiModelDownloadDeleteModelFree(String size) {
+    return 'Delete Model (Free $size)';
+  }
+
+  @override
+  String aiModelDownloadDownloadingProgress(int percent) {
+    return 'Downloading... $percent%';
+  }
+
+  @override
+  String get aiModelDownloadRam => 'RAM';
+
+  @override
+  String get aiModelDownloadRequiredToDownload =>
+      'Required to download models from HuggingFace. Get your free token at huggingface.co/settings/tokens';
+
+  @override
+  String aiModelDownloadRequiresRam(String ramLabel) {
+    return 'Requires $ramLabel RAM';
+  }
+
+  @override
+  String get aiModelDownloadSelectAModel => 'Select a model';
+
+  @override
+  String aiModelDownloadSizeStorage(String size) {
+    return '$size storage';
+  }
+
+  @override
+  String get beastModeAlgorithmInspector => 'ALGORITHM INSPECTOR';
+
+  @override
+  String get beastModeAlgorithmInspectorSubtitle =>
+      'See the math behind your workouts';
+
+  @override
+  String get beastModeRecoveryAndProgression => 'RECOVERY & PROGRESSION';
+
+  @override
+  String get beastModeRecoveryAndProgressionSubtitle =>
+      'Visualize your body\'s recovery and forecast growth';
+
+  @override
+  String get beastModeCustomizationLab => 'CUSTOMIZATION LAB';
+
+  @override
+  String get beastModeCustomizationLabSubtitle =>
+      'Advanced color and font controls';
+
+  @override
+  String get beastModeWorkoutAlgorithm => 'WORKOUT ALGORITHM';
+
+  @override
+  String get beastModeWorkoutAlgorithmSubtitle =>
+      'Deep control over workout generation';
+
+  @override
+  String get beastModeDataAndSyncTools => 'DATA & SYNC TOOLS';
+
+  @override
+  String get beastModeDataAndSyncToolsSubtitle =>
+      'Debug sync issues and manage your data';
+
+  @override
+  String get beastModeWorkoutTemplates => 'WORKOUT TEMPLATES';
+
+  @override
+  String get beastModeWorkoutTemplatesSubtitle =>
+      'Custom workout structure presets';
+
+  @override
+  String get beastModeAboutBeastMode => 'ABOUT BEAST MODE';
+
+  @override
+  String get beastModeAboutBeastModeSubtitle =>
+      'Build information and controls';
+
+  @override
+  String get challengeCardYouChallengedToBeat => 'You challenged to beat';
+
+  @override
+  String get challengeCompleteContinue => 'Continue';
+
+  @override
+  String coachVoicePickerFailedToSwitchVoice(String error) {
+    return 'Failed to switch voice: $error';
+  }
+
+  @override
+  String cycleScreenUiPhaseLabel(String displayName) {
+    return '$displayName phase';
+  }
+
+  @override
+  String cycleScreenUiSuggestedTraining(String intensity) {
+    return 'Suggested training: $intensity';
+  }
+
+  @override
+  String get cycleScreenUiPredictionsAreEstimates =>
+      'Predictions are estimates based on your logged data, not a birth-control method and not medical advice. See a clinician for any health concern.';
+
+  @override
+  String get cycleScreenUiRetry => 'Retry';
+
+  @override
+  String get cycleScreenUiLogYourFirstPeriod =>
+      'Log your first period to start predictions.';
+
+  @override
+  String get exercisePickerSheetAddFavoriteExercise => 'Add Favorite Exercise';
+
+  @override
+  String get exercisePickerSheetAddStapleExercise => 'Add Staple Exercise';
+
+  @override
+  String get exercisePickerSheetAddToExerciseQueue => 'Add to Exercise Queue';
+
+  @override
+  String get exercisePickerSheetAddExerciseToAvoid => 'Add Exercise to Avoid';
+
+  @override
+  String get exercisePickerSheetSearchForExercisesToAdd =>
+      'Search for exercises to add to your favorites';
+
+  @override
+  String get exercisePickerSheetSearchForCoreLifts =>
+      'Search for core lifts to lock in your workouts';
+
+  @override
+  String get exercisePickerSheetSearchForExercisesToInclude =>
+      'Search for exercises to include in your next workout';
+
+  @override
+  String get exercisePickerSheetSearchForExercisesToSkip =>
+      'Search for exercises you want to skip';
+
+  @override
+  String get exercisePickerSheetShowingResultsFor => 'Showing results for ';
+
+  @override
+  String exercisePickerSheetAddAsCustom(String name) {
+    return 'Add \"$name\" as custom';
+  }
+
+  @override
+  String exercisePickerSheetNSelected(int n) {
+    return '$n selected';
+  }
+
+  @override
+  String get exercisePickerSheetSave => 'Save';
+
+  @override
+  String exercisePickerSheetSaveN(int n) {
+    return 'Save ($n)';
+  }
+
+  @override
+  String get exercisePickerSheetBodyPart => 'Body Part';
+
+  @override
+  String get exercisePickerSheetEquipment => 'Equipment';
+
+  @override
+  String get exercisePickerSheetType => 'Type';
+
+  @override
+  String freshnessDecayCardUsedSessionsAgo(int sessions) {
+    String _temp0 = intl.Intl.pluralLogic(
+      sessions,
+      locale: localeName,
+      other: 'Used $sessions sessions ago',
+      one: 'Used 1 session ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String merchClaimsUnlockedAtLevel(int level) {
+    return 'Unlocked at Level $level';
+  }
+
+  @override
+  String merchClaimsAcceptedWeWillBeIn(String displayName) {
+    return '$displayName accepted! We\'ll be in touch.';
+  }
+
+  @override
+  String merchClaimsFailedToAccept(String error) {
+    return 'Failed to accept: $error';
+  }
+
+  @override
+  String merchClaimsFailedToCancel(String error) {
+    return 'Failed to cancel: $error';
+  }
+
+  @override
+  String myExercisesAreYouSureDelete(String exercise) {
+    return 'Are you sure you want to delete \"$exercise\"? This cannot be undone.';
+  }
+
+  @override
+  String pauseSubscriptionPausePlan(String planName) {
+    return 'Pause $planName';
+  }
+
+  @override
+  String get pauseSubscriptionBillingIsPaused => 'Billing is paused';
+
+  @override
+  String get pauseSubscriptionYouWontBeCharged =>
+      'You won\'t be charged during the pause';
+
+  @override
+  String get pauseSubscriptionDataIsPreserved => 'Data is preserved';
+
+  @override
+  String get pauseSubscriptionYourWorkoutHistory =>
+      'Your workout history & progress remain safe';
+
+  @override
+  String get pauseSubscriptionLimitedAccess => 'Limited access';
+
+  @override
+  String get pauseSubscriptionPremiumFeaturesAre =>
+      'Premium features are temporarily unavailable';
+
+  @override
+  String pauseSubscriptionPauseForDuration(String duration) {
+    return 'Pause for $duration';
+  }
+
+  @override
+  String get pauseSubscriptionSelectADuration => 'Select a duration';
+
+  @override
+  String get progressionPaceProgressionSpeed => 'Progression Speed';
+
+  @override
+  String get progressionPaceFineTuneSettings => 'Fine-Tune Settings';
+
+  @override
+  String get progressionPaceDeloadSettings => 'Deload Settings';
+
+  @override
+  String reportsHubCouldntBuildShare(String error) {
+    return 'Couldn\'t build share — $error';
+  }
+
+  @override
+  String reportsHubNoDataForMonth(String reportName, String month) {
+    return 'No $reportName data for $month yet — try a different month';
+  }
+
+  @override
+  String get settingsCardPleaseSelectAtLeastOne =>
+      'Please select at least one workout day';
+
+  @override
+  String settingsCardWorkoutDaysUpdatedTo(String days) {
+    return 'Workout days updated to $days';
+  }
+
+  @override
+  String get settingsCardWorkoutDays => 'Workout Days';
+
+  @override
+  String get settingsCardSelectWhichDaysYou =>
+      'Select which days you want to work out';
+
+  @override
+  String settingsCardNDaysSelected(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days selected',
+      one: '1 day selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsCardChangingDaysWillReschedule =>
+      'Changing days will reschedule your upcoming workouts automatically.';
+
+  @override
+  String get settingsCardSaveChanges => 'Save Changes';
+
+  @override
+  String get settingsCardNoChanges => 'No Changes';
+
+  @override
+  String strainRiskCardPercentOverCap(String percent) {
+    return '$percent% over cap';
+  }
+
+  @override
+  String strainRiskCardPercentVsLastWeek(String signedPercent) {
+    return '$signedPercent% vs last week';
+  }
+
+  @override
+  String volumeChartMuscleGroupVolume(String muscleGroup) {
+    return '$muscleGroup Volume';
+  }
+
+  @override
+  String get volumeChartWeeklyVolumeTrend => 'Weekly Volume Trend';
+
+  @override
+  String volumeChartNRisky(int count) {
+    return '$count risky';
+  }
+
+  @override
+  String get volumeChartVolume => 'Volume';
+
+  @override
+  String get volumeChartDangerousIncrease => 'Dangerous Increase';
+
+  @override
+  String get volumeChartAverage => 'Average';
+
+  @override
+  String get volumeChartPeak => 'Peak';
+
+  @override
+  String get volumeChartWeeks => 'Weeks';
+
+  @override
+  String get wearOsLogSetsDirectlyFromWatch => 'Log sets directly from watch';
+
+  @override
+  String get wearOsRealTimeHeartRateTracking => 'Real-time heart rate tracking';
+
+  @override
+  String get wearOsQuickFoodLoggingViaVoice => 'Quick food logging via voice';
+
+  @override
+  String get wearOsAutomaticDataSync => 'Automatic data sync';
+
+  @override
+  String workoutHistoryImportError(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String workoutHistoryImportImportFailed(String error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String get workoutHistoryImportPleaseEnterExerciseName =>
+      'Please enter an exercise name';
+
+  @override
+  String get workoutHistoryImportRequired => 'Required';
+
+  @override
+  String get workoutHistoryImportInvalid => 'Invalid';
+
+  @override
+  String get workoutHistoryImportExportFromHevy =>
+      'Export from Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton, and more.';
+
+  @override
+  String workoutHistoryImportRemoveExercise(String exerciseName) {
+    return 'Remove $exerciseName from your workout history?';
+  }
+
+  @override
+  String workoutHistoryImportNSessions(String sourceDescription, int count) {
+    return '$sourceDescription  •  $count sessions';
+  }
+
+  @override
+  String workoutHistoryImportMaxWeightKg(String weight) {
+    return 'Max: $weight kg';
+  }
+
+  @override
+  String xpProgressCardLvlN(int level) {
+    return 'Lvl $level';
+  }
+
+  @override
+  String xpProgressCardLevelN(int level) {
+    return 'Level $level';
+  }
+
+  @override
+  String xpProgressCardXpTotal(String xp) {
+    return '$xp XP Total';
+  }
+
+  @override
+  String xpProgressCardPercentToLevel(int percent, int level) {
+    return '$percent% to Level $level';
+  }
+
+  @override
+  String xpProgressCardPrestigeN(int level) {
+    return 'Prestige $level';
+  }
+
+  @override
+  String get xpProgressCardDaily => 'Daily';
+
+  @override
+  String get xpProgressCardDays => 'days';
+
+  @override
+  String get xpProgressCardNone => 'none';
+
+  @override
+  String fastingBodyStatusLiveSubtitle(String elapsed) {
+    return 'Your live metabolic journey — $elapsed in.';
+  }
+
+  @override
+  String get fastingBodyStatusPreviewSubtitle =>
+      'A preview of the metabolic stages of a fast.';
+
+  @override
+  String get fastingBodyStatusStartFastHint =>
+      'Start a fast to see your live timeline with the exact clock time each stage is reached.';
+
+  @override
+  String get fastingBodyStatusYouAreHere => 'You are here';
+
+  @override
+  String get fastingBodyStatusBeyondGoal => 'Beyond your goal';
+
+  @override
+  String get fastingGuideSubtitle =>
+      'Everything you need to fast confidently — what it is, how it works, and what happens in your body.';
+
+  @override
+  String get fastingGuideSwipeTimeline =>
+      'Swipe through what happens hour by hour — from your last meal all the way to a 30-day fast.';
+
+  @override
+  String get fastingGuideFaq => 'FAQ';
+
+  @override
+  String get fastingGuideSafetyBody =>
+      'Stop fasting and eat if you feel dizzy, faint, shaky, or unwell. Fasts beyond 24 hours need extra attention to electrolytes, and fasts beyond 72 hours should only be done under medical supervision. Fasting is not a substitute for medical care — this guide is educational and not medical advice.';
+
+  @override
+  String get fastingScoreCardCompletionRate => 'Completion Rate';
+
+  @override
+  String get fastingScoreCardStreakBonus => 'Streak Bonus';
+
+  @override
+  String get fastingScoreCardWeeklyGoal => 'Weekly Goal';
+
+  @override
+  String get fastingScoreCardProtocolLevel => 'Protocol Level';
+
+  @override
+  String fastingStatsCardStreakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fastingStatsCardFastsProgress(int fasts, int goal) {
+    return '$fasts / $goal fasts';
+  }
+
+  @override
+  String get fastingStatsCardFastingHelps => 'Fasting helps';
+
+  @override
+  String get fastingStatsCardMixedResults => 'Mixed results';
+
+  @override
+  String get fastingStatsCardNeutral => 'Neutral';
+
+  @override
+  String get fastingStatsCardNeedMoreData => 'Need more data';
+
+  @override
+  String chatScreenFailedToSendVoice(String error) {
+    return 'Failed to send voice message: $error';
+  }
+
+  @override
+  String chatScreenRouteNotRegistered(String route) {
+    return 'Route not registered: $route';
+  }
+
+  @override
+  String get chatScreenCoachIsThinkingLonger =>
+      'Coach is thinking longer than usual.';
+
+  @override
+  String get chatScreenCantReachCoach => 'Can\'t reach the coach right now.';
+
+  @override
+  String get chatScreenCouldntReachCoach => 'Couldn\'t reach the coach.';
+
+  @override
+  String get chatScreenSomethingWentWrongLoading =>
+      'Something went wrong loading your chat.';
+
+  @override
+  String get chatScreenMultiAgentHangTight =>
+      'Multi-agent answers can take up to two minutes — hang tight or retry.';
+
+  @override
+  String get chatScreenCheckConnection =>
+      'Check your connection and try again.';
+
+  @override
+  String chatScreenMessagesLeftToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count messages left today',
+      one: '1 message left today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chatScreenTyping => 'Typing...';
+
+  @override
+  String get formComparisonResultBeta => 'BETA';
+
+  @override
+  String get formComparisonResultImproving => 'Improving';
+
+  @override
+  String get formComparisonResultRegressing => 'Regressing';
+
+  @override
+  String get formComparisonResultStable => 'Stable';
+
+  @override
+  String get exerciseProgressDetailProgress => 'Progress';
+
+  @override
+  String get exerciseProgressDetailHistory => 'History';
+
+  @override
+  String get muscleAnalyticsNeedsWork => 'Needs Work';
+
+  @override
+  String get socialSortRecent => 'Recent';
+
+  @override
+  String get socialSortTop => 'Top';
+
+  @override
+  String get socialSortTrending => 'Trending';
+
+  @override
+  String socialUsernameCopied(String username) {
+    return 'Username copied: @$username';
+  }
+
+  @override
+  String get socialUserIdCopied => 'User ID copied';
+
+  @override
+  String get introTagline =>
+      'An AI coach that builds the plan, learns your body, and adjusts every week.';
+
+  @override
+  String get introBuildMyPlan => 'Build My Plan';
+
+  @override
+  String get introIAlreadyHaveAnAccount => 'I already have an account';
+
+  @override
+  String combinedHealthActivityStreakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days in a row at or above your step goal.',
+      one: '1 day at or above your step goal.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get combinedHealthConnectHealthBody =>
+      'Steps, heart rate, sleep and more sync from Health Connect on Android and the Health app on iOS.';
+
+  @override
+  String get moodWeeklyChartImproving => 'Improving';
+
+  @override
+  String get moodWeeklyChartDeclining => 'Declining';
+
+  @override
+  String get moodWeeklyChartStable => 'Stable';
+
+  @override
+  String favoriteWorkoutsSavedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count saved workouts',
+      one: '1 saved workout',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get favoriteWorkoutsWorkoutFallback => 'Workout';
+
+  @override
+  String get streakMilestoneDays => 'DAYS';
+
+  @override
+  String get streakMilestoneRare => 'RARE';
+
+  @override
+  String streakMilestoneNextBadgeName(String name) {
+    return 'Next: $name';
+  }
+
+  @override
+  String streakMilestoneDaysToGo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days to go!',
+      one: '1 day to go!',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String streakMilestonePreviewDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get achievementsCardAchievements => 'Achievements card achievements';
+
+  @override
+  String get aiModelDownloadBasic => 'Ai model download basic';
+
+  @override
+  String get aiModelDownloadBestQuality => 'Ai model download best quality';
+
+  @override
+  String get aiModelDownloadMultimodal => 'Ai model download multimodal';
+
+  @override
+  String get aiModelDownloadNotCompatible => 'Ai model download not compatible';
+
+  @override
+  String get aiModelDownloadOptimal => 'Ai model download optimal';
+
+  @override
+  String get aiModelDownloadRecommended => 'Ai model download recommended';
+
+  @override
+  String get aiModelDownloadSearch => 'Ai model download search';
+
+  @override
+  String get aiModelDownloadStandard => 'Ai model download standard';
+
+  @override
+  String get commonCancel => 'Common cancel';
+
+  @override
+  String get commonYou => 'Common you';
+
+  @override
+  String get complianceRingCardAllWorkoutsCompleted =>
+      'Compliance ring card all workouts completed';
+
+  @override
+  String get complianceRingCardGetStartedToday =>
+      'Compliance ring card get started today';
+
+  @override
+  String complianceRingCardGreatPace(Object arg0) {
+    return 'Compliance ring card great pace $arg0';
+  }
+
+  @override
+  String complianceRingCardOnTrack(Object arg0) {
+    return 'Compliance ring card on track $arg0';
+  }
+
+  @override
+  String complianceRingCardWorkoutsRemaining(Object arg0) {
+    return 'Compliance ring card workouts remaining $arg0';
+  }
+
+  @override
+  String get easyHelpLogASetBody => 'Easy help log a set body';
+
+  @override
+  String get easyHelpTodaysExercise => 'Easy help todays exercise';
+
+  @override
+  String get easyHelpTodaysExerciseBody => 'Easy help todays exercise body';
+
+  @override
+  String get easyHelpWeightAndRepsBody => 'Easy help weight and reps body';
+
+  @override
+  String get editProgramSheetBack => 'Edit program sheet back';
+
+  @override
+  String get editProgramSheetContinue => 'Edit program sheet continue';
+
+  @override
+  String editProgramSheetCustomValue(Object arg0) {
+    return 'Edit program sheet custom value $arg0';
+  }
+
+  @override
+  String get editProgramSheetDays => 'Edit program sheet days';
+
+  @override
+  String get editProgramSheetDifficulty => 'Edit program sheet difficulty';
+
+  @override
+  String get editProgramSheetDuration => 'Edit program sheet duration';
+
+  @override
+  String get editProgramSheetEquipment => 'Edit program sheet equipment';
+
+  @override
+  String get editProgramSheetEquipmentLabel =>
+      'Edit program sheet equipment label';
+
+  @override
+  String editProgramSheetFailedToLoadHistory(Object arg0) {
+    return 'Edit program sheet failed to load history $arg0';
+  }
+
+  @override
+  String editProgramSheetFailedToRestore(Object arg0) {
+    return 'Edit program sheet failed to restore $arg0';
+  }
+
+  @override
+  String get editProgramSheetFailedToUpdateProgram =>
+      'Edit program sheet failed to update program';
+
+  @override
+  String get editProgramSheetFocus => 'Edit program sheet focus';
+
+  @override
+  String get editProgramSheetHealth => 'Edit program sheet health';
+
+  @override
+  String get editProgramSheetInjuries => 'Edit program sheet injuries';
+
+  @override
+  String get editProgramSheetProgram => 'Edit program sheet program';
+
+  @override
+  String get editProgramSheetSavingPreferences =>
+      'Edit program sheet saving preferences';
+
+  @override
+  String get editProgramSheetSchedule => 'Edit program sheet schedule';
+
+  @override
+  String get editProgramSheetTrainingProgram =>
+      'Edit program sheet training program';
+
+  @override
+  String get editProgramSheetUpdateAndRegenerate =>
+      'Edit program sheet update and regenerate';
+
+  @override
+  String get editProgramSheetUpdating => 'Edit program sheet updating';
+
+  @override
+  String get emptyStateClearFilters => 'Empty state clear filters';
+
+  @override
+  String get emptyStateCreateProgram => 'Empty state create program';
+
+  @override
+  String get exerciseAddSheetSubtitle => 'Exercise add sheet subtitle';
+
+  @override
+  String get exerciseAddSheetTabAiPicks => 'Exercise add sheet tab ai picks';
+
+  @override
+  String get exerciseAddSheetTabLibrary => 'Exercise add sheet tab library';
+
+  @override
+  String get exerciseAddSheetTabMine => 'Exercise add sheet tab mine';
+
+  @override
+  String get exerciseAddSheetTabSnapped => 'Exercise add sheet tab snapped';
+
+  @override
+  String get exerciseDetailsAiCoachTips => 'Exercise details ai coach tips';
+
+  @override
+  String get exerciseDetailsBodyweight => 'Exercise details bodyweight';
+
+  @override
+  String get exerciseDetailsBreathing => 'Exercise details breathing';
+
+  @override
+  String get exerciseDetailsDetails => 'Exercise details details';
+
+  @override
+  String get exerciseDetailsDifficulty => 'Exercise details difficulty';
+
+  @override
+  String get exerciseDetailsDontHaveEquipment =>
+      'Exercise details dont have equipment';
+
+  @override
+  String get exerciseDetailsEquipment => 'Exercise details equipment';
+
+  @override
+  String get exerciseDetailsExerciseInfo => 'Exercise details exercise info';
+
+  @override
+  String get exerciseDetailsFormCues => 'Exercise details form cues';
+
+  @override
+  String get exerciseDetailsNotSpecified => 'Exercise details not specified';
+
+  @override
+  String get exerciseDetailsPrimaryMuscle => 'Exercise details primary muscle';
+
+  @override
+  String get exerciseDetailsProTip => 'Exercise details pro tip';
+
+  @override
+  String get exerciseDetailsSecondaryMuscles =>
+      'Exercise details secondary muscles';
+
+  @override
+  String get exerciseDetailsSetup => 'Exercise details setup';
+
+  @override
+  String get exerciseDetailsTapVideoHint => 'Exercise details tap video hint';
+
+  @override
+  String get exerciseDetailsVideo => 'Exercise details video';
+
+  @override
+  String get exerciseDetailsWatchOutFor => 'Exercise details watch out for';
+
+  @override
+  String get exerciseSwapOptionSwap => 'Exercise swap option swap';
+
+  @override
+  String get exerciseSwapSheetTabAnyEquipment =>
+      'Exercise swap sheet tab any equipment';
+
+  @override
+  String get exerciseSwapSheetTabRecent => 'Exercise swap sheet tab recent';
+
+  @override
+  String get exerciseSwapSheetTabSimilar => 'Exercise swap sheet tab similar';
+
+  @override
+  String get exerciseSwapSheetTabSnapped => 'Exercise swap sheet tab snapped';
+
+  @override
+  String get exerciseSwapSheetTitle => 'Exercise swap sheet title';
+
+  @override
+  String get fatigueAlertAcceptSuggestion => 'Fatigue alert accept suggestion';
+
+  @override
+  String get fatigueAlertContinueAsPlanned =>
+      'Fatigue alert continue as planned';
+
+  @override
+  String get fatigueAlertStopExercise => 'Fatigue alert stop exercise';
+
+  @override
+  String get fullScreenChartCouldNotLoad => 'Full screen chart could not load';
+
+  @override
+  String get fullScreenChartNotEnoughHistory =>
+      'Full screen chart not enough history';
+
+  @override
+  String habitsCardCompletedCount(Object arg0, Object arg1) {
+    return 'Habits card completed count $arg0 $arg1';
+  }
+
+  @override
+  String habitsCardDayStreak(Object arg0) {
+    return 'Habits card day streak $arg0';
+  }
+
+  @override
+  String habitsCardViewAllHabits(Object arg0) {
+    return 'Habits card view all habits $arg0';
+  }
+
+  @override
+  String get habitsTileCardNoHabits => 'Habits tile card no habits';
+
+  @override
+  String mainShellPartChatsLeftToday(Object arg0) {
+    return 'Main shell part chats left today $arg0';
+  }
+
+  @override
+  String get metricsDashboardBmi => 'Metrics dashboard bmi';
+
+  @override
+  String get metricsDashboardBodyFatPct => 'Metrics dashboard body fat pct';
+
+  @override
+  String get metricsDashboardCalories => 'Metrics dashboard calories';
+
+  @override
+  String get metricsDashboardHeartRate => 'Metrics dashboard heart rate';
+
+  @override
+  String get metricsDashboardHip => 'Metrics dashboard hip';
+
+  @override
+  String get metricsDashboardMuscleMass => 'Metrics dashboard muscle mass';
+
+  @override
+  String metricsDashboardNoMetricDataYet(Object arg0) {
+    return 'Metrics dashboard no metric data yet $arg0';
+  }
+
+  @override
+  String get metricsDashboardRestingHeartRate =>
+      'Metrics dashboard resting heart rate';
+
+  @override
+  String get metricsDashboardSave => 'Metrics dashboard save';
+
+  @override
+  String get metricsDashboardValue => 'Metrics dashboard value';
+
+  @override
+  String get metricsDashboardWaist => 'Metrics dashboard waist';
+
+  @override
+  String muscleHeatmapTileMostTrained(Object arg0) {
+    return 'Muscle heatmap tile most trained $arg0';
+  }
+
+  @override
+  String get muscleHeatmapTileRetry => 'Muscle heatmap tile retry';
+
+  @override
+  String get neatGamificationWidgetsActiveWalker =>
+      'Neat gamification widgets active walker';
+
+  @override
+  String get neatGamificationWidgetsCasualMover =>
+      'Neat gamification widgets casual mover';
+
+  @override
+  String get neatGamificationWidgetsCouchPotato =>
+      'Neat gamification widgets couch potato';
+
+  @override
+  String neatGamificationWidgetsCurrentXp(Object arg0) {
+    return 'Neat gamification widgets current xp $arg0';
+  }
+
+  @override
+  String get neatGamificationWidgetsExpired =>
+      'Neat gamification widgets expired';
+
+  @override
+  String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
+    return 'Neat gamification widgets hours minutes left $arg0 $arg1';
+  }
+
+  @override
+  String neatGamificationWidgetsMinutesLeft(Object arg0) {
+    return 'Neat gamification widgets minutes left $arg0';
+  }
+
+  @override
+  String get neatGamificationWidgetsNeat => 'Neat gamification widgets neat';
+
+  @override
+  String get neatGamificationWidgetsNeatChampion =>
+      'Neat gamification widgets neat champion';
+
+  @override
+  String get neatGamificationWidgetsNeatEnthusiast =>
+      'Neat gamification widgets neat enthusiast';
+
+  @override
+  String get neatGamificationWidgetsScore => 'Neat gamification widgets score';
+
+  @override
+  String neatGamificationWidgetsStepGoal(Object arg0) {
+    return 'Neat gamification widgets step goal $arg0';
+  }
+
+  @override
+  String neatGamificationWidgetsTargetActiveHours(Object arg0) {
+    return 'Neat gamification widgets target active hours $arg0';
+  }
+
+  @override
+  String neatGamificationWidgetsXpToNext(Object xpToNext, Object levelName) {
+    return '$xpToNext XP to reach $levelName';
+  }
+
+  @override
+  String get openAllCrates24HoursOf2xXp => 'Open all crates hours of x xp';
+
+  @override
+  String get openAllCratesActivityCrate => 'Open all crates activity crate';
+
+  @override
+  String get openAllCratesBonusCrateToOpen =>
+      'Open all crates bonus crate to open';
+
+  @override
+  String openAllCratesCollect(Object arg0, Object arg1) {
+    return 'Open all crates collect $arg0 $arg1';
+  }
+
+  @override
+  String openAllCratesCratesOpened(Object arg0) {
+    return 'Open all crates crates opened $arg0';
+  }
+
+  @override
+  String get openAllCratesDailyCrate => 'Open all crates daily crate';
+
+  @override
+  String get openAllCratesDone => 'Open all crates done';
+
+  @override
+  String get openAllCratesDoubleXpToken => 'Open all crates double xp token';
+
+  @override
+  String get openAllCratesFitnessCrate => 'Open all crates fitness crate';
+
+  @override
+  String openAllCratesGainedXp(Object arg0) {
+    return 'Open all crates gained xp $arg0';
+  }
+
+  @override
+  String get openAllCratesOpenYourCrates => 'Open all crates open your crates';
+
+  @override
+  String get openAllCratesOpeningYourCrates =>
+      'Open all crates opening your crates';
+
+  @override
+  String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
+    return 'Open all crates pick reward per day $arg0 $arg1';
+  }
+
+  @override
+  String openAllCratesPickYourReward(Object arg0, Object arg1) {
+    return 'Open all crates pick your reward $arg0 $arg1';
+  }
+
+  @override
+  String get openAllCratesProtectYourStreak =>
+      'Open all crates protect your streak';
+
+  @override
+  String get openAllCratesStreakCrate => 'Open all crates streak crate';
+
+  @override
+  String get openAllCratesStreakShield => 'Open all crates streak shield';
+
+  @override
+  String get openAllCratesToday => 'Open all crates today';
+
+  @override
+  String openAllCratesTotalXpFormatted(Object arg0) {
+    return 'Open all crates total xp formatted $arg0';
+  }
+
+  @override
+  String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
+    return 'Open all crates total xp level $arg0 $arg1';
+  }
+
+  @override
+  String openAllCratesXpInLevel(Object arg0, Object arg1) {
+    return 'Open all crates xp in level $arg0 $arg1';
+  }
+
+  @override
+  String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
+    return 'Open all crates xp to next level $arg0 $arg1';
+  }
+
+  @override
+  String get openAllCratesYesterday => 'Open all crates yesterday';
+
+  @override
+  String get pillarDetailCouldNotLoad => 'Pillar detail could not load';
+
+  @override
+  String get pillarDetailFiveOrMoreLoggedDays =>
+      'Pillar detail five or more logged days';
+
+  @override
+  String get pillarDetailHourlyActivityRibbon =>
+      'Pillar detail hourly activity ribbon';
+
+  @override
+  String get pillarDetailHourlyActivityRibbonBody =>
+      'Pillar detail hourly activity ribbon body';
+
+  @override
+  String get pillarDetailLogged => 'Pillar detail logged';
+
+  @override
+  String get pillarDetailMacroStream => 'Pillar detail macro stream';
+
+  @override
+  String get pillarDetailMacroStreamBody => 'Pillar detail macro stream body';
+
+  @override
+  String get pillarDetailNoHistoryYet => 'Pillar detail no history yet';
+
+  @override
+  String get pillarDetailOpenActivity => 'Pillar detail open activity';
+
+  @override
+  String get pillarDetailOpenNutrition => 'Pillar detail open nutrition';
+
+  @override
+  String get pillarDetailOpenWorkouts => 'Pillar detail open workouts';
+
+  @override
+  String get pillarDetailPending => 'Pillar detail pending';
+
+  @override
+  String get pillarDetailSetAGoal => 'Pillar detail set a goal';
+
+  @override
+  String get pillarDetailSleepStages => 'Pillar detail sleep stages';
+
+  @override
+  String get pillarDetailSleepStagesBody => 'Pillar detail sleep stages body';
+
+  @override
+  String get pillarDetailTwoOrMoreLoggedDays =>
+      'Pillar detail two or more logged days';
+
+  @override
+  String get pillarDetailViewFullStats => 'Pillar detail view full stats';
+
+  @override
+  String get pillarDetailWhenYouTrain => 'Pillar detail when you train';
+
+  @override
+  String get pillarDetailWhenYouTrainBody =>
+      'Pillar detail when you train body';
+
+  @override
+  String get planPreviewScreenBuildStrengthFoundation =>
+      'Plan preview screen build strength foundation';
+
+  @override
+  String planPreviewScreenDaysPerWeek(Object arg0) {
+    return 'Plan preview screen days per week $arg0';
+  }
+
+  @override
+  String planPreviewScreenEquipmentCount(Object arg0) {
+    return 'Plan preview screen equipment count $arg0';
+  }
+
+  @override
+  String planPreviewScreenExercisesMin(Object arg0, Object arg1) {
+    return 'Plan preview screen exercises min $arg0 $arg1';
+  }
+
+  @override
+  String get planPreviewScreenIncreaseIntensityVolume =>
+      'Plan preview screen increase intensity volume';
+
+  @override
+  String get planPreviewScreenMasterTheMovement =>
+      'Plan preview screen master the movement';
+
+  @override
+  String get planPreviewScreenPeakPerformanceWeek =>
+      'Plan preview screen peak performance week';
+
+  @override
+  String planPreviewScreenWeekNumber(Object arg0) {
+    return 'Plan preview screen week number $arg0';
+  }
+
+  @override
+  String get preAuthQuizSkipAndFinish => 'Pre auth quiz skip and finish';
+
+  @override
+  String get programMetaApplyStaples => 'Program meta apply staples';
+
+  @override
+  String get programMetaApplyStaplesSubtitle =>
+      'Program meta apply staples subtitle';
+
+  @override
+  String get programMetaDeloadEvery => 'Program meta deload every';
+
+  @override
+  String get programMetaFixedLoadsNote => 'Program meta fixed loads note';
+
+  @override
+  String get programMetaProgramSettings => 'Program meta program settings';
+
+  @override
+  String get programMetaProgression => 'Program meta progression';
+
+  @override
+  String get programSummaryAdvancedLabel => 'Program summary advanced label';
+
+  @override
+  String get programSummaryBeginnerLabel => 'Program summary beginner label';
+
+  @override
+  String get programSummaryBodyweight => 'Program summary bodyweight';
+
+  @override
+  String get programSummaryBuildMuscle => 'Program summary build muscle';
+
+  @override
+  String get programSummaryEndurance => 'Program summary endurance';
+
+  @override
+  String get programSummaryFullGym => 'Program summary full gym';
+
+  @override
+  String get programSummaryGeneralFitness => 'Program summary general fitness';
+
+  @override
+  String get programSummaryGetStronger => 'Program summary get stronger';
+
+  @override
+  String get programSummaryIntermediateLabel =>
+      'Program summary intermediate label';
+
+  @override
+  String get programSummaryLoseWeight => 'Program summary lose weight';
+
+  @override
+  String programSummaryNItems(Object arg0) {
+    return 'Program summary n items $arg0';
+  }
+
+  @override
+  String get programSummaryStayFit => 'Program summary stay fit';
+
+  @override
+  String get programSummaryStrengthSize => 'Program summary strength size';
+
+  @override
+  String get progressionSelectorSubtitle => 'Progression selector subtitle';
+
+  @override
+  String get progressionSelectorTitle => 'Progression selector title';
+
+  @override
+  String get quickLogMeasurementsNotLoggedYet =>
+      'Quick log measurements not logged yet';
+
+  @override
+  String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
+    return 'Quick log measurements updated days ago $arg0';
+  }
+
+  @override
+  String get quickLogMeasurementsUpdatedToday =>
+      'Quick log measurements updated today';
+
+  @override
+  String get quickLogMeasurementsUpdatedYesterday =>
+      'Quick log measurements updated yesterday';
+
+  @override
+  String get quickWorkoutDuration => 'Quick workout duration';
+
+  @override
+  String get quickWorkoutFocusOptional => 'Quick workout focus optional';
+
+  @override
+  String get quickWorkoutSubtitle => 'Quick workout subtitle';
+
+  @override
+  String get quickWorkoutTitle => 'Quick workout title';
+
+  @override
+  String get quizDaysSelectorBest => 'Quiz days selector best';
+
+  @override
+  String quizDaysSelectorDays(Object arg0) {
+    return 'Quiz days selector days $arg0';
+  }
+
+  @override
+  String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
+    return 'Quiz days selector days selected $arg0 $arg1';
+  }
+
+  @override
+  String get quizDaysSelectorFri => 'Quiz days selector fri';
+
+  @override
+  String get quizDaysSelectorMin => 'Quiz days selector min';
+
+  @override
+  String get quizDaysSelectorMon => 'Quiz days selector mon';
+
+  @override
+  String get quizDaysSelectorSat => 'Quiz days selector sat';
+
+  @override
+  String quizDaysSelectorSelectNDays(Object arg0) {
+    return 'Quiz days selector select n days $arg0';
+  }
+
+  @override
+  String get quizDaysSelectorSun => 'Quiz days selector sun';
+
+  @override
+  String get quizDaysSelectorThu => 'Quiz days selector thu';
+
+  @override
+  String get quizDaysSelectorTue => 'Quiz days selector tue';
+
+  @override
+  String get quizDaysSelectorWed => 'Quiz days selector wed';
+
+  @override
+  String get quizEquipmentBarbell => 'Quiz equipment barbell';
+
+  @override
+  String get quizEquipmentBodyweightOnly2 => 'Quiz equipment bodyweight only';
+
+  @override
+  String get quizEquipmentCableMachine => 'Quiz equipment cable machine';
+
+  @override
+  String get quizEquipmentEnablesChestPress =>
+      'Quiz equipment enables chest press';
+
+  @override
+  String get quizEquipmentFlatBench => 'Quiz equipment flat bench';
+
+  @override
+  String get quizEquipmentFullGymAccess => 'Quiz equipment full gym access';
+
+  @override
+  String get quizEquipmentHome => 'Quiz equipment home';
+
+  @override
+  String quizEquipmentIdentifiedCount(Object arg0) {
+    return 'Quiz equipment identified count $arg0';
+  }
+
+  @override
+  String get quizEquipmentMedicineBall => 'Quiz equipment medicine ball';
+
+  @override
+  String get quizEquipmentNeededForBarbell =>
+      'Quiz equipment needed for barbell';
+
+  @override
+  String quizEquipmentOtherCount(Object arg0) {
+    return 'Quiz equipment other count $arg0';
+  }
+
+  @override
+  String get quizEquipmentOtherEquipment => 'Quiz equipment other equipment';
+
+  @override
+  String get quizEquipmentPullUpBar => 'Quiz equipment pull up bar';
+
+  @override
+  String get quizEquipmentResistanceBands => 'Quiz equipment resistance bands';
+
+  @override
+  String get quizEquipmentSquatRack => 'Quiz equipment squat rack';
+
+  @override
+  String get quizEquipmentTrxSuspension => 'Quiz equipment trx suspension';
+
+  @override
+  String get quizFitnessLevel2To5Years => 'Quiz fitness level to years';
+
+  @override
+  String get quizFitnessLevel5PlusYears => 'Quiz fitness level plus years';
+
+  @override
+  String get quizFitnessLevel6MonTo2Yrs => 'Quiz fitness level mon to yrs';
+
+  @override
+  String get quizFitnessLevelAdvanced => 'Quiz fitness level advanced';
+
+  @override
+  String get quizFitnessLevelAdvancedDesc => 'Quiz fitness level advanced desc';
+
+  @override
+  String get quizFitnessLevelBeginner => 'Quiz fitness level beginner';
+
+  @override
+  String get quizFitnessLevelBeginnerDesc => 'Quiz fitness level beginner desc';
+
+  @override
+  String get quizFitnessLevelBrandNewToLifting =>
+      'Quiz fitness level brand new to lifting';
+
+  @override
+  String get quizFitnessLevelBuildingConsistency =>
+      'Quiz fitness level building consistency';
+
+  @override
+  String get quizFitnessLevelIntermediate => 'Quiz fitness level intermediate';
+
+  @override
+  String get quizFitnessLevelIntermediateDesc =>
+      'Quiz fitness level intermediate desc';
+
+  @override
+  String get quizFitnessLevelJustGettingStarted =>
+      'Quiz fitness level just getting started';
+
+  @override
+  String get quizFitnessLevelLessThan6Months =>
+      'Quiz fitness level less than months';
+
+  @override
+  String get quizFitnessLevelLight => 'Quiz fitness level light';
+
+  @override
+  String get quizFitnessLevelLightDesc => 'Quiz fitness level light desc';
+
+  @override
+  String get quizFitnessLevelModerate => 'Quiz fitness level moderate';
+
+  @override
+  String get quizFitnessLevelModerateDesc => 'Quiz fitness level moderate desc';
+
+  @override
+  String get quizFitnessLevelNever => 'Quiz fitness level never';
+
+  @override
+  String get quizFitnessLevelSedentary => 'Quiz fitness level sedentary';
+
+  @override
+  String get quizFitnessLevelSedentaryDesc =>
+      'Quiz fitness level sedentary desc';
+
+  @override
+  String get quizFitnessLevelSolidFoundation =>
+      'Quiz fitness level solid foundation';
+
+  @override
+  String get quizFitnessLevelVeryActive => 'Quiz fitness level very active';
+
+  @override
+  String get quizFitnessLevelVeryActiveDesc =>
+      'Quiz fitness level very active desc';
+
+  @override
+  String get quizFitnessLevelVeteranLifter =>
+      'Quiz fitness level veteran lifter';
+
+  @override
+  String get quizMotivationBeHealthierOverall =>
+      'Quiz motivation be healthier overall';
+
+  @override
+  String get quizMotivationBuildConfidence =>
+      'Quiz motivation build confidence';
+
+  @override
+  String get quizMotivationFeelStronger => 'Quiz motivation feel stronger';
+
+  @override
+  String get quizMotivationHaveMoreEnergy => 'Quiz motivation have more energy';
+
+  @override
+  String get quizMotivationImproveMentalHealth =>
+      'Quiz motivation improve mental health';
+
+  @override
+  String get quizMotivationLookBetter => 'Quiz motivation look better';
+
+  @override
+  String get quizMotivationSleepBetter => 'Quiz motivation sleep better';
+
+  @override
+  String get quizMotivationSportsPerformance =>
+      'Quiz motivation sports performance';
+
+  @override
+  String get regenerateSheetAddingVariety => 'Regenerate sheet adding variety';
+
+  @override
+  String get regenerateSheetApplyThisWorkout =>
+      'Regenerate sheet apply this workout';
+
+  @override
+  String get regenerateSheetBalancingMuscleGroups =>
+      'Regenerate sheet balancing muscle groups';
+
+  @override
+  String get regenerateSheetBootingUpTheAi =>
+      'Regenerate sheet booting up the ai';
+
+  @override
+  String get regenerateSheetBuildingYourPlan =>
+      'Regenerate sheet building your plan';
+
+  @override
+  String get regenerateSheetCheckingPreferences =>
+      'Regenerate sheet checking preferences';
+
+  @override
+  String get regenerateSheetConnectingToTheAi =>
+      'Regenerate sheet connecting to the ai';
+
+  @override
+  String get regenerateSheetConsideringFocusAreas =>
+      'Regenerate sheet considering focus areas';
+
+  @override
+  String get regenerateSheetCustomizeOrLetAiSuggest =>
+      'Regenerate sheet customize or let ai suggest';
+
+  @override
+  String get regenerateSheetDesigningYourWorkout =>
+      'Regenerate sheet designing your workout';
+
+  @override
+  String get regenerateSheetDialingInSetsAndReps =>
+      'Regenerate sheet dialing in sets and reps';
+
+  @override
+  String get regenerateSheetEnterAPrompt => 'Regenerate sheet enter a prompt';
+
+  @override
+  String get regenerateSheetFilteringByEquipment =>
+      'Regenerate sheet filtering by equipment';
+
+  @override
+  String get regenerateSheetFilteringByYourEquipment =>
+      'Regenerate sheet filtering by your equipment';
+
+  @override
+  String get regenerateSheetFinalizingYourWorkout =>
+      'Regenerate sheet finalizing your workout';
+
+  @override
+  String get regenerateSheetFineTuningTheDetails =>
+      'Regenerate sheet fine tuning the details';
+
+  @override
+  String regenerateSheetGeneratingElapsed(Object arg0) {
+    return 'Regenerate sheet generating elapsed $arg0';
+  }
+
+  @override
+  String get regenerateSheetGettingReady => 'Regenerate sheet getting ready';
+
+  @override
+  String get regenerateSheetLoadingInjuriesAndGoals =>
+      'Regenerate sheet loading injuries and goals';
+
+  @override
+  String get regenerateSheetLoadingPreferences =>
+      'Regenerate sheet loading preferences';
+
+  @override
+  String get regenerateSheetLoadingYourProfile =>
+      'Regenerate sheet loading your profile';
+
+  @override
+  String get regenerateSheetMatchingIntensity =>
+      'Regenerate sheet matching intensity';
+
+  @override
+  String get regenerateSheetMatchingYourFitnessLevel =>
+      'Regenerate sheet matching your fitness level';
+
+  @override
+  String get regenerateSheetPairingPushAndPull =>
+      'Regenerate sheet pairing push and pull';
+
+  @override
+  String get regenerateSheetPickingYourExercises =>
+      'Regenerate sheet picking your exercises';
+
+  @override
+  String get regenerateSheetPreparingYourRequest =>
+      'Regenerate sheet preparing your request';
+
+  @override
+  String get regenerateSheetPrimingTheEngine =>
+      'Regenerate sheet priming the engine';
+
+  @override
+  String get regenerateSheetPullingYourGoals =>
+      'Regenerate sheet pulling your goals';
+
+  @override
+  String get regenerateSheetReadingYourProfile =>
+      'Regenerate sheet reading your profile';
+
+  @override
+  String get regenerateSheetRegenerateWorkout =>
+      'Regenerate sheet regenerate workout';
+
+  @override
+  String get regenerateSheetRespectingYourInjuryList =>
+      'Regenerate sheet respecting your injury list';
+
+  @override
+  String get regenerateSheetRestoredFromLastRegen =>
+      'Regenerate sheet restored from last regen';
+
+  @override
+  String get regenerateSheetSavingToYourPlan =>
+      'Regenerate sheet saving to your plan';
+
+  @override
+  String get regenerateSheetScanningTheExerciseLibrary =>
+      'Regenerate sheet scanning the exercise library';
+
+  @override
+  String get regenerateSheetSequencingCompoundLifts =>
+      'Regenerate sheet sequencing compound lifts';
+
+  @override
+  String get regenerateSheetShapingTheSession =>
+      'Regenerate sheet shaping the session';
+
+  @override
+  String get regenerateSheetTodayNotInUsualDays =>
+      'Regenerate sheet today not in usual days';
+
+  @override
+  String get regenerateSheetTuningRestPeriods =>
+      'Regenerate sheet tuning rest periods';
+
+  @override
+  String get regenerateSheetUpdatingYourSchedule =>
+      'Regenerate sheet updating your schedule';
+
+  @override
+  String get regenerateSheetWarmingUp => 'Regenerate sheet warming up';
+
+  @override
+  String get restSuggestionAiRestCoach => 'Rest suggestion ai rest coach';
+
+  @override
+  String get restSuggestionCalculatingOptimalRestTime =>
+      'Rest suggestion calculating optimal rest time';
+
+  @override
+  String get restSuggestionQuick => 'Rest suggestion quick';
+
+  @override
+  String get restSuggestionQuickRest => 'Rest suggestion quick rest';
+
+  @override
+  String restSuggestionSaveTime(Object arg0) {
+    return 'Rest suggestion save time $arg0';
+  }
+
+  @override
+  String get restSuggestionSuggested => 'Rest suggestion suggested';
+
+  @override
+  String get restSuggestionUseSuggested => 'Rest suggestion use suggested';
+
+  @override
+  String get restTimerRest => 'Rest timer rest';
+
+  @override
+  String get restTimerSkipRest => 'Rest timer skip rest';
+
+  @override
+  String get rpeRirHelpsAdjustNextSet => 'Rpe rir helps adjust next set';
+
+  @override
+  String get rpeRirHowHardWasThatSet => 'Rpe rir how hard was that set';
+
+  @override
+  String get rpeRirRateOfPerceivedExertion =>
+      'Rpe rir rate of perceived exertion';
+
+  @override
+  String get rpeRirRepsInReserve => 'Rpe rir reps in reserve';
+
+  @override
+  String get rpeRirRir => 'Rpe rir rir';
+
+  @override
+  String get rpeRirRpe => 'Rpe rir rpe';
+
+  @override
+  String get safetyDisclaimerBannerDismissDisclaimer =>
+      'Safety disclaimer banner dismiss disclaimer';
+
+  @override
+  String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
+    return 'Safety disclaimer banner injuries flagged $arg0';
+  }
+
+  @override
+  String get safetyDisclaimerBannerInjuryBody =>
+      'Safety disclaimer banner injury body';
+
+  @override
+  String get safetyDisclaimerBannerSafetyModeActive =>
+      'Safety disclaimer banner safety mode active';
+
+  @override
+  String get safetyDisclaimerBannerSafetyModeBody =>
+      'Safety disclaimer banner safety mode body';
+
+  @override
+  String get shareBreakdownTodaysLifts => 'Share breakdown todays lifts';
+
+  @override
+  String get shareCoachWorkoutReview => 'Share coach workout review';
+
+  @override
+  String get sharePrNewPr => 'Share pr new pr';
+
+  @override
+  String get shareStatsCalories => 'Share stats calories';
+
+  @override
+  String get shareStatsDuration => 'Share stats duration';
+
+  @override
+  String get shareStatsExercises => 'Share stats exercises';
+
+  @override
+  String get shareStatsVolume => 'Share stats volume';
+
+  @override
+  String get shareStatsWorkoutComplete => 'Share stats workout complete';
+
+  @override
+  String get stretchControllerResume => 'Stretch controller resume';
+
+  @override
+  String get stretchControllerStartTimer => 'Stretch controller start timer';
+
+  @override
+  String todayScoreDetailDown(Object arg0) {
+    return 'Today score detail down $arg0';
+  }
+
+  @override
+  String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
+    return 'Today score detail earned pts $arg0 $arg1';
+  }
+
+  @override
+  String get todayScoreDetailHowItWorks => 'Today score detail how it works';
+
+  @override
+  String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
+    return 'Today score detail inactive explanation $arg0 $arg1';
+  }
+
+  @override
+  String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
+    return 'Today score detail momentum with avg $arg0 $arg1';
+  }
+
+  @override
+  String get todayScoreDetailSetupText => 'Today score detail setup text';
+
+  @override
+  String get todayScoreDetailSteady => 'Today score detail steady';
+
+  @override
+  String todayScoreDetailUp(Object arg0) {
+    return 'Today score detail up $arg0';
+  }
+
+  @override
+  String get trophiesEarnedAllMilestonesCleared =>
+      'Trophies earned all milestones cleared';
+
+  @override
+  String get trophiesEarnedMilestoneReached =>
+      'Trophies earned milestone reached';
+
+  @override
+  String trophiesEarnedNewBadges(Object arg0) {
+    return 'Trophies earned new badges $arg0';
+  }
+
+  @override
+  String trophiesEarnedNewCardioPRs(Object arg0) {
+    return 'Trophies earned new cardio p rs $arg0';
+  }
+
+  @override
+  String get trophiesEarnedNewPR => 'Trophies earned new pr';
+
+  @override
+  String trophiesEarnedNewPRs(Object arg0) {
+    return 'Trophies earned new p rs $arg0';
+  }
+
+  @override
+  String get trophiesEarnedNoNewRecords => 'Trophies earned no new records';
+
+  @override
+  String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
+    return 'Trophies earned remaining to unlock $arg0 $arg1';
+  }
+
+  @override
+  String get trophiesEarnedSessionHighlights =>
+      'Trophies earned session highlights';
+
+  @override
+  String get trophiesEarnedTitle => 'Trophies earned title';
+
+  @override
+  String get trophiesEarnedViewAllCardioPRs =>
+      'Trophies earned view all cardio p rs';
+
+  @override
+  String unifiedHomeWidgetsBreakfastLogged(Object arg0) {
+    return 'Unified home widgets breakfast logged $arg0';
+  }
+
+  @override
+  String unifiedHomeWidgetsCupsToday(Object arg0, Object arg1) {
+    return 'Unified home widgets cups today $arg0 $arg1';
+  }
+
+  @override
+  String get unifiedHomeWidgetsDrink16ozPostWorkout =>
+      'Unified home widgets drink oz post workout';
+
+  @override
+  String unifiedHomeWidgetsEndTheDayAtGoal(Object arg0) {
+    return 'Unified home widgets end the day at goal $arg0';
+  }
+
+  @override
+  String unifiedHomeWidgetsKcalBurned(Object arg0) {
+    return 'Unified home widgets kcal burned $arg0';
+  }
+
+  @override
+  String get unifiedHomeWidgetsNoWorkoutWasScheduled =>
+      'Unified home widgets no workout was scheduled';
+
+  @override
+  String get unifiedHomeWidgetsOver => 'Unified home widgets over';
+
+  @override
+  String get unifiedHomeWidgetsOvernightWaterReset =>
+      'Unified home widgets overnight water reset';
+
+  @override
+  String get unifiedHomeWidgetsRefuelHydration =>
+      'Unified home widgets refuel hydration';
+
+  @override
+  String get unifiedHomeWidgetsRestDayNoWorkoutScheduled =>
+      'Unified home widgets rest day no workout scheduled';
+
+  @override
+  String get unifiedHomeWidgetsRestDayNothingScheduled =>
+      'Unified home widgets rest day nothing scheduled';
+
+  @override
+  String get unifiedHomeWidgetsSleep => 'Unified home widgets sleep';
+
+  @override
+  String get unifiedHomeWidgetsWakeHydration =>
+      'Unified home widgets wake hydration';
+
+  @override
+  String get unifiedHomeWidgetsWorkoutCompleteGreatJob =>
+      'Unified home widgets workout complete great job';
+
+  @override
+  String weekProgressStripCompletedCount(Object arg0, Object arg1) {
+    return 'Week progress strip completed count $arg0 $arg1';
+  }
+
+  @override
+  String get weekProgressStripNoWorkoutsScheduled =>
+      'Week progress strip no workouts scheduled';
+
+  @override
+  String weightTrendCardDownThisWeek(Object arg0) {
+    return 'Weight trend card down this week $arg0';
+  }
+
+  @override
+  String weightTrendCardDownVsLastCycle(Object arg0) {
+    return 'Weight trend card down vs last cycle $arg0';
+  }
+
+  @override
+  String get weightTrendCardMaintaining => 'Weight trend card maintaining';
+
+  @override
+  String get weightTrendCardNoChange => 'Weight trend card no change';
+
+  @override
+  String get weightTrendCardNoData => 'Weight trend card no data';
+
+  @override
+  String get weightTrendCardReviewGoals => 'Weight trend card review goals';
+
+  @override
+  String get weightTrendCardSameAsLastCycle =>
+      'Weight trend card same as last cycle';
+
+  @override
+  String get weightTrendCardTargetHeld => 'Weight trend card target held';
+
+  @override
+  String weightTrendCardTargetHeldWindow(Object arg0) {
+    return 'Weight trend card target held window $arg0';
+  }
+
+  @override
+  String weightTrendCardUpThisWeek(Object arg0) {
+    return 'Weight trend card up this week $arg0';
+  }
+
+  @override
+  String weightTrendCardUpVsLastCycle(Object arg0) {
+    return 'Weight trend card up vs last cycle $arg0';
+  }
+
+  @override
+  String get weightTrendCardWeightStableThisWeek =>
+      'Weight trend card weight stable this week';
+
+  @override
+  String workoutDetailReplacingExercises(Object arg0) {
+    return 'Workout detail replacing exercises $arg0';
+  }
+
+  @override
+  String get workoutDetailUpdatingExercises =>
+      'Workout detail updating exercises';
+
+  @override
+  String get workoutImportCardio => 'Workout import cardio';
+
+  @override
+  String get workoutImportCycling => 'Workout import cycling';
+
+  @override
+  String get workoutImportEasy => 'Workout import easy';
+
+  @override
+  String get workoutImportFlexibility => 'Workout import flexibility';
+
+  @override
+  String workoutImportFromSource(Object arg0) {
+    return 'Workout import from source $arg0';
+  }
+
+  @override
+  String get workoutImportHard => 'Workout import hard';
+
+  @override
+  String get workoutImportHiit => 'Workout import hiit';
+
+  @override
+  String get workoutImportMedium => 'Workout import medium';
+
+  @override
+  String get workoutImportOther => 'Workout import other';
+
+  @override
+  String get workoutImportRunning => 'Workout import running';
+
+  @override
+  String get workoutImportSkip => 'Workout import skip';
+
+  @override
+  String get workoutImportStrengthTraining =>
+      'Workout import strength training';
+
+  @override
+  String get workoutImportSwimming => 'Workout import swimming';
+
+  @override
+  String get workoutImportWalking => 'Workout import walking';
+
+  @override
+  String get workoutImportWeights => 'Workout import weights';
+
+  @override
+  String get workoutImportWorkout => 'Workout import workout';
+
+  @override
+  String get workoutImportYoga => 'Workout import yoga';
+
+  @override
+  String workoutPlanDrawerExerciseCount(Object arg0) {
+    return 'Workout plan drawer exercise count $arg0';
+  }
+
+  @override
+  String get workoutPlanDrawerRemoveExerciseTooltip =>
+      'Workout plan drawer remove exercise tooltip';
+
+  @override
+  String workoutPlanDrawerSetsLogged(Object arg0) {
+    return 'Workout plan drawer sets logged $arg0';
+  }
+
+  @override
+  String get workoutPlanDrawerTitle => 'Workout plan drawer title';
+
+  @override
+  String get workoutShowcaseAdvanced => 'Workout showcase advanced';
+
+  @override
+  String get workoutShowcaseAutoDesc => 'Workout showcase auto desc';
+
+  @override
+  String get workoutShowcaseAutoLabel => 'Workout showcase auto label';
+
+  @override
+  String get workoutShowcaseCalories => 'Workout showcase calories';
+
+  @override
+  String get workoutShowcaseContinue => 'Workout showcase continue';
+
+  @override
+  String get workoutShowcaseDuration => 'Workout showcase duration';
+
+  @override
+  String get workoutShowcaseEasy => 'Workout showcase easy';
+
+  @override
+  String get workoutShowcaseEverySetYouLog =>
+      'Workout showcase every set you log';
+
+  @override
+  String get workoutShowcaseEveryWorkoutFlows =>
+      'Workout showcase every workout flows';
+
+  @override
+  String get workoutShowcaseFinishWorkout => 'Workout showcase finish workout';
+
+  @override
+  String get workoutShowcaseFormat1Rm => 'Workout showcase format rm';
+
+  @override
+  String get workoutShowcaseFormatBoarding =>
+      'Workout showcase format boarding';
+
+  @override
+  String get workoutShowcaseFormatCard => 'Workout showcase format card';
+
+  @override
+  String get workoutShowcaseFormatDiscord => 'Workout showcase format discord';
+
+  @override
+  String get workoutShowcaseFormatFull => 'Workout showcase format full';
+
+  @override
+  String get workoutShowcaseFormatIgStory => 'Workout showcase format ig story';
+
+  @override
+  String get workoutShowcaseFormatNewspaper =>
+      'Workout showcase format newspaper';
+
+  @override
+  String get workoutShowcaseFormatPassport =>
+      'Workout showcase format passport';
+
+  @override
+  String get workoutShowcaseFormatPolaroid =>
+      'Workout showcase format polaroid';
+
+  @override
+  String get workoutShowcaseFormatPrCard => 'Workout showcase format pr card';
+
+  @override
+  String get workoutShowcaseFormatQuote => 'Workout showcase format quote';
+
+  @override
+  String get workoutShowcaseFormatReceipt => 'Workout showcase format receipt';
+
+  @override
+  String get workoutShowcaseFormatTrading => 'Workout showcase format trading';
+
+  @override
+  String get workoutShowcaseFormatTrophy => 'Workout showcase format trophy';
+
+  @override
+  String get workoutShowcaseFormatVinyl => 'Workout showcase format vinyl';
+
+  @override
+  String get workoutShowcaseFormatWrapped => 'Workout showcase format wrapped';
+
+  @override
+  String get workoutShowcaseLinearDesc => 'Workout showcase linear desc';
+
+  @override
+  String get workoutShowcaseLinearLabel => 'Workout showcase linear label';
+
+  @override
+  String get workoutShowcaseLogAllSets => 'Workout showcase log all sets';
+
+  @override
+  String workoutShowcaseLogSet(Object arg0) {
+    return 'Workout showcase log set $arg0';
+  }
+
+  @override
+  String get workoutShowcaseNote => 'Workout showcase note';
+
+  @override
+  String get workoutShowcasePlan => 'Workout showcase plan';
+
+  @override
+  String get workoutShowcasePyramidDesc => 'Workout showcase pyramid desc';
+
+  @override
+  String get workoutShowcasePyramidLabel => 'Workout showcase pyramid label';
+
+  @override
+  String workoutShowcaseSetNOf3(Object arg0) {
+    return 'Workout showcase set n of $arg0';
+  }
+
+  @override
+  String workoutShowcaseTapToLogSet(Object arg0) {
+    return 'Workout showcase tap to log set $arg0';
+  }
+
+  @override
+  String get workoutShowcaseUndulatingDesc =>
+      'Workout showcase undulating desc';
+
+  @override
+  String get workoutShowcaseUndulatingLabel =>
+      'Workout showcase undulating label';
+
+  @override
+  String get workoutTopBarMore => 'Workout top bar more';
+
+  @override
+  String get xpGoalsDaily => 'Xp goals daily';
+
+  @override
+  String get xpGoalsDialog250LevelsAcross11Tiers =>
+      'Xp goals dialog levels across tiers';
+
+  @override
+  String get xpGoalsDialogBeginnerToTranscendent =>
+      'Xp goals dialog beginner to transcendent';
+
+  @override
+  String get xpGoalsDialogCompleteWorkoutXp =>
+      'Xp goals dialog complete workout xp';
+
+  @override
+  String get xpGoalsDialogDailyGoals => 'Xp goals dialog daily goals';
+
+  @override
+  String get xpGoalsDialogFirstChatWithAiCoachXp =>
+      'Xp goals dialog first chat with ai coach xp';
+
+  @override
+  String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
+      'Xp goals dialog first meal weight measurements xp';
+
+  @override
+  String get xpGoalsDialogFirstPrXp => 'Xp goals dialog first pr xp';
+
+  @override
+  String get xpGoalsDialogFirstProgressPhotoXp =>
+      'Xp goals dialog first progress photo xp';
+
+  @override
+  String get xpGoalsDialogFirstProteinGoalXp =>
+      'Xp goals dialog first protein goal xp';
+
+  @override
+  String get xpGoalsDialogFirstWorkoutXp => 'Xp goals dialog first workout xp';
+
+  @override
+  String get xpGoalsDialogHitProteinGoalXp =>
+      'Xp goals dialog hit protein goal xp';
+
+  @override
+  String get xpGoalsDialogLevels => 'Xp goals dialog levels';
+
+  @override
+  String get xpGoalsDialogLogBodyMeasurementsXp =>
+      'Xp goals dialog log body measurements xp';
+
+  @override
+  String get xpGoalsDialogLogMealXp => 'Xp goals dialog log meal xp';
+
+  @override
+  String get xpGoalsDialogLogWeightXp => 'Xp goals dialog log weight xp';
+
+  @override
+  String get xpGoalsDialogLoginXp => 'Xp goals dialog login xp';
+
+  @override
+  String get xpGoalsDialogMilestoneRewards =>
+      'Xp goals dialog milestone rewards';
+
+  @override
+  String get xpGoalsFirstTimeBonuses => 'Xp goals first time bonuses';
+
+  @override
+  String get xpGoalsScreenConsumableLegend =>
+      'Xp goals screen consumable legend';
+
+  @override
+  String xpGoalsScreenLevelCurrentTotal(Object arg0) {
+    return 'Xp goals screen level current total $arg0';
+  }
+
+  @override
+  String get xpGoalsScreenMilestoneLegend => 'Xp goals screen milestone legend';
+
+  @override
+  String get xpGoalsScreenXpBonusLegend => 'Xp goals screen xp bonus legend';
+
+  @override
+  String get xpGoalsScreenYouBadge => 'Xp goals screen you badge';
+
+  @override
+  String xpGoalsXpAvailable(Object arg0) {
+    return 'Xp goals xp available $arg0';
+  }
+
+  @override
+  String xpGoalsXpEarnedToday(Object arg0) {
+    return 'Xp goals xp earned today $arg0';
+  }
+
+  @override
+  String xpGoalsXpMultiplierActive(Object arg0) {
+    return 'Xp goals xp multiplier active $arg0';
+  }
+
+  @override
+  String localizedName(Object arg0) {
+    return 'Localized name $arg0';
+  }
+
+  @override
+  String get shareMotivationalCompleted => 'COMPLETED';
+
+  @override
+  String get workoutBottomBarSkip => 'Skip';
 }

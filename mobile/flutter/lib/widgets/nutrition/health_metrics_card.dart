@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/health_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../glass_sheet.dart';
 
 /// Provider for blood glucose data
@@ -76,7 +77,7 @@ class HealthMetricsCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'BLOOD GLUCOSE',
+                  AppLocalizations.of(context).healthMetricsCardBloodGlucose,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -94,13 +95,13 @@ class HealthMetricsCard extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             glucoseAsync.when(
-              loading: () => _buildLoadingState(textMuted),
-              error: (_, __) => _buildNoDataState(textMuted),
+              loading: () => _buildLoadingState(context, textMuted),
+              error: (_, __) => _buildNoDataState(context, textMuted),
               data: (summary) {
                 if (!summary.hasData) {
-                  return _buildNoDataState(textMuted);
+                  return _buildNoDataState(context, textMuted);
                 }
-                return _buildGlucoseSummary(summary, textPrimary, textMuted);
+                return _buildGlucoseSummary(context, summary, textPrimary, textMuted);
               },
             ),
             const SizedBox(height: 16),
@@ -114,7 +115,7 @@ class HealthMetricsCard extends ConsumerWidget {
                 }
                 return SizedBox(
                   height: 60,
-                  child: _buildMiniChart(readings, textMuted),
+                  child: _buildMiniChart(context, readings, textMuted),
                 );
               },
             ),
@@ -124,7 +125,7 @@ class HealthMetricsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
+  Widget _buildLoadingState(BuildContext context, Color textMuted) {
     return Row(
       children: [
         const SizedBox(
@@ -134,19 +135,19 @@ class HealthMetricsCard extends ConsumerWidget {
         ),
         const SizedBox(width: 12),
         Text(
-          'Loading health data...',
+          AppLocalizations.of(context).healthMetricsCardLoadingHealthData,
           style: TextStyle(fontSize: 14, color: textMuted),
         ),
       ],
     );
   }
 
-  Widget _buildNoDataState(Color textMuted) {
+  Widget _buildNoDataState(BuildContext context, Color textMuted) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'No glucose data',
+          AppLocalizations.of(context).healthMetricsCardNoGlucoseData,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -155,7 +156,7 @@ class HealthMetricsCard extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Connect Health Connect to see your blood glucose',
+          AppLocalizations.of(context).healthMetricsCardConnectHealthConnectTo,
           style: TextStyle(fontSize: 12, color: textMuted.withOpacity(0.7)),
         ),
       ],
@@ -163,6 +164,7 @@ class HealthMetricsCard extends ConsumerWidget {
   }
 
   Widget _buildGlucoseSummary(
+    BuildContext context,
     BloodGlucoseSummary summary,
     Color textPrimary,
     Color textMuted,
@@ -189,7 +191,7 @@ class HealthMetricsCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'mg/dL',
+                  AppLocalizations.of(context).healthMetricsCardMgDl,
                   style: TextStyle(
                     fontSize: 14,
                     color: textMuted,
@@ -198,7 +200,7 @@ class HealthMetricsCard extends ConsumerWidget {
               ],
             ),
             Text(
-              'Average today',
+              AppLocalizations.of(context).healthMetricsCardAverageToday,
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
           ],
@@ -209,7 +211,7 @@ class HealthMetricsCard extends ConsumerWidget {
           children: [
             _buildStatPill(
               '${summary.timeInRange.toStringAsFixed(0)}%',
-              'In range',
+              AppLocalizations.of(context).healthMetricsCardInRange,
               const Color(0xFF6BCB77),
               textPrimary,
             ),
@@ -255,11 +257,11 @@ class HealthMetricsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildMiniChart(List<BloodGlucoseReading> readings, Color textMuted) {
+  Widget _buildMiniChart(BuildContext context, List<BloodGlucoseReading> readings, Color textMuted) {
     if (readings.length < 2) {
       return Center(
         child: Text(
-          'Not enough data for chart',
+          AppLocalizations.of(context).healthMetricsCardNotEnoughDataFor,
           style: TextStyle(fontSize: 11, color: textMuted),
         ),
       );
@@ -375,7 +377,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                 ),
                 const SizedBox(width: 16),
                 Text(
-                  'Health Metrics',
+                  AppLocalizations.of(context).healthMetricsCardHealthMetrics,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -401,6 +403,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                     loading: () => const Center(child: CircularProgressIndicator()),
                     error: (_, __) => _buildErrorCard('Unable to load summary', elevated, textMuted),
                     data: (summary) => _buildSummaryCard(
+                      context,
                       summary,
                       elevated,
                       textPrimary,
@@ -412,7 +415,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
 
                   // Recent Readings
                   Text(
-                    'RECENT READINGS',
+                    AppLocalizations.of(context).healthMetricsCardRecentReadings,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -427,21 +430,21 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                     data: (readings) {
                       if (readings.isEmpty) {
                         return _buildEmptyCard(
-                          'No blood glucose readings',
-                          'Connect a glucose monitor via Health Connect',
+                          AppLocalizations.of(context).healthMetricsCardNoBloodGlucoseReadings,
+                          AppLocalizations.of(context).healthMetricsCardConnectAGlucoseMonitor,
                           elevated,
                           textMuted,
                           cardBorder,
                         );
                       }
-                      return _buildReadingsList(readings, elevated, textPrimary, textMuted, cardBorder);
+                      return _buildReadingsList(context, readings, elevated, textPrimary, textMuted, cardBorder);
                     },
                   ),
                   const SizedBox(height: 24),
 
                   // Insulin Data
                   Text(
-                    'INSULIN DELIVERY',
+                    AppLocalizations.of(context).healthMetricsCardInsulinDelivery,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -456,14 +459,14 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                     data: (doses) {
                       if (doses.isEmpty) {
                         return _buildEmptyCard(
-                          'No insulin data',
-                          'Insulin delivery data from connected devices will appear here',
+                          AppLocalizations.of(context).healthMetricsCardNoInsulinData,
+                          AppLocalizations.of(context).healthMetricsCardInsulinDeliveryData,
                           elevated,
                           textMuted,
                           cardBorder,
                         );
                       }
-                      return _buildInsulinList(doses, elevated, textPrimary, textMuted, cardBorder);
+                      return _buildInsulinList(context, doses, elevated, textPrimary, textMuted, cardBorder);
                     },
                   ),
                   const SizedBox(height: 40),
@@ -477,6 +480,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
   }
 
   Widget _buildSummaryCard(
+    BuildContext context,
     BloodGlucoseSummary summary,
     Color elevated,
     Color textPrimary,
@@ -485,8 +489,8 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
   ) {
     if (!summary.hasData) {
       return _buildEmptyCard(
-        'No data for today',
-        'Blood glucose readings will appear here',
+        AppLocalizations.of(context).healthMetricsCardNoDataForToday,
+        AppLocalizations.of(context).healthMetricsCardBloodGlucoseReadingsWill,
         elevated,
         textMuted,
         cardBorder,
@@ -507,8 +511,8 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
             children: [
               _buildMetricTile(
                 summary.averageGlucose.toStringAsFixed(0),
-                'Average',
-                'mg/dL',
+                AppLocalizations.of(context).healthMetricsCardAverage,
+                AppLocalizations.of(context).healthMetricsCardMgDl,
                 _getStatusColor(summary.averageGlucose),
                 textMuted,
               ),
@@ -519,8 +523,8 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
               ),
               _buildMetricTile(
                 summary.minGlucose.toStringAsFixed(0),
-                'Min',
-                'mg/dL',
+                AppLocalizations.of(context).healthMetricsCardMin,
+                AppLocalizations.of(context).healthMetricsCardMgDl,
                 textPrimary,
                 textMuted,
               ),
@@ -531,8 +535,8 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
               ),
               _buildMetricTile(
                 summary.maxGlucose.toStringAsFixed(0),
-                'Max',
-                'mg/dL',
+                AppLocalizations.of(context).healthMetricsCardMax,
+                AppLocalizations.of(context).healthMetricsCardMgDl,
                 textPrimary,
                 textMuted,
               ),
@@ -540,7 +544,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           // Time in range bars
-          _buildTimeInRangeBars(summary, textPrimary, textMuted),
+          _buildTimeInRangeBars(context, summary, textPrimary, textMuted),
         ],
       ),
     );
@@ -583,6 +587,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
   }
 
   Widget _buildTimeInRangeBars(
+    BuildContext context,
     BloodGlucoseSummary summary,
     Color textPrimary,
     Color textMuted,
@@ -591,7 +596,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Text('Time in Range', style: TextStyle(fontSize: 14, color: textPrimary)),
+            Text(AppLocalizations.of(context).healthMetricsCardTimeInRange, style: TextStyle(fontSize: 14, color: textPrimary)),
             const Spacer(),
             Text(summary.controlStatus, style: TextStyle(fontSize: 12, color: textMuted)),
           ],
@@ -635,9 +640,9 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildRangeLegend('Below', summary.timeBelowRange, const Color(0xFFE74C3C), textMuted),
-            _buildRangeLegend('In range', summary.timeInRange, const Color(0xFF6BCB77), textMuted),
-            _buildRangeLegend('Above', summary.timeAboveRange, const Color(0xFFF39C12), textMuted),
+            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardBelow, summary.timeBelowRange, const Color(0xFFE74C3C), textMuted),
+            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardInRange, summary.timeInRange, const Color(0xFF6BCB77), textMuted),
+            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardAbove, summary.timeAboveRange, const Color(0xFFF39C12), textMuted),
           ],
         ),
       ],
@@ -665,6 +670,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
   }
 
   Widget _buildReadingsList(
+    BuildContext context,
     List<BloodGlucoseReading> readings,
     Color elevated,
     Color textPrimary,
@@ -726,7 +732,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'mg/dL',
+                  AppLocalizations.of(context).healthMetricsCardMgDl,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
               ],
@@ -738,6 +744,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
   }
 
   Widget _buildInsulinList(
+    BuildContext context,
     List<InsulinDose> doses,
     Color elevated,
     Color textPrimary,
@@ -802,7 +809,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'units',
+                  AppLocalizations.of(context).healthMetricsCardUnits,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
               ],

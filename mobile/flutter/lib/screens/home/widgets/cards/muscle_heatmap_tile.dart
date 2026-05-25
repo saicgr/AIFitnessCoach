@@ -6,6 +6,7 @@ import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/providers/muscle_analytics_provider.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Muscle Heatmap Card - Shows top trained muscles as colored chips
 class MuscleHeatmapCard extends ConsumerWidget {
@@ -45,15 +46,17 @@ class MuscleHeatmapCard extends ConsumerWidget {
         ),
         child: topMusclesAsync.when(
           data: (muscles) => muscles.isEmpty
-              ? _buildEmpty(textMuted: textMuted, accentColor: accentColor)
+              ? _buildEmpty(context, textMuted: textMuted, accentColor: accentColor)
               : _buildContent(
+                  context,
                   muscles,
                   textColor: textColor,
                   textMuted: textMuted,
                   accentColor: accentColor,
                 ),
-          loading: () => _buildLoading(textMuted: textMuted, accentColor: accentColor),
+          loading: () => _buildLoading(context, textMuted: textMuted, accentColor: accentColor),
           error: (error, _) => _buildError(
+            context,
             ref,
             textMuted: textMuted,
             accentColor: accentColor,
@@ -64,11 +67,13 @@ class MuscleHeatmapCard extends ConsumerWidget {
   }
 
   Widget _buildContent(
+    BuildContext context,
     List<dynamic> muscles, {
     required Color textColor,
     required Color textMuted,
     required Color accentColor,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     // Take top 6
     final topMuscles = muscles.take(6).toList();
     // Find max intensity for normalization
@@ -85,7 +90,7 @@ class MuscleHeatmapCard extends ConsumerWidget {
             Icon(Icons.accessibility_new, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Muscles',
+              l10n.muscleHeatmapTileMuscles,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -134,7 +139,7 @@ class MuscleHeatmapCard extends ConsumerWidget {
         if (topMuscles.isNotEmpty) ...[
           const SizedBox(height: 10),
           Text(
-            'Most trained: ${topMuscles.first.formattedMuscleName}',
+            l10n.muscleHeatmapTileMostTrained(topMuscles.first.formattedMuscleName),
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
         ],
@@ -142,10 +147,12 @@ class MuscleHeatmapCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmpty({
+  Widget _buildEmpty(
+    BuildContext context, {
     required Color textMuted,
     required Color accentColor,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,7 +161,7 @@ class MuscleHeatmapCard extends ConsumerWidget {
             Icon(Icons.accessibility_new, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Muscles',
+              l10n.muscleHeatmapTileMuscles,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -166,7 +173,7 @@ class MuscleHeatmapCard extends ConsumerWidget {
         const SizedBox(height: 16),
         Center(
           child: Text(
-            'Complete workouts to see muscle data',
+            l10n.muscleHeatmapTileCompleteWorkoutsToSee,
             style: TextStyle(fontSize: 13, color: textMuted),
             textAlign: TextAlign.center,
           ),
@@ -175,7 +182,8 @@ class MuscleHeatmapCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoading({
+  Widget _buildLoading(
+    BuildContext context, {
     required Color textMuted,
     required Color accentColor,
   }) {
@@ -187,7 +195,7 @@ class MuscleHeatmapCard extends ConsumerWidget {
             Icon(Icons.accessibility_new, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Muscles',
+              AppLocalizations.of(context)!.muscleHeatmapTileMuscles,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -215,10 +223,12 @@ class MuscleHeatmapCard extends ConsumerWidget {
   }
 
   Widget _buildError(
+    BuildContext context,
     WidgetRef ref, {
     required Color textMuted,
     required Color accentColor,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -227,7 +237,7 @@ class MuscleHeatmapCard extends ConsumerWidget {
             Icon(Icons.accessibility_new, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Muscles',
+              l10n.muscleHeatmapTileMuscles,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -242,14 +252,14 @@ class MuscleHeatmapCard extends ConsumerWidget {
             Icon(Icons.error_outline, color: textMuted, size: 16),
             const SizedBox(width: 8),
             Text(
-              "Couldn't load",
+              l10n.muscleHeatmapTileCouldnTLoad,
               style: TextStyle(fontSize: 13, color: textMuted),
             ),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => ref.invalidate(muscleHeatmapProvider),
               child: Text(
-                'Retry',
+                l10n.muscleHeatmapTileRetry,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

@@ -144,6 +144,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   bool get _isLoading => _sendStatus != _MediaSendStatus.idle;
 
+  // TODO(i18n): no context at _statusLabel getter — strings used in build() via _statusLabel
   String get _statusLabel {
     switch (_sendStatus) {
       case _MediaSendStatus.idle:
@@ -202,8 +203,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send voice message: $e'), backgroundColor: AppColors.error),
+          SnackBar(content: Text(l10n.chatScreenFailedToSendVoice(e.toString())), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -312,7 +314,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           // Bad route is dev-time noise; surface a snack so QA notices.
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Route not registered: $route')),
+              SnackBar(content: Text(AppLocalizations.of(context)!.chatScreenRouteNotRegistered(route))),
             );
           }
         }
@@ -430,6 +432,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final messagesState = ref.watch(chatMessagesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
@@ -518,12 +521,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       errStr.contains('connection') ||
                       errStr.contains('timeout');
                   final headline = isReceiveTimeout
-                      ? 'Coach is thinking longer than usual.'
+                      ? l10n.chatScreenCoachIsThinkingLonger
                       : (isConnectionError
-                          ? "Can't reach the coach right now."
+                          ? l10n.chatScreenCantReachCoach
                           : (isOtherTransport
-                              ? "Couldn't reach the coach."
-                              : 'Something went wrong loading your chat.'));
+                              ? l10n.chatScreenCouldntReachCoach
+                              : l10n.chatScreenSomethingWentWrongLoading));
                   return Center(
                     key: const ValueKey('error'),
                     child: Padding(
@@ -552,8 +555,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             // suggesting the user's network is down.
                             errStr.contains('receiveTimeout') ||
                                     errStr.contains('receive timeout')
-                                ? 'Multi-agent answers can take up to two minutes — hang tight or retry.'
-                                : 'Check your connection and try again.',
+                                ? l10n.chatScreenMultiAgentHangTight
+                                : l10n.chatScreenCheckConnection,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
@@ -566,7 +569,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               HapticService.medium();
                               ref.read(chatMessagesProvider.notifier).loadHistory();
                             },
-                            child: const Text('Retry'),
+                            child: Text(l10n.buttonRetry),
                           ),
                         ],
                       ),
@@ -778,7 +781,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               color: AppColors.warning.withOpacity(isDark ? 0.15 : 0.1),
               child: Text(
-                '$remaining message${remaining == 1 ? '' : 's'} left today',
+                l10n.chatScreenMessagesLeftToday(remaining),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -917,10 +920,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               Flexible(
                                 child: Text(
                                   _isLoading
-                                      ? 'Typing...'
+                                      ? l10n.chatScreenTyping
                                       : offlineChatState.isAvailable
-                                          ? 'Offline'
-                                          : 'Online',
+                                          ? l10n.agentInfoHeaderOffline
+                                          : l10n.agentInfoHeaderOnline,
                                   style: TextStyle(fontSize: 11, color: statusColor),
                                   overflow: TextOverflow.ellipsis,
                                 ),

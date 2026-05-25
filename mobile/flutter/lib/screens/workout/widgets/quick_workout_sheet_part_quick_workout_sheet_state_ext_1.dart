@@ -148,6 +148,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
     required Color textSecondary,
     required Color textMuted,
   }) {
+    final l = AppLocalizations.of(context)!;
     final lower = equip.toLowerCase();
     final existing = _equipmentDetails[equip];
 
@@ -169,7 +170,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
                 Icon(Icons.tune, size: 16, color: accentColor),
                 const SizedBox(width: 6),
                 Text(
-                  'Available weights',
+                  l.quickWorkoutAvailableWeights,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -227,7 +228,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
                       setState(() => _equipmentDetails.remove(equip));
                     },
                     child: Text(
-                      'Clear',
+                      l.commonClear,
                       style: TextStyle(fontSize: 12, color: accentColor),
                     ),
                   ),
@@ -281,7 +282,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tap to add (tap again for pairs)',
+          AppLocalizations.of(context)!.quickWorkoutTapToAddPairs,
           style: TextStyle(fontSize: 11, color: textMuted),
         ),
         const SizedBox(height: 6),
@@ -482,7 +483,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
                   ),
                   child: Center(
                     child: Text(
-                      'With plates',
+                      AppLocalizations.of(context)!.quickWorkoutWithPlates,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -518,6 +519,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
     required Color textPrimary,
     required Color textMuted,
   }) {
+    final l = AppLocalizations.of(context)!;
     showGlassSheet(
       context: context,
       builder: (ctx) => GlassSheet(
@@ -527,7 +529,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Workout Focus',
+                l.quickWorkoutFocus,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -577,6 +579,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
     required Color textSecondary,
     required Color textMuted,
   }) {
+    final l = AppLocalizations.of(context)!;
     // Copy current selection so dialog can preview changes
     var tempSelection = Set<String>.from(_selectedEquipment);
 
@@ -598,7 +601,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
                   child: Row(
                     children: [
                       Text(
-                        'All Equipment',
+                        l.quickWorkoutAllEquipment,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -612,7 +615,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
                           Navigator.pop(ctx);
                         },
                         child: Text(
-                          'Done',
+                          l.commonDone,
                           style: TextStyle(
                             color: accentColor,
                             fontWeight: FontWeight.w600,
@@ -886,7 +889,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
                   preset.isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: preset.isFavorite ? Colors.red : null,
                 ),
-                title: Text(preset.isFavorite ? 'Unfavorite' : 'Favorite'),
+                title: Text(preset.isFavorite ? AppLocalizations.of(context)!.quickWorkoutUnfavorite : AppLocalizations.of(context)!.quickWorkoutFavorite),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final db = ref.read(appDatabaseProvider);
@@ -896,7 +899,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                title: Text(AppLocalizations.of(context)!.commonDelete, style: const TextStyle(color: Colors.red)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final db = ref.read(appDatabaseProvider);

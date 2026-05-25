@@ -18,6 +18,8 @@ class DiscoverTour {
   static const id = TooltipIds.discover;
 
   /// The 3 spotlight steps. Anchored on `TooltipAnchors.discover*`.
+  // TODO(i18n): static method — no BuildContext available.
+  // Refactor to instance method accepting BuildContext to enable l10n.
   static List<EmptyStateTip> steps() => [
         EmptyStateTip(
           icon: Icons.travel_explore_rounded,

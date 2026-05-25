@@ -73,6 +73,8 @@ void showFullscreenImage(
   );
 }
 
+// TODO(i18n): top-level function — no BuildContext available for 'Could not load image'.
+// Refactor to pass BuildContext or AppLocalizations to enable l10n.
 Widget _errorPlaceholder() {
   return const Center(
     child: Column(

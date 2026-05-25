@@ -1,0 +1,1082 @@
+[
+  {
+    "key": "exerciseSwapListeningNow",
+    "value": "Listening... speak now",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapFindingAlternatives",
+    "value": "Finding your best alternatives",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapMatchingEquipment",
+    "value": "Matching equipment, muscles, and your training history",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapAskAiTitle",
+    "value": "Ask AI for suggestions",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapAskAiHint",
+    "value": "e.g. something for my bad shoulder...",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapGetAiSuggestions",
+    "value": "Get AI Suggestions",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapAiUnavailable",
+    "value": "AI suggestions unavailable",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapNoAlternatives",
+    "value": "No alternatives found",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapTryRephrasing",
+    "value": "Try rephrasing your request",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "commonTryAgain",
+    "value": "Try Again",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapBadgeBestMatch",
+    "value": "Best Match",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapBadgeTopPick",
+    "value": "Top Pick",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapInstructions",
+    "value": "Instructions",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseSwapSwapToThis",
+    "value": "Swap to this exercise",
+    "file": "lib/screens/workout/widgets/exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddSearchMine",
+    "value": "Search my exercises...",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddNoMineYet",
+    "value": "No personal exercises yet",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddNoMineYetHint",
+    "value": "Add favorites, staples, or custom exercises to see them here",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddSectionCustom",
+    "value": "Custom Exercises",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddSectionFavorites",
+    "value": "Favorites",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddSectionStaples",
+    "value": "Staples",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddBadgeCustom",
+    "value": "Custom",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddBadgeFav",
+    "value": "Fav",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "exerciseAddBadgeStaple",
+    "value": "Staple",
+    "file": "lib/screens/workout/widgets/exercise_add_sheet_part_exercise_add_sheet_state_ext.dart"
+  },
+  {
+    "key": "commonNew",
+    "value": "NEW",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuRemoveFromFavorites",
+    "value": "Remove from Favorites",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuAddToFavorites",
+    "value": "Add to Favorites",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuRemoveFromQueue",
+    "value": "Remove from Queue",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuRepeatNextTime",
+    "value": "Repeat Next Time",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuRemoveAsStaple",
+    "value": "Remove as Staple",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuMarkAsStaple",
+    "value": "Mark as Staple",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuViewHistory",
+    "value": "View History",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuSwapExercise",
+    "value": "Swap Exercise",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuLinkAsSuperset",
+    "value": "Link as Superset",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuRemoveFromWorkout",
+    "value": "Remove from Workout",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuNeverRecommend",
+    "value": "Never Recommend",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuWhatDoTheseMean",
+    "value": "What do these mean?",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuAddedToFavorites",
+    "value": "Added to favorites",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuRemovedFromFavorites",
+    "value": "Removed from favorites",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuQueuedForNext",
+    "value": "Queued for next workout",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuRemovedFromQueue",
+    "value": "Removed from queue",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuMarkedAsStaple",
+    "value": "Marked as staple",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseMenuRemovedFromStaples",
+    "value": "Removed from staples",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseTableHeaderSet",
+    "value": "Set",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseTableHeaderLast",
+    "value": "Last",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "exerciseTableHeaderTarget",
+    "value": "Target",
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart"
+  },
+  {
+    "key": "supersetCreatePair",
+    "value": "Create Superset Pair",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetPairSubtitle",
+    "value": "Pair two exercises to alternate between them with minimal rest",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetType",
+    "value": "Superset Type",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetSuggestedPairs",
+    "value": "Suggested Pairs",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetRestSettings",
+    "value": "Rest Settings",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetRestBetween",
+    "value": "Rest between exercises",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetRestAfter",
+    "value": "Rest after superset",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetSaveToFavorites",
+    "value": "Save to Favorites",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetSaveToFavoritesSubtitle",
+    "value": "Save this combination to quickly use it again",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "commonClear",
+    "value": "Clear",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetCreate",
+    "value": "Create Superset",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetExerciseN",
+    "value": "Exercise {n}",
+    "placeholders": {
+      "n": { "type": "int" }
+    },
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "supersetTapToSelect",
+    "value": "Tap to select",
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart"
+  },
+  {
+    "key": "sessionDetailSet",
+    "value": "Set",
+    "file": "lib/screens/workout/widgets/session_detail_sheet.dart"
+  },
+  {
+    "key": "sessionDetailTime",
+    "value": "Time",
+    "file": "lib/screens/workout/widgets/session_detail_sheet.dart"
+  },
+  {
+    "key": "sessionDetailReps",
+    "value": "Reps",
+    "file": "lib/screens/workout/widgets/session_detail_sheet.dart"
+  },
+  {
+    "key": "sessionDetailWeight",
+    "value": "Weight",
+    "file": "lib/screens/workout/widgets/session_detail_sheet.dart"
+  },
+  {
+    "key": "sessionDetailSetCount",
+    "value": "{count, plural, =1{1 set} other{{count} sets}} · top set highlighted",
+    "placeholders": {
+      "count": { "type": "int" }
+    },
+    "file": "lib/screens/workout/widgets/session_detail_sheet.dart"
+  },
+  {
+    "key": "restRateLastSet",
+    "value": "Rate Last Set",
+    "file": "lib/screens/workout/widgets/rest_timer_overlay_ui.dart"
+  },
+  {
+    "key": "restRateLastSetOptional",
+    "value": "optional",
+    "file": "lib/screens/workout/widgets/rest_timer_overlay_ui.dart"
+  },
+  {
+    "key": "nextSetPreviewNextSet",
+    "value": "Next Set",
+    "file": "lib/screens/workout/widgets/next_set_preview_card.dart"
+  },
+  {
+    "key": "nextSetPreviewFinal",
+    "value": "Final Set",
+    "file": "lib/screens/workout/widgets/next_set_preview_card.dart"
+  },
+  {
+    "key": "nextSetPreviewUse",
+    "value": "Use",
+    "file": "lib/screens/workout/widgets/next_set_preview_card.dart"
+  },
+  {
+    "key": "nextSetPreviewAiRecommendation",
+    "value": "AI Recommendation",
+    "file": "lib/screens/workout/widgets/next_set_preview_card.dart"
+  },
+  {
+    "key": "nextSetPreviewUseThis",
+    "value": "Use This",
+    "file": "lib/screens/workout/widgets/next_set_preview_card.dart"
+  },
+  {
+    "key": "nextSetPreviewAnalyzing",
+    "value": "Analyzing your performance...",
+    "file": "lib/screens/workout/widgets/next_set_preview_card.dart"
+  },
+  {
+    "key": "nextSetPreviewCalculating",
+    "value": "Calculating next set...",
+    "file": "lib/screens/workout/widgets/next_set_preview_card.dart"
+  },
+  {
+    "key": "quickWorkoutAvailableWeights",
+    "value": "Available Weights",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_1.dart"
+  },
+  {
+    "key": "quickWorkoutTapToAddPairs",
+    "value": "Tap to add dumbbell pairs",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_1.dart"
+  },
+  {
+    "key": "quickWorkoutWithPlates",
+    "value": "With plates",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_1.dart"
+  },
+  {
+    "key": "quickWorkoutFocus",
+    "value": "Focus",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_1.dart"
+  },
+  {
+    "key": "quickWorkoutAllEquipment",
+    "value": "All Equipment",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_1.dart"
+  },
+  {
+    "key": "quickWorkoutUnfavorite",
+    "value": "Unfavorite",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_1.dart"
+  },
+  {
+    "key": "quickWorkoutFavorite",
+    "value": "Favorite",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_1.dart"
+  },
+  {
+    "key": "commonDelete",
+    "value": "Delete",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_1.dart"
+  },
+  {
+    "key": "quickWorkoutDiscoverWorkouts",
+    "value": "Discover Workouts",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_2.dart"
+  },
+  {
+    "key": "quickWorkoutDiscoverSubtitle",
+    "value": "Personalized suggestions based on your profile",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_2.dart"
+  },
+  {
+    "key": "quickWorkoutNoSuggestions",
+    "value": "No suggestions available",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_2.dart"
+  },
+  {
+    "key": "quickWorkoutConflictTitle",
+    "value": "Workout Already Scheduled",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_2.dart"
+  },
+  {
+    "key": "quickWorkoutConflictBody",
+    "value": "You already have \"{workoutName}\" scheduled for today. What would you like to do?",
+    "placeholders": {
+      "workoutName": { "type": "String" }
+    },
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_2.dart"
+  },
+  {
+    "key": "quickWorkoutConflictChangeDate",
+    "value": "Change Date",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_2.dart"
+  },
+  {
+    "key": "quickWorkoutConflictAddAnyway",
+    "value": "Add Anyway",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_2.dart"
+  },
+  {
+    "key": "quickWorkoutConflictReplace",
+    "value": "Replace",
+    "file": "lib/screens/workout/widgets/quick_workout_sheet_part_quick_workout_sheet_state_ext_2.dart"
+  },
+  {
+    "key": "completeUnableToChallenge",
+    "value": "Unable to start challenge",
+    "file": "lib/screens/workout/workout_complete_screen_ext_1.dart"
+  },
+  {
+    "key": "completeNoFriendsYet",
+    "value": "No friends yet — invite some!",
+    "file": "lib/screens/workout/workout_complete_screen_ext_1.dart"
+  },
+  {
+    "key": "completeViewGoals",
+    "value": "View Goals",
+    "file": "lib/screens/workout/workout_complete_screen_ext_1.dart"
+  },
+  {
+    "key": "completeNoShareData",
+    "value": "No workout data to share yet",
+    "file": "lib/screens/workout/workout_complete_screen_ext_1.dart"
+  },
+  {
+    "key": "completeUnableToExtend",
+    "value": "Unable to extend workout",
+    "file": "lib/screens/workout/workout_complete_screen_ext_1.dart"
+  },
+  {
+    "key": "completeExtendFailed",
+    "value": "Failed to extend workout. Please try again.",
+    "file": "lib/screens/workout/workout_complete_screen_ext_1.dart"
+  },
+  {
+    "key": "completePleaseRateWorkout",
+    "value": "Please rate your workout",
+    "file": "lib/screens/workout/workout_complete_screen_ext_1.dart"
+  },
+  {
+    "key": "summaryVolume",
+    "value": "Volume",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryDuration",
+    "value": "Duration",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summarySets",
+    "value": "Sets",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryReps",
+    "value": "Reps",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryPerformanceComparison",
+    "value": "Performance Comparison",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryVsDaysAgo",
+    "value": "vs {days} days ago",
+    "placeholders": {
+      "days": { "type": "int" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryPerExercise",
+    "value": "Per Exercise",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryWarmupStretching",
+    "value": "Warmup & Stretching",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryWarmup",
+    "value": "Warmup",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryStretching",
+    "value": "Stretching",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryRestAnalysis",
+    "value": "Rest Analysis",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryTotalRest",
+    "value": "Total Rest",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAvgSets",
+    "value": "Avg (Sets)",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAvgExercises",
+    "value": "Avg (Exercises)",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryHydration",
+    "value": "Hydration",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiInteractions",
+    "value": "AI Interactions",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiWeightSuggestions",
+    "value": "Weight Suggestions",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiCoachOpened",
+    "value": "Coach Opened",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiMessagesSent",
+    "value": "Messages Sent",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiCoachTips",
+    "value": "Coach Tips",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiTipsDismissed",
+    "value": "Tips Dismissed",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiFatigueAlerts",
+    "value": "Fatigue Alerts",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiRestSuggestions",
+    "value": "Rest Suggestions",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiInfoOpened",
+    "value": "Info Opened",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiVideosWatched",
+    "value": "Videos Watched",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiBreathingGuide",
+    "value": "Breathing Guide",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAiExerciseSwaps",
+    "value": "Exercise Swaps",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryHowYouFelt",
+    "value": "How You Felt",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryFeedbackMood",
+    "value": "Mood",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryFeedbackEnergy",
+    "value": "Energy",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryFeedbackConfidence",
+    "value": "Confidence",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryFeedbackFeelingStronger",
+    "value": "Feeling Stronger",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryWeightUnit",
+    "value": "Weight Unit",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryEquipmentIncrement",
+    "value": "{name} Increment",
+    "placeholders": {
+      "name": { "type": "String" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summarySettingsUsed",
+    "value": "Settings Used",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryPerExerciseDeepDive",
+    "value": "Per-Exercise Deep Dive",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNoCompletedSets",
+    "value": "No completed sets logged for this workout.",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryTiming",
+    "value": "TIMING",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryHydrationLabel",
+    "value": "HYDRATION",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryEst1RM",
+    "value": "Est. 1RM: {value} lb",
+    "placeholders": {
+      "value": { "type": "String" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryColSet",
+    "value": "Set",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryColPrev",
+    "value": "Prev",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryColTarget",
+    "value": "Target",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryColWeight",
+    "value": "Weight",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryColReps",
+    "value": "Reps",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryColRir",
+    "value": "RIR",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryColRpe",
+    "value": "RPE",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summarySupersetDetails",
+    "value": "Superset Details",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summarySupersetN",
+    "value": "Superset {id}",
+    "placeholders": {
+      "id": { "type": "String" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryExerciseOrderAndTime",
+    "value": "Exercise Order & Time",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryWorkoutEndedEarly",
+    "value": "Workout Ended Early",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryExitProgress",
+    "value": "Progress",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryExitExercisesDone",
+    "value": "Exercises Done",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryExitTimeSpent",
+    "value": "Time Spent",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryVolumeBreakdown",
+    "value": "Volume Breakdown",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryTotalVolumeLabel",
+    "value": "Total Volume: ",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryIntensityAnalysis",
+    "value": "Intensity Analysis",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAvgRpe",
+    "value": "Avg RPE",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryPeakRpe",
+    "value": "Peak RPE",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAvgRir",
+    "value": "Avg RIR",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryRepsLeft",
+    "value": "{count} reps left",
+    "placeholders": {
+      "count": { "type": "String" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryRpeDistribution",
+    "value": "RPE Distribution",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryIntensityEasy",
+    "value": "Easy",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryIntensityModerate",
+    "value": "Moderate",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryIntensityHard",
+    "value": "Hard",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryIntensityVeryHard",
+    "value": "Very Hard",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryIntensityMaximal",
+    "value": "Maximal",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryEstimated1RM",
+    "value": "Estimated 1RM",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryEpleyFormula",
+    "value": "Based on Epley formula from your best sets",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryBestSet",
+    "value": "Best set: {weight} lb x {reps}",
+    "placeholders": {
+      "weight": { "type": "String" },
+      "reps": { "type": "int" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summarySetTypeDistribution",
+    "value": "Set Type Distribution",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNoDetailedData",
+    "value": "Detailed tracking data is not available for this workout.",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryCoachLabel",
+    "value": "COACH",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summarySessionScore",
+    "value": "SESSION SCORE",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryOutOf100",
+    "value": "out of 100",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryRingPlan",
+    "value": "Plan",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryRingEffort",
+    "value": "Effort",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryRingRest",
+    "value": "Rest",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNoPlanData",
+    "value": "No plan data",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNoWorkingSets",
+    "value": "No working sets",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryEverySetRated",
+    "value": "Every set rated",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNoRestData",
+    "value": "No rest data",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryDonutRestCompliance",
+    "value": "REST COMPLIANCE",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryDonutOnTarget",
+    "value": "on target",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryDonutIntensity",
+    "value": "INTENSITY",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNSets",
+    "value": "{count} sets",
+    "placeholders": {
+      "count": { "type": "int" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNoRirLogged",
+    "value": "No RIR logged",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryDonutPlanAdherence",
+    "value": "PLAN ADHERENCE",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAllExercisesCompleted",
+    "value": "All exercises completed",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNSkipped",
+    "value": "{count} skipped",
+    "placeholders": {
+      "count": { "type": "int" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summarySessionTimeline",
+    "value": "SESSION TIMELINE",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryMusclesHit",
+    "value": "MUSCLES HIT",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryCardioSession",
+    "value": "Cardio session",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryMuscleMapNotApplicable",
+    "value": "Muscle map not applicable",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryNoVolumeData",
+    "value": "No volume data yet",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryTagMuscles",
+    "value": "Tag muscles · {exercises}",
+    "placeholders": {
+      "exercises": { "type": "String" }
+    },
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryPerExerciseDeepDiveLabel",
+    "value": "PER-EXERCISE DEEP DIVE",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAtlasFront",
+    "value": "FRONT",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryAtlasBack",
+    "value": "BACK",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryHideDetails",
+    "value": "Hide details",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "summaryMoreDetails",
+    "value": "More details",
+    "file": "lib/screens/workout/workout_summary_advanced.dart"
+  },
+  {
+    "key": "setRowSetN",
+    "value": "SET {n}",
+    "placeholders": {
+      "n": { "type": "int" }
+    },
+    "file": "lib/screens/workout/widgets/set_row_part_weight_increments.dart"
+  },
+  {
+    "key": "setRowSetNCompact",
+    "value": "Set {n}",
+    "placeholders": {
+      "n": { "type": "int" }
+    },
+    "file": "lib/screens/workout/widgets/set_row_part_weight_increments.dart"
+  },
+  {
+    "key": "setRowHidePrevious",
+    "value": "Hide previous",
+    "file": "lib/screens/workout/widgets/set_row_part_weight_increments.dart"
+  },
+  {
+    "key": "setRowPreviousData",
+    "value": "Previous: {weight} {unit} × {reps} reps",
+    "placeholders": {
+      "weight": { "type": "String" },
+      "unit": { "type": "String" },
+      "reps": { "type": "String" }
+    },
+    "file": "lib/screens/workout/widgets/set_row_part_weight_increments.dart"
+  },
+  {
+    "key": "setRowNReps",
+    "value": "{count} reps",
+    "placeholders": {
+      "count": { "type": "int" }
+    },
+    "file": "lib/screens/workout/widgets/set_row_part_weight_increments.dart"
+  },
+  {
+    "key": "shareBreakdownNExercises",
+    "value": "{count} exercises",
+    "placeholders": {
+      "count": { "type": "int" }
+    },
+    "file": "lib/screens/workout/widgets/share_templates/exercise_breakdown_template.dart"
+  },
+  {
+    "key": "shareBreakdownNMore",
+    "value": "+{count} more",
+    "placeholders": {
+      "count": { "type": "int" }
+    },
+    "file": "lib/screens/workout/widgets/share_templates/exercise_breakdown_template.dart"
+  },
+  {
+    "key": "shareBreakdownNSets",
+    "value": "{count} SETS",
+    "placeholders": {
+      "count": { "type": "int" }
+    },
+    "file": "lib/screens/workout/widgets/share_templates/exercise_breakdown_template.dart"
+  }
+]

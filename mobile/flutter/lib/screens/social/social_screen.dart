@@ -73,6 +73,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   }
 
   Widget _buildNormalLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
@@ -86,7 +87,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'Social',
+          l10n.socialSocial,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -101,7 +102,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               Icons.person_add_rounded,
               color: isDark ? Colors.white : AppColors.pureBlack,
             ),
-            tooltip: 'Find Friends',
+            tooltip: l10n.socialFindFriends,
             onPressed: () {
               HapticFeedback.lightImpact();
               ref.read(posthogServiceProvider).capture(
@@ -122,7 +123,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               Icons.chat_bubble_rounded,
               color: isDark ? Colors.white : AppColors.pureBlack,
             ),
-            tooltip: 'Messages',
+            tooltip: l10n.socialMessages,
             onPressed: () {
               HapticFeedback.lightImpact();
               Navigator.push(
@@ -189,13 +190,13 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Row(
             children: [
-              _buildPill(context, index: 0, label: 'Feed', animationValue: animationValue, isDark: isDark),
+              _buildPill(context, index: 0, label: AppLocalizations.of(context)!.discoverFeed, animationValue: animationValue, isDark: isDark),
               const SizedBox(width: 8),
-              _buildPill(context, index: 1, label: 'Challenges', animationValue: animationValue, isDark: isDark),
+              _buildPill(context, index: 1, label: AppLocalizations.of(context)!.discoverChallenges, animationValue: animationValue, isDark: isDark),
               const SizedBox(width: 8),
-              _buildPill(context, index: 2, label: 'Ranks', animationValue: animationValue, isDark: isDark),
+              _buildPill(context, index: 2, label: AppLocalizations.of(context)!.socialRanks, animationValue: animationValue, isDark: isDark),
               const SizedBox(width: 8),
-              _buildPill(context, index: 3, label: 'Friends', animationValue: animationValue, isDark: isDark),
+              _buildPill(context, index: 3, label: AppLocalizations.of(context)!.discoverFriends, animationValue: animationValue, isDark: isDark),
             ],
           ),
         );
@@ -253,6 +254,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   }
 
   Widget _buildFeedFilterButton(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = ref.colors(context);
     final sortBy = ref.watch(feedSortProvider);
     final myPostsOnly = ref.watch(feedMyPostsOnlyProvider);
@@ -260,10 +262,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     final storiesAutoScroll = ref.watch(storiesAutoScrollProvider);
     final anyAutoScroll = feedAutoScroll || storiesAutoScroll;
 
-    const sortOptions = [
-      ('recent', 'Recent'),
-      ('top', 'Top'),
-      ('trending', 'Trending'),
+    final sortOptions = [
+      ('recent', l10n.socialSortRecent),
+      ('top', l10n.socialSortTop),
+      ('trending', l10n.socialSortTrending),
     ];
 
     return PopupMenuButton<String>(
@@ -291,7 +293,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             ),
         ],
       ),
-      tooltip: 'Feed Options',
+      tooltip: l10n.socialFeedOptions,
       onSelected: (value) {
         HapticFeedback.selectionClick();
         if (value == 'my_posts_toggle') {
@@ -316,18 +318,18 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 color: myPostsOnly ? colors.accent : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
               ),
               const SizedBox(width: 10),
-              const Text('My Posts Only'),
+              Text(l10n.socialMyPostsOnly),
             ],
           ),
         ),
         const PopupMenuDivider(),
         // Sort section header
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           enabled: false,
           height: 32,
           child: Text(
-            'Sort by',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            l10n.socialSortBy,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ),
         ...sortOptions.map((o) => PopupMenuItem<String>(
@@ -355,7 +357,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 color: feedAutoScroll ? colors.accent : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
               ),
               const SizedBox(width: 10),
-              const Text('Auto-scroll Feed'),
+              Text(l10n.socialAutoScrollFeed),
             ],
           ),
         ),
@@ -369,7 +371,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 color: storiesAutoScroll ? colors.accent : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
               ),
               const SizedBox(width: 10),
-              const Text('Auto-scroll Stories'),
+              Text(l10n.socialAutoScrollStories),
             ],
           ),
         ),
@@ -412,8 +414,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               SnackBar(
                 content: Text(
                   username != null
-                      ? 'Username copied: @$username'
-                      : 'User ID copied',
+                      ? AppLocalizations.of(context)!.socialUsernameCopied(username)
+                      : AppLocalizations.of(context)!.socialUserIdCopied,
                 ),
                 behavior: SnackBarBehavior.floating,
                 duration: const Duration(seconds: 2),

@@ -322,6 +322,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
 
     if (filtered.isEmpty && !exercisesState.isLoading) {
       return EmptyState.noExercises(
+        context,
         onAction: searchQuery.isNotEmpty || activeFilters > 0
             ? () => clearSearchAndFilters(ref)
             : null,

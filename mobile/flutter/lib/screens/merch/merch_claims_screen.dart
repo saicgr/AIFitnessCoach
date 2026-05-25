@@ -8,6 +8,7 @@ import '../../data/models/merch_claim.dart';
 import '../../data/providers/merch_claim_provider.dart';
 import '../../data/providers/merch_notification_prefs_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
@@ -75,7 +76,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
                           Icon(Icons.card_giftcard, size: 28, color: accent),
                           const SizedBox(width: 12),
                           Text(
-                            'Merch Rewards',
+                            AppLocalizations.of(context).merchClaimsMerchRewards,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -164,7 +165,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Real rewards for real progress',
+                  AppLocalizations.of(context).merchClaimsRealRewardsForReal,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -189,7 +190,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  "Tap Accept to claim. We'll email you to collect your size and shipping address when we're ready to ship.",
+                  AppLocalizations.of(context).merchClaimsTapAcceptToClaim,
                   style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
                 ),
               ),
@@ -219,7 +220,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           Icon(Icons.lock_outline, size: 48, color: textMuted),
           const SizedBox(height: 12),
           Text(
-            'No merch unlocked yet',
+            AppLocalizations.of(context).merchClaimsNoMerchUnlockedYet,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -244,7 +245,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
         children: [
           Icon(Icons.error_outline, size: 40, color: textMuted),
           const SizedBox(height: 8),
-          Text('Failed to load merch claims', style: TextStyle(color: textColor)),
+          Text(AppLocalizations.of(context).merchClaimsFailedToLoadMerch, style: TextStyle(color: textColor)),
           const SizedBox(height: 4),
           Text(
             '$error',
@@ -255,7 +256,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           TextButton.icon(
             onPressed: () => ref.read(merchClaimsProvider.notifier).load(),
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text(AppLocalizations.of(context).buttonRetry),
             style: TextButton.styleFrom(foregroundColor: accent),
           ),
         ],
@@ -269,7 +270,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: Text(claim.emoji, style: const TextStyle(fontSize: 40)),
-        title: Text('Claim your ${claim.displayName}?'),
+        title: Text(AppLocalizations.of(context).merchClaimsClaimYour(claim.displayName)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,10 +288,10 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not now')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).merchClaimsNotNow)),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Accept reward'),
+            child: Text(AppLocalizations.of(context).merchClaimsAcceptReward),
           ),
         ],
       ),
@@ -302,7 +303,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("${claim.displayName} accepted! We'll be in touch."),
+            content: Text(AppLocalizations.of(context).merchClaimsAcceptedWeWillBeIn(claim.displayName)),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -310,7 +311,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to accept: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).merchClaimsFailedToAccept('$e'))),
         );
       }
     }
@@ -320,16 +321,16 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel this reward?'),
+        title: Text(AppLocalizations.of(context).merchClaimsCancelThisReward),
         content: Text(
-          "You'll forfeit the ${claim.displayName} (level ${claim.awardedAtLevel}). This can't be undone.",
+          AppLocalizations.of(context).merchClaimsYouWillForfeit(claim.displayName, claim.awardedAtLevel),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep it')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).merchClaimsKeepIt)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Cancel reward'),
+            child: Text(AppLocalizations.of(context).merchClaimsCancelReward),
           ),
         ],
       ),
@@ -339,13 +340,13 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
       await ref.read(merchClaimsProvider.notifier).cancel(claim.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reward cancelled.')),
+          SnackBar(content: Text(AppLocalizations.of(context).merchClaimsRewardCancelled)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to cancel: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).merchClaimsFailedToCancel('$e'))),
         );
       }
     }
@@ -361,12 +362,12 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (claim.trackingNumber != null) ...[
-              const Text('Tracking #', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context).merchClaimsTracking, style: const TextStyle(fontWeight: FontWeight.bold)),
               SelectableText(claim.trackingNumber!),
               const SizedBox(height: 8),
             ],
             if (claim.carrier != null) ...[
-              const Text('Carrier', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context).merchClaimsCarrier, style: const TextStyle(fontWeight: FontWeight.bold)),
               Text(claim.carrier!),
               const SizedBox(height: 8),
             ],
@@ -377,7 +378,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context).commonClose)),
         ],
       ),
     );
@@ -420,13 +421,13 @@ class _MerchNotificationToggle extends ConsumerWidget {
                 } catch (_) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Failed to update. Try again.')),
+                      SnackBar(content: Text(AppLocalizations.of(context).merchClaimsFailedToUpdateTry)),
                     );
                   }
                 }
               },
         title: Text(
-          'Merch notifications',
+          AppLocalizations.of(context).merchClaimsMerchNotifications,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -434,7 +435,7 @@ class _MerchNotificationToggle extends ConsumerWidget {
           ),
         ),
         subtitle: Text(
-          'Push + email alerts when close to merch tiers or when a reward is waiting',
+          AppLocalizations.of(context).merchClaimsPushEmailAlertsWhen,
           style: TextStyle(fontSize: 11, color: textMuted, height: 1.3),
         ),
         contentPadding: EdgeInsets.zero,
@@ -513,7 +514,7 @@ class _MerchClaimCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Unlocked at Level ${claim.awardedAtLevel}',
+                      AppLocalizations.of(context).merchClaimsUnlockedAtLevel(claim.awardedAtLevel),
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                     const SizedBox(height: 6),
@@ -552,7 +553,7 @@ class _MerchClaimCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "Reward accepted! We'll email you to collect shipping details.",
+                      AppLocalizations.of(context).merchClaimsRewardAcceptedWeLl,
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                   ),
@@ -561,13 +562,13 @@ class _MerchClaimCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          _buildActionRow(textColor, textMuted),
+          _buildActionRow(context, textColor, textMuted),
         ],
       ),
     );
   }
 
-  Widget _buildActionRow(Color textColor, Color textMuted) {
+  Widget _buildActionRow(BuildContext context, Color textColor, Color textMuted) {
     if (claim.isPending) {
       return Row(
         children: [
@@ -575,7 +576,7 @@ class _MerchClaimCard extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: onAccept,
               icon: const Icon(Icons.check_circle_outline, size: 18),
-              label: const Text('Accept reward'),
+              label: Text(AppLocalizations.of(context).merchClaimsAcceptReward),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
                 foregroundColor: Colors.black,
@@ -583,7 +584,7 @@ class _MerchClaimCard extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Cancel',
+            tooltip: AppLocalizations.of(context).buttonCancel,
             onPressed: onCancel,
             icon: Icon(Icons.delete_outline, color: textMuted),
           ),
@@ -596,7 +597,7 @@ class _MerchClaimCard extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: onCancel,
           icon: const Icon(Icons.delete_outline, size: 16),
-          label: const Text('Cancel reward'),
+          label: Text(AppLocalizations.of(context).merchClaimsCancelReward),
           style: OutlinedButton.styleFrom(foregroundColor: textMuted),
         ),
       );
@@ -607,7 +608,7 @@ class _MerchClaimCard extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: onViewTracking,
           icon: const Icon(Icons.local_shipping, size: 18),
-          label: Text(claim.isDelivered ? 'Delivery details' : 'View tracking'),
+          label: Text(claim.isDelivered ? AppLocalizations.of(context).merchClaimsDeliveryDetails : AppLocalizations.of(context).merchClaimsViewTracking),
         ),
       );
     }

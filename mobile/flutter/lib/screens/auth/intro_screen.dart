@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// Intro Screen — Onboarding v5
@@ -64,6 +65,7 @@ class _IntroScreenState extends State<IntroScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -145,7 +147,7 @@ class _IntroScreenState extends State<IntroScreen>
                     GestureDetector(
                       onTap: _onSignIn,
                       child: Text(
-                        'Sign In',
+                        l10n.authSignIn,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -198,7 +200,7 @@ class _IntroScreenState extends State<IntroScreen>
 
                 // ── Outcome-focused headline
                 Text(
-                  'Your body.',
+                  l10n.introYourBody,
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w900,
@@ -211,7 +213,7 @@ class _IntroScreenState extends State<IntroScreen>
                 const SizedBox(height: 4),
 
                 Text(
-                  'Your timeline.',
+                  l10n.introYourTimeline,
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w900,
@@ -224,7 +226,7 @@ class _IntroScreenState extends State<IntroScreen>
                 const SizedBox(height: 18),
 
                 Text(
-                  "An AI coach that builds the plan, learns your body, and adjusts every week.",
+                  l10n.introTagline,
                   style: TextStyle(
                     fontSize: 16,
                     color: textSecondary,
@@ -253,21 +255,21 @@ class _IntroScreenState extends State<IntroScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      const _StatPill(
+                      _StatPill(
                         value: '1,700+',
-                        label: 'Exercises',
-                        color: Color(0xFF00BCD4),
+                        label: l10n.authIntroExercises,
+                        color: const Color(0xFF00BCD4),
                       ),
                       _Divider(),
-                      const _StatPill(
+                      _StatPill(
                         value: '1M+',
-                        label: 'Foods',
-                        color: Color(0xFF2ECC71),
+                        label: l10n.authIntroFoods,
+                        color: const Color(0xFF2ECC71),
                       ),
                       _Divider(),
-                      const _StatPill(
+                      _StatPill(
                         value: '24/7',
-                        label: 'AI Coach',
+                        label: l10n.authIntroAiCoach,
                         color: AppColors.orange,
                       ),
                     ],
@@ -300,21 +302,21 @@ class _IntroScreenState extends State<IntroScreen>
                         ),
                       ],
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Build My Plan',
-                            style: TextStyle(
+                            l10n.introBuildMyPlan,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 0.3,
                             ),
                           ),
-                          SizedBox(width: 10),
-                          Icon(
+                          const SizedBox(width: 10),
+                          const Icon(
                             Icons.arrow_forward_rounded,
                             color: Colors.white,
                             size: 22,
@@ -332,7 +334,7 @@ class _IntroScreenState extends State<IntroScreen>
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Text(
-                      'I already have an account',
+                      l10n.introIAlreadyHaveAnAccount,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

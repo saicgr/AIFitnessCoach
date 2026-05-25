@@ -103,7 +103,7 @@ class _ExerciseCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                'CUSTOM',
+                                AppLocalizations.of(context).exercisePickerSheetCustom,
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
@@ -121,7 +121,7 @@ class _ExerciseCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                'AI',
+                                AppLocalizations.of(context).exercisePickerSheetAi,
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,

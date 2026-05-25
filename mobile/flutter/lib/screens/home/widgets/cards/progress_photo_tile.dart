@@ -7,6 +7,7 @@ import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/repositories/progress_photos_repository.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Provider to load recent progress photos for the tile
 final _recentPhotosProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
@@ -55,18 +56,21 @@ class ProgressPhotoCard extends ConsumerWidget {
         child: photosAsync.when(
           data: (photos) => photos.length >= 2
               ? _buildWithPhotos(
+                  context,
                   photos,
                   textColor: textColor,
                   textMuted: textMuted,
                   accentColor: accentColor,
                 )
               : _buildEmpty(
+                  context,
                   textColor: textColor,
                   textMuted: textMuted,
                   accentColor: accentColor,
                 ),
-          loading: () => _buildLoading(textMuted: textMuted),
+          loading: () => _buildLoading(context, textMuted: textMuted),
           error: (_, __) => _buildEmpty(
+            context,
             textColor: textColor,
             textMuted: textMuted,
             accentColor: accentColor,
@@ -77,6 +81,7 @@ class ProgressPhotoCard extends ConsumerWidget {
   }
 
   Widget _buildWithPhotos(
+    BuildContext context,
     List<dynamic> photos, {
     required Color textColor,
     required Color textMuted,
@@ -90,7 +95,7 @@ class ProgressPhotoCard extends ConsumerWidget {
             Icon(Icons.photo_library, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Progress Photos',
+              AppLocalizations.of(context)!.progressPhotoTileProgressPhotos,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -141,11 +146,13 @@ class ProgressPhotoCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmpty({
+  Widget _buildEmpty(
+    BuildContext context, {
     required Color textColor,
     required Color textMuted,
     required Color accentColor,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,7 +161,7 @@ class ProgressPhotoCard extends ConsumerWidget {
             Icon(Icons.photo_library, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Progress Photos',
+              l10n.progressPhotoTileProgressPhotos,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -170,7 +177,7 @@ class ProgressPhotoCard extends ConsumerWidget {
               Icon(Icons.camera_alt_outlined, color: textMuted, size: 32),
               const SizedBox(height: 8),
               Text(
-                'Take your first photo',
+                l10n.progressPhotoTileTakeYourFirstPhoto,
                 style: TextStyle(fontSize: 14, color: textMuted),
               ),
             ],
@@ -180,7 +187,7 @@ class ProgressPhotoCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoading({required Color textMuted}) {
+  Widget _buildLoading(BuildContext context, {required Color textMuted}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -189,7 +196,7 @@ class ProgressPhotoCard extends ConsumerWidget {
             Icon(Icons.photo_library, color: textMuted, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Progress Photos',
+              AppLocalizations.of(context)!.progressPhotoTileProgressPhotos,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

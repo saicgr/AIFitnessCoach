@@ -50,7 +50,7 @@ class PersonalRecordsCard extends ConsumerWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Personal Records',
+                AppLocalizations.of(context)!.personalRecordsCardPersonalRecords,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -64,7 +64,7 @@ class PersonalRecordsCard extends ConsumerWidget {
                   context.push('/achievements');
                 },
                 child: Text(
-                  'View All',
+                  AppLocalizations.of(context)!.personalRecordsCardViewAll,
                   style: TextStyle(
                     fontSize: 12,
                     color: accentColor,
@@ -92,7 +92,7 @@ class PersonalRecordsCard extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
-                'Complete workouts to earn PRs',
+                AppLocalizations.of(context)!.personalRecordsCardCompleteWorkoutsToPR,
                 style: TextStyle(fontSize: 14, color: textMuted),
               ),
             )
@@ -112,7 +112,7 @@ class PersonalRecordsCard extends ConsumerWidget {
                               style: TextStyle(fontSize: 14, color: textColor),
                             ),
                             Text(
-                              _timeAgo(pr.achievedAt),
+                              _timeAgo(context, pr.achievedAt),
                               style: TextStyle(fontSize: 11, color: textMuted),
                             ),
                           ],
@@ -134,17 +134,18 @@ class PersonalRecordsCard extends ConsumerWidget {
     );
   }
 
-  static String _timeAgo(String isoDate) {
+  static String _timeAgo(BuildContext context, String isoDate) {
+    final l10n = AppLocalizations.of(context)!;
     final date = DateTime.tryParse(isoDate);
     if (date == null) return '';
     final diff = DateTime.now().difference(date);
-    if (diff.inDays == 0) return 'Today';
-    if (diff.inDays == 1) return 'Yesterday';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
-    if (diff.inDays < 14) return '1 week ago';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
-    if (diff.inDays < 60) return '1 month ago';
-    return '${(diff.inDays / 30).floor()} months ago';
+    if (diff.inDays == 0) return l10n.personalRecordsCardToday;
+    if (diff.inDays == 1) return l10n.personalRecordsCardYesterday;
+    if (diff.inDays < 7) return l10n.personalRecordsCardDaysAgo(diff.inDays);
+    if (diff.inDays < 14) return l10n.personalRecordsCard1WeekAgo;
+    if (diff.inDays < 30) return l10n.personalRecordsCardWeeksAgo((diff.inDays / 7).floor());
+    if (diff.inDays < 60) return l10n.personalRecordsCard1MonthAgo;
+    return l10n.personalRecordsCardMonthsAgo((diff.inDays / 30).floor());
   }
 }
 
@@ -198,7 +199,7 @@ class AICoachTipCard extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Coach Tip',
+                  AppLocalizations.of(context)!.personalRecordsCardCoachTip,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -233,16 +234,16 @@ class AICoachTipCard extends ConsumerWidget {
           const SizedBox(height: 12),
           tipAsync.when(
             data: (tip) => Text(
-              tip ?? _getDefaultTip(),
+              tip ?? _getDefaultTip(context),
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
                 height: 1.4,
               ),
             ),
-            loading: () => _buildLoadingState(textMuted),
+            loading: () => _buildLoadingState(context, textMuted),
             error: (_, __) => Text(
-              _getDefaultTip(),
+              _getDefaultTip(context),
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -260,7 +261,7 @@ class AICoachTipCard extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Ask coach for more',
+                  AppLocalizations.of(context)!.personalRecordsCardAskCoachForMore,
                   style: TextStyle(
                     fontSize: 13,
                     color: accentColor,
@@ -277,7 +278,7 @@ class AICoachTipCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
+  Widget _buildLoadingState(BuildContext context, Color textMuted) {
     return Row(
       children: [
         SizedBox(
@@ -290,7 +291,7 @@ class AICoachTipCard extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          'Getting your personalized tip...',
+          AppLocalizations.of(context)!.personalRecordsCardGettingPersonalizedTip,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -301,14 +302,15 @@ class AICoachTipCard extends ConsumerWidget {
     );
   }
 
-  String _getDefaultTip() {
+  String _getDefaultTip(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      return "Start your day with 10 minutes of stretching to boost energy and flexibility.";
+      return l10n.personalRecordsCardMorningTip;
     } else if (hour < 17) {
-      return "Stay hydrated! Aim for at least 8 glasses of water before dinner.";
+      return l10n.personalRecordsCardAfternoonTip;
     } else {
-      return "Wind down with some light mobility work to improve tomorrow's workout.";
+      return l10n.personalRecordsCardEveningTip;
     }
   }
 }
@@ -371,7 +373,7 @@ class BodyWeightCard extends ConsumerWidget {
                 Icon(Icons.monitor_weight, color: accentColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Weight',
+                  AppLocalizations.of(context)!.personalRecordsCardWeight,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -492,7 +494,7 @@ class LeaderboardRankCard extends ConsumerWidget {
                 Icon(Icons.leaderboard, color: accentColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Rank',
+                  AppLocalizations.of(context)!.personalRecordsCardRank,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -518,7 +520,7 @@ class LeaderboardRankCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Top $percentile%',
+                      AppLocalizations.of(context)!.personalRecordsCardTopPercentile(percentile),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -526,7 +528,7 @@ class LeaderboardRankCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      'of $totalUsers users',
+                      AppLocalizations.of(context)!.personalRecordsCardOfUsers(totalUsers),
                       style: TextStyle(fontSize: 10, color: textMuted),
                     ),
                   ],
@@ -592,7 +594,7 @@ class WaterIntakeCard extends ConsumerWidget {
                 Icon(Icons.water_drop, color: accentColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Water',
+                  AppLocalizations.of(context)!.personalRecordsCardWater,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -617,7 +619,7 @@ class WaterIntakeCard extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '$glasses / $targetGlasses glasses',
+              AppLocalizations.of(context)!.personalRecordsCardGlasses(glasses, targetGlasses),
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
           ],
@@ -672,7 +674,7 @@ class SleepScoreCard extends ConsumerWidget {
               Icon(Icons.bedtime, color: purpleColor, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Sleep',
+                AppLocalizations.of(context)!.personalRecordsCardSleep,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -713,7 +715,9 @@ class SleepScoreCard extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            sleepData != null ? '${sleepQuality} quality sleep' : 'Connect Health to track',
+            sleepData != null
+                ? AppLocalizations.of(context)!.personalRecordsCardQualitySleep(sleepQuality)
+                : AppLocalizations.of(context)!.personalRecordsCardConnectHealthToTrack,
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
         ],

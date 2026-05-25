@@ -254,8 +254,8 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
 
       if (userId == null || widget.workoutLogId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to challenge friends at this time'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.completeUnableToChallenge),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -282,8 +282,8 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       if (friends.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('You don\'t have any friends yet. Add some friends first!'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.completeNoFriendsYet),
               backgroundColor: AppColors.orange,
               behavior: SnackBarBehavior.floating,
             ),
@@ -671,7 +671,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 4),
               action: SnackBarAction(
-                label: 'View Goals',
+                label: AppLocalizations.of(context)!.completeViewGoals,
                 textColor: Colors.white,
                 onPressed: () {
                   context.push('/goals');
@@ -819,8 +819,8 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
     if (!mounted) return;
     if (shareable == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No workout data to share yet'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.completeNoShareData),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -871,8 +871,8 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
 
       if (userId == null || widget.workout.id == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to extend workout'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.completeUnableToExtend),
             backgroundColor: AppColors.error,
           ),
         );
@@ -906,8 +906,8 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to extend workout. Please try again.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.completeExtendFailed),
               backgroundColor: AppColors.error,
             ),
           );
@@ -933,8 +933,8 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
 
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please rate your workout'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.completePleaseRateWorkout),
           backgroundColor: AppColors.error,
         ),
       );

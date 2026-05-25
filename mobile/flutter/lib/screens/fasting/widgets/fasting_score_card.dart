@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Card displaying the fasting score with breakdown
 class FastingScoreCard extends StatelessWidget {
@@ -19,6 +20,7 @@ class FastingScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -46,7 +48,7 @@ class FastingScoreCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Fasting Score',
+                  l10n.fastingScoreCardFastingScore,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -101,7 +103,7 @@ class FastingScoreCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 // Trend indicator
-                if (trend != null) _buildTrendIndicator(trend!, textMuted),
+                if (trend != null) _buildTrendIndicator(trend!, textMuted, l10n),
               ],
             ),
             const SizedBox(height: 16),
@@ -119,14 +121,14 @@ class FastingScoreCard extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Breakdown
-            _buildBreakdownSection(textPrimary, textMuted),
+            _buildBreakdownSection(textPrimary, textMuted, l10n),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTrendIndicator(FastingScoreTrend trend, Color textMuted) {
+  Widget _buildTrendIndicator(FastingScoreTrend trend, Color textMuted, AppLocalizations l10n) {
     final isUp = trend.isUp;
     final isDown = trend.isDown;
 
@@ -165,7 +167,7 @@ class FastingScoreCard extends StatelessWidget {
           ],
         ),
         Text(
-          'vs last week',
+          l10n.fastingScoreCardVsLastWeek,
           style: TextStyle(
             fontSize: 10,
             color: textMuted,
@@ -175,12 +177,12 @@ class FastingScoreCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBreakdownSection(Color textPrimary, Color textMuted) {
+  Widget _buildBreakdownSection(Color textPrimary, Color textMuted, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Breakdown',
+          l10n.fastingScoreCardBreakdown,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -189,7 +191,7 @@ class FastingScoreCard extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _buildBreakdownItem(
-          'Completion Rate',
+          l10n.fastingScoreCardCompletionRate,
           score.completionComponent,
           30,
           Icons.check_circle_outline,
@@ -199,7 +201,7 @@ class FastingScoreCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         _buildBreakdownItem(
-          'Streak Bonus',
+          l10n.fastingScoreCardStreakBonus,
           score.streakComponent,
           25,
           Icons.local_fire_department_outlined,
@@ -209,7 +211,7 @@ class FastingScoreCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         _buildBreakdownItem(
-          'Avg Duration',
+          l10n.fastingStatsCardAvg,
           score.durationComponent,
           20,
           Icons.timer_outlined,
@@ -219,7 +221,7 @@ class FastingScoreCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         _buildBreakdownItem(
-          'Weekly Goal',
+          l10n.fastingScoreCardWeeklyGoal,
           score.weeklyComponent,
           15,
           Icons.calendar_today_outlined,
@@ -229,7 +231,7 @@ class FastingScoreCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         _buildBreakdownItem(
-          'Protocol Level',
+          l10n.fastingScoreCardProtocolLevel,
           score.protocolComponent,
           10,
           Icons.speed_outlined,
@@ -305,6 +307,7 @@ class FastingScoreCompact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -352,7 +355,7 @@ class FastingScoreCompact extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Score',
+                l10n.fastingScoreCardScore,
                 style: TextStyle(
                   fontSize: 11,
                   color: textMuted,

@@ -7,6 +7,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Workout Compliance Ring Card for the home screen.
 ///
@@ -78,8 +79,9 @@ class ComplianceRingCard extends ConsumerWidget {
           border: Border.all(color: cardBorder),
         ),
         child: target == 0
-            ? _buildEmptyState(textMuted, accentColor)
+            ? _buildEmptyState(context, textMuted, accentColor)
             : _buildContentState(
+                context: context,
                 textColor: textColor,
                 textMuted: textMuted,
                 ringColor: ringColor,
@@ -139,7 +141,8 @@ class ComplianceRingCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted, Color accentColor) {
+  Widget _buildEmptyState(BuildContext context, Color textMuted, Color accentColor) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -148,7 +151,7 @@ class ComplianceRingCard extends ConsumerWidget {
             Icon(Icons.track_changes, color: accentColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Workout Compliance',
+              l10n.complianceRingCardWorkoutCompliance,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -159,7 +162,7 @@ class ComplianceRingCard extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'No workouts scheduled this week',
+          l10n.complianceRingCardNoWorkoutsScheduledThis,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -170,6 +173,7 @@ class ComplianceRingCard extends ConsumerWidget {
   }
 
   Widget _buildContentState({
+    required BuildContext context,
     required Color textColor,
     required Color textMuted,
     required Color ringColor,
@@ -243,7 +247,7 @@ class ComplianceRingCard extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                _complianceMessage(),
+                _complianceMessage(context),
                 style: TextStyle(
                   fontSize: 12,
                   color: ringColor,
@@ -257,13 +261,14 @@ class ComplianceRingCard extends ConsumerWidget {
     );
   }
 
-  String _complianceMessage() {
+  String _complianceMessage(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final remaining = target - completed;
-    if (_progress >= 1.0) return 'All workouts completed!';
-    if (_progress >= 0.75) return 'Great pace! $remaining left';
-    if (_progress >= 0.50) return 'On track — $remaining to go';
-    if (completed == 0) return 'Get started today!';
-    return '$remaining workouts remaining';
+    if (_progress >= 1.0) return l10n.complianceRingCardAllWorkoutsCompleted;
+    if (_progress >= 0.75) return l10n.complianceRingCardGreatPace(remaining);
+    if (_progress >= 0.50) return l10n.complianceRingCardOnTrack(remaining);
+    if (completed == 0) return l10n.complianceRingCardGetStartedToday;
+    return l10n.complianceRingCardWorkoutsRemaining(remaining);
   }
 }
 

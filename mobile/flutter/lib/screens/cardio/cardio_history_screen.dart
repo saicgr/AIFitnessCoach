@@ -6,6 +6,7 @@ import '../../data/models/cardio_log.dart';
 import '../../data/providers/cardio_providers.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/providers/habit_provider.dart' show currentUserIdProvider;
+import '../../l10n/generated/app_localizations.dart';
 
 /// Cardio history screen — lists Strava/Peloton/Garmin/Apple Health/Fitbit
 /// sessions imported into cardio_logs. Tapping a row opens a detail sheet
@@ -61,8 +62,8 @@ class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
     if (userId == null) {
       // Fail-fast rather than rendering an empty history for a logged-out
       // state. The router should gate this screen upstream; this is defense.
-      return const Scaffold(
-        body: Center(child: Text('Please sign in to see your cardio history.')),
+      return Scaffold(
+        body: Center(child: Text(AppLocalizations.of(context).cardioHistoryPleaseSignInTo)),
       );
     }
 
@@ -78,11 +79,11 @@ class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cardio History'),
+        title: Text(AppLocalizations.of(context).cardioHistoryCardioHistory),
         actions: [
           IconButton(
             icon: const Icon(Icons.date_range),
-            tooltip: 'Date range',
+            tooltip: AppLocalizations.of(context).cardioHistoryDateRange,
             onPressed: () async {
               final picked = await showDateRangePicker(
                 context: context,
@@ -98,7 +99,7 @@ class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
           if (_dateRange != null)
             IconButton(
               icon: const Icon(Icons.clear),
-              tooltip: 'Clear date filter',
+              tooltip: AppLocalizations.of(context).cardioHistoryClearDateFilter,
               onPressed: () => setState(() => _dateRange = null),
             ),
         ],
@@ -119,7 +120,7 @@ class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
                 final opt = _quickFilters[idx];
                 final selected = _activityFilter == opt.value;
                 return FilterChip(
-                  label: Text('${opt.emoji} ${opt.label}'),
+                  label: Text('${opt.emoji} ${_localizeChipLabel(context, opt.value)}'),
                   selected: selected,
                   onSelected: (_) => setState(() => _activityFilter = opt.value),
                 );
@@ -141,7 +142,7 @@ class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
                 padding: EdgeInsets.fromLTRB(12, 12, 12, 24),
               ),
               errorBuilder: (context, err, _) => _ErrorState(
-                message: 'Could not load cardio history',
+                message: AppLocalizations.of(context).cardioHistoryCouldNotLoadCardio,
                 detail: err.toString(),
                 onRetry: () => ref.invalidate(cardioLogsProvider(filter)),
               ),
@@ -167,6 +168,23 @@ class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
         ],
       ),
     );
+  }
+
+  String _localizeChipLabel(BuildContext context, String? value) {
+    final l10n = AppLocalizations.of(context);
+    switch (value) {
+      case null:   return l10n.cardioHistoryAll;
+      case 'run':  return l10n.cardioHistoryRun;
+      case 'walk': return l10n.cardioHistoryWalk;
+      case 'hike': return l10n.cardioHistoryHike;
+      case 'cycle': return l10n.cardioHistoryCycle;
+      case 'indoor_cycle': return l10n.cardioHistoryIndoorCycle;
+      case 'row':  return l10n.cardioHistoryRow;
+      case 'swim': return l10n.cardioHistorySwim;
+      case 'hiit': return l10n.cardioHistoryHiit;
+      case 'yoga': return l10n.cardioHistoryYoga;
+      default:     return value ?? l10n.cardioHistoryAll;
+    }
   }
 
   void _openDetailSheet(BuildContext context, CardioLog log) {
@@ -210,9 +228,9 @@ class _SummaryHeader extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Expanded(child: _StatBox(label: 'This week', value: '$weeklyKm km', sub: '${s.weeklySessions} sessions')),
-              Expanded(child: _StatBox(label: 'All-time', value: '$totalKm km', sub: '$totalHours h')),
-              Expanded(child: _StatBox(label: 'Sessions', value: s.totalSessions.toString(), sub: '${s.perActivity.length} activities')),
+              Expanded(child: _StatBox(label: AppLocalizations.of(context).cardioHistoryThisWeek, value: '$weeklyKm km', sub: AppLocalizations.of(context).cardioHistoryNSessions(s.weeklySessions))),
+              Expanded(child: _StatBox(label: AppLocalizations.of(context).cardioHistoryAllTime, value: '$totalKm km', sub: '$totalHours h')),
+              Expanded(child: _StatBox(label: AppLocalizations.of(context).cardioHistorySessions, value: s.totalSessions.toString(), sub: AppLocalizations.of(context).cardioHistoryNActivities(s.perActivity.length))),
             ],
           ),
         );
@@ -325,39 +343,39 @@ class _CardioDetailSheet extends StatelessWidget {
               spacing: 24,
               runSpacing: 12,
               children: [
-                _DetailStat(label: 'Duration', value: log.formatDuration()),
+                _DetailStat(label: AppLocalizations.of(context).cardioHistoryDuration, value: log.formatDuration()),
                 if (log.formatDistanceKm() != null)
-                  _DetailStat(label: 'Distance', value: log.formatDistanceKm()!),
+                  _DetailStat(label: AppLocalizations.of(context).cardioHistoryDistance, value: log.formatDistanceKm()!),
                 if (log.formatPacePerKm() != null)
-                  _DetailStat(label: 'Avg pace', value: log.formatPacePerKm()!),
+                  _DetailStat(label: AppLocalizations.of(context).cardioHistoryAvgPace, value: log.formatPacePerKm()!),
                 if (log.formatSpeedKmh() != null)
-                  _DetailStat(label: 'Avg speed', value: log.formatSpeedKmh()!),
+                  _DetailStat(label: AppLocalizations.of(context).cardioHistoryAvgSpeed, value: log.formatSpeedKmh()!),
                 if (log.avgHeartRate != null)
-                  _DetailStat(label: 'Avg HR', value: '${log.avgHeartRate} bpm'),
+                  _DetailStat(label: AppLocalizations.of(context).cardioHistoryAvgHr, value: '${log.avgHeartRate} bpm'),
                 if (log.maxHeartRate != null)
-                  _DetailStat(label: 'Max HR', value: '${log.maxHeartRate} bpm'),
+                  _DetailStat(label: AppLocalizations.of(context).cardioHistoryMaxHr, value: '${log.maxHeartRate} bpm'),
                 if (log.avgWatts != null)
-                  _DetailStat(label: 'Avg watts', value: '${log.avgWatts} W'),
+                  _DetailStat(label: AppLocalizations.of(context).cardioHistoryAvgWatts, value: '${log.avgWatts} W'),
                 if (log.calories != null)
-                  _DetailStat(label: 'Calories', value: log.calories.toString()),
+                  _DetailStat(label: AppLocalizations.of(context).cardioHistoryCalories, value: log.calories.toString()),
                 if (log.elevationGainM != null)
                   _DetailStat(
-                    label: 'Elevation',
+                    label: AppLocalizations.of(context).cardioHistoryElevation,
                     value: '${log.elevationGainM!.toStringAsFixed(0)} m',
                   ),
                 if (log.rpe != null)
-                  _DetailStat(label: 'RPE', value: log.rpe!.toStringAsFixed(1)),
+                  _DetailStat(label: AppLocalizations.of(context).cardioHistoryRpe, value: log.rpe!.toStringAsFixed(1)),
               ],
             ),
             if (log.notes != null && log.notes!.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text('Notes', style: Theme.of(context).textTheme.titleSmall),
+              Text(AppLocalizations.of(context).cardioHistoryNotes, style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 4),
               Text(log.notes!),
             ],
             if (splits.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text('Splits', style: Theme.of(context).textTheme.titleSmall),
+              Text(AppLocalizations.of(context).cardioHistorySplits, style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 4),
               for (final split in splits) _SplitRow(split: split),
             ],
@@ -372,7 +390,7 @@ class _CardioDetailSheet extends StatelessWidget {
                   const Icon(Icons.map_outlined, size: 18),
                   const SizedBox(width: 6),
                   Text(
-                    'Route recorded (${log.gpsPolyline!.length} pts)',
+                    AppLocalizations.of(context).cardioHistoryRouteRecordedPts(log.gpsPolyline!.length),
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
                 ],
@@ -463,16 +481,16 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               hasFilter
-                  ? 'No sessions match this filter.'
-                  : 'No cardio sessions yet.',
+                  ? AppLocalizations.of(context).cardioHistoryNoSessionsMatchThis
+                  : AppLocalizations.of(context).cardioHistoryNoCardioSessionsYet,
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
               hasFilter
-                  ? 'Try clearing filters or widening the date range.'
-                  : 'Import from Strava, Peloton, Garmin, Apple Health, or Fitbit to see your history here.',
+                  ? AppLocalizations.of(context).cardioHistoryTryClearingFiltersOr
+                  : AppLocalizations.of(context).cardioHistoryImportFromStravaPeloton,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -512,7 +530,7 @@ class _ErrorState extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(AppLocalizations.of(context).buttonRetry)),
           ],
         ),
       ),

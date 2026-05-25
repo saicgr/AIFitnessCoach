@@ -4,6 +4,7 @@ part of 'exercise_add_sheet.dart';
 extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
 
   Widget _buildMyExercisesTab(bool isDark, Color textPrimary, Color textMuted) {
+    final l = AppLocalizations.of(context)!;
     final cardBackground =
         isDark ? AppColors.elevated : AppColorsLight.elevated;
     final customState = ref.watch(customExercisesProvider);
@@ -49,7 +50,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
           padding: const EdgeInsets.all(16),
           child: TextField(
             decoration: InputDecoration(
-              hintText: 'Search my exercises...',
+              hintText: l.exerciseAddSearchMine,
               hintStyle: TextStyle(color: textMuted),
               prefixIcon: Icon(Icons.search, color: textMuted),
               filled: true,
@@ -77,13 +78,13 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                           color: textMuted.withValues(alpha: 0.5)),
                       const SizedBox(height: 16),
                       Text(
-                        'No custom exercises, favorites,\nor staples yet',
+                        l.exerciseAddNoMineYet,
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 15, color: textMuted),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Create custom exercises or mark favorites\nin Library → Mine',
+                        l.exerciseAddNoMineYetHint,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 13,
@@ -98,7 +99,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                     // Custom Exercises section
                     if (customExercises.isNotEmpty) ...[
                       _buildMineSectionHeader(
-                        'Custom Exercises',
+                        l.exerciseAddSectionCustom,
                         Icons.fitness_center,
                         AppColors.orange,
                         customExercises.length,
@@ -110,7 +111,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                             name: ce.name,
                             subtitle:
                                 '${_capitalize(ce.primaryMuscle)} · ${_capitalize(ce.equipment)}',
-                            badge: 'CUSTOM',
+                            badge: l.exerciseAddBadgeCustom,
                             badgeColor: AppColors.orange,
                             textPrimary: textPrimary,
                             textMuted: textMuted,
@@ -122,7 +123,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                     // Favorites section
                     if (favorites.isNotEmpty) ...[
                       _buildMineSectionHeader(
-                        'Favorites',
+                        l.exerciseAddSectionFavorites,
                         Icons.favorite,
                         AppColors.coral,
                         favorites.length,
@@ -133,7 +134,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                       ...favorites.map((f) => _buildMyExerciseCard(
                             name: f.exerciseName,
                             subtitle: '',
-                            badge: 'FAV',
+                            badge: l.exerciseAddBadgeFav,
                             badgeColor: AppColors.coral,
                             textPrimary: textPrimary,
                             textMuted: textMuted,
@@ -145,7 +146,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                     // Staples section
                     if (staples.isNotEmpty) ...[
                       _buildMineSectionHeader(
-                        'Staples',
+                        l.exerciseAddSectionStaples,
                         Icons.push_pin,
                         AppColors.purple,
                         staples.length,
@@ -156,7 +157,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                       ...staples.map((s) => _buildMyExerciseCard(
                             name: s.exerciseName,
                             subtitle: s.muscleGroup ?? '',
-                            badge: 'STAPLE',
+                            badge: l.exerciseAddBadgeStaple,
                             badgeColor: AppColors.purple,
                             textPrimary: textPrimary,
                             textMuted: textMuted,

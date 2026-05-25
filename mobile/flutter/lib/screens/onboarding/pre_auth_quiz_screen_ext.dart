@@ -259,7 +259,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Something went wrong. Please try again.'),
+            content: Text(AppLocalizations.of(context)!.preAuthQuizSomethingWentWrongPlease),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -310,8 +310,8 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       // Show error but still try to navigate
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save onboarding data. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.preAuthQuizFailedToSaveOnboarding),
             backgroundColor: Colors.red,
           ),
         );
@@ -404,8 +404,8 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         return buildTip(
           icon: Icons.flag_rounded,
           color: AppColors.onboardingAccent,
-          title: 'Your goals shape everything',
-          body: 'We use your goals to determine training split, exercise selection, and how fast you progress.',
+          title: AppLocalizations.of(context)!.preAuthQuizYourGoalsShapeEverything,
+          body: AppLocalizations.of(context)!.preAuthQuizWeUseYourGoals,
           bullets: [
             (icon: Icons.fitness_center, text: 'Exercise type & volume'),
             (icon: Icons.speed, text: 'Intensity & rest periods'),
@@ -417,14 +417,14 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
           icon: Icons.person_outline,
           color: const Color(0xFF3B82F6),
           title: 'Calibrating your baseline',
-          body: 'Fitness level helps set the right starting point — proper weights, rep ranges, and exercise complexity.',
+          body: AppLocalizations.of(context)!.preAuthQuizFitnessLevelHelpsSet,
         );
       case 2:
         return buildTip(
           icon: Icons.calendar_today_rounded,
           color: AppColors.green,
-          title: 'Consistency beats intensity',
-          body: 'We\'ll build the optimal training split for your schedule. More days isn\'t always better — recovery matters.',
+          title: AppLocalizations.of(context)!.preAuthQuizConsistencyBeatsIntensity,
+          body: AppLocalizations.of(context)!.preAuthQuizWeLlBuildThe,
           bullets: [
             (icon: Icons.looks_two, text: '2-3 days → Full Body'),
             (icon: Icons.looks_4, text: '4 days → Upper/Lower'),
@@ -435,15 +435,15 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         return buildTip(
           icon: Icons.event_available,
           color: const Color(0xFFA855F7),
-          title: 'Smart scheduling',
+          title: AppLocalizations.of(context)!.preAuthQuizWhichDaysWorkBest,
           body: 'Your chosen days help us space workouts optimally for muscle recovery between sessions.',
         );
       case 4:
         return buildTip(
           icon: Icons.home_rounded,
           color: AppColors.cyan,
-          title: 'Matched to your setup',
-          body: 'Every exercise will be chosen based on what equipment you actually have. No substitutions needed.',
+          title: AppLocalizations.of(context)!.preAuthQuizMatchedToYourSetup,
+          body: AppLocalizations.of(context)!.preAuthQuizEveryExerciseWillBe,
           bullets: [
             (icon: Icons.check_circle_outline, text: 'Only exercises you can do'),
             (icon: Icons.swap_horiz, text: 'Smart alternatives when needed'),
@@ -453,8 +453,8 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         return buildTip(
           icon: Icons.shield_outlined,
           color: AppColors.green,
-          title: 'Safety first',
-          body: 'Telling us about injuries ensures we avoid exercises that could cause pain or setbacks.',
+          title: AppLocalizations.of(context)!.preAuthQuizSafetyFirst,
+          body: AppLocalizations.of(context)!.preAuthQuizTellingUsAboutInjuries,
         );
       case 6:
         return QuizPrimaryGoal.buildInfoButton(context);
@@ -462,8 +462,8 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         return buildTip(
           icon: Icons.tune_rounded,
           color: AppColors.onboardingAccent,
-          title: 'Fine-tuning your plan',
-          body: 'These optional details make your workouts even more personalized. Skip if you prefer AI defaults.',
+          title: AppLocalizations.of(context)!.preAuthQuizFineTuningYourPlan,
+          body: AppLocalizations.of(context)!.preAuthQuizTheseOptionalDetailsMake,
         );
       case 8:
         return buildTip(
@@ -483,16 +483,16 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         return buildTip(
           icon: Icons.speed_rounded,
           color: AppColors.green,
-          title: 'Your progression speed',
-          body: 'Controls how quickly weights, reps, and difficulty increase each week.',
+          title: AppLocalizations.of(context)!.preAuthQuizYourProgressionSpeed,
+          body: AppLocalizations.of(context)!.preAuthQuizControlsHowQuicklyWeights,
         );
       case 11:
       case 12:
         return buildTip(
           icon: Icons.restaurant_rounded,
           color: AppColors.onboardingAccent,
-          title: 'Fuel your training',
-          body: 'Nutrition tracking is optional but powerful. AI calculates macros based on your goals and activity level.',
+          title: AppLocalizations.of(context)!.preAuthQuizFuelYourTraining,
+          body: AppLocalizations.of(context)!.preAuthQuizNutritionTrackingIsOptional,
         );
       default:
         return null;
@@ -879,7 +879,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Got it'),
+                    child: Text(AppLocalizations.of(context)!.preAuthQuizGotIt),
                   ),
                 ),
               ],

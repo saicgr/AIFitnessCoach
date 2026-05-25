@@ -246,6 +246,7 @@ class _AiChip extends StatelessWidget {
 }
 
 /// Pre-configured chips for common workout actions
+// TODO(i18n): WorkoutActionChips static const fields have no BuildContext — chip labels cannot be localized here
 class WorkoutActionChips {
   static const info = ActionChipData(
     id: 'info',

@@ -12,6 +12,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../core/services/pre_set_insight_engine.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -82,6 +83,7 @@ class _SessionDetailSheet extends StatelessWidget {
       dateLabel = session.dateIso;
     }
 
+    final l = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       child: Column(
@@ -110,11 +112,11 @@ class _SessionDetailSheet extends StatelessWidget {
           // Header row
           Row(
             children: [
-              _headerCell('Set', fg, flex: 1),
-              _headerCell(isTimed ? 'Time' : isBodyweight ? 'Reps' : 'Weight',
+              _headerCell(l.sessionDetailSet, fg, flex: 1),
+              _headerCell(isTimed ? l.sessionDetailTime : isBodyweight ? l.sessionDetailReps : l.sessionDetailWeight,
                   fg, flex: 2),
-              if (!isTimed && !isBodyweight) _headerCell('Reps', fg, flex: 1),
-              _headerCell('RIR', fg, flex: 1),
+              if (!isTimed && !isBodyweight) _headerCell(l.sessionDetailReps, fg, flex: 1),
+              _headerCell(l.rpeRirRir, fg, flex: 1),
             ],
           ),
           const SizedBox(height: 8),
@@ -122,7 +124,7 @@ class _SessionDetailSheet extends StatelessWidget {
             _setRow(context, i + 1, sets[i], fg, accent, bestScore),
           const SizedBox(height: 12),
           Text(
-            '${sets.length} set${sets.length == 1 ? '' : 's'} • top set highlighted',
+            l.sessionDetailSetCount(sets.length),
             style: TextStyle(
               color: fg.withValues(alpha: 0.5),
               fontSize: 11,

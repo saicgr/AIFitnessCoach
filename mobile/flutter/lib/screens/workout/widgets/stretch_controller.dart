@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Controller for stretch phase logic
 class StretchController {
@@ -146,11 +147,11 @@ class StretchPhaseScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Top bar
-                _buildTopBar(textPrimary, elevatedColor),
+                _buildTopBar(context, textPrimary, elevatedColor),
                 const SizedBox(height: 24),
 
                 // Header
-                _buildHeader(textSecondary),
+                _buildHeader(context, textSecondary),
                 const SizedBox(height: 16),
 
                 // Progress bar
@@ -163,10 +164,10 @@ class StretchPhaseScreen extends StatelessWidget {
 
                 // Upcoming exercises
                 if (!controller.isLastExercise)
-                  _buildUpcoming(textSecondary, elevatedColor),
+                  _buildUpcoming(context, textSecondary, elevatedColor),
 
                 // Action buttons
-                _buildActionButtons(),
+                _buildActionButtons(context),
               ],
             ),
           ),
@@ -175,7 +176,8 @@ class StretchPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar(Color textPrimary, Color elevatedColor) {
+  Widget _buildTopBar(BuildContext context, Color textPrimary, Color elevatedColor) {
+    final l = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -205,9 +207,9 @@ class StretchPhaseScreen extends StatelessWidget {
         ),
         TextButton(
           onPressed: controller.skipAll,
-          child: const Text(
-            'Skip All',
-            style: TextStyle(
+          child: Text(
+            l.stretchControllerSkipAll,
+            style: const TextStyle(
               color: AppColors.purple,
               fontWeight: FontWeight.w600,
             ),
@@ -217,7 +219,8 @@ class StretchPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Color textSecondary) {
+  Widget _buildHeader(BuildContext context, Color textSecondary) {
+    final l = AppLocalizations.of(context)!;
     return Row(
       children: [
         Container(
@@ -236,9 +239,9 @@ class StretchPhaseScreen extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'COOL DOWN',
-              style: TextStyle(
+            Text(
+              l.stretchControllerCoolDown,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.purple,
@@ -339,12 +342,13 @@ class StretchPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcoming(Color textSecondary, Color elevatedColor) {
+  Widget _buildUpcoming(BuildContext context, Color textSecondary, Color elevatedColor) {
+    final l = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'UP NEXT',
+          l.stretchControllerUpNext,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -393,7 +397,8 @@ class StretchPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -426,8 +431,8 @@ class StretchPhaseScreen extends StatelessWidget {
             ),
             label: Text(
               controller.isRunning
-                  ? 'Pause'
-                  : (controller.secondsRemaining > 0 ? 'Resume' : 'Start Timer'),
+                  ? l.stretchControllerPause
+                  : (controller.secondsRemaining > 0 ? l.stretchControllerResume : l.stretchControllerStartTimer),
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -451,7 +456,7 @@ class StretchPhaseScreen extends StatelessWidget {
               controller.isLastExercise ? Icons.check : Icons.skip_next,
             ),
             label: Text(
-              controller.isLastExercise ? 'Complete' : 'Next',
+              controller.isLastExercise ? l.stretchControllerComplete : l.commonNext,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

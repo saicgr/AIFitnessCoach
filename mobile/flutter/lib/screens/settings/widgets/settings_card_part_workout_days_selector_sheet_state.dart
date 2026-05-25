@@ -45,7 +45,7 @@ class _WorkoutDaysSelectorSheetState
   Future<void> _saveWorkoutDays() async {
     if (_selectedDays.isEmpty) {
       setState(() {
-        _errorMessage = 'Please select at least one workout day';
+        _errorMessage = AppLocalizations.of(context).settingsCardPleaseSelectAtLeastOne;
       });
       return;
     }
@@ -81,7 +81,7 @@ class _WorkoutDaysSelectorSheetState
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Workout days updated to ${dayNamesList.join(", ")}'),
+            content: Text(AppLocalizations.of(context).settingsCardWorkoutDaysUpdatedTo(dayNamesList.join(', '))),
             backgroundColor: AppColors.cyan,
             duration: const Duration(seconds: 3),
           ),
@@ -121,7 +121,7 @@ class _WorkoutDaysSelectorSheetState
             // bars at the top of this sheet.
             const SizedBox(height: 8),
             Text(
-              'Workout Days',
+              AppLocalizations.of(context).settingsCardWorkoutDays,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -130,7 +130,7 @@ class _WorkoutDaysSelectorSheetState
             ),
             const SizedBox(height: 8),
             Text(
-              'Select which days you want to work out',
+              AppLocalizations.of(context).settingsCardSelectWhichDaysYou,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -200,7 +200,7 @@ class _WorkoutDaysSelectorSheetState
 
             // Selected count
             Text(
-              '${_selectedDays.length} day${_selectedDays.length != 1 ? 's' : ''} selected',
+              AppLocalizations.of(context).settingsCardNDaysSelected(_selectedDays.length),
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.cyan,
@@ -229,7 +229,7 @@ class _WorkoutDaysSelectorSheetState
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Changing days will reschedule your upcoming workouts automatically.',
+                      AppLocalizations.of(context).settingsCardChangingDaysWillReschedule,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.white : AppColorsLight.textPrimary,
@@ -278,7 +278,7 @@ class _WorkoutDaysSelectorSheetState
                         ),
                       )
                     : Text(
-                        hasChanges ? 'Save Changes' : 'No Changes',
+                        hasChanges ? AppLocalizations.of(context).settingsCardSaveChanges : AppLocalizations.of(context).settingsCardNoChanges,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

@@ -12,6 +12,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../components/exercise_detail_sheet.dart';
 import '../providers/library_providers.dart';
 import '../../custom_exercises/widgets/create_exercise_sheet.dart';

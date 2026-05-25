@@ -16,6 +16,7 @@ import '../../../core/theme/accent_color_provider.dart';
 
 /// 4 felt buckets mapped to RIR. Order matches the plan spec:
 /// Easy → 4, Good → 3, Hard → 1, V.Hard → 0.
+// TODO(i18n): enum const label fields have no BuildContext — 'Easy'/'Good'/'Hard'/'V.Hard' cannot be localized here
 enum FeltBucket {
   easy(rir: 4, emoji: '😌', label: 'Easy'),
   good(rir: 3, emoji: '🙂', label: 'Good'),

@@ -336,7 +336,7 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'SET ${widget.setData.setNumber}',
+                  AppLocalizations.of(context)!.setRowSetN(widget.setData.setNumber),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -486,8 +486,12 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
             const SizedBox(width: 4),
             Text(
               _isPreviousExpanded
-                  ? 'Hide previous'
-                  : 'Previous: ${prevWeight?.toStringAsFixed(1) ?? '-'} ${widget.useKg ? 'kg' : 'lbs'} × ${prevReps ?? '-'} reps',
+                  ? AppLocalizations.of(context)!.setRowHidePrevious
+                  : AppLocalizations.of(context)!.setRowPreviousData(
+                      prevWeight?.toStringAsFixed(1) ?? '-',
+                      widget.useKg ? 'kg' : 'lbs',
+                      prevReps?.toString() ?? '-',
+                    ),
               style: TextStyle(
                 fontSize: 12,
                 color: mutedColor,
@@ -537,7 +541,7 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
           // Set info
           Expanded(
             child: Text(
-              'Set ${widget.setData.setNumber}',
+              AppLocalizations.of(context)!.setRowSetNCompact(widget.setData.setNumber),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -562,7 +566,7 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
           const SizedBox(width: 8),
           // Reps
           Text(
-            '${widget.setData.actualReps} reps',
+            AppLocalizations.of(context)!.setRowNReps(widget.setData.actualReps),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import 'pre_auth_quiz_screen.dart';
 
 /// Program summary screen shown after workout generation completes.
@@ -21,6 +22,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
     final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
     final quizData = ref.watch(preAuthQuizProvider);
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
       body: SafeArea(
@@ -64,7 +66,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
                       // Title
                       Center(
                         child: Text(
-                          'Your Program is Ready',
+                          l10n.programSummaryYourProgramIsReady,
                           style: TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
@@ -77,7 +79,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
 
                       Center(
                         child: Text(
-                          'Personalized for your goals and equipment',
+                          l10n.programSummaryPersonalizedForYourGoals,
                           style: TextStyle(
                             fontSize: 14,
                             color: textSecondary,
@@ -93,7 +95,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
                       const SizedBox(height: 28),
 
                       // Value props
-                      _buildValueProps(isDark, textPrimary, textSecondary),
+                      _buildValueProps(context, isDark, textPrimary, textSecondary),
 
                       const SizedBox(height: 32),
                     ],
@@ -117,9 +119,9 @@ class ProgramSummaryScreen extends ConsumerWidget {
     Color textSecondary,
     PreAuthQuizData quizData,
   ) {
-    final goalLabel = _formatGoal(quizData.primaryGoal ?? quizData.goal);
-    final equipmentLabel = _formatEquipment(quizData.equipment);
-    final levelLabel = _formatLevel(quizData.fitnessLevel);
+    final goalLabel = _formatGoal(context, quizData.primaryGoal ?? quizData.goal);
+    final equipmentLabel = _formatEquipment(context, quizData.equipment);
+    final levelLabel = _formatLevel(context, quizData.fitnessLevel);
     final daysLabel = '${quizData.daysPerWeek ?? 4}/week';
 
     return Column(
@@ -130,7 +132,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
               child: _buildSummaryTile(
                 icon: Icons.flag_rounded,
                 iconColor: AppColors.orange,
-                label: 'Goal',
+                label: AppLocalizations.of(context)!.challengeCreateFieldGoal,
                 value: goalLabel,
                 isDark: isDark,
                 textPrimary: textPrimary,
@@ -143,7 +145,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
               child: _buildSummaryTile(
                 icon: Icons.fitness_center_rounded,
                 iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                label: 'Equipment',
+                label: AppLocalizations.of(context)!.programSummaryEquipment,
                 value: equipmentLabel,
                 isDark: isDark,
                 textPrimary: textPrimary,
@@ -160,7 +162,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
               child: _buildSummaryTile(
                 icon: Icons.trending_up_rounded,
                 iconColor: AppColors.green,
-                label: 'Level',
+                label: AppLocalizations.of(context)!.programSummaryLevel,
                 value: levelLabel,
                 isDark: isDark,
                 textPrimary: textPrimary,
@@ -173,7 +175,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
               child: _buildSummaryTile(
                 icon: Icons.calendar_today_rounded,
                 iconColor: const Color(0xFFA855F7),
-                label: 'Workouts',
+                label: AppLocalizations.of(context)!.navWorkouts,
                 value: daysLabel,
                 isDark: isDark,
                 textPrimary: textPrimary,
@@ -243,27 +245,28 @@ class ProgramSummaryScreen extends ConsumerWidget {
     ).animate().fadeIn(delay: delay).slideY(begin: 0.08);
   }
 
-  Widget _buildValueProps(bool isDark, Color textPrimary, Color textSecondary) {
+  Widget _buildValueProps(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
+    final l10n = AppLocalizations.of(context)!;
     final props = [
       (
         icon: Icons.smart_toy_rounded,
-        title: 'AI Coach',
-        desc: 'Adapts workouts based on your progress',
+        title: l10n.authIntroAiCoach,
+        desc: l10n.programSummaryAdaptsWorkoutsBasedOn,
       ),
       (
         icon: Icons.shield_rounded,
-        title: 'Injury Awareness',
-        desc: 'Avoids exercises that stress your limitations',
+        title: l10n.programSummaryInjuryAwareness,
+        desc: l10n.programSummaryAvoidsExercisesThatStress,
       ),
       (
         icon: Icons.restaurant_rounded,
-        title: 'Nutrition Integration',
-        desc: 'Macros and meals aligned to your training',
+        title: l10n.programSummaryNutritionIntegration,
+        desc: l10n.programSummaryMacrosAndMealsAligned,
       ),
       (
         icon: Icons.trending_up_rounded,
-        title: 'Progressive Overload',
-        desc: 'Automatically increases challenge over time',
+        title: l10n.programSummaryProgressiveOverload,
+        desc: l10n.programSummaryAutomaticallyIncreasesChalle,
       ),
     ];
 
@@ -271,7 +274,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "What's included",
+          l10n.programSummaryWhatSIncluded,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -362,14 +365,14 @@ class ProgramSummaryScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.play_arrow_rounded, size: 22),
-                  SizedBox(width: 8),
+                  const Icon(Icons.play_arrow_rounded, size: 22),
+                  const SizedBox(width: 8),
                   Text(
-                    'Start Training',
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.programSummaryStartTraining,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
@@ -401,14 +404,14 @@ class ProgramSummaryScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.refresh_rounded, size: 18),
-                  SizedBox(width: 6),
+                  const Icon(Icons.refresh_rounded, size: 18),
+                  const SizedBox(width: 6),
                   Text(
-                    'Generate New Program',
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.programSummaryGenerateNewProgram,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -422,24 +425,24 @@ class ProgramSummaryScreen extends ConsumerWidget {
     );
   }
 
-  String _formatGoal(String? goal) {
-    if (goal == null) return 'General Fitness';
+  String _formatGoal(BuildContext context, String? goal) {
+    final l10n = AppLocalizations.of(context)!;
+    if (goal == null) return l10n.programSummaryGeneralFitness;
     switch (goal) {
       case 'muscle_hypertrophy':
-        return 'Build Muscle';
+      case 'build_muscle':
+        return l10n.programSummaryBuildMuscle;
       case 'muscle_strength':
-        return 'Get Stronger';
+        return l10n.programSummaryGetStronger;
       case 'strength_hypertrophy':
-        return 'Strength + Size';
+        return l10n.programSummaryStrengthSize;
       case 'lose_weight':
       case 'weight_loss':
-        return 'Lose Weight';
-      case 'build_muscle':
-        return 'Build Muscle';
+        return l10n.programSummaryLoseWeight;
       case 'stay_fit':
-        return 'Stay Fit';
+        return l10n.programSummaryStayFit;
       case 'improve_endurance':
-        return 'Endurance';
+        return l10n.programSummaryEndurance;
       default:
         return goal.replaceAll('_', ' ').split(' ').map(
           (w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w,
@@ -447,26 +450,28 @@ class ProgramSummaryScreen extends ConsumerWidget {
     }
   }
 
-  String _formatEquipment(List<String>? equipment) {
-    if (equipment == null || equipment.isEmpty) return 'Bodyweight';
-    if (equipment.contains('full_gym')) return 'Full Gym';
+  String _formatEquipment(BuildContext context, List<String>? equipment) {
+    final l10n = AppLocalizations.of(context)!;
+    if (equipment == null || equipment.isEmpty) return l10n.programSummaryBodyweight;
+    if (equipment.contains('full_gym')) return l10n.programSummaryFullGym;
     if (equipment.length <= 2) {
       return equipment.map((e) => e.replaceAll('_', ' ')).map(
         (w) => w.split(' ').map((s) => s.isNotEmpty ? '${s[0].toUpperCase()}${s.substring(1)}' : s).join(' '),
       ).join(', ');
     }
-    return '${equipment.length} items';
+    return l10n.programSummaryNItems(equipment.length);
   }
 
-  String _formatLevel(String? level) {
-    if (level == null) return 'Intermediate';
+  String _formatLevel(BuildContext context, String? level) {
+    final l10n = AppLocalizations.of(context)!;
+    if (level == null) return l10n.programSummaryIntermediateLabel;
     switch (level) {
       case 'beginner':
-        return 'Beginner';
+        return l10n.programSummaryBeginnerLabel;
       case 'intermediate':
-        return 'Intermediate';
+        return l10n.programSummaryIntermediateLabel;
       case 'advanced':
-        return 'Advanced';
+        return l10n.programSummaryAdvancedLabel;
       default:
         return level[0].toUpperCase() + level.substring(1);
     }

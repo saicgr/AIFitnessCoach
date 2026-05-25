@@ -24,6 +24,7 @@ import '../../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../widgets/glass_sheet.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 const String _tourSeenKey = 'tour_seen_easy';
 
@@ -60,34 +61,36 @@ class EasyHelpSheet extends ConsumerStatefulWidget {
 class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
   int _step = 0;
 
-  static const List<_Slide> _slides = [
-    _Slide(
-      icon: Icons.fitness_center_rounded,
-      title: "Today's exercise",
-      body:
-          'This is today\'s exercise. Tap ▶ Show video any time you need a form refresher.',
-    ),
-    _Slide(
-      icon: Icons.add_circle_outline_rounded,
-      title: 'Weight and reps',
-      body:
-          'Adjust weight and reps with − and +. Long-press a number to type it in directly.',
-    ),
-    _Slide(
-      icon: Icons.check_circle_outline,
-      title: 'Log a set',
-      body:
-          "Tap the big ✓ when you finish a set. We'll handle the rest — literally.",
-    ),
-  ];
+  static List<_Slide> _buildSlides(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    return [
+      _Slide(
+        icon: Icons.fitness_center_rounded,
+        title: l.easyHelpTodaysExercise,
+        body: l.easyHelpTodaysExerciseBody,
+      ),
+      _Slide(
+        icon: Icons.add_circle_outline_rounded,
+        title: l.easyHelpWeightAndReps,
+        body: l.easyHelpWeightAndRepsBody,
+      ),
+      _Slide(
+        icon: Icons.check_circle_outline,
+        title: l.easyHelpLogASet,
+        body: l.easyHelpLogASetBody,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
     final fg = isDark ? Colors.white : Colors.black;
-    final slide = _slides[_step];
-    final isLast = _step == _slides.length - 1;
+    final l = AppLocalizations.of(context)!;
+    final slides = _buildSlides(context);
+    final slide = slides[_step];
+    final isLast = _step == slides.length - 1;
 
     // Outer glass surface is provided by `GlassSheet` (showGlassSheet wraps
     // us). Here we just lay out the slide content; bg/borderRadius come from
@@ -135,7 +138,7 @@ class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
                         color: fg)),
               ),
               Text(
-                '${_step + 1} / ${_slides.length}',
+                '${_step + 1} / ${slides.length}',
                 style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.48)),
               ),
             ],
@@ -168,7 +171,7 @@ class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
               ),
-              child: Text(isLast ? 'Got it' : 'Next',
+              child: Text(isLast ? l.exerciseDetailGotIt : l.commonNext,
                   style: const TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
@@ -186,7 +189,7 @@ class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
               ),
-              child: Text('Skip to next exercise',
+              child: Text(l.easyHelpSkipToNextExercise,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: fg.withValues(alpha: 0.78))),
@@ -203,7 +206,7 @@ class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
                     .setMode(WorkoutUiMode.advanced);
               },
               child: Text(
-                'Switch to Advanced',
+                l.easyHelpSwitchToAdvanced,
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

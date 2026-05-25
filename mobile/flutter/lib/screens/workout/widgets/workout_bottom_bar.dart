@@ -11,6 +11,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/coach_persona.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 /// Bottom bar for workout actions - streamlined layout with exercise name centered
 class WorkoutBottomBar extends StatelessWidget {
@@ -128,6 +129,7 @@ class WorkoutBottomBar extends StatelessWidget {
   /// Build the action bar with new layout:
   /// [Water+] [Breathe] | Exercise Name (center, tappable) | [Skip]
   Widget _buildActionButtonsBar(BuildContext context, bool isDark) {
+    final l = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -190,7 +192,7 @@ class WorkoutBottomBar extends StatelessWidget {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'Instructions',
+                        l.workoutBottomBarInstructions,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -206,7 +208,7 @@ class WorkoutBottomBar extends StatelessWidget {
           ),
 
           // Right: Skip button
-          _buildSkipButton(isDark),
+          _buildSkipButton(context, isDark),
         ],
       ),
     );
@@ -263,7 +265,8 @@ class WorkoutBottomBar extends StatelessWidget {
   }
 
   /// Build the skip button
-  Widget _buildSkipButton(bool isDark) {
+  Widget _buildSkipButton(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: () {
         HapticFeedback.mediumImpact();
@@ -283,7 +286,7 @@ class WorkoutBottomBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Skip',
+              l10n.workoutBottomBarSkip,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

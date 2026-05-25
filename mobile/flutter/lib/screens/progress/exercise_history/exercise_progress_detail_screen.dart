@@ -6,6 +6,7 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/exercise_history.dart';
 import '../../../data/providers/exercise_history_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/exercise_stats_widgets.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/segmented_tab_bar.dart';
@@ -95,9 +96,9 @@ class _ExerciseProgressDetailScreenState extends ConsumerState<ExerciseProgressD
                 SegmentedTabBar(
                   controller: _tabController,
                   showIcons: false,
-                  tabs: const [
-                    SegmentedTabItem(label: 'Progress'),
-                    SegmentedTabItem(label: 'History'),
+                  tabs: [
+                    SegmentedTabItem(label: AppLocalizations.of(context)!.exerciseProgressDetailProgress),
+                    SegmentedTabItem(label: AppLocalizations.of(context)!.exerciseProgressDetailHistory),
                   ],
                 ),
                 Expanded(
@@ -164,7 +165,7 @@ class _ProgressTab extends ConsumerWidget {
       errorBuilder: (_, error, __) => Center(child: Text('Error: $error')),
       contentBuilder: (context, history) {
         if (!history.hasData) {
-          return _buildEmptyState(theme);
+          return _buildEmptyState(context, theme);
         }
 
         return RefreshIndicator(
@@ -233,7 +234,7 @@ class _ProgressTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
+  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -245,7 +246,7 @@ class _ProgressTab extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No data for this exercise yet',
+            AppLocalizations.of(context)!.exerciseProgressDetailNoDataForThis,
             style: theme.textTheme.titleMedium,
           ),
         ],
@@ -284,7 +285,7 @@ class _HistoryTab extends ConsumerWidget {
 
         if (sessions.isEmpty) {
           return Center(
-            child: Text('No sessions recorded', style: theme.textTheme.bodyLarge),
+            child: Text(AppLocalizations.of(context)!.exerciseProgressDetailNoSessionsRecorded, style: theme.textTheme.bodyLarge),
           );
         }
 
@@ -390,7 +391,7 @@ class _ExerciseInsightsCardState extends State<_ExerciseInsightsCard> {
                   Icon(Icons.lightbulb_outline, size: 20, color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
                   Text(
-                    'Insights',
+                    AppLocalizations.of(context)!.exerciseProgressDetailInsights,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

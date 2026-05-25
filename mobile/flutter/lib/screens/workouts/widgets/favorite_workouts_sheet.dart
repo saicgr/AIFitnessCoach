@@ -7,6 +7,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 
@@ -35,6 +36,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -65,7 +67,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Favorite Workouts',
+                        l10n.favoriteWorkoutsFavoriteWorkouts,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -74,7 +76,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${favorites.length} saved workout${favorites.length == 1 ? '' : 's'}',
+                        l10n.favoriteWorkoutsSavedCount(favorites.length),
                         style: TextStyle(fontSize: 13, color: textSecondary),
                       ),
                     ],
@@ -92,7 +94,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
 
           Flexible(
             child: favorites.isEmpty
-                ? _buildEmptyState(textSecondary)
+                ? _buildEmptyState(context, textSecondary)
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     itemCount: favorites.length,
@@ -114,7 +116,8 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(Color textSecondary) {
+  Widget _buildEmptyState(BuildContext context, Color textSecondary) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Center(
@@ -128,12 +131,12 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'No favorite workouts yet',
+              l10n.favoriteWorkoutsNoFavoriteWorkoutsYet,
               style: TextStyle(fontSize: 16, color: textSecondary),
             ),
             const SizedBox(height: 4),
             Text(
-              'Tap the heart on any workout to save it here',
+              l10n.favoriteWorkoutsTapTheHeartOn,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -155,6 +158,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
     Color textPrimary,
     Color textSecondary,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final cardColor = isDark
         ? AppColors.background.withValues(alpha: 0.5)
         : AppColorsLight.background;
@@ -224,7 +228,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              workout.name ?? 'Workout',
+                              workout.name ?? l10n.favoriteWorkoutsWorkoutFallback,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,

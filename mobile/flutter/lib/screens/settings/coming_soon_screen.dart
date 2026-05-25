@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/pill_app_bar.dart';
 
 /// Screen showing upcoming features that are planned but not yet available.
@@ -20,7 +21,7 @@ class ComingSoonScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Coming Soon'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).comingSoonComingSoon),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -51,7 +52,7 @@ class ComingSoonScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Upcoming Home Widgets',
+                    AppLocalizations.of(context).comingSoonUpcomingHomeWidgets,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -60,7 +61,7 @@ class ComingSoonScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'These features are in development and will be available as toggleable home screen widgets soon.',
+                    AppLocalizations.of(context).comingSoonTheseFeaturesAreIn,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,

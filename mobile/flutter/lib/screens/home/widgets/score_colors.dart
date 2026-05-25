@@ -6,8 +6,10 @@
 library;
 
 import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart' show BuildContext;
 
 import '../../../data/models/today_score.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 const Color kTrainColor = Color(0xFFEC8B2C);
 const Color kFuelColor = Color(0xFF3FA66B); // Nourish (internal key remains "fuel")
@@ -42,9 +44,20 @@ Color shadeColor(Color base, double percent) {
 }
 
 /// Tier label and color for a 0-100 sleep / pillar score.
+/// Returns the English label as a stable identifier; prefer
+/// [localizedTierLabel] for UI display.
 ({String label, Color color}) tierFor(int score) {
   if (score >= 85) return (label: 'Excellent', color: Color(0xFF16A34A));
   if (score >= 70) return (label: 'Good', color: Color(0xFF3FA66B));
   if (score >= 50) return (label: 'Fair', color: Color(0xFFEC8B2C));
   return (label: 'Low', color: Color(0xFFE5544D));
+}
+
+/// Localized tier label for a 0-100 score.
+String localizedTierLabel(BuildContext context, int score) {
+  final l10n = AppLocalizations.of(context)!;
+  if (score >= 85) return l10n.tierExcellent;
+  if (score >= 70) return l10n.tierGood;
+  if (score >= 50) return l10n.tierFair;
+  return l10n.tierLow;
 }
