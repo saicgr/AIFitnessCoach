@@ -3006,8 +3006,9 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count activities',
-      one: '1 activity',
+      other: '$count aktivit',
+      few: '$count aktivity',
+      one: '1 aktivita',
     );
     return '$_temp0';
   }
@@ -3017,8 +3018,9 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sessions',
-      one: '1 session',
+      other: '$count tréninků',
+      few: '$count tréninky',
+      one: '1 trénink',
     );
     return '$_temp0';
   }
@@ -3737,7 +3739,9 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count messages left today',
+      other: 'Dnes zbývá $count zpráv',
+      few: 'Dnes zbývají $count zprávy',
+      one: 'Dnes zbývá $count zpráva',
     );
     return '$_temp0';
   }
@@ -4052,11 +4056,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Vyber si novou osobnost AI kouče';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Použít $_customName';
   }
 
@@ -4556,7 +4556,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '(daysPerWeek)d/týden · (duration)';
   }
 
   @override
@@ -4893,12 +4893,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String connectedAppsScreenPreviouslyImportedActivitiesWill(Object appName) {
-    return 'Previously imported activities will stay in your $appName history. ';
+    return 'Dříve importované aktivity zůstanou ve vaší historii $appName. ';
   }
 
   @override
   String connectedAppsScreenRidesAndWorkoutsData(Object appName) {
-    return 'rides, and workouts. Data flows both ways — $appName workouts can ';
+    return 'jízdy a tréninky. Data proudí oběma směry — tréninky z $appName mohou ';
   }
 
   @override
@@ -6413,7 +6413,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String dailyPlanDetailSheetCal(Object calories) {
-    return '$calories cal';
+    return '$calories kal';
   }
 
   @override
@@ -11435,7 +11435,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get exportDialogPartExcel => 'Excel';
 
   @override
-  String get exportDialogPartExport => 'Export';
+  String get exportDialogPartExport => 'Exportovat';
 
   @override
   String exportDialogPartExportDataDialogExportData(Object appName) {
@@ -12366,7 +12366,9 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count days',
+      other: '$count dní',
+      few: '$count dny',
+      one: '$count den',
     );
     return '$_temp0';
   }
@@ -12594,7 +12596,9 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count saved workouts',
+      other: '$count uložených tréninků',
+      few: '$count uložené tréninky',
+      one: '$count uložený trénink',
     );
     return '$_temp0';
   }
@@ -14240,8 +14244,8 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       sessions,
       locale: localeName,
-      other: 'Used $sessions sessions ago',
-      one: 'Used 1 session ago',
+      other: 'Použito před $sessions tréninky',
+      one: 'Použito před 1 tréninkem',
     );
     return '$_temp0';
   }
@@ -14423,13 +14427,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get fullScreenChart1y => '1R';
 
   @override
-  String get fullScreenChart30d => '30D';
+  String get fullScreenChart30d => '30 Dní';
 
   @override
-  String get fullScreenChart7d => '7D';
+  String get fullScreenChart7d => '7 Dní';
 
   @override
-  String get fullScreenChart90d => '90D';
+  String get fullScreenChart90d => '90 Dní';
 
   @override
   String get fullScreenChartAll => 'Vše';
@@ -15989,8 +15993,8 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       minutes,
       locale: localeName,
-      other: '$minutes min in fat-burn zone',
-      one: '1 min in fat-burn zone',
+      other: '$minutes min v zóně spalování tuků',
+      one: '1 min v zóně spalování tuků',
     );
     return '$_temp0';
   }
@@ -20219,8 +20223,8 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count items',
-      one: 'Logged 1 item',
+      other: 'Zaznamenáno $count položek',
+      one: 'Zaznamenána 1 položka',
     );
     return '$_temp0';
   }
@@ -20230,8 +20234,8 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count photos ($kcal kcal)',
-      one: 'Logged 1 photo ($kcal kcal)',
+      other: 'Zaznamenáno $count fotek ($kcal kcal)',
+      one: 'Zaznamenána 1 fotka ($kcal kcal)',
     );
     return '$_temp0';
   }
@@ -22688,7 +22692,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String minimalHeaderD(Object streakDays) {
-    return '${streakDays}d';
+    return '$streakDays d';
   }
 
   @override
@@ -22795,7 +22799,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get moodCalendarHeatmapTotalCheckIns => 'Celkem check-inů';
 
   @override
-  String get moodCardBias => 'Bias';
+  String get moodCardBias => 'Zkreslení';
 
   @override
   String get moodCardInt => 'Int.';
@@ -23877,7 +23881,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String neatDashboardScreenPartStreaksCardMin(Object minutes) {
-    return '${minutes}min';
+    return '$minutes min';
   }
 
   @override
@@ -24213,7 +24217,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String newTilesPartPersonalRecordsCardH(Object sleepHours) {
-    return '${sleepHours}h';
+    return '$sleepHours h';
   }
 
   @override
@@ -24918,7 +24922,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Přátelé';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -25129,7 +25133,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCm(Object height) {
-    return '6.25 × $height cm';
+    return '6,25 × $height cm';
   }
 
   @override
@@ -34519,7 +34523,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get settingsAppleHealth => 'Apple Health';
 
   @override
-  String get settingsBeastMode => 'Beast Mode';
+  String get settingsBeastMode => 'Režim Bestie';
 
   @override
   String settingsCardAvoided(Object length) {
@@ -34565,8 +34569,9 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       n,
       locale: localeName,
-      other: '$n days selected',
-      one: '1 day selected',
+      other: 'vybráno $n dní',
+      few: 'vybrány $n dny',
+      one: 'vybrán 1 den',
     );
     return '$_temp0';
   }
@@ -35305,7 +35310,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String signInScreenSupportIsNowYour(Object appName) {
-    return '$appName Support is now your friend. Reach out anytime for help!';
+    return 'Podpora $appName je nyní tvým přítelem. Pro pomoc se na nás kdykoliv obrať!';
   }
 
   @override
@@ -35315,7 +35320,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String signInScreenWelcomeTo(Object appName) {
-    return 'Welcome to $appName!';
+    return 'Vítej v $appName!';
   }
 
   @override
@@ -36451,10 +36456,7 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Vybraný cíl: $_selectedGoal kroků';
   }
 
@@ -36462,8 +36464,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Posuvník cíle kroků, od $_minGoal do $_maxGoal kroků';
   }
@@ -36623,7 +36623,9 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count days to go!',
+      other: 'zbývá $count dní!',
+      few: 'zbývají $count dny!',
+      one: 'zbývá 1 den!',
     );
     return '$_temp0';
   }
@@ -36641,7 +36643,9 @@ class AppLocalizationsCs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count days',
+      other: '$count dní',
+      few: '$count dny',
+      one: '1 den',
     );
     return '$_temp0';
   }
@@ -36970,7 +36974,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return 'Vyčerpal jsi všech $used návrhů. Raději hlasuj pro stávající funkce!';
   }
 
   @override
@@ -37753,12 +37757,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String syncedSummaryViewBpm(Object avgHr) {
-    return '$avgHr bpm';
+    return '$avgHr tepů/min';
   }
 
   @override
   String syncedSummaryViewBpm2(Object maxHr) {
-    return '$maxHr bpm';
+    return '$maxHr tepů/min';
   }
 
   @override
@@ -37890,7 +37894,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String syncedWorkoutDetailScreenBpm2(Object rhr) {
-    return '$rhr bpm';
+    return '$rhr tepů/min';
   }
 
   @override
@@ -38954,7 +38958,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String trophiesCardWrapped(Object appName) {
-    return '$appName Wrapped';
+    return 'Zealova Wrapped';
   }
 
   @override
@@ -40906,7 +40910,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (Zealova)\\n(url)';
   }
 
   @override
@@ -41277,7 +41281,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutCompleteScreenWorkout(Object appName) {
-    return '$appName Workout';
+    return 'Trénink Zealova';
   }
 
   @override
@@ -41336,7 +41340,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Nepodařilo se načíst podrobnosti';
 
   @override
-  String get workoutDayDetailMaxHr => 'Max HR';
+  String get workoutDayDetailMaxHr => 'Max tepová frekvence';
 
   @override
   String get workoutDayDetailMusclesWorked => 'Svaly pracovaly';

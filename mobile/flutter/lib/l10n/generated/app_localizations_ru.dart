@@ -304,7 +304,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get activeWorkoutHelperPrimaryMuscle => 'Основная мышца';
 
   @override
-  String get activeWorkoutHelperProTip => 'Pro Tip';
+  String get activeWorkoutHelperProTip => 'Совет профи';
 
   @override
   String get activeWorkoutHelperSecondaryMuscles => 'Вспомогательные мышцы';
@@ -3035,8 +3035,10 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count activities',
-      one: '1 activity',
+      other: '$count тренировки',
+      many: '$count тренировок',
+      few: '$count тренировки',
+      one: '1 тренировка',
     );
     return '$_temp0';
   }
@@ -3046,8 +3048,10 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sessions',
-      one: '1 session',
+      other: '$count сессии',
+      many: '$count сессий',
+      few: '$count сессии',
+      one: '1 сессия',
     );
     return '$_temp0';
   }
@@ -3770,7 +3774,10 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count messages left today',
+      other: 'Осталось $count сообщения сегодня',
+      many: 'Осталось $count сообщений сегодня',
+      few: 'Осталось $count сообщения сегодня',
+      one: 'Осталось $count сообщение сегодня',
     );
     return '$_temp0';
   }
@@ -4084,11 +4091,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => 'Выберите нового ИИ-тренера';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Использовать $_customName';
   }
 
@@ -4593,7 +4596,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '(daysPerWeek)д/нед) · (duration)';
   }
 
   @override
@@ -12439,7 +12442,9 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count days',
+      other: '$count дней',
+      few: '$count дня',
+      one: '$count день',
     );
     return '$_temp0';
   }
@@ -14319,8 +14324,9 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       sessions,
       locale: localeName,
-      other: 'Used $sessions sessions ago',
-      one: 'Used 1 session ago',
+      other: 'Использовано $sessions тренировок назад',
+      few: 'Использовано $sessions тренировки назад',
+      one: 'Использовано 1 тренировку назад',
     );
     return '$_temp0';
   }
@@ -16079,8 +16085,9 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       minutes,
       locale: localeName,
-      other: '$minutes min in fat-burn zone',
-      one: '1 min in fat-burn zone',
+      other: '$minutes мин в зоне жиросжигания',
+      few: '$minutes мин в зоне жиросжигания',
+      one: '1 мин в зоне жиросжигания',
     );
     return '$_temp0';
   }
@@ -16768,19 +16775,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeEmptyFriends_v1 =>
-      'No connections yet. Invite a friend to train together.';
+      'Пока нет связей. Пригласите друга, чтобы тренироваться вместе.';
 
   @override
   String get homeEmptyFriends_v2 =>
-      'Friends list is empty. Accountability is a real thing.';
+      'Список друзей пуст. Ответственность перед другими — это важно.';
 
   @override
   String get homeEmptyFriends_v3 =>
-      'Nobody here yet. Share your link to grow your circle.';
+      'Здесь пока никого нет. Поделитесь ссылкой, чтобы расширить свой круг.';
 
   @override
   String get homeEmptyFriends_v4 =>
-      'No friends added. Working out alongside someone helps — add one.';
+      'Друзья не добавлены. Тренировки с кем-то помогают — добавьте одного.';
 
   @override
   String get homeEmptyGymProfiles_v1 =>
@@ -16800,19 +16807,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeEmptyHabits_v1 =>
-      'No habits set up. Add one small daily habit to start.';
+      'Привычки не настроены. Добавьте одну небольшую ежедневную привычку для начала.';
 
   @override
   String get homeEmptyHabits_v2 =>
-      'Habit tracker empty. Build one habit and make it automatic.';
+      'Трекер привычек пуст. Создайте привычку и сделайте её автоматической.';
 
   @override
   String get homeEmptyHabits_v3 =>
-      'Nothing tracked yet. Start with one habit you can do every day.';
+      'Пока ничего не отслеживается. Начните с одной привычки, которую можете выполнять каждый день.';
 
   @override
   String get homeEmptyHabits_v4 =>
-      'No habits active. Small daily actions compound into big results.';
+      'Нет активных привычек. Маленькие ежедневные действия приводят к большим результатам.';
 
   @override
   String get homeEmptyHistory_v1 =>
@@ -16912,19 +16919,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeEmptyPlans_v1 =>
-      'No plan yet. Let the AI build one around your schedule and goals.';
+      'Плана пока нет. Позвольте ИИ составить его с учетом вашего графика и целей.';
 
   @override
   String get homeEmptyPlans_v2 =>
-      'Plans empty. Generate a personalized training plan to get started.';
+      'Планы пусты. Создайте персональный план тренировок, чтобы начать.';
 
   @override
   String get homeEmptyPlans_v3 =>
-      'Nothing set up yet. Create a plan and stick to it.';
+      'Пока ничего не настроено. Создайте план и придерживайтесь его.';
 
   @override
   String get homeEmptyPlans_v4 =>
-      'No plan active. Start one to stop guessing what to do each day.';
+      'Нет активного плана. Начните один, чтобы не гадать, что делать каждый день.';
 
   @override
   String get homeEmptyPrograms_v1 =>
@@ -16960,19 +16967,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeEmptyRecovery_v1 =>
-      'No recovery data. Log sleep, HRV, or soreness to get a score.';
+      'Нет данных о восстановлении. Запишите сон, HRV или мышечную боль, чтобы получить оценку.';
 
   @override
   String get homeEmptyRecovery_v2 =>
-      'Recovery tracking is empty. Connect a wearable or log manually.';
+      'Трекер восстановления пуст. Подключите носимое устройство или запишите данные вручную.';
 
   @override
   String get homeEmptyRecovery_v3 =>
-      'Nothing tracked yet. Recovery data helps you train smarter.';
+      'Данные еще не отслеживаются. Информация о восстановлении помогает тренироваться эффективнее.';
 
   @override
   String get homeEmptyRecovery_v4 =>
-      'Recovery empty. Add today\'s data to protect your next session.';
+      'Данные о восстановлении отсутствуют. Добавьте показатели за сегодня, чтобы подготовиться к следующей тренировке.';
 
   @override
   String get homeEmptyScores_v1 =>
@@ -17012,31 +17019,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeEmptyTrends_v2 =>
-      'Trends need data. Keep logging and graphs will fill in.';
+      'Для анализа трендов нужны данные. Продолжайте вести записи, и графики заполнятся.';
 
   @override
   String get homeEmptyTrends_v3 =>
-      'Nothing to show yet. Come back after a week of tracking.';
+      'Пока нечего показать. Возвращайтесь через неделю ведения записей.';
 
   @override
   String get homeEmptyTrends_v4 =>
-      'Trend view empty. Consistency unlocks this — start logging daily.';
+      'Раздел трендов пуст. Регулярность — ключ к успеху, начните записывать данные ежедневно.';
 
   @override
   String get homeEmptyVitals_v1 =>
-      'No vitals logged. Connect a wearable or enter them manually.';
+      'Показатели здоровья не записаны. Подключите носимое устройство или введите данные вручную.';
 
   @override
   String get homeEmptyVitals_v2 =>
-      'Vitals tracking empty. Add a data point to start.';
+      'Отслеживание показателей здоровья пусто. Добавьте первую запись, чтобы начать.';
 
   @override
   String get homeEmptyVitals_v3 =>
-      'Nothing here yet. Log resting HR, HRV, or blood pressure.';
+      'Здесь пока пусто. Запишите пульс в покое, HRV или артериальное давление.';
 
   @override
   String get homeEmptyVitals_v4 =>
-      'No vitals data. Connect your wearable to auto-sync.';
+      'Нет данных о показателях здоровья. Подключите носимое устройство для автоматической синхронизации.';
 
   @override
   String get homeEmptyWater_v1 =>
@@ -17481,163 +17488,163 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeTip_ankle_mobility =>
-      'Limited ankle mobility forces compensations in squats. Stretch and drill it daily.';
+      'Ограниченная подвижность голеностопа заставляет компенсировать нагрузку в приседаниях. Растягивайте и тренируйте его ежедневно.';
 
   @override
   String get homeTip_breathing_during_lifts =>
-      'Exhale on the hard part, inhale on the easy part. Brace your core throughout.';
+      'Выдох на усилии, вдох на расслаблении. Держите мышцы кора напряженными на протяжении всего движения.';
 
   @override
   String get homeTip_caffeine_timing =>
-      'Caffeine peaks 45–60 min after drinking. Time it before your session.';
+      'Пик действия кофеина наступает через 45–60 минут после употребления. Рассчитывайте время перед тренировкой.';
 
   @override
   String get homeTip_cardio_and_strength =>
-      'Cardio doesn\'t kill gains if you\'re eating enough and not overdoing volume.';
+      'Кардио не убивает прогресс, если вы потребляете достаточно калорий и не перебарщиваете с объемом.';
 
   @override
   String get homeTip_cold_exposure =>
-      'Cold showers or ice baths may blunt post-workout inflammation. Save them for after, not before.';
+      'Холодный душ или ледяные ванны могут подавить воспаление после тренировки. Оставьте их на потом, а не до.';
 
   @override
   String get homeTip_compound_before_isolation =>
-      'Do your big lifts first when you\'re fresh. Isolation work comes at the end.';
+      'Выполняйте базовые упражнения в начале, пока полны сил. Изолирующие упражнения оставьте на конец.';
 
   @override
   String get homeTip_compound_lifts =>
-      'Squat, hinge, push, pull, carry. Master those five and you\'ve covered 80%.';
+      'Приседания, наклоны, жимы, тяги, переноска веса. Освойте эти пять движений, и вы закроете 80% потребностей.';
 
   @override
   String get homeTip_consistency_beats_perfection =>
-      'Showing up at 70% is better than skipping because you can\'t give 100%.';
+      'Тренировка на 70% лучше, чем пропуск из-за того, что вы не можете выложиться на 100%.';
 
   @override
   String get homeTip_core_in_every_lift =>
-      'Your core is working on every compound movement. You don\'t need 20 minutes of crunches.';
+      'Ваш кор работает в каждом базовом движении. Вам не нужно 20 минут скручиваний.';
 
   @override
   String get homeTip_creatine_basics =>
-      'Creatine monohydrate is the most studied supplement in sports science. 3–5g daily works.';
+      'Креатин моногидрат — самая изученная добавка в спортивной науке. 3–5 г ежедневно — это эффективно.';
 
   @override
   String get homeTip_deload_week =>
-      'Every 4–6 weeks, cut volume by 40%. Your body will come back stronger.';
+      'Каждые 4–6 недель снижайте объем тренировок на 40%. Ваше тело вернется к работе более сильным.';
 
   @override
   String get homeTip_eat_before_training =>
-      'Training fasted can work, but a small meal 60–90 min before helps most people perform better.';
+      'Тренировки натощак могут работать, но небольшой прием пищи за 60–90 минут до начала помогает большинству людей тренироваться лучше.';
 
   @override
   String get homeTip_eccentric_focus =>
-      'The lowering phase is where most muscle damage (and growth) happens. Control it.';
+      'Фаза опускания веса — это то, где происходит основное повреждение (и рост) мышц. Контролируйте её.';
 
   @override
   String get homeTip_fiber_and_gut =>
-      '30g of fiber a day keeps energy steady and reduces cravings. Most people get 15.';
+      '30 г клетчатки в день поддерживают стабильный уровень энергии и снижают тягу к еде. Большинство людей получают лишь 15.';
 
   @override
   String get homeTip_form_over_weight =>
-      'Ego lifts with bad form build injury, not muscle. Dial in the movement first.';
+      'Погоня за весами с плохой техникой ведет к травмам, а не к росту мышц. Сначала отточите движение.';
 
   @override
   String get homeTip_grip_strength =>
-      'Grip strength predicts longevity better than almost any other metric. Train it.';
+      'Сила хвата предсказывает долголетие лучше, чем почти любой другой показатель. Тренируйте её.';
 
   @override
   String get homeTip_hydration_basics =>
-      'Drink half your bodyweight in ounces daily. Add more on training days.';
+      'Выпивайте ежедневно объем воды в унциях, равный половине веса вашего тела в фунтах. В дни тренировок пейте больше.';
 
   @override
   String get homeTip_meal_timing_simple =>
-      'Eat mostly whole foods, hit your protein, sleep enough. Most of the rest is noise.';
+      'Ешьте преимущественно цельные продукты, добирайте белок, высыпайтесь. Остальное — второстепенно.';
 
   @override
   String get homeTip_mind_muscle_connection =>
-      'Slow down and feel the muscle working. It\'s not just about moving weight.';
+      'Замедлитесь и почувствуйте работу мышц. Дело не только в перемещении веса.';
 
   @override
   String get homeTip_mobility_daily =>
-      '10 minutes of mobility work daily beats a 60-minute session once a week.';
+      '10 минут мобильности каждый день лучше, чем 60-минутная сессия раз в неделю.';
 
   @override
   String get homeTip_no_junk_volume =>
-      '10 hard, focused sets beat 20 half-hearted ones. Quality over quantity.';
+      '10 тяжелых, сфокусированных подходов лучше, чем 20 выполненных вполсилы. Качество важнее количества.';
 
   @override
   String get homeTip_omega3_basics =>
-      '1–2g EPA+DHA daily reduces inflammation and supports joint health.';
+      '1–2 г EPA+DHA ежедневно уменьшают воспаление и поддерживают здоровье суставов.';
 
   @override
   String get homeTip_periodization =>
-      'Vary your rep ranges and intensity over time. Linear progress doesn\'t last forever.';
+      'Меняйте диапазоны повторений и интенсивность со временем. Линейный прогресс не длится вечно.';
 
   @override
   String get homeTip_progressive_overload =>
-      'Add a little more weight or one more rep each week. That\'s how you grow.';
+      'Добавляйте немного веса или еще одно повторение каждую неделю. Так происходит рост.';
 
   @override
   String get homeTip_protein_per_meal =>
-      'Aim for 30–40g of protein per meal. Spreading it out beats one big dose.';
+      'Старайтесь потреблять 30–40 г белка за прием пищи. Распределение белка лучше, чем один большой прием.';
 
   @override
   String get homeTip_protein_sources_vary =>
-      'Mix protein sources — chicken, eggs, Greek yogurt, legumes. Variety covers all amino acids.';
+      'Чередуйте источники белка: курица, яйца, греческий йогурт, бобовые. Разнообразие обеспечивает все аминокислоты.';
 
   @override
   String get homeTip_rate_of_perceived_exertion =>
-      'Rate your effort 1–10. Staying between 7–8 most sessions is the sweet spot.';
+      'Оценивайте свои усилия по шкале 1–10. Уровень 7–8 на большинстве тренировок — это «золотая середина».';
 
   @override
   String get homeTip_rest_days_grow_muscle =>
-      'Rest days aren\'t laziness — they\'re when the adaptation actually happens.';
+      'Дни отдыха — это не лень, именно в это время происходит адаптация и рост.';
 
   @override
   String get homeTip_scale_not_everything =>
-      'Weight fluctuates 2–4 lbs daily from water and food. Judge by weekly averages.';
+      'Вес колеблется на 1–2 кг ежедневно из-за воды и еды. Судите по средним недельным значениям.';
 
   @override
   String get homeTip_set_rep_ranges =>
-      '1–5 reps builds strength. 6–12 builds size. 12–20 builds endurance. All matter.';
+      '1–5 повторений для силы. 6–12 для объема. 12–20 для выносливости. Важно всё.';
 
   @override
   String get homeTip_sleep_for_recovery =>
-      'Your muscles don\'t grow during the workout — they grow while you sleep.';
+      'Ваши мышцы не растут во время тренировки — они растут, пока вы спите.';
 
   @override
   String get homeTip_sodium_and_water =>
-      'Salt isn\'t the enemy — it helps with hydration and performance. Don\'t fear it.';
+      'Соль — не враг, она помогает гидратации и производительности. Не бойтесь её.';
 
   @override
   String get homeTip_split_options =>
-      'Push/pull/legs, upper/lower, full-body 3x — all work if you\'re consistent.';
+      'Push/pull/legs, верх/низ, фулбоди 3 раза в неделю — всё работает, если вы постоянны.';
 
   @override
   String get homeTip_stress_and_recovery =>
-      'High stress = high cortisol = slower recovery. Manage the whole picture.';
+      'Высокий стресс = высокий кортизол = медленное восстановление. Управляйте всей картиной целиком.';
 
   @override
   String get homeTip_tempo_training =>
-      'Try a 3-0-1 tempo (3s down, 0 pause, 1s up) to feel any exercise differently.';
+      'Попробуйте темп 3-0-1 (3 сек вниз, 0 пауза, 1 сек вверх), чтобы почувствовать упражнение иначе.';
 
   @override
   String get homeTip_track_to_progress =>
-      'If you\'re not tracking it, you\'re not managing it. Log your sets.';
+      'Если вы не отслеживаете прогресс, вы им не управляете. Записывайте свои подходы.';
 
   @override
   String get homeTip_vitamin_d =>
-      'Most people are deficient in vitamin D. 1000–2000 IU daily is a safe baseline.';
+      'У большинства людей дефицит витамина D. 1000–2000 МЕ ежедневно — безопасная база.';
 
   @override
   String get homeTip_walk_after_meals =>
-      'A 10-minute walk after eating can cut your blood sugar spike by 30%.';
+      '10-минутная прогулка после еды может снизить скачок сахара в крови на 30%.';
 
   @override
   String get homeTip_warm_up_matters =>
-      '5 minutes of movement prep makes every set safer and stronger.';
+      '5 минут разминки делают каждый подход безопаснее и сильнее.';
 
   @override
   String get homeTip_zone2_cardio =>
-      'Zone 2 cardio (conversational pace) builds the aerobic base everything else sits on.';
+      'Кардио в зоне 2 (темп для разговора) создает аэробную базу, на которой строится всё остальное.';
 
   @override
   String get homeTodaysNutrition => 'Питание сегодня';
@@ -20323,8 +20330,9 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count items',
-      one: 'Logged 1 item',
+      other: 'Записано $count продуктов',
+      few: 'Записано $count продукта',
+      one: 'Записан 1 продукт',
     );
     return '$_temp0';
   }
@@ -20334,8 +20342,8 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count photos ($kcal kcal)',
-      one: 'Logged 1 photo ($kcal kcal)',
+      other: 'Добавлено $count фото ($kcal ккал)',
+      one: 'Добавлено 1 фото ($kcal ккал)',
     );
     return '$_temp0';
   }
@@ -21018,12 +21026,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String loggedMealsSectionCal(Object target, Object totalCaloriesEaten) {
-    return '$totalCaloriesEaten / $target cal';
+    return '$totalCaloriesEaten / $target ккал';
   }
 
   @override
   String loggedMealsSectionCal2(Object calories) {
-    return '$calories cal';
+    return '$calories ккал';
   }
 
   @override
@@ -21038,7 +21046,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String loggedMealsSectionEaten(Object totalCaloriesEaten) {
-    return '$totalCaloriesEaten eaten';
+    return '$totalCaloriesEaten съедено';
   }
 
   @override
@@ -21083,7 +21091,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String loggedMealsSectionGProtein(Object proteinG) {
-    return '${proteinG}g protein';
+    return '$proteinGг белка';
   }
 
   @override
@@ -21098,7 +21106,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String loggedMealsSectionKcal(Object totalCalories) {
-    return '$totalCalories kcal';
+    return '$totalCalories ккал';
   }
 
   @override
@@ -21148,7 +21156,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String loggedMealsSectionVia(Object label) {
-    return 'via $label';
+    return 'через $label';
   }
 
   @override
@@ -25035,7 +25043,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Друзья';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'Э$_stageNumber';
   }
 
@@ -25243,7 +25251,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCal(Object bmr) {
-    return '= $bmr cal';
+    return '= $bmr ккал';
   }
 
   @override
@@ -26785,16 +26793,17 @@ class AppLocalizationsRu extends AppLocalizations {
       'Отмените в любое время во время или после пробного периода. Оплата не взимается до окончания пробного периода, а управлять подпиской можно через Google Play.';
 
   @override
-  String get paywallTimelineHowYourFree => 'How your free';
+  String get paywallTimelineHowYourFree => 'Как работает ваша бесплатная';
 
   @override
-  String get paywallTimelineHowYourFreeTrial => 'How your free trial works';
+  String get paywallTimelineHowYourFreeTrial =>
+      'Как работает ваша бесплатная пробная версия';
 
   @override
-  String get paywallTimelineIn5Days => 'In 5 days';
+  String get paywallTimelineIn5Days => 'Через 5 дней';
 
   @override
-  String get paywallTimelineIn7Days => 'In 7 days';
+  String get paywallTimelineIn7Days => 'Через 7 дней';
 
   @override
   String paywallTimelineScreenFirstCharge(Object dateFormat) {
@@ -26807,18 +26816,18 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get paywallTimelineToday => 'Today';
+  String get paywallTimelineToday => 'Сегодня';
 
   @override
-  String get paywallTimelineTrialWorks => 'trial works';
+  String get paywallTimelineTrialWorks => 'пробная версия';
 
   @override
   String get paywallTimelineUnlimitedWorkoutsFoodScann =>
-      'Unlimited workouts, food scanning, injury tracking, skill progressions & more';
+      'Безлимитные тренировки, сканирование еды, отслеживание травм, прогресс навыков и многое другое';
 
   @override
   String get paywallTimelineWeLlRemindYou =>
-      'We\\\'ll remind you before your trial ends - no surprises';
+      'Мы напомним вам до окончания пробного периода — никаких сюрпризов';
 
   @override
   String pendingRequestCardValue(Object message) {
@@ -26826,42 +26835,43 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get pendingRequestCardViewProfile => 'View Profile';
+  String get pendingRequestCardViewProfile => 'Просмотреть профиль';
 
   @override
-  String get permissionsPrimerAFewQuickPermissions => 'A few quick permissions';
+  String get permissionsPrimerAFewQuickPermissions =>
+      'Несколько быстрых разрешений';
 
   @override
-  String get permissionsPrimerCamera => 'Camera';
+  String get permissionsPrimerCamera => 'Камера';
 
   @override
   String get permissionsPrimerEachAppFeatureWill =>
-      'Each app feature will explain itself before asking the OS.';
+      'Каждая функция приложения будет объяснена перед запросом доступа у ОС.';
 
   @override
-  String get permissionsPrimerGrantPermissions => 'Grant permissions';
+  String get permissionsPrimerGrantPermissions => 'Предоставить разрешения';
 
   @override
   String get permissionsPrimerGrantingTheseNowMeans =>
-      'Granting these now means features just work — no surprise prompts mid-workout.';
+      'Предоставление разрешений сейчас означает, что функции будут работать сразу — без внезапных запросов во время тренировки.';
 
   @override
-  String get permissionsPrimerMicrophone => 'Microphone';
+  String get permissionsPrimerMicrophone => 'Микрофон';
 
   @override
-  String get permissionsPrimerNotNow => 'Not now';
+  String get permissionsPrimerNotNow => 'Не сейчас';
 
   @override
-  String get permissionsPrimerNotifications => 'Notifications';
+  String get permissionsPrimerNotifications => 'Уведомления';
 
   @override
-  String get permissionsPrimerPhotos => 'Photos';
+  String get permissionsPrimerPhotos => 'Фотографии';
 
   @override
   String get personalBestsGrid => '⏱️';
 
   @override
-  String get personalBestsGridHeaviestLift => 'Heaviest Lift';
+  String get personalBestsGridHeaviestLift => 'Самый тяжелый вес';
 
   @override
   String personalBestsGridLb(Object weightLb) {
@@ -26869,38 +26879,38 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get personalBestsGridLongestSession => 'Longest Session';
+  String get personalBestsGridLongestSession => 'Самая долгая тренировка';
 
   @override
-  String get personalBestsGridMostVolume => 'Most Volume';
+  String get personalBestsGridMostVolume => 'Максимальный объем';
 
   @override
-  String get personalGoalsActiveGoals => 'Active Goals';
+  String get personalGoalsActiveGoals => 'Активные цели';
 
   @override
-  String get personalGoalsDeleteGoal => 'Delete Goal?';
+  String get personalGoalsDeleteGoal => 'Удалить цель?';
 
   @override
   String get personalGoalsFullRecordsViewComing =>
-      'Full records view coming in a future update';
+      'Полный просмотр рекордов появится в будущих обновлениях';
 
   @override
-  String get personalGoalsMaxReps => 'Max Reps';
+  String get personalGoalsMaxReps => 'Макс. повторений';
 
   @override
-  String get personalGoalsNewGoal => 'New Goal';
+  String get personalGoalsNewGoal => 'Новая цель';
 
   @override
-  String get personalGoalsNewPrs => 'New PRs';
+  String get personalGoalsNewPrs => 'Новые PR';
 
   @override
-  String get personalGoalsNoGoalsThisWeek => 'No goals this week';
+  String get personalGoalsNoGoalsThisWeek => 'На этой неделе нет целей';
 
   @override
-  String get personalGoalsPersonalRecords => 'Personal Records';
+  String get personalGoalsPersonalRecords => 'Личные рекорды';
 
   @override
-  String get personalGoalsReps => ' reps';
+  String get personalGoalsReps => ' повт.';
 
   @override
   String personalGoalsScreenDeleted(Object exerciseName) {
@@ -26919,47 +26929,47 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get personalGoalsSetAWeeklyChallenge =>
-      'Set a weekly challenge to push your limits!';
+      'Установите еженедельный вызов, чтобы расширить свои возможности!';
 
   @override
-  String get personalGoalsSetYourFirstGoal => 'Set Your First Goal';
+  String get personalGoalsSetYourFirstGoal => 'Установите свою первую цель';
 
   @override
-  String get personalGoalsSomethingWentWrong => 'Something went wrong';
+  String get personalGoalsSomethingWentWrong => 'Что-то пошло не так';
 
   @override
-  String get personalGoalsThisWeek => 'This Week';
+  String get personalGoalsThisWeek => 'На этой неделе';
 
   @override
-  String get personalGoalsTryAgain => 'Try Again';
+  String get personalGoalsTryAgain => 'Повторить попытку';
 
   @override
-  String get personalGoalsUnknownError => 'Unknown error';
+  String get personalGoalsUnknownError => 'Неизвестная ошибка';
 
   @override
-  String get personalGoalsWeeklyGoals => 'Weekly Goals';
+  String get personalGoalsWeeklyGoals => 'Еженедельные цели';
 
   @override
-  String get personalGoalsWeeklyVolume => 'Weekly Volume';
+  String get personalGoalsWeeklyVolume => 'Еженедельный объем';
 
   @override
-  String get personalInfoACoupleFinalDetails => 'A couple final details';
+  String get personalInfoACoupleFinalDetails => 'Еще пара деталей';
 
   @override
-  String get personalInfoDateOfBirth => 'DATE OF BIRTH';
+  String get personalInfoDateOfBirth => 'ДАТА РОЖДЕНИЯ';
 
   @override
-  String get personalInfoDoYouTrackA => 'Do you track a menstrual cycle?';
+  String get personalInfoDoYouTrackA => 'Вы отслеживаете менструальный цикл?';
 
   @override
-  String get personalInfoFirstName => 'First name';
+  String get personalInfoFirstName => 'Имя';
 
   @override
-  String get personalInfoNoThanks => 'No thanks';
+  String get personalInfoNoThanks => 'Нет, спасибо';
 
   @override
   String get personalInfoPleaseCompleteTheBody =>
-      'Please complete the body metrics step first.';
+      'Пожалуйста, сначала заполните параметры тела.';
 
   @override
   String personalInfoScreenFailedToSave(Object e) {
@@ -26968,20 +26978,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get personalInfoWeUseTheseTo =>
-      'We use these to personalize your coaching and keep your account safe.';
+      'Мы используем их для персонализации ваших тренировок и обеспечения безопасности аккаунта.';
 
   @override
-  String get personalInfoYesSetItUp => 'Yes, set it up';
+  String get personalInfoYesSetItUp => 'Да, настроить';
 
   @override
   String get personalInfoYouMustBeAt =>
-      'You must be at least 16 to use Zealova.';
+      'Вам должно быть не менее 16 лет, чтобы использовать Zealova.';
 
   @override
-  String get personalInfoYourName => 'YOUR NAME';
+  String get personalInfoYourName => 'ВАШЕ ИМЯ';
 
   @override
-  String get personalRecordsAllTime => 'ALL-TIME';
+  String get personalRecordsAllTime => 'ЗА ВСЕ ВРЕМЯ';
 
   @override
   String get personalRecordsCard1MonthAgo => '1 месяц назад';
@@ -27081,17 +27091,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get personalRecordsCompleteWorkoutsToStart =>
-      'Complete workouts to start tracking your PRs across exercises.';
+      'Завершайте тренировки, чтобы начать отслеживать свои PR по упражнениям.';
 
   @override
-  String get personalRecordsNoPersonalRecordsYet => 'No Personal Records Yet';
+  String get personalRecordsNoPersonalRecordsYet => 'Личных рекордов пока нет';
 
   @override
   String get personalRecordsNoPrsYetLog =>
-      'No PRs yet — log a workout to set one!';
+      'PR пока нет — запишите тренировку, чтобы установить первый!';
 
   @override
-  String get personalRecordsPersonalRecords => 'Personal Records';
+  String get personalRecordsPersonalRecords => 'Личные рекорды';
 
   @override
   String personalRecordsScreenValue(Object pr) {
@@ -27099,13 +27109,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get personalRecordsSearchExercises => 'Search exercises...';
+  String get personalRecordsSearchExercises => 'Поиск упражнений...';
 
   @override
-  String get personalRecordsSortBy => 'Sort by:';
+  String get personalRecordsSortBy => 'Сортировать по:';
 
   @override
-  String get personalityCardFunFact => 'FUN FACT';
+  String get personalityCardFunFact => 'ИНТЕРЕСНЫЙ ФАКТ';
 
   @override
   String personalityCardValue(Object motivationQuote) {
@@ -27114,7 +27124,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get personalityCardYourGymPersonalityIs =>
-      'Your gym personality is...';
+      'Ваш тип личности в зале — это...';
 
   @override
   String phaseRecommendationBannerBasedOn(Object evidenceCitation) {
@@ -27137,38 +27147,38 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get phaseRecommendationBannerGotIt => 'Got it';
+  String get phaseRecommendationBannerGotIt => 'Понятно';
 
   @override
-  String get photoEditorAddSticker => 'Add Sticker';
+  String get photoEditorAddSticker => 'Добавить стикер';
 
   @override
-  String get photoEditorCrop => 'Crop';
+  String get photoEditorCrop => 'Обрезать';
 
   @override
-  String get photoEditorCropPhoto => 'Crop Photo';
+  String get photoEditorCropPhoto => 'Обрезать фото';
 
   @override
   String get photoEditorFailedToCropImage =>
-      'Failed to crop image. Please try again.';
+      'Не удалось обрезать изображение. Пожалуйста, попробуйте снова.';
 
   @override
-  String get photoEditorFlip => 'Flip';
+  String get photoEditorFlip => 'Отразить';
 
   @override
-  String get photoEditorHideLogo => 'Hide Logo';
+  String get photoEditorHideLogo => 'Скрыть логотип';
 
   @override
-  String get photoEditorNoStickersUsedYet => 'No stickers used yet';
+  String get photoEditorNoStickersUsedYet => 'Стикеры еще не использовались';
 
   @override
-  String get photoEditorProcessing => 'Processing…';
+  String get photoEditorProcessing => 'Обработка...';
 
   @override
-  String get photoEditorResetLogo => 'Reset Logo';
+  String get photoEditorResetLogo => 'Сбросить логотип';
 
   @override
-  String get photoEditorRotate => 'Rotate';
+  String get photoEditorRotate => 'Повернуть';
 
   @override
   String photoEditorScreenEditPhoto(Object viewTypeName) {
@@ -27186,41 +27196,41 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get photoEditorShowLogo => 'Show Logo';
+  String get photoEditorShowLogo => 'Показать логотип';
 
   @override
-  String get photoEditorSize => 'Size';
+  String get photoEditorSize => 'Размер';
 
   @override
   String get photoEditorYourRecentlyUsedStickers =>
-      'Your recently used stickers will appear here';
+      'Ваши недавно использованные стикеры появятся здесь';
 
   @override
-  String get photoOverlayTemplateAddYourPhoto => 'Add your photo';
+  String get photoOverlayTemplateAddYourPhoto => 'Добавьте свое фото';
 
   @override
-  String get photoOverlayTemplateTime => 'Time';
+  String get photoOverlayTemplateTime => 'Время';
 
   @override
-  String get photoOverlayTemplateVolume => 'Volume';
+  String get photoOverlayTemplateVolume => 'Объем';
 
   @override
-  String get photoOverlayTemplateWorkoutComplete => 'WORKOUT COMPLETE';
+  String get photoOverlayTemplateWorkoutComplete => 'ТРЕНИРОВКА ЗАВЕРШЕНА';
 
   @override
-  String get photosAll => 'All';
+  String get photosAll => 'Все';
 
   @override
-  String get photosChooseFromGallery => 'Choose from Gallery';
+  String get photosChooseFromGallery => 'Выбрать из галереи';
 
   @override
-  String get photosCompare => 'Compare';
+  String get photosCompare => 'Сравнить';
 
   @override
-  String get photosDeletePhoto => 'Delete Photo?';
+  String get photosDeletePhoto => 'Удалить фото?';
 
   @override
-  String get photosLatestByView => 'Latest by View';
+  String get photosLatestByView => 'Последние по виду';
 
   @override
   String get photosSelectExistingPhoto => 'Выбрать существующее фото';
@@ -27317,7 +27327,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pillarDetailFiveOrMoreLoggedDays => '5+ дней с записями';
 
   @override
-  String get pillarDetailHeatmap30d => 'heatmap-30d';
+  String get pillarDetailHeatmap30d => 'тепловая-карта-30д';
 
   @override
   String get pillarDetailHourlyActivityRibbon => 'Почасовая активность';
@@ -27406,7 +27416,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pillarDetailSleepStagesBody => 'Анализируйте качество своего сна.';
 
   @override
-  String get pillarDetailSparkline7d => 'sparkline-7d';
+  String get pillarDetailSparkline7d => 'график-7д';
 
   @override
   String get pillarDetailSteps => 'Шаги';
@@ -30170,7 +30180,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quitWorkoutTooTired => 'Слишком устал';
 
   @override
-  String get quitWorkoutWhyAreYouEnding => 'Why are you ending early?';
+  String get quitWorkoutWhyAreYouEnding => 'Почему вы заканчиваете раньше?';
 
   @override
   String quizBodyMetricsEnterAValueBetween(Object dialogMax, Object unit) {
@@ -30183,13 +30193,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get quizBodyMetricsGain => 'Gain';
+  String get quizBodyMetricsGain => 'Набор';
 
   @override
-  String get quizBodyMetricsGender => 'Gender';
+  String get quizBodyMetricsGender => 'Пол';
 
   @override
-  String get quizBodyMetricsHeight => 'Height';
+  String get quizBodyMetricsHeight => 'Рост';
 
   @override
   String quizBodyMetricsHowMuchDoYou(Object directionLabel) {
@@ -30197,16 +30207,17 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get quizBodyMetricsLetSSetYour => 'Let\'s set your body goals';
+  String get quizBodyMetricsLetSSetYour =>
+      'Давайте установим ваши цели по телу';
 
   @override
-  String get quizBodyMetricsLose => 'Lose';
+  String get quizBodyMetricsLose => 'Похудение';
 
   @override
-  String get quizBodyMetricsMaintain => 'Maintain';
+  String get quizBodyMetricsMaintain => 'Поддержание';
 
   @override
-  String get quizBodyMetricsOther => 'Other';
+  String get quizBodyMetricsOther => 'Другое';
 
   @override
   String quizBodyMetricsUiCurrentBmi(Object bmi) {
@@ -30220,33 +30231,34 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizBodyMetricsWeLlUseThis =>
-      'We\'ll use this to calculate your personalized targets';
+      'Мы используем это для расчета ваших персональных целей';
 
   @override
-  String get quizBodyMetricsWeight => 'Weight';
+  String get quizBodyMetricsWeight => 'Вес';
 
   @override
-  String get quizBodyMetricsWeightGoal => 'Weight Goal';
+  String get quizBodyMetricsWeightGoal => 'Целевой вес';
 
   @override
-  String get quizBodyMetricsWhatShouldWeCall => 'What should we call you?';
+  String get quizBodyMetricsWhatShouldWeCall =>
+      'Как мы можем к вам обращаться?';
 
   @override
-  String get quizBodyMetricsYourName => 'Your name';
+  String get quizBodyMetricsYourName => 'Ваше имя';
 
   @override
-  String get quizContinueButtonSeeMyPlan => 'See My Plan';
+  String get quizContinueButtonSeeMyPlan => 'Посмотреть мой план';
 
   @override
   String get quizDaysSelectorAiGeneratesWorkoutsWithin =>
-      'AI generates workouts within your chosen range';
+      'ИИ создает тренировки в выбранном вами диапазоне';
 
   @override
   String get quizDaysSelectorBest => 'Лучший выбор';
 
   @override
   String get quizDaysSelectorConsistencyBeatsIntensity =>
-      'Consistency beats intensity - pick what you can maintain';
+      'Регулярность важнее интенсивности — выберите то, что сможете поддерживать';
 
   @override
   String quizDaysSelectorDays(Object arg0) {
@@ -30259,17 +30271,18 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get quizDaysSelectorForYourWorkouts => ') for your workouts';
+  String get quizDaysSelectorForYourWorkouts => ') для ваших тренировок';
 
   @override
   String get quizDaysSelectorFri => 'Пт';
 
   @override
-  String get quizDaysSelectorHowLongAreYour => 'How long are your workouts?';
+  String get quizDaysSelectorHowLongAreYour =>
+      'Сколько длятся ваши тренировки?';
 
   @override
   String get quizDaysSelectorHowManyDaysPer =>
-      'How many days per week can you train?';
+      'Сколько дней в неделю вы можете тренироваться?';
 
   @override
   String get quizDaysSelectorMin => 'мин.';
@@ -30298,49 +30311,50 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quizDaysSelectorWed => 'Ср';
 
   @override
-  String get quizDaysSelectorWhichDaysWorkBest => 'Which days work best?';
+  String get quizDaysSelectorWhichDaysWorkBest =>
+      'Какие дни подходят лучше всего?';
 
   @override
-  String get quizEquipmentApartmentFriendly => 'Apartment-friendly';
+  String get quizEquipmentApartmentFriendly => 'Для квартиры';
 
   @override
   String get quizEquipmentBarbell => 'Штанга';
 
   @override
-  String get quizEquipmentBodyweightBands => 'Bodyweight + Bands';
+  String get quizEquipmentBodyweightBands => 'Собственный вес + эспандеры';
 
   @override
-  String get quizEquipmentBodyweightOnly => 'Bodyweight only';
+  String get quizEquipmentBodyweightOnly => 'Только собственный вес';
 
   @override
   String get quizEquipmentBodyweightOnly2 => 'Только собственный вес';
 
   @override
-  String get quizEquipmentBodyweightPullUpBar => 'Bodyweight + Pull-up Bar';
+  String get quizEquipmentBodyweightPullUpBar => 'Собственный вес + турник';
 
   @override
   String get quizEquipmentCableMachine => 'Тренажер с тросами';
 
   @override
   String get quizEquipmentCouldnTLoadIdentified =>
-      'Couldn\'t load identified equipment. Pick from the list below.';
+      'Не удалось загрузить распознанное оборудование. Выберите из списка ниже.';
 
   @override
   String get quizEquipmentCouldnTOpenThe =>
-      'Couldn\'t open the camera. Pick your equipment below.';
+      'Не удалось открыть камеру. Выберите оборудование ниже.';
 
   @override
   String get quizEquipmentDedicatedSpaceWithDumbbells =>
-      'Dedicated space with dumbbells, barbell, bench';
+      'Выделенное место с гантелями, штангой, скамьей';
 
   @override
-  String get quizEquipmentDoYouHaveA => 'Do you have a weight bench?';
+  String get quizEquipmentDoYouHaveA => 'У вас есть скамья для жима?';
 
   @override
-  String get quizEquipmentDoYouHaveA2 => 'Do you have a squat rack?';
+  String get quizEquipmentDoYouHaveA2 => 'У вас есть стойка для приседаний?';
 
   @override
-  String get quizEquipmentDumbbells => 'Dumbbells';
+  String get quizEquipmentDumbbells => 'Гантели';
 
   @override
   String get quizEquipmentEnablesChestPress => 'Позволяет выполнять жим лежа';
@@ -30349,32 +30363,32 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quizEquipmentFlatBench => 'Горизонтальная скамья';
 
   @override
-  String get quizEquipmentFullGym => 'Full Gym';
+  String get quizEquipmentFullGym => 'Полный зал';
 
   @override
   String get quizEquipmentFullGymAccess => 'Полный доступ к залу';
 
   @override
   String get quizEquipmentFullGymWithMachines =>
-      'Full gym with machines, cables, and free weights';
+      'Полный зал с тренажерами, блоками и свободными весами';
 
   @override
-  String get quizEquipmentGym => 'Gym';
+  String get quizEquipmentGym => 'Тренажерный зал';
 
   @override
   String get quizEquipmentHome => 'Домашний зал';
 
   @override
-  String get quizEquipmentHomeDumbbellsBench => 'Home + Dumbbells & Bench';
+  String get quizEquipmentHomeDumbbellsBench => 'Дом + гантели и скамья';
 
   @override
-  String get quizEquipmentHomeGym => 'Home Gym';
+  String get quizEquipmentHomeGym => 'Домашний зал';
 
   @override
-  String get quizEquipmentHomeKettlebell => 'Home + Kettlebell';
+  String get quizEquipmentHomeKettlebell => 'Дом + гиря';
 
   @override
-  String get quizEquipmentHotel => 'Hotel';
+  String get quizEquipmentHotel => 'Отель';
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
@@ -30382,14 +30396,14 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get quizEquipmentKettlebell => 'Kettlebell';
+  String get quizEquipmentKettlebell => 'Гиря';
 
   @override
   String get quizEquipmentMedicineBall => 'Медбол';
 
   @override
   String get quizEquipmentMinimalEquipmentBodyweight =>
-      'Minimal equipment - bodyweight, mat';
+      'Минимум оборудования — собственный вес, коврик';
 
   @override
   String get quizEquipmentNeededForBarbell =>
@@ -30397,7 +30411,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizEquipmentNoEquipmentIdentifiedPick =>
-      'No equipment identified. Pick from the list below.';
+      'Оборудование не распознано. Выберите из списка ниже.';
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
@@ -30411,36 +30425,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quizEquipmentPullUpBar => 'Турник';
 
   @override
-  String get quizEquipmentQuickPresets => 'Quick presets';
+  String get quizEquipmentQuickPresets => 'Быстрые пресеты';
 
   @override
-  String get quizEquipmentRecommended => 'Recommended';
+  String get quizEquipmentRecommended => 'Рекомендуемое';
 
   @override
   String get quizEquipmentRequiredForBarbellSquat =>
-      'Required for: Barbell Squat, Overhead Press, Barbell Bench Press';
+      'Необходимо для: приседаний со штангой, жима над головой, жима штанги лежа';
 
   @override
   String get quizEquipmentResistanceBands => 'Фитнес-резинки';
 
   @override
   String get quizEquipmentSelectAllThatApply =>
-      'Select all that apply - we\'ll design workouts around what you have';
+      'Выберите все подходящие варианты — мы составим тренировки с учетом того, что у вас есть';
 
   @override
   String get quizEquipmentSelectingYourWorkoutEnviron =>
-      'Selecting your workout environment helps us recommend the right exercises and equipment for your setup.';
+      'Выбор условий тренировки помогает нам рекомендовать подходящие упражнения и оборудование.';
 
   @override
   String get quizEquipmentSquatRack => 'Стойка для приседаний';
 
   @override
   String get quizEquipmentTakeAFewPhotos =>
-      'Take a few photos and our AI identifies your equipment.';
+      'Сделайте несколько фото, и наш ИИ определит ваше оборудование.';
 
   @override
   String get quizEquipmentTravelFriendlyDumbbellsC =>
-      'Travel-friendly - dumbbells, cardio machines';
+      'Для путешествий — гантели, кардиотренажеры';
 
   @override
   String get quizEquipmentTrxSuspension => 'Петли TRX';
@@ -30455,18 +30469,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quizEquipmentU1f3e2 => '🏢';
 
   @override
-  String get quizEquipmentU1f4f8SnapYour => '📸 Snap your gym';
+  String get quizEquipmentU1f4f8SnapYour => '📸 Сфотографируйте свой зал';
 
   @override
   String get quizEquipmentU1f9f3 => '🧳';
 
   @override
   String get quizEquipmentUnlocksBenchPressIncline =>
-      'Unlocks: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+      'Открывает: жим лежа, жим под углом, пуловер, тягу в наклоне с упором грудью';
 
   @override
   String get quizEquipmentUnlocksChestSupportedKb =>
-      'Unlocks: Chest-Supported KB Row, KB Floor Press alternatives';
+      'Открывает: тягу гири с упором грудью, альтернативы жиму гири лежа';
 
   @override
   String quizEquipmentUsersSnappedEquipment(Object apiBaseUrl, Object userId) {
@@ -30475,26 +30489,26 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizEquipmentWhatEquipmentDoYou =>
-      'What equipment do you have access to?';
+      'К какому оборудованию у вас есть доступ?';
 
   @override
-  String get quizEquipmentWhereDoYouWorkout => 'Where do you workout?';
+  String get quizEquipmentWhereDoYouWorkout => 'Где вы тренируетесь?';
 
   @override
-  String get quizEquipmentWorkoutEnvironment => 'Workout Environment';
+  String get quizEquipmentWorkoutEnvironment => 'Место тренировок';
 
   @override
-  String get quizEquipmentYesAddIt => 'Yes, Add It';
+  String get quizEquipmentYesAddIt => 'Да, добавить';
 
   @override
   String get quizEquipmentYouCanCustomizeEquipment =>
-      'You can customize equipment after selecting an environment, or skip this and select equipment manually.';
+      'Вы можете настроить оборудование после выбора места или пропустить этот шаг и выбрать оборудование вручную.';
 
   @override
-  String get quizFastingApplyCustomProtocol => 'Apply Custom Protocol';
+  String get quizFastingApplyCustomProtocol => 'Применить свой протокол';
 
   @override
-  String get quizFastingChooseAFastingProtocol => 'Choose a fasting protocol';
+  String get quizFastingChooseAFastingProtocol => 'Выберите протокол голодания';
 
   @override
   String quizFastingCustomProtocol(
@@ -30505,10 +30519,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get quizFastingEatingHours => 'Eating hours';
+  String get quizFastingEatingHours => 'Часы приема пищи';
 
   @override
-  String get quizFastingFastingHours => 'Fasting hours';
+  String get quizFastingFastingHours => 'Часы голодания';
 
   @override
   String quizFastingH(Object _customFastingHours) {
@@ -30522,21 +30536,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizFastingIntermittentFastingCanHelp =>
-      'Intermittent fasting can help you reach your goals faster';
+      'Интервальное голодание поможет быстрее достичь ваших целей';
 
   @override
   String get quizFastingOptionalYouCanSet =>
-      'Optional - you can set this later';
+      'Необязательно — можно настроить позже';
 
   @override
-  String get quizFastingPopular => 'Popular';
+  String get quizFastingPopular => 'Популярное';
 
   @override
-  String get quizFastingRecommended => 'Recommended';
+  String get quizFastingRecommended => 'Рекомендуемое';
 
   @override
   String get quizFastingSetYourCustomFasting =>
-      'Set your custom fasting window';
+      'Установите свой график голодания';
 
   @override
   String quizFastingUiAHEatingWindow(Object eatingHours, Object maxMeals) {
@@ -30549,11 +30563,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get quizFastingUiBedtime => 'Bedtime';
+  String get quizFastingUiBedtime => 'Время сна';
 
   @override
   String get quizFastingUiHelpsOptimizeYourFasting =>
-      'Helps optimize your fasting window';
+      'Помогает оптимизировать окно голодания';
 
   @override
   String quizFastingUiMealScheduleInH(Object eatingHours) {
@@ -30570,16 +30584,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizFastingUiTipConsiderLargerNutrient =>
-      'Tip: Consider larger, nutrient-dense meals';
+      'Совет: рассмотрите более объемные, питательные приемы пищи';
 
   @override
-  String get quizFastingUiWakeUp => 'Wake up';
+  String get quizFastingUiWakeUp => 'Время пробуждения';
 
   @override
-  String get quizFastingUiYourSleepSchedule => 'Your sleep schedule';
+  String get quizFastingUiYourSleepSchedule => 'Ваш график сна';
 
   @override
-  String get quizFastingYesLetSTry => 'Yes, let\'s try it';
+  String get quizFastingYesLetSTry => 'Да, давайте попробуем';
 
   @override
   String get quizFitnessLevel2To5Years => 'От 2 до 5 лет';
@@ -30599,7 +30613,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizFitnessLevelBeHonestWeLl =>
-      'Be honest - we\'ll adjust as you progress';
+      'Будьте честны — мы скорректируем нагрузку по мере вашего прогресса';
 
   @override
   String get quizFitnessLevelBeginner => 'Новичок';
@@ -30616,15 +30630,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizFitnessLevelDailyActivityLevelOutside =>
-      'Daily activity level (outside gym)?';
+      'Уровень активности вне зала?';
 
   @override
   String get quizFitnessLevelHelpsCalculateYourCalorie =>
-      'Helps calculate your calorie needs';
+      'Помогает рассчитать потребность в калориях';
 
   @override
   String get quizFitnessLevelHowLongHaveYou =>
-      'How long have you been lifting weights?';
+      'Как долго вы занимаетесь с отягощениями?';
 
   @override
   String get quizFitnessLevelIntermediate => 'Средний уровень';
@@ -30667,7 +30681,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizFitnessLevelThisHelpsUsPick =>
-      'This helps us pick the right exercises';
+      'Это помогает нам подбирать подходящие упражнения';
 
   @override
   String get quizFitnessLevelVeryActive => 'Очень активный';
@@ -30681,23 +30695,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quizFitnessLevelWhatSYourCurrent =>
-      'What\'s your current fitness level?';
+      'Каков ваш текущий уровень подготовки?';
 
   @override
   String get quizLimitationsAnyInjuriesOrLimitations =>
-      'Any injuries or limitations?';
+      'Есть ли травмы или ограничения?';
 
   @override
   String get quizLimitationsDescribeYourLimitation =>
-      'Describe your limitation';
+      'Опишите ваше ограничение';
 
   @override
   String get quizLimitationsEGCarpalTunnel =>
-      'e.g., Carpal tunnel, herniated disc, etc.';
+      'например, туннельный синдром, грыжа диска и т.д.';
 
   @override
   String get quizLimitationsWeLlAvoidExercises =>
-      'We\'ll avoid exercises that stress these areas';
+      'Мы исключим упражнения, дающие нагрузку на эти области';
 
   @override
   String get quizMotivationBeHealthierOverall =>
@@ -32581,7 +32595,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get repPreferencesHowShouldWeProgress =>
-      'How should we progress your exercises?';
+      'Как нам прогрессировать в ваших упражнениях?';
 
   @override
   String get repPreferencesPreventBoring15Rep =>
@@ -34168,9 +34182,11 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sets',
+      other: '$count подходов',
+      few: '$count подхода',
+      one: '$count подход',
     );
-    return '$_temp0 · top set highlighted';
+    return '$_temp0 · выделен лучший подход';
   }
 
   @override
@@ -34733,8 +34749,9 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       n,
       locale: localeName,
-      other: '$n days selected',
-      one: '1 day selected',
+      other: 'выбрано $n дней',
+      few: 'выбрано $n дня',
+      one: 'выбран 1 день',
     );
     return '$_temp0';
   }
@@ -35107,7 +35124,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String settingsScreenExtWhyIBuilt(Object appName) {
-    return 'Why I built $appName';
+    return 'Почему я создал $appName';
   }
 
   @override
@@ -35296,7 +35313,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shareStatsDuration => 'Поделиться длительностью';
 
   @override
-  String get shareStatsEliteTemplate => 'ELITE TEMPLATE';
+  String get shareStatsEliteTemplate => 'ЭЛИТНЫЙ ШАБЛОН';
 
   @override
   String get shareStatsExercises => 'Поделиться упражнениями';
@@ -35374,12 +35391,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String shareWeeklySummarySheetMyWeek(Object appName, Object dateRange) {
-    return 'My $appName week — $dateRange';
+    return 'Моя неделя в $appName — $dateRange';
   }
 
   @override
   String shareWeeklySummarySheetMyWeeklyReport(Object appName) {
-    return 'My $appName Weekly Report';
+    return 'Мой еженедельный отчет $appName';
   }
 
   @override
@@ -36623,10 +36640,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Выбранная цель: $_selectedGoal шагов';
   }
 
@@ -36634,8 +36648,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Ползунок цели шагов, от $_minGoal до $_maxGoal шагов';
   }
@@ -37308,7 +37320,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get summaryCardHours => 'Часы';
 
   @override
-  String get summaryCardPrs => 'PRs';
+  String get summaryCardPrs => 'Рекорды';
 
   @override
   String get summaryCardShareYourWrapped => 'Поделиться итогами';
@@ -37323,7 +37335,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get summaryCardioSession => 'Кардиотренировка';
 
   @override
-  String get summaryCardsPrs => 'PRs';
+  String get summaryCardsPrs => 'Рекорды';
 
   @override
   String get summaryCardsStreak => 'Серия';
@@ -38050,7 +38062,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncedWorkoutDetailRpeRateOfPerceived =>
-      'RPE · Rate of Perceived Exertion';
+      'RPE · Шкала воспринимаемой нагрузки';
 
   @override
   String syncedWorkoutDetailScreenAppDetailedSamplesMay(Object sourceApp) {
@@ -38148,7 +38160,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncedWorkoutDetailTotalCal => 'Всего калорий';
 
   @override
-  String get syncedWorkoutDetailTrainingEffect => 'Training Effect';
+  String get syncedWorkoutDetailTrainingEffect => 'Эффект тренировки';
 
   @override
   String get syncedWorkoutDetailZones => 'Зоны';
@@ -40293,7 +40305,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String weeklyCheckinSheetEveryWeekAnalysesYour(Object appName) {
-    return 'Every week, $appName analyses your food logs to calculate how many calories your body is actually burning — then suggests smarter calorie & macro targets based on your real progress.';
+    return 'Каждую неделю $appName анализирует ваши записи о питании, чтобы рассчитать, сколько калорий на самом деле сжигает ваш организм, а затем предлагает более точные цели по калориям и БЖУ, основанные на вашем реальном прогрессе.';
   }
 
   @override
@@ -40558,7 +40570,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get weeklyPrsTemplate1Pr => '1 PR';
+  String get weeklyPrsTemplate1Pr => '1 рекорд';
 
   @override
   String weeklyPrsTemplateMore(Object length) {
@@ -43273,7 +43285,7 @@ class AppLocalizationsRu extends AppLocalizations {
     Object completedCount,
     Object totalPlanned,
   ) {
-    return '$completedCount / $totalPlanned exercises';
+    return '$completedCount / $totalPlanned упражнений';
   }
 
   @override
@@ -43302,22 +43314,22 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedLb(Object totalVol) {
-    return '$totalVol lb';
+    return '$totalVol фунтов';
   }
 
   @override
   String workoutSummaryAdvancedLb2(Object value) {
-    return '$value lb';
+    return '$value фунтов';
   }
 
   @override
   String workoutSummaryAdvancedLong(Object tooLong) {
-    return '$tooLong long';
+    return '$tooLong долго';
   }
 
   @override
   String workoutSummaryAdvancedMS(Object m, Object s) {
-    return '${m}m ${s}s';
+    return '$mм $sс';
   }
 
   @override
@@ -43335,7 +43347,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedNewThisSession(Object length) {
-    return '$length new this session';
+    return '$length новых за эту тренировку';
   }
 
   @override
@@ -43404,7 +43416,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedS(Object duration) {
-    return '${duration}s';
+    return '$durationс';
   }
 
   @override

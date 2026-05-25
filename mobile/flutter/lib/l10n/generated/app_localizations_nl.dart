@@ -774,7 +774,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get addGymSheetSkip => 'Overslaan';
 
   @override
-  String get addGymSheetSplitBodyPart => 'Body Part';
+  String get addGymSheetSplitBodyPart => 'Lichaamsdeel';
 
   @override
   String get addGymSheetSplitDesc3Days => '3 dagen';
@@ -4067,11 +4067,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Selecteer een nieuwe AI-coachpersona';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Gebruik $_customName';
   }
 
@@ -4798,7 +4794,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get comparisonViewUiSelect2Photos => 'Selecteer 2 foto\'s';
 
   @override
-  String get comparisonViewUiU00b7 => '  \\u00B7  ';
+  String get comparisonViewUiU00b7 => '  ·  ';
 
   @override
   String comparisonViewUiValue(Object username) {
@@ -7805,7 +7801,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get easyExerciseHeaderVideo => 'Video';
 
   @override
-  String get easyFocalColumnHold => 'Hold';
+  String get easyFocalColumnHold => 'Vast';
 
   @override
   String get easyFocalColumnReps => 'Reps';
@@ -9983,7 +9979,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get exerciseFilterSuitableFor => 'Geschikt voor';
 
   @override
-  String get exerciseHistoryAllTime => 'ALL-TIME';
+  String get exerciseHistoryAllTime => 'ALTIJD';
 
   @override
   String get exerciseHistoryCompleteSomeWorkoutsTo =>
@@ -21255,7 +21251,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '(rij)\" : \"\")';
   }
 
   @override
@@ -25009,7 +25005,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Vrienden';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -33108,7 +33104,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get restTimerCardLivePreview => 'Live voorbeeld';
 
   @override
-  String get restTimerCardMultiplier => 'Multiplier';
+  String get restTimerCardMultiplier => 'Vermenigvuldiger';
 
   @override
   String get restTimerCardRestBaserestRpe7 => 'Rust = BaseRest * (RPE / 7)';
@@ -36589,10 +36585,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Geselecteerd doel: $_selectedGoal stappen';
   }
 
@@ -36600,8 +36593,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Stappendoelschuifregelaar, van $_minGoal tot $_maxGoal stappen';
   }
@@ -38389,7 +38380,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get templatePreBuiltTemplates => 'Vooraf ingestelde sjablonen';
 
   @override
-  String get tierComparisonAdv => 'ADV.';
+  String get tierComparisonAdv => 'GEV.';
 
   @override
   String get tierComparisonAdvanced => 'Geavanceerd';
@@ -43451,7 +43442,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Kon workout niet terugdraaien';
 
   @override
-  String get workoutSummaryGeneralAiCoachReview => 'AI Coach Review';
+  String get workoutSummaryGeneralAiCoachReview => 'AI Coach beoordeling';
 
   @override
   String get workoutSummaryGeneralCalories => 'Calorieën';
@@ -43477,7 +43468,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps reps';
+    return '$weightLbs lb x $reps herh.';
   }
 
   @override
@@ -43879,7 +43870,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get wrappedSummaryStatHours => 'Uren';
 
   @override
-  String get wrappedSummaryStatPrs => 'PRs';
+  String get wrappedSummaryStatPrs => 'PR\'s';
 
   @override
   String get wrappedSummaryStatVolumeLbs => 'Volume (lbs)';
@@ -44071,7 +44062,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get xpGoalsScreenNoLevelsAvailable => 'Geen niveaus beschikbaar';
 
   @override
-  String get xpGoalsScreenReward => 'REWARD';
+  String get xpGoalsScreenReward => 'BELONING';
 
   @override
   String get xpGoalsScreenSetFirstPersonalRecord =>
@@ -44288,7 +44279,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get xpProgressCardNone => 'geen';
 
   @override
-  String get xpProgressCardNovice => 'Novice';
+  String get xpProgressCardNovice => 'Beginneling';
 
   @override
   String xpProgressCardPercentToLevel(Object level, Object percent) {
@@ -44323,7 +44314,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get youAchievements => 'Prestaties';
 
   @override
-  String get youHubMiniGames => 'Mini-games';
+  String get youHubMiniGames => 'Minigames';
 
   @override
   String get youHubMiniGamesUnlocked => '🎮 Mini-games ontgrendeld!';

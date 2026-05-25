@@ -6946,11 +6946,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Use {_customName}'**
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  );
+  String coachSelectionScreenUse(Object _customName);
 
   /// No description provided for @coachSelectionWhatYouLlBe.
   ///
@@ -41827,7 +41823,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'S{_stageNumber}'**
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber);
+  String nutrientRushGameS(Object _stageNumber);
 
   /// No description provided for @nutrientRushGameStageClear.
   ///
@@ -61375,10 +61371,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Selected goal: {_selectedGoal} steps'**
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  );
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal);
 
   /// No description provided for @stepGoalEditorSheetStepGoalSliderFrom.
   ///
@@ -61387,8 +61380,6 @@ abstract class AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   );
 
   /// No description provided for @stepGoalEditorSheetSteps.

@@ -4092,11 +4092,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Selecciona un nuevo coach con IA';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Usar $_customName';
   }
 
@@ -8567,7 +8563,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get editWeightsQuantity => 'Cantidad';
 
   @override
-  String get editWeightsSet => 'Set';
+  String get editWeightsSet => 'Serie';
 
   @override
   String get editWeightsSetQuantity => 'Establecer cantidad';
@@ -8733,7 +8729,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get editableFitnessCardPrep => 'Preparación';
 
   @override
-  String get editableFitnessCardSet => 'Set';
+  String get editableFitnessCardSet => 'Serie';
 
   @override
   String get editableFitnessCardSteps => 'Pasos';
@@ -11392,7 +11388,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get expandableSummaryExerciseReps => 'Reps';
+  String get expandableSummaryExerciseReps => 'Repeticiones';
 
   @override
   String get expandableSummaryExerciseSet => 'Serie';
@@ -12654,7 +12650,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String fatigueAlertModalReps(Object newReps) {
-    return '$newReps reps';
+    return '$newReps repeticiones';
   }
 
   @override
@@ -16563,10 +16559,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get heroWorkoutCardPreview => 'VISTA PREVIA';
 
   @override
-  String get heroWorkoutCardQuick => 'Quick';
+  String get heroWorkoutCardQuick => 'Rápido';
 
   @override
-  String get heroWorkoutCardQuickWorkout => 'QUICK WORKOUT';
+  String get heroWorkoutCardQuickWorkout => 'ENTRENAMIENTO RÁPIDO';
 
   @override
   String get heroWorkoutCardQuickWorkoutDismissed => 'Quick workout descartado';
@@ -21357,7 +21353,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '(fila)\" : \"\")';
   }
 
   @override
@@ -21997,24 +21993,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String medicalDisclaimerScreenByContinuingToUse(Object appName) {
-    return 'By continuing to use $appName, you acknowledge that you have read and understood this disclaimer.';
+    return 'Al continuar usando $appName, reconoces que has leído y comprendido este aviso legal.';
   }
 
   @override
   String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
     Object appName,
   ) {
-    return 'Physical exercise involves inherent risks. By using $appName, you acknowledge that you are voluntarily participating in physical activities and assume all risks associated with such activities, including but not limited to injury, illness, or death.';
+    return 'El ejercicio físico conlleva riesgos inherentes. Al usar $appName, reconoces que participas voluntariamente en actividades físicas y asumes todos los riesgos asociados con dichas actividades, incluyendo, entre otros, lesiones, enfermedades o la muerte.';
   }
 
   @override
   String medicalDisclaimerScreenPleaseReadThisDisclaimer(Object appName) {
-    return 'Please read this disclaimer carefully before using $appName.';
+    return 'Por favor, lee este aviso legal detenidamente antes de usar $appName.';
   }
 
   @override
   String medicalDisclaimerScreenProvidesAiGeneratedFitness(Object appName) {
-    return '$appName provides AI-generated fitness recommendations for informational and educational purposes only. The content provided by this app is not intended to be a substitute for professional medical advice, diagnosis, or treatment.';
+    return '$appName proporciona recomendaciones de fitness generadas por IA solo con fines informativos y educativos. El contenido proporcionado por esta aplicación no pretende sustituir el consejo, diagnóstico o tratamiento médico profesional.';
   }
 
   @override
@@ -22267,7 +22263,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String menuAnalysisSheetGCGF(Object carbs, Object fat) {
-    return '${carbs}g C  ${fat}g F';
+    return '${carbs}g C  ${fat}g G';
   }
 
   @override
@@ -25116,7 +25112,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
+    return ') (unidad)';
   }
 
   @override
@@ -25136,7 +25132,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Amigos';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'E$_stageNumber';
   }
 
@@ -34837,7 +34833,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsAppleHealth => 'Apple Health';
 
   @override
-  String get settingsBeastMode => 'Beast Mode';
+  String get settingsBeastMode => 'Modo Bestia';
 
   @override
   String settingsCardAvoided(Object length) {
@@ -35525,12 +35521,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String shareWeeklySummarySheetMyWeek(Object appName, Object dateRange) {
-    return 'My $appName week — $dateRange';
+    return 'Mi semana en $appName — $dateRange';
   }
 
   @override
   String shareWeeklySummarySheetMyWeeklyReport(Object appName) {
-    return 'My $appName Weekly Report';
+    return 'Mi informe semanal de $appName';
   }
 
   @override
@@ -36607,7 +36603,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String statsPrsTemplatePrs(Object totalPRCount) {
-    return '$totalPRCount PRs';
+    return '$totalPRCount Récords personales';
   }
 
   @override
@@ -36779,10 +36775,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Objetivo seleccionado: $_selectedGoal pasos';
   }
 
@@ -36790,8 +36783,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Deslizador de objetivo de pasos, de $_minGoal a $_maxGoal pasos';
   }
@@ -37319,7 +37310,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Versión con peso corporal';
 
   @override
-  String get suggestedReplyChipsCycleadjusted => 'cycleAdjusted';
+  String get suggestedReplyChipsCycleadjusted => 'ajustadoAlCiclo';
 
   @override
   String get suggestedReplyChipsHowShouldITrain =>
@@ -37347,7 +37338,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get suggestedReplyChipsPlanTomorrow => 'Planificar mañana';
 
   @override
-  String get suggestedReplyChipsPreworkoutfuelgap => 'preWorkoutFuelGap';
+  String get suggestedReplyChipsPreworkoutfuelgap =>
+      'brechaCombustiblePreEntreno';
 
   @override
   String get suggestedReplyChipsQuickCheck => 'Revisión rápida';
@@ -37356,7 +37348,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get suggestedReplyChipsRecapDetails => 'Detalles del resumen';
 
   @override
-  String get suggestedReplyChipsRecoverylighter => 'recoveryLighter';
+  String get suggestedReplyChipsRecoverylighter => 'recuperaciónMásLigera';
 
   @override
   String get suggestedReplyChipsStartAnyway => 'Empezar de todos modos';
@@ -37464,7 +37456,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get summaryCardHours => 'Horas';
 
   @override
-  String get summaryCardPrs => 'PRs';
+  String get summaryCardPrs => 'Récords personales';
 
   @override
   String get summaryCardShareYourWrapped => 'Comparte tu resumen';
@@ -37479,7 +37471,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get summaryCardioSession => 'Sesión de cardio';
 
   @override
-  String get summaryCardsPrs => 'PRs';
+  String get summaryCardsPrs => 'Récords personales';
 
   @override
   String get summaryCardsStreak => 'Racha';
@@ -38090,12 +38082,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String syncedSummaryViewBpm(Object avgHr) {
-    return '$avgHr bpm';
+    return '$avgHr lpm';
   }
 
   @override
   String syncedSummaryViewBpm2(Object maxHr) {
-    return '$maxHr bpm';
+    return '$maxHr lpm';
   }
 
   @override
@@ -41641,7 +41633,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String workoutCompleteScreenWorkout(Object appName) {
-    return '$appName Workout';
+    return 'Entrenamiento $appName';
   }
 
   @override
@@ -43328,7 +43320,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'EMPUJE DE LA PARTE SUPERIOR DEL CUERPO';
 
   @override
-  String get workoutShowcaseVideo => 'Video';
+  String get workoutShowcaseVideo => 'Vídeo';
 
   @override
   String get workoutShowcaseVolume => 'Volumen';
@@ -44431,12 +44423,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String xpHeroTileLv(Object level) {
-    return 'Lv $level';
+    return 'Niv. $level';
   }
 
   @override
   String xpHeroTileLv2(Object label, Object nextLevel) {
-    return 'Lv $nextLevel → $label';
+    return 'Niv. $nextLevel → $label';
   }
 
   @override

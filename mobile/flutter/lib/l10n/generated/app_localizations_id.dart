@@ -4064,11 +4064,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => 'Pilih persona AI coach baru';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Gunakan $_customName';
   }
 
@@ -6809,7 +6805,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String demoActiveWorkoutScreenUi1Reps(Object _currentExerciseReps) {
-    return '$_currentExerciseReps reps';
+    return '$_currentExerciseReps repetisi';
   }
 
   @override
@@ -9364,7 +9360,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get exerciseAddBadgeCustom => 'Kustom';
 
   @override
-  String get exerciseAddBadgeFav => 'Fav';
+  String get exerciseAddBadgeFav => 'Favorit';
 
   @override
   String get exerciseAddBadgeStaple => 'Utama';
@@ -12546,7 +12542,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String fatigueAlertModalReps(Object newReps) {
-    return '$newReps reps';
+    return '$newReps repetisi';
   }
 
   @override
@@ -12836,7 +12832,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get firstWorkoutForecastTotalVolumeLifted => 'Total volume angkatan';
 
   @override
-  String get fitnessAssessmentBodyweightSquats => 'Bodyweight Squats';
+  String get fitnessAssessmentBodyweightSquats => 'Squat Berat Badan';
 
   @override
   String get fitnessAssessmentCardioCapacity => 'Kapasitas Kardio';
@@ -15102,7 +15098,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get guestSessionTimerTryWorkout => 'Coba Latihan';
 
   @override
-  String get guestSignUpGetYourPersonalPlan => 'Get Your Personal Plan';
+  String get guestSignUpGetYourPersonalPlan => 'Dapatkan Rencana Pribadi Anda';
 
   @override
   String get guestSignUpSeeYourFullWorkout =>
@@ -21032,7 +21028,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String loggedMealsSectionKcal2(Object totalCalories) {
-    return '$totalCalories kcal';
+    return '$totalCalories kkal';
   }
 
   @override
@@ -21129,7 +21125,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get loggedMealsWeight => 'Berat';
 
   @override
-  String get loggedMealsXLarge => 'X-Large';
+  String get loggedMealsXLarge => 'Sangat Besar';
 
   @override
   String get logoutAreYouSureYou =>
@@ -21199,7 +21195,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '(baris)\" : \"\")';
   }
 
   @override
@@ -22102,7 +22098,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String menuAnalysisSheetGCGF(Object carbs, Object fat) {
-    return '${carbs}g C  ${fat}g F';
+    return '${carbs}g Karb  ${fat}g Lemak';
   }
 
   @override
@@ -23188,7 +23184,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get muscleDetailTotalSets => 'Total Set';
 
   @override
-  String get muscleDetailTotalVolume => 'Total Volume';
+  String get muscleDetailTotalVolume => 'Volume Total';
 
   @override
   String get muscleDetailVolume => 'Volume';
@@ -24960,7 +24956,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Teman';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -25167,7 +25163,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCal(Object bmr) {
-    return '= $bmr cal';
+    return '= $bmr kal';
   }
 
   @override
@@ -27802,7 +27798,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String prShareCardReps(Object reps) {
-    return '$reps reps';
+    return '$reps repetisi';
   }
 
   @override
@@ -28694,33 +28690,33 @@ class AppLocalizationsId extends AppLocalizations {
       'Ketuk program apa saja untuk mempelajari lebih lanjut';
 
   @override
-  String get programsTryAgain => 'Try Again';
+  String get programsTryAgain => 'Coba Lagi';
 
   @override
-  String get progressAll => 'All';
+  String get progressAll => 'Semua';
 
   @override
   String get progressChartsCompleteSomeWorkoutsTo =>
-      'Complete some workouts to see your volume progression over time.';
+      'Selesaikan beberapa latihan untuk melihat perkembangan volume Anda dari waktu ke waktu.';
 
   @override
   String get progressChartsCompleteWeightedExercisesTo =>
-      'Complete weighted exercises to see your strength progression.';
+      'Selesaikan latihan berbeban untuk melihat perkembangan kekuatan Anda.';
 
   @override
-  String get progressChartsFailedToLoadData => 'Failed to Load Data';
+  String get progressChartsFailedToLoadData => 'Gagal Memuat Data';
 
   @override
-  String get progressChartsMuscleGroupBreakdown => 'Muscle Group Breakdown';
+  String get progressChartsMuscleGroupBreakdown => 'Rincian Kelompok Otot';
 
   @override
-  String get progressChartsNoStrengthDataYet => 'No Strength Data Yet';
+  String get progressChartsNoStrengthDataYet => 'Belum Ada Data Kekuatan';
 
   @override
-  String get progressChartsNoVolumeDataYet => 'No Volume Data Yet';
+  String get progressChartsNoVolumeDataYet => 'Belum Ada Data Volume';
 
   @override
-  String get progressChartsPeriodSummary => 'Period Summary';
+  String get progressChartsPeriodSummary => 'Ringkasan Periode';
 
   @override
   String progressChartsScreenKg(Object value) {
@@ -28728,79 +28724,80 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressChartsStrengthSummary => 'Strength Summary';
+  String get progressChartsStrengthSummary => 'Ringkasan Kekuatan';
 
   @override
-  String get progressChartsStrengthTrends => 'Strength Trends';
+  String get progressChartsStrengthTrends => 'Tren Kekuatan';
 
   @override
-  String get progressChartsTopMuscle => 'Top Muscle: ';
+  String get progressChartsTopMuscle => 'Otot Utama: ';
 
   @override
-  String get progressChartsTrends => 'Trends';
+  String get progressChartsTrends => 'Tren';
 
   @override
-  String get progressChartsVolumeTrend => 'Volume Trend';
+  String get progressChartsVolumeTrend => 'Tren Volume';
 
   @override
-  String get progressChartsVolumeTrends => 'Volume Trends';
+  String get progressChartsVolumeTrends => 'Tren Volume';
 
   @override
-  String get progressChooseFromGallery => 'Choose from Gallery';
+  String get progressChooseFromGallery => 'Pilih dari Galeri';
 
   @override
-  String get progressDeletePhoto => 'Delete Photo?';
+  String get progressDeletePhoto => 'Hapus Foto?';
 
   @override
   String get progressFailedToProcessPhoto =>
-      'Failed to process photo. Please try again.';
+      'Gagal memproses foto. Silakan coba lagi.';
 
   @override
-  String get progressFitness => 'FITNESS';
+  String get progressFitness => 'KEBUGARAN';
 
   @override
-  String get progressGreat => 'Great!';
+  String get progressGreat => 'Bagus!';
 
   @override
-  String get progressMeasurements => 'Measurements';
+  String get progressMeasurements => 'Pengukuran';
 
   @override
   String get progressOk => 'OK';
 
   @override
-  String get progressPhotoSaved => 'Photo Saved!';
+  String get progressPhotoSaved => 'Foto Disimpan!';
 
   @override
-  String get progressPhotoTileProgressPhotos => 'Progress Photos';
+  String get progressPhotoTileProgressPhotos => 'Foto Perkembangan';
 
   @override
-  String get progressPhotoTileTakeYourFirstPhoto => 'Take your first photo';
+  String get progressPhotoTileTakeYourFirstPhoto => 'Ambil foto pertama Anda';
 
   @override
-  String get progressPhotos => 'Photos';
+  String get progressPhotos => 'Foto';
 
   @override
-  String get progressProgressTracking => 'Progress Tracking';
+  String get progressProgressTracking => 'Pelacakan Perkembangan';
 
   @override
-  String get progressPrs30d => 'PRS (30D)';
+  String get progressPrs30d => 'PRS (30H)';
 
   @override
-  String get progressScores => 'Scores';
+  String get progressScores => 'Skor';
 
   @override
   String get progressScreenExtCompleteWorkoutsTargetingTh =>
-      'Complete workouts targeting this muscle\\nto see your strength progress.';
+      'Selesaikan latihan yang menargetkan otot ini\nuntuk melihat perkembangan kekuatan Anda.';
 
   @override
-  String get progressScreenExtDetails => 'Details';
+  String get progressScreenExtDetails => 'Detail';
 
   @override
   String get progressScreenExtNoDataForThis =>
-      'No data for this muscle group yet';
+      'Belum ada data untuk kelompok otot ini';
 
   @override
-  String get progressScreenExtProgressToNextLevel => 'Progress to next level';
+  String get progressScreenExtProgressToNextLevel =>
+      'Lanjut ke level berikutnya';
 
   @override
   String progressScreenExtSetsWk(Object weeklySets) {
@@ -28808,77 +28805,78 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressScreenPartView => 'View';
+  String get progressScreenPartView => 'Lihat';
 
   @override
-  String get progressScreenUiAddPhoto => 'Add Photo';
+  String get progressScreenUiAddPhoto => 'Tambah Foto';
 
   @override
   String get progressScreenUiAi100RatingBody =>
-      'AI /100 rating, body-fat rings & posture feedback';
+      'Peringkat AI /100, ring lemak tubuh & umpan balik postur';
 
   @override
-  String get progressScreenUiBodyAnalyzer => 'Body Analyzer';
+  String get progressScreenUiBodyAnalyzer => 'Penganalisis Tubuh';
 
   @override
-  String get progressScreenUiBodyMeasurements => 'Body Measurements';
+  String get progressScreenUiBodyMeasurements => 'Pengukuran Tubuh';
 
   @override
-  String get progressScreenUiDetailedAnalytics => 'Detailed Analytics';
+  String get progressScreenUiDetailedAnalytics => 'Analitik Terperinci';
 
   @override
-  String get progressScreenUiExerciseHistory => 'Exercise History';
+  String get progressScreenUiExerciseHistory => 'Riwayat Latihan';
 
   @override
-  String get progressScreenUiExerciseProgressions => 'Exercise Progressions';
+  String get progressScreenUiExerciseProgressions => 'Progresi Latihan';
 
   @override
   String get progressScreenUiFailedToLoadMeasurements =>
-      'Failed to load measurements';
+      'Gagal memuat pengukuran';
 
   @override
-  String get progressScreenUiLatestByView => 'Latest by View';
+  String get progressScreenUiLatestByView => 'Terbaru berdasarkan Tampilan';
 
   @override
-  String get progressScreenUiLogMeasurement => 'Log Measurement';
+  String get progressScreenUiLogMeasurement => 'Catat Pengukuran';
 
   @override
-  String get progressScreenUiLogMeasurements => 'Log Measurements';
+  String get progressScreenUiLogMeasurements => 'Catat Pengukuran';
 
   @override
   String get progressScreenUiMasterEasierVariantsThen =>
-      'Master easier variants, then advance to harder ones';
+      'Kuasai varian yang lebih mudah, lalu lanjutkan ke yang lebih sulit';
 
   @override
-  String get progressScreenUiMuscleAnalytics => 'Muscle Analytics';
+  String get progressScreenUiMuscleAnalytics => 'Analitik Otot';
 
   @override
-  String get progressScreenUiNoProgressPhotosYet => 'No Progress Photos Yet';
+  String get progressScreenUiNoProgressPhotosYet =>
+      'Belum Ada Foto Perkembangan';
 
   @override
   String get progressScreenUiPerExerciseProgressPrs =>
-      'Per-exercise progress & PRs';
+      'Perkembangan per latihan & PR';
 
   @override
-  String get progressScreenUiPhotoProgress => 'Photo Progress';
+  String get progressScreenUiPhotoProgress => 'Perkembangan Foto';
 
   @override
-  String get progressScreenUiPleaseTryAgain => 'Please try again.';
+  String get progressScreenUiPleaseTryAgain => 'Silakan coba lagi.';
 
   @override
-  String get progressScreenUiTakeFirstPhoto => 'Take First Photo';
+  String get progressScreenUiTakeFirstPhoto => 'Ambil Foto Pertama';
 
   @override
   String get progressScreenUiTakePhotosFromDifferent =>
-      'Take photos from different angles to track your visual progress over time.';
+      'Ambil foto dari berbagai sudut untuk melacak perkembangan visual Anda dari waktu ke waktu.';
 
   @override
   String get progressScreenUiTrackYourBodyMeasurements =>
-      'Track your body measurements to see detailed progress beyond the scale.';
+      'Lacak pengukuran tubuh Anda untuk melihat perkembangan terperinci di luar timbangan.';
 
   @override
   String get progressScreenUiTrainingVolumeBalance =>
-      'Training volume & balance';
+      'Volume & keseimbangan latihan';
 
   @override
   String progressScreenWeight(Object formattedWeight) {
@@ -28891,10 +28889,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressSelectExistingPhoto => 'Select existing photo';
+  String get progressSelectExistingPhoto => 'Pilih foto yang ada';
 
   @override
-  String get progressSelectViewType => 'Select View Type';
+  String get progressSelectViewType => 'Pilih Tipe Tampilan';
 
   @override
   String progressShareGalleryScreenViralFormats(Object length) {
@@ -28903,20 +28901,20 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get progressShareGalleryShareYourTransformation =>
-      'Share Your Transformation';
+      'Bagikan Transformasi Anda';
 
   @override
-  String get progressShareGalleryTapToOpen => 'tap to open';
+  String get progressShareGalleryTapToOpen => 'ketuk untuk membuka';
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'A\\nTRANSFORMATION\\nSTUDY';
+      'SEBUAH\nSTUDI\nTRANSFORMASI';
 
   @override
-  String get progressShareTemplatesBreaking => 'BREAKING';
+  String get progressShareTemplatesBreaking => 'TERBARU';
 
   @override
-  String get progressShareTemplatesConsistency => 'CONSISTENCY';
+  String get progressShareTemplatesConsistency => 'KONSISTENSI';
 
   @override
   String progressShareTemplatesFromAgo(Object durationText) {
@@ -28925,7 +28923,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get progressShareTemplatesFromILlStart =>
-      'FROM \"I\\\'LL START MONDAY\"';
+      'DARI \"SAYA AKAN MULAI SENIN\"';
 
   @override
   String progressShareTemplatesHowSheLost(Object weightLostText) {
@@ -28933,10 +28931,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesInGreenBoxes => 'IN GREEN BOXES';
+  String get progressShareTemplatesInGreenBoxes => 'DALAM KOTAK HIJAU';
 
   @override
-  String get progressShareTemplatesInTheBooks => 'IN THE BOOKS';
+  String get progressShareTemplatesInTheBooks => 'SELESAI DILAKUKAN';
 
   @override
   String progressShareTemplatesLocalLegendShedsIn(
@@ -28952,7 +28950,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesMyTransformation => 'MY TRANSFORMATION';
+  String get progressShareTemplatesMyTransformation => 'TRANSFORMASI SAYA';
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
@@ -28960,13 +28958,13 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesOfConsistency => 'OF CONSISTENCY';
+  String get progressShareTemplatesOfConsistency => 'DARI KONSISTENSI';
 
   @override
-  String get progressShareTemplatesOfDiscipline => 'of discipline.';
+  String get progressShareTemplatesOfDiscipline => 'dari disiplin.';
 
   @override
-  String get progressShareTemplatesOfPureWork => 'OF PURE WORK';
+  String get progressShareTemplatesOfPureWork => 'DARI KERJA KERAS';
 
   @override
   String progressShareTemplatesOfWork(Object durationText) {
@@ -28974,17 +28972,17 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesProgress => 'PROGRESS';
+  String get progressShareTemplatesProgress => 'PROGRES';
 
   @override
-  String get progressShareTemplatesReportedBy => 'REPORTED BY';
+  String get progressShareTemplatesReportedBy => 'DILAPORKAN OLEH';
 
   @override
   String get progressShareTemplatesSourcesCloseToThe =>
-      'Sources close to the subject confirm the shift is due to consistent training, honest eating, and refusing to skip leg day. Experts call it \"unprecedented dedication.\"';
+      'Sumber terdekat mengonfirmasi perubahan ini berkat latihan yang konsisten, pola makan jujur, dan tidak pernah melewatkan hari latihan kaki. Para ahli menyebutnya \"dedikasi yang belum pernah terjadi sebelumnya.\"';
 
   @override
-  String get progressShareTemplatesTheDailyGains => 'THE DAILY GAINS';
+  String get progressShareTemplatesTheDailyGains => 'KEUNTUNGAN HARIAN';
 
   @override
   String progressShareTemplatesTheGlowUp(Object durationText) {
@@ -28992,10 +28990,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTheTransformation => 'THE TRANSFORMATION';
+  String get progressShareTemplatesTheTransformation => 'TRANSFORMASI';
 
   @override
-  String get progressShareTemplatesTimeline => 'TIMELINE';
+  String get progressShareTemplatesTimeline => 'LINIMASA';
 
   @override
   String progressShareTemplatesToLater(Object durationText) {
@@ -29003,19 +29001,19 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesToRightNow => 'to right now.';
+  String get progressShareTemplatesToRightNow => 'hingga saat ini.';
 
   @override
   String progressShareTemplatesTotal(Object totalWorkouts) {
-    return '$totalWorkouts total';
+    return 'total $totalWorkouts';
   }
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTUESDAY';
+      '#TRANSFORMASI\\nSELASA';
 
   @override
-  String get progressShareTemplatesTransformed => 'TRANSFORMED';
+  String get progressShareTemplatesTransformed => 'DITRANSFORMASI';
 
   @override
   String progressShareTemplatesValue(Object daysBetween) {
@@ -29057,7 +29055,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get progressShareTemplatesZealovaMarket => 'ZEALOVA MARKET';
 
   @override
-  String get progressSignUpToUnlock => 'Sign Up to Unlock';
+  String get progressSignUpToUnlock => 'Daftar untuk Membuka';
 
   @override
   String get progressStrength => 'KEKUATAN';
@@ -29455,7 +29453,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get quickActionsRowBigBottle => 'Botol besar';
 
   @override
-  String get quickActionsRowChat => 'Chat';
+  String get quickActionsRowChat => 'Obrolan';
 
   @override
   String get quickActionsRowCoach => 'Pelatih';
@@ -30321,10 +30319,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get quizEquipmentOtherEquipment => 'Quiz equipment other equipment';
+  String get quizEquipmentOtherEquipment => 'Peralatan lainnya';
 
   @override
-  String get quizEquipmentPullUpBar => 'Quiz equipment pull up bar';
+  String get quizEquipmentPullUpBar => 'Pull Up Bar';
 
   @override
   String get quizEquipmentQuickPresets => 'Preset cepat';
@@ -30337,7 +30335,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Diperlukan untuk: Barbell Squat, Overhead Press, Barbell Bench Press';
 
   @override
-  String get quizEquipmentResistanceBands => 'Quiz equipment resistance bands';
+  String get quizEquipmentResistanceBands => 'Resistance Bands';
 
   @override
   String get quizEquipmentSelectAllThatApply =>
@@ -30348,7 +30346,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Memilih lingkungan latihan membantu kami merekomendasikan latihan dan peralatan yang tepat untuk pengaturan Anda.';
 
   @override
-  String get quizEquipmentSquatRack => 'Quiz equipment squat rack';
+  String get quizEquipmentSquatRack => 'Squat Rack';
 
   @override
   String get quizEquipmentTakeAFewPhotos =>
@@ -30359,7 +30357,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Ramah perjalanan - dumbel, mesin kardio';
 
   @override
-  String get quizEquipmentTrxSuspension => 'Quiz equipment trx suspension';
+  String get quizEquipmentTrxSuspension => 'TRX Suspension';
 
   @override
   String get quizEquipmentU1f3e0 => '🏠';
@@ -30498,37 +30496,35 @@ class AppLocalizationsId extends AppLocalizations {
   String get quizFastingYesLetSTry => 'Ya, mari kita coba';
 
   @override
-  String get quizFitnessLevel2To5Years => 'Quiz fitness level to years';
+  String get quizFitnessLevel2To5Years => '2 hingga 5 tahun';
 
   @override
-  String get quizFitnessLevel5PlusYears => 'Quiz fitness level plus years';
+  String get quizFitnessLevel5PlusYears => '5 tahun lebih';
 
   @override
-  String get quizFitnessLevel6MonTo2Yrs => 'Quiz fitness level mon to yrs';
+  String get quizFitnessLevel6MonTo2Yrs => '6 bulan hingga 2 tahun';
 
   @override
-  String get quizFitnessLevelAdvanced => 'Quiz fitness level advanced';
+  String get quizFitnessLevelAdvanced => 'Lanjutan';
 
   @override
-  String get quizFitnessLevelAdvancedDesc => 'Quiz fitness level advanced desc';
+  String get quizFitnessLevelAdvancedDesc => 'Deskripsi tingkat lanjutan';
 
   @override
   String get quizFitnessLevelBeHonestWeLl =>
       'Jujurlah - kami akan menyesuaikan seiring kemajuan Anda';
 
   @override
-  String get quizFitnessLevelBeginner => 'Quiz fitness level beginner';
+  String get quizFitnessLevelBeginner => 'Pemula';
 
   @override
-  String get quizFitnessLevelBeginnerDesc => 'Quiz fitness level beginner desc';
+  String get quizFitnessLevelBeginnerDesc => 'Deskripsi tingkat pemula';
 
   @override
-  String get quizFitnessLevelBrandNewToLifting =>
-      'Quiz fitness level brand new to lifting';
+  String get quizFitnessLevelBrandNewToLifting => 'Baru memulai angkat beban';
 
   @override
-  String get quizFitnessLevelBuildingConsistency =>
-      'Quiz fitness level building consistency';
+  String get quizFitnessLevelBuildingConsistency => 'Membangun konsistensi';
 
   @override
   String get quizFitnessLevelDailyActivityLevelOutside =>
@@ -30543,60 +30539,53 @@ class AppLocalizationsId extends AppLocalizations {
       'Sudah berapa lama Anda berlatih beban?';
 
   @override
-  String get quizFitnessLevelIntermediate => 'Quiz fitness level intermediate';
+  String get quizFitnessLevelIntermediate => 'Menengah';
 
   @override
-  String get quizFitnessLevelIntermediateDesc =>
-      'Quiz fitness level intermediate desc';
+  String get quizFitnessLevelIntermediateDesc => 'Deskripsi tingkat menengah';
 
   @override
-  String get quizFitnessLevelJustGettingStarted =>
-      'Quiz fitness level just getting started';
+  String get quizFitnessLevelJustGettingStarted => 'Baru saja memulai';
 
   @override
-  String get quizFitnessLevelLessThan6Months =>
-      'Quiz fitness level less than months';
+  String get quizFitnessLevelLessThan6Months => 'Kurang dari 6 bulan';
 
   @override
-  String get quizFitnessLevelLight => 'Quiz fitness level light';
+  String get quizFitnessLevelLight => 'Ringan';
 
   @override
-  String get quizFitnessLevelLightDesc => 'Quiz fitness level light desc';
+  String get quizFitnessLevelLightDesc => 'Deskripsi tingkat ringan';
 
   @override
-  String get quizFitnessLevelModerate => 'Quiz fitness level moderate';
+  String get quizFitnessLevelModerate => 'Sedang';
 
   @override
-  String get quizFitnessLevelModerateDesc => 'Quiz fitness level moderate desc';
+  String get quizFitnessLevelModerateDesc => 'Deskripsi tingkat sedang';
 
   @override
-  String get quizFitnessLevelNever => 'Quiz fitness level never';
+  String get quizFitnessLevelNever => 'Tidak pernah';
 
   @override
-  String get quizFitnessLevelSedentary => 'Quiz fitness level sedentary';
+  String get quizFitnessLevelSedentary => 'Sedenter';
 
   @override
-  String get quizFitnessLevelSedentaryDesc =>
-      'Quiz fitness level sedentary desc';
+  String get quizFitnessLevelSedentaryDesc => 'Deskripsi tingkat sedenter';
 
   @override
-  String get quizFitnessLevelSolidFoundation =>
-      'Quiz fitness level solid foundation';
+  String get quizFitnessLevelSolidFoundation => 'Fondasi yang kuat';
 
   @override
   String get quizFitnessLevelThisHelpsUsPick =>
       'Ini membantu kami memilih latihan yang tepat';
 
   @override
-  String get quizFitnessLevelVeryActive => 'Quiz fitness level very active';
+  String get quizFitnessLevelVeryActive => 'Sangat aktif';
 
   @override
-  String get quizFitnessLevelVeryActiveDesc =>
-      'Quiz fitness level very active desc';
+  String get quizFitnessLevelVeryActiveDesc => 'Deskripsi tingkat sangat aktif';
 
   @override
-  String get quizFitnessLevelVeteranLifter =>
-      'Quiz fitness level veteran lifter';
+  String get quizFitnessLevelVeteranLifter => 'Pengangkat beban veteran';
 
   @override
   String get quizFitnessLevelWhatSYourCurrent =>
@@ -30620,35 +30609,35 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get quizMotivationBeHealthierOverall =>
-      'Quiz motivation be healthier overall';
+      'Menjadi lebih sehat secara keseluruhan';
 
   @override
-  String get quizMotivationBuildConfidence =>
-      'Quiz motivation build confidence';
+  String get quizMotivationBuildConfidence => 'Membangun kepercayaan diri';
 
   @override
-  String get quizMotivationFeelStronger => 'Quiz motivation feel stronger';
+  String get quizMotivationFeelStronger => 'Ingin merasa lebih kuat';
 
   @override
-  String get quizMotivationHaveMoreEnergy => 'Quiz motivation have more energy';
+  String get quizMotivationHaveMoreEnergy =>
+      'Ingin memiliki lebih banyak energi';
 
   @override
   String get quizMotivationImproveMentalHealth =>
-      'Quiz motivation improve mental health';
+      'Ingin meningkatkan kesehatan mental';
 
   @override
-  String get quizMotivationLookBetter => 'Quiz motivation look better';
+  String get quizMotivationLookBetter => 'Ingin terlihat lebih baik';
 
   @override
   String get quizMotivationSelectAllThatResonate =>
       'Pilih semua yang sesuai dengan Anda';
 
   @override
-  String get quizMotivationSleepBetter => 'Quiz motivation sleep better';
+  String get quizMotivationSleepBetter => 'Ingin tidur lebih nyenyak';
 
   @override
   String get quizMotivationSportsPerformance =>
-      'Quiz motivation sports performance';
+      'Ingin meningkatkan performa olahraga';
 
   @override
   String get quizMotivationWhatSDrivingYou =>
@@ -32093,7 +32082,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get refuelWindowCardWater => 'Air';
 
   @override
-  String get regenerateSheetAddingVariety => 'Regenerate sheet adding variety';
+  String get regenerateSheetAddingVariety => 'Menambahkan variasi';
 
   @override
   String get regenerateSheetAiGenerationTakes =>
@@ -32113,20 +32102,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get regenerateSheetApply => 'Terapkan';
 
   @override
-  String get regenerateSheetApplyThisWorkout =>
-      'Regenerate sheet apply this workout';
+  String get regenerateSheetApplyThisWorkout => 'Terapkan latihan ini';
 
   @override
   String get regenerateSheetBalancingMuscleGroups =>
-      'Regenerate sheet balancing muscle groups';
+      'Menyeimbangkan kelompok otot';
 
   @override
-  String get regenerateSheetBootingUpTheAi =>
-      'Regenerate sheet booting up the ai';
+  String get regenerateSheetBootingUpTheAi => 'Memulai AI';
 
   @override
-  String get regenerateSheetBuildingYourPlan =>
-      'Regenerate sheet building your plan';
+  String get regenerateSheetBuildingYourPlan => 'Menyusun rencana Anda';
 
   @override
   String get regenerateSheetBuildingYourWorkout => 'Menyusun latihan Anda…';
@@ -32135,16 +32121,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get regenerateSheetCheckingEquipment => 'Memeriksa peralatan';
 
   @override
-  String get regenerateSheetCheckingPreferences =>
-      'Regenerate sheet checking preferences';
+  String get regenerateSheetCheckingPreferences => 'Memeriksa preferensi';
 
   @override
-  String get regenerateSheetConnectingToTheAi =>
-      'Regenerate sheet connecting to the ai';
+  String get regenerateSheetConnectingToTheAi => 'Menghubungkan ke AI';
 
   @override
   String get regenerateSheetConsideringFocusAreas =>
-      'Regenerate sheet considering focus areas';
+      'Mempertimbangkan area fokus';
 
   @override
   String get regenerateSheetCustomize => 'Sesuaikan';
@@ -32155,51 +32139,49 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get regenerateSheetCustomizeOrLetAiSuggest =>
-      'Regenerate sheet customize or let ai suggest';
+      'Sesuaikan atau biarkan AI menyarankan';
 
   @override
   String get regenerateSheetDescribeYourIdealWorkout =>
       'Deskripsikan latihan ideal Anda';
 
   @override
-  String get regenerateSheetDesigningYourWorkout =>
-      'Regenerate sheet designing your workout';
+  String get regenerateSheetDesigningYourWorkout => 'Merancang latihan Anda';
 
   @override
   String get regenerateSheetDialingInSetsAndReps =>
-      'Regenerate sheet dialing in sets and reps';
+      'Menentukan set dan repetisi';
 
   @override
   String get regenerateSheetDoThisToday => 'Lakukan ini hari ini';
 
   @override
-  String get regenerateSheetEnterAPrompt => 'Regenerate sheet enter a prompt';
+  String get regenerateSheetEnterAPrompt => 'Masukkan perintah';
 
   @override
   String get regenerateSheetEnterAPromptAbove => 'Masukkan perintah di atas…';
 
   @override
   String get regenerateSheetFilteringByEquipment =>
-      'Regenerate sheet filtering by equipment';
+      'Memfilter berdasarkan peralatan';
 
   @override
   String get regenerateSheetFilteringByYourEquipment =>
-      'Regenerate sheet filtering by your equipment';
+      'Memfilter berdasarkan peralatan Anda';
 
   @override
   String get regenerateSheetFinalizingDetails => 'Menyelesaikan detail…';
 
   @override
   String get regenerateSheetFinalizingYourWorkout =>
-      'Regenerate sheet finalizing your workout';
+      'Menyelesaikan latihan Anda';
 
   @override
-  String get regenerateSheetFineTuningTheDetails =>
-      'Regenerate sheet fine tuning the details';
+  String get regenerateSheetFineTuningTheDetails => 'Menyempurnakan detail';
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return 'Regenerate sheet generating elapsed $arg0';
+    return 'Menghasilkan waktu berlalu $arg0';
   }
 
   @override
@@ -32212,7 +32194,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get regenerateSheetGettingCreative => 'Mencari ide kreatif';
 
   @override
-  String get regenerateSheetGettingReady => 'Regenerate sheet getting ready';
+  String get regenerateSheetGettingReady => 'Bersiap-siap';
 
   @override
   String get regenerateSheetHoldingYourSchedule => 'Mempertahankan jadwal Anda';
@@ -32227,23 +32209,20 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get regenerateSheetLoadingInjuriesAndGoals =>
-      'Regenerate sheet loading injuries and goals';
+      'Memuat cedera dan tujuan';
 
   @override
-  String get regenerateSheetLoadingPreferences =>
-      'Regenerate sheet loading preferences';
+  String get regenerateSheetLoadingPreferences => 'Memuat preferensi';
 
   @override
-  String get regenerateSheetLoadingYourProfile =>
-      'Regenerate sheet loading your profile';
+  String get regenerateSheetLoadingYourProfile => 'Memuat profil Anda';
 
   @override
-  String get regenerateSheetMatchingIntensity =>
-      'Regenerate sheet matching intensity';
+  String get regenerateSheetMatchingIntensity => 'Menyesuaikan intensitas';
 
   @override
   String get regenerateSheetMatchingYourFitnessLevel =>
-      'Regenerate sheet matching your fitness level';
+      'Menyesuaikan dengan tingkat kebugaran Anda';
 
   @override
   String get regenerateSheetNoSuggestionsYet => 'Belum ada saran';
@@ -32253,40 +32232,34 @@ class AppLocalizationsId extends AppLocalizations {
       'Mengoptimalkan untuk tujuan Anda';
 
   @override
-  String get regenerateSheetPairingPushAndPull =>
-      'Regenerate sheet pairing push and pull';
+  String get regenerateSheetPairingPushAndPull => 'Memasangkan push dan pull';
 
   @override
   String get regenerateSheetPersonalizingExercises =>
       'Mempersonalisasi latihan';
 
   @override
-  String get regenerateSheetPickingYourExercises =>
-      'Regenerate sheet picking your exercises';
+  String get regenerateSheetPickingYourExercises => 'Memilih latihan Anda';
 
   @override
   String get regenerateSheetPreparingYourRequest =>
-      'Regenerate sheet preparing your request';
+      'Menyiapkan permintaan Anda';
 
   @override
-  String get regenerateSheetPrimingTheEngine =>
-      'Regenerate sheet priming the engine';
+  String get regenerateSheetPrimingTheEngine => 'Menyiapkan mesin';
 
   @override
-  String get regenerateSheetPullingYourGoals =>
-      'Regenerate sheet pulling your goals';
+  String get regenerateSheetPullingYourGoals => 'Menarik tujuan Anda';
 
   @override
-  String get regenerateSheetReadingYourProfile =>
-      'Regenerate sheet reading your profile';
+  String get regenerateSheetReadingYourProfile => 'Membaca profil Anda';
 
   @override
   String get regenerateSheetRegenerateCurrentWorkout =>
       'Regenerasi Latihan Saat Ini';
 
   @override
-  String get regenerateSheetRegenerateWorkout =>
-      'Regenerate sheet regenerate workout';
+  String get regenerateSheetRegenerateWorkout => 'Buat ulang latihan';
 
   @override
   String get regenerateSheetRegenerationComplete => 'Regenerasi selesai!';
@@ -32296,23 +32269,22 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get regenerateSheetRespectingYourInjuryList =>
-      'Regenerate sheet respecting your injury list';
+      'Memperhatikan daftar cedera Anda';
 
   @override
   String get regenerateSheetRestoredFromLastRegen =>
-      'Regenerate sheet restored from last regen';
+      'Dipulihkan dari pembuatan ulang terakhir';
 
   @override
   String get regenerateSheetRestoredFromLastRegeneration =>
       'Dipulihkan dari regenerasi terakhir Anda';
 
   @override
-  String get regenerateSheetSavingToYourPlan =>
-      'Regenerate sheet saving to your plan';
+  String get regenerateSheetSavingToYourPlan => 'Menyimpan ke rencana Anda';
 
   @override
   String get regenerateSheetScanningTheExerciseLibrary =>
-      'Regenerate sheet scanning the exercise library';
+      'Memindai pustaka latihan';
 
   @override
   String get regenerateSheetSchedulingYourWorkout =>
@@ -32320,11 +32292,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get regenerateSheetSequencingCompoundLifts =>
-      'Regenerate sheet sequencing compound lifts';
+      'Mengurutkan angkatan compound';
 
   @override
-  String get regenerateSheetShapingTheSession =>
-      'Regenerate sheet shaping the session';
+  String get regenerateSheetShapingTheSession => 'Membentuk sesi';
 
   @override
   String get regenerateSheetStartingRegeneration => 'Memulai regenerasi…';
@@ -32340,21 +32311,20 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get regenerateSheetTodayNotInUsualDays =>
-      'Regenerate sheet today not in usual days';
+      'Hari ini tidak termasuk dalam hari biasa';
 
   @override
   String get regenerateSheetTuningRestPeriods =>
-      'Regenerate sheet tuning rest periods';
+      'Menyesuaikan periode istirahat';
 
   @override
-  String get regenerateSheetUpdatingYourSchedule =>
-      'Regenerate sheet updating your schedule';
+  String get regenerateSheetUpdatingYourSchedule => 'Memperbarui jadwal Anda';
 
   @override
   String get regenerateSheetUseThisSuggestion => 'Gunakan Saran Ini';
 
   @override
-  String get regenerateSheetWarmingUp => 'Regenerate sheet warming up';
+  String get regenerateSheetWarmingUp => 'Pemanasan';
 
   @override
   String get regenerateSheetWhen => 'KAPAN?';
@@ -33005,11 +32975,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get restRateLastSetOptional => 'opsional';
 
   @override
-  String get restSuggestionAiRestCoach => 'Rest suggestion ai rest coach';
+  String get restSuggestionAiRestCoach => 'Saran istirahat AI rest coach';
 
   @override
   String get restSuggestionCalculatingOptimalRestTime =>
-      'Rest suggestion calculating optimal rest time';
+      'Saran istirahat menghitung waktu istirahat optimal';
 
   @override
   String get restSuggestionCardAiRestCoach => 'PELATIH ISTIRAHAT AI';
@@ -33028,7 +32998,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get restSuggestionCardUseSuggested => 'Gunakan yang Disarankan';
 
   @override
-  String get restSuggestionQuick => 'Rest suggestion quick';
+  String get restSuggestionQuick => 'Saran istirahat cepat';
 
   @override
   String get restSuggestionQuickRest => 'Saran istirahat singkat';
@@ -33066,7 +33036,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get restTimerCardLivePreview => 'Pratinjau Langsung';
 
   @override
-  String get restTimerCardMultiplier => 'Multiplier';
+  String get restTimerCardMultiplier => 'Pengali';
 
   @override
   String get restTimerCardRestBaserestRpe7 =>
@@ -36553,10 +36523,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Target terpilih: $_selectedGoal langkah';
   }
 
@@ -36564,8 +36531,6 @@ class AppLocalizationsId extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Penggeser target langkah, dari $_minGoal hingga $_maxGoal langkah';
   }
@@ -36710,7 +36675,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get streakExplainerHowTheStreakWorks => 'Cara kerja streak';
 
   @override
-  String get streakExplainerStreakFreezes => 'Streak freezes';
+  String get streakExplainerStreakFreezes => 'Pembekuan streak';
 
   @override
   String get streakExplainerUseFreeze => 'Gunakan freeze';
@@ -37233,7 +37198,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get summaryCardHours => 'Jam';
 
   @override
-  String get summaryCardPrs => 'PRs';
+  String get summaryCardPrs => 'PR';
 
   @override
   String get summaryCardShareYourWrapped => 'Bagikan Wrapped Anda';
@@ -37248,7 +37213,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get summaryCardioSession => 'Sesi kardio';
 
   @override
-  String get summaryCardsPrs => 'PRs';
+  String get summaryCardsPrs => 'PR';
 
   @override
   String get summaryCardsStreak => 'Streak';
@@ -38072,7 +38037,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get syncedWorkoutDetailTotalCal => 'Total kalori';
 
   @override
-  String get syncedWorkoutDetailTrainingEffect => 'Training Effect';
+  String get syncedWorkoutDetailTrainingEffect => 'Efek Latihan';
 
   @override
   String get syncedWorkoutDetailZones => 'Zona';
@@ -39053,7 +39018,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String trophiesCardWrapped(Object appName) {
-    return '$appName Wrapped';
+    return 'Zealova Wrapped';
   }
 
   @override
@@ -41011,7 +40976,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -44116,7 +44081,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get xpGoalsTrophyRoom => 'Ruang Trofi';
 
   @override
-  String get xpGoalsU2022 => '\\u2022 ';
+  String get xpGoalsU2022 => '• ';
 
   @override
   String get xpGoalsWeekly => 'Mingguan';

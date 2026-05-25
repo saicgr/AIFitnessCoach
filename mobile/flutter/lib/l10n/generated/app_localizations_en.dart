@@ -4031,11 +4031,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Select a new AI coach persona';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Use $_customName';
   }
 
@@ -24793,7 +24789,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Friends';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -36301,10 +36297,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Selected goal: $_selectedGoal steps';
   }
 
@@ -36312,8 +36305,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Step goal slider, from $_minGoal to $_maxGoal steps';
   }

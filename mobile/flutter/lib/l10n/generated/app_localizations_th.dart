@@ -77,7 +77,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String accuracyFeedbackSnackbarCal(Object calories, Object displayName) {
-    return '$displayName — $calories cal';
+    return '$displayName — $calories แคลอรี่';
   }
 
   @override
@@ -132,7 +132,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get achievementsNoPersonalRecords => 'ยังไม่มีสถิติส่วนตัว';
 
   @override
-  String get achievementsPrs => 'PRs';
+  String get achievementsPrs => 'สถิติสูงสุด (PRs)';
 
   @override
   String get achievementsRecentAchievements => 'ความสำเร็จล่าสุด';
@@ -191,7 +191,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get actionChipsRowReorder => 'จัดลำดับใหม่';
 
   @override
-  String get actionChipsRowSuperset => 'Superset';
+  String get actionChipsRowSuperset => 'ซูเปอร์เซ็ต';
 
   @override
   String get actionChipsRowSwap => 'สลับ';
@@ -775,7 +775,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get addGymSheetSkip => 'ข้าม';
 
   @override
-  String get addGymSheetSplitBodyPart => 'Body Part';
+  String get addGymSheetSplitBodyPart => 'แยกส่วนร่างกาย';
 
   @override
   String get addGymSheetSplitDesc3Days => '3 วัน';
@@ -793,7 +793,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get addGymSheetSplitDescFlexible => 'ยืดหยุ่น';
 
   @override
-  String get addGymSheetSplitFullBody => 'Full Body';
+  String get addGymSheetSplitFullBody => 'ทั่วร่าง';
 
   @override
   String get addGymSheetSplitLetAiDecide => 'ให้ AI ตัดสินใจ';
@@ -805,7 +805,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get addGymSheetSplitPushPullLegs => 'Push/Pull/Legs';
 
   @override
-  String get addGymSheetSplitUpperLower => 'Upper/Lower';
+  String get addGymSheetSplitUpperLower => 'บน/ล่าง';
 
   @override
   String addGymSheetStepOf(Object step, Object total) {
@@ -1355,7 +1355,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get aiCoachReportPr => 'PR';
 
   @override
-  String get aiCoachReportPrs => 'PRs';
+  String get aiCoachReportPrs => 'สถิติสูงสุด (PRs)';
 
   @override
   String get aiCoachReportVolume => 'ปริมาณการฝึก';
@@ -3067,7 +3067,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String cardioHistoryScreenCal(Object calories) {
-    return '$calories cal';
+    return '$calories แคลอรี่';
   }
 
   @override
@@ -4048,11 +4048,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => 'เลือกบุคลิกโค้ช AI คนใหม่';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'ใช้ $_customName';
   }
 
@@ -4588,17 +4584,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String companionPickerSheetCal(Object item) {
-    return '$item cal';
+    return '$item แคลอรี่';
   }
 
   @override
   String companionPickerSheetCal2(Object estCalories) {
-    return '$estCalories cal';
+    return '$estCalories แคลอรี่';
   }
 
   @override
   String companionPickerSheetCal3(Object _selectedCalTotal) {
-    return '$_selectedCalTotal cal';
+    return '$_selectedCalTotal แคลอรี่';
   }
 
   @override
@@ -5033,7 +5029,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String contextualBannerLbs(Object exerciseName, Object weightLbs) {
-    return '$exerciseName: $weightLbs lbs';
+    return '$exerciseName: $weightLbs ปอนด์';
   }
 
   @override
@@ -9959,7 +9955,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exerciseHistoryNoPersonalRecordsYet => 'ยังไม่มีสถิติส่วนตัว';
 
   @override
-  String get exerciseHistoryPrStreak => 'PR Streak';
+  String get exerciseHistoryPrStreak => 'สถิติ PR ต่อเนื่อง';
 
   @override
   String get exerciseHistoryRecentPersonalRecords => 'สถิติส่วนตัวล่าสุด';
@@ -10888,12 +10884,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String exerciseScienceResearchScreenEveryWorkoutParameterIn(Object appName) {
-    return 'Every workout parameter in $appName is derived from peer-reviewed exercise science. Tap a paper to see details.';
+    return 'พารามิเตอร์การออกกำลังกายทุกอย่างใน Zealova มาจากงานวิจัยด้านวิทยาศาสตร์การกีฬาที่ผ่านการตรวจสอบแล้ว แตะที่งานวิจัยเพื่อดูรายละเอียด';
   }
 
   @override
   String exerciseScienceResearchScreenHowUsesThis(Object appName) {
-    return 'How $appName uses this';
+    return 'Zealova ใช้งานนี้อย่างไร';
   }
 
   @override
@@ -11524,7 +11520,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'Strava / Garmin Connect / Komoot';
 
   @override
-  String get fastingAiInsightAiInsight => 'AI Insight';
+  String get fastingAiInsightAiInsight => 'ข้อมูลเชิงลึก AI';
 
   @override
   String get fastingAiInsightCouldnTLoadYour =>
@@ -11786,7 +11782,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fastingImpactActivityCalendar => 'ปฏิทินกิจกรรม';
 
   @override
-  String get fastingImpactAiInsights => 'AI Insights';
+  String get fastingImpactAiInsights => 'ข้อมูลเชิงลึก AI';
 
   @override
   String fastingImpactCardCorrelation(Object displayName) {
@@ -13283,7 +13279,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
-    return '$adjustedCal cal';
+    return '$adjustedCal แคล';
   }
 
   @override
@@ -13293,7 +13289,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String foodAnalysisResultCardGP(Object adjustedProtein) {
-    return '${adjustedProtein}g P';
+    return '$adjustedProteinก. โปรตีน';
   }
 
   @override
@@ -13400,11 +13396,11 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelKcal => ' kcal';
+  String get foodBrowserPanelKcal => ' แคล';
 
   @override
   String foodBrowserPanelKcal2(Object totalCal) {
-    return '$totalCal kcal';
+    return '$totalCal แคล';
   }
 
   @override
@@ -13549,7 +13545,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get foodHistoryScreenAvgDay => 'เฉลี่ยต่อวัน';
 
   @override
-  String get foodHistoryScreenCal => ' cal';
+  String get foodHistoryScreenCal => ' แคล';
 
   @override
   String get foodHistoryScreenDatabase => 'ฐานข้อมูล';
@@ -13636,7 +13632,7 @@ class AppLocalizationsTh extends AppLocalizations {
     Object fatG,
     Object proteinG,
   ) {
-    return '${proteinG}P · ${carbsG}C · ${fatG}F';
+    return '$proteinGโปรตีน · $carbsGคาร์บ · $fatGไขมัน';
   }
 
   @override
@@ -14439,7 +14435,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String futuristicSetCardRmKg(Object suggestion) {
-    return '1RM: ${suggestion}kg';
+    return '1RM: $suggestionกก.';
   }
 
   @override
@@ -15741,7 +15737,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get healthMetricsCardMax => 'สูงสุด';
 
   @override
-  String get healthMetricsCardMgDl => 'mg/dL';
+  String get healthMetricsCardMgDl => 'มก./ดล.';
 
   @override
   String get healthMetricsCardMin => 'ต่ำสุด';
@@ -16011,7 +16007,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String heartRateChartSummaryBpm(Object value) {
-    return '$value bpm';
+    return '$value ครั้ง/นาที';
   }
 
   @override
@@ -16231,12 +16227,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String heroNutritionCardGG(Object consumed, Object target) {
-    return '${consumed}g / ${target}g';
+    return '$consumedก. / $targetก.';
   }
 
   @override
   String heroNutritionCardKcal(Object calorieTarget, Object caloriesConsumed) {
-    return '$caloriesConsumed / $calorieTarget kcal';
+    return '$caloriesConsumed / $calorieTarget แคล';
   }
 
   @override
@@ -17870,7 +17866,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String hrZonesCardBpm(Object currentHR) {
-    return '$currentHR bpm';
+    return '$currentHR ครั้ง/นาที';
   }
 
   @override
@@ -18985,7 +18981,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String introCardFormatDataTotalvolumelbsRound(Object totalSets) {
-    return ').format(data.totalVolumeLbs.round())) lbs · (totalSets) sets';
+    return ').format(data.totalVolumeLbs.round())) ปอนด์ · (totalSets) เซต';
   }
 
   @override
@@ -19813,7 +19809,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get log1rmLog1rm => 'บันทึก 1RM';
 
   @override
-  String get log1rmNewPr => 'NEW PR!';
+  String get log1rmNewPr => 'สถิติใหม่!';
 
   @override
   String get log1rmPleaseEnterAValid => 'โปรดระบุน้ำหนักที่ถูกต้อง';
@@ -20167,7 +20163,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String logMealSheetL2Kcal(Object calories, Object timesLogged) {
-    return '~$calories kcal · $timesLogged×';
+    return '~$calories kcal · บันทึก $timesLogged ครั้ง';
   }
 
   @override
@@ -20905,7 +20901,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String loggedMealsSectionCal3(Object food) {
-    return '$food cal';
+    return '$food แคลอรี่';
   }
 
   @override
@@ -20920,42 +20916,42 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String loggedMealsSectionG(Object proteinG) {
-    return '${proteinG}g';
+    return '$proteinG กรัม';
   }
 
   @override
   String loggedMealsSectionG2(Object carbsG) {
-    return '${carbsG}g';
+    return '$carbsG กรัม';
   }
 
   @override
   String loggedMealsSectionG3(Object fatG) {
-    return '${fatG}g';
+    return '$fatG กรัม';
   }
 
   @override
   String loggedMealsSectionG4(Object consumed, Object target) {
-    return '$consumed/${target}g';
+    return '$consumed/$target กรัม';
   }
 
   @override
   String loggedMealsSectionG5(Object consumed) {
-    return '${consumed}g';
+    return '$consumed กรัม';
   }
 
   @override
   String loggedMealsSectionGC(Object totalCarbs) {
-    return '${totalCarbs}g C';
+    return '$totalCarbs กรัม คาร์โบไฮเดรต';
   }
 
   @override
   String loggedMealsSectionGF(Object totalFat) {
-    return '${totalFat}g F';
+    return '$totalFat กรัม ไขมัน';
   }
 
   @override
   String loggedMealsSectionGP(Object totalProtein) {
-    return '${totalProtein}g P';
+    return '$totalProtein กรัม โปรตีน';
   }
 
   @override
@@ -21307,7 +21303,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String mealPlannerScreenG(Object current, Object target) {
-    return '$current / $target g';
+    return '$current / $target กรัม';
   }
 
   @override
@@ -22601,7 +22597,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String milestonesScreenPts(Object points) {
-    return '$points pts';
+    return '$points คะแนน';
   }
 
   @override
@@ -24887,7 +24883,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — เพื่อน';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'ด่าน $_stageNumber';
   }
 
@@ -24944,7 +24940,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String nutritionFastingCardCal(Object currentCalories) {
-    return '$currentCalories cal';
+    return '$currentCalories แคล';
   }
 
   @override
@@ -24962,17 +24958,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String nutritionFastingCardG(Object protein) {
-    return '${protein}g';
+    return '$proteinก.';
   }
 
   @override
   String nutritionFastingCardG2(Object carbs) {
-    return '${carbs}g';
+    return '$carbsก.';
   }
 
   @override
   String nutritionFastingCardG3(Object fat) {
-    return '${fat}g';
+    return '$fatก.';
   }
 
   @override
@@ -25095,7 +25091,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCal(Object bmr) {
-    return '= $bmr cal';
+    return '= $bmr แคล';
   }
 
   @override
@@ -25105,12 +25101,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetG(Object grams) {
-    return '${grams}g';
+    return '$gramsก.';
   }
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetG2(Object target) {
-    return '/${target}g';
+    return '/$targetก.';
   }
 
   @override
@@ -25844,7 +25840,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return ')(tdee) แคล';
   }
 
   @override
@@ -25854,12 +25850,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardG(Object avgProtein) {
-    return '${avgProtein}g';
+    return '$avgProteinก.';
   }
 
   @override
   String nutritionTabPartWeeklyOverviewCardG2(Object grams) {
-    return '${grams}g';
+    return '$gramsก.';
   }
 
   @override
@@ -30615,17 +30611,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String quizNutritionGoalsG(Object protein) {
-    return '${protein}g';
+    return '$proteinก.';
   }
 
   @override
   String quizNutritionGoalsG2(Object carbs) {
-    return '${carbs}g';
+    return '$carbsก.';
   }
 
   @override
   String quizNutritionGoalsG3(Object fat) {
-    return '${fat}g';
+    return '$fatก.';
   }
 
   @override
@@ -36402,10 +36398,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'เป้าหมายที่เลือก: $_selectedGoal ก้าว';
   }
 
@@ -36413,8 +36406,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'แถบเลื่อนเป้าหมายจำนวนก้าว จาก $_minGoal ถึง $_maxGoal ก้าว';
   }
@@ -36923,7 +36914,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return 'คุณใช้คำแนะนำครบ $used จาก $used ครั้งแล้ว. โหวตฟีเจอร์ที่มีอยู่แทนได้เลย!';
   }
 
   @override
@@ -37901,7 +37892,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get syncedWorkoutDetailSpeed => 'ความเร็ว';
 
   @override
-  String get syncedWorkoutDetailSplits => 'Splits';
+  String get syncedWorkoutDetailSplits => 'ช่วงการออกกำลังกาย';
 
   @override
   String get syncedWorkoutDetailSpoAvg => 'SpO₂ เฉลี่ย';
@@ -37919,7 +37910,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get syncedWorkoutDetailTotalCal => 'แคลอรีรวม';
 
   @override
-  String get syncedWorkoutDetailTrainingEffect => 'Training Effect';
+  String get syncedWorkoutDetailTrainingEffect => 'ผลลัพธ์การฝึก';
 
   @override
   String get syncedWorkoutDetailZones => 'โซน';
@@ -38069,7 +38060,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get templateEditorSaveChanges => 'บันทึกการเปลี่ยนแปลง';
 
   @override
-  String get templateEditorSupersets => 'Supersets';
+  String get templateEditorSupersets => 'ซูเปอร์เซ็ต';
 
   @override
   String get templateListAMondayInThe =>
@@ -38895,7 +38886,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String trophiesCardWrapped(Object appName) {
-    return '$appName Wrapped';
+    return '$appName สรุปผล';
   }
 
   @override
@@ -40396,7 +40387,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get weeklyRecapTemplatePrs => 'PR';
 
   @override
-  String get weeklyRecapTemplateStreak => 'STREAK';
+  String get weeklyRecapTemplateStreak => 'สตรีค';
 
   @override
   String weeklyRecapTemplateValue(Object pct) {
@@ -40506,7 +40497,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get weeklyWrappedSets => 'เซต';
 
   @override
-  String get weeklyWrappedStreak => 'Streak';
+  String get weeklyWrappedStreak => 'สตรีค';
 
   @override
   String get weeklyWrappedYourWeek => 'สัปดาห์ของคุณ';
@@ -42632,13 +42623,13 @@ class AppLocalizationsTh extends AppLocalizations {
       'ป้ายกำกับอัตโนมัติสำหรับโชว์เคสการออกกำลังกาย';
 
   @override
-  String get workoutShowcaseBarbellSquat => 'Barbell Squat';
+  String get workoutShowcaseBarbellSquat => 'บาร์เบลสควอท';
 
   @override
-  String get workoutShowcaseBenchPress => 'BENCH PRESS';
+  String get workoutShowcaseBenchPress => 'เบนช์เพรส';
 
   @override
-  String get workoutShowcaseBoardingPass => 'BOARDING PASS';
+  String get workoutShowcaseBoardingPass => 'บัตรผ่าน';
 
   @override
   String get workoutShowcaseBreathing => 'การหายใจ';
@@ -42865,7 +42856,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workoutShowcaseSideA => 'ด้าน A';
 
   @override
-  String get workoutShowcaseSuperset => 'Superset';
+  String get workoutShowcaseSuperset => 'ซูเปอร์เซ็ต';
 
   @override
   String workoutShowcaseTapToLogSet(Object arg0) {
@@ -42890,7 +42881,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workoutShowcaseUpNextBenchPress => 'ถัดไป: Bench Press';
 
   @override
-  String get workoutShowcaseUpperBodyPush => 'UPPER BODY PUSH';
+  String get workoutShowcaseUpperBodyPush => 'ท่าดันร่างกายส่วนบน';
 
   @override
   String get workoutShowcaseVideo => 'วิดีโอ';

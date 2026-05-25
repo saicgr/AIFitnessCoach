@@ -179,7 +179,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get actionChipsRowIncrements => 'Przyrosty';
 
   @override
-  String get actionChipsRowInfo => 'Info';
+  String get actionChipsRowInfo => 'Informacje';
 
   @override
   String get actionChipsRowLR => 'L/P';
@@ -337,7 +337,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') dla (name)';
   }
 
   @override
@@ -3026,8 +3026,10 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count activities',
-      one: '1 activity',
+      other: '$count aktywności',
+      many: '$count aktywności',
+      few: '$count aktywności',
+      one: '1 aktywność',
     );
     return '$_temp0';
   }
@@ -3037,8 +3039,10 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sessions',
-      one: '1 session',
+      other: '$count sesji',
+      many: '$count sesji',
+      few: '$count sesje',
+      one: '1 sesja',
     );
     return '$_temp0';
   }
@@ -3644,18 +3648,20 @@ class AppLocalizationsPl extends AppLocalizations {
       'Stuknij akcję, aby jej użyć. Przytrzymaj przyciski, aby zmienić kolejność.';
 
   @override
-  String get chatScreenCantReachCoach => 'Can\'t reach the coach right now.';
+  String get chatScreenCantReachCoach =>
+      'Nie można teraz połączyć się z trenerem.';
 
   @override
   String get chatScreenCheckConnection =>
-      'Check your connection and try again.';
+      'Sprawdź połączenie i spróbuj ponownie.';
 
   @override
   String get chatScreenCoachIsThinkingLonger =>
-      'Coach is thinking longer than usual.';
+      'Trener potrzebuje więcej czasu na odpowiedź niż zwykle.';
 
   @override
-  String get chatScreenCouldntReachCoach => 'Couldn\'t reach the coach.';
+  String get chatScreenCouldntReachCoach =>
+      'Nie udało się połączyć z trenerem.';
 
   @override
   String get chatScreenExtAboutAiCoach => 'O trenerze AI';
@@ -3754,7 +3760,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String chatScreenFailedToSendVoice(Object error) {
-    return 'Failed to send voice message: $error';
+    return 'Nie udało się wysłać wiadomości głosowej: $error';
   }
 
   @override
@@ -3762,14 +3768,17 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count messages left today',
+      other: 'Pozostało $count wiadomości na dziś',
+      many: 'Pozostało $count wiadomości na dziś',
+      few: 'Pozostały $count wiadomości na dziś',
+      one: 'Pozostała $count wiadomość na dziś',
     );
     return '$_temp0';
   }
 
   @override
   String get chatScreenMultiAgentHangTight =>
-      'Multi-agent answers can take up to two minutes — hang tight or retry.';
+      'Odpowiedzi od wielu agentów mogą zająć do dwóch minut — poczekaj lub spróbuj ponownie.';
 
   @override
   String get chatScreenPartAddAMessage => 'Dodaj wiadomość...';
@@ -3822,15 +3831,15 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String chatScreenRouteNotRegistered(Object route) {
-    return 'Route not registered: $route';
+    return 'Ścieżka nie jest zarejestrowana: $route';
   }
 
   @override
   String get chatScreenSomethingWentWrongLoading =>
-      'Something went wrong loading your chat.';
+      'Wystąpił błąd podczas ładowania czatu.';
 
   @override
-  String get chatScreenTyping => 'Typing...';
+  String get chatScreenTyping => 'Pisze...';
 
   @override
   String get chatScreenUiConnectionDropped => 'Połączenie przerwane';
@@ -4078,12 +4087,8 @@ class AppLocalizationsPl extends AppLocalizations {
       'Wybierz nową osobowość trenera AI';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
-    return 'Use $_customName';
+  String coachSelectionScreenUse(Object _customName) {
+    return 'Użyj $_customName';
   }
 
   @override
@@ -4710,7 +4715,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String comparisonGalleryValue(Object afterDate, Object beforeDate) {
-    return '$beforeDate  ->  $afterDate';
+    return '$beforeDate -> $afterDate';
   }
 
   @override
@@ -5866,7 +5871,7 @@ class AppLocalizationsPl extends AppLocalizations {
     Object kMinCorrelationPairs,
     Object pairedPoints,
   ) {
-    return '$pairedPoints/$kMinCorrelationPairs shared days';
+    return '$pairedPoints/$kMinCorrelationPairs wspólnych dni';
   }
 
   @override
@@ -5998,7 +6003,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String cycleInsightsChartsD(Object days) {
-    return '${days}d';
+    return '$days dni';
   }
 
   @override
@@ -7529,17 +7534,17 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String discoverScreenLvl(Object level) {
-    return 'Lvl $level';
+    return 'Poz. $level';
   }
 
   @override
   String discoverScreenLvl2(Object level) {
-    return 'Lvl $level';
+    return 'Poz. $level';
   }
 
   @override
   String discoverScreenOf(Object totalActive, Object yourRank) {
-    return '#$yourRank of $totalActive';
+    return '#$yourRank z $totalActive';
   }
 
   @override
@@ -8323,22 +8328,22 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String editTargetsSheetCalculatedKcal(Object numberFormat) {
-    return 'Calculated: $numberFormat kcal';
+    return 'Obliczono: $numberFormat kcal';
   }
 
   @override
   String editTargetsSheetCappedAtSafeMinimum(Object cappedMinimum) {
-    return 'Capped at safe minimum ($cappedMinimum kcal) \\u2014 ';
+    return 'Ograniczono do bezpiecznego minimum ($cappedMinimum kcal) — ';
   }
 
   @override
   String editTargetsSheetFailedToRecalculate(Object e) {
-    return 'Failed to recalculate: $e';
+    return 'Nie udało się przeliczyć: $e';
   }
 
   @override
   String editTargetsSheetFailedToSave(Object e) {
-    return 'Failed to save: $e';
+    return 'Nie udało się zapisać: $e';
   }
 
   @override
@@ -8358,17 +8363,17 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String editTargetsSheetProteinTarget(Object anchorLabel) {
-    return 'Protein target $anchorLabel';
+    return 'Cel białka $anchorLabel';
   }
 
   @override
   String editTargetsSheetSafeMinimumCaloriesMeet(Object cappedMinimum) {
-    return 'Safe-minimum calories ($cappedMinimum) meet your TDEE \\u2014 ';
+    return 'Bezpieczne minimum kalorii ($cappedMinimum) pokrywa Twoje TDEE — ';
   }
 
   @override
   String editTargetsSheetTotalUBMust(Object sum) {
-    return 'Total: $sum% \\u00b7 Must equal 100%';
+    return 'Suma: $sum% · Musi wynosić 100%';
   }
 
   @override
@@ -8378,7 +8383,7 @@ class AppLocalizationsPl extends AppLocalizations {
     Object goalLabel,
     Object weeks,
   ) {
-    return '$goalLabel \\u2192 ~$weeks wks ($dateStr)$deficitInfo';
+    return '$goalLabel → ~$weeks tyg. ($dateStr)$deficitInfo';
   }
 
   @override
@@ -10167,7 +10172,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String exerciseNavigationMixinChangedTo(Object displayName) {
-    return 'Changed to $displayName';
+    return 'Zmieniono na $displayName';
   }
 
   @override
@@ -10181,12 +10186,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String exerciseNavigationMixinFailedToAddExercises(Object e) {
-    return 'Failed to add exercises: $e';
+    return 'Nie udało się dodać ćwiczeń: $e';
   }
 
   @override
   String exerciseNavigationMixinFailedToAddExercises2(Object e) {
-    return 'Failed to add exercises: $e';
+    return 'Nie udało się dodać ćwiczeń: $e';
   }
 
   @override
@@ -10207,22 +10212,22 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String exerciseNavigationMixinRemoveFromThisWorkout(Object name) {
-    return 'Remove \"$name\" from this workout?';
+    return 'Usunąć „$name” z tego treningu?';
   }
 
   @override
   String exerciseNavigationMixinRemoved(Object name) {
-    return '$name removed';
+    return 'Usunięto $name';
   }
 
   @override
   String exerciseNavigationMixinRemovedFromSuperset(Object name) {
-    return '$name removed from superset';
+    return 'Usunięto $name z superserii';
   }
 
   @override
   String exerciseNavigationMixinSetThisCountSets(Object newCount) {
-    return 'Set this count ($newCount sets) on every exercise in the superset group? ';
+    return 'Ustawić tę liczbę ($newCount serii) dla każdego ćwiczenia w superserii?';
   }
 
   @override
@@ -10231,12 +10236,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String exerciseNavigationMixinSuperset(Object name, Object name1) {
-    return 'Superset: $name + $name1';
+    return 'Superseria: $name + $name1';
   }
 
   @override
   String exerciseNavigationMixinSuperset2(Object name) {
-    return 'Superset: $name';
+    return 'Superseria: $name';
   }
 
   @override
@@ -10638,7 +10643,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get exerciseProgressDetail => '•  ';
 
   @override
-  String get exerciseProgressDetailHistory => 'History';
+  String get exerciseProgressDetailHistory => 'Historia';
 
   @override
   String get exerciseProgressDetailInsights => 'Wnioski';
@@ -10652,7 +10657,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Brak zarejestrowanych sesji';
 
   @override
-  String get exerciseProgressDetailProgress => 'Progress';
+  String get exerciseProgressDetailProgress => 'Postęp';
 
   @override
   String get exerciseProgressionsAdvance => 'Awansuj';
@@ -11587,7 +11592,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Strava / Garmin Connect / Komoot';
 
   @override
-  String get fastingAiInsightAiInsight => 'AI Insight';
+  String get fastingAiInsightAiInsight => 'Wnioski AI';
 
   @override
   String get fastingAiInsightCouldnTLoadYour =>
@@ -11641,7 +11646,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Trwała utrata wagi poprzez celowanie w zmagazynowany tłuszcz, a nie tkankę mięśniową.';
 
   @override
-  String get fastingBodyStatusBeyondGoal => 'Beyond your goal';
+  String get fastingBodyStatusBeyondGoal => 'Poza celem';
 
   @override
   String get fastingBodyStatusBodyStatus => 'Stan organizmu';
@@ -11651,12 +11656,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String fastingBodyStatusLiveSubtitle(Object elapsed) {
-    return 'Your live metabolic journey — $elapsed in.';
+    return 'Twoja metaboliczna podróż na żywo — $elapsed min.';
   }
 
   @override
   String get fastingBodyStatusPreviewSubtitle =>
-      'A preview of the metabolic stages of a fast.';
+      'Podgląd etapów metabolicznych postu.';
 
   @override
   String fastingBodyStatusScreenAtH(Object startHour) {
@@ -11675,10 +11680,10 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get fastingBodyStatusStartFastHint =>
-      'Start a fast to see your live timeline with the exact clock time each stage is reached.';
+      'Rozpocznij post, aby zobaczyć oś czasu na żywo z dokładną godziną osiągnięcia każdego etapu.';
 
   @override
-  String get fastingBodyStatusYouAreHere => 'You are here';
+  String get fastingBodyStatusYouAreHere => 'Jesteś tutaj';
 
   @override
   String get fastingCalendarEnergy => 'Energia';
@@ -11787,18 +11792,18 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get fastingGuideSafetyBody =>
-      'Stop fasting and eat if you feel dizzy, faint, shaky, or unwell. Fasts beyond 24 hours need extra attention to electrolytes, and fasts beyond 72 hours should only be done under medical supervision. Fasting is not a substitute for medical care — this guide is educational and not medical advice.';
+      'Przerwij post i zjedz, jeśli czujesz zawroty głowy, słabość, drżenie lub źle się czujesz. Posty powyżej 24 godzin wymagają szczególnej uwagi w kwestii elektrolitów, a posty powyżej 72 godzin powinny być przeprowadzane wyłącznie pod nadzorem lekarza. Post nie zastępuje opieki medycznej — ten przewodnik ma charakter edukacyjny i nie stanowi porady lekarskiej.';
 
   @override
   String get fastingGuideStaySafe => 'Bądź bezpieczny';
 
   @override
   String get fastingGuideSubtitle =>
-      'Everything you need to fast confidently — what it is, how it works, and what happens in your body.';
+      'Wszystko, czego potrzebujesz, aby pościć pewnie — czym jest post, jak działa i co dzieje się w Twoim organizmie.';
 
   @override
   String get fastingGuideSwipeTimeline =>
-      'Swipe through what happens hour by hour — from your last meal all the way to a 30-day fast.';
+      'Przesuwaj, aby zobaczyć, co dzieje się godzina po godzinie — od ostatniego posiłku aż do 30-dniowego postu.';
 
   @override
   String get fastingGuideTheFastingTimeline => 'Oś czasu postu';
@@ -11849,7 +11854,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get fastingImpactActivityCalendar => 'Kalendarz aktywności';
 
   @override
-  String get fastingImpactAiInsights => 'AI Insights';
+  String get fastingImpactAiInsights => 'Wnioski AI';
 
   @override
   String fastingImpactCardCorrelation(Object displayName) {
@@ -12082,19 +12087,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get fastingScoreCardBreakdown => 'Szczegóły';
 
   @override
-  String get fastingScoreCardCompletionRate => 'Completion Rate';
+  String get fastingScoreCardCompletionRate => 'Wskaźnik ukończenia';
 
   @override
   String get fastingScoreCardFastingScore => 'Wynik postu';
 
   @override
-  String get fastingScoreCardProtocolLevel => 'Protocol Level';
+  String get fastingScoreCardProtocolLevel => 'Poziom protokołu';
 
   @override
   String get fastingScoreCardScore => 'Wynik';
 
   @override
-  String get fastingScoreCardStreakBonus => 'Streak Bonus';
+  String get fastingScoreCardStreakBonus => 'Bonus za serię';
 
   @override
   String fastingScoreCardValue(Object scoreChange) {
@@ -12115,7 +12120,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get fastingScoreCardVsLastWeek => 'w porównaniu do zeszłego tygodnia';
 
   @override
-  String get fastingScoreCardWeeklyGoal => 'Weekly Goal';
+  String get fastingScoreCardWeeklyGoal => 'Cel tygodniowy';
 
   @override
   String fastingScreenFailedToStartFast(Object e) {
@@ -12380,14 +12385,14 @@ class AppLocalizationsPl extends AppLocalizations {
   String get fastingStatsCardFastingDays => 'Dni postu';
 
   @override
-  String get fastingStatsCardFastingHelps => 'Fasting helps';
+  String get fastingStatsCardFastingHelps => 'Post pomaga';
 
   @override
   String get fastingStatsCardFastingScore => 'Wynik postu';
 
   @override
   String fastingStatsCardFastsProgress(Object fasts, Object goal) {
-    return '$fasts / $goal fasts';
+    return '$fasts / $goal postów';
   }
 
   @override
@@ -12402,13 +12407,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get fastingStatsCardLongest => 'Najdłuższy';
 
   @override
-  String get fastingStatsCardMixedResults => 'Mixed results';
+  String get fastingStatsCardMixedResults => 'Mieszane wyniki';
 
   @override
-  String get fastingStatsCardNeedMoreData => 'Need more data';
+  String get fastingStatsCardNeedMoreData => 'Potrzeba więcej danych';
 
   @override
-  String get fastingStatsCardNeutral => 'Neutral';
+  String get fastingStatsCardNeutral => 'Neutralne';
 
   @override
   String get fastingStatsCardNonFasting => 'Dni bez postu';
@@ -12418,7 +12423,10 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count days',
+      other: '$count dni',
+      many: '$count dni',
+      few: '$count dni',
+      one: '$count dzień',
     );
     return '$_temp0';
   }
@@ -13356,7 +13364,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
-    return '$adjustedCal cal';
+    return '$adjustedCal kal.';
   }
 
   @override
@@ -13470,7 +13478,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String foodBrowserPanelItems(Object totalItems) {
-    return '$totalItems items';
+    return '$totalItems pozycji';
   }
 
   @override
@@ -13559,7 +13567,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String foodBrowserPanelResultsUBMs(Object searchTimeMs, Object totalCount) {
-    return '$totalCount results \\u00b7 ${searchTimeMs}ms';
+    return '$totalCount wyników · ${searchTimeMs}ms';
   }
 
   @override
@@ -13704,7 +13712,7 @@ class AppLocalizationsPl extends AppLocalizations {
     Object _mealLabel,
     Object _sourceLabel,
   ) {
-    return '$_dateLabel  ·  $_mealLabel  ·  $_sourceLabel';
+    return '$_dateLabel · $_mealLabel · $_sourceLabel';
   }
 
   @override
@@ -14220,7 +14228,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get formComparisonResultImproved => 'Poprawa';
 
   @override
-  String get formComparisonResultImproving => 'Improving';
+  String get formComparisonResultImproving => 'Poprawa';
 
   @override
   String get formComparisonResultOverallTrend => 'Ogólny trend';
@@ -14232,13 +14240,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get formComparisonResultRegressed => 'Pogorszenie';
 
   @override
-  String get formComparisonResultRegressing => 'Regressing';
+  String get formComparisonResultRegressing => 'Pogorszenie';
 
   @override
   String get formComparisonResultScoreTrend => 'Trend wyniku';
 
   @override
-  String get formComparisonResultStable => 'Stable';
+  String get formComparisonResultStable => 'Stabilnie';
 
   @override
   String get founderNoteDiscord => 'Discord';
@@ -14299,8 +14307,10 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       sessions,
       locale: localeName,
-      other: 'Used $sessions sessions ago',
-      one: 'Used 1 session ago',
+      other: 'Użyto $sessions sesji temu',
+      many: 'Użyto $sessions sesji temu',
+      few: 'Użyto $sessions sesje temu',
+      one: 'Użyto 1 sesję temu',
     );
     return '$_temp0';
   }
@@ -14714,7 +14724,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get goalHistoryTryAgain => 'Spróbuj ponownie';
 
   @override
-  String get goalHistoryU2022 => '\\u2022 ';
+  String get goalHistoryU2022 => '• ';
 
   @override
   String get goalLeaderboardCouldNotLoadLeaderboard =>
@@ -16064,8 +16074,10 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       minutes,
       locale: localeName,
-      other: '$minutes min in fat-burn zone',
-      one: '1 min in fat-burn zone',
+      other: '$minutes min w strefie spalania tłuszczu',
+      many: '$minutes min w strefie spalania tłuszczu',
+      few: '$minutes min w strefie spalania tłuszczu',
+      one: '1 min w strefie spalania tłuszczu',
     );
     return '$_temp0';
   }
@@ -19107,7 +19119,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get introTagline =>
-      'An AI coach that builds the plan, learns your body, and adjusts every week.';
+      'Trener AI, który tworzy plan, uczy się Twojego ciała i dostosowuje się co tydzień.';
 
   @override
   String get introYourBody => 'Twoje ciało.';
@@ -20311,8 +20323,8 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count items',
-      one: 'Logged 1 item',
+      other: 'Zalogowano $count produktów',
+      one: 'Zalogowano 1 produkt',
     );
     return '$_temp0';
   }
@@ -20322,8 +20334,8 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count photos ($kcal kcal)',
-      one: 'Logged 1 photo ($kcal kcal)',
+      other: 'Zalogowano $count zdjęć ($kcal kcal)',
+      one: 'Zalogowano 1 zdjęcie ($kcal kcal)',
     );
     return '$_temp0';
   }
@@ -20379,7 +20391,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String logMealSheetNutritionFor(Object servingsLabel) {
-    return 'Nutrition for $servingsLabel';
+    return 'Wartości odżywcze dla $servingsLabel';
   }
 
   @override
@@ -20613,7 +20625,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String logMealSheetYouVeBeenFasting(Object elapsedHours, Object elapsedMins) {
-    return 'You\\\'ve been fasting for ${elapsedHours}h ${elapsedMins}m.';
+    return 'Pościsz od ${elapsedHours}h ${elapsedMins}m.';
   }
 
   @override
@@ -21263,7 +21275,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '(wiersz)\" : \"\")';
   }
 
   @override
@@ -22193,7 +22205,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String menuAnalysisSheetValue(Object elapsed) {
-    return ')(elapsed)';
+    return ')(upłynęło)';
   }
 
   @override
@@ -22218,7 +22230,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get menuAnalysisTourFilterByDietAllergens =>
-      'Filter by diet & allergens';
+      'Filtruj według diety i alergenów';
 
   @override
   String get menuAnalysisTourHideDishesThatDon =>
@@ -22781,7 +22793,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String minimalHeaderD(Object streakDays) {
-    return '${streakDays}d';
+    return '$streakDays dni';
   }
 
   @override
@@ -22887,7 +22899,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get moodCalendarHeatmapTotalCheckIns => 'Łącznie zameldowań';
 
   @override
-  String get moodCardBias => 'Bias';
+  String get moodCardBias => 'Odchylenie';
 
   @override
   String get moodCardInt => 'Int.';
@@ -23157,7 +23169,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get muscleAnalyticsMuscleTrends => 'Trendy mięśniowe';
 
   @override
-  String get muscleAnalyticsNeedsWork => 'Needs Work';
+  String get muscleAnalyticsNeedsWork => 'Wymaga pracy';
 
   @override
   String get muscleAnalyticsNoBalanceData => 'Brak danych o równowadze';
@@ -23756,7 +23768,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(item)%';
+    return ')(element)%';
   }
 
   @override
@@ -24160,7 +24172,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String neatScoreDisplayValue(Object widget) {
-    return '))(widget)';
+    return '))(widżet)';
   }
 
   @override
@@ -24998,7 +25010,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
+    return ') (jednostka)';
   }
 
   @override
@@ -25018,7 +25030,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Znajomi';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -25032,12 +25044,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String nutrientRushGameYou(Object name) {
-    return '$name (You)';
+    return '$name (Ty)';
   }
 
   @override
   String nutrientRushGameYourBest(Object best) {
-    return 'Your best: $best';
+    return 'Twój rekord: $best';
   }
 
   @override
@@ -25220,12 +25232,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String nutritionGoalsCardPartCalculationInfoSheetActivityMultiplier(
     Object activityMultiplier,
   ) {
-    return 'Activity Multiplier (×$activityMultiplier)';
+    return 'Mnożnik aktywności (×$activityMultiplier)';
   }
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCal(Object bmr) {
-    return '= $bmr cal';
+    return '= $bmr kcal';
   }
 
   @override
@@ -25255,7 +25267,7 @@ class AppLocalizationsPl extends AppLocalizations {
     Object fatPct,
     Object proteinPct,
   ) {
-    return 'Macro Split ($displayName: $carbPct/$proteinPct/$fatPct)';
+    return 'Podział makroskładników ($displayName: $carbPct/$proteinPct/$fatPct)';
   }
 
   @override
@@ -25413,32 +25425,32 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String nutritionPatternsTabGoalKcal(Object calorieGoal) {
-    return 'Goal: $calorieGoal kcal';
+    return 'Cel: $calorieGoal kcal';
   }
 
   @override
   String nutritionPatternsTabKcalDay(Object avgCalories) {
-    return '$avgCalories kcal/day';
+    return '$avgCalories kcal/dzień';
   }
 
   @override
   String nutritionPatternsTabKcalPGC(Object c, Object cal, Object f, Object p) {
-    return '$cal kcal · P ${p}g · C ${c}g · F ${f}g';
+    return '$cal kcal · B ${p}g · W ${c}g · T ${f}g';
   }
 
   @override
   String nutritionPatternsTabLogMealsToSee(Object _METRICS) {
-    return 'Log meals to see your top $_METRICS sources.';
+    return 'Zapisuj posiłki, aby zobaczyć główne źródła $_METRICS.';
   }
 
   @override
   String nutritionPatternsTabNoMealsThis(Object range) {
-    return 'No meals this $range';
+    return 'Brak posiłków w tym $range';
   }
 
   @override
   String nutritionPatternsTabViewAll(Object length) {
-    return 'View all $length';
+    return 'Zobacz wszystkie $length';
   }
 
   @override
@@ -27112,7 +27124,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-confidence estimate\" : \"\")';
+    return '(confidence)-szacunek z pewnością';
   }
 
   @override
@@ -29397,7 +29409,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String prsTemplateValue(Object unit) {
-    return ') (unit)';
+    return ') (jednostka)';
   }
 
   @override
@@ -30129,12 +30141,12 @@ class AppLocalizationsPl extends AppLocalizations {
     Object progressPercent,
     Object totalCompletedSets,
   ) {
-    return '$progressPercent% complete • $totalCompletedSets sets done';
+    return '$progressPercent% ukończono • $totalCompletedSets serii wykonanych';
   }
 
   @override
   String quitWorkoutDialogSays(Object name) {
-    return '$name says:';
+    return '$name mówi:';
   }
 
   @override
@@ -30508,12 +30520,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String quizFastingH(Object _customFastingHours) {
-    return '$_customFastingHours h';
+    return '$_customFastingHours godz.';
   }
 
   @override
   String quizFastingH2(Object _customEatingHours) {
-    return '$_customEatingHours h';
+    return '$_customEatingHours godz.';
   }
 
   @override
@@ -32910,7 +32922,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String reportsHubNoDataForMonth(Object month, Object reportName) {
-    return 'No $reportName data for $month yet — try a different month';
+    return 'Brak danych $reportName dla $month — spróbuj wybrać inny miesiąc';
   }
 
   @override
@@ -34160,9 +34172,12 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sets',
+      other: '$count serii',
+      many: '$count serii',
+      few: '$count serie',
+      one: '$count seria',
     );
-    return '$_temp0 · top set highlighted';
+    return '$_temp0 · wyróżniono najlepszą serię';
   }
 
   @override
@@ -34492,7 +34507,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String setTrackingSectionValue(Object reps) {
-    return ')×(reps)';
+    return ')×(powtórzenia)';
   }
 
   @override
@@ -34691,7 +34706,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsCardChangingDaysWillReschedule =>
-      'Changing days will reschedule your upcoming workouts automatically.';
+      'Zmiana dni spowoduje automatyczne przeplanowanie nadchodzących treningów.';
 
   @override
   String settingsCardExercises(Object length) {
@@ -34723,14 +34738,16 @@ class AppLocalizationsPl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       n,
       locale: localeName,
-      other: '$n days selected',
-      one: '1 day selected',
+      other: 'Wybrano $n dni',
+      many: 'Wybrano $n dni',
+      few: 'Wybrano $n dni',
+      one: 'Wybrano 1 dzień',
     );
     return '$_temp0';
   }
 
   @override
-  String get settingsCardNoChanges => 'No Changes';
+  String get settingsCardNoChanges => 'Brak zmian';
 
   @override
   String settingsCardPartAccentColorGridLvl(Object unlockLevel) {
@@ -34838,7 +34855,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsCardPleaseSelectAtLeastOne =>
-      'Please select at least one workout day';
+      'Wybierz przynajmniej jeden dzień treningowy';
 
   @override
   String settingsCardQueued(Object length) {
@@ -34846,11 +34863,11 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get settingsCardSaveChanges => 'Save Changes';
+  String get settingsCardSaveChanges => 'Zapisz zmiany';
 
   @override
   String get settingsCardSelectWhichDaysYou =>
-      'Select which days you want to work out';
+      'Wybierz dni, w które chcesz trenować';
 
   @override
   String get settingsCardSunday => 'Niedziela';
@@ -34957,11 +34974,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsCardWeeklyVariety => 'Cotygodniowa różnorodność';
 
   @override
-  String get settingsCardWorkoutDays => 'Workout Days';
+  String get settingsCardWorkoutDays => 'Dni treningowe';
 
   @override
   String settingsCardWorkoutDaysUpdatedTo(Object days) {
-    return 'Workout days updated to $days';
+    return 'Dni treningowe zaktualizowane na: $days';
   }
 
   @override
@@ -35096,7 +35113,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String settingsScreenExtWhyIBuilt(Object appName) {
-    return 'Why I built $appName';
+    return 'Dlaczego stworzyłem $appName';
   }
 
   @override
@@ -35363,12 +35380,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String shareWeeklySummarySheetMyWeek(Object appName, Object dateRange) {
-    return 'My $appName week — $dateRange';
+    return 'Mój tydzień w $appName — $dateRange';
   }
 
   @override
   String shareWeeklySummarySheetMyWeeklyReport(Object appName) {
-    return 'My $appName Weekly Report';
+    return 'Mój cotygodniowy raport $appName';
   }
 
   @override
@@ -35879,20 +35896,20 @@ class AppLocalizationsPl extends AppLocalizations {
   String get socialSortBy => 'Sortuj według';
 
   @override
-  String get socialSortRecent => 'Recent';
+  String get socialSortRecent => 'Najnowsze';
 
   @override
-  String get socialSortTop => 'Top';
+  String get socialSortTop => 'Najlepsze';
 
   @override
-  String get socialSortTrending => 'Trending';
+  String get socialSortTrending => 'Na czasie';
 
   @override
-  String get socialUserIdCopied => 'User ID copied';
+  String get socialUserIdCopied => 'Skopiowano ID użytkownika';
 
   @override
   String socialUsernameCopied(Object username) {
-    return 'Username copied: @$username';
+    return 'Skopiowano nazwę użytkownika: @$username';
   }
 
   @override
@@ -36615,10 +36632,7 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Wybrany cel: $_selectedGoal kroków';
   }
 
@@ -36626,8 +36640,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Suwak celu kroków, od $_minGoal do $_maxGoal kroków';
   }
@@ -36733,12 +36745,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String strainRiskCardPercentOverCap(Object percent) {
-    return '$percent% over cap';
+    return '$percent% powyżej limitu';
   }
 
   @override
   String strainRiskCardPercentVsLastWeek(Object signedPercent) {
-    return '$signedPercent% vs last week';
+    return '$signedPercent% w porównaniu do zeszłego tygodnia';
   }
 
   @override
@@ -39417,7 +39429,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsCups(Object cupGoal, Object cups) {
-    return '$cups / $cupGoal cups';
+    return '$cups / $cupGoal kubków';
   }
 
   @override
@@ -39842,14 +39854,14 @@ class AppLocalizationsPl extends AppLocalizations {
   String get volumeCardTotalVolumeLifted => 'ŁĄCZNA PODNIESIONA OBJĘTOŚĆ';
 
   @override
-  String get volumeChartAverage => 'Average';
+  String get volumeChartAverage => 'Średnia';
 
   @override
   String get volumeChartCompleteSomeWorkoutsTo =>
       'Ukończ kilka treningów, aby zobaczyć trendy objętości.';
 
   @override
-  String get volumeChartDangerousIncrease => 'Dangerous Increase';
+  String get volumeChartDangerousIncrease => 'Niebezpieczny wzrost';
 
   @override
   String get volumeChartLogAFewWeighted =>
@@ -39857,12 +39869,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String volumeChartMuscleGroupVolume(Object muscleGroup) {
-    return '$muscleGroup Volume';
+    return 'Objętość $muscleGroup';
   }
 
   @override
   String volumeChartNRisky(Object count) {
-    return '$count risky';
+    return '$count ryzykownych';
   }
 
   @override
@@ -39873,19 +39885,19 @@ class AppLocalizationsPl extends AppLocalizations {
       'Brak jeszcze objętości z obciążeniem';
 
   @override
-  String get volumeChartPeak => 'Peak';
+  String get volumeChartPeak => 'Szczyt';
 
   @override
-  String get volumeChartVolume => 'Volume';
+  String get volumeChartVolume => 'Objętość';
 
   @override
   String get volumeChartVolumeTrends => 'Trendy objętości';
 
   @override
-  String get volumeChartWeeklyVolumeTrend => 'Weekly Volume Trend';
+  String get volumeChartWeeklyVolumeTrend => 'Tygodniowy trend objętości';
 
   @override
-  String get volumeChartWeeks => 'Weeks';
+  String get volumeChartWeeks => 'Tygodnie';
 
   @override
   String get volumeHeroTemplateExercises => 'ĆWICZENIA';
@@ -40078,19 +40090,22 @@ class AppLocalizationsPl extends AppLocalizations {
   String get watchInstallBannerWatchDetected => 'Wykryto zegarek';
 
   @override
-  String get wearOsAutomaticDataSync => 'Automatic data sync';
+  String get wearOsAutomaticDataSync => 'Automatyczna synchronizacja danych';
 
   @override
   String get wearOsComingFeatures => 'Nadchodzące funkcje:';
 
   @override
-  String get wearOsLogSetsDirectlyFromWatch => 'Log sets directly from watch';
+  String get wearOsLogSetsDirectlyFromWatch =>
+      'Zapisuj serie bezpośrednio z zegarka';
 
   @override
-  String get wearOsQuickFoodLoggingViaVoice => 'Quick food logging via voice';
+  String get wearOsQuickFoodLoggingViaVoice =>
+      'Szybkie zapisywanie jedzenia głosowo';
 
   @override
-  String get wearOsRealTimeHeartRateTracking => 'Real-time heart rate tracking';
+  String get wearOsRealTimeHeartRateTracking =>
+      'Śledzenie tętna w czasie rzeczywistym';
 
   @override
   String get wearOsSmartwatch => 'Smartwatch';
@@ -41458,7 +41473,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutCompleteScreenWorkout(Object appName) {
-    return '$appName Workout';
+    return 'Trening $appName';
   }
 
   @override
@@ -41988,7 +42003,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutHistoryImportError(Object error) {
-    return 'Error: $error';
+    return 'Błąd: $error';
   }
 
   @override
@@ -41996,7 +42011,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get workoutHistoryImportExportFromHevy =>
-      'Export from Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton, and more.';
+      'Eksportuj z Hevy, Strong, Fitbod, Jeff Nippard, Renaissance Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, Peloton i innych.';
 
   @override
   String get workoutHistoryImportFitbod => 'Fitbod';
@@ -42012,7 +42027,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutHistoryImportImportFailed(Object error) {
-    return 'Import failed: $error';
+    return 'Import nieudany: $error';
   }
 
   @override
@@ -42023,7 +42038,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Importuj historię treningów';
 
   @override
-  String get workoutHistoryImportInvalid => 'Invalid';
+  String get workoutHistoryImportInvalid => 'Nieprawidłowy';
 
   @override
   String get workoutHistoryImportJeffNippard => 'Jeff Nippard';
@@ -42036,12 +42051,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutHistoryImportMaxWeightKg(Object weight) {
-    return 'Max: $weight kg';
+    return 'Maks: $weight kg';
   }
 
   @override
   String workoutHistoryImportNSessions(Object count, Object sourceDescription) {
-    return '$sourceDescription  •  $count sessions';
+    return '$sourceDescription  •  $count sesji';
   }
 
   @override
@@ -42060,7 +42075,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get workoutHistoryImportPleaseEnterExerciseName =>
-      'Please enter an exercise name';
+      'Wpisz nazwę ćwiczenia';
 
   @override
   String get workoutHistoryImportPoundsLb => 'Funty (lb)';
@@ -42073,7 +42088,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutHistoryImportRemoveExercise(Object exerciseName) {
-    return 'Remove $exerciseName from your workout history?';
+    return 'Usunąć $exerciseName z historii treningów?';
   }
 
   @override
@@ -42084,7 +42099,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get workoutHistoryImportReps => 'Powtórzenia';
 
   @override
-  String get workoutHistoryImportRequired => 'Required';
+  String get workoutHistoryImportRequired => 'Wymagane';
 
   @override
   String workoutHistoryImportScreenKg(Object lastWeightKg) {
@@ -42773,17 +42788,17 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutSheetsMixinLoggedLocallySyncFailed(Object label) {
-    return '$label logged locally (sync failed)';
+    return '$label zapisano lokalnie (synchronizacja nie powiodła się)';
   }
 
   @override
   String workoutSheetsMixinMlLogged(Object amountMl, Object label) {
-    return '${amountMl}ml $label logged';
+    return 'Zapisano ${amountMl}ml $label';
   }
 
   @override
   String workoutSheetsMixinMlLogged2(Object amountMl, Object label) {
-    return '${amountMl}ml $label logged';
+    return 'Zapisano ${amountMl}ml $label';
   }
 
   @override
@@ -43688,7 +43703,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get workoutTopBarCompleteWorkout => 'Zakończ trening';
 
   @override
-  String get workoutTopBarMore => 'Workout top bar more';
+  String get workoutTopBarMore => 'Więcej opcji treningu';
 
   @override
   String get workoutTopBarSkipExercise => 'Pomiń ćwiczenie';
@@ -44333,17 +44348,17 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get xpProgressCardDaily => 'Daily';
+  String get xpProgressCardDaily => 'Dziennie';
 
   @override
-  String get xpProgressCardDays => 'days';
+  String get xpProgressCardDays => 'dni';
 
   @override
   String get xpProgressCardLevel1Novice => 'Poziom 1 • Nowicjusz';
 
   @override
   String xpProgressCardLevelN(Object level) {
-    return 'Level $level';
+    return 'Poziom $level';
   }
 
   @override
@@ -44356,26 +44371,26 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String xpProgressCardLvlN(Object level) {
-    return 'Lvl $level';
+    return 'Poz. $level';
   }
 
   @override
   String get xpProgressCardNextLevel => 'Następny poziom';
 
   @override
-  String get xpProgressCardNone => 'none';
+  String get xpProgressCardNone => 'brak';
 
   @override
   String get xpProgressCardNovice => 'Nowicjusz';
 
   @override
   String xpProgressCardPercentToLevel(Object level, Object percent) {
-    return '$percent% to Level $level';
+    return '$percent% do poziomu $level';
   }
 
   @override
   String xpProgressCardPrestigeN(Object level) {
-    return 'Prestige $level';
+    return 'Prestiż $level';
   }
 
   @override
@@ -44395,7 +44410,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String xpProgressCardXpTotal(Object xp) {
-    return '$xp XP Total';
+    return 'Łącznie $xp XP';
   }
 
   @override

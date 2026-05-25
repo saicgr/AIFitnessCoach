@@ -77,7 +77,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String accuracyFeedbackSnackbarCal(Object calories, Object displayName) {
-    return '$displayName — $calories cal';
+    return '$displayName — $calories క్యాలరీలు';
   }
 
   @override
@@ -184,7 +184,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get actionChipsRowInfo => 'సమాచారం';
 
   @override
-  String get actionChipsRowLR => 'L/R';
+  String get actionChipsRowLR => 'ఎడమ/కుడి';
 
   @override
   String get actionChipsRowNote => 'గమనిక';
@@ -644,182 +644,187 @@ class AppLocalizationsTe extends AppLocalizations {
   String get addGymProfileYesAddIt => 'అవును, జోడించు';
 
   @override
-  String get addGymSheetAddNewGym => 'Add New Gym';
+  String get addGymSheetAddNewGym => 'కొత్త జిమ్‌ను జోడించండి';
 
   @override
   String addGymSheetAlsoAt(Object names) {
-    return 'Also at: $names';
+    return 'ఇక్కడ కూడా: $names';
   }
 
   @override
-  String get addGymSheetBack => 'Back';
+  String get addGymSheetBack => 'వెనుకకు';
 
   @override
-  String get addGymSheetCommercialGym => 'Commercial Gym';
+  String get addGymSheetCommercialGym => 'కమర్షియల్ జిమ్';
 
   @override
   String get addGymSheetCommercialGymDesc =>
-      'Full access to all machines and equipment';
+      'అన్ని యంత్రాలు మరియు పరికరాలకు పూర్తి ప్రాప్యత';
 
   @override
   String addGymSheetConflictDay(Object day, Object names) {
-    return '$day also at \"$names\"';
+    return '$day కూడా \"$names\" వద్ద';
   }
 
   @override
   String addGymSheetConflictMessage(Object details) {
-    return 'Schedule overlap: $details. Whichever profile is active that day will own the workout.';
+    return 'షెడ్యూల్ ఓవర్‌ల్యాప్: $details. ఆ రోజు ఏ ప్రొఫైల్ యాక్టివ్‌గా ఉంటే అదే వర్కవుట్‌ను కలిగి ఉంటుంది.';
   }
 
   @override
-  String get addGymSheetCreateGym => 'Create Gym';
+  String get addGymSheetCreateGym => 'జిమ్‌ను సృష్టించండి';
 
   @override
   String addGymSheetCreatedProfile(Object name) {
-    return '✓ Created \"$name\" gym profile';
+    return '✓ \"$name\" జిమ్ ప్రొఫైల్ సృష్టించబడింది';
   }
 
   @override
-  String get addGymSheetCurrent => 'current';
+  String get addGymSheetCurrent => 'ప్రస్తుత';
 
   @override
-  String get addGymSheetEnterGymName => 'Please enter a name for your gym';
+  String get addGymSheetEnterGymName => 'దయచేసి మీ జిమ్ పేరును నమోదు చేయండి';
 
   @override
-  String get addGymSheetEnterNameFirst => 'Please enter a gym name first';
+  String get addGymSheetEnterNameFirst =>
+      'దయచేసి ముందుగా జిమ్ పేరును నమోదు చేయండి';
 
   @override
-  String get addGymSheetEquipment => 'Equipment';
+  String get addGymSheetEquipment => 'పరికరాలు';
 
   @override
   String addGymSheetEquipmentCount(Object count) {
-    return '$count equipment';
+    return '$count పరికరాలు';
   }
 
   @override
   String addGymSheetEquipmentSelected(Object count) {
-    return '$count Equipment Selected';
+    return '$count పరికరాలు ఎంచుకోబడ్డాయి';
   }
 
   @override
   String addGymSheetFailedToCreate(Object error) {
-    return 'Failed to create profile: $error';
+    return 'ప్రొఫైల్‌ను సృష్టించడం విఫలమైంది: $error';
   }
 
   @override
   String get addGymSheetFollowUpBenchSubtitle =>
-      'Unlocks: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+      'అన్‌లాక్ అవుతాయి: బెంచ్ ప్రెస్, ఇంక్లైన్ ప్రెస్, పుల్‌ఓవర్, చెస్ట్-సపోర్టెడ్ రోస్';
 
   @override
-  String get addGymSheetFollowUpBenchTitle => 'Do you have a weight bench?';
+  String get addGymSheetFollowUpBenchTitle => 'మీ దగ్గర వెయిట్ బెంచ్ ఉందా?';
 
   @override
   String get addGymSheetFollowUpSquatRackSubtitle =>
-      'Required for: Barbell Squat, Overhead Press, Barbell Bench Press';
+      'వీటికి అవసరం: బార్‌బెల్ స్క్వాట్, ఓవర్‌హెడ్ ప్రెస్, బార్‌బెల్ బెంచ్ ప్రెస్';
 
   @override
-  String get addGymSheetFollowUpSquatRackTitle => 'Do you have a squat rack?';
+  String get addGymSheetFollowUpSquatRackTitle =>
+      'మీ దగ్గర స్క్వాట్ రాక్ ఉందా?';
 
   @override
-  String get addGymSheetGymNameHint => 'e.g., Home Gym, Planet Fitness, Hotel';
+  String get addGymSheetGymNameHint =>
+      'ఉదా: హోమ్ జిమ్, ప్లానెట్ ఫిట్‌నెస్, హోటల్';
 
   @override
   String get addGymSheetHelpsUsSuggest =>
-      'This helps us suggest the right equipment';
+      'సరైన పరికరాలను సూచించడానికి ఇది మాకు సహాయపడుతుంది';
 
   @override
-  String get addGymSheetHomeGym => 'Home Gym';
+  String get addGymSheetHomeGym => 'హోమ్ జిమ్';
 
   @override
   String get addGymSheetHomeGymDesc =>
-      'Dedicated workout space with your equipment';
+      'మీ పరికరాలతో కూడిన ప్రత్యేక వర్కవుట్ స్థలం';
 
   @override
-  String get addGymSheetHomeMinimal => 'Home (Minimal)';
+  String get addGymSheetHomeMinimal => 'ఇల్లు (కనిష్ట)';
 
   @override
-  String get addGymSheetHomeMinimalDesc => 'Bodyweight exercises only';
+  String get addGymSheetHomeMinimalDesc =>
+      'కేవలం బాడీ వెయిట్ వ్యాయామాలు మాత్రమే';
 
   @override
-  String get addGymSheetHotelTravel => 'Hotel / Travel';
+  String get addGymSheetHotelTravel => 'హోటల్ / ప్రయాణం';
 
   @override
   String get addGymSheetHotelTravelDesc =>
-      'Limited space and equipment while traveling';
+      'ప్రయాణంలో ఉన్నప్పుడు పరిమిత స్థలం మరియు పరికరాలు';
 
   @override
   String addGymSheetItems(Object count) {
-    return '$count items';
+    return '$count అంశాలు';
   }
 
   @override
-  String get addGymSheetNext => 'Next';
+  String get addGymSheetNext => 'తదుపరి';
 
   @override
-  String get addGymSheetOutdoors => 'Outdoors';
+  String get addGymSheetOutdoors => 'బయట (అవుట్‌డోర్)';
 
   @override
-  String get addGymSheetOutdoorsDesc => 'Parks, outdoor gyms, and open spaces';
+  String get addGymSheetOutdoorsDesc =>
+      'పార్కులు, అవుట్‌డోర్ జిమ్‌లు మరియు బహిరంగ ప్రదేశాలు';
 
   @override
   String get addGymSheetPickAtLeastOneDay =>
-      'Please pick at least one workout day';
+      'దయచేసి కనీసం ఒక వర్కవుట్ రోజును ఎంచుకోండి';
 
   @override
   String get addGymSheetPickDaysDesc =>
-      'Pick the days you\'ll train at this gym. We\'ll pre-generate 14 days of workouts for these days the moment you switch to this profile.';
+      'మీరు ఈ జిమ్‌లో శిక్షణ పొందే రోజులను ఎంచుకోండి. మీరు ఈ ప్రొఫైల్‌కు మారిన వెంటనే, ఆ రోజులకు 14 రోజుల వర్కవుట్‌లను మేము ముందుగానే రూపొందిస్తాము.';
 
   @override
   String addGymSheetSameAs(Object name) {
-    return 'Same as $name';
+    return '$name లాగే';
   }
 
   @override
-  String get addGymSheetSkip => 'Skip';
+  String get addGymSheetSkip => 'దాటవేయి';
 
   @override
-  String get addGymSheetSplitBodyPart => 'Body Part';
+  String get addGymSheetSplitBodyPart => 'బాడీ పార్ట్';
 
   @override
-  String get addGymSheetSplitDesc3Days => '3 days';
+  String get addGymSheetSplitDesc3Days => '3 రోజులు';
 
   @override
-  String get addGymSheetSplitDesc4Days => '4 days';
+  String get addGymSheetSplitDesc4Days => '4 రోజులు';
 
   @override
-  String get addGymSheetSplitDesc56Days => '5-6 days';
+  String get addGymSheetSplitDesc56Days => '5-6 రోజులు';
 
   @override
-  String get addGymSheetSplitDesc6Days => '6 days';
+  String get addGymSheetSplitDesc6Days => '6 రోజులు';
 
   @override
-  String get addGymSheetSplitDescFlexible => 'Flexible';
+  String get addGymSheetSplitDescFlexible => 'ఫ్లెక్సిబుల్';
 
   @override
-  String get addGymSheetSplitFullBody => 'Full Body';
+  String get addGymSheetSplitFullBody => 'ఫుల్ బాడీ';
 
   @override
-  String get addGymSheetSplitLetAiDecide => 'Let AI Decide';
+  String get addGymSheetSplitLetAiDecide => 'AI నిర్ణయించనివ్వండి';
 
   @override
   String get addGymSheetSplitPhul => 'PHUL';
 
   @override
-  String get addGymSheetSplitPushPullLegs => 'Push/Pull/Legs';
+  String get addGymSheetSplitPushPullLegs => 'పుష్/పుల్/లెగ్స్';
 
   @override
-  String get addGymSheetSplitUpperLower => 'Upper/Lower';
+  String get addGymSheetSplitUpperLower => 'అప్పర్/లోయర్';
 
   @override
   String addGymSheetStepOf(Object step, Object total) {
-    return 'Step $step of $total';
+    return 'దశ $step / $total';
   }
 
   @override
-  String get addGymSheetWorkoutEnvironment => 'Workout Environment';
+  String get addGymSheetWorkoutEnvironment => 'వర్కవుట్ వాతావరణం';
 
   @override
-  String get addGymSheetYesAddIt => 'Yes, Add It';
+  String get addGymSheetYesAddIt => 'అవును, జోడించు';
 
   @override
   String get addScheduleItemAddToGoogleCalendar =>
@@ -1187,7 +1192,7 @@ class AppLocalizationsTe extends AppLocalizations {
     Object budgetTail,
     Object meal,
   ) {
-    return 'Italian or comfort $meal — one real pick, macros, lighter swap if needed.$budgetTail';
+    return 'ఇటాలియన్ లేదా కంఫర్ట్ $meal — ఒక నిజమైన ఎంపిక, మాక్రోలు, అవసరమైతే తేలికపాటి మార్పు.$budgetTail';
   }
 
   @override
@@ -1462,7 +1467,7 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get aiInputPreviewWarmup => 'WARMUP';
+  String get aiInputPreviewWarmup => 'వార్మప్';
 
   @override
   String get aiIntegrationsAiIntegrations => 'AI ఇంటిగ్రేషన్లు';
@@ -4087,11 +4092,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'కొత్త AI కోచ్ వ్యక్తిత్వాన్ని ఎంచుకోండి';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return '$_customNameని ఉపయోగించండి';
   }
 
@@ -4204,7 +4205,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'స్ట్రీక్‌ను ప్రారంభించడానికి మీ స్టెప్ గోల్‌ను చేరుకోండి.';
 
   @override
-  String get combinedHealthRestingHeartRate => 'Resting Heart Rate';
+  String get combinedHealthRestingHeartRate => 'విశ్రాంతి హృదయ స్పందన రేటు';
 
   @override
   String get combinedHealthSaving => 'సేవ్ అవుతోంది...';
@@ -4270,7 +4271,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get comingSoonBluetoothHeartRateHardware =>
-      'Bluetooth Heart Rate Hardware';
+      'Bluetooth హృదయ స్పందన హార్డ్‌వేర్';
 
   @override
   String get comingSoonBody => 'మేము ఈ ఫీచర్‌పై పని చేస్తున్నాము. వేచి ఉండండి.';
@@ -4320,7 +4321,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'మేము తదుపరి పని చేస్తున్న ఫీచర్లు';
 
   @override
-  String get comingSoonFitnessScore => 'Fitness Score';
+  String get comingSoonFitnessScore => 'ఫిట్‌నెస్ స్కోరు';
 
   @override
   String get comingSoonFoodPreferences => 'ఆహార ప్రాధాన్యతలు';
@@ -4357,7 +4358,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'ఇటీవల శిక్షణ పొందిన కండరాల సమూహాలు';
 
   @override
-  String get comingSoonMuscleHeatmap => 'Muscle Heatmap';
+  String get comingSoonMuscleHeatmap => 'కండరాల హీట్‌మ్యాప్';
 
   @override
   String get comingSoonMyJourney => 'నా ప్రయాణం';
@@ -4820,7 +4821,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get comparisonViewUiSelect2Photos => '2 ఫోటోలను ఎంచుకోండి';
 
   @override
-  String get comparisonViewUiU00b7 => '  \\u00B7  ';
+  String get comparisonViewUiU00b7 => '  ·  ';
 
   @override
   String comparisonViewUiValue(Object username) {
@@ -5731,7 +5732,7 @@ class AppLocalizationsTe extends AppLocalizations {
     Object lastUsedFormatted,
     Object usageCount,
   ) {
-    return 'Used (usageCount) times(lastUsedFormatted)\" : \"\")';
+    return 'ఉపయోగించినవి (usageCount) సార్లు(lastUsedFormatted)\" : \"\")';
   }
 
   @override
@@ -6347,7 +6348,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'Google Health Connect నుండి';
 
   @override
-  String get dailyActivityCardRestingHr => 'Resting HR';
+  String get dailyActivityCardRestingHr => 'విశ్రాంతి HR';
 
   @override
   String get dailyActivityCardSteps => 'అడుగులు';
@@ -6369,7 +6370,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get dailyCookedDish => 'వండిన వంటకం';
 
   @override
-  String get dailyCrateBannerActivityCrate => 'Activity Crate';
+  String get dailyCrateBannerActivityCrate => 'యాక్టివిటీ క్రేట్';
 
   @override
   String get dailyCrateBannerBasicRewards => 'ప్రాథమిక రివార్డులు';
@@ -6379,7 +6380,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'ఈరోజు తెరవడానికి 1 క్రేట్‌ను ఎంచుకోండి';
 
   @override
-  String get dailyCrateBannerDailyCrate => 'Daily Crate';
+  String get dailyCrateBannerDailyCrate => 'డైలీ క్రేట్';
 
   @override
   String get dailyCrateBannerDailyCratesAvailable =>
@@ -6394,7 +6395,7 @@ class AppLocalizationsTe extends AppLocalizations {
       '🎁 మీ Daily Crateని ఎంచుకోండి';
 
   @override
-  String get dailyCrateBannerStreakCrate => 'Streak Crate';
+  String get dailyCrateBannerStreakCrate => 'స్ట్రీక్ క్రేట్';
 
   @override
   String get dailyCrateBannerTapToPickYour =>
@@ -7349,7 +7350,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీ గ్లూకోజ్ డేటాను సింక్ చేయండి';
 
   @override
-  String get diabetesDashboardScreenTimeInRange => 'Time in Range';
+  String get diabetesDashboardScreenTimeInRange => 'పరిధిలో సమయం';
 
   @override
   String get diabetesDashboardScreenTodaySInsulin => 'ఈరోజు ఇన్సులిన్';
@@ -7403,7 +7404,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get dietHeuristicsWholeFoods => 'హోల్ ఫుడ్స్';
 
   @override
-  String get difficultyCardDifficultyMultipliers => 'Difficulty Multipliers';
+  String get difficultyCardDifficultyMultipliers => 'కష్టతరమైన గుణకాలు';
 
   @override
   String get difficultyCardResetAll => 'అన్నీ రీసెట్ చేయండి';
@@ -7426,10 +7427,10 @@ class AppLocalizationsTe extends AppLocalizations {
       'స్కేలింగ్ ఫ్యాక్టర్లను ఎడిట్ చేయడానికి ఏదైనా సెల్‌పై నొక్కండి';
 
   @override
-  String get difficultyCardTier => 'Tier';
+  String get difficultyCardTier => 'స్థాయి';
 
   @override
-  String get difficultyCardVolume => 'Volume';
+  String get difficultyCardVolume => 'వాల్యూమ్';
 
   @override
   String difficultyCardVolume2(Object tier) {
@@ -7460,19 +7461,19 @@ class AppLocalizationsTe extends AppLocalizations {
   String get difficultySelectorContinueAnyway => 'ఏది ఏమైనా కొనసాగించండి';
 
   @override
-  String get difficultySelectorDifficulty => 'Difficulty';
+  String get difficultySelectorDifficulty => 'కష్టతరం';
 
   @override
   String get difficultySelectorGotIt => 'అర్థమైంది';
 
   @override
-  String get difficultySelectorHellIntensity => 'Hell Intensity';
+  String get difficultySelectorHellIntensity => 'హెల్ ఇంటెన్సిటీ';
 
   @override
   String get difficultySelectorHellModeWarning => 'HELL మోడ్ హెచ్చరిక';
 
   @override
-  String get difficultySelectorHighIntensity => 'High Intensity';
+  String get difficultySelectorHighIntensity => 'అధిక తీవ్రత';
 
   @override
   String get difficultySelectorIAcceptTheRisk =>
@@ -7485,7 +7486,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String difficultySelectorModeMayBeIntense(Object displayName) {
-    return '$displayName mode may be intense for beginners. Consider starting with Beginner or Moderate difficulty and progressing as you build strength and endurance.';
+    return '$displayName మోడ్ ప్రారంభకులకు కష్టంగా ఉండవచ్చు. మీరు బలం మరియు ఓర్పును పెంచుకునేటప్పుడు బిగినర్ లేదా మోడరేట్ కష్టతరంతో ప్రారంభించి, క్రమంగా పెంచుకోవడాన్ని పరిగణించండి.';
   }
 
   @override
@@ -10341,68 +10342,68 @@ class AppLocalizationsTe extends AppLocalizations {
       'దీనిని కోర్ లిఫ్ట్‌గా గుర్తించండి, ఇది ఎప్పటికీ మార్చబడదు. AI ఎల్లప్పుడూ మీ వర్కవుట్‌లలో ప్రధాన వ్యాయామాలను కలిగి ఉంటుంది - మీరు స్థిరమైన ప్రోగ్రెసివ్ ఓవర్‌లోడ్ కోరుకునే కాంపౌండ్ మూవ్‌మెంట్‌లకు ఇది సరైనది.';
 
   @override
-  String get exerciseOptionsInfoNeverRecommend => 'Never Recommend';
+  String get exerciseOptionsInfoNeverRecommend => 'ఎప్పటికీ సిఫార్సు చేయవద్దు';
 
   @override
   String get exerciseOptionsInfoPairWithAnotherExercise =>
-      'Pair with another exercise to perform back-to-back with minimal rest. Great for time efficiency and muscle pump.';
+      'కనీస విశ్రాంతితో వరుసగా చేయడానికి మరొక వ్యాయామంతో జత చేయండి. సమయం ఆదా మరియు కండరాల పంపు కోసం ఇది చాలా బాగుంటుంది.';
 
   @override
   String get exerciseOptionsInfoPermanentlyBlockThisExercis =>
-      'Permanently block this exercise from future AI recommendations. Use this for exercises you dislike or cannot perform due to injury.';
+      'భవిష్యత్తులో AI సిఫార్సుల నుండి ఈ వ్యాయామాన్ని శాశ్వతంగా నిరోధించండి. మీకు నచ్చని లేదా గాయం కారణంగా చేయలేని వ్యాయామాల కోసం దీనిని ఉపయోగించండి.';
 
   @override
   String get exerciseOptionsInfoQueueThisExerciseTo =>
-      'Queue this exercise to appear in your next workout. Great for exercises you want to focus on. Queued exercises expire after 7 days if not used.';
+      'మీ తదుపరి వర్కవుట్‌లో ఈ వ్యాయామం కనిపించేలా క్యూలో ఉంచండి. మీరు దృష్టి పెట్టాలనుకునే వ్యాయామాలకు ఇది చాలా బాగుంటుంది. క్యూలో ఉంచిన వ్యాయామాలు ఉపయోగించకపోతే 7 రోజుల తర్వాత గడువు ముగుస్తుంది.';
 
   @override
-  String get exerciseOptionsInfoRemoveFromWorkout => 'Remove from Workout';
+  String get exerciseOptionsInfoRemoveFromWorkout => 'వర్కవుట్ నుండి తొలగించు';
 
   @override
   String get exerciseOptionsInfoRemoveThisExerciseFrom =>
-      'Remove this exercise from the current workout only. The exercise may appear again in future workouts.';
+      'ఈ వ్యాయామాన్ని ప్రస్తుత వర్కవుట్ నుండి మాత్రమే తొలగించండి. ఈ వ్యాయామం భవిష్యత్తులో మళ్ళీ కనిపించవచ్చు.';
 
   @override
-  String get exerciseOptionsInfoRepeatNextTime => 'Repeat Next Time';
+  String get exerciseOptionsInfoRepeatNextTime => 'తదుపరిసారి పునరావృతం చేయి';
 
   @override
   String get exerciseOptionsInfoReplaceWithASimilar =>
-      'Replace with a similar exercise targeting the same muscles. Choose from AI suggestions, recent swaps, or browse the full library.';
+      'అదే కండరాలను లక్ష్యంగా చేసుకునే ఇలాంటి వ్యాయామంతో భర్తీ చేయండి. AI సూచనలు, ఇటీవలి మార్పుల నుండి ఎంచుకోండి లేదా పూర్తి లైబ్రరీని బ్రౌజ్ చేయండి.';
 
   @override
   String get exerciseOptionsInfoSaveExercisesYouLove =>
-      'Save exercises you love for quick access. Favorites appear in your Exercise Library filtered view and are prioritized in AI recommendations.';
+      'మీకు నచ్చిన వ్యాయామాలను త్వరిత ప్రాప్యత కోసం సేవ్ చేయండి. ఇష్టమైనవి మీ వ్యాయామ లైబ్రరీ ఫిల్టర్ చేసిన వీక్షణలో కనిపిస్తాయి మరియు AI సిఫార్సులలో ప్రాధాన్యత ఇవ్వబడతాయి.';
 
   @override
   String get exerciseOptionsInfoSeeYourPerformanceHistory =>
-      'See your performance history and progression charts for this exercise over time.';
+      'కాలక్రమేణా ఈ వ్యాయామం కోసం మీ పనితీరు చరిత్ర మరియు పురోగతి చార్ట్‌లను చూడండి.';
 
   @override
-  String get exerciseOptionsInfoStapleExercise => 'Staple Exercise';
+  String get exerciseOptionsInfoStapleExercise => 'స్టేపుల్ వ్యాయామం';
 
   @override
-  String get exerciseOptionsInfoSwapExercise => 'Swap Exercise';
+  String get exerciseOptionsInfoSwapExercise => 'వ్యాయామాన్ని మార్చు';
 
   @override
-  String get exerciseOptionsInfoViewHistory => 'View History';
+  String get exerciseOptionsInfoViewHistory => 'చరిత్రను చూడండి';
 
   @override
-  String get exerciseOptionsNotes => 'Notes';
+  String get exerciseOptionsNotes => 'గమనికలు';
 
   @override
-  String get exerciseOptionsRemoveAndDonT => 'Remove and Don\'t Recommend';
+  String get exerciseOptionsRemoveAndDonT => 'తొలగించు మరియు సిఫార్సు చేయవద్దు';
 
   @override
-  String get exerciseOptionsRemoveFromWorkout => 'Remove from Workout';
+  String get exerciseOptionsRemoveFromWorkout => 'వర్కవుట్ నుండి తొలగించు';
 
   @override
-  String get exerciseOptionsReportPain => 'Report pain';
+  String get exerciseOptionsReportPain => 'నొప్పిని నివేదించు';
 
   @override
-  String get exerciseOptionsSwapExercise => 'Swap exercise';
+  String get exerciseOptionsSwapExercise => 'వ్యాయామాన్ని మార్చు';
 
   @override
-  String get exerciseOptionsVideoInstructions => 'Video & Instructions';
+  String get exerciseOptionsVideoInstructions => 'వీడియో & సూచనలు';
 
   @override
   String exercisePickerSheetAddAsCustom(Object name) {
@@ -10432,20 +10433,20 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get exercisePickerSheetCanTFindYour =>
-      'Can\'t find your exercise? Add it as custom';
+      'మీ వ్యాయామం దొరకలేదా? దానిని కస్టమ్‌గా జోడించండి';
 
   @override
-  String get exercisePickerSheetClearAll => 'Clear all';
+  String get exercisePickerSheetClearAll => 'అన్నీ క్లియర్ చేయి';
 
   @override
   String get exercisePickerSheetCreateCustomExercise =>
-      'Create Custom Exercise';
+      'కస్టమ్ వ్యాయామాన్ని సృష్టించు';
 
   @override
-  String get exercisePickerSheetCustom => 'CUSTOM';
+  String get exercisePickerSheetCustom => 'కస్టమ్';
 
   @override
-  String get exercisePickerSheetCustomOnly => 'Custom only';
+  String get exercisePickerSheetCustomOnly => 'కస్టమ్ మాత్రమే';
 
   @override
   String get exercisePickerSheetEquipment => 'పరికరాలు';
@@ -10456,11 +10457,12 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get exercisePickerSheetNoExercisesFound => 'No exercises found';
+  String get exercisePickerSheetNoExercisesFound =>
+      'ఎటువంటి వ్యాయామాలు కనుగొనబడలేదు';
 
   @override
   String get exercisePickerSheetOrTypeAboveTo =>
-      'Or type above to search the full exercise library';
+      'లేదా పూర్తి వ్యాయామ లైబ్రరీని శోధించడానికి పైన టైప్ చేయండి';
 
   @override
   String exercisePickerSheetPartExercisePickerSheetStateShowingOf(
@@ -10498,7 +10500,8 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీ వర్కౌట్‌లలో చేర్చడానికి కోర్ లిఫ్ట్‌ల కోసం వెతకండి';
 
   @override
-  String get exercisePickerSheetSearchForExercises => 'Search for exercises';
+  String get exercisePickerSheetSearchForExercises =>
+      'వ్యాయామాల కోసం శోధించండి';
 
   @override
   String get exercisePickerSheetSearchForExercisesToAdd =>
@@ -10514,10 +10517,10 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get exercisePickerSheetSearchTryPushRow =>
-      'Search — try \"push\", \"row\", \"squat\"';
+      'శోధన — \"push\", \"row\", \"squat\" ప్రయత్నించండి';
 
   @override
-  String get exercisePickerSheetSearching => 'Searching...';
+  String get exercisePickerSheetSearching => 'శోధిస్తోంది...';
 
   @override
   String get exercisePickerSheetShowingResultsFor =>
@@ -10525,25 +10528,25 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get exercisePickerSheetTapExercisesToSelect =>
-      'Tap exercises to select multiple';
+      'బహుళ వ్యాయామాలను ఎంచుకోవడానికి వాటిపై నొక్కండి';
 
   @override
   String get exercisePickerSheetTryADifferentSearch =>
-      'Try a different search or filter';
+      'వేరే శోధన లేదా ఫిల్టర్‌ని ప్రయత్నించండి';
 
   @override
   String get exercisePickerSheetType => 'రకం';
 
   @override
   String get exercisePickerSheetTypeToSearchOr =>
-      'Type to search or use filters to browse';
+      'శోధించడానికి టైప్ చేయండి లేదా బ్రౌజ్ చేయడానికి ఫిల్టర్‌లను ఉపయోగించండి';
 
   @override
-  String get exercisePickerSheetYourCustomExercises => 'YOUR CUSTOM EXERCISES';
+  String get exercisePickerSheetYourCustomExercises => 'మీ కస్టమ్ వ్యాయామాలు';
 
   @override
   String get exercisePreferencesCardAiWillPrioritizeThese =>
-      'AI will prioritize these';
+      'AI వీటికి ప్రాధాన్యత ఇస్తుంది';
 
   @override
   String exercisePreferencesCardAvoided(Object avoidedCount) {
@@ -10551,45 +10554,45 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get exercisePreferencesCardCooldownStretch => 'Cooldown Stretch';
+  String get exercisePreferencesCardCooldownStretch => 'కూల్‌డౌన్ స్ట్రెచ్';
 
   @override
   String get exercisePreferencesCardCoreLiftsThatNever =>
-      'Core lifts that never rotate';
+      'ఎప్పటికీ మారని కోర్ లిఫ్ట్‌లు';
 
   @override
-  String get exercisePreferencesCardCustomExercises => 'Custom Exercises';
+  String get exercisePreferencesCardCustomExercises => 'కస్టమ్ వ్యాయామాలు';
 
   @override
   String get exercisePreferencesCardCustomizeStepPerEquipme =>
-      'Customize +/- step per equipment';
+      'ప్రతి పరికరానికి +/- స్టెప్‌ను అనుకూలీకరించండి';
 
   @override
   String get exercisePreferencesCardCustomizeWhichExercisesAppe =>
-      'Customize which exercises appear in workouts';
+      'వర్కవుట్‌లలో ఏ వ్యాయామాలు కనిపించాలో అనుకూలీకరించండి';
 
   @override
   String get exercisePreferencesCardDynamicWarmupBeforeWorkouts =>
-      'Dynamic warmup before workouts';
+      'వర్కవుట్‌లకు ముందు డైనమిక్ వార్మప్';
 
   @override
   String get exercisePreferencesCardEnableOrDisableWorkout =>
-      'Enable or disable workout phases';
+      'వర్కవుట్ దశలను ప్రారంభించండి లేదా నిలిపివేయండి';
 
   @override
   String get exercisePreferencesCardExercisePreferences =>
-      'Exercise Preferences';
+      'వ్యాయామ ప్రాధాన్యతలు';
 
   @override
   String get exercisePreferencesCardExercisePreferences2 =>
-      'EXERCISE PREFERENCES';
+      'వ్యాయామ ప్రాధాన్యతలు';
 
   @override
   String get exercisePreferencesCardExercisePreferencesExplained =>
-      'Exercise Preferences Explained';
+      'వ్యాయామ ప్రాధాన్యతల వివరణ';
 
   @override
-  String get exercisePreferencesCardExerciseQueue => 'Exercise Queue';
+  String get exercisePreferencesCardExerciseQueue => 'వ్యాయామ క్యూ';
 
   @override
   String exercisePreferencesCardExercises(Object customCount) {
@@ -10607,25 +10610,26 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get exercisePreferencesCardExercisesToAvoid => 'Exercises to Avoid';
+  String get exercisePreferencesCardExercisesToAvoid =>
+      'నివారించాల్సిన వ్యాయామాలు';
 
   @override
-  String get exercisePreferencesCardFavoriteExercises => 'Favorite Exercises';
+  String get exercisePreferencesCardFavoriteExercises => 'ఇష్టమైన వ్యాయామాలు';
 
   @override
   String get exercisePreferencesCardFavoritesAvoidedQueue =>
-      'Favorites, avoided, queue';
+      'ఇష్టమైనవి, నివారించబడినవి, క్యూ';
 
   @override
   String get exercisePreferencesCardIncompleteExerciseWarning =>
-      'Incomplete Exercise Warning';
+      'అసంపూర్ణ వ్యాయామ హెచ్చరిక';
 
   @override
-  String get exercisePreferencesCardMusclesToAvoid => 'Muscles to Avoid';
+  String get exercisePreferencesCardMusclesToAvoid => 'నివారించాల్సిన కండరాలు';
 
   @override
   String get exercisePreferencesCardQueueExercisesForNext =>
-      'Queue exercises for next workout';
+      'తదుపరి వర్కవుట్ కోసం వ్యాయామాలను క్యూలో ఉంచండి';
 
   @override
   String exercisePreferencesCardQueued(Object queueCount) {
@@ -10634,44 +10638,44 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get exercisePreferencesCardSkipOrReduceMuscle =>
-      'Skip or reduce muscle groups';
+      'కండరాల సమూహాలను దాటవేయండి లేదా తగ్గించండి';
 
   @override
   String get exercisePreferencesCardSkipSpecificExercises =>
-      'Skip specific exercises';
+      'నిర్దిష్ట వ్యాయామాలను దాటవేయండి';
 
   @override
-  String get exercisePreferencesCardStapleExercises => 'Staple Exercises';
+  String get exercisePreferencesCardStapleExercises => 'ప్రధాన వ్యాయామాలు';
 
   @override
   String get exercisePreferencesCardStretchingAfterWorkouts =>
-      'Stretching after workouts';
+      'వర్కవుట్‌ల తర్వాత స్ట్రెచింగ్';
 
   @override
-  String get exercisePreferencesCardWarmupCooldown => 'WARMUP & COOLDOWN';
+  String get exercisePreferencesCardWarmupCooldown => 'వార్మప్ & కూల్‌డౌన్';
 
   @override
-  String get exercisePreferencesCardWarmupPhase => 'Warmup Phase';
+  String get exercisePreferencesCardWarmupPhase => 'వార్మప్ దశ';
 
   @override
   String get exercisePreferencesCardWarnBeforeFinishingWith =>
-      'Warn before finishing with unlogged sets';
+      'లాగ్ చేయని సెట్‌లతో ముగించే ముందు హెచ్చరించండి';
 
   @override
-  String get exercisePreferencesCardWeightIncrements => 'Weight Increments';
+  String get exercisePreferencesCardWeightIncrements => 'బరువు పెంపుదల';
 
   @override
-  String get exercisePreferencesCardWhatSThis => 'What\'s this?';
+  String get exercisePreferencesCardWhatSThis => 'ఇది ఏమిటి?';
 
   @override
-  String get exercisePreferencesCardWorkoutMode => 'WORKOUT MODE';
+  String get exercisePreferencesCardWorkoutMode => 'వర్కవుట్ మోడ్';
 
   @override
   String get exercisePreferencesCardYourPersonalExerciseLibrary =>
-      'Your personal exercise library';
+      'మీ వ్యక్తిగత వ్యాయామ లైబ్రరీ';
 
   @override
-  String get exercisePreviewOverlayFormDemo => 'Form Demo';
+  String get exercisePreviewOverlayFormDemo => 'ఫారమ్ డెమో';
 
   @override
   String exercisePreviewOverlayS(Object _remainingSeconds) {
@@ -10680,7 +10684,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get exercisePreviewOverlayTapAnywhereToStart =>
-      'Tap anywhere to start';
+      'ప్రారంభించడానికి ఎక్కడైనా నొక్కండి';
 
   @override
   String exercisePreviewOverlayTarget(Object muscles) {
@@ -10694,60 +10698,64 @@ class AppLocalizationsTe extends AppLocalizations {
   String get exerciseProgressDetailHistory => 'చరిత్ర';
 
   @override
-  String get exerciseProgressDetailInsights => 'Insights';
+  String get exerciseProgressDetailInsights => 'అంతర్దృష్టులు';
 
   @override
   String get exerciseProgressDetailNoDataForThis =>
-      'No data for this exercise yet';
+      'ఈ వ్యాయామం కోసం ఇంకా డేటా లేదు';
 
   @override
-  String get exerciseProgressDetailNoSessionsRecorded => 'No sessions recorded';
+  String get exerciseProgressDetailNoSessionsRecorded =>
+      'ఏ సెషన్‌లు రికార్డ్ చేయబడలేదు';
 
   @override
   String get exerciseProgressDetailProgress => 'ప్రగతి';
 
   @override
-  String get exerciseProgressionsAdvance => 'Advance';
+  String get exerciseProgressionsAdvance => 'ముందుకు వెళ్ళండి';
 
   @override
-  String get exerciseProgressionsAdvanceProgression => 'Advance progression?';
+  String get exerciseProgressionsAdvanceProgression =>
+      'ప్రోగ్రెషన్‌ను ముందుకు తీసుకెళ్లాలా?';
 
   @override
-  String get exerciseProgressionsBestLoad => 'Best load';
+  String get exerciseProgressionsBestLoad => 'ఉత్తమ లోడ్';
 
   @override
-  String get exerciseProgressionsBestReps => 'Best reps';
+  String get exerciseProgressionsBestReps => 'ఉత్తమ రెప్స్';
 
   @override
   String get exerciseProgressionsEarnTheHarderVariant =>
-      'Earn the harder variant';
+      'మరింత కష్టమైన వేరియంట్‌ను పొందండి';
 
   @override
   String get exerciseProgressionsLoadingYourProgressions =>
-      'Loading your progressions...';
+      'మీ ప్రోగ్రెషన్‌లను లోడ్ చేస్తోంది...';
 
   @override
-  String get exerciseProgressionsMasteryProgress => 'Mastery progress';
+  String get exerciseProgressionsMasteryProgress => 'మాస్టరీ పురోగతి';
 
   @override
-  String get exerciseProgressionsNoProgressionsYet => 'No progressions yet';
+  String get exerciseProgressionsNoProgressionsYet =>
+      'ఇంకా ప్రోగ్రెషన్‌లు లేవు';
 
   @override
-  String get exerciseProgressionsNotYet => 'Not yet';
+  String get exerciseProgressionsNotYet => 'ఇంకా లేదు';
 
   @override
   String get exerciseProgressionsOneMoreTooEasy =>
-      'One more \"too easy\" session unlocks the next variant.';
+      'మరో \"చాలా సులభం\" సెషన్ తదుపరి వేరియంట్‌ను అన్‌లాక్ చేస్తుంది.';
 
   @override
   String get exerciseProgressionsOtherTrackedExercises =>
-      'OTHER TRACKED EXERCISES';
+      'ఇతర ట్రాక్ చేయబడిన వ్యాయామాలు';
 
   @override
-  String get exerciseProgressionsProgressions => 'Progressions';
+  String get exerciseProgressionsProgressions => 'ప్రోగ్రెషన్‌లు';
 
   @override
-  String get exerciseProgressionsReadyToAdvance => 'READY TO ADVANCE';
+  String get exerciseProgressionsReadyToAdvance =>
+      'ముందుకు వెళ్లడానికి సిద్ధంగా ఉంది';
 
   @override
   String get exerciseProgressionsReadyToAdvance2 =>
@@ -11006,12 +11014,12 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String exerciseScienceResearchScreenEveryWorkoutParameterIn(Object appName) {
-    return 'Every workout parameter in $appName is derived from peer-reviewed exercise science. Tap a paper to see details.';
+    return 'Zealova లోని ప్రతి వర్కవుట్ పారామీటర్ పీర్-రివ్యూడ్ వ్యాయామ శాస్త్రం నుండి తీసుకోబడింది. వివరాలను చూడటానికి ఒక పేపర్‌పై నొక్కండి.';
   }
 
   @override
   String exerciseScienceResearchScreenHowUsesThis(Object appName) {
-    return 'How $appName uses this';
+    return 'Zealova దీనిని ఎలా ఉపయోగిస్తుంది';
   }
 
   @override
@@ -17253,7 +17261,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get homeMySpaceCurrentLayout => '● ప్రస్తుత లేఅవుట్';
 
   @override
-  String get homeMySpaceMySpace => 'My Space';
+  String get homeMySpaceMySpace => 'నా స్పేస్';
 
   @override
   String get homeMySpaceReset => 'రీసెట్ చేయండి';
@@ -17302,46 +17310,46 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీ కెమెరాతో భోజనాన్ని స్కాన్ చేయండి. మాక్రోలను సులభంగా ట్రాక్ చేయండి.';
 
   @override
-  String get homeScreenApply => 'Apply';
+  String get homeScreenApply => 'వర్తింపజేయండి';
 
   @override
   String homeScreenApplyPreset(Object name) {
-    return 'Apply \"$name\"?';
+    return '\"$name\"ని వర్తింపజేయాలా?';
   }
 
   @override
   String homeScreenApplyPresetBody(Object name) {
-    return 'This will replace your current layout with the \"$name\" preset.';
+    return 'ఇది మీ ప్రస్తుత లేఅవుట్‌ను \"$name\" ప్రీసెట్‌తో భర్తీ చేస్తుంది.';
   }
 
   @override
-  String get homeScreenCancel => 'Cancel';
+  String get homeScreenCancel => 'రద్దు చేయి';
 
   @override
-  String get homeScreenDailyStepsGoal => 'Daily Steps Goal';
+  String get homeScreenDailyStepsGoal => 'రోజువారీ అడుగుల లక్ష్యం';
 
   @override
-  String get homeScreenDefaultRestored => 'Default layout restored';
+  String get homeScreenDefaultRestored => 'డిఫాల్ట్ లేఅవుట్ పునరుద్ధరించబడింది';
 
   @override
   String homeScreenImportedWorkouts(Object count) {
-    return 'Imported $count workouts';
+    return '$count వర్కవుట్‌లు దిగుమతి చేయబడ్డాయి';
   }
 
   @override
   String homeScreenPresetApplied(Object name) {
-    return '\"$name\" applied';
+    return '\"$name\" వర్తింపజేయబడింది';
   }
 
   @override
-  String get homeScreenReset => 'Reset';
+  String get homeScreenReset => 'రీసెట్ చేయి';
 
   @override
-  String get homeScreenResetToDefault => 'Reset to Default?';
+  String get homeScreenResetToDefault => 'డిఫాల్ట్‌కి రీసెట్ చేయాలా?';
 
   @override
   String get homeScreenResetToDefaultBody =>
-      'This will restore your home screen to the default layout.';
+      'ఇది మీ హోమ్ స్క్రీన్‌ను డిఫాల్ట్ లేఅవుట్‌కు పునరుద్ధరిస్తుంది.';
 
   @override
   String get homeScreenTourCarouselDesc =>
@@ -20217,7 +20225,8 @@ class AppLocalizationsTe extends AppLocalizations {
       'అన్ని అంశాలు ధృవీకరించబడిన పోషకాహార డేటాతో సరిపోలాయి';
 
   @override
-  String get logMealSheetAnalysisFailed => 'Analysis failed. Please try again.';
+  String get logMealSheetAnalysisFailed =>
+      'విశ్లేషణ విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి.';
 
   @override
   String get logMealSheetAnalyze => 'విశ్లేషించు';
@@ -20264,7 +20273,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String logMealSheetCouldnTAddFood(Object message) {
-    return 'Couldn\'t add food: $message';
+    return 'ఆహారాన్ని జోడించలేకపోయాము: $message';
   }
 
   @override
@@ -20312,7 +20321,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String logMealSheetFailedToSaveError(Object error) {
-    return 'Failed to save: $error';
+    return 'సేవ్ చేయడం విఫలమైంది: $error';
   }
 
   @override
@@ -20411,8 +20420,8 @@ class AppLocalizationsTe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count items',
-      one: 'Logged 1 item',
+      other: '$count అంశాలు లాగ్ చేయబడ్డాయి',
+      one: '1 అంశం లాగ్ చేయబడింది',
     );
     return '$_temp0';
   }
@@ -20422,8 +20431,8 @@ class AppLocalizationsTe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count photos ($kcal kcal)',
-      one: 'Logged 1 photo ($kcal kcal)',
+      other: '$count ఫోటోలు లాగ్ చేయబడ్డాయి ($kcal kcal)',
+      one: '1 ఫోటో లాగ్ చేయబడింది ($kcal kcal)',
     );
     return '$_temp0';
   }
@@ -20570,7 +20579,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'స్పీచ్ రికగ్నిషన్ అందుబాటులో లేదు';
 
   @override
-  String get logMealSheetStartingAnalysis => 'Starting analysis...';
+  String get logMealSheetStartingAnalysis => 'విశ్లేషణ ప్రారంభమవుతోంది...';
 
   @override
   String get logMealSheetStopListening => 'వినడం ఆపండి';
@@ -21842,7 +21851,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get measurementsScreenPartWeightBodyFatChest =>
-      'weight, body_fat, chest, waist, hips, neck, shoulders, biceps_left, biceps_right, forearm_left, forearm_right, thigh_left, thigh_right, calf_left, calf_right';
+      'బరువు, శరీర కొవ్వు, ఛాతీ, నడుము, తుంటి, మెడ, భుజాలు, ఎడమ బైసెప్, కుడి బైసెప్, ఎడమ ముంజేయి, కుడి ముంజేయి, ఎడమ తొడ, కుడి తొడ, ఎడమ పిక్క, కుడి పిక్క';
 
   @override
   String get measurementsScreenPartWorkoutsNutritionMeasureme =>
@@ -22845,7 +22854,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String milestonesScreenPts(Object points) {
-    return '$points pts';
+    return '$points పాయింట్లు';
   }
 
   @override
@@ -22899,7 +22908,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String minimalHeaderD(Object streakDays) {
-    return '${streakDays}d';
+    return '$streakDays రోజులు';
   }
 
   @override
@@ -25147,7 +25156,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'Nutrient Rush — స్నేహితులు';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -27740,7 +27749,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get portionAmountInputAdjustPortion => 'భాగం సర్దుబాటు చేయండి';
 
   @override
-  String get portionAmountInputCal => 'Cal';
+  String get portionAmountInputCal => 'క్యాలరీలు';
 
   @override
   String get portionAmountInputCustomAmount => 'కస్టమ్ మొత్తం';
@@ -28634,7 +28643,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీ ప్రోగ్రామ్‌కు ప్రాథమిక వ్యాయామాలను జోడించండి';
 
   @override
-  String get programMetaDeloadEvery => 'Program meta deload every';
+  String get programMetaDeloadEvery => 'ప్రోగ్రామ్ మెటా డీలోడ్ ప్రతి';
 
   @override
   String get programMetaFixedLoadsNote => 'స్థిరమైన బరువులు';
@@ -28992,7 +29001,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get progressProgressTracking => 'ప్రోగ్రెస్ ట్రాకింగ్';
 
   @override
-  String get progressPrs30d => 'PRS (30D)';
+  String get progressPrs30d => 'PRS (30 రోజులు)';
 
   @override
   String get progressScores => 'స్కోర్లు';
@@ -30185,7 +30194,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String quickWorkoutSheetPartQuickWorkoutSheetStateMesocycle(
     Object phaseDisplayName,
   ) {
-    return 'Mesocycle: $phaseDisplayName';
+    return 'మెసోసైకిల్: $phaseDisplayName';
   }
 
   @override
@@ -31105,7 +31114,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get quizTrainingPreferencesWorkoutTypes => 'వ్యాయామ రకాలు';
 
   @override
-  String get quizTrainingStyleArnoldSplit => 'Arnold Split';
+  String get quizTrainingStyleArnoldSplit => 'ఆర్నాల్డ్ స్ప్లిట్';
 
   @override
   String get quizTrainingStyleAutomaticallyOptimizedForYo =>
@@ -31115,7 +31124,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get quizTrainingStyleBestFor56 => 'వారానికి 5-6 రోజులకు ఉత్తమం';
 
   @override
-  String get quizTrainingStyleBodyPartSplit => 'Body Part Split';
+  String get quizTrainingStyleBodyPartSplit => 'బాడీ పార్ట్ స్ప్లిట్';
 
   @override
   String get quizTrainingStyleChestBackShouldersArms =>
@@ -31133,7 +31142,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get quizTrainingStyleExerciseVariety => 'వ్యాయామ వైవిధ్యం';
 
   @override
-  String get quizTrainingStyleFullBody => 'Full Body';
+  String get quizTrainingStyleFullBody => 'ఫుల్ బాడీ';
 
   @override
   String get quizTrainingStyleLetAiDecide => 'AIని నిర్ణయించనివ్వండి';
@@ -33025,7 +33034,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get reportWrappedTemplateWrapped => 'WRAPPED';
 
   @override
-  String get reportsHub1RepMaxes => '1-Rep Maxes';
+  String get reportsHub1RepMaxes => '1RM';
 
   @override
   String get reportsHubBadgesUnlockedAlongYour =>
@@ -33489,37 +33498,37 @@ class AppLocalizationsTe extends AppLocalizations {
   String get ringCatalogWeight => 'బరువు';
 
   @override
-  String get ringLabelCycleDay => 'Cycle day';
+  String get ringLabelCycleDay => 'సైకిల్ రోజు';
 
   @override
-  String get ringLabelHeartRate => 'Heart rate';
+  String get ringLabelHeartRate => 'హృదయ స్పందన రేటు';
 
   @override
   String get ringLabelHrv => 'HRV';
 
   @override
-  String get ringLabelHydration => 'Hydration';
+  String get ringLabelHydration => 'హైడ్రేషన్';
 
   @override
-  String get ringLabelMove => 'Move';
+  String get ringLabelMove => 'కదలిక';
 
   @override
-  String get ringLabelNourish => 'Nourish';
+  String get ringLabelNourish => 'పోషణ';
 
   @override
-  String get ringLabelRecovery => 'Recovery';
+  String get ringLabelRecovery => 'రికవరీ';
 
   @override
-  String get ringLabelSleep => 'Sleep';
+  String get ringLabelSleep => 'నిద్ర';
 
   @override
-  String get ringLabelStress => 'Stress';
+  String get ringLabelStress => 'ఒత్తిడి';
 
   @override
-  String get ringLabelTrain => 'Train';
+  String get ringLabelTrain => 'శిక్షణ';
 
   @override
-  String get ringLabelWeight => 'Weight';
+  String get ringLabelWeight => 'బరువు';
 
   @override
   String get roiSummaryCardCalories => 'క్యాలరీలు';
@@ -33886,7 +33895,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get scoreBreakdownScoreBreakdown => 'స్కోర్ విశ్లేషణ';
 
   @override
-  String get scoreBreakdownStrength => 'Strength';
+  String get scoreBreakdownStrength => 'బలం';
 
   @override
   String get scoreChangeAnnouncementGotIt => 'అర్థమైంది';
@@ -36786,10 +36795,7 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'ఎంచుకున్న లక్ష్యం: $_selectedGoal అడుగులు';
   }
 
@@ -36797,8 +36803,6 @@ class AppLocalizationsTe extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'స్టెప్ గోల్ స్లైడర్, $_minGoal నుండి $_maxGoal అడుగుల వరకు';
   }
@@ -37519,13 +37523,13 @@ class AppLocalizationsTe extends AppLocalizations {
   String get summaryColWeight => 'బరువు';
 
   @override
-  String get summaryDonutIntensity => 'INTENSITY';
+  String get summaryDonutIntensity => 'తీవ్రత';
 
   @override
   String get summaryDonutOnTarget => 'లక్ష్యం చేరుకున్నారు';
 
   @override
-  String get summaryDonutPlanAdherence => 'PLAN ADHERENCE';
+  String get summaryDonutPlanAdherence => 'ప్లాన్ అనుసరణ';
 
   @override
   String get summaryDonutRestCompliance => 'రెస్ట్ కంప్లయన్స్';
@@ -37647,7 +37651,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get summaryMuscleMapNotApplicable => 'మజిల్ మ్యాప్ వర్తించదు';
 
   @override
-  String get summaryMusclesHit => 'MUSCLES HIT';
+  String get summaryMusclesHit => 'కండరాల పనితీరు';
 
   @override
   String summaryNSets(Object count) {
@@ -37695,7 +37699,8 @@ class AppLocalizationsTe extends AppLocalizations {
   String get summaryPerExerciseDeepDive => 'ప్రతి వ్యాయామంపై లోతైన విశ్లేషణ';
 
   @override
-  String get summaryPerExerciseDeepDiveLabel => 'PER-EXERCISE DEEP DIVE';
+  String get summaryPerExerciseDeepDiveLabel =>
+      'ప్రతి వ్యాయామంపై లోతైన విశ్లేషణ';
 
   @override
   String get summaryPerformanceComparison => 'పనితీరు పోలిక';
@@ -37727,7 +37732,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get summarySessionScore => 'సెషన్ స్కోరు';
 
   @override
-  String get summarySessionTimeline => 'SESSION TIMELINE';
+  String get summarySessionTimeline => 'సెషన్ టైమ్‌లైన్';
 
   @override
   String get summarySetTypeDistribution => 'సెట్ రకం పంపిణీ';
@@ -38593,7 +38598,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get templatePreBuiltTemplates => 'ప్రీ-బిల్ట్ టెంప్లేట్‌లు';
 
   @override
-  String get tierComparisonAdv => 'ADV.';
+  String get tierComparisonAdv => 'అధునాతన';
 
   @override
   String get tierComparisonAdvanced => 'అడ్వాన్స్‌డ్';
@@ -38609,16 +38614,16 @@ class AppLocalizationsTe extends AppLocalizations {
   String get tierComparisonWhichTierIsRight => 'ఏ టైర్ నాకు సరైనది?';
 
   @override
-  String get tierExcellent => 'Excellent';
+  String get tierExcellent => 'అద్భుతం';
 
   @override
-  String get tierFair => 'Fair';
+  String get tierFair => 'పర్వాలేదు';
 
   @override
-  String get tierGood => 'Good';
+  String get tierGood => 'మంచిది';
 
   @override
-  String get tierLow => 'Low';
+  String get tierLow => 'తక్కువ';
 
   @override
   String get tileFactoryFoodPatterns => 'ఆహార అలవాట్లు';
@@ -40623,7 +40628,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'మేము మీ వారాన్ని విశ్లేషిస్తాము';
 
   @override
-  String get weeklyCheckinWeeklyCheckIn => 'Weekly Check-In';
+  String get weeklyCheckinWeeklyCheckIn => 'వారపు చెక్-ఇన్';
 
   @override
   String get weeklyCheckinWhatHappensEachWeek => 'ప్రతి వారం ఏమి జరుగుతుంది';
@@ -41273,7 +41278,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -42944,10 +42949,10 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీ చరిత్ర ఆధారంగా AI లక్ష్యాలు రూపొందించబడతాయి.';
 
   @override
-  String get workoutSheetsMixinBarType => 'Bar Type';
+  String get workoutSheetsMixinBarType => 'బార్ రకం';
 
   @override
-  String get workoutSheetsMixinBreakSuperset => 'Break Superset';
+  String get workoutSheetsMixinBreakSuperset => 'సూపర్‌సెట్‌ను విడగొట్టండి';
 
   @override
   String get workoutSheetsMixinChangeRepsProgression =>
@@ -43026,7 +43031,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get workoutSheetsMixinUndo => 'రద్దు చేయి';
 
   @override
-  String get workoutSheetsMixinWarmUp => 'Warm Up';
+  String get workoutSheetsMixinWarmUp => 'వార్మ్ అప్';
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
@@ -43077,19 +43082,19 @@ class AppLocalizationsTe extends AppLocalizations {
   String get workoutShowcaseAutoLabel => 'వర్కవుట్ షోకేస్ ఆటో లేబుల్';
 
   @override
-  String get workoutShowcaseBarbellSquat => 'Barbell Squat';
+  String get workoutShowcaseBarbellSquat => 'బార్‌బెల్ స్క్వాట్';
 
   @override
-  String get workoutShowcaseBenchPress => 'BENCH PRESS';
+  String get workoutShowcaseBenchPress => 'బెంచ్ ప్రెస్';
 
   @override
-  String get workoutShowcaseBoardingPass => 'BOARDING PASS';
+  String get workoutShowcaseBoardingPass => 'బోర్డింగ్ పాస్';
 
   @override
   String get workoutShowcaseBreathing => 'శ్వాస';
 
   @override
-  String get workoutShowcaseCal => 'Cal';
+  String get workoutShowcaseCal => 'క్యాలరీలు';
 
   @override
   String get workoutShowcaseCalories => 'వర్కవుట్ షోకేస్ క్యాలరీలు';
@@ -43104,7 +43109,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get workoutShowcaseEasy => 'వర్కవుట్ షోకేస్ సులభం';
 
   @override
-  String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 reps';
+  String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 రెప్స్';
 
   @override
   String get workoutShowcaseEverySetYouLog =>
@@ -43225,7 +43230,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'ప్లాన్ తదుపరి సెషన్‌ను ఆటో-సర్దుబాటు చేస్తుంది — మీ అసలు పనితీరు నుండి బరువు + reps రీకాలిబ్రేట్ అవుతాయి.';
 
   @override
-  String get workoutShowcasePoweredByZealova => 'Powered by Zealova';
+  String get workoutShowcasePoweredByZealova => 'Zealova ద్వారా అందించబడింది';
 
   @override
   String get workoutShowcaseProgressionModel => 'ప్రోగ్రెషన్ మోడల్';
@@ -43240,7 +43245,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get workoutShowcaseRare => '★ అరుదైనది';
 
   @override
-  String get workoutShowcaseReps => 'Reps';
+  String get workoutShowcaseReps => 'రెప్స్';
 
   @override
   String workoutShowcaseScreenDay(Object day) {
@@ -43317,10 +43322,10 @@ class AppLocalizationsTe extends AppLocalizations {
   String get workoutShowcaseShareYourWorkout => 'మీ వర్కౌట్‌ను షేర్ చేయండి';
 
   @override
-  String get workoutShowcaseSideA => 'SIDE A';
+  String get workoutShowcaseSideA => 'సైడ్ A';
 
   @override
-  String get workoutShowcaseSuperset => 'Superset';
+  String get workoutShowcaseSuperset => 'సూపర్‌సెట్';
 
   @override
   String workoutShowcaseTapToLogSet(Object arg0) {
@@ -43328,7 +43333,7 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get workoutShowcaseTheGainsGazette => 'THE GAINS GAZETTE';
+  String get workoutShowcaseTheGainsGazette => 'ది గెయిన్స్ గెజిట్';
 
   @override
   String get workoutShowcaseTime => 'సమయం';
@@ -43345,7 +43350,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get workoutShowcaseUpNextBenchPress => 'తదుపరి: Bench Press';
 
   @override
-  String get workoutShowcaseUpperBodyPush => 'UPPER BODY PUSH';
+  String get workoutShowcaseUpperBodyPush => 'అప్పర్ బాడీ పుష్';
 
   @override
   String get workoutShowcaseVideo => 'వీడియో';
@@ -43354,7 +43359,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get workoutShowcaseVolume => 'వాల్యూమ్';
 
   @override
-  String get workoutShowcaseWarmup => 'Warmup';
+  String get workoutShowcaseWarmup => 'వార్మ్ అప్';
 
   @override
   String get workoutShowcaseWeight => 'బరువు';
@@ -44160,10 +44165,10 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get wrappedTemplateVolume => 'VOLUME';
+  String get wrappedTemplateVolume => 'వాల్యూమ్';
 
   @override
-  String get wrappedTemplateWrapped => 'WRAPPED';
+  String get wrappedTemplateWrapped => 'ర్యాప్డ్';
 
   @override
   String get wrappedViewerFailedToLoadYour =>
@@ -44312,7 +44317,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get xpGoalsScreenInventory => 'ఇన్వెంటరీ';
 
   @override
-  String get xpGoalsScreenLegendary => 'LEGENDARY';
+  String get xpGoalsScreenLegendary => 'లెజెండరీ';
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
@@ -44338,7 +44343,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get xpGoalsScreenLogWeight => 'బరువును నమోదు చేయండి';
 
   @override
-  String get xpGoalsScreenMilestone => 'MILESTONE';
+  String get xpGoalsScreenMilestone => 'మైలురాయి';
 
   @override
   String get xpGoalsScreenMilestoneLegend =>
@@ -44348,7 +44353,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get xpGoalsScreenNoLevelsAvailable => 'స్థాయిలు అందుబాటులో లేవు';
 
   @override
-  String get xpGoalsScreenReward => 'REWARD';
+  String get xpGoalsScreenReward => 'రివార్డ్';
 
   @override
   String get xpGoalsScreenSetFirstPersonalRecord =>
@@ -44457,12 +44462,12 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String xpHeroTileLv(Object level) {
-    return 'Lv $level';
+    return 'స్థాయి $level';
   }
 
   @override
   String xpHeroTileLv2(Object label, Object nextLevel) {
-    return 'Lv $nextLevel → $label';
+    return 'స్థాయి $nextLevel → $label';
   }
 
   @override
@@ -44492,7 +44497,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String xpLeaderboardScreenLvl(Object currentLevel) {
-    return 'Lvl $currentLevel';
+    return 'స్థాయి $currentLevel';
   }
 
   @override
@@ -44628,5 +44633,5 @@ class AppLocalizationsTe extends AppLocalizations {
   String get youTrophies => 'ట్రోఫీలు';
 
   @override
-  String get youWrapped => 'Wrapped';
+  String get youWrapped => 'ర్యాప్డ్';
 }

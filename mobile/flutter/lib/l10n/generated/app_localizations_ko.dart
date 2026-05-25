@@ -295,7 +295,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get activeWorkoutHelperPrimaryMuscle => '주동근';
 
   @override
-  String get activeWorkoutHelperProTip => 'Pro Tip';
+  String get activeWorkoutHelperProTip => '프로 팁';
 
   @override
   String get activeWorkoutHelperSecondaryMuscles => '협응근';
@@ -1403,7 +1403,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get aiInputPreviewWarmup => 'WARMUP';
+  String get aiInputPreviewWarmup => '웜업';
 
   @override
   String get aiIntegrationsAiIntegrations => 'AI 연동';
@@ -2539,7 +2539,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get bodyAnalyzerBodyAnalyzer => 'Body Analyzer';
+  String get bodyAnalyzerBodyAnalyzer => '신체 분석기';
 
   @override
   String get bodyAnalyzerBodyFat => '체지방';
@@ -2735,7 +2735,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String caloriesSummaryCardCalPhase(Object delta, Object phase) {
-    return '+$delta cal · $phase phase';
+    return '+$delta cal · $phase 단계';
   }
 
   @override
@@ -2892,8 +2892,8 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count activities',
-      one: '1 activity',
+      other: '활동 $count개',
+      one: '활동 1개',
     );
     return '$_temp0';
   }
@@ -2903,8 +2903,8 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sessions',
-      one: '1 session',
+      other: '세션 $count개',
+      one: '세션 1개',
     );
     return '$_temp0';
   }
@@ -3062,7 +3062,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String challengeCardDaysLeft(Object daysRemaining) {
-    return '$daysRemaining days left';
+    return '$daysRemaining일 남음';
   }
 
   @override
@@ -3073,7 +3073,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String challengeCardParticipating(Object participantCount) {
-    return '$participantCount participating';
+    return '$participantCount명 참여 중';
   }
 
   @override
@@ -3903,11 +3903,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => '새로운 AI 코치 페르소나 선택';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return '$_customName 사용';
   }
 
@@ -4382,7 +4378,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '(daysPerWeek)일/주 · (duration)';
   }
 
   @override
@@ -4778,7 +4774,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String consistencyScoreCardDays(Object currentStreakValue) {
-    return '$currentStreakValue days';
+    return '$currentStreakValue일';
   }
 
   @override
@@ -4895,12 +4891,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String conversationScreenIsTyping(Object first) {
-    return '$first is typing...';
+    return '$first님이 입력 중...';
   }
 
   @override
   String conversationScreenPeopleTyping(Object length) {
-    return '$length people typing...';
+    return '$length명이 입력 중...';
   }
 
   @override
@@ -5421,12 +5417,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String customExerciseCardExercises(Object componentCount) {
-    return '$componentCount exercises';
+    return '운동 $componentCount개';
   }
 
   @override
   String customExerciseCardUsedTimes(Object usageCount) {
-    return 'Used $usageCount times';
+    return '$usageCount회 사용됨';
   }
 
   @override
@@ -5836,17 +5832,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String cycleScreenCouldNotSwitchMode(Object e) {
-    return 'Could not switch mode: $e';
+    return '모드를 전환할 수 없습니다: $e';
   }
 
   @override
   String cycleScreenIJustLoggedMy(Object what) {
-    return 'I just logged my $what. Anything I should know?';
+    return '$what을(를) 방금 기록했어요. 알아두어야 할 점이 있나요?';
   }
 
   @override
   String cycleScreenSwitchedTo(Object displayName) {
-    return 'Switched to $displayName';
+    return '$displayName(으)로 전환되었습니다';
   }
 
   @override
@@ -6027,7 +6023,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String cycleTrackerWidgetDay(Object cycleLength) {
-    return 'Day $cycleLength';
+    return '$cycleLength일차';
   }
 
   @override
@@ -6172,7 +6168,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String dailyPlanDetailSheetCal(Object calories) {
-    return '$calories cal';
+    return '$calories kcal';
   }
 
   @override
@@ -6258,7 +6254,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String dailyXpStripTodayGoals(Object completed, Object total) {
-    return 'Today: $completed/$total goals';
+    return '오늘: $completed/$total 목표 완료';
   }
 
   @override
@@ -7393,12 +7389,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String durationRangeSliderMin(Object minDuration) {
-    return '$minDuration min';
+    return '$minDuration분';
   }
 
   @override
   String durationRangeSliderMin2(Object maxDuration) {
-    return '$maxDuration min';
+    return '$maxDuration분';
   }
 
   @override
@@ -7873,7 +7869,7 @@ class AppLocalizationsKo extends AppLocalizations {
     Object _generatingWorkout,
     Object _totalWorkoutsToGenerate,
   ) {
-    return '$_generatingWorkout of $_totalWorkoutsToGenerate';
+    return '$_generatingWorkout / $_totalWorkoutsToGenerate';
   }
 
   @override
@@ -8474,12 +8470,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String emailSignInScreenSupportIsNowYour(Object appName) {
-    return '$appName Support is now your friend. Reach out anytime for help!';
+    return '$appName 고객 지원팀이 여러분을 도와드립니다. 언제든 문의해 주세요!';
   }
 
   @override
   String emailSignInScreenWelcomeTo(Object appName) {
-    return 'Welcome to $appName!';
+    return '$appName에 오신 것을 환영합니다!';
   }
 
   @override
@@ -9170,12 +9166,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String exerciseCardAddedTo(Object exerciseName, Object name) {
-    return 'Added \"$exerciseName\" to $name';
+    return '\"$exerciseName\"을(를) $name에 추가했습니다';
   }
 
   @override
   String exerciseCardAddedToQueue(Object exerciseName) {
-    return 'Added \"$exerciseName\" to queue';
+    return '\"$exerciseName\"을(를) 대기열에 추가했습니다';
   }
 
   @override
@@ -9372,7 +9368,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String exerciseDetailSheetPartExerciseActionButtonsStateFailedToStaple(
     Object e,
   ) {
-    return 'Failed to staple: $e';
+    return '고정 실패: $e';
   }
 
   @override
@@ -9380,7 +9376,7 @@ class AppLocalizationsKo extends AppLocalizations {
     Object exerciseName,
     Object selected,
   ) {
-    return 'Replaced \"$selected\" with \"$exerciseName\"';
+    return '\"$selected\"을(를) \"$exerciseName\"(으)로 교체했습니다';
   }
 
   @override
@@ -9389,21 +9385,21 @@ class AppLocalizationsKo extends AppLocalizations {
     Object section,
     Object timing,
   ) {
-    return 'Stapled \"$exerciseName\" to $section ($timing)';
+    return '\"$exerciseName\"을(를) $section에 고정했습니다 ($timing)';
   }
 
   @override
   String exerciseDetailSheetPartExerciseActionButtonsStateUnstapled(
     Object exerciseName,
   ) {
-    return '\"$exerciseName\" unstapled';
+    return '\"$exerciseName\" 고정 해제됨';
   }
 
   @override
   String exerciseDetailSheetPartLog1RMButtonRemoveTheOfflineVideo(
     Object exerciseName,
   ) {
-    return 'Remove the offline video for \"$exerciseName\"? You can re-download it anytime.';
+    return '\"$exerciseName\"의 오프라인 동영상을 삭제할까요? 언제든지 다시 다운로드할 수 있습니다.';
   }
 
   @override
@@ -10838,7 +10834,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String exercisesTabFailedToLoadExercises(Object error) {
-    return 'Failed to load exercises: $error';
+    return '운동 목록을 불러오지 못했습니다: $error';
   }
 
   @override
@@ -12553,12 +12549,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String flexibilityScoreCardTestsCompleted(Object testsCompleted) {
-    return '$testsCompleted tests completed';
+    return '테스트 $testsCompleted개 완료';
   }
 
   @override
   String flexibilityScoreCardTotalAssessments(Object totalAssessments) {
-    return '$totalAssessments total assessments';
+    return '총 평가 $totalAssessments개';
   }
 
   @override
@@ -13710,8 +13706,8 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       sessions,
       locale: localeName,
-      other: 'Used $sessions sessions ago',
-      one: 'Used 1 session ago',
+      other: '$sessions회 세션 전 사용됨',
+      one: '1회 세션 전 사용됨',
     );
     return '$_temp0';
   }
@@ -13726,12 +13722,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String friendCardBadges(Object totalAchievements) {
-    return '$totalAchievements badges';
+    return '배지 $totalAchievements개';
   }
 
   @override
   String friendCardDayStreak(Object currentStreak) {
-    return '$currentStreak day streak';
+    return '$currentStreak일 연속 기록';
   }
 
   @override
@@ -13742,7 +13738,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String friendCardSupport(Object appName) {
-    return '$appName Support';
+    return '$appName 고객지원';
   }
 
   @override
@@ -13750,7 +13746,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String friendCardWorkouts(Object totalWorkouts) {
-    return '$totalWorkouts workouts';
+    return '운동 $totalWorkouts회';
   }
 
   @override
@@ -14263,12 +14259,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String groupCreateSheetNoFriendsMatching(Object searchQuery) {
-    return 'No friends matching \"$searchQuery\"';
+    return '\"$searchQuery\"와 일치하는 친구가 없습니다';
   }
 
   @override
   String groupCreateSheetSelectFriendsSelected(Object length) {
-    return 'Select Friends ($length selected)';
+    return '친구 선택 ($length명 선택됨)';
   }
 
   @override
@@ -14577,12 +14573,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String gymEquipmentSheetSaveItems(Object length) {
-    return 'Save $length Items';
+    return '항목 $length개 저장';
   }
 
   @override
   String gymEquipmentSheetSelected(Object length) {
-    return '$length selected';
+    return '$length개 선택됨';
   }
 
   @override
@@ -14764,12 +14760,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String habitProgressHeaderComplete(Object percentage) {
-    return '$percentage% complete';
+    return '$percentage% 완료';
   }
 
   @override
   String habitProgressHeaderOf(Object total) {
-    return 'of $total';
+    return '$total 중';
   }
 
   @override
@@ -14948,7 +14944,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String habitsTileCardMore(Object remainingCount) {
-    return '+$remainingCount more';
+    return '+$remainingCount개 더보기';
   }
 
   @override
@@ -15624,7 +15620,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String heroFastingCardHM(Object hours, Object mins) {
-    return '${hours}h ${mins}m';
+    return '$hours시간 $mins분';
   }
 
   @override
@@ -15632,12 +15628,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String heroFastingCardOfHGoal(Object targetHours) {
-    return 'of ${targetHours}h goal';
+    return '목표 $targetHours시간 중';
   }
 
   @override
   String heroFastingCardProtocol(Object defaultProtocol) {
-    return '$defaultProtocol Protocol';
+    return '$defaultProtocol 프로토콜';
   }
 
   @override
@@ -15808,7 +15804,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get heroWorkoutCardPreview => '미리보기';
 
   @override
-  String get heroWorkoutCardQuick => 'Quick';
+  String get heroWorkoutCardQuick => '빠른 운동';
 
   @override
   String get heroWorkoutCardQuickWorkout => 'QUICK 운동';
@@ -16006,35 +16002,31 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeEmptyCustomExercises_v1 =>
-      'No custom exercises yet. Build your own and add them to any workout.';
+      '아직 맞춤형 운동이 없습니다. 직접 만들어 운동에 추가해보세요.';
 
   @override
   String get homeEmptyCustomExercises_v2 =>
-      'Custom exercise library is empty. Create your first move.';
+      '맞춤형 운동 라이브러리가 비어 있습니다. 첫 번째 운동을 만들어보세요.';
 
   @override
   String get homeEmptyCustomExercises_v3 =>
-      'Nothing here yet. Add an exercise that\'s not in the main library.';
+      '아직 아무것도 없습니다. 기본 라이브러리에 없는 운동을 추가해보세요.';
 
   @override
   String get homeEmptyCustomExercises_v4 =>
-      'No custom exercises. Build one and it\'ll show up in search.';
+      '맞춤형 운동이 없습니다. 하나를 만들면 검색 결과에 나타납니다.';
 
   @override
-  String get homeEmptyFasting_v1 =>
-      'No fasting sessions started. Choose a protocol to begin.';
+  String get homeEmptyFasting_v1 => '시작된 단식 세션이 없습니다. 프로토콜을 선택하여 시작하세요.';
 
   @override
-  String get homeEmptyFasting_v2 =>
-      'Fasting tracker is empty. Start a session when you\'re ready.';
+  String get homeEmptyFasting_v2 => '단식 추적기가 비어 있습니다. 준비되면 세션을 시작하세요.';
 
   @override
-  String get homeEmptyFasting_v3 =>
-      'Nothing logged yet. Pick a window and start the clock.';
+  String get homeEmptyFasting_v3 => '아직 기록된 내용이 없습니다. 시간대를 선택하고 타이머를 시작하세요.';
 
   @override
-  String get homeEmptyFasting_v4 =>
-      'No fasting data. Tap to start your first session.';
+  String get homeEmptyFasting_v4 => '단식 데이터가 없습니다. 탭하여 첫 번째 세션을 시작하세요.';
 
   @override
   String get homeEmptyFavorites_v1 => '아직 즐겨찾기가 없어요. 운동이나 루틴에 하트를 눌러 저장하세요.';
@@ -16049,52 +16041,45 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyFavorites_v4 => '운동 옆의 하트를 탭하여 여기에 추가하세요.';
 
   @override
-  String get homeEmptyFriends_v1 =>
-      'No connections yet. Invite a friend to train together.';
+  String get homeEmptyFriends_v1 => '아직 연결된 친구가 없습니다. 친구를 초대해 함께 운동하세요.';
 
   @override
-  String get homeEmptyFriends_v2 =>
-      'Friends list is empty. Accountability is a real thing.';
+  String get homeEmptyFriends_v2 => '친구 목록이 비어 있습니다. 서로의 운동을 독려해보세요.';
 
   @override
-  String get homeEmptyFriends_v3 =>
-      'Nobody here yet. Share your link to grow your circle.';
+  String get homeEmptyFriends_v3 => '아직 아무도 없습니다. 링크를 공유하여 친구를 늘려보세요.';
 
   @override
   String get homeEmptyFriends_v4 =>
-      'No friends added. Working out alongside someone helps — add one.';
+      '추가된 친구가 없습니다. 누군가와 함께 운동하면 큰 도움이 됩니다. 친구를 추가해보세요.';
 
   @override
   String get homeEmptyGymProfiles_v1 =>
-      'No gym profiles. Add your equipment so workouts fit your setup.';
+      '헬스장 프로필이 없습니다. 장비를 추가하여 운동을 설정에 맞게 조정하세요.';
 
   @override
   String get homeEmptyGymProfiles_v2 =>
-      'Gym profile empty. Tell us your equipment once — we\'ll use it every time.';
+      '헬스장 프로필이 비어 있습니다. 장비를 한 번만 알려주시면 매번 반영해 드립니다.';
 
   @override
   String get homeEmptyGymProfiles_v3 =>
-      'No setup saved. Add a gym profile to get tailored workouts.';
+      '저장된 설정이 없습니다. 헬스장 프로필을 추가하여 맞춤형 운동을 받아보세요.';
 
   @override
   String get homeEmptyGymProfiles_v4 =>
-      'Profile empty. Configure your equipment and let the AI do the rest.';
+      '프로필이 비어 있습니다. 장비를 구성하면 나머지는 AI가 알아서 처리합니다.';
 
   @override
-  String get homeEmptyHabits_v1 =>
-      'No habits set up. Add one small daily habit to start.';
+  String get homeEmptyHabits_v1 => '설정된 습관이 없습니다. 작은 일일 습관 하나를 추가하여 시작해보세요.';
 
   @override
-  String get homeEmptyHabits_v2 =>
-      'Habit tracker empty. Build one habit and make it automatic.';
+  String get homeEmptyHabits_v2 => '습관 추적기가 비어 있습니다. 습관 하나를 만들어 자동화해보세요.';
 
   @override
-  String get homeEmptyHabits_v3 =>
-      'Nothing tracked yet. Start with one habit you can do every day.';
+  String get homeEmptyHabits_v3 => '아직 추적 중인 내용이 없습니다. 매일 할 수 있는 습관 하나로 시작하세요.';
 
   @override
-  String get homeEmptyHabits_v4 =>
-      'No habits active. Small daily actions compound into big results.';
+  String get homeEmptyHabits_v4 => '활성화된 습관이 없습니다. 작은 일일 행동이 모여 큰 결과를 만듭니다.';
 
   @override
   String get homeEmptyHistory_v1 => '아직 운동 기록이 없어요. 하나를 완료하고 기록을 시작하세요.';
@@ -16109,20 +16094,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyHistory_v4 => '기록이 비어있다는 건 이제 시작이라는 뜻이죠. 멋진 기록을 만들어 보세요.';
 
   @override
-  String get homeEmptyJournal_v1 =>
-      'No journal entries. Write down today\'s win, however small.';
+  String get homeEmptyJournal_v1 => '저널 항목이 없습니다. 작더라도 오늘의 성취를 기록해보세요.';
 
   @override
   String get homeEmptyJournal_v2 =>
-      'Journal is empty. Document your journey — you\'ll be glad you did.';
+      '저널이 비어 있습니다. 여정을 기록해보세요. 나중에 큰 도움이 될 것입니다.';
 
   @override
-  String get homeEmptyJournal_v3 =>
-      'Nothing written yet. Your first entry starts here.';
+  String get homeEmptyJournal_v3 => '아직 작성된 내용이 없습니다. 첫 번째 기록을 여기서 시작하세요.';
 
   @override
-  String get homeEmptyJournal_v4 =>
-      'No entries. Grab 2 minutes and write something honest.';
+  String get homeEmptyJournal_v4 => '항목이 없습니다. 2분만 투자해서 솔직한 기록을 남겨보세요.';
 
   @override
   String get homeEmptyMeasurements_v1 =>
@@ -16175,35 +16157,31 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeEmptyPlans_v1 =>
-      'No plan yet. Let the AI build one around your schedule and goals.';
+      '아직 계획이 없습니다. AI가 당신의 일정과 목표에 맞춰 계획을 세우게 하세요.';
 
   @override
-  String get homeEmptyPlans_v2 =>
-      'Plans empty. Generate a personalized training plan to get started.';
+  String get homeEmptyPlans_v2 => '계획이 비어 있습니다. 맞춤형 훈련 계획을 생성하여 시작해보세요.';
 
   @override
-  String get homeEmptyPlans_v3 =>
-      'Nothing set up yet. Create a plan and stick to it.';
+  String get homeEmptyPlans_v3 => '아직 설정된 내용이 없습니다. 계획을 세우고 꾸준히 실천해보세요.';
 
   @override
   String get homeEmptyPlans_v4 =>
-      'No plan active. Start one to stop guessing what to do each day.';
+      '활성화된 계획이 없습니다. 계획을 시작하여 매일 무엇을 할지 고민하는 시간을 줄이세요.';
 
   @override
   String get homeEmptyPrograms_v1 =>
-      'No active program. Browse programs to find your next goal.';
+      '활성화된 프로그램이 없습니다. 프로그램을 둘러보고 다음 목표를 찾아보세요.';
 
   @override
-  String get homeEmptyPrograms_v2 =>
-      'Programs give your training structure. Pick one to start.';
+  String get homeEmptyPrograms_v2 => '프로그램은 훈련에 체계를 더해줍니다. 하나를 선택해 시작해보세요.';
 
   @override
   String get homeEmptyPrograms_v3 =>
-      'Nothing running yet. Start a program to unlock weekly plans.';
+      '아직 진행 중인 내용이 없습니다. 프로그램을 시작하여 주간 계획을 잠금 해제하세요.';
 
   @override
-  String get homeEmptyPrograms_v4 =>
-      'No program active. Choose one that matches where you are.';
+  String get homeEmptyPrograms_v4 => '활성화된 프로그램이 없습니다. 현재 상태에 맞는 프로그램을 선택하세요.';
 
   @override
   String get homeEmptyRecipes_v1 => '아직 레시피가 없어요. 라이브러리를 둘러보거나 코치에게 물어보세요.';
@@ -16219,35 +16197,33 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeEmptyRecovery_v1 =>
-      'No recovery data. Log sleep, HRV, or soreness to get a score.';
+      '회복 데이터가 없습니다. 수면, HRV 또는 근육통을 기록하여 점수를 확인하세요.';
 
   @override
   String get homeEmptyRecovery_v2 =>
-      'Recovery tracking is empty. Connect a wearable or log manually.';
+      '회복 추적기가 비어 있습니다. 웨어러블 기기를 연결하거나 직접 기록하세요.';
 
   @override
   String get homeEmptyRecovery_v3 =>
-      'Nothing tracked yet. Recovery data helps you train smarter.';
+      '아직 추적 중인 내용이 없습니다. 회복 데이터는 더 스마트하게 훈련하는 데 도움이 됩니다.';
 
   @override
   String get homeEmptyRecovery_v4 =>
-      'Recovery empty. Add today\'s data to protect your next session.';
+      '회복 데이터가 비어 있습니다. 오늘의 데이터를 추가하여 다음 세션을 준비하세요.';
 
   @override
-  String get homeEmptyScores_v1 =>
-      'No scores yet. Log a workout to generate your first readiness score.';
+  String get homeEmptyScores_v1 => '아직 점수가 없습니다. 운동을 기록하여 첫 번째 준비도 점수를 생성하세요.';
 
   @override
-  String get homeEmptyScores_v2 =>
-      'Scores appear after you start logging data. Keep at it.';
+  String get homeEmptyScores_v2 => '점수는 데이터를 기록하기 시작하면 나타납니다. 꾸준히 기록해보세요.';
 
   @override
   String get homeEmptyScores_v3 =>
-      'Nothing scored yet. Complete a session to see your first rating.';
+      '아직 점수가 매겨지지 않았습니다. 세션을 완료하여 첫 번째 평가를 확인하세요.';
 
   @override
   String get homeEmptyScores_v4 =>
-      'Score empty. More data means sharper insights — start logging.';
+      '점수가 비어 있습니다. 데이터가 많을수록 더 정확한 통찰력을 얻을 수 있습니다. 기록을 시작하세요.';
 
   @override
   String get homeEmptySleep_v1 => '수면 데이터가 없어요. 웨어러블을 연결하거나 수동으로 기록하세요.';
@@ -16262,36 +16238,29 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptySleep_v4 => '수면 데이터가 부족해요. 기록해 주시면 회복 점수에 반영해 드릴게요.';
 
   @override
-  String get homeEmptyTrends_v1 =>
-      'No trends yet. Log consistently for 7 days to see patterns.';
+  String get homeEmptyTrends_v1 => '아직 트렌드가 없습니다. 7일 동안 꾸준히 기록하여 패턴을 확인해보세요.';
 
   @override
   String get homeEmptyTrends_v2 =>
-      'Trends need data. Keep logging and graphs will fill in.';
+      '트렌드를 보려면 데이터가 필요합니다. 계속 기록하면 그래프가 채워질 것입니다.';
 
   @override
-  String get homeEmptyTrends_v3 =>
-      'Nothing to show yet. Come back after a week of tracking.';
+  String get homeEmptyTrends_v3 => '아직 보여줄 내용이 없습니다. 일주일간 추적한 후 다시 확인해보세요.';
 
   @override
-  String get homeEmptyTrends_v4 =>
-      'Trend view empty. Consistency unlocks this — start logging daily.';
+  String get homeEmptyTrends_v4 => '트렌드 보기가 비어 있습니다. 꾸준함이 핵심입니다. 매일 기록을 시작하세요.';
 
   @override
-  String get homeEmptyVitals_v1 =>
-      'No vitals logged. Connect a wearable or enter them manually.';
+  String get homeEmptyVitals_v1 => '기록된 활력 징후가 없습니다. 웨어러블 기기를 연결하거나 직접 입력하세요.';
 
   @override
-  String get homeEmptyVitals_v2 =>
-      'Vitals tracking empty. Add a data point to start.';
+  String get homeEmptyVitals_v2 => '활력 징후 추적기가 비어 있습니다. 데이터 포인트를 추가하여 시작하세요.';
 
   @override
-  String get homeEmptyVitals_v3 =>
-      'Nothing here yet. Log resting HR, HRV, or blood pressure.';
+  String get homeEmptyVitals_v3 => '아직 아무것도 없습니다. 안정 시 심박수, HRV 또는 혈압을 기록해보세요.';
 
   @override
-  String get homeEmptyVitals_v4 =>
-      'No vitals data. Connect your wearable to auto-sync.';
+  String get homeEmptyVitals_v4 => '활력 징후 데이터가 없습니다. 웨어러블 기기를 연결하여 자동 동기화하세요.';
 
   @override
   String get homeEmptyWater_v1 => '오늘 물을 기록하지 않았어요. 첫 잔을 마시고 기록하세요.';
@@ -16303,8 +16272,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeEmptyWater_v3 => '아직 기록이 없네요. 오늘 하루 수분 섭취를 시작해 보세요.';
 
   @override
-  String get homeEmptyWater_v4 =>
-      'No water logged. Stay ahead of thirst — log now.';
+  String get homeEmptyWater_v4 => '수분 섭취 기록이 없습니다. 갈증을 느끼기 전에 지금 기록하세요.';
 
   @override
   String get homeEmptyWorkout_v1 => '아직 운동 기록이 없어요. 탭하여 오늘의 세션을 생성하세요.';
@@ -16637,8 +16605,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeStreak30Day_v2 => '한 달 달성. 이제 완벽한 습관이 되었네요.';
 
   @override
-  String get homeStreak30Day_v3 =>
-      '30-day streak! Most people quit by now — not you.';
+  String get homeStreak30Day_v3 => '30일 연속 달성! 대부분은 이전에 포기하지만, 당신은 해냈습니다.';
 
   @override
   String get homeStreak30Day_v4 => '한 달간의 꾸준함. 정말 대단합니다.';
@@ -16719,15 +16686,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeTip_breathing_during_lifts =>
-      'Exhale on the hard part, inhale on the easy part. Brace your core throughout.';
+      '힘든 부분에서 숨을 내뱉고, 쉬운 부분에서 들이마시세요. 운동 내내 코어에 힘을 주세요.';
 
   @override
   String get homeTip_caffeine_timing =>
-      'Caffeine peaks 45–60 min after drinking. Time it before your session.';
+      '카페인은 섭취 후 45~60분 뒤에 효과가 최고조에 달합니다. 운동 전에 맞춰 섭취하세요.';
 
   @override
   String get homeTip_cardio_and_strength =>
-      'Cardio doesn\'t kill gains if you\'re eating enough and not overdoing volume.';
+      '충분한 영양을 섭취하고 과도하게 하지 않는다면 유산소 운동이 근성장을 방해하지 않습니다.';
 
   @override
   String get homeTip_cold_exposure =>
@@ -16739,67 +16706,65 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeTip_compound_lifts =>
-      'Squat, hinge, push, pull, carry. Master those five and you\'ve covered 80%.';
+      '스쿼트, 힌지, 푸시, 풀, 캐리. 이 다섯 가지만 마스터해도 80%는 해결됩니다.';
 
   @override
   String get homeTip_consistency_beats_perfection =>
-      'Showing up at 70% is better than skipping because you can\'t give 100%.';
+      '100%를 할 수 없다고 포기하는 것보다 70%라도 꾸준히 하는 것이 훨씬 낫습니다.';
 
   @override
   String get homeTip_core_in_every_lift =>
-      'Your core is working on every compound movement. You don\'t need 20 minutes of crunches.';
+      '모든 복합 운동에서 코어는 작동합니다. 20분 동안 크런치만 할 필요는 없습니다.';
 
   @override
   String get homeTip_creatine_basics =>
-      'Creatine monohydrate is the most studied supplement in sports science. 3–5g daily works.';
+      '크레아틴 모노하이드레이트는 스포츠 과학에서 가장 많이 연구된 보충제입니다. 매일 3~5g이면 충분합니다.';
 
   @override
-  String get homeTip_deload_week =>
-      'Every 4–6 weeks, cut volume by 40%. Your body will come back stronger.';
+  String get homeTip_deload_week => '4~6주마다 운동량을 40% 줄이세요. 몸이 더 강해져서 돌아올 것입니다.';
 
   @override
   String get homeTip_eat_before_training =>
-      'Training fasted can work, but a small meal 60–90 min before helps most people perform better.';
+      '공복 운동도 효과가 있지만, 운동 60~90분 전 가벼운 식사는 운동 수행 능력을 높여줍니다.';
 
   @override
   String get homeTip_eccentric_focus =>
-      'The lowering phase is where most muscle damage (and growth) happens. Control it.';
+      '근육 손상(및 성장)의 대부분은 무게를 내리는 단계에서 일어납니다. 이 과정을 통제하세요.';
 
   @override
   String get homeTip_fiber_and_gut =>
-      '30g of fiber a day keeps energy steady and reduces cravings. Most people get 15.';
+      '하루 30g의 식이섬유는 에너지를 일정하게 유지하고 식탐을 줄여줍니다. 대부분은 15g 정도만 섭취합니다.';
 
   @override
   String get homeTip_form_over_weight =>
-      'Ego lifts with bad form build injury, not muscle. Dial in the movement first.';
+      '잘못된 자세로 무리하게 드는 무게는 근육이 아닌 부상을 키웁니다. 먼저 정확한 동작을 익히세요.';
 
   @override
-  String get homeTip_grip_strength =>
-      'Grip strength predicts longevity better than almost any other metric. Train it.';
+  String get homeTip_grip_strength => '악력은 다른 어떤 지표보다 장수를 잘 예측합니다. 꾸준히 단련하세요.';
 
   @override
   String get homeTip_hydration_basics =>
-      'Drink half your bodyweight in ounces daily. Add more on training days.';
+      '매일 체중(온스 기준)의 절반만큼 물을 마시세요. 운동하는 날에는 더 많이 마셔야 합니다.';
 
   @override
   String get homeTip_meal_timing_simple =>
-      'Eat mostly whole foods, hit your protein, sleep enough. Most of the rest is noise.';
+      '자연식 위주로 식사하고, 단백질을 챙기며, 충분히 주무세요. 나머지는 부차적인 요소일 뿐입니다.';
 
   @override
   String get homeTip_mind_muscle_connection =>
-      'Slow down and feel the muscle working. It\'s not just about moving weight.';
+      '천천히 움직이며 근육의 움직임에 집중하세요. 단순히 무게를 옮기는 것이 전부가 아닙니다.';
 
   @override
   String get homeTip_mobility_daily =>
-      '10 minutes of mobility work daily beats a 60-minute session once a week.';
+      '매주 한 번 60분 운동하는 것보다 매일 10분씩 가동성 훈련을 하는 것이 훨씬 효과적입니다.';
 
   @override
   String get homeTip_no_junk_volume =>
-      '10 hard, focused sets beat 20 half-hearted ones. Quality over quantity.';
+      '설렁설렁하는 20세트보다 집중해서 하는 10세트가 낫습니다. 양보다 질이 중요합니다.';
 
   @override
   String get homeTip_omega3_basics =>
-      '1–2g EPA+DHA daily reduces inflammation and supports joint health.';
+      '매일 1~2g의 EPA+DHA 섭취는 염증을 줄이고 관절 건강을 돕습니다.';
 
   @override
   String get homeTip_periodization =>
@@ -16807,11 +16772,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeTip_progressive_overload =>
-      'Add a little more weight or one more rep each week. That\'s how you grow.';
+      '매주 무게를 조금씩 늘리거나 횟수를 한 번 더 해보세요. 그것이 성장의 비결입니다.';
 
   @override
   String get homeTip_protein_per_meal =>
-      'Aim for 30–40g of protein per meal. Spreading it out beats one big dose.';
+      '끼니당 30~40g의 단백질 섭취를 목표로 하세요. 한 번에 몰아 먹는 것보다 나누어 먹는 것이 좋습니다.';
 
   @override
   String get homeTip_protein_sources_vary =>
@@ -16819,11 +16784,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeTip_rate_of_perceived_exertion =>
-      'Rate your effort 1–10. Staying between 7–8 most sessions is the sweet spot.';
+      '운동 강도를 1~10으로 평가해보세요. 대부분의 세션에서 7~8을 유지하는 것이 가장 좋습니다.';
 
   @override
   String get homeTip_rest_days_grow_muscle =>
-      'Rest days aren\'t laziness — they\'re when the adaptation actually happens.';
+      '휴식일은 게으름이 아닙니다. 신체가 실제로 적응하고 성장하는 시간입니다.';
 
   @override
   String get homeTip_scale_not_everything =>
@@ -16831,15 +16796,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeTip_set_rep_ranges =>
-      '1–5 reps builds strength. 6–12 builds size. 12–20 builds endurance. All matter.';
+      '1~5회는 근력, 6~12회는 근비대, 12~20회는 근지구력을 키워줍니다. 모두 중요합니다.';
 
   @override
-  String get homeTip_sleep_for_recovery =>
-      'Your muscles don\'t grow during the workout — they grow while you sleep.';
+  String get homeTip_sleep_for_recovery => '근육은 운동할 때가 아니라 잠잘 때 성장합니다.';
 
   @override
   String get homeTip_sodium_and_water =>
-      'Salt isn\'t the enemy — it helps with hydration and performance. Don\'t fear it.';
+      '나트륨은 적이 아닙니다. 수분 보충과 운동 수행 능력을 돕습니다. 두려워하지 마세요.';
 
   @override
   String get homeTip_split_options =>
@@ -16847,27 +16811,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeTip_stress_and_recovery =>
-      'High stress = high cortisol = slower recovery. Manage the whole picture.';
+      '높은 스트레스는 높은 코르티솔 수치를 유발해 회복을 더디게 합니다. 전체적인 관리가 필요합니다.';
 
   @override
   String get homeTip_tempo_training =>
       '3-0-1 템포(내릴 때 3초, 멈춤 없이, 올릴 때 1초)로 운동 자극을 다르게 느껴보세요.';
 
   @override
-  String get homeTip_track_to_progress =>
-      'If you\'re not tracking it, you\'re not managing it. Log your sets.';
+  String get homeTip_track_to_progress => '기록하지 않으면 관리할 수 없습니다. 세트를 기록하세요.';
 
   @override
   String get homeTip_vitamin_d =>
-      'Most people are deficient in vitamin D. 1000–2000 IU daily is a safe baseline.';
+      '대부분의 사람들은 비타민 D가 부족합니다. 매일 1000~2000 IU 섭취가 안전한 기준입니다.';
 
   @override
-  String get homeTip_walk_after_meals =>
-      'A 10-minute walk after eating can cut your blood sugar spike by 30%.';
+  String get homeTip_walk_after_meals => '식후 10분 걷기는 혈당 스파이크를 30%까지 낮출 수 있습니다.';
 
   @override
-  String get homeTip_warm_up_matters =>
-      '5 minutes of movement prep makes every set safer and stronger.';
+  String get homeTip_warm_up_matters => '5분의 준비 운동이 모든 세트를 더 안전하고 강력하게 만듭니다.';
 
   @override
   String get homeTip_zone2_cardio =>
@@ -17296,7 +17257,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String hydrationSummaryBlockGal(Object gallons, Object goalGallons) {
-    return '($gallons / $goalGallons gal)';
+    return '($gallons / $goalGallons 갤런)';
   }
 
   @override
@@ -18395,12 +18356,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String inventoryScreenHM(Object hours, Object minutes) {
-    return '${hours}h ${minutes}m';
+    return '$hours시간 $minutes분';
   }
 
   @override
   String inventoryScreenHMRemaining(Object hours, Object minutes) {
-    return '${hours}h ${minutes}m remaining';
+    return '$hours시간 $minutes분 남음';
   }
 
   @override
@@ -18410,7 +18371,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String inventoryScreenToClaim(Object pendingCount) {
-    return '$pendingCount to claim';
+    return '$pendingCount개 수령 가능';
   }
 
   @override
@@ -22051,7 +22012,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String moodPickerCardGeneratingYourWorkout2(Object label) {
-    return 'Generating your $label workout...';
+    return '$label 운동을 생성 중입니다...';
   }
 
   @override
@@ -22068,12 +22029,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String moodPickerCardStepOf(Object currentStep, Object totalSteps) {
-    return 'Step $currentStep of $totalSteps';
+    return '$currentStep단계 / $totalSteps단계';
   }
 
   @override
   String moodPickerCardStepOf2(Object currentStep, Object totalSteps) {
-    return 'Step $currentStep of $totalSteps';
+    return '$currentStep단계 / $totalSteps단계';
   }
 
   @override
@@ -22937,7 +22898,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String neatActivityCardH(Object activeHours) {
-    return '${activeHours}h';
+    return '$activeHours시간';
   }
 
   @override
@@ -23258,12 +23219,12 @@ class AppLocalizationsKo extends AppLocalizations {
     Object daysPerWeek,
     Object duration,
   ) {
-    return '$daysPerWeek days/week • $duration';
+    return '주 $daysPerWeek회 • $duration';
   }
 
   @override
   String netflixExercisesTabPartExerciseListCardFlexible(Object duration) {
-    return 'Flexible • $duration';
+    return '유연함 • $duration';
   }
 
   @override
@@ -24001,7 +23962,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — 친구';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -28618,7 +28579,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String quickStartCardInDays(Object daysUntilNext) {
-    return 'In $daysUntilNext days';
+    return '$daysUntilNext일 후';
   }
 
   @override
@@ -28626,7 +28587,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String quickStartCardNext(Object name) {
-    return 'Next: $name';
+    return '다음: $name';
   }
 
   @override
@@ -30258,7 +30219,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String recipeHistoryScreenScheduleSNowUse(Object schedulesUsingRecipeCount) {
-    return '$schedulesUsingRecipeCount schedule(s) now use the reverted version';
+    return '$schedulesUsingRecipeCount개의 스케줄이 현재 되돌린 버전을 사용 중입니다.';
   }
 
   @override
@@ -31356,7 +31317,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String reportInjuryScreenFailedToReportInjury(Object e) {
-    return 'Failed to report injury: $e';
+    return '부상 보고 실패: $e';
   }
 
   @override
@@ -31616,12 +31577,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String requestRefundScreenPer(Object _billingPeriod) {
-    return 'Per $_billingPeriod';
+    return '$_billingPeriod당';
   }
 
   @override
   String requestRefundScreenWeHaveReceivedYour(Object planName) {
-    return 'We have received your refund request for $planName';
+    return '$planName에 대한 환불 요청이 접수되었습니다.';
   }
 
   @override
@@ -31775,10 +31736,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get restTimerOverlayLog1rm => '1RM 기록';
 
   @override
-  String get restTimerOverlayNextSet => 'NEXT SET';
+  String get restTimerOverlayNextSet => '다음 세트';
 
   @override
-  String get restTimerOverlayNextUp => 'NEXT UP';
+  String get restTimerOverlayNextUp => '다음 운동';
 
   @override
   String get restTimerOverlayRateLastSet => '마지막 세트 평가';
@@ -32302,7 +32263,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scoreBreakdownScoreBreakdown => '점수 분석';
 
   @override
-  String get scoreBreakdownStrength => 'Strength';
+  String get scoreBreakdownStrength => '근력';
 
   @override
   String get scoreChangeAnnouncementGotIt => '확인';
@@ -32441,7 +32402,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get scoreExplainFriedFoodsProcessedMeats =>
-      'Fried foods, processed meats, sugary drinks, refined seed oils, packaged snacks.';
+      '튀긴 음식, 가공육, 당분이 많은 음료, 정제된 씨앗유, 포장된 간식.';
 
   @override
   String get scoreExplainGlycemicLoadCombines =>
@@ -33239,7 +33200,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsAppleHealth => 'Apple Health';
 
   @override
-  String get settingsBeastMode => 'Beast Mode';
+  String get settingsBeastMode => '비스트 모드';
 
   @override
   String settingsCardAvoided(Object length) {
@@ -33295,17 +33256,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String settingsCardPartAccentColorGridLvl(Object unlockLevel) {
-    return 'Lvl $unlockLevel';
+    return '레벨 $unlockLevel';
   }
 
   @override
   String settingsCardPartAccentColorGridSelected(Object length) {
-    return '$length selected';
+    return '$length개 선택됨';
   }
 
   @override
   String settingsCardPartAccentColorGridUnlocksAtLevelKeep(Object unlockLevel) {
-    return 'Unlocks at Level $unlockLevel — keep going!';
+    return '레벨 $unlockLevel에서 잠금 해제됩니다 — 계속 힘내세요!';
   }
 
   @override
@@ -34356,12 +34317,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String socialScreenPartMessagesScreenGroupCreated(Object name) {
-    return 'Group \"$name\" created';
+    return '그룹 \"$name\" 생성됨';
   }
 
   @override
   String socialScreenPartMessagesScreenSelectMembersSelected(Object length) {
-    return 'Select members ($length selected)';
+    return '멤버 선택 ($length개 선택됨)';
   }
 
   @override
@@ -35102,10 +35063,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return '선택된 목표: $_selectedGoal 걸음';
   }
 
@@ -35113,8 +35071,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return '걸음 목표 슬라이더, $_minGoal에서 $_maxGoal 걸음 사이';
   }
@@ -35406,7 +35362,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String strengthOverviewCardUiMuscleGroups(Object length) {
-    return '$length muscle groups';
+    return '근육 그룹 $length개';
   }
 
   @override
@@ -35601,7 +35557,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return '제안 횟수 $used회를 모두 사용하셨습니다. 기존 기능에 투표해 주세요!';
   }
 
   @override
@@ -38116,17 +38072,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenAsOf(Object whenStr) {
-    return 'as of $whenStr';
+    return '$whenStr 기준';
   }
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Could not load VO2max.\\n$error';
+    return 'VO2max를 불러올 수 없습니다.\\n$error';
   }
 
   @override
   String vo2maxDetailScreenFitnessAge(Object fitnessAge) {
-    return 'Fitness age $fitnessAge';
+    return '신체 나이 $fitnessAge';
   }
 
   @override
@@ -38444,7 +38400,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String weekChangesCardMoreNewExercises(Object newExercises) {
-    return '+$newExercises more new exercises';
+    return '새로운 운동 $newExercises개 추가';
   }
 
   @override
@@ -38648,17 +38604,17 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String weeklyCheckinSheetPartRecommendationOptionCardGC(Object carbsG) {
-    return '${carbsG}g C';
+    return '${carbsG}g 탄수화물';
   }
 
   @override
   String weeklyCheckinSheetPartRecommendationOptionCardGF(Object fatG) {
-    return '${fatG}g F';
+    return '${fatG}g 지방';
   }
 
   @override
   String weeklyCheckinSheetPartRecommendationOptionCardGP(Object proteinG) {
-    return '${proteinG}g P';
+    return '${proteinG}g 단백질';
   }
 
   @override
@@ -39732,7 +39688,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutCompleteScreenWorkout(Object appName) {
-    return '$appName Workout';
+    return '$appName 운동';
   }
 
   @override
@@ -41415,7 +41371,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedAiInteractions => 'AI 상호작용';
 
   @override
-  String get workoutSummaryAdvancedAvgEffort => 'AVG EFFORT';
+  String get workoutSummaryAdvancedAvgEffort => '평균 노력도';
 
   @override
   String get workoutSummaryAdvancedAvgExercises => '평균 (운동)';
@@ -41481,10 +41437,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedHydration => '수분 섭취';
 
   @override
-  String get workoutSummaryAdvancedHydration2 => 'HYDRATION';
+  String get workoutSummaryAdvancedHydration2 => '수분 섭취';
 
   @override
-  String get workoutSummaryAdvancedIntensity => 'INTENSITY';
+  String get workoutSummaryAdvancedIntensity => '강도';
 
   @override
   String get workoutSummaryAdvancedIntensityAnalysis => '강도 분석';
@@ -41519,7 +41475,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedMuscleMapNotApplicable => '근육 지도를 사용할 수 없음';
 
   @override
-  String get workoutSummaryAdvancedMusclesHit => 'MUSCLES HIT';
+  String get workoutSummaryAdvancedMusclesHit => '자극 근육';
 
   @override
   String workoutSummaryAdvancedNewThisSession(Object length) {
@@ -41549,8 +41505,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedPerExerciseDeepDive => '운동별 상세 분석';
 
   @override
-  String get workoutSummaryAdvancedPerExerciseDeepDive2 =>
-      'PER-EXERCISE DEEP DIVE';
+  String get workoutSummaryAdvancedPerExerciseDeepDive2 => '운동별 상세 분석';
 
   @override
   String get workoutSummaryAdvancedPerformanceComparison => '성과 비교';
@@ -41559,7 +41514,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedPlan => '계획';
 
   @override
-  String get workoutSummaryAdvancedPlanAdherence => 'PLAN ADHERENCE';
+  String get workoutSummaryAdvancedPlanAdherence => '계획 준수율';
 
   @override
   String get workoutSummaryAdvancedPrev => '이전';
@@ -41577,7 +41532,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedRestAnalysis => '휴식 분석';
 
   @override
-  String get workoutSummaryAdvancedRestCompliance => 'REST COMPLIANCE';
+  String get workoutSummaryAdvancedRestCompliance => '휴식 준수율';
 
   @override
   String workoutSummaryAdvancedRir(Object rir) {
@@ -41593,10 +41548,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get workoutSummaryAdvancedSessionScore => 'SESSION SCORE';
+  String get workoutSummaryAdvancedSessionScore => '세션 점수';
 
   @override
-  String get workoutSummaryAdvancedSessionTimeline => 'SESSION TIMELINE';
+  String get workoutSummaryAdvancedSessionTimeline => '세션 타임라인';
 
   @override
   String get workoutSummaryAdvancedSet => '세트';
@@ -41626,7 +41581,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryAdvancedTiming => '타이밍';
 
   @override
-  String get workoutSummaryAdvancedTop1rm => 'TOP 1RM';
+  String get workoutSummaryAdvancedTop1rm => '최고 1RM';
 
   @override
   String get workoutSummaryAdvancedTotalRest => '총 휴식 시간';

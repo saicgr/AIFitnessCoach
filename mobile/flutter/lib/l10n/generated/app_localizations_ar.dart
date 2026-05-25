@@ -485,7 +485,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String activityShareCardLbs(Object absValue) {
-    return '$absValue lbs';
+    return '$absValue رطل';
   }
 
   @override
@@ -4028,11 +4028,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => 'اختر شخصية مدرب AI جديدة';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'استخدم $_customName';
   }
 
@@ -8723,12 +8719,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String emailSignInScreenSupportIsNowYour(Object appName) {
-    return '$appName Support is now your friend. Reach out anytime for help!';
+    return 'دعم $appName أصبح صديقك الآن. تواصل معنا في أي وقت للحصول على المساعدة!';
   }
 
   @override
   String emailSignInScreenWelcomeTo(Object appName) {
-    return 'Welcome to $appName!';
+    return 'مرحباً بك في $appName!';
   }
 
   @override
@@ -10801,12 +10797,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String exerciseScienceResearchScreenEveryWorkoutParameterIn(Object appName) {
-    return 'Every workout parameter in $appName is derived from peer-reviewed exercise science. Tap a paper to see details.';
+    return 'كل معيار تمرين في $appName مستمد من أبحاث علم الرياضة المراجعة من قبل الأقران. اضغط على ورقة بحثية لرؤية التفاصيل.';
   }
 
   @override
   String exerciseScienceResearchScreenHowUsesThis(Object appName) {
-    return 'How $appName uses this';
+    return 'كيف يستخدم $appName هذا';
   }
 
   @override
@@ -13528,7 +13524,7 @@ class AppLocalizationsAr extends AppLocalizations {
     Object fatG,
     Object proteinG,
   ) {
-    return '${proteinG}P · ${carbsG}C · ${fatG}F';
+    return '$proteinG بروتين · $carbsG كربوهيدرات · $fatG دهون';
   }
 
   @override
@@ -14138,7 +14134,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String friendCardSupport(Object appName) {
-    return '$appName Support';
+    return 'دعم $appName';
   }
 
   @override
@@ -17093,7 +17089,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String homeScreenUiRestoreTheOriginalLayout(Object appName) {
-    return 'Restore the original $appName layout';
+    return 'استعادة التخطيط الأصلي لـ $appName';
   }
 
   @override
@@ -24693,8 +24689,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — الأصدقاء';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
-    return 'مرحلة $stageNumber';
+  String nutrientRushGameS(Object _stageNumber) {
+    return 'S$_stageNumber';
   }
 
   @override
@@ -34619,7 +34615,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String settingsScreenExtWhyIBuilt(Object appName) {
-    return 'Why I built $appName';
+    return 'لماذا قمت ببناء $appName';
   }
 
   @override
@@ -34752,7 +34748,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String shareBodyAnalyzerSheetBodyAnalyzer(Object appName) {
-    return '@$appName · Body Analyzer';
+    return '@$appName · محلل الجسم';
   }
 
   @override
@@ -34882,12 +34878,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String shareWeeklySummarySheetMyWeek(Object appName, Object dateRange) {
-    return 'My $appName week — $dateRange';
+    return 'أسبوعي في $appName — $dateRange';
   }
 
   @override
   String shareWeeklySummarySheetMyWeeklyReport(Object appName) {
-    return 'My $appName Weekly Report';
+    return 'تقريري الأسبوعي في $appName';
   }
 
   @override
@@ -36117,10 +36113,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'الهدف المختار: $_selectedGoal خطوة';
   }
 
@@ -36128,8 +36121,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'شريط تمرير هدف الخطوات، من $_minGoal إلى $_maxGoal خطوة';
   }
@@ -36632,7 +36623,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return 'لقد استخدمت جميع اقتراحاتك البالغ عددها $used من أصل $used. صوّت على الميزات الموجودة بدلاً من ذلك!';
   }
 
   @override
@@ -40894,7 +40885,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workoutCompleteScreenWorkout(Object appName) {
-    return '$appName Workout';
+    return 'تمرين $appName';
   }
 
   @override
@@ -41516,7 +41507,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workoutHistoryImportScreenKg(Object lastWeightKg) {
-    return '$lastWeightKg kg';
+    return '$lastWeightKg كجم';
   }
 
   @override

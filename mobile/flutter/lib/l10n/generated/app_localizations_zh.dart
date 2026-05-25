@@ -124,7 +124,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get achievementsNoPersonalRecords => '暂无个人纪录';
 
   @override
-  String get achievementsPrs => 'PRs';
+  String get achievementsPrs => 'PR';
 
   @override
   String get achievementsRecentAchievements => '近期成就';
@@ -1302,7 +1302,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiCoachReportPr => 'PR';
 
   @override
-  String get aiCoachReportPrs => 'PRs';
+  String get aiCoachReportPrs => 'PR';
 
   @override
   String get aiCoachReportVolume => '训练总量';
@@ -2859,8 +2859,8 @@ class AppLocalizationsZh extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count activities',
-      one: '1 activity',
+      other: '$count 次活动',
+      one: '1 次活动',
     );
     return '$_temp0';
   }
@@ -2870,8 +2870,8 @@ class AppLocalizationsZh extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sessions',
-      one: '1 session',
+      other: '$count 次训练',
+      one: '1 次训练',
     );
     return '$_temp0';
   }
@@ -3859,11 +3859,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => '选择新的 AI 教练人设';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return '使用 $_customName';
   }
 
@@ -4331,7 +4327,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '(daysPerWeek)天/周 · (duration)';
   }
 
   @override
@@ -5409,7 +5405,7 @@ class AppLocalizationsZh extends AppLocalizations {
     Object lastUsedFormatted,
     Object usageCount,
   ) {
-    return 'Used (usageCount) times(lastUsedFormatted)\" : \"\")';
+    return '已使用 (usageCount) 次(lastUsedFormatted)\" : \"\")';
   }
 
   @override
@@ -8382,12 +8378,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String emailSignInScreenSupportIsNowYour(Object appName) {
-    return '$appName Support is now your friend. Reach out anytime for help!';
+    return '$appName 支持团队现在是您的好伙伴。随时联系我们获取帮助！';
   }
 
   @override
   String emailSignInScreenWelcomeTo(Object appName) {
-    return 'Welcome to $appName!';
+    return '欢迎来到 $appName！';
   }
 
   @override
@@ -10368,12 +10364,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String exerciseScienceResearchScreenEveryWorkoutParameterIn(Object appName) {
-    return 'Every workout parameter in $appName is derived from peer-reviewed exercise science. Tap a paper to see details.';
+    return '$appName 中的每个训练参数均源自同行评审的运动科学研究。点击论文查看详情。';
   }
 
   @override
   String exerciseScienceResearchScreenHowUsesThis(Object appName) {
-    return 'How $appName uses this';
+    return '$appName 如何使用这些研究';
   }
 
   @override
@@ -20674,24 +20670,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String medicalDisclaimerScreenByContinuingToUse(Object appName) {
-    return 'By continuing to use $appName, you acknowledge that you have read and understood this disclaimer.';
+    return '继续使用 $appName 即表示您已阅读并理解本免责声明。';
   }
 
   @override
   String medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(
     Object appName,
   ) {
-    return 'Physical exercise involves inherent risks. By using $appName, you acknowledge that you are voluntarily participating in physical activities and assume all risks associated with such activities, including but not limited to injury, illness, or death.';
+    return '体育锻炼存在固有风险。使用 $appName 即表示您承认您是自愿参加体育活动，并承担与此类活动相关的所有风险，包括但不限于受伤、疾病或死亡。';
   }
 
   @override
   String medicalDisclaimerScreenPleaseReadThisDisclaimer(Object appName) {
-    return 'Please read this disclaimer carefully before using $appName.';
+    return '在使用 $appName 前，请仔细阅读本免责声明。';
   }
 
   @override
   String medicalDisclaimerScreenProvidesAiGeneratedFitness(Object appName) {
-    return '$appName provides AI-generated fitness recommendations for informational and educational purposes only. The content provided by this app is not intended to be a substitute for professional medical advice, diagnosis, or treatment.';
+    return '$appName 提供的 AI 生成健身建议仅供参考和教育目的。本应用提供的内容不旨在替代专业的医疗建议、诊断或治疗。';
   }
 
   @override
@@ -23652,7 +23648,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — 好友';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -25610,7 +25606,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-confidence estimate\" : \"\")';
+    return '(置信度)-置信度估计\" : \"\")';
   }
 
   @override
@@ -32348,7 +32344,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') of (exerciseName)';
+    return ') / (exerciseName)';
   }
 
   @override
@@ -34627,10 +34623,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return '已选目标：$_selectedGoal 步';
   }
 
@@ -34638,8 +34631,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return '步数目标滑块，从 $_minGoal 到 $_maxGoal 步';
   }
@@ -35117,7 +35108,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return '你已使用 $used 个建议中的全部 $used 个。请改为对现有功能进行投票！';
   }
 
   @override
@@ -38376,7 +38367,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String weeklyRecapDialogValue(Object rank) {
-    return '#$rank';
+    return '第$rank名';
   }
 
   @override
@@ -38848,7 +38839,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — Zealova\\n(url)';
   }
 
   @override
@@ -39202,7 +39193,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutCompleteScreenWorkout(Object appName) {
-    return '$appName Workout';
+    return 'Zealova 训练';
   }
 
   @override
@@ -41838,12 +41829,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String xpHeroTileLv(Object level) {
-    return 'Lv $level';
+    return '等级 $level';
   }
 
   @override
   String xpHeroTileLv2(Object label, Object nextLevel) {
-    return 'Lv $nextLevel → $label';
+    return '等级 $nextLevel → $label';
   }
 
   @override
@@ -41877,12 +41868,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String xpLeaderboardScreenValue(Object rank) {
-    return '#$rank';
+    return '第$rank名';
   }
 
   @override
   String xpLeaderboardScreenValue2(Object rank) {
-    return '#$rank';
+    return '第$rank名';
   }
 
   @override

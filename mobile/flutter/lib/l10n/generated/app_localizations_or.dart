@@ -77,7 +77,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String accuracyFeedbackSnackbarCal(Object calories, Object displayName) {
-    return '$displayName — $calories cal';
+    return '$displayName — $calories କ୍ୟାଲୋରୀ';
   }
 
   @override
@@ -183,7 +183,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get actionChipsRowInfo => 'ସୂଚନା';
 
   @override
-  String get actionChipsRowLR => 'L/R';
+  String get actionChipsRowLR => 'ବାମ/ଡାହାଣ';
 
   @override
   String get actionChipsRowNote => 'ନୋଟ୍';
@@ -876,13 +876,13 @@ class AppLocalizationsOr extends AppLocalizations {
   String get aiCoachCoachNotifications => 'କୋଚ୍ ନୋଟିଫିକେସନ୍';
 
   @override
-  String get aiCoachCoachVoicePersonality => 'Coach Voice & Personality';
+  String get aiCoachCoachVoicePersonality => 'କୋଚ୍ ସ୍ୱର ଏବଂ ବ୍ୟକ୍ତିତ୍ୱ';
 
   @override
   String get aiCoachEveningCheckInFor => 'ଅଭ୍ୟାସ ପାଇଁ ସନ୍ଧ୍ୟା ଚେକ୍-ଇନ୍';
 
   @override
-  String get aiCoachFloatingAiChatBubble => 'Floating AI Chat Bubble';
+  String get aiCoachFloatingAiChatBubble => 'ଫ୍ଲୋଟିଂ AI ଚାଟ୍ ବବୁଲ୍';
 
   @override
   String get aiCoachGentle => 'ନମ୍ର';
@@ -1314,10 +1314,10 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଅଧା ତଥ୍ୟରୁ କାମ କରୁଛି — ଉତ୍ତର ସାଧାରଣ ହୋଇପାରେ।';
 
   @override
-  String get aiCoachMissedWorkoutNudge => 'Missed Workout Nudge';
+  String get aiCoachMissedWorkoutNudge => 'ମିସ୍ ହୋଇଥିବା ୱାର୍କଆଉଟ୍ ପାଇଁ ନଜ୍';
 
   @override
-  String get aiCoachNudgeIntensity => 'Nudge Intensity';
+  String get aiCoachNudgeIntensity => 'ନଜ୍ ତୀବ୍ରତା';
 
   @override
   String get aiCoachOff => 'ବନ୍ଦ';
@@ -1347,7 +1347,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String aiCoachReportCardS(Object sets) {
-    return '${sets}s';
+    return '$sets ସେଟ୍';
   }
 
   @override
@@ -1360,7 +1360,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଉତ୍କୃଷ୍ଟ ୱାର୍କଆଉଟ୍! ଏହି ଗତି ବଜାୟ ରଖନ୍ତୁ।';
 
   @override
-  String get aiCoachReportMusclesWorked => 'Muscles Worked';
+  String get aiCoachReportMusclesWorked => 'କାର୍ଯ୍ୟକ୍ଷମ ମାଂସପେଶୀ';
 
   @override
   String get aiCoachReportPr => 'PR';
@@ -1369,7 +1369,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get aiCoachReportPrs => 'PRs';
 
   @override
-  String get aiCoachReportVolume => 'Volume';
+  String get aiCoachReportVolume => 'ଭଲ୍ୟୁମ୍';
 
   @override
   String get aiCoachReportVsLast => 'vs ଗତ ଥର';
@@ -1383,7 +1383,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଫ୍ଲୋଟିଂ ଚାଟ୍ ବବୁଲ୍, ବିଶେଷ ବିଜ୍ଞପ୍ତି ଏବଂ ଗୋପନୀୟତା ନିୟନ୍ତ୍ରଣ ଦେଖାନ୍ତୁ';
 
   @override
-  String get aiCoachStreakCelebrations => 'Streak Celebrations';
+  String get aiCoachStreakCelebrations => 'ଷ୍ଟ୍ରିକ୍ ସେଲିବ୍ରେସନ୍';
 
   @override
   String get aiCoachTough => 'କଠିନ';
@@ -2256,7 +2256,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String avoidedExercisesScreenAvoidExercises(Object count) {
-    return 'Avoid $count exercises';
+    return '$count ଟି ବ୍ୟାୟାମ ଏଡ଼ାଇ ଚାଲନ୍ତୁ';
   }
 
   @override
@@ -2533,13 +2533,13 @@ class AppLocalizationsOr extends AppLocalizations {
   String get beastHeaderCardPowerUserToolkit => 'ପାୱାର୍ ୟୁଜର୍ ଟୁଲକିଟ୍';
 
   @override
-  String get beastModeAboutBeastMode => 'ABOUT BEAST MODE';
+  String get beastModeAboutBeastMode => 'BEAST MODE ବିଷୟରେ';
 
   @override
   String get beastModeAboutBeastModeSubtitle => 'ବିଲ୍ଡ ସୂଚନା ଏବଂ ନିୟନ୍ତ୍ରଣ';
 
   @override
-  String get beastModeAlgorithmInspector => 'ALGORITHM INSPECTOR';
+  String get beastModeAlgorithmInspector => 'ଆଲଗୋରିଦମ୍ ଇନ୍ସପେକ୍ଟର';
 
   @override
   String get beastModeAlgorithmInspectorSubtitle =>
@@ -2549,14 +2549,14 @@ class AppLocalizationsOr extends AppLocalizations {
   String get beastModeBeastMode => 'Beast Mode';
 
   @override
-  String get beastModeCustomizationLab => 'CUSTOMIZATION LAB';
+  String get beastModeCustomizationLab => 'କଷ୍ଟମାଇଜେସନ୍ ଲ୍ୟାବ୍';
 
   @override
   String get beastModeCustomizationLabSubtitle =>
       'ଉନ୍ନତ ରଙ୍ଗ ଏବଂ ଫଣ୍ଟ ନିୟନ୍ତ୍ରଣ';
 
   @override
-  String get beastModeDataAndSyncTools => 'DATA & SYNC TOOLS';
+  String get beastModeDataAndSyncTools => 'ଡାଟା ଏବଂ ସିଙ୍କ୍ ଟୁଲ୍ସ';
 
   @override
   String get beastModeDataAndSyncToolsSubtitle =>
@@ -2566,7 +2566,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get beastModePremium => 'ପ୍ରିମିୟମ୍';
 
   @override
-  String get beastModeRecoveryAndProgression => 'RECOVERY & PROGRESSION';
+  String get beastModeRecoveryAndProgression => 'ରିକଭରି ଏବଂ ପ୍ରଗ୍ରେସନ୍';
 
   @override
   String get beastModeRecoveryAndProgressionSubtitle =>
@@ -2586,14 +2586,14 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣ ପାୱାର ୟୁଜର୍ ଟୁଲକିଟ୍ ଅନଲକ୍ କରିଛନ୍ତି। ଆପଣଙ୍କ ୱାର୍କଆଉଟ୍ ପଛରେ ଥିବା ଆଲଗୋରିଦମ ଦେଖନ୍ତୁ।';
 
   @override
-  String get beastModeWorkoutAlgorithm => 'WORKOUT ALGORITHM';
+  String get beastModeWorkoutAlgorithm => 'ୱାର୍କଆଉଟ୍ ଆଲଗୋରିଦମ୍';
 
   @override
   String get beastModeWorkoutAlgorithmSubtitle =>
       'ୱାର୍କଆଉଟ୍ ଜେନେରେସନ୍ ଉପରେ ଗଭୀର ନିୟନ୍ତ୍ରଣ';
 
   @override
-  String get beastModeWorkoutTemplates => 'WORKOUT TEMPLATES';
+  String get beastModeWorkoutTemplates => 'ୱାର୍କଆଉଟ୍ ଟେମ୍ପଲେଟ୍';
 
   @override
   String get beastModeWorkoutTemplatesSubtitle =>
@@ -2919,7 +2919,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get cancelConfirmationWeDHateTo => 'ଆପଣ ଯାଆନ୍ତୁ ବୋଲି ଆମେ ଚାହୁଁନାହୁଁ';
 
   @override
-  String get cancelConfirmationWhatYouLlLose => 'What you\\\'ll lose';
+  String get cancelConfirmationWhatYouLlLose => 'ଆପଣ ଯାହା ହରାଇବେ';
 
   @override
   String get cancelConfirmationWhyAreYouThinking =>
@@ -3081,12 +3081,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String cardioHistoryScreenCal(Object calories) {
-    return '$calories cal';
+    return '$calories କ୍ୟାଲୋରୀ';
   }
 
   @override
   String cardioHistoryScreenM(Object log) {
-    return '$log m';
+    return '$log ମିନିଟ୍';
   }
 
   @override
@@ -3793,12 +3793,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String chatScreenPartMediaSendStatusFailedToConnect(Object e) {
-    return 'Failed to connect: $e';
+    return 'ସଂଯୋଗ କରିବାରେ ବିଫଳ: $e';
   }
 
   @override
   String chatScreenPartMediaSendStatusPeopleInQueue(Object currentQueueSize) {
-    return '$currentQueueSize people in queue';
+    return 'କ୍ୟୁରେ $currentQueueSize ଜଣ ଅଛନ୍ତି';
   }
 
   @override
@@ -3863,16 +3863,16 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣଙ୍କର ବ୍ୟକ୍ତିଗତ AI-ଚାଳିତ ଫିଟନେସ୍ କୋଚ୍। ୱାର୍କଆଉଟ୍, ପୁଷ୍ଟିକର ଖାଦ୍ୟ, ସୁସ୍ଥତା, କିମ୍ବା ଫିଟନେସ୍ ସମ୍ବନ୍ଧୀୟ ଯେକୌଣସି ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ। AI ବ୍ୟକ୍ତିଗତ ପରାମର୍ଶ ଦେବା ପାଇଁ ଆପଣଙ୍କ ଅଗ୍ରଗତିରୁ ଶିଖିଥାଏ।';
 
   @override
-  String get classicStatsTemplateCalories => 'CALORIES';
+  String get classicStatsTemplateCalories => 'କ୍ୟାଲୋରୀ';
 
   @override
-  String get classicStatsTemplateDuration => 'DURATION';
+  String get classicStatsTemplateDuration => 'ଅବଧି';
 
   @override
-  String get classicStatsTemplateExercises => 'EXERCISES';
+  String get classicStatsTemplateExercises => 'ବ୍ୟାୟାମ';
 
   @override
-  String get classicStatsTemplateVolume => 'VOLUME';
+  String get classicStatsTemplateVolume => 'ଭଲ୍ୟୁମ୍';
 
   @override
   String get coachAskAnything => 'ଯାହା ବି ପଚାରନ୍ତୁ…';
@@ -3889,14 +3889,14 @@ class AppLocalizationsOr extends AppLocalizations {
   String get coachDashboardActiveGoals => 'ସକ୍ରିୟ ଲକ୍ଷ୍ୟ';
 
   @override
-  String get coachDashboardBodyFat => 'Body Fat';
+  String get coachDashboardBodyFat => 'ଶରୀରର ଚର୍ବି';
 
   @override
   String get coachDashboardFailedToLoadDashboard =>
       'ଡ୍ୟାଶବୋର୍ଡ ଲୋଡ୍ କରିବାରେ ବିଫଳ';
 
   @override
-  String get coachDashboardReadiness => 'Readiness';
+  String get coachDashboardReadiness => 'ପ୍ରସ୍ତୁତି';
 
   @override
   String coachDashboardScreenValue(Object nutritionPct) {
@@ -3941,7 +3941,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get coachProfileCardSampleConversation => 'ନମୁନା ବାର୍ତ୍ତାଳାପ';
 
   @override
-  String get coachReviewApply => 'Apply';
+  String get coachReviewApply => 'ପ୍ରୟୋଗ କରନ୍ତୁ';
 
   @override
   String get coachReviewApplySwapComingWith =>
@@ -3954,10 +3954,10 @@ class AppLocalizationsOr extends AppLocalizations {
   String get coachReviewFullFeedback => 'ସମ୍ପୂର୍ଣ୍ଣ ମତାମତ';
 
   @override
-  String get coachReviewMacroBalance => 'Macro balance';
+  String get coachReviewMacroBalance => 'ମାକ୍ରୋ ବାଲାନ୍ସ';
 
   @override
-  String get coachReviewMicronutrientGaps => 'Micronutrient gaps';
+  String get coachReviewMicronutrientGaps => 'ଅଣୁପୁଷ୍ଟିକର ଅଭାବ';
 
   @override
   String get coachReviewNoReviewYetTap =>
@@ -3995,7 +3995,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get coachReviewTemplateCoachSReview => 'କୋଚ୍‌ଙ୍କ ସମୀକ୍ଷା';
 
   @override
-  String get coachReviewTemplateWorkoutReview => 'WORKOUT REVIEW';
+  String get coachReviewTemplateWorkoutReview => 'ୱାର୍କଆଉଟ୍ ସମୀକ୍ଷା';
 
   @override
   String get coachReviewWeLlNotifyYou =>
@@ -4008,13 +4008,13 @@ class AppLocalizationsOr extends AppLocalizations {
   String get coachSelectionAppearance => 'ଦୃଶ୍ୟ';
 
   @override
-  String get coachSelectionBuild => 'Build';
+  String get coachSelectionBuild => 'ତିଆରି କରନ୍ତୁ';
 
   @override
   String get coachSelectionCoachAce => 'Coach Ace';
 
   @override
-  String get coachSelectionCoachingStyle => 'Coaching style';
+  String get coachSelectionCoachingStyle => 'Coaching ଶୈଳୀ';
 
   @override
   String get coachSelectionCommunicationTone => 'କଥାବାର୍ତ୍ତାର ଶୈଳୀ';
@@ -4024,7 +4024,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣଙ୍କ ନିଜର କୋଚ୍ ତିଆରି କରନ୍ତୁ';
 
   @override
-  String get coachSelectionCustom => 'CUSTOM';
+  String get coachSelectionCustom => 'କଷ୍ଟମ୍';
 
   @override
   String get coachSelectionDesignACoachThat =>
@@ -4044,7 +4044,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଚାଲନ୍ତୁ! ଆଜି ସେହି ଗେନ୍‌ସ ହାସଲ କରିବାର ସମୟ! ଆପଣ 5-ଦିନର ଷ୍ଟ୍ରିକ୍‌ରେ ଅଛନ୍ତି ଏବଂ ମୁଁ ଆପଣଙ୍କୁ ଏହା ଭାଙ୍ଗିବାକୁ ଦେବି ନାହିଁ। କିଛି ଜାଦୁ କରିବାକୁ ପ୍ରସ୍ତୁତ କି?';
 
   @override
-  String get coachSelectionLook => 'Look';
+  String get coachSelectionLook => 'ଦେଖା';
 
   @override
   String get coachSelectionMotivationalEncouraging =>
@@ -4064,7 +4064,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣଙ୍କ ନିଜର କୋଚ୍ ତିଆରି କରନ୍ତୁ';
 
   @override
-  String get coachSelectionScreenEnergy => 'Energy';
+  String get coachSelectionScreenEnergy => 'ଶକ୍ତି';
 
   @override
   String get coachSelectionScreenHowTheyTalk => 'ସେମାନେ କିପରି କଥା ହୁଅନ୍ତି';
@@ -4080,11 +4080,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଏକ ନୂଆ AI କୋଚ୍ ପର୍ସନା ଚୟନ କରନ୍ତୁ';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return '$_customName ବ୍ୟବହାର କରନ୍ତୁ';
   }
 
@@ -4211,7 +4207,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String combinedHealthScreenHM(Object day, Object day1) {
-    return '${day}h ${day1}m';
+    return '$dayଘଣ୍ଟା $day1ମିନିଟ୍';
   }
 
   @override
@@ -4409,90 +4405,89 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get comingSoonStepsCountAndCalorie =>
-      'Steps count and calorie deficit tracking';
+      'ପାଦ ଗଣନା ଏବଂ କ୍ୟାଲୋରୀ ନିଅଣ୍ଟ ଟ୍ରାକିଂ';
 
   @override
   String get comingSoonStrengthAndVolumeCharts =>
-      'Strength and volume charts over time';
+      'ସମୟ ସହିତ ଶକ୍ତି ଏବଂ ଭଲ୍ୟୁମ୍ ଚାର୍ଟ';
 
   @override
   String get comingSoonTheseFeaturesAreIn =>
-      'These features are in development and will be available as toggleable home screen widgets soon.';
+      'ଏହି ଫିଚରଗୁଡ଼ିକ ବିକାଶଧୀନ ଅଛି ଏବଂ ଶୀଘ୍ର ହୋମ୍ ସ୍କ୍ରିନ୍ ୱିଜେଟ୍ ଭାବରେ ଉପଲବ୍ଧ ହେବ।';
 
   @override
   String get comingSoonTitle => 'ଶୀଘ୍ର ଆସୁଛି';
 
   @override
-  String get comingSoonTodaySIntakeVs =>
-      'Today\'s intake vs target at a glance';
+  String get comingSoonTodaySIntakeVs => 'ଆଜିର ଗ୍ରହଣ ବନାମ ଲକ୍ଷ୍ୟ';
 
   @override
   String get comingSoonTotalWorkoutsTimeInvested =>
-      'Total workouts, time invested, and milestones';
+      'ମୋଟ ୱର୍କଆଉଟ୍, ବିନିଯୋଗ ହୋଇଥିବା ସମୟ ଏବଂ ମାଇଲଖୁଣ୍ଟ';
 
   @override
   String get comingSoonTrackBodyMeasurementsEasily =>
-      'Track body measurements easily';
+      'ଶରୀରର ମାପ ସହଜରେ ଟ୍ରାକ୍ କରନ୍ତୁ';
 
   @override
-  String get comingSoonUpcomingHomeWidgets => 'Upcoming Home Widgets';
+  String get comingSoonUpcomingHomeWidgets => 'ଆଗାମୀ ହୋମ୍ ୱିଜେଟ୍';
 
   @override
   String get comingSoonVisualDonutChartsFor =>
-      'Visual donut charts for protein, carbs & fat';
+      'ପ୍ରୋଟିନ୍, କାର୍ବସ୍ ଏବଂ ଚର୍ବି ପାଇଁ ଭିଜୁଆଲ୍ ଡୋନଟ୍ ଚାର୍ଟ';
 
   @override
-  String get comingSoonWeekChanges => 'Week Changes';
+  String get comingSoonWeekChanges => 'ସପ୍ତାହ ପରିବର୍ତ୍ତନ';
 
   @override
-  String get comingSoonWeeklyPlan => 'Weekly Plan';
+  String get comingSoonWeeklyPlan => 'ସାପ୍ତାହିକ ଯୋଜନା';
 
   @override
-  String get comingSoonWeightTracker => 'Weight Tracker';
+  String get comingSoonWeightTracker => 'ଓଜନ ଟ୍ରାକର୍';
 
   @override
-  String get comingSoonWhatShouldIEat => 'What Should I Eat? Widget';
+  String get comingSoonWhatShouldIEat => 'ମୁଁ କଣ ଖାଇବି? ୱିଜେଟ୍';
 
   @override
   String get comingSoonYourFitnessJourneyProgress =>
-      'Your fitness journey progress';
+      'ଆପଣଙ୍କ ଫିଟନେସ୍ ଯାତ୍ରାର ଅଗ୍ରଗତି';
 
   @override
-  String get comingSoonYourJourneyRoi => 'Your Journey ROI';
+  String get comingSoonYourJourneyRoi => 'ଆପଣଙ୍କ ଯାତ୍ରାର ROI';
 
   @override
-  String get comingSoonYourPositionOnThe => 'Your position on the leaderboard';
+  String get comingSoonYourPositionOnThe => 'ଲିଡରବୋର୍ଡରେ ଆପଣଙ୍କ ସ୍ଥାନ';
 
   @override
-  String get commentsAddAComment => 'Add a comment...';
+  String get commentsAddAComment => 'ଏକ ମନ୍ତବ୍ୟ ଯୋଡନ୍ତୁ...';
 
   @override
   String get commentsAreYouSureYou =>
-      'Are you sure you want to delete this comment?';
+      'ଆପଣ ନିଶ୍ଚିତ କି ଯେ ଆପଣ ଏହି ମନ୍ତବ୍ୟଟି ଡିଲିଟ୍ କରିବାକୁ ଚାହାଁନ୍ତି?';
 
   @override
-  String get commentsBeTheFirstTo => 'Be the first to comment!';
+  String get commentsBeTheFirstTo => 'ପ୍ରଥମ ମନ୍ତବ୍ୟ ଦିଅନ୍ତୁ!';
 
   @override
-  String get commentsCopyText => 'Copy Text';
+  String get commentsCopyText => 'ଟେକ୍ସଟ୍ କପି କରନ୍ତୁ';
 
   @override
-  String get commentsDeleteComment => 'Delete Comment';
+  String get commentsDeleteComment => 'ମନ୍ତବ୍ୟ ଡିଲିଟ୍ କରନ୍ତୁ';
 
   @override
-  String get commentsNoCommentsYet => 'No comments yet';
+  String get commentsNoCommentsYet => 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ମନ୍ତବ୍ୟ ନାହିଁ';
 
   @override
-  String get commitmentPactHoldToCommit => 'Hold to commit';
+  String get commitmentPactHoldToCommit => 'କମିଟ୍ କରିବାକୁ ଦବେଇ ରଖନ୍ତୁ';
 
   @override
-  String get commitmentPactIMIn => 'I\'m in';
+  String get commitmentPactIMIn => 'ମୁଁ ପ୍ରସ୍ତୁତ';
 
   @override
-  String get commitmentPactOneLastThing => 'One last thing.';
+  String get commitmentPactOneLastThing => 'ଆଉ ଗୋଟିଏ କଥା।';
 
   @override
-  String get commitmentPactOtherWorkoutDays => 'OTHER WORKOUT DAYS';
+  String get commitmentPactOtherWorkoutDays => 'ଅନ୍ୟ ୱର୍କଆଉଟ୍ ଦିନ';
 
   @override
   String commitmentPactScreenFirstSession(Object dayLabel) {
@@ -4500,14 +4495,14 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get commitmentPactSkipAnyway => 'Skip anyway';
+  String get commitmentPactSkipAnyway => 'ତଥାପି ସ୍କିପ୍ କରନ୍ତୁ';
 
   @override
-  String get commitmentPactSkipTheCommitment => 'Skip the commitment?';
+  String get commitmentPactSkipTheCommitment => 'କମିଟମେଣ୍ଟ ସ୍କିପ୍ କରିବେ କି?';
 
   @override
   String get commitmentPactWeLlHandleThe =>
-      'We\'ll handle the plan — you handle showing up.';
+      'ଆମେ ପ୍ଲାନ୍ ସମ୍ଭାଳିବୁ — ଆପଣ କେବଳ ଉପସ୍ଥିତ ରୁହନ୍ତୁ।';
 
   @override
   String get commonBack => 'ପଛକୁ';
@@ -4555,18 +4550,18 @@ class AppLocalizationsOr extends AppLocalizations {
   String get commonYou => 'ଆପଣ';
 
   @override
-  String get communityRecipeSearchCommunityRecipes => 'Community recipes';
+  String get communityRecipeSearchCommunityRecipes => 'କମ୍ୟୁନିଟି ରେସିପି';
 
   @override
   String get communityRecipeSearchNothingFoundInCommunity =>
-      'Nothing found in community recipes.';
+      'କମ୍ୟୁନିଟି ରେସିପିରେ କିଛି ମିଳିଲା ନାହିଁ।';
 
   @override
   String get communityRecipeSearchOpenTheRecipeTo =>
-      'Open the recipe to save it to your library';
+      'ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରିବାକୁ ରେସିପି ଖୋଲନ୍ତୁ';
 
   @override
-  String get communityRecipeSearchSaveToMyRecipes => 'Save to my recipes';
+  String get communityRecipeSearchSaveToMyRecipes => 'ମୋ ରେସିପିରେ ସେଭ୍ କରନ୍ତୁ';
 
   @override
   String communityRecipeSearchScreenKcalLogs(
@@ -4578,11 +4573,11 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get communityRecipeSearchSearchPublicRecipes =>
-      'Search public recipes…';
+      'ସର୍ବସାଧାରଣ ରେସିପି ଖୋଜନ୍ତୁ…';
 
   @override
   String get communityRecipeSearchSearchPublicRecipesShared =>
-      'Search public recipes shared by other users.';
+      'ଅନ୍ୟ ବ୍ୟବହାରକାରୀଙ୍କ ଦ୍ୱାରା ସେୟାର କରାଯାଇଥିବା ସର୍ବସାଧାରଣ ରେସିପି ଖୋଜନ୍ତୁ।';
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
@@ -4601,17 +4596,17 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get companionPickerAddAll => 'Add all';
+  String get companionPickerAddAll => 'ସବୁ ଯୋଡନ୍ତୁ';
 
   @override
   String get companionPickerLastTimeYouLogged =>
-      'Last time you logged these together — pick only what applies today.';
+      'ଗତଥର ଆପଣ ଏଗୁଡ଼ିକୁ ଏକାଠି ଲଗ୍ କରିଥିଲେ — ଆଜି ଯାହା ପ୍ରଯୁଜ୍ୟ ତାହା କେବଳ ବାଛନ୍ତୁ।';
 
   @override
-  String get companionPickerLogSelected => 'Log selected';
+  String get companionPickerLogSelected => 'ବାଛିଥିବା ଲଗ୍ କରନ୍ତୁ';
 
   @override
-  String get companionPickerPickWhatYouHad => 'Pick what you had';
+  String get companionPickerPickWhatYouHad => 'ଆପଣ କଣ ନେଇଥିଲେ ତାହା ବାଛନ୍ତୁ';
 
   @override
   String companionPickerSheetCal(Object item) {
@@ -4630,82 +4625,82 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String companionPickerSheetCalAlwaysIncluded(Object primaryCalories) {
-    return '$primaryCalories cal — always included';
+    return '$primaryCalories cal — ସର୍ବଦା ଅନ୍ତର୍ଭୁକ୍ତ';
   }
 
   @override
   String companionPickerSheetGProtein(Object _selectedProteinTotal) {
-    return '· ${_selectedProteinTotal}g protein';
+    return '· ${_selectedProteinTotal}g ପ୍ରୋଟିନ୍';
   }
 
   @override
   String companionPickerSheetOnItsOwn(Object primaryName) {
-    return '$primaryName on its own.';
+    return '$primaryName ଏକାକୀ।';
   }
 
   @override
   String companionPickerSheetTypicalCompanionsFor(Object primaryName) {
-    return 'Typical companions for $primaryName.';
+    return '$primaryName ପାଇଁ ସାଧାରଣ ସାଥୀ।';
   }
 
   @override
-  String get comparisonAiSummary => 'AI Summary';
+  String get comparisonAiSummary => 'AI ସାରାଂଶ';
 
   @override
-  String get comparisonAlign => 'Align';
+  String get comparisonAlign => 'ଆଲାଇନ୍';
 
   @override
-  String get comparisonBorder => 'Border';
+  String get comparisonBorder => 'ବର୍ଡର';
 
   @override
-  String get comparisonComparisonSaved => 'Comparison saved!';
+  String get comparisonComparisonSaved => 'ତୁଳନା ସେଭ୍ ହୋଇଛି!';
 
   @override
-  String get comparisonCtaLabel => 'CTA label';
+  String get comparisonCtaLabel => 'CTA ଲେବଲ୍';
 
   @override
-  String get comparisonDates => 'Dates';
+  String get comparisonDates => 'ତାରିଖ';
 
   @override
-  String get comparisonGalleryComparisonDeleted => 'Comparison deleted';
+  String get comparisonGalleryComparisonDeleted => 'ତୁଳନା ଡିଲିଟ୍ ହୋଇଛି';
 
   @override
   String get comparisonGalleryCreateABeforeAfter =>
-      'Create a before & after comparison from the Photos tab to see your progress over time.';
+      'ସମୟ ସହିତ ଆପଣଙ୍କ ଅଗ୍ରଗତି ଦେଖିବା ପାଇଁ ଫଟୋ ଟ୍ୟାବରୁ ଏକ ପୂର୍ବ ଏବଂ ପରର ତୁଳନା ସୃଷ୍ଟି କରନ୍ତୁ।';
 
   @override
-  String get comparisonGalleryDeleteComparison => 'Delete Comparison?';
+  String get comparisonGalleryDeleteComparison => 'ତୁଳନା ଡିଲିଟ୍ କରିବେ କି?';
 
   @override
   String get comparisonGalleryExportAndShareThis =>
-      'Export and share this comparison';
+      'ଏହି ତୁଳନାକୁ ଏକ୍ସପୋର୍ଟ ଏବଂ ସେୟାର କରନ୍ତୁ';
 
   @override
-  String get comparisonGalleryNoComparisonsYet => 'No Comparisons Yet';
+  String get comparisonGalleryNoComparisonsYet =>
+      'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ତୁଳନା ନାହିଁ';
 
   @override
-  String get comparisonGalleryOpen => 'Open';
+  String get comparisonGalleryOpen => 'ଖୋଲନ୍ତୁ';
 
   @override
-  String get comparisonGalleryOpenInComparisonEditor =>
-      'Open in comparison editor';
+  String get comparisonGalleryOpenInComparisonEditor => 'ତୁଳନା ଏଡିଟରରେ ଖୋଲନ୍ତୁ';
 
   @override
   String get comparisonGalleryOpenTheComparisonIn =>
-      'Open the comparison in editor first to export and share.';
+      'ଏକ୍ସପୋର୍ଟ ଏବଂ ସେୟାର କରିବା ପାଇଁ ପ୍ରଥମେ ଏଡିଟରରେ ତୁଳନା ଖୋଲନ୍ତୁ।';
 
   @override
-  String get comparisonGalleryReEdit => 'Re-edit';
+  String get comparisonGalleryReEdit => 'ପୁନଃ-ଏଡିଟ୍';
 
   @override
-  String get comparisonGalleryRemoveThisComparison => 'Remove this comparison';
+  String get comparisonGalleryRemoveThisComparison => 'ଏହି ତୁଳନାକୁ ହଟାନ୍ତୁ';
 
   @override
-  String get comparisonGallerySavedComparisons => 'Saved Comparisons';
+  String get comparisonGallerySavedComparisons => 'ସେଭ୍ ହୋଇଥିବା ତୁଳନା';
 
   @override
   String get comparisonGalleryThisWillPermanentlyRemove =>
-      'This will permanently remove the comparison. The original photos will not be deleted.';
+      'ଏହା ସ୍ଥାୟୀ ଭାବରେ ତୁଳନାକୁ ହଟାଇଦେବ। ମୂଳ ଫଟୋଗୁଡ଼ିକ ଡିଲିଟ୍ ହେବ ନାହିଁ।';
 
   @override
   String comparisonGalleryValue(Object afterDate, Object beforeDate) {
@@ -4713,43 +4708,43 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get comparisonGap => 'Gap';
+  String get comparisonGap => 'ଗ୍ୟାପ୍';
 
   @override
-  String get comparisonGhost => 'Ghost';
+  String get comparisonGhost => 'ଘୋଷ୍ଟ';
 
   @override
-  String get comparisonLogo => 'Logo';
+  String get comparisonLogo => 'ଲୋଗୋ';
 
   @override
-  String get comparisonNextCustomize => 'Next: Customize';
+  String get comparisonNextCustomize => 'ପରବର୍ତ୍ତୀ: କଷ୍ଟମାଇଜ୍';
 
   @override
-  String get comparisonNextSelectPhotos => 'Next: Select Photos';
+  String get comparisonNextSelectPhotos => 'ପରବର୍ତ୍ତୀ: ଫଟୋ ବାଛନ୍ତୁ';
 
   @override
-  String get comparisonRadius => 'Radius';
+  String get comparisonRadius => 'ରେଡିୟସ୍';
 
   @override
-  String get comparisonReset => 'Reset';
+  String get comparisonReset => 'ରିସେଟ୍';
 
   @override
-  String get comparisonSeeAll => 'See all';
+  String get comparisonSeeAll => 'ସବୁ ଦେଖନ୍ତୁ';
 
   @override
-  String get comparisonShape => 'Shape';
+  String get comparisonShape => 'ଆକୃତି';
 
   @override
-  String get comparisonStartNow => 'START NOW';
+  String get comparisonStartNow => 'ଏବେ ଆରମ୍ଭ କରନ୍ତୁ';
 
   @override
-  String get comparisonStats => 'Stats';
+  String get comparisonStats => 'ପରିସଂଖ୍ୟାନ';
 
   @override
-  String get comparisonTemplates => 'Templates';
+  String get comparisonTemplates => 'ଟେମ୍ପଲେଟ୍';
 
   @override
-  String get comparisonUsername => 'Username';
+  String get comparisonUsername => 'ୟୁଜରନେମ୍';
 
   @override
   String comparisonViewComparison(Object displayName) {
@@ -4757,10 +4752,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get comparisonViewExtAll => 'All';
+  String get comparisonViewExtAll => 'ସବୁ';
 
   @override
-  String get comparisonViewExtClear => 'Clear';
+  String get comparisonViewExtClear => 'ସଫା କରନ୍ତୁ';
 
   @override
   String comparisonViewExtSelected(Object length, Object photoCount) {
@@ -4778,23 +4773,23 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String comparisonViewKg(Object weight) {
-    return '$weight kg';
+    return '$weight କିଗ୍ରା';
   }
 
   @override
-  String get comparisonViewUi2PhotoLayouts => '2-Photo Layouts';
+  String get comparisonViewUi2PhotoLayouts => '୨-ଫଟୋ ଲେଆଉଟ୍';
 
   @override
-  String get comparisonViewUiMultiPhotoLayouts => 'Multi-Photo Layouts';
+  String get comparisonViewUiMultiPhotoLayouts => 'ମଲ୍ଟି-ଫଟୋ ଲେଆଉଟ୍';
 
   @override
-  String get comparisonViewUiMyProgress => 'MY PROGRESS';
+  String get comparisonViewUiMyProgress => 'ମୋର ପ୍ରଗତି';
 
   @override
-  String get comparisonViewUiNoPhotosFound => 'No Photos Found';
+  String get comparisonViewUiNoPhotosFound => 'କୌଣସି ଫଟୋ ମିଳିଲା ନାହିଁ';
 
   @override
-  String get comparisonViewUiNoPhotosSelected => 'No photos selected';
+  String get comparisonViewUiNoPhotosSelected => 'କୌଣସି ଫଟୋ ଚୟନ କରାଯାଇ ନାହିଁ';
 
   @override
   String comparisonViewUiNoPhotosYetTry(Object displayName) {
@@ -4802,13 +4797,13 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get comparisonViewUiProgressSummary => 'Progress Summary';
+  String get comparisonViewUiProgressSummary => 'ପ୍ରଗତି ସାରାଂଶ';
 
   @override
-  String get comparisonViewUiSelect2Photos => 'Select 2 photos';
+  String get comparisonViewUiSelect2Photos => '୨ଟି ଫଟୋ ଚୟନ କରନ୍ତୁ';
 
   @override
-  String get comparisonViewUiU00b7 => '  \\u00B7  ';
+  String get comparisonViewUiU00b7 => '  ·  ';
 
   @override
   String comparisonViewUiValue(Object username) {
@@ -4826,7 +4821,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get comparisonWeights => 'Weights';
+  String get comparisonWeights => 'ଓଜନ';
 
   @override
   String get comparisonWidth => 'ଓସାର';
@@ -4930,7 +4925,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String connectedAppsScreenRidesAndWorkoutsData(Object appName) {
-    return 'rides, and workouts. Data flows both ways — $appName workouts can ';
+    return 'ରାଇଡ୍, ଏବଂ ୱାର୍କଆଉଟ୍। ଡାଟା ଉଭୟ ଦିଗରେ ପ୍ରବାହିତ ହୁଏ — $appName ୱାର୍କଆଉଟ୍ ଗୁଡିକ';
   }
 
   @override
@@ -5652,10 +5647,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get customContentSectionReps => 'Reps';
+  String get customContentSectionReps => 'ରେପ୍ସ';
 
   @override
-  String get customContentSectionSets => 'Sets';
+  String get customContentSectionSets => 'ସେଟ୍';
 
   @override
   String get customContentSectionTapTheButtonAbove =>
@@ -5812,7 +5807,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String customGoalsScreenAreYouSureYou(Object goalText) {
-    return 'Are you sure you want to delete \"$goalText\"?';
+    return 'ଆପଣ ନିଶ୍ଚିତ କି ଯେ ଆପଣ \"$goalText\" ଡିଲିଟ୍ କରିବାକୁ ଚାହାଁନ୍ତି?';
   }
 
   @override
@@ -5914,7 +5909,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଦୟାକରି ଏକ ୱାର୍କଆଉଟ୍ ନାମ ଲେଖନ୍ତୁ';
 
   @override
-  String get customWorkoutBuilderReps => 'Reps';
+  String get customWorkoutBuilderReps => 'ରେପ୍ସ';
 
   @override
   String get customWorkoutBuilderScheduleFor => 'ଏଥିପାଇଁ ସିଡ୍ୟୁଲ୍ କରନ୍ତୁ';
@@ -6007,7 +6002,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String cycleInsightsChartsD(Object days) {
-    return '${days}d';
+    return '$days ଦିନ';
   }
 
   @override
@@ -7535,12 +7530,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String discoverScreenLvl(Object level) {
-    return 'Lvl $level';
+    return 'ସ୍ତର $level';
   }
 
   @override
   String discoverScreenLvl2(Object level) {
-    return 'Lvl $level';
+    return 'ସ୍ତର $level';
   }
 
   @override
@@ -8314,7 +8309,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get editTargetsMaintainingWeight => 'ଓଜନ ବଜାୟ ରଖିବା';
 
   @override
-  String get editTargetsRec => 'Rec';
+  String get editTargetsRec => 'ସୁପାରିଶ';
 
   @override
   String get editTargetsRecalculateFromProfile => 'ପ୍ରୋଫାଇଲରୁ ପୁନଃ ଗଣନା କରନ୍ତୁ';
@@ -8469,7 +8464,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get editTrackingSteps => 'ପାଦ';
 
   @override
-  String get editTrackingWorkoutStreak => 'Workout Streak';
+  String get editTrackingWorkoutStreak => 'ୱାର୍କଆଉଟ୍ ଷ୍ଟ୍ରିକ୍';
 
   @override
   String get editWeightsAnyWeightAllowedIn =>
@@ -8586,7 +8581,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get editableFitnessCard90Min => '90 ମିନିଟ୍';
 
   @override
-  String get editableFitnessCardActiveGym => 'Active Gym';
+  String get editableFitnessCardActiveGym => 'ସକ୍ରିୟ ଜିମ୍';
 
   @override
   String get editableFitnessCardActiveInjuries => 'Active ଆଘାତ';
@@ -8635,7 +8630,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get editableFitnessCardGoal => 'ଲକ୍ଷ୍ୟ';
 
   @override
-  String get editableFitnessCardGym => 'Gym';
+  String get editableFitnessCardGym => 'ଜିମ୍';
 
   @override
   String get editableFitnessCardInjuries => 'ଆଘାତ';
@@ -8669,24 +8664,24 @@ class AppLocalizationsOr extends AppLocalizations {
   String editableFitnessCardPartEditableFitnessCardStateMin(
     Object _selectedWarmupDuration,
   ) {
-    return '$_selectedWarmupDuration min';
+    return '$_selectedWarmupDuration ମିନିଟ୍';
   }
 
   @override
   String editableFitnessCardPartEditableFitnessCardStateMin2(
     Object _selectedStretchDuration,
   ) {
-    return '$_selectedStretchDuration min';
+    return '$_selectedStretchDuration ମିନିଟ୍';
   }
 
   @override
   String editableFitnessCardPartEditableFitnessCardStateMin3(Object duration) {
-    return '$duration min';
+    return '$duration ମିନିଟ୍';
   }
 
   @override
   String editableFitnessCardPartEditableFitnessCardStateMin4(Object duration) {
-    return '$duration min';
+    return '$duration ମିନିଟ୍';
   }
 
   @override
@@ -8718,12 +8713,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String elevationProfileM(Object ascent) {
-    return '+$ascent m';
+    return '+$ascent ମିଟର';
   }
 
   @override
   String elevationProfileM2(Object value) {
-    return '$value m';
+    return '$value ମିଟର';
   }
 
   @override
@@ -8745,7 +8740,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣଙ୍କ ନିର୍ଦ୍ଧାରିତ Workout ବିଷୟରେ ଦୈନିକ ରିମାଇଣ୍ଡର୍';
 
   @override
-  String get emailPreferencesEmailPreferences => 'EMAIL PREFERENCES';
+  String get emailPreferencesEmailPreferences => 'ଇମେଲ୍ ପସନ୍ଦ';
 
   @override
   String get emailPreferencesFailedToLoadEmail =>
@@ -9770,7 +9765,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String exerciseDetailSheetMS(Object restMins, Object restSecs) {
-    return '${restMins}m ${restSecs}s';
+    return '$restMinsମି $restSecsସେ';
   }
 
   @override
@@ -10234,12 +10229,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String exerciseNavigationMixinSuperset(Object name, Object name1) {
-    return 'Superset: $name + $name1';
+    return 'ସୁପରସେଟ୍: $name + $name1';
   }
 
   @override
   String exerciseNavigationMixinSuperset2(Object name) {
-    return 'Superset: $name';
+    return 'ସୁପରସେଟ୍: $name';
   }
 
   @override
@@ -10624,7 +10619,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String exercisePreviewOverlayS(Object _remainingSeconds) {
-    return '${_remainingSeconds}s';
+    return '$_remainingSecondsସେ';
   }
 
   @override
@@ -10744,7 +10739,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String exerciseProgressionsScreenKg(Object mastery) {
-    return '$mastery kg';
+    return '$mastery କିଗ୍ରା';
   }
 
   @override
@@ -10867,7 +10862,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String exerciseSafetyAuditScreenExerciseSPendingAudit(Object length) {
-    return '$length exercise(s) pending audit';
+    return '$length ଟି ବ୍ୟାୟାମ ଅଡିଟ୍ ପାଇଁ ବାକି ଅଛି';
   }
 
   @override
@@ -10956,12 +10951,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String exerciseScienceResearchScreenEveryWorkoutParameterIn(Object appName) {
-    return 'Every workout parameter in $appName is derived from peer-reviewed exercise science. Tap a paper to see details.';
+    return '$appName ରେ ପ୍ରତ୍ୟେକ ୱାର୍କଆଉଟ୍ ପାରାମିଟର ବୈଜ୍ଞାନିକ ଗବେଷଣା ଉପରେ ଆଧାରିତ। ବିବରଣୀ ଦେଖିବା ପାଇଁ ଏକ ପେପର ଉପରେ ଟ୍ୟାପ୍ କରନ୍ତୁ।';
   }
 
   @override
   String exerciseScienceResearchScreenHowUsesThis(Object appName) {
-    return 'How $appName uses this';
+    return '$appName ଏହାକୁ କିପରି ବ୍ୟବହାର କରେ';
   }
 
   @override
@@ -11022,10 +11017,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get exerciseSetTracker15s => '−15s';
+  String get exerciseSetTracker15s => '−15ସେ';
 
   @override
-  String get exerciseSetTracker15s2 => '+15s';
+  String get exerciseSetTracker15s2 => '+15ସେ';
 
   @override
   String get exerciseSetTrackerAddNotesHere => 'ଏଠାରେ ନୋଟ୍ ଲେଖନ୍ତୁ...';
@@ -11075,12 +11070,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String exerciseStatsSheetKg(Object item) {
-    return '$item kg';
+    return '$item କିଗ୍ରା';
   }
 
   @override
   String exerciseStatsSheetKg2(Object item) {
-    return '$item kg';
+    return '$item କିଗ୍ରା';
   }
 
   @override
@@ -11166,7 +11161,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get exerciseSwapNoAlternatives => 'କୌଣସି ବିକଳ୍ପ ମିଳିଲା ନାହିଁ';
 
   @override
-  String get exerciseSwapOptionSwap => 'Exercise swap option swap';
+  String get exerciseSwapOptionSwap => 'ବ୍ୟାୟାମ ବଦଳାଇବା ବିକଳ୍ପ';
 
   @override
   String get exerciseSwapSheetAiPicks => 'AI ପସନ୍ଦ';
@@ -11275,17 +11270,16 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଏହି ବ୍ୟାୟାମକୁ ସ୍ୱାପ୍ କରନ୍ତୁ';
 
   @override
-  String get exerciseSwapSheetTabAnyEquipment =>
-      'Exercise swap sheet tab any equipment';
+  String get exerciseSwapSheetTabAnyEquipment => 'ଯେକୌଣସି ଉପକରଣ';
 
   @override
-  String get exerciseSwapSheetTabRecent => 'Exercise swap sheet tab recent';
+  String get exerciseSwapSheetTabRecent => 'ସାମ୍ପ୍ରତିକ';
 
   @override
-  String get exerciseSwapSheetTabSimilar => 'Exercise swap sheet tab similar';
+  String get exerciseSwapSheetTabSimilar => 'ସମାନ';
 
   @override
-  String get exerciseSwapSheetTabSnapped => 'Exercise swap sheet tab snapped';
+  String get exerciseSwapSheetTabSnapped => 'ସ୍ନାପ୍ ହୋଇଥିବା';
 
   @override
   String get exerciseSwapSheetTitle => 'ବ୍ୟାୟାୟାମ ବଦଳାଇବା ସିଟ୍';
@@ -11330,7 +11324,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String expandableSummaryExerciseCardKg(Object weightKg) {
-    return '$weightKg kg';
+    return '$weightKg କିଗ୍ରା';
   }
 
   @override
@@ -11614,43 +11608,43 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get fastingBenefit_appetite =>
-      'Appetite hormones reset over time, making it easier to eat less.';
+      'ଭୋକ ସମ୍ବନ୍ଧୀୟ ହରମୋନ୍ ସମୟ ସହିତ ସନ୍ତୁଳିତ ହୁଏ, ଯାହା କମ୍ ଖାଇବା ସହଜ କରିଥାଏ।';
 
   @override
   String get fastingBenefit_autophagy =>
-      'Cellular autophagy clears damaged proteins, linked to slower aging.';
+      'ସେଲୁଲାର୍ ଅଟୋଫ୍ୟାଗି କ୍ଷତିଗ୍ରସ୍ତ ପ୍ରୋଟିନ୍‌କୁ ସଫା କରେ, ଯାହା ବାର୍ଦ୍ଧକ୍ୟକୁ ଧୀର କରିବା ସହିତ ଜଡିତ।';
 
   @override
   String get fastingBenefit_bs_control =>
-      'Blood sugar stays more stable, reducing cravings and energy dips.';
+      'ରକ୍ତରେ ଶର୍କରା ସ୍ଥିର ରହେ, ଯାହା ଖାଦ୍ୟ ପାଇଁ ଲାଳସା ଏବଂ ଶକ୍ତି ହ୍ରାସକୁ କମାଇଥାଏ।';
 
   @override
   String get fastingBenefit_cellular_repair =>
-      'DNA repair pathways activate during extended fasts.';
+      'ଦୀର୍ଘ ସମୟ ଉପବାସ ସମୟରେ DNA ମରାମତି ପ୍ରକ୍ରିୟା ସକ୍ରିୟ ହୋଇଥାଏ।';
 
   @override
   String get fastingBenefit_energy =>
-      'Stable energy throughout the day — no post-meal crashes.';
+      'ଦିନସାରା ସ୍ଥିର ଶକ୍ତି — ଖାଇବା ପରେ କ୍ଳାନ୍ତି ଅନୁଭବ ହୁଏ ନାହିଁ।';
 
   @override
   String get fastingBenefit_gut_rest =>
-      'Digestive system gets a break, supporting gut microbiome health.';
+      'ହଜମ ପ୍ରକ୍ରିୟାକୁ ବିଶ୍ରାମ ମିଳେ, ଯାହା ପେଟର ସ୍ୱାସ୍ଥ୍ୟ ପାଇଁ ଭଲ।';
 
   @override
   String get fastingBenefit_insulin_sensitivity =>
-      'Improved insulin sensitivity reduces risk of type 2 diabetes.';
+      'ଇନସୁଲିନ୍ ସମ୍ବେଦନଶୀଳତାରେ ଉନ୍ନତି ଟାଇପ୍ ୨ ମଧୁମେହର ଆଶଙ୍କା କମାଇଥାଏ।';
 
   @override
   String get fastingBenefit_longevity =>
-      'Animal studies link fasting to longer healthspan and reduced disease markers.';
+      'ପଶୁମାନଙ୍କ ଉପରେ ହୋଇଥିବା ଗବେଷଣା ଅନୁଯାୟୀ ଉପବାସ ଦୀର୍ଘାୟୁ ଏବଂ ରୋଗ ହ୍ରାସ କରିବାରେ ସହାୟକ।';
 
   @override
   String get fastingBenefit_mental_clarity =>
-      'Ketones power the brain more steadily than glucose spikes.';
+      'ଗ୍ଲୁକୋଜ୍ ବୃଦ୍ଧି ଅପେକ୍ଷା କିଟୋନ୍ ମସ୍ତିଷ୍କକୁ ଅଧିକ ସ୍ଥିର ଶକ୍ତି ପ୍ରଦାନ କରେ।';
 
   @override
   String get fastingBenefit_weight_loss =>
-      'Sustainable weight loss by targeting stored fat rather than lean tissue.';
+      'ଶରୀରର ଚର୍ ଚର୍ବିକୁ ଲକ୍ଷ୍ୟ କରି ସ୍ଥାୟୀ ଓଜନ ହ୍ରାସ କରିବାରେ ସହାୟକ।';
 
   @override
   String get fastingBodyStatusBeyondGoal => 'ଆପଣଙ୍କ ଲକ୍ଷ୍ୟଠାରୁ ଅଧିକ';
@@ -11682,7 +11676,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String fastingBodyStatusScreenH(Object hourOffset) {
-    return '${hourOffset}h · ';
+    return '$hourOffsetଘଣ୍ଟା · ';
   }
 
   @override
@@ -11722,7 +11716,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String fastingCalendarWidgetKg(Object data) {
-    return '$data kg';
+    return '$data କିଗ୍ରା';
   }
 
   @override
@@ -11830,10 +11824,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get fastingHydrationRow250Ml => '+250 ml';
+  String get fastingHydrationRow250Ml => '+250 ମିଲି';
 
   @override
-  String get fastingHydrationRow500Ml => '+500 ml';
+  String get fastingHydrationRow500Ml => '+500 ମିଲି';
 
   @override
   String get fastingHydrationRowBottle => 'ବୋତଲ';
@@ -11846,7 +11840,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String fastingHydrationRowMl(Object goalMl) {
-    return ' / $goalMl ml';
+    return ' / $goalMl ମିଲି';
   }
 
   @override
@@ -11988,68 +11982,69 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get fastingProtocol_16_8_desc =>
-      'Skip breakfast, eat between noon and 8 PM';
+      'ସକାଳ ଜଳଖିଆ ଛାଡନ୍ତୁ, ଦ୍ୱିପହର ୧୨ଟାରୁ ରାତି ୮ଟା ମଧ୍ୟରେ ଖାଆନ୍ତୁ';
 
   @override
   String get fastingProtocol_16_8_name => '16:8';
 
   @override
-  String get fastingProtocol_18_6_desc => 'Tighter 6-hour eating window';
+  String get fastingProtocol_18_6_desc => '୬ ଘଣ୍ଟିଆ ଖାଇବା ସମୟ';
 
   @override
   String get fastingProtocol_18_6_name => '18:6';
 
   @override
-  String get fastingProtocol_20_4_desc => 'Warrior diet — one main meal';
+  String get fastingProtocol_20_4_desc =>
+      'ୱାରିଅର୍ ଡାଏଟ୍ — ଦିନକୁ ଥରେ ମୁଖ୍ୟ ଖାଦ୍ୟ';
 
   @override
   String get fastingProtocol_20_4_name => '20:4';
 
   @override
   String get fastingProtocol_36h_desc =>
-      'Monk fast — extended autophagy window';
+      'ମଙ୍କ୍ ଫାଷ୍ଟ୍ — ଅଟୋଫ୍ୟାଗି ପାଇଁ ଅଧିକ ସମୟ';
 
   @override
-  String get fastingProtocol_36h_name => '36-hour';
+  String get fastingProtocol_36h_name => '୩୬-ଘଣ୍ଟିଆ';
 
   @override
   String get fastingProtocol_48h_desc =>
-      'Extended fast — medical supervision recommended';
+      'ଦୀର୍ଘ ସମୟ ଉପବାସ — ଚିକିତ୍ସକଙ୍କ ପରାମର୍ଶ ଆବଶ୍ୟକ';
 
   @override
-  String get fastingProtocol_48h_name => '48-hour';
+  String get fastingProtocol_48h_name => '୪୮-ଘଣ୍ଟିଆ';
 
   @override
   String get fastingProtocol_5_2_desc =>
-      '5 days normal eating, 2 days 500-600 cal';
+      '୫ ଦିନ ସାଧାରଣ ଖାଦ୍ୟ, ୨ ଦିନ ୫୦୦-୬୦୦ କ୍ୟାଲୋରୀ';
 
   @override
   String get fastingProtocol_5_2_name => '5:2';
 
   @override
   String get fastingProtocol_72h_desc =>
-      'Stem-cell renewal fast — medical supervision required';
+      'ଷ୍ଟେମ୍-ସେଲ୍ ନବୀକରଣ ଉପବାସ — ଡାକ୍ତରୀ ତତ୍ତ୍ୱାବଧାନ ଆବଶ୍ୟକ';
 
   @override
-  String get fastingProtocol_72h_name => '72-hour';
+  String get fastingProtocol_72h_name => '୭୨-ଘଣ୍ଟିଆ';
 
   @override
   String get fastingProtocol_adf_desc =>
-      'Alternate Day Fasting — normal day then very-low-cal day';
+      'ଅଲ୍ଟରନେଟ୍ ଡେ ଫାଷ୍ଟିଂ (ଦିନ ଛାଡ଼ି ଉପବାସ) — ସାଧାରଣ ଦିନ ପରେ ଅତି କମ୍ କ୍ୟାଲୋରୀ ଦିନ';
 
   @override
   String get fastingProtocol_adf_name => 'ADF';
 
   @override
   String get fastingProtocol_custom_desc =>
-      'Set your own eating and fasting window';
+      'ଆପଣଙ୍କ ନିଜର ଖାଇବା ଏବଂ ଉପବାସ ସମୟ ସ୍ଥିର କରନ୍ତୁ';
 
   @override
-  String get fastingProtocol_custom_name => 'Custom';
+  String get fastingProtocol_custom_name => 'କଷ୍ଟମ୍';
 
   @override
   String get fastingProtocol_omad_desc =>
-      'One Meal A Day — all nutrition in a single sitting';
+      'ଦିନକୁ ଗୋଟିଏ ଥର ଖାଦ୍ୟ (OMAD) — ସମସ୍ତ ପୋଷଣ ଗୋଟିଏ ଥରରେ';
 
   @override
   String get fastingProtocol_omad_name => 'OMAD';
@@ -12326,52 +12321,52 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get fastingStage_autophagy_desc =>
-      'Cells begin breaking down and recycling damaged proteins and organelles — a deep cellular clean-up.';
+      'କୋଷଗୁଡ଼ିକ କ୍ଷତିଗ୍ରસ્ત ପ୍ରୋଟିନ୍ ଏବଂ ଅର୍ଗାନେଲଗୁଡ଼ିକୁ ଭାଙ୍ଗିବା ଏବଂ ପୁନଃଚକ୍ରଣ କରିବା ଆରମ୍ଭ କରନ୍ତି — ଏହା ଏକ ଗଭୀର କୋଷୀୟ ସଫେଇ।';
 
   @override
-  String get fastingStage_autophagy_name => 'Autophagy';
+  String get fastingStage_autophagy_name => 'ଅଟୋଫ୍ୟାଜି';
 
   @override
   String get fastingStage_fat_burning_desc =>
-      'With glycogen low, fat cells release fatty acids into the bloodstream as fuel.';
+      'ଗ୍ଲାଇକୋଜେନ୍ କମ୍ ଥିବାରୁ, ଚର୍ବି କୋଷଗୁଡ଼ିକ ଶକ୍ତି ପାଇଁ ରକ୍ତ ପ୍ରବାହରେ ଫ୍ୟାଟି ଏସିଡ୍ ଛାଡ଼ିଥାନ୍ତି।';
 
   @override
-  String get fastingStage_fat_burning_name => 'Fat Burning';
+  String get fastingStage_fat_burning_name => 'ଫ୍ୟାଟ୍ ବର୍ନିଂ (ଚର୍ବି ଜଳିବା)';
 
   @override
   String get fastingStage_glycogen_depletion_desc =>
-      'Your body uses stored glucose first. After 12–14 hours liver glycogen runs low and the metabolic shift begins.';
+      'ଆପଣଙ୍କ ଶରୀର ପ୍ରଥମେ ସଂରକ୍ଷିତ ଗ୍ଲୁକୋଜ ବ୍ୟବହାର କରେ। ୧୨-୧୪ ଘଣ୍ଟା ପରେ ଯକୃତର ଗ୍ଲାଇକୋଜେନ୍ କମ୍ ହୋଇଯାଏ ଏବଂ ମେଟାବୋଲିକ୍ ପରିବର୍ତ୍ତନ ଆରମ୍ଭ ହୁଏ।';
 
   @override
-  String get fastingStage_glycogen_depletion_name => 'Glycogen Depletion';
+  String get fastingStage_glycogen_depletion_name => 'ଗ୍ଲାଇକୋଜେନ୍ ହ୍ରାସ';
 
   @override
   String get fastingStage_growth_hormone_desc =>
-      'HGH levels rise sharply, protecting lean muscle mass and accelerating fat metabolism.';
+      'HGH ସ୍ତର ଦ୍ରୁତ ଗତିରେ ବୃଦ୍ଧି ପାଏ, ଯାହା ମାଂସପେଶୀକୁ ସୁରକ୍ଷା ଦିଏ ଏବଂ ଚର୍ବି ମେଟାବୋଲିଜିମ୍ କୁ ତ୍ୱରାନ୍ୱିତ କରେ।';
 
   @override
-  String get fastingStage_growth_hormone_name => 'Growth Hormone Surge';
+  String get fastingStage_growth_hormone_name => 'ଗ୍ରୋଥ୍ ହରମୋନ୍ ବୃଦ୍ଧି';
 
   @override
   String get fastingStage_inflammation_drop_desc =>
-      'Inflammatory markers decrease as the gut rests and immune cells undergo regeneration.';
+      'ପେଟ ବିଶ୍ରାମ ନେବା ଏବଂ ରୋଗ ପ୍ରତିରୋଧକ କୋଷଗୁଡ଼ିକର ପୁନର୍ଜନ୍ମ ହେତୁ ପ୍ରଦାହଜନକ ଚିହ୍ନଗୁଡ଼ିକ କମିଯାଏ।';
 
   @override
-  String get fastingStage_inflammation_drop_name => 'Inflammation Drop';
+  String get fastingStage_inflammation_drop_name => 'ପ୍ରଦାହ ହ୍ରାସ';
 
   @override
   String get fastingStage_insulin_low_desc =>
-      'Insulin stays near baseline, unlocking fat stores and improving insulin sensitivity.';
+      'ଇନସୁଲିନ୍ ବେସଲାଇନ୍ ନିକଟରେ ରହିଥାଏ, ଯାହା ଚର୍ବି ଭଣ୍ଡାରକୁ ଖୋଲିଦିଏ ଏବଂ ଇନସୁଲିନ୍ ସମ୍ବେଦନଶୀଳତାକୁ ଉନ୍ନତ କରେ।';
 
   @override
-  String get fastingStage_insulin_low_name => 'Low Insulin';
+  String get fastingStage_insulin_low_name => 'କମ୍ ଇନସୁଲିନ୍';
 
   @override
   String get fastingStage_ketosis_desc =>
-      'The liver converts fatty acids into ketone bodies — a clean, efficient fuel for the brain.';
+      'ଯକୃତ ଫ୍ୟାଟି ଏସିଡକୁ କିଟୋନ୍ ବଡିରେ ପରିଣତ କରେ — ମସ୍ତିଷ୍କ ପାଇଁ ଏହା ଏକ ସ୍ୱଚ୍ଛ, ଦକ୍ଷ ଇନ୍ଧନ।';
 
   @override
-  String get fastingStage_ketosis_name => 'Ketosis';
+  String get fastingStage_ketosis_name => 'କିଟୋସିସ୍';
 
   @override
   String get fastingStartFast => 'ଉପବାସ ଆରମ୍ଭ କରନ୍ତୁ';
@@ -12469,7 +12464,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String fastingTimelinePagerExtendedFast(Object label) {
-    return 'Extended fast · $label';
+    return 'ଦୀର୍ଘକାଳୀନ ଉପବାସ · $label';
   }
 
   @override
@@ -12485,43 +12480,43 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get fastingTip_bcaa_avoid =>
-      'BCAAs and most supplements with calories or amino acids will break the fast.';
+      'BCAAs ଏବଂ କ୍ୟାଲୋରୀ କିମ୍ବା ଆମିନୋ ଏସିଡ୍ ଥିବା ଅଧିକାଂଶ ସପ୍ଲିମେଣ୍ଟ ଆପଣଙ୍କ ଉପବାସକୁ ଭାଙ୍ଗିଦେବ।';
 
   @override
   String get fastingTip_break_with_protein =>
-      'Break your fast with a protein-rich meal to preserve muscle and stay full longer.';
+      'ମାଂସପେଶୀ ବଜାୟ ରଖିବା ଏବଂ ଅଧିକ ସମୟ ପେଟ ପୂର୍ଣ୍ଣ ରଖିବା ପାଇଁ ପ୍ରୋଟିନ୍-ଯୁକ୍ତ ଖାଦ୍ୟ ସହିତ ଉପବାସ ଭାଙ୍ଗନ୍ତୁ।';
 
   @override
   String get fastingTip_coffee_ok =>
-      'Black coffee won\'t break your fast and can actually blunt hunger.';
+      'ବ୍ଲାକ୍ କଫି ଆପଣଙ୍କ ଉପବାସକୁ ଭାଙ୍ଗିବ ନାହିଁ ଏବଂ ପ୍ରକୃତରେ ଭୋକକୁ କମ୍ କରିପାରେ।';
 
   @override
   String get fastingTip_exercise_fasted_ok_intermediate =>
-      'Light to moderate cardio fasted is fine once you\'re adapted. Listen to your body.';
+      'ଥରେ ଅଭ୍ୟସ୍ତ ହୋଇଗଲେ ଉପବାସ ସମୟରେ ହାଲୁକା କାର୍ଡିଓ କରିବା ଠିକ୍ ଅଛି। ନିଜ ଶରୀରର କଥା ଶୁଣନ୍ତୁ।';
 
   @override
   String get fastingTip_exercise_high_intensity_eat_first =>
-      'For heavy lifting or intense intervals, eating beforehand protects performance.';
+      'ଭାରୀ ବ୍ୟାୟାମ କିମ୍ବା ତୀବ୍ର ବ୍ୟାୟାମ ପାଇଁ, ପୂର୍ବରୁ ଖାଇବା ଦ୍ୱାରା କାର୍ଯ୍ୟଦକ୍ଷତା ବଜାୟ ରହେ।';
 
   @override
   String get fastingTip_ramp_up_gradually =>
-      'Start with 12 hours and add 30 minutes each week — don\'t jump to OMAD day one.';
+      '୧୨ ଘଣ୍ଟାରୁ ଆରମ୍ଭ କରନ୍ତୁ ଏବଂ ପ୍ରତି ସପ୍ତାହରେ ୩୦ ମିନିଟ୍ ବଢ଼ାନ୍ତୁ — ପ୍ରଥମ ଦିନରୁ OMAD କୁ ଯାଆନ୍ତୁ ନାହିଁ।';
 
   @override
   String get fastingTip_refeed_carbs_carefully =>
-      'After a 36h+ fast, reintroduce carbs gradually to avoid refeeding discomfort.';
+      '୩୬ ଘଣ୍ଟାରୁ ଅଧିକ ଉପବାସ ପରେ, ଅସୁବିଧା ଏଡ଼ାଇବା ପାଇଁ କାର୍ବୋହାଇଡ୍ରେଟ୍ ଧୀରେ ଧୀରେ ଗ୍ରହଣ କରନ୍ତୁ।';
 
   @override
   String get fastingTip_sleep_helps_extended =>
-      'Timing your fast to overlap with sleep makes longer windows much easier.';
+      'ଆପଣଙ୍କ ଉପବାସକୁ ନିଦ ସହିତ ମିଶାଇଲେ ଦୀର୍ଘ ସମୟ ଉପବାସ କରିବା ବହୁତ ସହଜ ହୋଇଯାଏ।';
 
   @override
   String get fastingTip_stay_hydrated =>
-      'Water, black coffee, and plain tea are all fair game during your fast.';
+      'ଉପବାସ ସମୟରେ ପାଣି, ବ୍ଲାକ୍ କଫି ଏବଂ ସାଧାରଣ ଚା\' ପିଇବା ଠିକ୍ ଅଛି।';
 
   @override
   String get fastingTip_track_hunger_separate_from_appetite =>
-      'Hunger and appetite are different. Hunger fades in waves; appetite is habitual.';
+      'ଭୋକ ଏବଂ ଖାଇବାର ଇଚ୍ଛା ଅଲଗା। ଭୋକ ତରଙ୍ଗ ଭଳି ଆସେ ଏବଂ ଚାଲିଯାଏ; ଖାଇବାର ଇଚ୍ଛା ଏକ ଅଭ୍ୟାସ।';
 
   @override
   String get fastingTotalFasts => 'ମୋଟ ଉପବାସ';
@@ -12743,7 +12738,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String feedTabErrorLoadingFeed(Object error) {
-    return 'Error loading feed: $error';
+    return 'ଫିଡ୍ ଲୋଡ୍ କରିବାରେ ତ୍ରୁଟି: $error';
   }
 
   @override
@@ -13647,10 +13642,10 @@ class AppLocalizationsOr extends AppLocalizations {
   String get foodHistoryScreenDatabase => 'ଡାଟାବେସ୍';
 
   @override
-  String get foodHistoryScreenDateRange => 'DATE RANGE';
+  String get foodHistoryScreenDateRange => 'ତାରିଖ ସୀମା';
 
   @override
-  String get foodHistoryScreenDays => 'Days';
+  String get foodHistoryScreenDays => 'ଦିନ';
 
   @override
   String foodHistoryScreenDeleted(Object foodName) {
@@ -13658,7 +13653,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodHistoryScreenEditPortion => 'Edit Portion';
+  String get foodHistoryScreenEditPortion => 'ଅଂଶ ସମ୍ପାଦନ କରନ୍ତୁ';
 
   @override
   String foodHistoryScreenFailedToReLog(Object name) {
@@ -13666,22 +13661,23 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodHistoryScreenFrequentlyEaten => 'Frequently Eaten';
+  String get foodHistoryScreenFrequentlyEaten => 'ସାଧାରଣତଃ ଖିଆଯାଉଥିବା ଖାଦ୍ୟ';
 
   @override
-  String get foodHistoryScreenInflammationScore => 'Inflammation Score';
+  String get foodHistoryScreenInflammationScore => 'ପ୍ରଦାହ ସ୍କୋର';
 
   @override
-  String get foodHistoryScreenLoadMore => 'Load More';
+  String get foodHistoryScreenLoadMore => 'ଅଧିକ ଲୋଡ୍ କରନ୍ତୁ';
 
   @override
-  String get foodHistoryScreenMealType => 'MEAL TYPE';
+  String get foodHistoryScreenMealType => 'ଖାଦ୍ୟର ପ୍ରକାର';
 
   @override
-  String get foodHistoryScreenMeals => 'Meals';
+  String get foodHistoryScreenMeals => 'ଖାଦ୍ୟ';
 
   @override
-  String get foodHistoryScreenNoFoodHistoryYet => 'No food history yet';
+  String get foodHistoryScreenNoFoodHistoryYet =>
+      'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଖାଦ୍ୟ ଇତିହାସ ନାହିଁ';
 
   @override
   String foodHistoryScreenPartDateRangeCal(Object calories) {
@@ -13737,7 +13733,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodHistoryScreenProtein => 'Protein';
+  String get foodHistoryScreenProtein => 'ପ୍ରୋଟିନ୍';
 
   @override
   String foodHistoryScreenReLoggedAs(Object mealType, Object name) {
@@ -13750,30 +13746,30 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodHistoryScreenRecent => 'Recent';
+  String get foodHistoryScreenRecent => 'ସାମ୍ପ୍ରତିକ';
 
   @override
-  String get foodHistoryScreenSaveChanges => 'Save Changes';
+  String get foodHistoryScreenSaveChanges => 'ପରିବର୍ତ୍ତନଗୁଡ଼ିକ ସେଭ କରନ୍ତୁ';
 
   @override
-  String get foodHistoryScreenSearchError => 'Search error';
+  String get foodHistoryScreenSearchError => 'ସର୍ଚ୍ଚ ତ୍ରୁଟି';
 
   @override
   String get foodHistoryScreenStartLoggingMealsTo =>
-      'Start logging meals to see your history here!';
+      'ଆପଣଙ୍କ ଇତିହାସ ଦେଖିବା ପାଇଁ ମିଲ୍ ଲଗ୍ କରିବା ଆରମ୍ଭ କରନ୍ତୁ!';
 
   @override
   String get foodHistorySearchMealsFoodsHigh =>
-      'Search meals, foods, \"high protein\"...';
+      'ମିଲ୍, ଖାଦ୍ୟ, \"high protein\" ସର୍ଚ୍ଚ କରନ୍ତୁ...';
 
   @override
-  String get foodHistoryUndo => 'Undo';
+  String get foodHistoryUndo => 'ଅନଡୁ';
 
   @override
-  String get foodItemRankingAddFood => 'Add food';
+  String get foodItemRankingAddFood => 'ଖାଦ୍ୟ ଯୋଡନ୍ତୁ';
 
   @override
-  String get foodItemRankingDetails => ') details';
+  String get foodItemRankingDetails => ') ବିବରଣୀ';
 
   @override
   String foodItemRankingNFoodItems(Object count) {
@@ -13781,7 +13777,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodItemRankingScore => 'Score';
+  String get foodItemRankingScore => 'ସ୍କୋର';
 
   @override
   String get foodItemRankingTapToHideDetails =>
@@ -13792,27 +13788,26 @@ class AppLocalizationsOr extends AppLocalizations {
       'ବିବରଣୀ ଦେଖିବା ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ';
 
   @override
-  String get foodLibraryAHomemadeMealWith =>
-      'A homemade meal with multiple ingredients';
+  String get foodLibraryAHomemadeMealWith => 'ଅନେକ ଉପାଦାନ ସହିତ ଏକ ଘରୋଇ ଖାଦ୍ୟ';
 
   @override
   String get foodLibraryASingleFoodType =>
-      'A single food — type it or let AI fill it in';
+      'ଏକ ସିଙ୍ଗଲ୍ ଖାଦ୍ୟ — ଏହାକୁ ଟାଇପ୍ କରନ୍ତୁ କିମ୍ବା AI କୁ ପୂରଣ କରିବାକୁ ଦିଅନ୍ତୁ';
 
   @override
-  String get foodLibraryAdd => 'Add';
+  String get foodLibraryAdd => 'ଯୋଡନ୍ତୁ';
 
   @override
-  String get foodLibraryCustomFood => 'Custom food';
+  String get foodLibraryCustomFood => 'କଷ୍ଟମ୍ ଖାଦ୍ୟ';
 
   @override
-  String get foodLibraryFailedToDelete => 'Failed to delete';
+  String get foodLibraryFailedToDelete => 'ଡିଲିଟ୍ କରିବାରେ ବିଫଳ';
 
   @override
-  String get foodLibraryFoodLibrary => 'Food Library';
+  String get foodLibraryFoodLibrary => 'ଫୁଡ୍ ଲାଇବ୍ରେରୀ';
 
   @override
-  String get foodLibraryRecipe => 'Recipe';
+  String get foodLibraryRecipe => 'ରେସିପି';
 
   @override
   String foodLibraryScreenAdded(Object name) {
@@ -13825,10 +13820,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodLibraryScreenCalories => 'Calories';
+  String get foodLibraryScreenCalories => 'କ୍ୟାଲୋରୀ';
 
   @override
-  String get foodLibraryScreenCarbs => 'Carbs';
+  String get foodLibraryScreenCarbs => 'କାର୍ବସ୍';
 
   @override
   String foodLibraryScreenDelete(Object name) {
@@ -13841,7 +13836,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodLibraryScreenDescription => 'Description';
+  String get foodLibraryScreenDescription => 'ବିବରଣୀ';
 
   @override
   String foodLibraryScreenFailedToLoadRecipe(Object e) {
@@ -13854,19 +13849,19 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodLibraryScreenFat => 'Fat';
+  String get foodLibraryScreenFat => 'ଫ୍ୟାଟ୍';
 
   @override
-  String get foodLibraryScreenIngredients => 'Ingredients';
+  String get foodLibraryScreenIngredients => 'ଉପାଦାନଗୁଡ଼ିକ';
 
   @override
-  String get foodLibraryScreenLog => 'Log';
+  String get foodLibraryScreenLog => 'ଲଗ୍';
 
   @override
-  String get foodLibraryScreenLogThisFood => 'Log This Food';
+  String get foodLibraryScreenLogThisFood => 'ଏହି ଖାଦ୍ୟକୁ ଲଗ୍ କରନ୍ତୁ';
 
   @override
-  String get foodLibraryScreenLogToWhichMeal => 'Log to which meal?';
+  String get foodLibraryScreenLogToWhichMeal => 'କେଉଁ ମିଲ୍ ପାଇଁ ଲଗ୍ କରିବେ?';
 
   @override
   String foodLibraryScreenLoggedTo(Object label, Object name) {
@@ -13904,10 +13899,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodLibraryScreenProtein => 'Protein';
+  String get foodLibraryScreenProtein => 'ପ୍ରୋଟିନ୍';
 
   @override
-  String get foodLibraryScreenRecipe => 'Recipe';
+  String get foodLibraryScreenRecipe => 'ରେସିପି';
 
   @override
   String foodLibraryScreenRecipes(Object length) {
@@ -13920,52 +13915,54 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodLibraryScreenSavedFood => 'Saved Food';
+  String get foodLibraryScreenSavedFood => 'ସେଭ୍ ହୋଇଥିବା ଖାଦ୍ୟ';
 
   @override
-  String get foodLibraryScreenServings => 'Servings';
+  String get foodLibraryScreenServings => 'ସର୍ଭିଂ';
 
   @override
-  String get foodLibraryScreenSortBy => 'Sort By';
+  String get foodLibraryScreenSortBy => 'ଏହି ଅନୁସାରେ ସର୍ଟ କରନ୍ତୁ';
 
   @override
   String get foodLibraryScreenThisActionCannotBe =>
-      'This action cannot be undone.';
+      'ଏହି କାର୍ଯ୍ୟକୁ ପୂର୍ବବତ୍ କରାଯାଇପାରିବ ନାହିଁ।';
 
   @override
-  String get foodLibrarySearchFoodsAndRecipes => 'Search foods and recipes...';
+  String get foodLibrarySearchFoodsAndRecipes =>
+      'ଖାଦ୍ୟ ଏବଂ ରେସିପି ସର୍ଚ୍ଚ କରନ୍ତୁ...';
 
   @override
-  String get foodLibraryThisActionCannotBe => 'This action cannot be undone.';
+  String get foodLibraryThisActionCannotBe =>
+      'ଏହି କାର୍ଯ୍ୟକୁ ପୂର୍ବବତ୍ କରାଯାଇପାରିବ ନାହିଁ।';
 
   @override
   String get foodLibraryUsingYourExistingCustom =>
-      'Using your existing custom food';
+      'ଆପଣଙ୍କର ବିଦ୍ୟମାନ କଷ୍ଟମ୍ ଖାଦ୍ୟ ବ୍ୟବହାର କରି';
 
   @override
-  String get foodLoggingRulesAddRule => 'Add rule';
+  String get foodLoggingRulesAddRule => 'ନିୟମ ଯୋଡନ୍ତୁ';
 
   @override
-  String get foodLoggingRulesAlwaysRules => 'Always-Rules';
+  String get foodLoggingRulesAlwaysRules => 'ସର୍ବଦା-ନିୟମ';
 
   @override
-  String get foodLoggingRulesConflictingRules => 'Conflicting rules';
+  String get foodLoggingRulesConflictingRules => 'ବିରୋଧୀ ନିୟମ';
 
   @override
-  String get foodLoggingRulesDeleteRule => 'Delete rule?';
+  String get foodLoggingRulesDeleteRule => 'ନିୟମ ଡିଲିଟ୍ କରିବେ?';
 
   @override
   String get foodLoggingRulesEGNoBun =>
-      'e.g. \"No bun\" or \"we cook low-oil South Indian\"';
+      'ଉଦାହରଣ ସ୍ୱରୂପ \"No bun\" କିମ୍ବା \"we cook low-oil South Indian\"';
 
   @override
-  String get foodLoggingRulesEditRule => 'Edit rule';
+  String get foodLoggingRulesEditRule => 'ନିୟମ ଏଡିଟ୍ କରନ୍ତୁ';
 
   @override
-  String get foodLoggingRulesNewAlwaysRule => 'New always-rule';
+  String get foodLoggingRulesNewAlwaysRule => 'ନୂତନ ସର୍ବଦା-ନିୟମ';
 
   @override
-  String get foodLoggingRulesNoRulesYet => 'No rules yet';
+  String get foodLoggingRulesNoRulesYet => 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ନିୟମ ନାହିଁ';
 
   @override
   String foodLoggingRulesScreenValue(Object text) {
@@ -13974,20 +13971,20 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get foodMoodAnalyticsAnalyzingMoodPatterns =>
-      'Analyzing mood patterns...';
+      'ମୁଡ୍ ପ୍ୟାଟର୍ନ୍ ବିଶ୍ଳେଷଣ କରୁଛି...';
 
   @override
   String get foodMoodAnalyticsAvailableWhenLoggingMeals =>
-      'Available when logging meals';
+      'ମିଲ୍ ଲଗ୍ କରିବା ସମୟରେ ଉପଲବ୍ଧ';
 
   @override
-  String get foodMoodAnalyticsAverage => 'Average: ';
+  String get foodMoodAnalyticsAverage => 'ହାରାହାରି: ';
 
   @override
   String get foodMoodAnalyticsAvgEnergy => 'ହାରାହାରି ଶକ୍ତି';
 
   @override
-  String get foodMoodAnalyticsByMealType => 'BY MEAL TYPE';
+  String get foodMoodAnalyticsByMealType => 'ମିଲ୍ ପ୍ରକାର ଅନୁସାରେ';
 
   @override
   String foodMoodAnalyticsCardPartFoodMoodAnalyticsSheetX(Object occurrences) {
@@ -13995,40 +13992,42 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodMoodAnalyticsEnergyLevels => 'ENERGY LEVELS';
+  String get foodMoodAnalyticsEnergyLevels => 'ଶକ୍ତି ସ୍ତର';
 
   @override
-  String get foodMoodAnalyticsFoodMood => 'FOOD & MOOD';
+  String get foodMoodAnalyticsFoodMood => 'ଖାଦ୍ୟ ଓ ମୁଡ୍';
 
   @override
-  String get foodMoodAnalyticsFoodMoodInsights => 'Food & Mood Insights';
+  String get foodMoodAnalyticsFoodMoodInsights =>
+      'ଖାଦ୍ୟ ଓ ମୁଡ୍ ସମ୍ବନ୍ଧୀୟ ସୂଚନା';
 
   @override
   String get foodMoodAnalyticsFoodsThatBoostYour =>
-      'FOODS THAT BOOST YOUR MOOD';
+      'ଆପଣଙ୍କ ମୁଡ୍ ଭଲ କରୁଥିବା ଖାଦ୍ୟ';
 
   @override
-  String get foodMoodAnalyticsFoodsToWatch => 'FOODS TO WATCH';
+  String get foodMoodAnalyticsFoodsToWatch => 'ଧ୍ୟାନ ଦେବାକୁ ଥିବା ଖାଦ୍ୟ';
 
   @override
   String get foodMoodAnalyticsLogHowYouFeel =>
-      'Log how you feel before and after meals to discover patterns';
+      'ପ୍ୟାଟର୍ନ୍ ଜାଣିବା ପାଇଁ ମିଲ୍ ପୂର୍ବରୁ ଏବଂ ପରେ ଆପଣ କିପରି ଅନୁଭବ କରୁଛନ୍ତି ତାହା ଲଗ୍ କରନ୍ତୁ';
 
   @override
   String get foodMoodAnalyticsMealsTracked => 'ଖାଦ୍ୟ ଟ୍ରାକ୍ କରାଯାଇଛି';
 
   @override
-  String get foodMoodAnalyticsMoodAfterEating => 'MOOD AFTER EATING';
+  String get foodMoodAnalyticsMoodAfterEating => 'ଖାଇବା ପରେ ମୁଡ୍';
 
   @override
   String get foodMoodAnalyticsMoodImproved => 'ମୁଡ୍ ଭଲ ହୋଇଛି';
 
   @override
   String get foodMoodAnalyticsNoEnergyDataRecorded =>
-      'No energy data recorded yet';
+      'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଶକ୍ତି ତଥ୍ୟ ରେକର୍ଡ ହୋଇନାହିଁ';
 
   @override
-  String get foodMoodAnalyticsNoMoodDataYet => 'No mood data yet';
+  String get foodMoodAnalyticsNoMoodDataYet =>
+      'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ମୁଡ୍ ତଥ୍ୟ ନାହିଁ';
 
   @override
   String foodMoodAnalyticsOftenImprovesYourMood(Object food) {
@@ -14036,11 +14035,12 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get foodMoodAnalyticsStartTrackingMood => 'Start tracking mood';
+  String get foodMoodAnalyticsStartTrackingMood =>
+      'ମୁଡ୍ ଟ୍ରାକ୍ କରିବା ଆରମ୍ଭ କରନ୍ତୁ';
 
   @override
   String get foodMoodAnalyticsTrackYourMoodWhen =>
-      'Track your mood when logging meals\\nto see patterns and insights';
+      'ପ୍ୟାଟର୍ନ୍ ଏବଂ ସୂଚନା ଦେଖିବା ପାଇଁ\\nମିଲ୍ ଲଗ୍ କରିବା ସମୟରେ ଆପଣଙ୍କ ମୁଡ୍ ଟ୍ରାକ୍ କରନ୍ତୁ';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'ଟ୍ରାକ୍ ହୋଇଥିବା ଖାଦ୍ୟ';
@@ -14049,19 +14049,20 @@ class AppLocalizationsOr extends AppLocalizations {
   String get foodMoodAnalyticsTrackingRate => 'ଟ୍ରାକିଂ ହାର';
 
   @override
-  String get foodMoodAnalyticsUnableToLoadData => 'Unable to load data';
+  String get foodMoodAnalyticsUnableToLoadData => 'ତଥ୍ୟ ଲୋଡ୍ କରିବାରେ ଅସମର୍ଥ';
 
   @override
-  String get foodMoodAnalyticsUnableToLoadMood => 'Unable to load mood data';
+  String get foodMoodAnalyticsUnableToLoadMood =>
+      'ମୁଡ୍ ତଥ୍ୟ ଲୋଡ୍ କରିବାରେ ଅସମର୍ଥ';
 
   @override
-  String get foodReportCalories => 'Calories';
+  String get foodReportCalories => 'କ୍ୟାଲୋରୀ';
 
   @override
-  String get foodReportCarbs => 'Carbs';
+  String get foodReportCarbs => 'କାର୍ବସ୍';
 
   @override
-  String get foodReportCorrectedValues => 'Corrected Values';
+  String get foodReportCorrectedValues => 'ସଂଶୋଧିତ ମୂଲ୍ୟ';
 
   @override
   String foodReportDialogFailedToSubmitReport(Object e) {
@@ -14075,32 +14076,33 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get foodReportEGISearched =>
-      'e.g. I searched for mexican coke, not a burrito bowl';
+      'ଉଦାହରଣ ସ୍ୱରୂପ, ମୁଁ mexican coke ସର୍ଚ୍ଚ କରିଥିଲି, burrito bowl ନୁହେଁ';
 
   @override
-  String get foodReportFat => 'Fat';
+  String get foodReportFat => 'ଫ୍ୟାଟ୍';
 
   @override
-  String get foodReportProtein => 'Protein';
+  String get foodReportProtein => 'ପ୍ରୋଟିନ୍';
 
   @override
-  String get foodReportReportIssue => 'Report Issue';
+  String get foodReportReportIssue => 'ସମସ୍ୟା ରିପୋର୍ଟ କରନ୍ତୁ';
 
   @override
-  String get foodReportReportSubmitted => 'Report submitted';
+  String get foodReportReportSubmitted => 'ରିପୋର୍ଟ ଦାଖଲ ହୋଇଛି';
 
   @override
-  String get foodReportSubmitReport => 'Submit Report';
+  String get foodReportSubmitReport => 'ରିପୋର୍ଟ ଦାଖଲ କରନ୍ତୁ';
 
   @override
   String get foodReportWeLlReviewAnd =>
-      'We\'ll review and update within 48h.\\nThanks for helping improve our data!';
+      'ଆମେ 48 ଘଣ୍ଟା ମଧ୍ୟରେ ସମୀକ୍ଷା ଏବଂ ଅପଡେଟ୍ କରିବୁ।\\nଆମର ତଥ୍ୟକୁ ଉନ୍ନତ କରିବାରେ ସାହାଯ୍ୟ କରିଥିବାରୁ ଧନ୍ୟବାଦ!';
 
   @override
-  String get foodReportWhatFoodDidYou => 'What food did you actually mean?';
+  String get foodReportWhatFoodDidYou =>
+      'ଆପଣ ପ୍ରକୃତରେ କେଉଁ ଖାଦ୍ୟ ବିଷୟରେ କହୁଥିଲେ?';
 
   @override
-  String get foodReportWrongFood => 'Wrong food';
+  String get foodReportWrongFood => 'ଭୁଲ୍ ଖାଦ୍ୟ';
 
   @override
   String get foodReportWrongNutrition => 'ଭୁଲ ପୋଷଣ';
@@ -14492,16 +14494,16 @@ class AppLocalizationsOr extends AppLocalizations {
   String get fuelWater => 'ଜଳ';
 
   @override
-  String get fullScreenChart1y => '1Y';
+  String get fullScreenChart1y => '୧ ବର୍ଷ';
 
   @override
-  String get fullScreenChart30d => '30D';
+  String get fullScreenChart30d => '୩୦ ଦିନ';
 
   @override
-  String get fullScreenChart7d => '7D';
+  String get fullScreenChart7d => '୭ ଦିନ';
 
   @override
-  String get fullScreenChart90d => '90D';
+  String get fullScreenChart90d => '୯୦ ଦିନ';
 
   @override
   String get fullScreenChartAll => 'ସବୁ';
@@ -16114,7 +16116,7 @@ class AppLocalizationsOr extends AppLocalizations {
     Object percent,
     Object shortLabel,
   ) {
-    return '$shortLabel ${minutes}m ($percent%)';
+    return '$shortLabel $minutes ମିନିଟ୍ ($percent%)';
   }
 
   @override
@@ -17081,102 +17083,102 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String homeGreetingAfternoon_v1(Object name) {
-    return 'Afternoon energy, $name!';
+    return 'ଅପରାହ୍ନର ଶକ୍ତି, $name!';
   }
 
   @override
   String homeGreetingAfternoon_v2(Object name) {
-    return 'Hi $name, time to move?';
+    return 'ନମସ୍କାର $name, ବ୍ୟାୟାମ କରିବାର ସମୟ ହେଲା କି?';
   }
 
   @override
   String homeGreetingAfternoon_v3(Object name) {
-    return 'Stretch break, $name?';
+    return 'ଷ୍ଟ୍ରେଚ୍ ବ୍ରେକ୍ ନେବେ କି, $name?';
   }
 
   @override
   String homeGreetingAfternoon_v4(Object name) {
-    return 'How\'s the day, $name?';
+    return 'ଦିନଟି କେମିତି କଟୁଛି, $name?';
   }
 
   @override
   String homeGreetingAfternoon_v5(Object name) {
-    return 'Good afternoon, $name';
+    return 'ଶୁଭ ଅପରାହ୍ନ, $name';
   }
 
   @override
   String homeGreetingEvening_v1(Object name) {
-    return 'Wind-down time, $name';
+    return 'ବିଶ୍ରାମର ସମୟ, $name';
   }
 
   @override
   String homeGreetingEvening_v2(Object name) {
-    return 'Evening, $name';
+    return 'ସନ୍ଧ୍ୟା, $name';
   }
 
   @override
   String homeGreetingEvening_v3(Object name) {
-    return 'End the day strong, $name';
+    return 'ଦିନଟିକୁ ଭଲ ଭାବେ ଶେଷ କରନ୍ତୁ, $name';
   }
 
   @override
   String homeGreetingEvening_v4(Object name) {
-    return 'Last reps, $name?';
+    return 'ଶେଷ ଥର ବ୍ୟାୟାମ କରିବେ କି, $name?';
   }
 
   @override
   String homeGreetingEvening_v5(Object name) {
-    return 'Evening reflection, $name';
+    return 'ସନ୍ଧ୍ୟାର ଚିନ୍ତନ, $name';
   }
 
   @override
   String homeGreetingMidday_v1(Object name) {
-    return 'Lunch break, $name?';
+    return 'ମଧ୍ୟାହ୍ନ ଭୋଜନ ବ୍ରେକ୍, $name?';
   }
 
   @override
   String homeGreetingMidday_v2(Object name) {
-    return 'Midday check-in, $name';
+    return 'ମଧ୍ୟାହ୍ନର ସମୀକ୍ଷା, $name';
   }
 
   @override
   String homeGreetingMidday_v3(Object name) {
-    return 'Hey $name, halfway there';
+    return 'ହେ $name, ଅଧା ବାଟ ଅତିକ୍ରମ କରିସାରିଲେଣି';
   }
 
   @override
   String homeGreetingMidday_v4(Object name) {
-    return 'Powering through, $name?';
+    return 'ଉତ୍ସାହର ସହ ଆଗକୁ ବଢୁଛନ୍ତି କି, $name?';
   }
 
   @override
   String homeGreetingMidday_v5(Object name) {
-    return 'Strong day so far, $name';
+    return 'ଏପର୍ଯ୍ୟନ୍ତ ଦିନଟି ବହୁତ ଭଲ କଟୁଛି, $name';
   }
 
   @override
   String homeGreetingMorning_v1(Object name) {
-    return 'Morning, $name!';
+    return 'ସୁପ୍ରଭାତ, $name!';
   }
 
   @override
   String homeGreetingMorning_v2(Object name) {
-    return 'Hey $name, ready to crush it?';
+    return 'ହେ $name, ଆଜିର ଲକ୍ଷ୍ୟ ପୂରଣ କରିବାକୁ ପ୍ରସ୍ତୁତ?';
   }
 
   @override
   String homeGreetingMorning_v3(Object name) {
-    return 'Good morning, $name';
+    return 'ଶୁଭ ସକାଳ, $name';
   }
 
   @override
   String homeGreetingMorning_v4(Object name) {
-    return 'Up early, $name?';
+    return 'ସକାଳୁ ଉଠିଗଲେ କି, $name?';
   }
 
   @override
   String homeGreetingMorning_v5(Object name) {
-    return 'Welcome back, $name';
+    return 'ସ୍ୱାଗତ, $name';
   }
 
   @override
@@ -17369,7 +17371,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String homeScreenUiRestoreTheOriginalLayout(Object appName) {
-    return 'Restore the original $appName layout';
+    return 'ମୂଳ $appName ଲେଆଉଟ୍ ପୁନଃସ୍ଥାପନ କରନ୍ତୁ';
   }
 
   @override
@@ -17385,30 +17387,32 @@ class AppLocalizationsOr extends AppLocalizations {
   String get homeStartWorkout => 'ୱର୍କଆଉଟ୍ ଆରମ୍ଭ';
 
   @override
-  String get homeStreak100Day_v1 => '100 days. You built something real.';
+  String get homeStreak100Day_v1 => '୧୦୦ ଦିନ। ଆପଣ କିଛି ବାସ୍ତବ କରି ଦେଖାଇଛନ୍ତି।';
 
   @override
-  String get homeStreak100Day_v2 => 'Triple digits. You don\'t miss.';
+  String get homeStreak100Day_v2 => 'ତିନି ଅଙ୍କ। ଆପଣ କେବେ ବି ମିସ୍ କରନ୍ତି ନାହିଁ।';
 
   @override
   String get homeStreak100Day_v3 =>
-      '100-day streak! That\'s elite-level dedication.';
+      '୧୦୦ ଦିନର ଷ୍ଟ୍ରିକ୍! ଏହା ଏକ ଉଚ୍ଚକୋଟୀର ନିଷ୍ଠା।';
 
   @override
-  String get homeStreak100Day_v4 => '100 days in the books. Unstoppable.';
+  String get homeStreak100Day_v4 => '୧୦୦ ଦିନ ପୂରଣ ହେଲା। ଆପଣ ଅଟକିବାର ନୁହଁନ୍ତି।';
 
   @override
-  String get homeStreak30Day_v1 => '30 days. A full month of showing up.';
+  String get homeStreak30Day_v1 => '୩୦ ଦିନ। ଏକ ପୂରା ମାସର ନିରନ୍ତର ପ୍ରୟାସ।';
 
   @override
-  String get homeStreak30Day_v2 => 'One month in. This is a habit now.';
+  String get homeStreak30Day_v2 =>
+      'ଏକ ମାସ ପୂରଣ ହେଲା। ଏହା ଏବେ ଏକ ଅଭ୍ୟାସରେ ପରିଣତ ହୋଇଛି।';
 
   @override
   String get homeStreak30Day_v3 =>
-      '30-day streak! Most people quit by now — not you.';
+      '୩୦ ଦିନର ଷ୍ଟ୍ରିକ୍! ଅଧିକାଂଶ ଲୋକ ଏତେ ଦୂର ଯିବା ପୂର୍ବରୁ ଛାଡ଼ି ଦିଅନ୍ତି — କିନ୍ତୁ ଆପଣ ନୁହଁନ୍ତି।';
 
   @override
-  String get homeStreak30Day_v4 => 'A month of consistency. That\'s rare.';
+  String get homeStreak30Day_v4 =>
+      'ଏକ ମାସର ସ୍ଥିରତା। ଏହା ବହୁତ କମ୍ ଲୋକଙ୍କ ପାଖରେ ଥାଏ।';
 
   @override
   String get homeStreak365Day_v1 => '365 ଦିନ। ଆପଣଙ୍କର ଏକ ସମ୍ପୂର୍ଣ୍ଣ ବର୍ଷ।';
@@ -17425,16 +17429,16 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଏକ ବର୍ଷ ପୂରଣ ହେଲା। ଆପଣ ସ୍ଥିରତାର ଏକ ନୂଆ ପରିଭାଷା ଲେଖିଛନ୍ତି।';
 
   @override
-  String get homeStreak7Day_v1 => '1 week streak — locked in!';
+  String get homeStreak7Day_v1 => '୧ ସପ୍ତାହର ଷ୍ଟ୍ରିକ୍ — ଜାରି ରଖନ୍ତୁ!';
 
   @override
-  String get homeStreak7Day_v2 => '7 days. You\'re on a roll.';
+  String get homeStreak7Day_v2 => '୭ ଦିନ। ଆପଣ ବହୁତ ଭଲ ପ୍ରଦର୍ଶନ କରୁଛନ୍ତି।';
 
   @override
-  String get homeStreak7Day_v3 => 'Week streak! Stack another.';
+  String get homeStreak7Day_v3 => 'ସପ୍ତାହର ଷ୍ଟ୍ରିକ୍! ଆଉ ଏକ ସପ୍ତାହ ଯୋଡ଼ନ୍ତୁ।';
 
   @override
-  String get homeStreak7Day_v4 => '7 days straight. Keep that fire going.';
+  String get homeStreak7Day_v4 => 'ଲଗାତାର ୭ ଦିନ। ଏହି ଉତ୍ସାହକୁ ବଜାୟ ରଖନ୍ତୁ।';
 
   @override
   String get homeSwipeToSeeThis =>
@@ -17847,22 +17851,22 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String hormonalHealthSettingsScreenDays(Object selected) {
-    return '$selected days';
+    return '$selected ଦିନ';
   }
 
   @override
   String hormonalHealthSettingsScreenDays2(Object selected) {
-    return '$selected days';
+    return '$selected ଦିନ';
   }
 
   @override
   String hormonalHealthSettingsScreenDays3(Object selected) {
-    return '$selected days';
+    return '$selected ଦିନ';
   }
 
   @override
   String hormonalHealthSettingsScreenDays4(Object selected) {
-    return '$selected days';
+    return '$selected ଦିନ';
   }
 
   @override
@@ -18056,7 +18060,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String hydrationDialogLog(Object label) {
-    return 'Log $label';
+    return '$label ଲଗ୍ କରନ୍ତୁ';
   }
 
   @override
@@ -18884,10 +18888,10 @@ class AppLocalizationsOr extends AppLocalizations {
   String get insightsPastReports => 'ପୂର୍ବ ରିପୋର୍ଟ';
 
   @override
-  String get insightsProgressTemplateBodyFat => 'BODY FAT';
+  String get insightsProgressTemplateBodyFat => 'ଶରୀରର ଚର୍ବି';
 
   @override
-  String get insightsProgressTemplateBodyRecovery => 'BODY & RECOVERY';
+  String get insightsProgressTemplateBodyRecovery => 'ଶରୀର ଓ ପୁନରୁଦ୍ଧାର';
 
   @override
   String insightsProgressTemplateDays(Object maxStreak) {
@@ -18895,16 +18899,16 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get insightsProgressTemplateMaxStreak => 'MAX STREAK';
+  String get insightsProgressTemplateMaxStreak => 'ସର୍ବାଧିକ ଷ୍ଟ୍ରିକ୍';
 
   @override
-  String get insightsProgressTemplateNutrition => 'NUTRITION';
+  String get insightsProgressTemplateNutrition => 'ପୁଷ୍ଟିସାର';
 
   @override
-  String get insightsProgressTemplateReadiness => 'READINESS';
+  String get insightsProgressTemplateReadiness => 'ପ୍ରସ୍ତୁତି';
 
   @override
-  String get insightsProgressTemplateWeight => 'WEIGHT';
+  String get insightsProgressTemplateWeight => 'ଓଜନ';
 
   @override
   String get insightsPrsTemplate1Pr => '1 PR';
@@ -18919,7 +18923,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଏହି ସମୟ ମଧ୍ୟରେ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି PR ନାହିଁ';
 
   @override
-  String get insightsPrsTemplatePersonalRecords => 'PERSONAL RECORDS';
+  String get insightsPrsTemplatePersonalRecords => 'ବ୍ୟକ୍ତିଗତ ରେକର୍ଡ';
 
   @override
   String insightsPrsTemplatePrs(Object count) {
@@ -18931,26 +18935,26 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଉପସ୍ଥିତ ରହିବା ହିଁ ପ୍ରକୃତ ବିଜୟ। ରେପ୍ସ ଜାରି ରଖନ୍ତୁ।';
 
   @override
-  String get insightsReportCardCalories => 'CALORIES';
+  String get insightsReportCardCalories => 'କ୍ୟାଲୋରୀ';
 
   @override
-  String get insightsReportCardCompleted => 'COMPLETED';
+  String get insightsReportCardCompleted => 'ସମ୍ପୂର୍ଣ୍ଣ';
 
   @override
-  String get insightsReportCardCompletion => 'COMPLETION';
+  String get insightsReportCardCompletion => 'ସମାପ୍ତି';
 
   @override
-  String get insightsReportCardMaxStreak => 'MAX STREAK';
+  String get insightsReportCardMaxStreak => 'ସର୍ବାଧିକ ଷ୍ଟ୍ରିକ୍';
 
   @override
   String get insightsReportCardPrs => 'PRs';
 
   @override
-  String get insightsReportCardReportCard => 'REPORT CARD';
+  String get insightsReportCardReportCard => 'ରିପୋର୍ଟ କାର୍ଡ';
 
   @override
   String insightsReportCardTemplateDays(Object maxStreak) {
-    return '$maxStreak days';
+    return '$maxStreak ଦିନ';
   }
 
   @override
@@ -18979,11 +18983,11 @@ class AppLocalizationsOr extends AppLocalizations {
     Object workoutsCompleted,
     Object workoutsScheduled,
   ) {
-    return '$workoutsCompleted/$workoutsScheduled workouts  |  ${totalTimeMinutes}min  |  $caloriesBurnedEstimate kcal';
+    return '$workoutsCompleted/$workoutsScheduled ୱର୍କଆଉଟ୍  |  $totalTimeMinutesମିନିଟ୍  |  $caloriesBurnedEstimate kcal';
   }
 
   @override
-  String get insightsScreenPartBodyFat => 'Body Fat';
+  String get insightsScreenPartBodyFat => 'ଶରୀରର ଚର୍ବି';
 
   @override
   String get insightsScreenPartFailedToLoadInsights =>
@@ -19352,7 +19356,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get kegelSessionSessionComplete => 'ସେସନ୍ ସମ୍ପୂର୍ଣ୍ଣ!';
 
   @override
-  String get kegelSessionSqueeze => 'SQUEEZE';
+  String get kegelSessionSqueeze => 'ଚାପି ଧରନ୍ତୁ';
 
   @override
   String get kegelSessionSqueezeYourPelvicFloor =>
@@ -19436,12 +19440,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String lastNightSleepCardH(Object hours) {
-    return '${hours}h';
+    return '$hoursଘଣ୍ଟା';
   }
 
   @override
   String lastNightSleepCardM(Object minutes) {
-    return '${minutes}m';
+    return '$minutesମିନିଟ୍';
   }
 
   @override
@@ -20564,17 +20568,17 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String logMealSheetUi2GProteinLeft(Object proteinRemaining) {
-    return '${proteinRemaining}g protein left';
+    return '${proteinRemaining}g ପ୍ରୋଟିନ୍ ବାକି ଅଛି';
   }
 
   @override
   String logMealSheetUi2KcalLeft(Object caloriesRemaining) {
-    return '$caloriesRemaining kcal left';
+    return '$caloriesRemaining kcal ବାକି ଅଛି';
   }
 
   @override
   String logMealSheetUi2PickUpTo(Object remaining) {
-    return 'Pick up to $remaining';
+    return '$remaining ପର୍ଯ୍ୟନ୍ତ ବାଛନ୍ତୁ';
   }
 
   @override
@@ -21039,17 +21043,17 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String loggedMealsSectionCal(Object target, Object totalCaloriesEaten) {
-    return '$totalCaloriesEaten / $target cal';
+    return '$totalCaloriesEaten / $target କ୍ୟାଲୋରୀ';
   }
 
   @override
   String loggedMealsSectionCal2(Object calories) {
-    return '$calories cal';
+    return '$calories କ୍ୟାଲୋରୀ';
   }
 
   @override
   String loggedMealsSectionCal3(Object food) {
-    return '$food cal';
+    return '$food କ୍ୟାଲୋରୀ';
   }
 
   @override
@@ -21059,7 +21063,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String loggedMealsSectionEaten(Object totalCaloriesEaten) {
-    return '$totalCaloriesEaten eaten';
+    return '$totalCaloriesEaten ଖିଆଯାଇଛି';
   }
 
   @override
@@ -21104,7 +21108,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String loggedMealsSectionGProtein(Object proteinG) {
-    return '${proteinG}g protein';
+    return '${proteinG}g ପ୍ରୋଟିନ୍';
   }
 
   @override
@@ -21169,7 +21173,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String loggedMealsSectionVia(Object label) {
-    return 'via $label';
+    return '$label ମାଧ୍ୟମରେ';
   }
 
   @override
@@ -21329,17 +21333,17 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String manageGymProfilesSheetAreYouSureYou(Object name) {
-    return 'Are you sure you want to delete \"$name\"? ';
+    return 'ଆପଣ ନିଶ୍ଚିତ କି ଯେ ଆପଣ \"$name\" କୁ ଡିଲିଟ୍ କରିବାକୁ ଚାହାଁନ୍ତି?';
   }
 
   @override
   String manageGymProfilesSheetCreated(Object name) {
-    return 'Created \"$name\"';
+    return '\"$name\" ସୃଷ୍ଟି ହୋଇଛି';
   }
 
   @override
   String manageGymProfilesSheetDeleted(Object name) {
-    return 'Deleted \"$name\"';
+    return '\"$name\" ଡିଲିଟ୍ ହୋଇଛି';
   }
 
   @override
@@ -21347,7 +21351,7 @@ class AppLocalizationsOr extends AppLocalizations {
     Object environmentDisplayName,
     Object equipmentCount,
   ) {
-    return '$equipmentCount equipment • $environmentDisplayName';
+    return '$equipmentCount ଉପକରଣ • $environmentDisplayName';
   }
 
   @override
@@ -21765,11 +21769,11 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get measurementsScreenPartWeightBodyFatChest =>
-      'weight, body_fat, chest, waist, hips, neck, shoulders, biceps_left, biceps_right, forearm_left, forearm_right, thigh_left, thigh_right, calf_left, calf_right';
+      'ଓଜନ, ଶରୀରର ଚର୍ବି, ଛାତି, ଅଣ୍ଟା, ପିଚା, ବେକ, କାନ୍ଧ, ବାମ ବାଇସେପ୍ସ, ଡାହାଣ ବାଇସେପ୍ସ, ବାମ ବାହୁ, ଡାହାଣ ବାହୁ, ବାମ ଜଙ୍ଘ, ଡାହାଣ ଜଙ୍ଘ, ବାମ ପିଣ୍ଡୁଳି, ଡାହାଣ ପିଣ୍ଡୁଳି';
 
   @override
   String get measurementsScreenPartWorkoutsNutritionMeasureme =>
-      'Workouts, nutrition, measurements & more';
+      'ୱର୍କଆଉଟ୍, ପୁଷ୍ଟିକର ଖାଦ୍ୟ, ମାପ ଏବଂ ଅଧିକ';
 
   @override
   String measurementsScreenRecorded(Object displayName) {
@@ -21859,7 +21863,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get mediaPickerHelperImagesMax10Mb =>
-      'Images: max 10 MB | Videos: max 60s (BETA)';
+      'ଛବି: ସର୍ବାଧିକ 10 MB | ଭିଡିଓ: ସର୍ବାଧିକ 60s (BETA)';
 
   @override
   String get mediaPickerHelperOpenSettings => 'ସେଟିଂସ ଖୋଲନ୍ତୁ';
@@ -21981,10 +21985,10 @@ class AppLocalizationsOr extends AppLocalizations {
       'ମେନୁରୁ ସ୍ୱୟଂଚାଳିତ ଭାବେ ଚିହ୍ନଟ ହୋଇଛି — ଯଦି ଭୁଲ୍ ଥାଏ ତେବେ ଏଡିଟ୍ କରନ୍ତୁ';
 
   @override
-  String get menuAnalysisCal => 'Cal';
+  String get menuAnalysisCal => 'କ୍ୟାଲୋରୀ';
 
   @override
-  String get menuAnalysisCarbs => 'Carbs';
+  String get menuAnalysisCarbs => 'କାର୍ବସ୍';
 
   @override
   String get menuAnalysisClearAll => 'ସବୁ ସଫା କରନ୍ତୁ';
@@ -22008,7 +22012,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get menuAnalysisEditSavedMenu => 'ସେଭ୍ ହୋଇଥିବା ମେନୁ ଏଡିଟ୍ କରନ୍ତୁ';
 
   @override
-  String get menuAnalysisFat => 'Fat';
+  String get menuAnalysisFat => 'ଫ୍ୟାଟ୍';
 
   @override
   String get menuAnalysisHistoryAddAddress => 'ଠିକଣା ଯୋଡନ୍ତୁ';
@@ -22262,7 +22266,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get menuAnalysisTourFilterByDietAllergens =>
-      'Filter by diet & allergens';
+      'ଖାଦ୍ୟ ଏବଂ ଆଲର୍ଜେନ୍ ଅନୁଯାୟୀ ଫିଲ୍ଟର୍ କରନ୍ତୁ';
 
   @override
   String get menuAnalysisTourHideDishesThatDon =>
@@ -23850,7 +23854,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String myStatsTabExercisesTrackedTotalSets(Object length, Object totalSets) {
-    return '$length exercises tracked  •  $totalSets total sets';
+    return '$length ବ୍ୟାୟାମ ଟ୍ରାକ୍ କରାଯାଇଛି  •  $totalSets ମୋଟ ସେଟ୍';
   }
 
   @override
@@ -25075,7 +25079,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — ସାଙ୍ଗମାନେ';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -25168,7 +25172,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get nutritionFastingCardGoalWeight => 'ଲକ୍ଷ୍ୟ ଓଜନ';
 
   @override
-  String get nutritionFastingCardMacros => 'Macros';
+  String get nutritionFastingCardMacros => 'ମାକ୍ରୋ';
 
   @override
   String get nutritionFastingCardMaintainWeight => 'ଓଜନ ବଜାୟ ରଖନ୍ତୁ';
@@ -25283,12 +25287,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCal(Object bmr) {
-    return '= $bmr cal';
+    return '= $bmr କ୍ୟାଲୋରୀ';
   }
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCm(Object height) {
-    return '6.25 × $height cm';
+    return '6.25 × $height ସେମି';
   }
 
   @override
@@ -25734,7 +25738,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String nutritionSettingsScreenUiMin(Object t) {
-    return '$t min';
+    return '$t ମିନିଟ୍';
   }
 
   @override
@@ -26038,7 +26042,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return ')(tdee) କ୍ୟାଲୋରୀ';
   }
 
   @override
@@ -27281,27 +27285,27 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String photosTabFailedToOpenEditor(Object e) {
-    return 'Failed to open editor: $e';
+    return 'ଏଡିଟର୍ ଖୋଲିବାରେ ବିଫଳ: $e';
   }
 
   @override
   String photosTabFailedToUploadPhoto(Object e) {
-    return 'Failed to upload photo: $e';
+    return 'ଫଟୋ ଅପଲୋଡ୍ କରିବାରେ ବିଫଳ: $e';
   }
 
   @override
   String photosTabPhotoSaved(Object displayName) {
-    return '$displayName photo saved!';
+    return '$displayName ଫଟୋ ସେଭ୍ ହୋଇଛି!';
   }
 
   @override
   String photosTabSavedComparisons(Object length) {
-    return 'Saved Comparisons ($length)';
+    return 'ସେଭ୍ ହୋଇଥିବା ତୁଳନା ($length)';
   }
 
   @override
   String photosTabSelected(Object length) {
-    return '$length selected';
+    return '$length ଚୟନ କରାଯାଇଛି';
   }
 
   @override
@@ -27683,7 +27687,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get portionAmountInputAdjustPortion => 'ଅଂଶ ସଜାଡ଼ନ୍ତୁ';
 
   @override
-  String get portionAmountInputCal => 'Cal';
+  String get portionAmountInputCal => 'କ୍ୟାଲୋରୀ';
 
   @override
   String get portionAmountInputCustomAmount => 'କଷ୍ଟମ୍ ପରିମାଣ';
@@ -28396,20 +28400,21 @@ class AppLocalizationsOr extends AppLocalizations {
       'ପ୍ରୋଗ୍ରାମ୍ ଇତିହାସ ଲୋଡ୍ କରିବାରେ ବିଫଳ';
 
   @override
-  String get programHistoryNoProgramHistoryYet => 'No Program History Yet';
+  String get programHistoryNoProgramHistoryYet =>
+      'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ପ୍ରୋଗ୍ରାମ ଇତିହାସ ନାହିଁ';
 
   @override
-  String get programHistoryProgramHistory => 'Program History';
+  String get programHistoryProgramHistory => 'ପ୍ରୋଗ୍ରାମ ଇତିହାସ';
 
   @override
   String get programHistoryProgramRestoredSuccessfully =>
-      'Program restored successfully!';
+      'ପ୍ରୋଗ୍ରାମ ସଫଳତାର ସହିତ ପୁନଃସ୍ଥାପିତ ହୋଇଛି!';
 
   @override
-  String get programHistoryRestoreProgram => 'Restore Program?';
+  String get programHistoryRestoreProgram => 'ପ୍ରୋଗ୍ରାମ ପୁନଃସ୍ଥାପନ କରିବେ କି?';
 
   @override
-  String get programHistoryRestoreProgram2 => 'Restore Program';
+  String get programHistoryRestoreProgram2 => 'ପ୍ରୋଗ୍ରାମ ପୁନଃସ୍ଥାପନ କରନ୍ତୁ';
 
   @override
   String programHistoryScreenDaysWeek(Object length) {
@@ -28437,20 +28442,20 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get programHistoryUnknownError => 'Unknown error';
+  String get programHistoryUnknownError => 'ଅଜଣା ତ୍ରୁଟି';
 
   @override
   String get programHistoryWhenYouCustomizeYour =>
-      'When you customize your program, snapshots will be saved here.';
+      'ଯେତେବେଳେ ଆପଣ ଆପଣଙ୍କର ପ୍ରୋଗ୍ରାମକୁ କଷ୍ଟମାଇଜ୍ କରନ୍ତି, ସ୍ନାପସଟଗୁଡିକ ଏଠାରେ ସେଭ୍ ହୋଇ ରହିବ।';
 
   @override
   String get programLibrary => '•  ';
 
   @override
-  String get programLibraryAll => 'All';
+  String get programLibraryAll => 'ସବୁ';
 
   @override
-  String get programLibraryAny => 'Any';
+  String get programLibraryAny => 'ଯେକୌଣସି';
 
   @override
   String programLibraryCardWk(Object durationWeeks) {
@@ -28463,27 +28468,27 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get programLibraryClearFilters => 'Clear filters';
+  String get programLibraryClearFilters => 'ଫିଲ୍ଟର୍ ସଫା କରନ୍ତୁ';
 
   @override
   String get programLibraryCouldNotImportThis =>
-      'Could not import this program. Please try again.';
+      'ଏହି ପ୍ରୋଗ୍ରାମକୁ ଇମ୍ପୋର୍ଟ କରିହେଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get programLibraryImportCustomize => 'Import & customize';
+  String get programLibraryImportCustomize => 'ଇମ୍ପୋର୍ଟ ଏବଂ କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ';
 
   @override
-  String get programLibraryImporting => 'Importing...';
+  String get programLibraryImporting => 'ଇମ୍ପୋର୍ଟ ହେଉଛି...';
 
   @override
-  String get programLibraryLevel => 'Level';
+  String get programLibraryLevel => 'ସ୍ତର';
 
   @override
   String get programLibraryNoProgramsMatchThese =>
-      'No programs match these filters.';
+      'ଏହି ଫିଲ୍ଟର୍ ସହିତ କୌଣସି ପ୍ରୋଗ୍ରାମ ମେଳ ଖାଉନାହିଁ।';
 
   @override
-  String get programLibraryProgramLibrary => 'Program Library';
+  String get programLibraryProgramLibrary => 'ପ୍ରୋଗ୍ରାମ ଲାଇବ୍ରେରୀ';
 
   @override
   String programLibraryScreenRest(Object dayName) {
@@ -28501,25 +28506,25 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get programLibrarySearchPrograms => 'Search programs';
+  String get programLibrarySearchPrograms => 'ପ୍ରୋଗ୍ରାମ ଖୋଜନ୍ତୁ';
 
   @override
-  String get programMenuButtonBrowsePrograms => 'Browse Programs';
+  String get programMenuButtonBrowsePrograms => 'ପ୍ରୋଗ୍ରାମଗୁଡିକ ଦେଖନ୍ତୁ';
 
   @override
   String get programMenuButtonChangeDaysEquipmentDiffic =>
-      'Change days, equipment, difficulty, and more';
+      'ଦିନ, ଉପକରଣ, କଷ୍ଟସାଧ୍ୟତା ଏବଂ ଅଧିକ ପରିବର୍ତ୍ତନ କରନ୍ତୁ';
 
   @override
-  String get programMenuButtonCustomizeProgram => 'Customize Program';
+  String get programMenuButtonCustomizeProgram => 'ପ୍ରୋଗ୍ରାମ କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ';
 
   @override
   String get programMenuButtonCustomizeYourWorkoutProgram =>
-      'Customize your workout program or regenerate with current settings.';
+      'ଆପଣଙ୍କର ୱାର୍କଆଉଟ୍ ପ୍ରୋଗ୍ରାମକୁ କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ କିମ୍ବା ବର୍ତ୍ତମାନର ସେଟିଂସହିତ ପୁନଃ ନିର୍ମାଣ କରନ୍ତୁ।';
 
   @override
   String get programMenuButtonFailedToClearWorkouts =>
-      'Failed to clear workouts';
+      'ୱାର୍କଆଉଟ୍ ସଫା କରିବାରେ ବିଫଳ';
 
   @override
   String programMenuButtonGeneratedFreshWorkouts(Object generatedCount) {
@@ -28528,42 +28533,44 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get programMenuButtonGetFreshWorkoutsWith =>
-      'Get fresh workouts with your current settings';
+      'ଆପଣଙ୍କର ବର୍ତ୍ତମାନର ସେଟିଂସହିତ ନୂତନ ୱାର୍କଆଉଟ୍ ପାଆନ୍ତୁ';
 
   @override
-  String get programMenuButtonMySpace => 'My Space';
+  String get programMenuButtonMySpace => 'ମୋ ସ୍ଥାନ';
 
   @override
   String get programMenuButtonPleaseLogInTo =>
-      'Please log in to regenerate workouts';
+      'ୱାର୍କଆଉଟ୍ ପୁନଃ ନିର୍ମାଣ କରିବାକୁ ଦୟାକରି ଲଗ୍ ଇନ୍ କରନ୍ତୁ';
 
   @override
-  String get programMenuButtonProgramOptions => 'Program Options';
+  String get programMenuButtonProgramOptions => 'ପ୍ରୋଗ୍ରାମ ବିକଳ୍ପ';
 
   @override
   String get programMenuButtonProgramUpdatedYourNew =>
-      'Program updated! Your new workouts are ready.';
+      'ପ୍ରୋଗ୍ରାମ ଅପଡେଟ୍ ହୋଇଛି! ଆପଣଙ୍କର ନୂତନ ୱାର୍କଆଉଟ୍ ପ୍ରସ୍ତୁତ।';
 
   @override
-  String get programMenuButtonRegenerateThisWeek => 'Regenerate This Week';
+  String get programMenuButtonRegenerateThisWeek =>
+      'ଏହି ସପ୍ତାହ ପୁନଃ ନିର୍ମାଣ କରନ୍ତୁ';
 
   @override
-  String get programMenuButtonRegenerateWorkouts => 'Regenerate Workouts?';
+  String get programMenuButtonRegenerateWorkouts =>
+      'ୱାର୍କଆଉଟ୍ ପୁନଃ ନିର୍ମାଣ କରିବେ କି?';
 
   @override
   String get programMenuButtonSeeYourWorkoutDays =>
-      'See your workout days, experience level & goals';
+      'ଆପଣଙ୍କର ୱାର୍କଆଉଟ୍ ଦିନ, ଅଭିଜ୍ଞତା ସ୍ତର ଏବଂ ଲକ୍ଷ୍ୟ ଦେଖନ୍ତୁ';
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'This will delete your upcoming incomplete workouts and generate fresh ones using your current program settings.\\n\\nCompleted workouts will NOT be affected.';
+      'ଏହା ଆପଣଙ୍କର ଆଗାମୀ ଅସମ୍ପୂର୍ଣ୍ଣ ୱାର୍କଆଉଟଗୁଡ଼ିକୁ ଡିଲିଟ୍ କରିବ ଏବଂ ଆପଣଙ୍କର ବର୍ତ୍ତମାନର ପ୍ରୋଗ୍ରାମ ସେଟିଂସ ବ୍ୟବହାର କରି ନୂତନ ୱାର୍କଆଉଟ୍ ପ୍ରସ୍ତୁତ କରିବ।\\n\\nସମ୍ପୂର୍ଣ୍ଣ ହୋଇଥିବା ୱାର୍କଆଉଟ୍ ଉପରେ କୌଣସି ପ୍ରଭାବ ପଡିବ ନାହିଁ।';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
-      'Try celebrity workouts, sport training & more';
+      'ସେଲିବ୍ରିଟି ୱାର୍କଆଉଟ୍, ସ୍ପୋର୍ଟ୍ ଟ୍ରେନିଂ ଏବଂ ଅଧିକ ଚେଷ୍ଟା କରନ୍ତୁ';
 
   @override
-  String get programMenuButtonViewMyPreferences => 'View My Preferences';
+  String get programMenuButtonViewMyPreferences => 'ମୋ ପସନ୍ଦ ଦେଖନ୍ତୁ';
 
   @override
   String get programMetaApplyStaples => 'ଷ୍ଟାପଲ୍ସ ପ୍ରୟୋଗ କରନ୍ତୁ';
@@ -28586,18 +28593,18 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get programSummaryAdaptsWorkoutsBasedOn =>
-      'Adapts workouts based on your progress';
+      'ଆପଣଙ୍କର ଅଗ୍ରଗତି ଆଧାରରେ ୱାର୍କଆଉଟ୍ ଗ୍ରହଣ କରେ';
 
   @override
   String get programSummaryAdvancedLabel => 'ଉନ୍ନତ';
 
   @override
   String get programSummaryAutomaticallyIncreasesChalle =>
-      'Automatically increases challenge over time';
+      'ସମୟ ସହିତ ସ୍ୱୟୟଂଚାଳିତ ଭାବରେ ଚ୍ୟାଲେଞ୍ଜ ବଢାଏ';
 
   @override
   String get programSummaryAvoidsExercisesThatStress =>
-      'Avoids exercises that stress your limitations';
+      'ଆପଣଙ୍କର ସୀମାକୁ ଚାପ ଦେଉଥିବା ବ୍ୟାୟାମକୁ ଏଡ଼ାଇଥାଏ';
 
   @override
   String get programSummaryBeginnerLabel => 'ଆରମ୍ଭକାରୀ';
@@ -28612,7 +28619,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get programSummaryEndurance => 'ସହନଶୀଳତା';
 
   @override
-  String get programSummaryEquipment => 'Equipment';
+  String get programSummaryEquipment => 'ଉପକରଣ';
 
   @override
   String get programSummaryFullGym => 'ସମ୍ପୂର୍ଣ୍ଣ ଜିମ୍';
@@ -28621,26 +28628,27 @@ class AppLocalizationsOr extends AppLocalizations {
   String get programSummaryGeneralFitness => 'ସାଧାରଣ ଫିଟନେସ୍';
 
   @override
-  String get programSummaryGenerateNewProgram => 'Generate New Program';
+  String get programSummaryGenerateNewProgram =>
+      'ନୂତନ ପ୍ରୋଗ୍ରାମ ପ୍ରସ୍ତୁତ କରନ୍ତୁ';
 
   @override
   String get programSummaryGetStronger => 'ଅଧିକ ଶକ୍ତିଶାଳୀ ହୁଅନ୍ତୁ';
 
   @override
-  String get programSummaryInjuryAwareness => 'Injury Awareness';
+  String get programSummaryInjuryAwareness => 'ଆଘାତ ସଚେତନତା';
 
   @override
   String get programSummaryIntermediateLabel => 'ମଧ୍ୟବର୍ତ୍ତୀ';
 
   @override
-  String get programSummaryLevel => 'Level';
+  String get programSummaryLevel => 'ସ୍ତର';
 
   @override
   String get programSummaryLoseWeight => 'ଓଜନ କମାନ୍ତୁ';
 
   @override
   String get programSummaryMacrosAndMealsAligned =>
-      'Macros and meals aligned to your training';
+      'ଆପଣଙ୍କର ଟ୍ରେନିଂ ସହିତ ମାକ୍ରୋ ଏବଂ ଖାଦ୍ୟ ସମାନ';
 
   @override
   String programSummaryNItems(Object arg0) {
@@ -28648,17 +28656,17 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get programSummaryNutritionIntegration => 'Nutrition Integration';
+  String get programSummaryNutritionIntegration => 'ପୁଷ୍ଟିକର ଏକୀକରଣ';
 
   @override
   String get programSummaryPersonalizedForYourGoals =>
-      'Personalized for your goals and equipment';
+      'ଆପଣଙ୍କର ଲକ୍ଷ୍ୟ ଏବଂ ଉପକରଣ ପାଇଁ ବ୍ୟକ୍ତିଗତ';
 
   @override
-  String get programSummaryProgressiveOverload => 'Progressive Overload';
+  String get programSummaryProgressiveOverload => 'ପ୍ରୋଗ୍ରେସିଭ୍ ଓଭରଲୋଡ୍';
 
   @override
-  String get programSummaryStartTraining => 'Start Training';
+  String get programSummaryStartTraining => 'ଟ୍ରେନିଂ ଆରମ୍ଭ କରନ୍ତୁ';
 
   @override
   String get programSummaryStayFit => 'ଫିଟ୍ ରୁହନ୍ତୁ';
@@ -28667,76 +28675,78 @@ class AppLocalizationsOr extends AppLocalizations {
   String get programSummaryStrengthSize => 'ଶକ୍ତି ଏବଂ ଆକାର';
 
   @override
-  String get programSummaryWhatSIncluded => 'What\'s included';
+  String get programSummaryWhatSIncluded => 'କଣ ଅନ୍ତର୍ଭୁକ୍ତ ଅଛି';
 
   @override
-  String get programSummaryYourProgramIsReady => 'Your Program is Ready';
+  String get programSummaryYourProgramIsReady => 'ଆପଣଙ୍କର ପ୍ରୋଗ୍ରାମ ପ୍ରସ୍ତୁତ';
 
   @override
   String get programTemplateBuilderAProgramNeedsAt =>
-      'A program needs at least one training day.';
+      'ଏକ ପ୍ରୋଗ୍ରାମ ପାଇଁ ଅତିକମରେ ଗୋଟିଏ ଟ୍ରେନିଂ ଦିନ ଆବଶ୍ୟକ।';
 
   @override
-  String get programTemplateBuilderAddExercise => 'Add exercise';
+  String get programTemplateBuilderAddExercise => 'ବ୍ୟାୟାମ ଯୋଡନ୍ତୁ';
 
   @override
-  String get programTemplateBuilderBuildFromScratch => 'Build from scratch';
+  String get programTemplateBuilderBuildFromScratch => 'ଶୂନ୍ୟରୁ ନିର୍ମାଣ କରନ୍ତୁ';
 
   @override
   String get programTemplateBuilderCopyDayToAnother =>
-      'Copy day to another day';
+      'ଦିନକୁ ଅନ୍ୟ ଦିନକୁ କପି କରନ୍ତୁ';
 
   @override
   String get programTemplateBuilderCouldNotSaveThe =>
-      'Could not save the template. Please try again.';
+      'ଟେମ୍ପଲେଟ୍ ସେଭ୍ କରିହେଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get programTemplateBuilderDropInASplit =>
-      'Drop in a split you already wrote and we will parse it.';
+      'ଆପଣ ଲେଖିଥିବା ଏକ ସ୍ପ୍ଲିଟ୍ ଡ୍ରପ୍ କରନ୍ତୁ ଏବଂ ଆମେ ଏହାକୁ ପାର୍ସ କରିବୁ।';
 
   @override
-  String get programTemplateBuilderEditProgram => 'Edit Program';
+  String get programTemplateBuilderEditProgram => 'ପ୍ରୋଗ୍ରାମ ଏଡିଟ୍ କରନ୍ତୁ';
 
   @override
-  String get programTemplateBuilderEmpty => 'Empty';
+  String get programTemplateBuilderEmpty => 'ଖାଲି';
 
   @override
   String get programTemplateBuilderGiveYourProgramA =>
-      'Give your program a name.';
+      'ଆପଣଙ୍କ ପ୍ରୋଗ୍ରାମକୁ ଏକ ନାମ ଦିଅନ୍ତୁ।';
 
   @override
-  String get programTemplateBuilderImportFromLibrary => 'Import from library';
+  String get programTemplateBuilderImportFromLibrary =>
+      'ଲାଇବ୍ରେରୀରୁ ଇମ୍ପୋର୍ଟ କରନ୍ତୁ';
 
   @override
   String get programTemplateBuilderLayOutEachTraining =>
-      'Lay out each training day exercise by exercise.';
+      'ପ୍ରତ୍ୟେକ ଟ୍ରେନିଂ ଦିନର ବ୍ୟାୟାମ ଲେଆଉଟ୍ କରନ୍ତୁ।';
 
   @override
-  String get programTemplateBuilderMakeRestDay => 'Make rest day';
+  String get programTemplateBuilderMakeRestDay => 'ବିଶ୍ରାମ ଦିନ କରନ୍ତୁ';
 
   @override
-  String get programTemplateBuilderMakeTrainingDay => 'Make training day';
+  String get programTemplateBuilderMakeTrainingDay => 'ଟ୍ରେନିଂ ଦିନ କରନ୍ତୁ';
 
   @override
-  String get programTemplateBuilderMyTemplates => 'My templates';
+  String get programTemplateBuilderMyTemplates => 'ମୋ ଟେମ୍ପଲେଟ୍';
 
   @override
-  String get programTemplateBuilderNewProgram => 'New Program';
+  String get programTemplateBuilderNewProgram => 'ନୂତନ ପ୍ରୋଗ୍ରାମ';
 
   @override
-  String get programTemplateBuilderParseProgram => 'Parse program';
+  String get programTemplateBuilderParseProgram => 'ପ୍ରୋଗ୍ରାମ ପାର୍ସ କରନ୍ତୁ';
 
   @override
-  String get programTemplateBuilderParsing => 'Parsing...';
+  String get programTemplateBuilderParsing => 'ପାର୍ସିଂ ହେଉଛି...';
 
   @override
-  String get programTemplateBuilderPasteMyProgram => 'Paste my program';
+  String get programTemplateBuilderPasteMyProgram =>
+      'ମୋ ପ୍ରୋଗ୍ରାମ ପେଷ୍ଟ କରନ୍ତୁ';
 
   @override
-  String get programTemplateBuilderSaveTemplate => 'Save template';
+  String get programTemplateBuilderSaveTemplate => 'ଟେମ୍ପଲେଟ୍ ସେଭ୍ କରନ୍ତୁ';
 
   @override
-  String get programTemplateBuilderSaving => 'Saving...';
+  String get programTemplateBuilderSaving => 'ସେଭ୍ ହେଉଛି...';
 
   @override
   String programTemplateBuilderScreenCopyInto(Object sourceName) {
@@ -28772,44 +28782,45 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get programTemplateBuilderStartFromAStructured =>
-      'Start from a structured program and make it your own.';
+      'ଏକ ସଂରଚିତ ପ୍ରୋଗ୍ରାମରୁ ଆରମ୍ଭ କରନ୍ତୁ ଏବଂ ଏହାକୁ ନିଜସ୍ୱ କରନ୍ତୁ।';
 
   @override
-  String get programsAll => 'All';
+  String get programsAll => 'ସବୁ';
 
   @override
-  String get programsClearFilters => 'Clear filters';
+  String get programsClearFilters => 'ଫିଲ୍ଟର୍ ସଫା କରନ୍ତୁ';
 
   @override
-  String get programsIntro185Programs => '185+ Programs';
+  String get programsIntro185Programs => '185+ ପ୍ରୋଗ୍ରାମ';
 
   @override
-  String get programsIntro37WorkoutDays => '3-7 workout days per week';
+  String get programsIntro37WorkoutDays => 'ପ୍ରତି ସପ୍ତାହରେ 3-7 ୱାର୍କଆଉଟ୍ ଦିନ';
 
   @override
-  String get programsIntroAllLevels => 'All Levels';
+  String get programsIntroAllLevels => 'ସମସ୍ତ ସ୍ତର';
 
   @override
-  String get programsIntroBeginnerToAdvanced => 'Beginner to Advanced';
+  String get programsIntroBeginnerToAdvanced => 'ବିଗିନର୍ ରୁ ଆଡଭାନ୍ସଡ୍';
 
   @override
-  String get programsIntroBrowsePrograms => 'Browse Programs';
+  String get programsIntroBrowsePrograms => 'ପ୍ରୋଗ୍ରାମଗୁଡିକ ଦେଖନ୍ତୁ';
 
   @override
-  String get programsIntroCategories => 'Categories';
+  String get programsIntroCategories => 'ବର୍ଗ';
 
   @override
-  String get programsIntroCustomFrequency => 'Custom Frequency';
+  String get programsIntroCustomFrequency => 'କଷ୍ଟମ୍ ଫ୍ରିକ୍ୱେନ୍ସି';
 
   @override
-  String get programsIntroFlexibleDuration => 'Flexible Duration';
+  String get programsIntroFlexibleDuration => 'ନମନୀୟ ଅବଧି';
 
   @override
   String get programsIntroProfessionalExerciseTutorial =>
-      'Professional exercise tutorials';
+      'ବୃତ୍ତିଗତ ବ୍ୟାୟାମ ଟ୍ୟୁଟୋରିଆଲ୍';
 
   @override
-  String get programsIntroProgramsFrom1To => 'Programs from 1 to 16 weeks';
+  String get programsIntroProgramsFrom1To =>
+      '୧ ରୁ ୧୬ ସପ୍ତାହ ପର୍ଯ୍ୟନ୍ତ ପ୍ରୋଗ୍ରାମ୍';
 
   @override
   String get programsIntroStrengthCardioMobilityM =>
@@ -28822,7 +28833,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get programsIntroWhatYouCanExpect => 'ଆପଣ କଣ ଆଶା କରିପାରିବେ';
 
   @override
-  String get programsIntroWorkoutPrograms => 'Workout Programs';
+  String get programsIntroWorkoutPrograms => 'ୱାର୍କଆଉଟ୍ ପ୍ରୋଗ୍ରାମ୍';
 
   @override
   String get programsNoProgramsFound => 'କୌଣସି ପ୍ରୋଗ୍ରାମ ମିଳିଲା ନାହିଁ';
@@ -29251,17 +29262,17 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String progressionChainCardStepOf(Object chain, Object currentStepOrder) {
-    return 'Step $currentStepOrder of $chain';
+    return 'Step $currentStepOrder ର $chain';
   }
 
   @override
   String progressionChainCardStepOf2(Object chain, Object currentStepOrder) {
-    return 'Step $currentStepOrder of $chain';
+    return 'Step $currentStepOrder ର $chain';
   }
 
   @override
   String progressionChainCardSteps(Object chain) {
-    return '$chain steps';
+    return '$chain ଷ୍ଟେପ୍';
   }
 
   @override
@@ -29667,12 +29678,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String quickActionsRowPartHeroActionCardFailedToEndFast(Object e) {
-    return 'Failed to end fast: $e';
+    return 'ଫାଷ୍ଟ ଶେଷ କରିବାରେ ବିଫଳ: $e';
   }
 
   @override
   String quickActionsRowPartHeroActionCardFailedToUploadPhoto(Object e) {
-    return 'Failed to upload photo: $e';
+    return 'ଫଟୋ ଅପଲୋଡ୍ କରିବାରେ ବିଫଳ: $e';
   }
 
   @override
@@ -29682,7 +29693,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String quickActionsRowPartHeroActionCardPhotoSaved(Object displayName) {
-    return '$displayName photo saved!';
+    return '$displayName ଫଟୋ ସେଭ୍ ହୋଇଛି!';
   }
 
   @override
@@ -30889,7 +30900,7 @@ class AppLocalizationsOr extends AppLocalizations {
     Object calPerMeal,
     Object proteinPerMeal,
   ) {
-    return '~$calPerMeal kcal & ${proteinPerMeal}g protein per meal';
+    return '~$calPerMeal kcal ଓ ${proteinPerMeal}g ପ୍ରୋଟିନ୍ ପ୍ରତି ମିଲ୍';
   }
 
   @override
@@ -31318,7 +31329,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String recipeBuilderSheetItems(Object length) {
-    return '$length items';
+    return '$length ଆଇଟମ୍';
   }
 
   @override
@@ -31331,7 +31342,7 @@ class AppLocalizationsOr extends AppLocalizations {
     Object portionEaten,
     Object recipeName,
   ) {
-    return 'Logged $portionEaten serving(s) of \"$recipeName\": ';
+    return 'ଲଗ୍ ହୋଇଛି $portionEaten ସର୍ଭିଂ \"$recipeName\": ';
   }
 
   @override
@@ -31353,7 +31364,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String recipeBuilderSheetRecipeCreated(Object text) {
-    return 'Recipe \"$text\" created!';
+    return 'ରେସିପି \"$text\" ତିଆରି ହୋଇଛି!';
   }
 
   @override
@@ -31984,7 +31995,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String recipesTabCouldnTLoadRecipes(Object message) {
-    return 'Couldn\\\'t load recipes: $message';
+    return 'ରେସିପି ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ: $message';
   }
 
   @override
@@ -32564,7 +32575,7 @@ class AppLocalizationsOr extends AppLocalizations {
   regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion(
     Object message,
   ) {
-    return 'Failed to apply suggestion: $message';
+    return 'ସଜେସନ୍ ପ୍ରୟୋଗ କରିବାରେ ବିଫଳ: $message';
   }
 
   @override
@@ -32572,7 +32583,7 @@ class AppLocalizationsOr extends AppLocalizations {
   regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToApplySuggestion2(
     Object e,
   ) {
-    return 'Failed to apply suggestion: $e';
+    return 'ସଜେସନ୍ ପ୍ରୟୋଗ କରିବାରେ ବିଫଳ: $e';
   }
 
   @override
@@ -32580,7 +32591,7 @@ class AppLocalizationsOr extends AppLocalizations {
   regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate(
     Object message,
   ) {
-    return 'Failed to regenerate: $message';
+    return 'ପୁନଃନିର୍ମାଣ ବିଫଳ ହୋଇଛି: $message';
   }
 
   @override
@@ -32588,7 +32599,7 @@ class AppLocalizationsOr extends AppLocalizations {
   regenerateWorkoutSheetPartRegenerateWorkoutSheetStateExtFailedToRegenerate2(
     Object e,
   ) {
-    return 'Failed to regenerate: $e';
+    return 'ପୁନଃନିର୍ମାଣ ବିଫଳ ହୋଇଛି: $e';
   }
 
   @override
@@ -32774,7 +32785,7 @@ class AppLocalizationsOr extends AppLocalizations {
     Object preferredMaxReps,
     Object preferredMinReps,
   ) {
-    return '$preferredMinReps-$preferredMaxReps reps';
+    return '$preferredMinReps-$preferredMaxReps ରେପ୍ସ';
   }
 
   @override
@@ -33292,7 +33303,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String restTimerOverlayUiReps(Object reps) {
-    return '$reps reps';
+    return '$reps ରେପ୍ସ';
   }
 
   @override
@@ -33609,7 +33620,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get savedHubTryAgain => 'ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ';
 
   @override
-  String get scheduleGenerateThisWeek => 'Generate This Week';
+  String get scheduleGenerateThisWeek => 'ଏହି ସପ୍ତାହ ପାଇଁ ଜେନେରେଟ୍ କରନ୍ତୁ';
 
   @override
   String scheduleItemCardMin(Object durationMinutes) {
@@ -33617,32 +33628,32 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scheduleMealDays => 'Days';
+  String get scheduleMealDays => 'ଦିନ';
 
   @override
-  String get scheduleMealEndDate => 'End date';
+  String get scheduleMealEndDate => 'ଶେଷ ତାରିଖ';
 
   @override
-  String get scheduleMealInterval => 'Interval';
+  String get scheduleMealInterval => 'ଅନ୍ତରାଳ';
 
   @override
   String get scheduleMealPickACadenceWe =>
-      'Pick a cadence; we’ll handle the AI recipe save for you.';
+      'ଏକ କ୍ୟାଡେନ୍ସ ବାଛନ୍ତୁ; ଆମେ ଆପଣଙ୍କ ପାଇଁ AI ରେସିପି ସେଭ୍ କରିବୁ।';
 
   @override
-  String get scheduleMealPickADate => 'Pick a date';
+  String get scheduleMealPickADate => 'ଏକ ତାରିଖ ବାଛନ୍ତୁ';
 
   @override
-  String get scheduleMealPickAnEndDate => 'Pick an end date';
+  String get scheduleMealPickAnEndDate => 'ଏକ ଶେଷ ତାରିଖ ବାଛନ୍ତୁ';
 
   @override
-  String get scheduleMealPickAtLeastOne => 'Pick at least one day';
+  String get scheduleMealPickAtLeastOne => 'ଅତିକମରେ ଗୋଟିଏ ଦିନ ବାଛନ୍ତୁ';
 
   @override
-  String get scheduleMealSchedule => 'Schedule';
+  String get scheduleMealSchedule => 'ସିଡ୍ୟୁଲ୍';
 
   @override
-  String get scheduleMealScheduleThisMeal => 'Schedule this meal';
+  String get scheduleMealScheduleThisMeal => 'ଏହି ମିଲ୍ ସିଡ୍ୟୁଲ୍ କରନ୍ତୁ';
 
   @override
   String scheduleMealSheetDays(Object i) {
@@ -33655,10 +33666,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scheduleMealTime => 'Time';
+  String get scheduleMealTime => 'ସମୟ';
 
   @override
-  String get scheduleMismatchConfirm => 'Confirm';
+  String get scheduleMismatchConfirm => 'ନିଶ୍ଚିତ କରନ୍ତୁ';
 
   @override
   String scheduleMismatchDialogAiWillSwitchTo(Object compatibleSplitName) {
@@ -33685,22 +33696,23 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scheduleMismatchKeepMyCurrentDays => 'Keep my current days';
+  String get scheduleMismatchKeepMyCurrentDays =>
+      'ମୋର ବର୍ତ୍ତମାନର ଦିନଗୁଡ଼ିକୁ ରଖନ୍ତୁ';
 
   @override
-  String get scheduleMismatchRecommended => 'Recommended';
+  String get scheduleMismatchRecommended => 'ସୁପାରିଶ କରାଯାଇଛି';
 
   @override
-  String get scheduleMismatchScheduleMismatch => 'Schedule Mismatch';
+  String get scheduleMismatchScheduleMismatch => 'ସିଡ୍ୟୁଲ୍ ମେଳ ଖାଉନାହିଁ';
 
   @override
-  String get scheduleNoItemsScheduled => 'No items scheduled';
+  String get scheduleNoItemsScheduled => 'କୌଣସି ଆଇଟମ୍ ସିଡ୍ୟୁଲ୍ ହୋଇନାହିଁ';
 
   @override
-  String get scheduleRestDay => 'Rest day';
+  String get scheduleRestDay => 'ବିଶ୍ରାମ ଦିନ';
 
   @override
-  String get scheduleSchedule => 'Schedule';
+  String get scheduleSchedule => 'ସିଡ୍ୟୁଲ୍';
 
   @override
   String scheduleScreenFailedToLoad(Object error) {
@@ -33726,16 +33738,16 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scheduleScreenPartMon => 'Mon';
+  String get scheduleScreenPartMon => 'ସୋମ';
 
   @override
   String get scheduleScreenPartStrength => 'STRENGTH';
 
   @override
-  String get scheduleScreenPartSun => 'Sun';
+  String get scheduleScreenPartSun => 'ରବି';
 
   @override
-  String get scheduleScreenPartThisWeek => 'This Week';
+  String get scheduleScreenPartThisWeek => 'ଏହି ସପ୍ତାହ';
 
   @override
   String scheduleScreenPartWeekSelectorEx(Object exerciseCount) {
@@ -33748,10 +33760,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scheduleToday => 'Today';
+  String get scheduleToday => 'ଆଜି';
 
   @override
-  String get scheduleWorkoutCheckingSchedule => 'Checking schedule...';
+  String get scheduleWorkoutCheckingSchedule => 'ସିଡ୍ୟୁଲ୍ ଯାଞ୍ଚ କରୁଛି...';
 
   @override
   String scheduleWorkoutDialogFailedToScheduleWorkout(Object e) {
@@ -33774,17 +33786,17 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scheduleWorkoutSchedule => 'Schedule';
+  String get scheduleWorkoutSchedule => 'ସିଡ୍ୟୁଲ୍';
 
   @override
-  String get scheduleWorkoutScheduleWorkout => 'Schedule Workout';
+  String get scheduleWorkoutScheduleWorkout => 'ୱାର୍କଆଉଟ୍ ସିଡ୍ୟୁଲ୍ କରନ୍ତୁ';
 
   @override
-  String get scheduleWorkoutSchedulingWorkout => 'Scheduling workout...';
+  String get scheduleWorkoutSchedulingWorkout => 'ୱାର୍କଆଉଟ୍ ସିଡ୍ୟୁଲ୍ କରୁଛି...';
 
   @override
   String get scheduleWorkoutThisWorkoutWillBe =>
-      'This workout will be added alongside them.';
+      'ଏହି ୱାର୍କଆଉଟ୍ ସେଗୁଡ଼ିକ ସହିତ ଯୋଡାଯିବ।';
 
   @override
   String get scoreBreakdownConsistency => 'Consistency';
@@ -33799,7 +33811,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get scoreBreakdownStrength => 'Strength';
 
   @override
-  String get scoreChangeAnnouncementGotIt => 'Got it';
+  String get scoreChangeAnnouncementGotIt => 'ବୁଝିଲି';
 
   @override
   String get scoreChangeAnnouncementMove => 'Move';
@@ -33817,31 +33829,31 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scoreChangeAnnouncementSleepNowCountsToward =>
-      'Sleep now counts toward your daily score.';
+      'ନିଦ ଏବେ ଆପଣଙ୍କ ଦୈନିକ ସ୍କୋରରେ ଗଣାଯିବ।';
 
   @override
   String get scoreChangeAnnouncementTrain => 'Train';
 
   @override
-  String get scoreChangeAnnouncementWhatSNew => 'WHAT\\\'S NEW';
+  String get scoreChangeAnnouncementWhatSNew => 'WHAT\'S NEW';
 
   @override
-  String get scoreColorsExcellent => 'Excellent';
+  String get scoreColorsExcellent => 'ଉତ୍କୃଷ୍ଟ';
 
   @override
   String get scoreExplain03AntiInflammatory => '0 – 3  Anti-inflammatory';
 
   @override
-  String get scoreExplain13Poor => '1 – 3  Poor';
+  String get scoreExplain13Poor => '1 – 3  ଖରାପ';
 
   @override
-  String get scoreExplain46Average => '4 – 6  Average';
+  String get scoreExplain46Average => '4 – 6  ହାରାହାରି';
 
   @override
   String get scoreExplain46NeutralMild => '4 – 6  Neutral / mild';
 
   @override
-  String get scoreExplain710GoodExcellent => '7 – 10  Good / Excellent';
+  String get scoreExplain710GoodExcellent => '7 – 10  ଭଲ / ଉତ୍କୃଷ୍ଟ';
 
   @override
   String get scoreExplain710HighlyInflammatory => '7 – 10  Highly inflammatory';
@@ -33868,7 +33880,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scoreExplainCertainPortionsOfAvocado =>
-      'Certain portions of avocado, sweet potato, almonds — OK in small servings, rough in large.';
+      'ଆଭୋକାଡୋ, ମିଠା ଆଳୁ, ବାଦାମର କିଛି ଅଂଶ — ଅଳ୍ପ ପରିମାଣରେ ଠିକ୍, ଅଧିକ ପରିମାଣରେ କଷ୍ଟକର।';
 
   @override
   String get scoreExplainChronicLowGradeInflammation =>
@@ -33916,7 +33928,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scoreExplainDessertsSugaryDrinksCandy =>
-      'Desserts, sugary drinks, candy, many breakfast cereals. Spikes insulin, crashes energy.';
+      'ଡେଜର୍ଟ୍, ମିଠା ପାନୀୟ, କ୍ୟାଣ୍ଡି, ଅନେକ ପ୍ରକାରର ବ୍ରେକଫାଷ୍ଟ ସିରିଏଲ୍। ଏହା ଇନସୁଲିନ୍ ବଢ଼ାଏ ଏବଂ ଶକ୍ତି କମାଇଦିଏ।';
 
   @override
   String get scoreExplainEachMealGets =>
@@ -33924,10 +33936,10 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scoreExplainEngineeredFoodProductsChip =>
-      'Engineered food products: chips, sodas, instant noodles, packaged sweets, most fast food.';
+      'ଇଞ୍ଜିନିୟର୍ଡ ଖାଦ୍ୟ ପଦାର୍ଥ: ଚିପ୍ସ, ସୋଡା, ଇନଷ୍ଟାଣ୍ଟ ନୁଡୁଲ୍ସ, ପ୍ୟାକେଜ୍ ମିଠା, ଅଧିକାଂଶ ଫାଷ୍ଟ ଫୁଡ୍।';
 
   @override
-  String get scoreExplainFodmapRating => 'FODMAP rating';
+  String get scoreExplainFodmapRating => 'FODMAP ରେଟିଂ';
 
   @override
   String get scoreExplainFodmapsAreShortChain =>
@@ -33935,7 +33947,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scoreExplainFriedFoodsProcessedMeats =>
-      'Fried foods, processed meats, sugary drinks, refined seed oils, packaged snacks.';
+      'ଭଜା ଖାଦ୍ୟ, ପ୍ରକ୍ରିୟାକୃତ ମାଂସ, ଚିନିଯୁକ୍ତ ପାନୀୟ, ରିଫାଇନ୍ଡ ସିଡ୍ ଅଏଲ୍, ପ୍ୟାକେଜ୍ ସ୍ନାକ୍ସ।';
 
   @override
   String get scoreExplainGlycemicLoadCombines =>
@@ -33947,10 +33959,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainGood => 'Good';
+  String get scoreExplainGood => 'ଭଲ';
 
   @override
-  String get scoreExplainHealthScore => 'Health score';
+  String get scoreExplainHealthScore => 'ସ୍ୱାସ୍ଥ୍ୟ ସ୍କୋର';
 
   @override
   String scoreExplainHealthScoreValue(Object v) {
@@ -33958,28 +33970,29 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainHigh => 'High';
+  String get scoreExplainHigh => 'ଅଧିକ';
 
   @override
-  String get scoreExplainHigh15G => 'High  (15 g+)';
+  String get scoreExplainHigh15G => 'ଅଧିକ (15 g+)';
 
   @override
-  String get scoreExplainHigh20 => 'High  (20+)';
+  String get scoreExplainHigh20 => 'ଅଧିକ (20+)';
 
   @override
   String get scoreExplainHighInflammationUltraProce =>
-      'High inflammation, ultra-processed, or way off your macros. Swap to a Good option if possible.';
+      'ଅଧିକ ପ୍ରଦାହ, ଅଲ୍ଟ୍ରା-ପ୍ରୋସେସ୍ଡ, କିମ୍ବା ଆପଣଙ୍କ ମାକ୍ରୋଠାରୁ ବହୁତ ଦୂର। ଯଦି ସମ୍ଭବ, ଏକ ଭଲ ବିକଳ୍ପ ବାଛନ୍ତୁ।';
 
   @override
   String get scoreExplainHighProteinOrFiber =>
-      'High protein or fiber, whole foods, low added sugar, anti-inflammatory ingredients.';
+      'ଅଧିକ ପ୍ରୋଟିନ୍ କିମ୍ବା ଫାଇବର, ସମ୍ପୂର୍ଣ୍ଣ ଖାଦ୍ୟ, କମ୍ ଚିନି, ପ୍ରଦାହ-ବିରୋଧୀ ଉପାଦାନ।';
 
   @override
   String get scoreExplainHitsYourGoalMacros =>
-      'Hits your goal macros, mostly whole foods, low-to-moderate inflammation. Pick freely.';
+      'ଆପଣଙ୍କ ଲକ୍ଷ୍ୟ ମାକ୍ରୋ ପୂରଣ କରେ, ଅଧିକାଂଶ ସମ୍ପୂର୍ଣ୍ଣ ଖାଦ୍ୟ, କମ୍ ରୁ ମଧ୍ୟମ ପ୍ରଦାହ। ମୁକ୍ତ ଭାବରେ ବାଛନ୍ତୁ।';
 
   @override
-  String get scoreExplainHowThisDishRates => 'How this dish rates for you';
+  String get scoreExplainHowThisDishRates =>
+      'ଏହି ଖାଦ୍ୟ ଆପଣଙ୍କ ପାଇଁ କିପରି ମୂଲ୍ୟାୟନ କରେ';
 
   @override
   String get scoreExplainImportantIfYouHaveDiabetes =>
@@ -33996,48 +34009,48 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scoreExplainLeafyGreensBerriesWild =>
-      'Leafy greens, berries, wild salmon, turmeric, extra-virgin olive oil, nuts, legumes.';
+      'ଶାଗ, ବେରି, ବନ୍ୟ ସାଲମନ୍, ହଳଦୀ, ଏକ୍ସଟ୍ରା-ଭର୍ଜିନ୍ ଅଲିଭ୍ ଅଏଲ୍, ବାଦାମ, ଡାଲି ଜାତୀୟ ଶସ୍ୟ।';
 
   @override
-  String get scoreExplainLow => 'Low';
+  String get scoreExplainLow => 'କମ୍';
 
   @override
-  String get scoreExplainLowUnder10 => 'Low  (under 10)';
+  String get scoreExplainLowUnder10 => 'କମ୍ (10 ରୁ କମ୍)';
 
   @override
-  String get scoreExplainLowUnder5G => 'Low  (under 5 g)';
+  String get scoreExplainLowUnder5G => 'କମ୍ (5 g ରୁ କମ୍)';
 
   @override
   String get scoreExplainMeatEggsRiceOats =>
-      'Meat, eggs, rice, oats, lactose-free dairy, carrots, zucchini, spinach, berries, oranges.';
+      'ମାଂସ, ଅଣ୍ଡା, ଚାଉଳ, ଓଟସ୍, ଲାକ୍ଟୋଜ୍-ମୁକ୍ତ ଡାଏରୀ, ଗାଜର, ଜୁକିନି, ପାଳଙ୍ଗ, ବେରି, କମଳା।';
 
   @override
-  String get scoreExplainMedium => 'Medium';
+  String get scoreExplainMedium => 'ମଧ୍ୟମ';
 
   @override
-  String get scoreExplainMedium1019 => 'Medium  (10 – 19)';
+  String get scoreExplainMedium1019 => 'ମଧ୍ୟମ (10 – 19)';
 
   @override
   String get scoreExplainMinimalBloodSugarSpike =>
-      'Minimal blood-sugar spike. Non-starchy vegetables, eggs, meat, berries, most dairy.';
+      'ସର୍ବନିମ୍ନ ରକ୍ତ-ଶର୍କରା ବୃଦ୍ଧି। ଷ୍ଟାର୍ଚ-ମୁକ୍ତ ପନିପରିବା, ଅଣ୍ଡା, ମାଂସ, ବେରି, ଅଧିକାଂଶ ଡାଏରୀ।';
 
   @override
-  String get scoreExplainModerate => 'Moderate';
+  String get scoreExplainModerate => 'ମଧ୍ୟମ';
 
   @override
-  String get scoreExplainModerate514G => 'Moderate  (5 – 14 g)';
+  String get scoreExplainModerate514G => 'ମଧ୍ୟମ (5 – 14 g)';
 
   @override
   String get scoreExplainModerateSpikeOatsWhole =>
-      'Moderate spike. Oats, whole-wheat bread, banana, sweet potato, basmati rice.';
+      'ମଧ୍ୟମ ବୃଦ୍ଧି। ଓଟସ୍, ହୋଲ୍-ହୁଇଟ୍ ବ୍ରେଡ୍, କଦଳୀ, ମିଠା ଆଳୁ, ବାସୁମତୀ ଚାଉଳ।';
 
   @override
   String get scoreExplainMostSavouryDishesPlain =>
-      'Most savoury dishes, plain dairy, whole fruit. No meaningful blood-sugar impact.';
+      'ଅଧିକାଂଶ ସ୍ୱାଦିଷ୍ଟ ଖାଦ୍ୟ, ସାଧାରଣ ଡାଏରୀ, ସମ୍ପୂର୍ଣ୍ଣ ଫଳ। ରକ୍ତ-ଶର୍କରା ଉପରେ କୌଣସି ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ପ୍ରଭାବ ନାହିଁ।';
 
   @override
   String get scoreExplainOnionGarlicWheatRye =>
-      'Onion, garlic, wheat, rye, milk/ice cream, apples, pears, honey, beans, cauliflower.';
+      'ପିଆଜ, ରସୁଣ, ଗହମ, ରାଇ, କ୍ଷୀର/ଆଇସକ୍ରିମ୍, ସେଓ, ନାସପାତି, ମହୁ, ବିନ୍ସ, କୋବି।';
 
   @override
   String get scoreExplainOnlyRelevantIfYouHaveIbs =>
@@ -34049,15 +34062,15 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scoreExplainRawOrBasicCooked =>
-      'Raw or basic-cooked foods: meat, eggs, vegetables, plain yoghurt, cheese, whole grains.';
+      'କଞ୍ଚା କିମ୍ବା ସାଧାରଣ ଭାବେ ରନ୍ଧା ଖାଦ୍ୟ: ମାଂସ, ଅଣ୍ଡା, ପନିପରିବା, ସାଧାରଣ ଦହି, ପନିର, ସମ୍ପୂର୍ଣ୍ଣ ଶସ୍ୟ।';
 
   @override
   String get scoreExplainReasonableChoiceCouldBe =>
-      'Reasonable choice — could be improved on one or two axes (more fiber, less processing).';
+      'ଯୁକ୍ତିଯୁକ୍ତ ପସନ୍ଦ — ଏକ କିମ୍ବା ଦୁଇଟି ଦିଗରେ ଉନ୍ନତ ହୋଇପାରିବ (ଅଧିକ ଫାଇବର, କମ୍ ପ୍ରକ୍ରିୟାକରଣ)।';
 
   @override
   String get scoreExplainReasonableChoiceWithA =>
-      'Reasonable choice with a trade-off — watch portion or pair with a cleaner side.';
+      'ଏକ ବୁଝାମଣା ସହିତ ଯୁକ୍ତିଯୁକ୍ତ ପସନ୍ଦ — ପରିମାଣ ଉପରେ ନଜର ରଖନ୍ତୁ କିମ୍ବା ଏକ ସ୍ୱାସ୍ଥ୍ୟକର ସାଇଡ୍ ଖାଦ୍ୟ ସହିତ ଖାଆନ୍ତୁ।';
 
   @override
   String get scoreExplainScoreDetailUnavailable =>
@@ -34068,11 +34081,11 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scoreExplainSteepSpikeCrashWhite =>
-      'Steep spike + crash. White rice bowls, sugary drinks, pastries, large pasta plates.';
+      'ତୀବ୍ର ବୃଦ୍ଧି + ହ୍ରାସ। ଧଳା ଚାଉଳ, ଚିନିଯୁକ୍ତ ପାନୀୟ, ପେଷ୍ଟ୍ରି, ବଡ ପାସ୍ତା ପ୍ଲେଟ୍।';
 
   @override
   String get scoreExplainSweetenedYogurtASmall =>
-      'Sweetened yogurt, a small pastry, half a sports drink. A reasonable treat — not daily.';
+      'ମିଠା ଦହି, ଏକ ଛୋଟ ପେଷ୍ଟ୍ରି, ଅଧା ସ୍ପୋର୍ଟସ୍ ଡ୍ରିଙ୍କ୍। ଏକ ଯୁକ୍ତିଯୁକ୍ତ ଖାଦ୍ୟ — ପ୍ରତିଦିନ ନୁହେଁ।';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -34080,11 +34093,11 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainUltraProcessed => 'Ultra-processed';
+  String get scoreExplainUltraProcessed => 'ଅଲ୍ଟ୍ରା-ପ୍ରୋସେସ୍ଡ';
 
   @override
   String get scoreExplainUltraProcessedDeepFried =>
-      'Ultra-processed, deep-fried, low fiber, or very high added sugar / sodium.';
+      'ଅଲ୍ଟ୍ରା-ପ୍ରୋସେସ୍ଡ, ଡିପ୍-ଫ୍ରାଏଡ୍, କମ୍ ଫାଇବର, କିମ୍ବା ବହୁତ ଅଧିକ ଚିନି / ସୋଡିୟମ୍।';
 
   @override
   String get scoreExplainUltraProcessedNova4 => 'ଅଲ୍ଟ୍ରା-ପ୍ରୋସେସ୍ଡ (NOVA 4)';
@@ -34753,7 +34766,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsAppleHealth => 'Apple Health';
 
   @override
-  String get settingsBeastMode => 'Beast Mode';
+  String get settingsBeastMode => 'ବିଷ୍ଟ ମୋଡ୍';
 
   @override
   String settingsCardAvoided(Object length) {
@@ -34810,7 +34823,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String settingsCardPartAccentColorGridLvl(Object unlockLevel) {
-    return 'Lvl $unlockLevel';
+    return 'ସ୍ତର $unlockLevel';
   }
 
   @override
@@ -34910,7 +34923,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsCardPartWednesday => 'ବୁଧବାର';
 
   @override
-  String get settingsCardPartWorkoutDays => 'Workout Days';
+  String get settingsCardPartWorkoutDays => 'ୱର୍କଆଉଟ୍ ଦିନ';
 
   @override
   String get settingsCardPleaseSelectAtLeastOne =>
@@ -34932,13 +34945,13 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsCardSunday => 'ରବିବାର';
 
   @override
-  String get settingsCardUiAccentColor => 'Accent Color';
+  String get settingsCardUiAccentColor => 'ଆକ୍ସେଣ୍ଟ ରଙ୍ଗ';
 
   @override
-  String get settingsCardUiBodyMeasurements => 'BODY MEASUREMENTS';
+  String get settingsCardUiBodyMeasurements => 'ଶରୀରର ମାପ';
 
   @override
-  String get settingsCardUiBodyWeight => 'BODY WEIGHT';
+  String get settingsCardUiBodyWeight => 'ଶରୀରର ଓଜନ';
 
   @override
   String get settingsCardUiChooseAnAccentColor =>
@@ -34952,7 +34965,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsCardUiChooseTimezone => 'Timezone ବାଛନ୍ତୁ';
 
   @override
-  String get settingsCardUiExerciseConsistency => 'Exercise Consistency';
+  String get settingsCardUiExerciseConsistency => 'ବ୍ୟାୟାମର ସ୍ଥିରତା';
 
   @override
   String get settingsCardUiForLoggingLiftsSets =>
@@ -34979,16 +34992,16 @@ class AppLocalizationsOr extends AppLocalizations {
       'AI ଆପଣଙ୍କ Workout ପାଇଁ ବ୍ୟାୟାମ କିପରି ବାଛିବା ଉଚିତ୍?';
 
   @override
-  String get settingsCardUiProgressionPace => 'Progression Pace';
+  String get settingsCardUiProgressionPace => 'ଅଗ୍ରଗତିର ଗତି';
 
   @override
-  String get settingsCardUiTrainingIntensity => 'Training Intensity';
+  String get settingsCardUiTrainingIntensity => 'ତାଲିମର ତୀବ୍ରତା';
 
   @override
-  String get settingsCardUiTrainingSplit => 'Training Split';
+  String get settingsCardUiTrainingSplit => 'ତାଲିମ ବିଭାଜନ';
 
   @override
-  String get settingsCardUiUnits => 'Units';
+  String get settingsCardUiUnits => 'ୟୁନିଟ୍';
 
   @override
   String get settingsCardUiWeightWorkoutAndBody =>
@@ -34999,10 +35012,10 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣ କେଉଁ ପ୍ରକାରର Workout ପସନ୍ଦ କରନ୍ତି?';
 
   @override
-  String get settingsCardUiWorkoutType => 'Workout Type';
+  String get settingsCardUiWorkoutType => 'ୱର୍କଆଉଟ୍ ପ୍ରକାର';
 
   @override
-  String get settingsCardUiWorkoutWeight => 'WORKOUT WEIGHT';
+  String get settingsCardUiWorkoutWeight => 'ୱର୍କଆଉଟ୍ ଓଜନ';
 
   @override
   String settingsCardValue(Object label, Object value) {
@@ -35030,7 +35043,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get settingsCardWeeklyVariety => 'Weekly Variety';
+  String get settingsCardWeeklyVariety => 'ସାପ୍ତାହିକ ବିବିଧତା';
 
   @override
   String get settingsCardWorkoutDays => 'ୱାର୍କଆଉଟ୍ ଦିନ';
@@ -35044,7 +35057,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsComingSoon => 'ଖୁବ୍ ଶୀଘ୍ର ଆସୁଛି';
 
   @override
-  String get settingsConnections => 'CONNECTIONS';
+  String get settingsConnections => 'ସଂଯୋଗ';
 
   @override
   String get settingsContactSupport => 'ସପୋର୍ଟ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ';
@@ -35053,25 +35066,25 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsDeleteAccount => 'ଆକାଉଣ୍ଟ ଡିଲିଟ୍ କରନ୍ତୁ';
 
   @override
-  String get settingsEquipment => 'Equipment';
+  String get settingsEquipment => 'ଉପକରଣ';
 
   @override
-  String get settingsExercisePrefs => 'Exercise Prefs';
+  String get settingsExercisePrefs => 'ବ୍ୟାୟାମ ପସନ୍ଦ';
 
   @override
-  String get settingsFavoritesAvoidedQueue => 'Favorites, avoided & queue';
+  String get settingsFavoritesAvoidedQueue => 'ପସନ୍ଦ, ଏଡ଼ାଇବା ଏବଂ କ୍ୟୁ';
 
   @override
   String get settingsHealthConnect => 'Health Connect';
 
   @override
-  String get settingsHealthDevices => 'Health & Devices';
+  String get settingsHealthDevices => 'ସ୍ୱାସ୍ଥ୍ୟ ଏବଂ ଉପକରଣ';
 
   @override
   String get settingsHelpSection => 'ସାହାଯ୍ୟ';
 
   @override
-  String get settingsHelpSupport => 'HELP & SUPPORT';
+  String get settingsHelpSupport => 'ସହାୟତା ଏବଂ ସମର୍ଥନ';
 
   @override
   String get settingsLanguage => 'ଭାଷା';
@@ -35083,25 +35096,25 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsLogout => 'ସାଇନ୍ ଆଉଟ୍';
 
   @override
-  String get settingsMealReminders => 'Meal Reminders';
+  String get settingsMealReminders => 'ଖାଦ୍ୟ ସ୍ମାରକ';
 
   @override
-  String get settingsMyGyms => 'My Gyms';
+  String get settingsMyGyms => 'ମୋ ଜିମ୍';
 
   @override
   String get settingsNutritionSection => 'ପୋଷଣ';
 
   @override
-  String get settingsPersonalization => 'PERSONALIZATION';
+  String get settingsPersonalization => 'ବ୍ୟକ୍ତିଗତକରଣ';
 
   @override
-  String get settingsPowerUserTools => 'Power user tools';
+  String get settingsPowerUserTools => 'ପାୱାର ୟୁଜର୍ ଟୁଲ୍ସ';
 
   @override
-  String get settingsPrivacyData => 'Privacy & Data';
+  String get settingsPrivacyData => 'ଗୋପନୀୟତା ଏବଂ ତଥ୍ୟ';
 
   @override
-  String get settingsPrivacyPolicy => 'Privacy Policy';
+  String get settingsPrivacyPolicy => 'ଗୋପନୀୟତା ନୀତି';
 
   @override
   String get settingsPrivacySection => 'ଗୋପନୀୟତା';
@@ -35111,13 +35124,14 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get settingsRecipeSchedulesSharingV =>
-      'Recipe schedules + sharing + versioning';
+      'ରେସିପି ସିଡ୍ୟୁଲ୍ + ସେୟାରିଂ + ଭର୍ସନିଂ';
 
   @override
-  String get settingsReplayToursOrReset => 'Replay tours or reset inline hints';
+  String get settingsReplayToursOrReset =>
+      'ଟୁର୍ସ ପୁନର୍ବାର ଦେଖନ୍ତୁ କିମ୍ବା ଇନଲାଇନ୍ ହିଣ୍ଟ୍ସ ରିସେଟ୍ କରନ୍ତୁ';
 
   @override
-  String get settingsResearchScience => 'Research & Science';
+  String get settingsResearchScience => 'ଗବେଷଣା ଏବଂ ବିଜ୍ଞାନ';
 
   @override
   String settingsScreenAbout(Object appName) {
@@ -35133,25 +35147,26 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsScreenExtANoteFromChetan => 'Chetan ଙ୍କ ପକ୍ଷରୁ ଏକ ନୋଟ୍';
 
   @override
-  String get settingsScreenExtInlineHints => 'INLINE HINTS';
+  String get settingsScreenExtInlineHints => 'ଇନଲାଇନ୍ ହିଣ୍ଟ୍ସ';
 
   @override
-  String get settingsScreenExtReplay => 'Replay';
+  String get settingsScreenExtReplay => 'ପୁନର୍ବାର ଦେଖନ୍ତୁ';
 
   @override
   String get settingsScreenExtReplayIndividualTours =>
-      'REPLAY INDIVIDUAL TOURS';
+      'ବ୍ୟକ୍ତିଗତ ଟୁର୍ସ ପୁନର୍ବାର ଦେଖନ୍ତୁ';
 
   @override
   String get settingsScreenExtReplayOnboardingWalkthrough =>
-      'Replay onboarding walkthrough';
+      'ଅନବୋର୍ଡିଂ ୱାକଥ୍ରୁ ପୁନର୍ବାର ଦେଖନ୍ତୁ';
 
   @override
   String get settingsScreenExtReplayTheOnboardingWalkthro =>
       'Onboarding walkthrough, individual screen tours, କିମ୍ବା inline hints ରିସେଟ୍ କରନ୍ତୁ।';
 
   @override
-  String get settingsScreenExtResetInlineHints => 'Reset inline hints';
+  String get settingsScreenExtResetInlineHints =>
+      'ଇନଲାଇନ୍ ହିଣ୍ଟ୍ସ ରିସେଟ୍ କରନ୍ତୁ';
 
   @override
   String get settingsScreenExtSearchSettings => 'ସେଟିଂସ୍ ଖୋଜନ୍ତୁ...';
@@ -35161,7 +35176,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପ୍ ରେ ଥିବା ଛୋଟ empty-state hints। ସାହାଯ୍ୟ ପାଠ ପୁଣି ଦେଖିବା ପାଇଁ ସେଗୁଡିକୁ ରିସେଟ୍ କରନ୍ତୁ।';
 
   @override
-  String get settingsScreenExtTutorialsHints => 'Tutorials & Hints';
+  String get settingsScreenExtTutorialsHints => 'ଟ୍ୟୁଟୋରିଆଲ୍ ଏବଂ ହିଣ୍ଟ୍ସ';
 
   @override
   String settingsScreenExtVersion(Object buildNumber, Object version) {
@@ -35206,31 +35221,33 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsSearchSettings => 'ସେଟିଂସ୍ ଖୋଜନ୍ତୁ';
 
   @override
-  String get settingsSetProgressionResearch => 'Set progression & research';
+  String get settingsSetProgressionResearch =>
+      'ପ୍ରଗ୍ରେସନ୍ ଏବଂ ଗବେଷଣା ସେଟ୍ କରନ୍ତୁ';
 
   @override
-  String get settingsSharingExportEmail => 'Sharing, export, email';
+  String get settingsSharingExportEmail => 'ସେୟାରିଂ, ଏକ୍ସପୋର୍ଟ, ଇମେଲ୍';
 
   @override
-  String get settingsSingleLevelWithCrate => 'Single level, with crate reward';
+  String get settingsSingleLevelWithCrate =>
+      'ସିଙ୍ଗଲ୍ ଲେଭଲ୍, କ୍ରେଟ୍ ରିୱାର୍ଡ ସହିତ';
 
   @override
-  String get settingsSoundNotifs => 'Sound & Notifs';
+  String get settingsSoundNotifs => 'ସାଉଣ୍ଡ ଏବଂ ନୋଟିଫିକେସନ୍';
 
   @override
-  String get settingsSubscription => 'Subscription';
+  String get settingsSubscription => 'ସବସ୍କ୍ରିପସନ୍';
 
   @override
-  String get settingsTermsOfService => 'Terms of Service';
+  String get settingsTermsOfService => 'ସେବା ସର୍ତ୍ତାବଳୀ';
 
   @override
-  String get settingsTestLevelUpLevel => 'Test Level-Up (Level 2→3)';
+  String get settingsTestLevelUpLevel => 'ଟେଷ୍ଟ ଲେଭଲ୍-ଅପ୍ (ଲେଭଲ୍ ୨→୩)';
 
   @override
-  String get settingsTestLevelUpLevel2 => 'Test Level-Up (Level 10→11)';
+  String get settingsTestLevelUpLevel2 => 'ଟେଷ୍ଟ ଲେଭଲ୍-ଅପ୍ (ଲେଭଲ୍ ୧୦→୧୧)';
 
   @override
-  String get settingsTestMultiLevel1 => 'Test Multi-Level (1→5)';
+  String get settingsTestMultiLevel1 => 'ଟେଷ୍ଟ ମଲ୍ଟି-ଲେଭଲ୍ (୧→୫)';
 
   @override
   String get settingsThemeDark => 'ଡାର୍କ୍';
@@ -35249,38 +35266,37 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get settingsTitleChangeBeginnerNovic =>
-      'Title change: Beginner → Novice';
+      'ଟାଇଟଲ୍ ପରିବର୍ତ୍ତନ: ବିଗିନର୍ → ନୋଭିସ୍';
 
   @override
-  String get settingsTraining => 'TRAINING';
+  String get settingsTraining => 'ଟ୍ରେନିଂ';
 
   @override
-  String get settingsTrainingMethods => 'Training Methods';
+  String get settingsTrainingMethods => 'ଟ୍ରେନିଂ ପଦ୍ଧତି';
 
   @override
   String get settingsTrainingSection => 'ତାଲିମ୍';
 
   @override
-  String get settingsTutorialsHints => 'Tutorials & Hints';
+  String get settingsTutorialsHints => 'ଟ୍ୟୁଟୋରିଆଲ୍ ଏବଂ ହିଣ୍ଟ୍ସ';
 
   @override
-  String get settingsVoiceAudioReminders => 'Voice, audio, reminders';
+  String get settingsVoiceAudioReminders => 'ଭଏସ୍, ଅଡିଓ, ରିମାଇଣ୍ଡର୍ସ';
 
   @override
-  String get settingsVoicePersonality => 'Voice & personality';
+  String get settingsVoicePersonality => 'ଭଏସ୍ ଏବଂ ପର୍ସନାଲିଟି';
 
   @override
-  String get settingsWithCascadeOverlayDialog =>
-      'With cascade overlay + dialog';
+  String get settingsWithCascadeOverlayDialog => 'କାସକେଡ୍ ଓଭରଲେ + ଡାଏଲଗ୍ ସହିତ';
 
   @override
-  String get settingsWorkoutMode => 'Workout Mode';
+  String get settingsWorkoutMode => 'ୱାର୍କଆଉଟ୍ ମୋଡ୍';
 
   @override
-  String get settingsWorkoutSettings => 'Workout Settings';
+  String get settingsWorkoutSettings => 'ୱାର୍କଆଉଟ୍ ସେଟିଂସ୍';
 
   @override
-  String get shareArtifactCardCopyShare => 'Copy & share';
+  String get shareArtifactCardCopyShare => 'କପି ଏବଂ ସେୟାର କରନ୍ତୁ';
 
   @override
   String get shareArtifactCardCouldNotCreateShare =>
@@ -35356,7 +35372,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get shareStatsDuration => 'ଅବଧି ପରିସଂଖ୍ୟାନ ସେୟାର କରନ୍ତୁ';
 
   @override
-  String get shareStatsEliteTemplate => 'ELITE TEMPLATE';
+  String get shareStatsEliteTemplate => 'ଏଲିଟ୍ ଟେମ୍ପଲେଟ୍';
 
   @override
   String get shareStatsExercises => 'ବ୍ୟାୟାମ ପରିସଂଖ୍ୟାନ ସେୟାର କରନ୍ତୁ';
@@ -35376,7 +35392,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String shareStatsSheetUnlocksAtLevelLevels(Object levelsToGo) {
-    return 'Unlocks at Level 75 · $levelsToGo levels to go';
+    return 'ଲେଭଲ୍ ୭୫ ରେ ଅନଲକ୍ ହେବ · $levelsToGo ଲେଭଲ୍ ବାକି ଅଛି';
   }
 
   @override
@@ -35413,7 +35429,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get shareStrengthShowWatermark => 'ୱାଟରମାର୍କ ଦେଖାନ୍ତୁ';
 
   @override
-  String get shareStrengthStrengthScore => 'STRENGTH SCORE';
+  String get shareStrengthStrengthScore => 'ଷ୍ଟ୍ରେନ୍ଥ ସ୍କୋର୍';
 
   @override
   String get shareStrengthTopMuscles => 'ଶ୍ରେଷ୍ଠ ମାଂସପେଶୀ';
@@ -35766,7 +35782,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get smartInsightCardSmartInsight => 'Smart insight';
+  String get smartInsightCardSmartInsight => 'ସ୍ମାର୍ଟ ଇନସାଇଟ୍';
 
   @override
   String get snappedEquipmentCouldnTReuseThat =>
@@ -35852,7 +35868,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get socialPrivacyReactions => 'ପ୍ରତିକ୍ରିୟା (Reactions)';
 
   @override
-  String get socialPrivacyReadReceipts => 'Read Receipts';
+  String get socialPrivacyReadReceipts => 'ରିଡ୍ ରିସିପ୍ଟସ୍';
 
   @override
   String get socialPrivacyRequireApprovalForFollow =>
@@ -36150,7 +36166,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String stackedBannerPanelWrapped2(Object month) {
-    return '$month Wrapped';
+    return '$month ୱ୍ରାପ୍ଡ୍';
   }
 
   @override
@@ -36691,10 +36707,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'ନିର୍ଦ୍ଦିଷ୍ଟ ଲକ୍ଷ୍ୟ: $_selectedGoal ପଦକ୍ଷେପ';
   }
 
@@ -36702,8 +36715,6 @@ class AppLocalizationsOr extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'ଷ୍ଟେପ୍ ଗୋଲ୍ ସ୍ଲାଇଡର୍, $_minGoal ରୁ $_maxGoal ପଦକ୍ଷେପ ପର୍ଯ୍ୟନ୍ତ';
   }
@@ -37215,7 +37226,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return 'ଆପଣ ଆପଣଙ୍କର $used ଟି ସଜେସନ୍ ମଧ୍ୟରୁ ସବୁ $used ବ୍ୟବହାର କରିସାରିଛନ୍ତି। ଏହା ବଦଳରେ ଅସ୍ତିତ୍ୱ ଥିବା ଫିଚର୍ସ ଉପରେ ଭୋଟ୍ ଦିଅନ୍ତୁ!';
   }
 
   @override
@@ -37427,13 +37438,13 @@ class AppLocalizationsOr extends AppLocalizations {
   String get summaryColWeight => 'ଓଜନ';
 
   @override
-  String get summaryDonutIntensity => 'INTENSITY';
+  String get summaryDonutIntensity => 'ଇଣ୍ଟେନସିଟି';
 
   @override
   String get summaryDonutOnTarget => 'ଲକ୍ଷ୍ୟ ପୂରଣ ହୋଇଛି';
 
   @override
-  String get summaryDonutPlanAdherence => 'PLAN ADHERENCE';
+  String get summaryDonutPlanAdherence => 'ପ୍ଲାନ୍ ଆଡିୟରେନ୍ସ';
 
   @override
   String get summaryDonutRestCompliance => 'ବିଶ୍ରାମ ଅନୁପାଳନ';
@@ -37555,7 +37566,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get summaryMuscleMapNotApplicable => 'ମସଲ୍ ମ୍ୟାପ୍ ପ୍ରଯୁଜ୍ୟ ନୁହେଁ';
 
   @override
-  String get summaryMusclesHit => 'MUSCLES HIT';
+  String get summaryMusclesHit => 'ମସଲ୍ସ ହିଟ୍';
 
   @override
   String summaryNSets(Object count) {
@@ -37603,7 +37614,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get summaryPerExerciseDeepDive => 'ପ୍ରତି-ବ୍ୟାୟାମ ଗଭୀର ବିଶ୍ଳେଷଣ';
 
   @override
-  String get summaryPerExerciseDeepDiveLabel => 'PER-EXERCISE DEEP DIVE';
+  String get summaryPerExerciseDeepDiveLabel => 'ପର୍-ଏକ୍ସରସାଇଜ୍ ଡିପ୍ ଡାଇଭ୍';
 
   @override
   String get summaryPerformanceComparison => 'ପ୍ରଦର୍ଶନ ତୁଳନା';
@@ -37635,7 +37646,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get summarySessionScore => 'ସେସନ୍ ସ୍କୋର';
 
   @override
-  String get summarySessionTimeline => 'SESSION TIMELINE';
+  String get summarySessionTimeline => 'ସେସନ୍ ଟାଇମଲାଇନ୍';
 
   @override
   String get summarySetTypeDistribution => 'ସେଟ୍ ପ୍ରକାର ବଣ୍ଟନ';
@@ -38312,7 +38323,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String syncedWorkoutsSummaryCardCal(Object calories) {
-    return '$calories cal';
+    return '$calories କ୍ୟାଲୋରୀ';
   }
 
   @override
@@ -38322,12 +38333,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String syncedWorkoutsSummaryCardM(Object duration) {
-    return '${duration}m';
+    return '$durationମି';
   }
 
   @override
   String syncedWorkoutsSummaryCardSteps(Object steps) {
-    return '$steps steps';
+    return '$steps ପଦକ୍ଷେପ';
   }
 
   @override
@@ -38502,7 +38513,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get templatePreBuiltTemplates => 'ପୂର୍ବ-ନିର୍ମିତ ଟେମ୍ପଲେଟ୍';
 
   @override
-  String get tierComparisonAdv => 'ADV.';
+  String get tierComparisonAdv => 'ଅଗ୍ରୀମ';
 
   @override
   String get tierComparisonAdvanced => 'ଆଡଭାନ୍ସଡ୍';
@@ -39809,7 +39820,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଅଣ-ଗୁରୁତ୍ୱପୂର୍ଣ୍ଣ ବିଜ୍ଞପ୍ତିଗୁଡ଼ିକୁ ବନ୍ଦ କରାଯାଉଛି';
 
   @override
-  String get vacationModeVacationMode => 'Vacation Mode';
+  String get vacationModeVacationMode => 'ଛୁଟି ମୋଡ';
 
   @override
   String get vacationModeVacationModeSettingsSaved =>
@@ -39890,13 +39901,13 @@ class AppLocalizationsOr extends AppLocalizations {
   String get voiceAnnouncementsTestVoice => 'ଭଏସ୍ ପରୀକ୍ଷା କରନ୍ତୁ';
 
   @override
-  String get voiceAnnouncementsVoiceAnnouncements => 'VOICE ANNOUNCEMENTS';
+  String get voiceAnnouncementsVoiceAnnouncements => 'ଭଏସ୍ ଆନାଉନ୍ସମେଣ୍ଟ';
 
   @override
-  String get voiceAnnouncementsVoiceAnnouncements2 => 'Voice Announcements';
+  String get voiceAnnouncementsVoiceAnnouncements2 => 'ଭଏସ୍ ଆନାଉନ୍ସମେଣ୍ଟ';
 
   @override
-  String get voiceAnnouncementsVoiceSetLogging => 'Voice set-logging';
+  String get voiceAnnouncementsVoiceSetLogging => 'ଭଏସ୍ ସେଟ୍-ଲଗିଂ';
 
   @override
   String get voiceAnnouncementsWhenEnabledYouWill => 'ସକ୍ଷମ ହେଲେ, ଆପଣ ଶୁଣିବେ:';
@@ -39916,7 +39927,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get volumeAlertCardVolumeAlert => 'Volume Alert';
+  String get volumeAlertCardVolumeAlert => 'ଭଲ୍ୟୁମ୍ ଆଲର୍ଟ';
 
   @override
   String volumeAlertCardVolumeAlerts(Object length) {
@@ -39924,7 +39935,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get volumeCardTotalVolumeLifted => 'TOTAL VOLUME LIFTED';
+  String get volumeCardTotalVolumeLifted => 'ମୋଟ ଉଠାଯାଇଥିବା ଭଲ୍ୟୁମ୍';
 
   @override
   String get volumeChartAverage => 'ହାରାହାରି';
@@ -39964,7 +39975,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get volumeChartVolume => 'ଭଲ୍ୟୁମ୍';
 
   @override
-  String get volumeChartVolumeTrends => 'Volume Trends';
+  String get volumeChartVolumeTrends => 'ଭଲ୍ୟୁମ୍ ଟ୍ରେଣ୍ଡ୍';
 
   @override
   String get volumeChartWeeklyVolumeTrend => 'ସାପ୍ତାହିକ ଭଲ୍ୟୁମ୍ ଟ୍ରେଣ୍ଡ';
@@ -39973,7 +39984,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get volumeChartWeeks => 'ସପ୍ତାହ';
 
   @override
-  String get volumeHeroTemplateExercises => 'EXERCISES';
+  String get volumeHeroTemplateExercises => 'ବ୍ୟାୟାମ';
 
   @override
   String volumeHeroTemplateThatS(Object comparison) {
@@ -40001,10 +40012,10 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get volumeHistoryTotalVolume => 'Total Volume';
+  String get volumeHistoryTotalVolume => 'ମୋଟ ଭଲ୍ୟୁମ୍';
 
   @override
-  String get volumeHistoryVolumeHistory => 'Volume History';
+  String get volumeHistoryVolumeHistory => 'ଭଲ୍ୟୁମ୍ ଇତିହାସ';
 
   @override
   String get volumeProgressionCardDefineCustomProgressionVia =>
@@ -40021,7 +40032,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get volumeProgressionCardVolumeProgressionCurves =>
-      'Volume Progression Curves';
+      'ଭଲ୍ୟୁମ୍ ପ୍ରଗ୍ରେସନ୍ କର୍ଭସ୍';
 
   @override
   String volumeProgressionCardW(Object v) {
@@ -40033,19 +40044,19 @@ class AppLocalizationsOr extends AppLocalizations {
       'Wave pattern: ଭଲ୍ୟୁମ୍ ସାଇକେଲ ସାପ୍ତାହିକ ଭାବେ ବଢ଼େ ଏବଂ କମେ';
 
   @override
-  String get warmupControllerPause => 'Pause';
+  String get warmupControllerPause => 'ବିରତି';
 
   @override
-  String get warmupControllerSkipWarmup => 'Skip Warmup';
+  String get warmupControllerSkipWarmup => 'ୱାର୍ମଅପ୍ ଏଡ଼ାନ୍ତୁ';
 
   @override
-  String get warmupControllerStartWorkout => 'Start Workout';
+  String get warmupControllerStartWorkout => 'ୱାର୍କଆଉଟ୍ ଆରମ୍ଭ କରନ୍ତୁ';
 
   @override
-  String get warmupControllerUpNext => 'UP NEXT';
+  String get warmupControllerUpNext => 'ପରବର୍ତ୍ତୀ';
 
   @override
-  String get warmupControllerWarmUp => 'WARM UP';
+  String get warmupControllerWarmUp => 'ୱାର୍ମ ଅପ୍';
 
   @override
   String get warmupCooldownCard1Min => '1 ମିନିଟ୍';
@@ -40060,16 +40071,16 @@ class AppLocalizationsOr extends AppLocalizations {
       'ସଠିକ୍ ଅବଧି ନିୟନ୍ତ୍ରଣ (1-15 ମିନିଟ୍)';
 
   @override
-  String get warmupCooldownCardWarmupCooldown => 'Warmup & Cooldown';
+  String get warmupCooldownCardWarmupCooldown => 'ୱାର୍ମଅପ୍ ଏବଂ କୁଲଡାଉନ୍';
 
   @override
-  String get warmupPhaseIncline => 'Incline';
+  String get warmupPhaseIncline => 'ଇନକ୍ଲାଇନ୍';
 
   @override
-  String get warmupPhaseIntervals => 'INTERVALS';
+  String get warmupPhaseIntervals => 'ଇଣ୍ଟରଭାଲ୍';
 
   @override
-  String get warmupPhasePause => 'Pause';
+  String get warmupPhasePause => 'ବିରତି';
 
   @override
   String warmupPhaseScreenSec(Object duration) {
@@ -40077,29 +40088,30 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get warmupPhaseSkipWarmup => 'Skip Warmup';
+  String get warmupPhaseSkipWarmup => 'ୱାର୍ମଅପ୍ ଏଡ଼ାନ୍ତୁ';
 
   @override
-  String get warmupPhaseSpeed => 'Speed';
+  String get warmupPhaseSpeed => 'ଗତି';
 
   @override
-  String get warmupPhaseStartWorkout => 'Start Workout';
+  String get warmupPhaseStartWorkout => 'ୱାର୍କଆଉଟ୍ ଆରମ୍ଭ କରନ୍ତୁ';
 
   @override
-  String get warmupPhaseUpNext => 'UP NEXT';
+  String get warmupPhaseUpNext => 'ପରବର୍ତ୍ତୀ';
 
   @override
-  String get warmupPhaseWarmUp => 'WARM UP';
+  String get warmupPhaseWarmUp => 'ୱାର୍ମ ଅପ୍';
 
   @override
-  String get warmupSettingsCooldownStretchDuration =>
-      'Cooldown Stretch Duration';
+  String get warmupSettingsCooldownStretchDuration => 'କୁଲଡାଉନ୍ ଷ୍ଟ୍ରେଚ୍ ଅବଧି';
 
   @override
-  String get warmupSettingsEnableCooldownStretch => 'Enable Cooldown Stretch';
+  String get warmupSettingsEnableCooldownStretch =>
+      'କୁଲଡାଉନ୍ ଷ୍ଟ୍ରେଚ୍ ସକ୍ଷମ କରନ୍ତୁ';
 
   @override
-  String get warmupSettingsEnableWarmupPhase => 'Enable Warmup Phase';
+  String get warmupSettingsEnableWarmupPhase =>
+      'ୱାର୍ମଅପ୍ ପର୍ଯ୍ୟାୟ ସକ୍ଷମ କରନ୍ତୁ';
 
   @override
   String get warmupSettingsHowLongToStretch =>
@@ -40111,7 +40123,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get warmupSettingsIncompleteExerciseWarning =>
-      'Incomplete Exercise Warning';
+      'ଅସମ୍ପୂର୍ଣ୍ଣ ବ୍ୟାୟାମ ଚେତାବନୀ';
 
   @override
   String warmupSettingsSectionMin(Object label, Object minutes) {
@@ -40131,10 +40143,10 @@ class AppLocalizationsOr extends AppLocalizations {
       'ପ୍ରଭାବଶାଳୀ ୱାର୍ମ-ଅପ୍ ପାଇଁ ଟିପ୍ସ:';
 
   @override
-  String get warmupSettingsWarmupCooldown => 'WARMUP & COOLDOWN';
+  String get warmupSettingsWarmupCooldown => 'ୱାର୍ମଅପ୍ ଏବଂ କୁଲଡାଉନ୍';
 
   @override
-  String get warmupSettingsWarmupDuration => 'Warmup Duration';
+  String get warmupSettingsWarmupDuration => 'ୱାର୍ମଅପ୍ ଅବଧି';
 
   @override
   String get warmupSettingsWarnBeforeFinishingWith =>
@@ -40400,7 +40412,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String weeklyCheckinSheetPartRecommendationOptionCardCal(Object calories) {
-    return '$calories cal';
+    return '$calories କ୍ୟାଲୋରୀ';
   }
 
   @override
@@ -40667,7 +40679,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String weeklyRecapDialogRankShieldsActivated(Object count) {
-    return '$count Rank Shields activated';
+    return '$count ରାଙ୍କ୍ ସିଲ୍ଡ ସକ୍ରିୟ ହୋଇଛି';
   }
 
   @override
@@ -40677,7 +40689,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String weeklyRecapDialogWeekIn(Object tierLabel, Object weeks) {
-    return 'Week $weeks in $tierLabel';
+    return '$tierLabel ରେ ସପ୍ତାହ $weeks';
   }
 
   @override
@@ -41177,7 +41189,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41673,7 +41685,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutDetailAiAiGenerationParameters => 'AI ଜେନେରେସନ୍ ପାରାମିଟର';
 
   @override
-  String get workoutDetailAiAiInsights => 'AI INSIGHTS';
+  String get workoutDetailAiAiInsights => 'AI ଅନ୍ତର୍ଦୃଷ୍ଟି';
 
   @override
   String get workoutDetailAiExerciseSelection => 'ବ୍ୟାୟାମ ଚୟନ';
@@ -41728,22 +41740,22 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutDetailAiWhyTheseExercises => 'ଏହି ବ୍ୟାୟାମଗୁଡ଼ିକ କାହିଁକି?';
 
   @override
-  String get workoutDetailAiWorkoutDesign => 'Workout Design';
+  String get workoutDetailAiWorkoutDesign => 'Workout ଡିଜାଇନ୍';
 
   @override
-  String get workoutDetailAiWorkoutSpecifics => 'Workout Specifics';
+  String get workoutDetailAiWorkoutSpecifics => 'Workout ବିଶେଷତା';
 
   @override
-  String get workoutDetailCoolDownStretches => 'COOL DOWN STRETCHES';
+  String get workoutDetailCoolDownStretches => 'COOL DOWN ଷ୍ଟ୍ରେଚ୍';
 
   @override
-  String get workoutDetailDifficulty => 'Difficulty';
+  String get workoutDetailDifficulty => 'କଷ୍ଟକର';
 
   @override
-  String get workoutDetailEquipment => 'EQUIPMENT';
+  String get workoutDetailEquipment => 'ଉପକରଣ';
 
   @override
-  String get workoutDetailExercises => 'EXERCISES';
+  String get workoutDetailExercises => 'ବ୍ୟାୟାମ';
 
   @override
   String get workoutDetailFailedToLoadWorkout => 'Workout ଲୋଡ୍ କରିବାରେ ବିଫଳ';
@@ -41753,16 +41765,16 @@ class AppLocalizationsOr extends AppLocalizations {
       ') ଉପଲବ୍ଧ ଉପକରଣ ପାଇଁ...';
 
   @override
-  String get workoutDetailHelpersHell => 'Hell';
+  String get workoutDetailHelpersHell => 'ନର୍କ';
 
   @override
-  String get workoutDetailHelpersUpdatingExercises => 'Updating Exercises';
+  String get workoutDetailHelpersUpdatingExercises => 'ବ୍ୟାୟାମ ଅପଡେଟ୍ କରୁଛି';
 
   @override
-  String get workoutDetailMoreInfo => 'MORE INFO';
+  String get workoutDetailMoreInfo => 'ଅଧିକ ସୂଚନା';
 
   @override
-  String get workoutDetailProgram => 'Program';
+  String get workoutDetailProgram => 'ପ୍ରୋଗ୍ରାମ୍';
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
@@ -41770,14 +41782,14 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get workoutDetailRevert => 'Revert';
+  String get workoutDetailRevert => 'ପୂର୍ବ ଅବସ୍ଥାକୁ ଫେରନ୍ତୁ';
 
   @override
   String get workoutDetailScreenBreakSuperset => 'Superset ଭାଙ୍ଗିବେ କି?';
 
   @override
   String workoutDetailScreenCalBurned(Object estimatedCalories) {
-    return '~$estimatedCalories cal burned';
+    return '~$estimatedCalories କ୍ୟାଲୋରୀ ଜଳିଛି';
   }
 
   @override
@@ -41789,7 +41801,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଶେଷ ବ୍ୟାୟାମକୁ ହଟାଇ ହେବ ନାହିଁ';
 
   @override
-  String get workoutDetailScreenChallenge => 'CHALLENGE';
+  String get workoutDetailScreenChallenge => 'ଚ୍ୟାଲେଞ୍ଜ';
 
   @override
   String get workoutDetailScreenDiscardTheEquipmentChange =>
@@ -41815,29 +41827,29 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଏହି ସେସନ୍ ଅପରିବର୍ତ୍ତିତ ରଖନ୍ତୁ। ନୂତନ ଉପକରଣ ଭବିଷ୍ୟତର Workout ପାଇଁ ପ୍ରଯୁଜ୍ୟ ହେବ।';
 
   @override
-  String get workoutDetailScreenLetSGo => 'Let\'s Go';
+  String get workoutDetailScreenLetSGo => 'ଚାଲନ୍ତୁ ଆରମ୍ଭ କରିବା';
 
   @override
   String workoutDetailScreenMinSauna(Object durationMinutes) {
-    return '$durationMinutes min sauna';
+    return '$durationMinutes ମିନିଟ୍ ସାଉନା';
   }
 
   @override
-  String get workoutDetailScreenNeverRecommend => 'Never Recommend';
+  String get workoutDetailScreenNeverRecommend => 'କେବେବି ସୁପାରିଶ କରନ୍ତୁ ନାହିଁ';
 
   @override
-  String get workoutDetailScreenNoThanks => 'No Thanks';
+  String get workoutDetailScreenNoThanks => 'ଧନ୍ୟବାଦ, ଆବଶ୍ୟକ ନାହିଁ';
 
   @override
   String workoutDetailScreenProgressionFrom(Object progressionFrom) {
-    return 'Progression from $progressionFrom';
+    return '$progressionFrom ରୁ ପ୍ରଗ୍ରେସନ୍';
   }
 
   @override
-  String get workoutDetailScreenRemoveExercise => 'Remove Exercise';
+  String get workoutDetailScreenRemoveExercise => 'ବ୍ୟାୟାମ ହଟାନ୍ତୁ';
 
   @override
-  String get workoutDetailScreenReplaceNow => 'Replace now';
+  String get workoutDetailScreenReplaceNow => 'ବର୍ତ୍ତମାନ ବଦଳାନ୍ତୁ';
 
   @override
   String get workoutDetailScreenRevertToOriginal =>
@@ -41931,16 +41943,16 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutDetailScreenYesSave => 'ହଁ, ସେଭ୍ କରନ୍ତୁ';
 
   @override
-  String get workoutDetailTryAgain => 'Try Again';
+  String get workoutDetailTryAgain => 'ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ';
 
   @override
-  String get workoutDetailType => 'Type';
+  String get workoutDetailType => 'ପ୍ରକାର';
 
   @override
   String get workoutDetailUpdatingExercises => 'ବ୍ୟାୟାମ ଅପଡେଟ୍ କରୁଛି';
 
   @override
-  String get workoutDetailWantAChallenge => 'WANT A CHALLENGE?';
+  String get workoutDetailWantAChallenge => 'ଏକ ଚ୍ୟାଲେଞ୍ଜ ଚାହୁଁଛନ୍ତି କି?';
 
   @override
   String get workoutDetailWarmUp => 'WARM UP';
@@ -41949,14 +41961,14 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutFavourites => 'ପ୍ରିୟ';
 
   @override
-  String get workoutFlowMixinComplete => 'Complete';
+  String get workoutFlowMixinComplete => 'ସମ୍ପୂର୍ଣ୍ଣ';
 
   @override
   String get workoutFlowMixinCompleteWorkoutNow =>
       'ବର୍ତ୍ତମାନ Workout ସମ୍ପୂର୍ଣ୍ଣ କରିବେ କି?';
 
   @override
-  String get workoutFlowMixinKeepGoing => 'Keep going';
+  String get workoutFlowMixinKeepGoing => 'ଜାରି ରଖନ୍ତୁ';
 
   @override
   String get workoutGalleryCompleteAWorkoutAnd =>
@@ -41969,17 +41981,17 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutGalleryNoImagesYet => 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି Image ନାହିଁ';
 
   @override
-  String get workoutGalleryShareAgain => 'Share Again';
+  String get workoutGalleryShareAgain => 'ପୁଣି ସେୟାର କରନ୍ତୁ';
 
   @override
   String get workoutGalleryThisWillRemoveThe =>
       'ଏହା ଆପଣଙ୍କ ଗ୍ୟାଲେରୀରୁ Image ଟିକୁ ହଟାଇ ଦେବ।';
 
   @override
-  String get workoutGalleryWorkoutGallery => 'Workout Gallery';
+  String get workoutGalleryWorkoutGallery => 'Workout ଗ୍ୟାଲେରୀ';
 
   @override
-  String get workoutGalleryWorkoutRecap => 'Workout Recap';
+  String get workoutGalleryWorkoutRecap => 'Workout ରିକ୍ୟାପ୍';
 
   @override
   String get workoutGenerate => 'ୱର୍କଆଉଟ୍ ସୃଷ୍ଟି';
@@ -42019,7 +42031,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutGenerationSomethingWentWrong => 'କିଛି ଭୁଲ୍ ହୋଇଛି';
 
   @override
-  String get workoutGenerationTryAgain => 'Try Again';
+  String get workoutGenerationTryAgain => 'ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ';
 
   @override
   String get workoutGenerationWorkoutReady => 'Workout ପ୍ରସ୍ତୁତ!';
@@ -42028,10 +42040,10 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutHistory => 'ଇତିହାସ';
 
   @override
-  String get workoutHistoryImportAddExercise => 'Add Exercise';
+  String get workoutHistoryImportAddExercise => 'ବ୍ୟାୟାମ ଯୋଡନ୍ତୁ';
 
   @override
-  String get workoutHistoryImportAddToHistory => 'Add to History';
+  String get workoutHistoryImportAddToHistory => 'ଇତିହାସରେ ଯୋଡନ୍ତୁ';
 
   @override
   String get workoutHistoryImportAddYourPastWorkout =>
@@ -42045,13 +42057,13 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutHistoryImportAppleHealth => 'Apple Health';
 
   @override
-  String get workoutHistoryImportAutoDetect => 'Auto-detect';
+  String get workoutHistoryImportAutoDetect => 'ସ୍ୱୟଂଚାଳିତ ଚିହ୍ନଟ';
 
   @override
   String get workoutHistoryImportBeforeWeParse => 'Parse କରିବା ପୂର୍ବରୁ...';
 
   @override
-  String get workoutHistoryImportChooseFile => 'Choose File';
+  String get workoutHistoryImportChooseFile => 'ଫାଇଲ୍ ବାଛନ୍ତୁ';
 
   @override
   String get workoutHistoryImportCouldNotReadThat =>
@@ -42407,7 +42419,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String workoutImportSummarySheetMore(Object more) {
-    return '+$more more';
+    return '+$more ଅଧିକ';
   }
 
   @override
@@ -42838,10 +42850,10 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣଙ୍କ ଇତିହାସ ଆଧାରରେ AI ଟାର୍ଗେଟ୍ ଗୁଡ଼ିକ ପ୍ରସ୍ତୁତ କରାଯିବ।';
 
   @override
-  String get workoutSheetsMixinBarType => 'Bar Type';
+  String get workoutSheetsMixinBarType => 'ବାର୍ ପ୍ରକାର';
 
   @override
-  String get workoutSheetsMixinBreakSuperset => 'Break Superset';
+  String get workoutSheetsMixinBreakSuperset => 'ସୁପରସେଟ୍ ଭାଙ୍ଗନ୍ତୁ';
 
   @override
   String get workoutSheetsMixinChangeRepsProgression =>
@@ -42917,7 +42929,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get workoutSheetsMixinUndo => 'Undo';
+  String get workoutSheetsMixinUndo => 'ପୂର୍ବ ଅବସ୍ଥାକୁ ଫେରନ୍ତୁ';
 
   @override
   String get workoutSheetsMixinWarmUp => 'Warm Up';
@@ -42934,7 +42946,7 @@ class AppLocalizationsOr extends AppLocalizations {
       '15ଟି ଭାଇରାଲ୍ ଫର୍ମାଟ୍ — ପ୍ରିଭ୍ୟୁ ଦେଖିବା ପାଇଁ ଯେକୌଣସିଟି ଟ୍ୟାପ୍ କରନ୍ତୁ';
 
   @override
-  String get workoutShowcase1rmEstimate => '1RM ESTIMATE';
+  String get workoutShowcase1rmEstimate => '1RM ଆକଳନ';
 
   @override
   String get workoutShowcase252Lb => '252 lb';
@@ -42946,7 +42958,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutShowcase44Min => '44 ମିନିଟ୍';
 
   @override
-  String get workoutShowcaseAdjust => 'Adjust';
+  String get workoutShowcaseAdjust => 'ସଜାଡନ୍ତୁ';
 
   @override
   String get workoutShowcaseAdvanced => 'ଆଡଭାନ୍ସଡ୍';
@@ -42971,19 +42983,19 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutShowcaseAutoLabel => 'ୱର୍କଆଉଟ୍ ଶୋକେସ୍ ଅଟୋ ଲେବଲ୍';
 
   @override
-  String get workoutShowcaseBarbellSquat => 'Barbell Squat';
+  String get workoutShowcaseBarbellSquat => 'ବାରବେଲ ସ୍କ୍ୱାଟ';
 
   @override
-  String get workoutShowcaseBenchPress => 'BENCH PRESS';
+  String get workoutShowcaseBenchPress => 'ବେଞ୍ଚ ପ୍ରେସ୍';
 
   @override
-  String get workoutShowcaseBoardingPass => 'BOARDING PASS';
+  String get workoutShowcaseBoardingPass => 'ବୋର୍ଡିଂ ପାସ୍';
 
   @override
   String get workoutShowcaseBreathing => 'ଶ୍ୱାସକ୍ରିୟା';
 
   @override
-  String get workoutShowcaseCal => 'Cal';
+  String get workoutShowcaseCal => 'କ୍ୟାଲୋରୀ';
 
   @override
   String get workoutShowcaseCalories => 'ୱର୍କଆଉଟ୍ ଶୋକେସ୍ କ୍ୟାଲୋରୀ';
@@ -42998,7 +43010,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutShowcaseEasy => 'ୱର୍କଆଉଟ୍ ଶୋକେସ୍ ସହଜ';
 
   @override
-  String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 reps';
+  String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 ଥର';
 
   @override
   String get workoutShowcaseEverySetYouLog =>
@@ -43069,13 +43081,13 @@ class AppLocalizationsOr extends AppLocalizations {
       'ସେଟ୍ ଗୁଡ଼ିକରେ ଆପଣଙ୍କ ଓଜନ + reps କିପରି ପ୍ରଗ୍ରେସ କରେ।';
 
   @override
-  String get workoutShowcaseInfo => 'Info';
+  String get workoutShowcaseInfo => 'ସୂଚନା';
 
   @override
   String get workoutShowcaseInstructions => 'ନିର୍ଦ୍ଦେଶାବଳୀ';
 
   @override
-  String get workoutShowcaseLR => 'L/R';
+  String get workoutShowcaseLR => 'ବାମ/ଡାହାଣ';
 
   @override
   String get workoutShowcaseLinearDesc => 'ୱର୍କଆଉଟ୍ ଶୋକେସ୍ ଲିନିୟର୍ ବର୍ଣ୍ଣନା';
@@ -43102,7 +43114,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutShowcaseMovedThisSession => 'ଏହି ସେସନରେ ମୁଭ୍ ହୋଇଛି';
 
   @override
-  String get workoutShowcaseNewPr => 'NEW PR';
+  String get workoutShowcaseNewPr => 'ନୂଆ PR';
 
   @override
   String get workoutShowcaseNote => 'ୱର୍କଆଉଟ୍ ଶୋକେସ୍ ନୋଟ୍';
@@ -43115,7 +43127,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ପ୍ଲାନଟି ପରବର୍ତ୍ତୀ ସେସନରେ ଅଟୋ-ଆଡଜଷ୍ଟ ହୋଇଯିବ — ଆପଣଙ୍କ ପ୍ରକୃତ କାର୍ଯ୍ୟଦକ୍ଷତା ଅନୁଯାୟୀ ଓଜନ + reps ପୁନଃ କାଲିବ୍ରେଟ୍ ହେବ।';
 
   @override
-  String get workoutShowcasePoweredByZealova => 'Powered by Zealova';
+  String get workoutShowcasePoweredByZealova => 'Zealova ଦ୍ୱାରା ପରିଚାଳିତ';
 
   @override
   String get workoutShowcaseProgressionModel => 'Progression ମଡେଲ୍';
@@ -43127,10 +43139,10 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutShowcasePyramidLabel => 'ୱର୍କଆଉଟ୍ ଶୋକେସ୍ ପିରାମିଡ୍ ଲେବଲ୍';
 
   @override
-  String get workoutShowcaseRare => '★ RARE';
+  String get workoutShowcaseRare => '★ ବିରଳ';
 
   @override
-  String get workoutShowcaseReps => 'Reps';
+  String get workoutShowcaseReps => 'ଥର';
 
   @override
   String workoutShowcaseScreenDay(Object day) {
@@ -43173,7 +43185,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String workoutShowcaseScreenVolZealovaPress(Object day) {
-    return 'VOL. $day · ZEALOVA PRESS';
+    return 'VOL. $day · Zealova ପ୍ରେସ୍';
   }
 
   @override
@@ -43187,16 +43199,16 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get workoutShowcaseSet1 => 'Set 1';
+  String get workoutShowcaseSet1 => 'ସେଟ୍ ୧';
 
   @override
-  String get workoutShowcaseSet1Of4 => 'Set 1 of 4';
+  String get workoutShowcaseSet1Of4 => '୪ ରୁ ସେଟ୍ ୧';
 
   @override
-  String get workoutShowcaseSet2 => 'Set 2';
+  String get workoutShowcaseSet2 => 'ସେଟ୍ ୨';
 
   @override
-  String get workoutShowcaseSet3 => 'Set 3';
+  String get workoutShowcaseSet3 => 'ସେଟ୍ ୩';
 
   @override
   String workoutShowcaseSetNOf3(Object arg0) {
@@ -43207,10 +43219,10 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutShowcaseShareYourWorkout => 'ଆପଣଙ୍କ ୱାର୍କଆଉଟ୍ ସେୟାର କରନ୍ତୁ';
 
   @override
-  String get workoutShowcaseSideA => 'SIDE A';
+  String get workoutShowcaseSideA => 'ପାର୍ଶ୍ୱ A';
 
   @override
-  String get workoutShowcaseSuperset => 'Superset';
+  String get workoutShowcaseSuperset => 'ସୁପରସେଟ୍';
 
   @override
   String workoutShowcaseTapToLogSet(Object arg0) {
@@ -43235,16 +43247,16 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutShowcaseUpNextBenchPress => 'ପରବର୍ତ୍ତୀ: Bench Press';
 
   @override
-  String get workoutShowcaseUpperBodyPush => 'UPPER BODY PUSH';
+  String get workoutShowcaseUpperBodyPush => 'ଅପର ବଡି ପୁସ୍';
 
   @override
-  String get workoutShowcaseVideo => 'Video';
+  String get workoutShowcaseVideo => 'ଭିଡିଓ';
 
   @override
-  String get workoutShowcaseVolume => 'Volume';
+  String get workoutShowcaseVolume => 'ଭଲ୍ୟୁମ୍';
 
   @override
-  String get workoutShowcaseWarmup => 'Warmup';
+  String get workoutShowcaseWarmup => 'ୱାର୍ମଅପ୍';
 
   @override
   String get workoutShowcaseWeight => 'ଓଜନ';
@@ -43259,7 +43271,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutShowcaseYou => '@you';
 
   @override
-  String get workoutShowcaseZealova => 'ZEALOVA';
+  String get workoutShowcaseZealova => 'Zealova';
 
   @override
   String get workoutStateCardsAiPoweredPersonalizedProgra =>
@@ -43291,7 +43303,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣଙ୍କ ବ୍ୟକ୍ତିଗତ ୱାର୍କଆଉଟ୍ ପ୍ଲାନ ତିଆରି କରାଯାଉଛି';
 
   @override
-  String get workoutStatsStripCalories => 'Calories';
+  String get workoutStatsStripCalories => 'କ୍ୟାଲୋରୀ';
 
   @override
   String get workoutStatsStripDuration => 'ଅବଧି';
@@ -43363,7 +43375,7 @@ class AppLocalizationsOr extends AppLocalizations {
     Object completedCount,
     Object totalPlanned,
   ) {
-    return '$completedCount / $totalPlanned exercises';
+    return '$completedCount / $totalPlanned ବ୍ୟାୟାମ';
   }
 
   @override
@@ -43403,12 +43415,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedLong(Object tooLong) {
-    return '$tooLong long';
+    return '$tooLong ଦୀର୍ଘ';
   }
 
   @override
   String workoutSummaryAdvancedMS(Object m, Object s) {
-    return '${m}m ${s}s';
+    return '$mମି $sସେ';
   }
 
   @override
@@ -43426,7 +43438,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedNewThisSession(Object length) {
-    return '$length new this session';
+    return 'ଏହି ସେସନରେ $length ନୂଆ';
   }
 
   @override
@@ -43494,7 +43506,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedS(Object duration) {
-    return '${duration}s';
+    return '$durationସେ';
   }
 
   @override
@@ -43628,12 +43640,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps reps';
+    return '$weightLbs lb x $reps ଥର';
   }
 
   @override
   String workoutSummaryGeneralLibraryId(Object libraryId) {
-    return 'Library ID: $libraryId';
+    return 'ଲାଇବ୍ରେରୀ ID: $libraryId';
   }
 
   @override
@@ -43741,7 +43753,7 @@ class AppLocalizationsOr extends AppLocalizations {
     Object reps,
     Object weightKg,
   ) {
-    return '$weightKg kg x $reps reps  |  Est. 1RM: $estimated1rmKg kg';
+    return '$weightKg kg x $reps ଥର  |  ଅନୁମାନିତ 1RM: $estimated1rmKg kg';
   }
 
   @override
@@ -43940,7 +43952,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get workoutsStrength => 'STRENGTH';
+  String get workoutsStrength => 'ଶକ୍ତି';
 
   @override
   String get workoutsSyncSessionsFromYour =>
@@ -44048,7 +44060,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get wrappedTemplateVolume => 'VOLUME';
+  String get wrappedTemplateVolume => 'ଭଲ୍ୟୁମ୍';
 
   @override
   String get wrappedTemplateWrapped => 'WRAPPED';
@@ -44198,7 +44210,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get xpGoalsScreenInventory => 'ଇନଭେଣ୍ଟୋରୀ';
 
   @override
-  String get xpGoalsScreenLegendary => 'LEGENDARY';
+  String get xpGoalsScreenLegendary => 'ଲିଜେଣ୍ଡାରୀ';
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
@@ -44224,7 +44236,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get xpGoalsScreenLogWeight => 'ଓଜନ ଲଗ୍ କରନ୍ତୁ';
 
   @override
-  String get xpGoalsScreenMilestone => 'MILESTONE';
+  String get xpGoalsScreenMilestone => 'ମାଇଲଖୁଣ୍ଟ';
 
   @override
   String get xpGoalsScreenMilestoneLegend =>
@@ -44234,7 +44246,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get xpGoalsScreenNoLevelsAvailable => 'କୌଣସି ସ୍ତର ଉପଲବ୍ଧ ନାହିଁ';
 
   @override
-  String get xpGoalsScreenReward => 'REWARD';
+  String get xpGoalsScreenReward => 'ପୁରସ୍କାର';
 
   @override
   String get xpGoalsScreenSetFirstPersonalRecord =>
@@ -44401,7 +44413,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get xpLeaderboardYourRank => 'ଆପଣଙ୍କ ର଼୍ୟାଙ୍କ';
 
   @override
-  String get xpLevelBarLvl => 'Lvl';
+  String get xpLevelBarLvl => 'ସ୍ତର';
 
   @override
   String xpLevelBarValue(Object progressPercent) {
@@ -44429,7 +44441,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String xpProgressCardLevelN(Object level) {
-    return 'Level $level';
+    return 'ସ୍ତର $level';
   }
 
   @override
@@ -44442,7 +44454,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String xpProgressCardLvlN(Object level) {
-    return 'Lvl $level';
+    return 'ସ୍ତର $level';
   }
 
   @override
@@ -44461,7 +44473,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String xpProgressCardPrestigeN(Object level) {
-    return 'Prestige $level';
+    return 'ପ୍ରେଷ୍ଟିଜ୍ $level';
   }
 
   @override

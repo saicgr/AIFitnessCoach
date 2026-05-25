@@ -77,7 +77,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String accuracyFeedbackSnackbarCal(Object calories, Object displayName) {
-    return '$displayName — $calories cal';
+    return '$displayName — $calories kcal';
   }
 
   @override
@@ -1347,7 +1347,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String aiCoachReportCardS(Object sets) {
-    return '${sets}s';
+    return '$sets Sätze';
   }
 
   @override
@@ -3084,7 +3084,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String cardioHistoryScreenCal(Object calories) {
-    return '$calories cal';
+    return '$calories kcal';
   }
 
   @override
@@ -4088,11 +4088,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wähle eine neue KI-Coach-Persönlichkeit';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return '$_customName verwenden';
   }
 
@@ -4217,7 +4213,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String combinedHealthScreenCal(Object caloriesBurned) {
-    return '$caloriesBurned cal';
+    return '$caloriesBurned kcal';
   }
 
   @override
@@ -4628,17 +4624,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String companionPickerSheetCal(Object item) {
-    return '$item cal';
+    return '$item kcal';
   }
 
   @override
   String companionPickerSheetCal2(Object estCalories) {
-    return '$estCalories cal';
+    return '$estCalories kcal';
   }
 
   @override
   String companionPickerSheetCal3(Object _selectedCalTotal) {
-    return '$_selectedCalTotal cal';
+    return '$_selectedCalTotal kcal';
   }
 
   @override
@@ -8571,7 +8567,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get editWeightsQuantity => 'Anzahl';
 
   @override
-  String get editWeightsSet => 'Set';
+  String get editWeightsSet => 'Satz';
 
   @override
   String get editWeightsSetQuantity => 'Set-Anzahl';
@@ -8706,7 +8702,7 @@ class AppLocalizationsDe extends AppLocalizations {
     Object _selectedStretchDuration,
     Object _selectedWarmupDuration,
   ) {
-    return '$_selectedWarmupDuration+$_selectedStretchDuration min';
+    return '$_selectedWarmupDuration+$_selectedStretchDuration Min.';
   }
 
   @override
@@ -8737,7 +8733,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get editableFitnessCardPrep => 'Vorbereitung';
 
   @override
-  String get editableFitnessCardSet => 'Set';
+  String get editableFitnessCardSet => 'Satz';
 
   @override
   String get editableFitnessCardSteps => 'Schritte';
@@ -10450,7 +10446,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get exercisePickerSheetCustomOnly => 'Nur eigene';
 
   @override
-  String get exercisePickerSheetEquipment => 'Equipment';
+  String get exercisePickerSheetEquipment => 'Ausrüstung';
 
   @override
   String exercisePickerSheetNSelected(Object n) {
@@ -10652,7 +10648,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dehnen nach Workouts';
 
   @override
-  String get exercisePreferencesCardWarmupCooldown => 'WARMUP & COOLDOWN';
+  String get exercisePreferencesCardWarmupCooldown => 'AUFWÄRMEN & ABKÜHLEN';
 
   @override
   String get exercisePreferencesCardWarmupPhase => 'Aufwärmphase';
@@ -11654,7 +11650,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Strava / Garmin Connect / Komoot';
 
   @override
-  String get fastingAiInsightAiInsight => 'AI Insight';
+  String get fastingAiInsightAiInsight => 'KI-Einblick';
 
   @override
   String get fastingAiInsightCouldnTLoadYour =>
@@ -12158,7 +12154,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fastingScoreCardProtocolLevel => 'Protokoll-Level';
 
   @override
-  String get fastingScoreCardScore => 'Score';
+  String get fastingScoreCardScore => 'Punktzahl';
 
   @override
   String get fastingScoreCardStreakBonus => 'Streak-Bonus';
@@ -15034,7 +15030,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get guestHome1700WithSignup => '1700+ mit Anmeldung';
 
   @override
-  String get guestHomeAiCoachDemo => 'AI Coach Demo';
+  String get guestHomeAiCoachDemo => 'KI-Coach Demo';
 
   @override
   String get guestHomeAllFree => 'ALLES KOSTENLOS';
@@ -15062,7 +15058,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get guestHomePreview20Exercises => 'Vorschau von 20 Übungen';
 
   @override
-  String get guestHomeScreenAiCoachChat => 'AI Coach Chat';
+  String get guestHomeScreenAiCoachChat => 'KI-Coach Chat';
 
   @override
   String get guestHomeScreenAskAnythingAboutFitness =>
@@ -16563,10 +16559,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get heroWorkoutCardPreview => 'VORSCHAU';
 
   @override
-  String get heroWorkoutCardQuick => 'Quick';
+  String get heroWorkoutCardQuick => 'Schnell';
 
   @override
-  String get heroWorkoutCardQuickWorkout => 'QUICK WORKOUT';
+  String get heroWorkoutCardQuickWorkout => 'SCHNELLES WORKOUT';
 
   @override
   String get heroWorkoutCardQuickWorkoutDismissed => 'Quick Workout verworfen';
@@ -17545,7 +17541,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_ankle_mobility =>
-      'Limited ankle mobility forces compensations in squats. Stretch and drill it daily.';
+      'Eingeschränkte Beweglichkeit der Sprunggelenke erzwingt Kompensationen bei Kniebeugen. Dehne und trainiere sie täglich.';
 
   @override
   String get homeTip_breathing_during_lifts =>
@@ -17557,15 +17553,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_cardio_and_strength =>
-      'Cardio doesn\'t kill gains if you\'re eating enough and not overdoing volume.';
+      'Cardio zerstört nicht deine Gains, solange du genug isst und das Volumen nicht übertreibst.';
 
   @override
   String get homeTip_cold_exposure =>
-      'Cold showers or ice baths may blunt post-workout inflammation. Save them for after, not before.';
+      'Kalte Duschen oder Eisbäder können Entzündungen nach dem Training hemmen. Hebe sie dir für danach auf, nicht davor.';
 
   @override
   String get homeTip_compound_before_isolation =>
-      'Do your big lifts first when you\'re fresh. Isolation work comes at the end.';
+      'Mache deine großen Übungen zuerst, wenn du noch frisch bist. Isolationsübungen kommen zum Schluss.';
 
   @override
   String get homeTip_compound_lifts =>
@@ -17605,7 +17601,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_grip_strength =>
-      'Grip strength predicts longevity better than almost any other metric. Train it.';
+      'Die Griffkraft ist ein besserer Indikator für Langlebigkeit als fast jeder andere Messwert. Trainiere sie.';
 
   @override
   String get homeTip_hydration_basics =>
@@ -17625,15 +17621,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_no_junk_volume =>
-      '10 hard, focused sets beat 20 half-hearted ones. Quality over quantity.';
+      '10 harte, fokussierte Sätze sind besser als 20 halbherzige. Qualität vor Quantität.';
 
   @override
   String get homeTip_omega3_basics =>
-      '1–2g EPA+DHA daily reduces inflammation and supports joint health.';
+      '1–2g EPA+DHA täglich reduzieren Entzündungen und unterstützen die Gelenkgesundheit.';
 
   @override
   String get homeTip_periodization =>
-      'Vary your rep ranges and intensity over time. Linear progress doesn\'t last forever.';
+      'Variiere deine Wiederholungsbereiche und Intensität über die Zeit. Lineare Fortschritte halten nicht ewig an.';
 
   @override
   String get homeTip_progressive_overload =>
@@ -17645,7 +17641,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_protein_sources_vary =>
-      'Mix protein sources — chicken, eggs, Greek yogurt, legumes. Variety covers all amino acids.';
+      'Mische deine Proteinquellen – Hühnchen, Eier, griechischer Joghurt, Hülsenfrüchte. Abwechslung deckt alle Aminosäuren ab.';
 
   @override
   String get homeTip_rate_of_perceived_exertion =>
@@ -17657,7 +17653,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_scale_not_everything =>
-      'Weight fluctuates 2–4 lbs daily from water and food. Judge by weekly averages.';
+      'Das Gewicht schwankt täglich um 1–2 kg durch Wasser und Nahrung. Beurteile es nach wöchentlichen Durchschnittswerten.';
 
   @override
   String get homeTip_set_rep_ranges =>
@@ -17669,11 +17665,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_sodium_and_water =>
-      'Salt isn\'t the enemy — it helps with hydration and performance. Don\'t fear it.';
+      'Salz ist nicht der Feind – es hilft bei der Hydratation und Leistung. Hab keine Angst davor.';
 
   @override
   String get homeTip_split_options =>
-      'Push/pull/legs, upper/lower, full-body 3x — all work if you\'re consistent.';
+      'Push/Pull/Beine, Oberkörper/Unterkörper, Ganzkörper 3x – alles funktioniert, wenn du konsequent bist.';
 
   @override
   String get homeTip_stress_and_recovery =>
@@ -17681,7 +17677,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_tempo_training =>
-      'Try a 3-0-1 tempo (3s down, 0 pause, 1s up) to feel any exercise differently.';
+      'Versuche ein 3-0-1 Tempo (3s ab, 0 Pause, 1s auf), um jede Übung anders wahrzunehmen.';
 
   @override
   String get homeTip_track_to_progress =>
@@ -17689,7 +17685,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_vitamin_d =>
-      'Most people are deficient in vitamin D. 1000–2000 IU daily is a safe baseline.';
+      'Die meisten Menschen haben einen Vitamin-D-Mangel. 1000–2000 IE täglich sind eine sichere Basis.';
 
   @override
   String get homeTip_walk_after_meals =>
@@ -17701,7 +17697,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get homeTip_zone2_cardio =>
-      'Zone 2 cardio (conversational pace) builds the aerobic base everything else sits on.';
+      'Zone 2 Cardio (Sprechtempo) baut die aerobe Basis auf, auf der alles andere aufbaut.';
 
   @override
   String get homeTodaysNutrition => 'Heutige Ernährung';
@@ -18159,7 +18155,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get hydrationSummaryBlockHydration => 'Hydration';
+  String get hydrationSummaryBlockHydration => 'Hydratation';
 
   @override
   String hydrationSummaryBlockMl(Object currentMl, Object goalMl) {
@@ -18767,7 +18763,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get inlineExerciseInfoFormTips => 'Ausführungstipps';
 
   @override
-  String get inlineExerciseInfoSetup => 'Setup';
+  String get inlineExerciseInfoSetup => 'Vorbereitung';
 
   @override
   String get inlineReferralExpanderApply => 'Anwenden';
@@ -18806,7 +18802,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get inlineThemeSelectorAuto => 'Auto';
+  String get inlineThemeSelectorAuto => 'Automatisch';
 
   @override
   String get inlineWorkoutChatAddAMessage => 'Nachricht hinzufügen...';
@@ -19485,7 +19481,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Stärke deinen Beckenboden mit Kegel-Übungen, die in deine Trainingsroutine integriert sind.';
 
   @override
-  String get kegelSettingsWarmup => 'Warmup';
+  String get kegelSettingsWarmup => 'Aufwärmen';
 
   @override
   String get languageLanguage => 'SPRACHE';
@@ -21104,27 +21100,27 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String loggedMealsSectionCal(Object target, Object totalCaloriesEaten) {
-    return '$totalCaloriesEaten / $target cal';
+    return '$totalCaloriesEaten / $target kcal';
   }
 
   @override
   String loggedMealsSectionCal2(Object calories) {
-    return '$calories cal';
+    return '$calories kcal';
   }
 
   @override
   String loggedMealsSectionCal3(Object food) {
-    return '$food cal';
+    return '$food kcal';
   }
 
   @override
   String loggedMealsSectionCopyTo(Object name) {
-    return 'Copy $name to...';
+    return '$name kopieren nach...';
   }
 
   @override
   String loggedMealsSectionEaten(Object totalCaloriesEaten) {
-    return '$totalCaloriesEaten eaten';
+    return '$totalCaloriesEaten gegessen';
   }
 
   @override
@@ -21154,7 +21150,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String loggedMealsSectionGC(Object totalCarbs) {
-    return '${totalCarbs}g C';
+    return '${totalCarbs}g K';
   }
 
   @override
@@ -21169,12 +21165,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String loggedMealsSectionGProtein(Object proteinG) {
-    return '${proteinG}g protein';
+    return '${proteinG}g Protein';
   }
 
   @override
   String loggedMealsSectionGProtein2(Object food) {
-    return '${food}g protein';
+    return '${food}g Protein';
   }
 
   @override
@@ -21194,22 +21190,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String loggedMealsSectionMoveTo(Object name) {
-    return 'Move $name to...';
+    return '$name verschieben nach...';
   }
 
   @override
   String loggedMealsSectionRemoved2(Object removedName) {
-    return 'Removed $removedName';
+    return '$removedName entfernt';
   }
 
   @override
   String loggedMealsSectionRemoved3(Object name) {
-    return 'Removed $name';
+    return '$name entfernt';
   }
 
   @override
   String loggedMealsSectionSwap(Object existingName) {
-    return 'Swap $existingName';
+    return '$existingName austauschen';
   }
 
   @override
@@ -21357,7 +21353,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '(Zeile)\" : \"\")';
   }
 
   @override
@@ -21618,13 +21614,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get measurementDetailImperial => 'Imperial';
 
   @override
-  String get measurementDetailMax => 'Max';
+  String get measurementDetailMax => 'Max.';
 
   @override
   String get measurementDetailMetric => 'Metrisch';
 
   @override
-  String get measurementDetailMin => 'Min';
+  String get measurementDetailMin => 'Min.';
 
   @override
   String get measurementDetailNoDataInThis => 'Keine Daten in diesem Bereich';
@@ -25140,7 +25136,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Freunde';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -25348,7 +25344,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCal(Object bmr) {
-    return '= $bmr cal';
+    return '= $bmr kcal';
   }
 
   @override
@@ -26649,7 +26645,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get paywallFeaturesAiCoachExperience => 'AI Coach Erlebnis';
 
   @override
-  String get paywallFeaturesAiWorkouts => 'AI Workouts';
+  String get paywallFeaturesAiWorkouts => 'KI-Workouts';
 
   @override
   String get paywallFeaturesAutoAdaptWorkoutsAround =>
@@ -27897,7 +27893,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get prCardShareSharePr => 'PR teilen';
 
   @override
-  String get prCardShareZealovaAiFitnessCoach => 'Zealova · AI Fitness Coach';
+  String get prCardShareZealovaAiFitnessCoach => 'Zealova · KI-Fitness-Coach';
 
   @override
   String get prCardShareZealovaCom => 'zealova.com';
@@ -29195,7 +29191,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Quellen aus dem Umfeld bestätigen, dass die Veränderung auf konsequentes Training, ehrliche Ernährung und das Verweigern, den Leg Day ausfallen zu lassen, zurückzuführen ist. Experten nennen es \"beispiellose Hingabe.\"';
 
   @override
-  String get progressShareTemplatesTheDailyGains => 'THE DAILY GAINS';
+  String get progressShareTemplatesTheDailyGains => 'TÄGLICHE ERFOLGE';
 
   @override
   String progressShareTemplatesTheGlowUp(Object durationText) {
@@ -29203,10 +29199,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTheTransformation => 'THE TRANSFORMATION';
+  String get progressShareTemplatesTheTransformation => 'DIE TRANSFORMATION';
 
   @override
-  String get progressShareTemplatesTimeline => 'TIMELINE';
+  String get progressShareTemplatesTimeline => 'ZEITSTRAHL';
 
   @override
   String progressShareTemplatesToLater(Object durationText) {
@@ -33691,43 +33687,43 @@ class AppLocalizationsDe extends AppLocalizations {
       'Tippe auf ♥ bei einem beliebigen Rezept in „Entdecken“ oder deiner Bibliothek, um es hier zu speichern.';
 
   @override
-  String get savedHubTryAgain => 'Try again';
+  String get savedHubTryAgain => 'Erneut versuchen';
 
   @override
-  String get scheduleGenerateThisWeek => 'Generate This Week';
+  String get scheduleGenerateThisWeek => 'Diese Woche generieren';
 
   @override
   String scheduleItemCardMin(Object durationMinutes) {
-    return '$durationMinutes min';
+    return '$durationMinutes Min.';
   }
 
   @override
-  String get scheduleMealDays => 'Days';
+  String get scheduleMealDays => 'Tage';
 
   @override
-  String get scheduleMealEndDate => 'End date';
+  String get scheduleMealEndDate => 'Enddatum';
 
   @override
-  String get scheduleMealInterval => 'Interval';
+  String get scheduleMealInterval => 'Intervall';
 
   @override
   String get scheduleMealPickACadenceWe =>
-      'Pick a cadence; we’ll handle the AI recipe save for you.';
+      'Wähle einen Rhythmus; wir speichern das KI-Rezept für dich.';
 
   @override
-  String get scheduleMealPickADate => 'Pick a date';
+  String get scheduleMealPickADate => 'Datum wählen';
 
   @override
-  String get scheduleMealPickAnEndDate => 'Pick an end date';
+  String get scheduleMealPickAnEndDate => 'Enddatum wählen';
 
   @override
-  String get scheduleMealPickAtLeastOne => 'Pick at least one day';
+  String get scheduleMealPickAtLeastOne => 'Wähle mindestens einen Tag';
 
   @override
-  String get scheduleMealSchedule => 'Schedule';
+  String get scheduleMealSchedule => 'Planen';
 
   @override
-  String get scheduleMealScheduleThisMeal => 'Schedule this meal';
+  String get scheduleMealScheduleThisMeal => 'Diese Mahlzeit planen';
 
   @override
   String scheduleMealSheetDays(Object i) {
@@ -33740,10 +33736,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scheduleMealTime => 'Time';
+  String get scheduleMealTime => 'Uhrzeit';
 
   @override
-  String get scheduleMismatchConfirm => 'Confirm';
+  String get scheduleMismatchConfirm => 'Bestätigen';
 
   @override
   String scheduleMismatchDialogAiWillSwitchTo(Object compatibleSplitName) {
@@ -33770,22 +33766,23 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scheduleMismatchKeepMyCurrentDays => 'Keep my current days';
+  String get scheduleMismatchKeepMyCurrentDays =>
+      'Meine aktuellen Tage beibehalten';
 
   @override
-  String get scheduleMismatchRecommended => 'Recommended';
+  String get scheduleMismatchRecommended => 'Empfohlen';
 
   @override
-  String get scheduleMismatchScheduleMismatch => 'Schedule Mismatch';
+  String get scheduleMismatchScheduleMismatch => 'Zeitplan-Konflikt';
 
   @override
-  String get scheduleNoItemsScheduled => 'No items scheduled';
+  String get scheduleNoItemsScheduled => 'Keine Einträge geplant';
 
   @override
-  String get scheduleRestDay => 'Rest day';
+  String get scheduleRestDay => 'Ruhetag';
 
   @override
-  String get scheduleSchedule => 'Schedule';
+  String get scheduleSchedule => 'Planen';
 
   @override
   String scheduleScreenFailedToLoad(Object error) {
@@ -33811,16 +33808,16 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scheduleScreenPartMon => 'Mon';
+  String get scheduleScreenPartMon => 'Mo';
 
   @override
-  String get scheduleScreenPartStrength => 'STRENGTH';
+  String get scheduleScreenPartStrength => 'KRAFT';
 
   @override
-  String get scheduleScreenPartSun => 'Sun';
+  String get scheduleScreenPartSun => 'So';
 
   @override
-  String get scheduleScreenPartThisWeek => 'This Week';
+  String get scheduleScreenPartThisWeek => 'Diese Woche';
 
   @override
   String scheduleScreenPartWeekSelectorEx(Object exerciseCount) {
@@ -33833,10 +33830,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scheduleToday => 'Today';
+  String get scheduleToday => 'Heute';
 
   @override
-  String get scheduleWorkoutCheckingSchedule => 'Checking schedule...';
+  String get scheduleWorkoutCheckingSchedule => 'Zeitplan wird überprüft...';
 
   @override
   String scheduleWorkoutDialogFailedToScheduleWorkout(Object e) {
@@ -33859,38 +33856,38 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scheduleWorkoutSchedule => 'Schedule';
+  String get scheduleWorkoutSchedule => 'Planen';
 
   @override
-  String get scheduleWorkoutScheduleWorkout => 'Schedule Workout';
+  String get scheduleWorkoutScheduleWorkout => 'Training planen';
 
   @override
-  String get scheduleWorkoutSchedulingWorkout => 'Scheduling workout...';
+  String get scheduleWorkoutSchedulingWorkout => 'Training wird geplant...';
 
   @override
   String get scheduleWorkoutThisWorkoutWillBe =>
-      'This workout will be added alongside them.';
+      'Dieses Training wird zusätzlich hinzugefügt.';
 
   @override
-  String get scoreBreakdownConsistency => 'Consistency';
+  String get scoreBreakdownConsistency => 'Beständigkeit';
 
   @override
-  String get scoreBreakdownReadiness => 'Readiness';
+  String get scoreBreakdownReadiness => 'Bereitschaft';
 
   @override
-  String get scoreBreakdownScoreBreakdown => 'Score Breakdown';
+  String get scoreBreakdownScoreBreakdown => 'Score-Aufschlüsselung';
 
   @override
-  String get scoreBreakdownStrength => 'Strength';
+  String get scoreBreakdownStrength => 'Kraft';
 
   @override
-  String get scoreChangeAnnouncementGotIt => 'Got it';
+  String get scoreChangeAnnouncementGotIt => 'Verstanden';
 
   @override
-  String get scoreChangeAnnouncementMove => 'Move';
+  String get scoreChangeAnnouncementMove => 'Bewegung';
 
   @override
-  String get scoreChangeAnnouncementNourish => 'Nourish';
+  String get scoreChangeAnnouncementNourish => 'Ernährung';
 
   @override
   String scoreChangeAnnouncementSheetValue(Object label, Object weight) {
@@ -33898,38 +33895,39 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scoreChangeAnnouncementSleep => 'Sleep';
+  String get scoreChangeAnnouncementSleep => 'Schlaf';
 
   @override
   String get scoreChangeAnnouncementSleepNowCountsToward =>
-      'Sleep now counts toward your daily score.';
+      'Schlaf zählt jetzt zu deinem täglichen Score.';
 
   @override
-  String get scoreChangeAnnouncementTrain => 'Train';
+  String get scoreChangeAnnouncementTrain => 'Training';
 
   @override
-  String get scoreChangeAnnouncementWhatSNew => 'WHAT\\\'S NEW';
+  String get scoreChangeAnnouncementWhatSNew => 'NEUIGKEITEN';
 
   @override
-  String get scoreColorsExcellent => 'Excellent';
+  String get scoreColorsExcellent => 'Exzellent';
 
   @override
-  String get scoreExplain03AntiInflammatory => '0 – 3  Anti-inflammatory';
+  String get scoreExplain03AntiInflammatory => '0 – 3  Entzündungshemmend';
 
   @override
-  String get scoreExplain13Poor => '1 – 3  Poor';
+  String get scoreExplain13Poor => '1 – 3  Schlecht';
 
   @override
-  String get scoreExplain46Average => '4 – 6  Average';
+  String get scoreExplain46Average => '4 – 6  Durchschnittlich';
 
   @override
   String get scoreExplain46NeutralMild => '4 – 6  Neutral / mild';
 
   @override
-  String get scoreExplain710GoodExcellent => '7 – 10  Good / Excellent';
+  String get scoreExplain710GoodExcellent => '7 – 10  Gut / Exzellent';
 
   @override
-  String get scoreExplain710HighlyInflammatory => '7 – 10  Highly inflammatory';
+  String get scoreExplain710HighlyInflammatory =>
+      '7 – 10  Stark entzündungsfördernd';
 
   @override
   String get scoreExplainAddedSugar => 'Zugesetzter Zucker';
@@ -33953,7 +33951,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scoreExplainCertainPortionsOfAvocado =>
-      'Certain portions of avocado, sweet potato, almonds — OK in small servings, rough in large.';
+      'Bestimmte Portionen von Avocado, Süßkartoffel, Mandeln — OK in kleinen Mengen, problematisch in großen.';
 
   @override
   String get scoreExplainChronicLowGradeInflammation =>
@@ -34001,7 +33999,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scoreExplainDessertsSugaryDrinksCandy =>
-      'Desserts, sugary drinks, candy, many breakfast cereals. Spikes insulin, crashes energy.';
+      'Desserts, zuckerhaltige Getränke, Süßigkeiten, viele Frühstückscerealien. Lässt Insulin ansteigen und Energie abfallen.';
 
   @override
   String get scoreExplainEachMealGets =>
@@ -34009,10 +34007,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scoreExplainEngineeredFoodProductsChip =>
-      'Engineered food products: chips, sodas, instant noodles, packaged sweets, most fast food.';
+      'Industriell verarbeitete Lebensmittel: Chips, Limonaden, Instant-Nudeln, verpackte Süßwaren, die meisten Fast-Food-Produkte.';
 
   @override
-  String get scoreExplainFodmapRating => 'FODMAP rating';
+  String get scoreExplainFodmapRating => 'FODMAP-Bewertung';
 
   @override
   String get scoreExplainFodmapsAreShortChain =>
@@ -34020,7 +34018,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scoreExplainFriedFoodsProcessedMeats =>
-      'Fried foods, processed meats, sugary drinks, refined seed oils, packaged snacks.';
+      'Frittierte Lebensmittel, verarbeitetes Fleisch, zuckerhaltige Getränke, raffinierte Pflanzenöle, verpackte Snacks.';
 
   @override
   String get scoreExplainGlycemicLoadCombines =>
@@ -34032,10 +34030,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainGood => 'Good';
+  String get scoreExplainGood => 'Gut';
 
   @override
-  String get scoreExplainHealthScore => 'Health score';
+  String get scoreExplainHealthScore => 'Gesundheits-Score';
 
   @override
   String scoreExplainHealthScoreValue(Object v) {
@@ -34043,28 +34041,29 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainHigh => 'High';
+  String get scoreExplainHigh => 'Hoch';
 
   @override
-  String get scoreExplainHigh15G => 'High  (15 g+)';
+  String get scoreExplainHigh15G => 'Hoch (15 g+)';
 
   @override
-  String get scoreExplainHigh20 => 'High  (20+)';
+  String get scoreExplainHigh20 => 'Hoch (20+)';
 
   @override
   String get scoreExplainHighInflammationUltraProce =>
-      'High inflammation, ultra-processed, or way off your macros. Swap to a Good option if possible.';
+      'Stark entzündungsfördernd, ultra-verarbeitet oder weit abseits deiner Makros. Wähle nach Möglichkeit eine gute Alternative.';
 
   @override
   String get scoreExplainHighProteinOrFiber =>
-      'High protein or fiber, whole foods, low added sugar, anti-inflammatory ingredients.';
+      'Hoher Protein- oder Ballaststoffgehalt, unverarbeitete Lebensmittel, wenig zugesetzter Zucker, entzündungshemmende Zutaten.';
 
   @override
   String get scoreExplainHitsYourGoalMacros =>
-      'Hits your goal macros, mostly whole foods, low-to-moderate inflammation. Pick freely.';
+      'Erfüllt deine Ziel-Makros, hauptsächlich vollwertige Lebensmittel, geringe bis moderate Entzündungswerte. Wähle frei.';
 
   @override
-  String get scoreExplainHowThisDishRates => 'How this dish rates for you';
+  String get scoreExplainHowThisDishRates =>
+      'Wie dieses Gericht für dich bewertet wird';
 
   @override
   String get scoreExplainImportantIfYouHaveDiabetes =>
@@ -34081,48 +34080,48 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scoreExplainLeafyGreensBerriesWild =>
-      'Leafy greens, berries, wild salmon, turmeric, extra-virgin olive oil, nuts, legumes.';
+      'Blattgemüse, Beeren, Wildlachs, Kurkuma, natives Olivenöl extra, Nüsse, Hülsenfrüchte.';
 
   @override
-  String get scoreExplainLow => 'Low';
+  String get scoreExplainLow => 'Niedrig';
 
   @override
-  String get scoreExplainLowUnder10 => 'Low  (under 10)';
+  String get scoreExplainLowUnder10 => 'Niedrig (unter 10)';
 
   @override
-  String get scoreExplainLowUnder5G => 'Low  (under 5 g)';
+  String get scoreExplainLowUnder5G => 'Niedrig (unter 5 g)';
 
   @override
   String get scoreExplainMeatEggsRiceOats =>
-      'Meat, eggs, rice, oats, lactose-free dairy, carrots, zucchini, spinach, berries, oranges.';
+      'Fleisch, Eier, Reis, Haferflocken, laktosefreie Milchprodukte, Karotten, Zucchini, Spinat, Beeren, Orangen.';
 
   @override
-  String get scoreExplainMedium => 'Medium';
+  String get scoreExplainMedium => 'Mittel';
 
   @override
-  String get scoreExplainMedium1019 => 'Medium  (10 – 19)';
+  String get scoreExplainMedium1019 => 'Mittel (10 – 19)';
 
   @override
   String get scoreExplainMinimalBloodSugarSpike =>
-      'Minimal blood-sugar spike. Non-starchy vegetables, eggs, meat, berries, most dairy.';
+      'Minimaler Blutzuckeranstieg. Nicht stärkehaltiges Gemüse, Eier, Fleisch, Beeren, die meisten Milchprodukte.';
 
   @override
-  String get scoreExplainModerate => 'Moderate';
+  String get scoreExplainModerate => 'Moderat';
 
   @override
-  String get scoreExplainModerate514G => 'Moderate  (5 – 14 g)';
+  String get scoreExplainModerate514G => 'Moderat (5 – 14 g)';
 
   @override
   String get scoreExplainModerateSpikeOatsWhole =>
-      'Moderate spike. Oats, whole-wheat bread, banana, sweet potato, basmati rice.';
+      'Moderater Anstieg. Haferflocken, Vollkornbrot, Banane, Süßkartoffel, Basmati-Reis.';
 
   @override
   String get scoreExplainMostSavouryDishesPlain =>
-      'Most savoury dishes, plain dairy, whole fruit. No meaningful blood-sugar impact.';
+      'Die meisten herzhaften Gerichte, Natur-Milchprodukte, ganzes Obst. Keine nennenswerte Auswirkung auf den Blutzucker.';
 
   @override
   String get scoreExplainOnionGarlicWheatRye =>
-      'Onion, garlic, wheat, rye, milk/ice cream, apples, pears, honey, beans, cauliflower.';
+      'Zwiebeln, Knoblauch, Weizen, Roggen, Milch/Eiscreme, Äpfel, Birnen, Honig, Bohnen, Blumenkohl.';
 
   @override
   String get scoreExplainOnlyRelevantIfYouHaveIbs =>
@@ -34134,15 +34133,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scoreExplainRawOrBasicCooked =>
-      'Raw or basic-cooked foods: meat, eggs, vegetables, plain yoghurt, cheese, whole grains.';
+      'Rohe oder einfach zubereitete Lebensmittel: Fleisch, Eier, Gemüse, Naturjoghurt, Käse, Vollkornprodukte.';
 
   @override
   String get scoreExplainReasonableChoiceCouldBe =>
-      'Reasonable choice — could be improved on one or two axes (more fiber, less processing).';
+      'Vernünftige Wahl — könnte in ein oder zwei Punkten verbessert werden (mehr Ballaststoffe, weniger verarbeitet).';
 
   @override
   String get scoreExplainReasonableChoiceWithA =>
-      'Reasonable choice with a trade-off — watch portion or pair with a cleaner side.';
+      'Vernünftige Wahl mit einem Kompromiss — achte auf die Portionsgröße oder kombiniere es mit einer gesünderen Beilage.';
 
   @override
   String get scoreExplainScoreDetailUnavailable =>
@@ -34153,11 +34152,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scoreExplainSteepSpikeCrashWhite =>
-      'Steep spike + crash. White rice bowls, sugary drinks, pastries, large pasta plates.';
+      'Starker Anstieg + Absturz. Reisgerichte mit weißem Reis, zuckerhaltige Getränke, Gebäck, große Portionen Pasta.';
 
   @override
   String get scoreExplainSweetenedYogurtASmall =>
-      'Sweetened yogurt, a small pastry, half a sports drink. A reasonable treat — not daily.';
+      'Gesüßter Joghurt, ein kleines Gebäck, ein halbes Sportgetränk. Eine vernünftige Belohnung — nicht täglich.';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -34165,7 +34164,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainUltraProcessed => 'Ultra-processed';
+  String get scoreExplainUltraProcessed => 'Ultra-verarbeitet';
 
   @override
   String get scoreExplainUltraProcessedDeepFried =>
@@ -34229,7 +34228,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get scoringFitnessScore => 'Fitness Score';
+  String get scoringFitnessScore => 'Fitness-Score';
 
   @override
   String get scoringHowScoresAreCalculated => 'Wie Scores berechnet werden';
@@ -34486,7 +34485,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get setRowPartHowHardWasThat => 'Wie anstrengend war dieser Satz?';
 
   @override
-  String get setRowPartRateOfPerceivedExertion => 'Rate of Perceived Exertion';
+  String get setRowPartRateOfPerceivedExertion =>
+      'RPE (Rate of Perceived Exertion)';
 
   @override
   String get setRowPartRepsInReserve => 'Reps in Reserve';
@@ -34661,7 +34661,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Betrag zur Gewichtsanpassung';
 
   @override
-  String get setTrackingSheetsDropSet => 'Drop Set';
+  String get setTrackingSheetsDropSet => 'Drop-Set';
 
   @override
   String get setTrackingSheetsExerciseHistory => 'Übungshistorie';
@@ -34898,7 +34898,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String settingsCardPartAccentColorGridLvl(Object unlockLevel) {
-    return 'Lvl $unlockLevel';
+    return 'Stufe $unlockLevel';
   }
 
   @override
@@ -35449,7 +35449,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shareStatsDuration => 'Dauer';
 
   @override
-  String get shareStatsEliteTemplate => 'ELITE TEMPLATE';
+  String get shareStatsEliteTemplate => 'ELITE-VORLAGE';
 
   @override
   String get shareStatsExercises => 'Übungen';
@@ -35800,7 +35800,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String sleepDetailScreenHM3(Object summary, Object summary1) {
-    return '${summary}h ${summary1}m';
+    return '$summary Std. $summary1 Min.';
   }
 
   @override
@@ -36130,17 +36130,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String stackedBannerPanelCrateOpenedYouGot(Object rewardName) {
-    return '🎁 Crate opened! You got $rewardName';
+    return '🎁 Kiste geöffnet! Du hast $rewardName erhalten';
   }
 
   @override
   String stackedBannerPanelCratesAvailable(Object displayCount) {
-    return '$displayCount Crates Available!';
+    return '$displayCount Kisten verfügbar!';
   }
 
   @override
   String stackedBannerPanelCratesReadyToOpen(Object displayCount) {
-    return '$displayCount crates ready to open';
+    return '$displayCount Kisten bereit zum Öffnen';
   }
 
   @override
@@ -36177,7 +36177,7 @@ class AppLocalizationsDe extends AppLocalizations {
     Object exercisesCount,
     Object missedDescription,
   ) {
-    return '$missedDescription · ${durationMinutes}min · $exercisesCount exercises';
+    return '$missedDescription · $durationMinutes Min. · $exercisesCount Übungen';
   }
 
   @override
@@ -36203,7 +36203,7 @@ class AppLocalizationsDe extends AppLocalizations {
     Object formattedAmount,
     Object tierLabel,
   ) {
-    return '$tierLabel renews in $days days for $formattedAmount';
+    return '$tierLabel verlängert sich in $days Tagen für $formattedAmount';
   }
 
   @override
@@ -36221,7 +36221,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String stackedBannerPanelWorkoutTipsMealIdeas(Object marketingDomain) {
-    return 'Workout tips, meal ideas, and community highlights @$marketingDomain';
+    return 'Workout-Tipps, Rezeptideen und Community-Highlights @$marketingDomain';
   }
 
   @override
@@ -36229,7 +36229,7 @@ class AppLocalizationsDe extends AppLocalizations {
     Object totalWorkouts,
     Object volumeStr,
   ) {
-    return '$totalWorkouts workouts · $volumeStr lifted';
+    return '$totalWorkouts Workouts · $volumeStr bewegt';
   }
 
   @override
@@ -36239,7 +36239,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String stackedBannerPanelWrapped2(Object month) {
-    return '$month Wrapped';
+    return '$month Rückblick';
   }
 
   @override
@@ -36249,7 +36249,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String stackedBannerPanelXXpActive(Object xpMultiplier) {
-    return '${xpMultiplier}x XP Active';
+    return '${xpMultiplier}x XP aktiv';
   }
 
   @override
@@ -36258,12 +36258,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String stackedBannerPanelYouReAwayFrom(Object remaining, Object workoutWord) {
-    return 'You\'re $remaining $workoutWord away from your weekly goal';
+    return 'Du bist $remaining $workoutWord von deinem wöchentlichen Ziel entfernt';
   }
 
   @override
   String stackedBannerPanelYourWrappedIsHere(Object month) {
-    return 'Your $month Wrapped Is Here';
+    return 'Dein $month Rückblick ist da';
   }
 
   @override
@@ -36778,10 +36778,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Ausgewähltes Ziel: $_selectedGoal Schritte';
   }
 
@@ -36789,8 +36786,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Schrittziel-Regler, von $_minGoal bis $_maxGoal Schritten';
   }
@@ -38090,7 +38085,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String syncedSummaryViewM(Object duration) {
-    return '${duration}m';
+    return '$duration Min.';
   }
 
   @override
@@ -38206,7 +38201,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String syncedWorkoutDetailScreenAppDetailedSamplesMay(Object sourceApp) {
-    return 'app, detailed samples may not reach $sourceApp.';
+    return 'App, detaillierte Daten werden möglicherweise nicht an $sourceApp übertragen.';
   }
 
   @override
@@ -38256,7 +38251,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String syncedWorkoutDetailScreenOnlyASummaryWas(Object sourceApp) {
-    return 'Only a summary was shared from $sourceApp';
+    return 'Nur eine Zusammenfassung wurde von $sourceApp geteilt';
   }
 
   @override
@@ -38300,7 +38295,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get syncedWorkoutDetailTotalCal => 'Gesamtkalorien';
 
   @override
-  String get syncedWorkoutDetailTrainingEffect => 'Training Effect';
+  String get syncedWorkoutDetailTrainingEffect => 'Trainingseffekt';
 
   @override
   String get syncedWorkoutDetailZones => 'Zonen';
@@ -38401,7 +38396,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String syncedWorkoutsSummaryCardM(Object duration) {
-    return '${duration}m';
+    return '$duration Min.';
   }
 
   @override
@@ -40134,7 +40129,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String warmupCooldownCardMin(Object warmupDurationMinutes) {
-    return '$warmupDurationMinutes min';
+    return '$warmupDurationMinutes Min.';
   }
 
   @override
@@ -43215,12 +43210,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutShowcaseScreenDay(Object day) {
-    return 'Day $day';
+    return 'Tag $day';
   }
 
   @override
   String workoutShowcaseScreenDuration(Object duration) {
-    return 'DURATION: $duration';
+    return 'DAUER: $duration';
   }
 
   @override
@@ -43230,7 +43225,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutShowcaseScreenPrsEntered(Object prs) {
-    return '$prs PRS · ENTERED';
+    return '$prs PRS · EINGETRAGEN';
   }
 
   @override
@@ -43244,7 +43239,7 @@ class AppLocalizationsDe extends AppLocalizations {
     Object prs,
     Object volume,
   ) {
-    return 'TOTAL  $duration · $volume · $prs PRS';
+    return 'GESAMT  $duration · $volume · $prs PRS';
   }
 
   @override
@@ -43259,12 +43254,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutShowcaseScreenVolume(Object volume) {
-    return 'VOLUME:   $volume';
+    return 'VOLUMEN:   $volume';
   }
 
   @override
   String workoutShowcaseScreenYouDay(Object day) {
-    return '@you · day $day';
+    return '@du · Tag $day';
   }
 
   @override
@@ -43443,7 +43438,7 @@ class AppLocalizationsDe extends AppLocalizations {
     Object completedCount,
     Object totalPlanned,
   ) {
-    return '$completedCount / $totalPlanned exercises';
+    return '$completedCount / $totalPlanned Übungen';
   }
 
   @override
@@ -43482,7 +43477,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedLong(Object tooLong) {
-    return '$tooLong long';
+    return '$tooLong lang';
   }
 
   @override
@@ -43505,7 +43500,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedNewThisSession(Object length) {
-    return '$length new this session';
+    return '$length neu in dieser Session';
   }
 
   @override

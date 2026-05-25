@@ -1076,7 +1076,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetHeadacheComingOnAny(Object meal) {
-    return 'Headache coming on. Any $meal or hydration move that helps? Skip if no real food link.';
+    return '頭痛がしそうです。$mealや水分補給で改善する方法はありますか？食事と直接関係なければスキップしてください。';
   }
 
   @override
@@ -1104,7 +1104,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetIMBloatedPick(Object meal) {
-    return 'I\'m bloated. $meal pick that\'s gentle on the gut and what to avoid today?';
+    return 'お腹が張っています。$mealで胃腸に優しい選択肢と、今日避けるべきものを教えてください。';
   }
 
   @override
@@ -1313,7 +1313,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get aiCoachReportPr => 'PR';
 
   @override
-  String get aiCoachReportPrs => 'PRs';
+  String get aiCoachReportPrs => 'PR';
 
   @override
   String get aiCoachReportVolume => '音量';
@@ -2890,8 +2890,7 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count activities',
-      one: '1 activity',
+      other: '$count 件のアクティビティ',
     );
     return '$_temp0';
   }
@@ -2901,8 +2900,7 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sessions',
-      one: '1 session',
+      other: '$count 回のセッション',
     );
     return '$_temp0';
   }
@@ -3899,11 +3897,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => '新しいAIコーチを選択';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return '$_customNameを使用';
   }
 
@@ -5463,7 +5457,7 @@ class AppLocalizationsJa extends AppLocalizations {
     Object lastUsedFormatted,
     Object usageCount,
   ) {
-    return 'Used (usageCount) times(lastUsedFormatted)\" : \"\")';
+    return '使用回数 (usageCount) 回(lastUsedFormatted)\" : \"\")';
   }
 
   @override
@@ -7124,7 +7118,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get difficultySelectorGotIt => '了解';
 
   @override
-  String get difficultySelectorHellIntensity => 'Hell Intensity';
+  String get difficultySelectorHellIntensity => '地獄の強度';
 
   @override
   String get difficultySelectorHellModeWarning => 'HELLモードの警告';
@@ -8473,12 +8467,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String emailSignInScreenSupportIsNowYour(Object appName) {
-    return '$appName Support is now your friend. Reach out anytime for help!';
+    return '$appName サポートがあなたの味方です。いつでもお気軽にご相談ください！';
   }
 
   @override
   String emailSignInScreenWelcomeTo(Object appName) {
-    return 'Welcome to $appName!';
+    return '$appNameへようこそ！';
   }
 
   @override
@@ -8846,7 +8840,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String equipmentMatchCardExerciseYouCanDo(Object length, Object matches) {
-    return '$length exercise$matches you can do here';
+    return 'ここでできるエクササイズ $length 件$matches';
   }
 
   @override
@@ -10489,12 +10483,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String exerciseScienceResearchScreenEveryWorkoutParameterIn(Object appName) {
-    return 'Every workout parameter in $appName is derived from peer-reviewed exercise science. Tap a paper to see details.';
+    return '$appNameのすべてのワークアウトパラメータは、査読済みの運動科学に基づいています。論文をタップして詳細をご覧ください。';
   }
 
   @override
   String exerciseScienceResearchScreenHowUsesThis(Object appName) {
-    return 'How $appName uses this';
+    return '$appNameでの活用方法';
   }
 
   @override
@@ -13709,8 +13703,8 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       sessions,
       locale: localeName,
-      other: 'Used $sessions sessions ago',
-      one: 'Used 1 session ago',
+      other: '$sessionsセッション前に使用',
+      one: '1セッション前に使用',
     );
     return '$_temp0';
   }
@@ -15397,8 +15391,8 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       minutes,
       locale: localeName,
-      other: '$minutes min in fat-burn zone',
-      one: '1 min in fat-burn zone',
+      other: '脂肪燃焼ゾーンで$minutes分',
+      one: '脂肪燃焼ゾーンで1分',
     );
     return '$_temp0';
   }
@@ -15970,36 +15964,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeDefaultLayoutRestored => 'デフォルトのレイアウトに戻しました！';
 
   @override
-  String get homeEmptyAchievements_v1 =>
-      'No achievements yet. Keep training to unlock them.';
+  String get homeEmptyAchievements_v1 => '実績はまだありません。トレーニングを続けて解除しましょう。';
 
   @override
-  String get homeEmptyAchievements_v2 =>
-      'Achievements unlock as you hit milestones. Keep going.';
+  String get homeEmptyAchievements_v2 => 'マイルストーンを達成すると実績が解除されます。頑張りましょう。';
 
   @override
-  String get homeEmptyAchievements_v3 =>
-      'Nothing unlocked yet. Your first is closer than you think.';
+  String get homeEmptyAchievements_v3 => 'まだ何も解除されていません。最初の解除はすぐそこです。';
 
   @override
-  String get homeEmptyAchievements_v4 =>
-      'Start logging workouts and achievements will follow.';
+  String get homeEmptyAchievements_v4 => 'ワークアウトを記録して、実績を積み上げましょう。';
 
   @override
-  String get homeEmptyChallenges_v1 =>
-      'No active challenges. Browse and pick one to start.';
+  String get homeEmptyChallenges_v1 => '現在チャレンジはありません。一覧から選んで始めましょう。';
 
   @override
-  String get homeEmptyChallenges_v2 =>
-      'Challenges are a great way to build momentum. Join one.';
+  String get homeEmptyChallenges_v2 => 'チャレンジはモチベーション維持に最適です。ぜひ参加してください。';
 
   @override
-  String get homeEmptyChallenges_v3 =>
-      'Nothing running yet. Find a challenge that fits your level.';
+  String get homeEmptyChallenges_v3 => '現在進行中のものはありません。自分に合ったチャレンジを見つけましょう。';
 
   @override
-  String get homeEmptyChallenges_v4 =>
-      'No challenges? There are some good ones waiting for you.';
+  String get homeEmptyChallenges_v4 => 'チャレンジが見当たりませんか？おすすめのチャレンジが待っています。';
 
   @override
   String get homeEmptyChat_v1 => 'まだメッセージはありません。コーチに何でも聞いてください。';
@@ -16011,67 +15997,56 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyChat_v3 => 'チャットは空です。質問を投稿するか、今の気持ちを教えてください。';
 
   @override
-  String get homeEmptyChat_v4 => 'First conversation starts here. Say hello.';
+  String get homeEmptyChat_v4 => 'ここから会話が始まります。まずは挨拶してみましょう。';
 
   @override
   String get homeEmptyCustomExercises_v1 =>
-      'No custom exercises yet. Build your own and add them to any workout.';
+      'カスタムエクササイズはまだありません。自分だけのメニューを作成して追加しましょう。';
 
   @override
   String get homeEmptyCustomExercises_v2 =>
-      'Custom exercise library is empty. Create your first move.';
+      'カスタムエクササイズライブラリが空です。最初の種目を作成しましょう。';
 
   @override
   String get homeEmptyCustomExercises_v3 =>
-      'Nothing here yet. Add an exercise that\'s not in the main library.';
+      'まだ何もありません。メインライブラリにないエクササイズを追加しましょう。';
 
   @override
-  String get homeEmptyCustomExercises_v4 =>
-      'No custom exercises. Build one and it\'ll show up in search.';
+  String get homeEmptyCustomExercises_v4 => 'カスタムエクササイズはありません。作成すれば検索に表示されます。';
 
   @override
-  String get homeEmptyFasting_v1 =>
-      'No fasting sessions started. Choose a protocol to begin.';
+  String get homeEmptyFasting_v1 => '断食セッションが開始されていません。プロトコルを選んで始めましょう。';
 
   @override
-  String get homeEmptyFasting_v2 =>
-      'Fasting tracker is empty. Start a session when you\'re ready.';
+  String get homeEmptyFasting_v2 => '断食トラッカーが空です。準備ができたらセッションを開始してください。';
 
   @override
-  String get homeEmptyFasting_v3 =>
-      'Nothing logged yet. Pick a window and start the clock.';
+  String get homeEmptyFasting_v3 => 'まだ記録がありません。時間枠を選んでタイマーを開始しましょう。';
 
   @override
-  String get homeEmptyFasting_v4 =>
-      'No fasting data. Tap to start your first session.';
+  String get homeEmptyFasting_v4 => '断食データがありません。タップして最初のセッションを開始しましょう。';
 
   @override
   String get homeEmptyFavorites_v1 =>
-      'No favorites yet. Heart a workout or exercise to save it.';
+      'お気に入りはまだありません。ワークアウトやエクササイズにハートをつけて保存しましょう。';
 
   @override
-  String get homeEmptyFavorites_v2 =>
-      'Nothing saved here. Find something you love and keep it.';
+  String get homeEmptyFavorites_v2 => '保存されたものはありません。お気に入りを見つけてキープしましょう。';
 
   @override
-  String get homeEmptyFavorites_v3 =>
-      'Your favorites list is waiting. Explore and bookmark.';
+  String get homeEmptyFavorites_v3 => 'お気に入りリストが空です。探索してブックマークしましょう。';
 
   @override
-  String get homeEmptyFavorites_v4 =>
-      'Tap the heart on any workout to add it here.';
+  String get homeEmptyFavorites_v4 => 'ワークアウトのハートをタップして、ここに追加しましょう。';
 
   @override
-  String get homeEmptyFriends_v1 =>
-      'No connections yet. Invite a friend to train together.';
+  String get homeEmptyFriends_v1 => 'まだ友達がいません。友達を招待して一緒にトレーニングしましょう。';
 
   @override
-  String get homeEmptyFriends_v2 =>
-      'Friends list is empty. Accountability is a real thing.';
+  String get homeEmptyFriends_v2 => '友達リストが空です。仲間と一緒に取り組むと継続しやすくなります。';
 
   @override
-  String get homeEmptyFriends_v3 =>
-      'Nobody here yet. Share your link to grow your circle.';
+  String get homeEmptyFriends_v3 => 'まだ誰もいません。リンクをシェアして輪を広げましょう。';
 
   @override
   String get homeEmptyFriends_v4 =>
@@ -16079,19 +16054,17 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get homeEmptyGymProfiles_v1 =>
-      'No gym profiles. Add your equipment so workouts fit your setup.';
+      'ジムプロフィールがありません。設備を追加して、自分に合ったワークアウトを見つけましょう。';
 
   @override
-  String get homeEmptyGymProfiles_v2 =>
-      'Gym profile empty. Tell us your equipment once — we\'ll use it every time.';
+  String get homeEmptyGymProfiles_v2 => 'ジムのプロフィールが空です。一度設備を教えていただければ、毎回活用します。';
 
   @override
   String get homeEmptyGymProfiles_v3 =>
-      'No setup saved. Add a gym profile to get tailored workouts.';
+      '設定が保存されていません。ジムのプロフィールを追加して、最適なワークアウトを受け取りましょう。';
 
   @override
-  String get homeEmptyGymProfiles_v4 =>
-      'Profile empty. Configure your equipment and let the AI do the rest.';
+  String get homeEmptyGymProfiles_v4 => 'プロフィールが空です。設備を設定すれば、あとはAIにお任せください。';
 
   @override
   String get homeEmptyHabits_v1 => '習慣が設定されていません。まずは小さな日課を1つ追加してみましょう。';
@@ -16106,66 +16079,53 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyHabits_v4 => 'アクティブな習慣がありません。小さな日々の行動が大きな成果につながります。';
 
   @override
-  String get homeEmptyHistory_v1 =>
-      'No workouts logged yet. Complete one to start your history.';
+  String get homeEmptyHistory_v1 => 'ワークアウトの記録がまだありません。まずは1回完了して履歴を作りましょう。';
 
   @override
-  String get homeEmptyHistory_v2 =>
-      'Your history is clean — that changes after your first session.';
+  String get homeEmptyHistory_v2 => '履歴はまだ空です。最初のセッションを終えれば、ここが変わります。';
 
   @override
-  String get homeEmptyHistory_v3 =>
-      'No past workouts. Get one done and it\'ll show here.';
+  String get homeEmptyHistory_v3 => '過去のワークアウトはありません。1回完了すれば、ここに表示されます。';
 
   @override
-  String get homeEmptyHistory_v4 =>
-      'Empty history means you\'re just getting started. Go write it.';
+  String get homeEmptyHistory_v4 => '履歴が空なのは、まだ始まったばかりだからです。さあ、記録を始めましょう。';
 
   @override
-  String get homeEmptyJournal_v1 =>
-      'No journal entries. Write down today\'s win, however small.';
+  String get homeEmptyJournal_v1 => 'ジャーナルの記録がありません。今日の小さな成果でも書き留めてみましょう。';
 
   @override
   String get homeEmptyJournal_v2 =>
-      'Journal is empty. Document your journey — you\'ll be glad you did.';
+      'ジャーナルが空です。あなたの歩みを記録しましょう。きっと後で振り返るのが楽しくなります。';
 
   @override
-  String get homeEmptyJournal_v3 =>
-      'Nothing written yet. Your first entry starts here.';
+  String get homeEmptyJournal_v3 => 'まだ何も書かれていません。最初の1ページをここから始めましょう。';
 
   @override
-  String get homeEmptyJournal_v4 =>
-      'No entries. Grab 2 minutes and write something honest.';
+  String get homeEmptyJournal_v4 => '記録がありません。2分だけ時間を取って、正直な気持ちを書いてみませんか。';
 
   @override
-  String get homeEmptyMeasurements_v1 =>
-      'No measurements logged. Add a baseline to track progress.';
+  String get homeEmptyMeasurements_v1 => '測定値が記録されていません。基準値を追加して進捗を追跡しましょう。';
 
   @override
-  String get homeEmptyMeasurements_v2 =>
-      'Nothing tracked yet. Start with your current numbers.';
+  String get homeEmptyMeasurements_v2 => 'まだ何も追跡していません。現在の数値から始めてみましょう。';
 
   @override
-  String get homeEmptyMeasurements_v3 =>
-      'No body data yet. Log measurements to see trends.';
+  String get homeEmptyMeasurements_v3 => '身体データがありません。測定値を記録して傾向を確認しましょう。';
 
   @override
-  String get homeEmptyMeasurements_v4 =>
-      'Measurements empty. Add one so you have something to beat.';
+  String get homeEmptyMeasurements_v4 => '測定値が空です。目標となる数値を追加しましょう。';
 
   @override
-  String get homeEmptyMood_v1 => 'No mood entries. How are you feeling today?';
+  String get homeEmptyMood_v1 => '気分の記録がありません。今日はどんな気分ですか？';
 
   @override
-  String get homeEmptyMood_v2 =>
-      'Mood tracking is empty. Log how you feel after your next workout.';
+  String get homeEmptyMood_v2 => '気分の追跡が空です。次のワークアウト後に今の気分を記録しましょう。';
 
   @override
-  String get homeEmptyMood_v3 =>
-      'Nothing logged yet. Mood patterns help predict your best training days.';
+  String get homeEmptyMood_v3 => 'まだ記録がありません。気分の傾向を知ることで、最高のトレーニング日を予測できます。';
 
   @override
-  String get homeEmptyMood_v4 => 'No mood data. Tap to add today\'s entry.';
+  String get homeEmptyMood_v4 => '気分のデータがありません。タップして今日の記録を追加しましょう。';
 
   @override
   String get homeEmptyNutrition_v1 => 'まだ記録がありません。写真を撮って始めましょう。';
@@ -16180,132 +16140,105 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyNutrition_v4 => '何か食べていますか？写真を撮れば、数値は私たちが計算します。';
 
   @override
-  String get homeEmptyPhotos_v1 =>
-      'No progress photos. Take your first one today.';
+  String get homeEmptyPhotos_v1 => '進捗写真がありません。今日、最初の1枚を撮りましょう。';
 
   @override
-  String get homeEmptyPhotos_v2 =>
-      'Photos tell the story numbers can\'t. Take one now.';
+  String get homeEmptyPhotos_v2 => '写真は数字では語れない物語を伝えてくれます。今すぐ1枚撮りましょう。';
 
   @override
-  String get homeEmptyPhotos_v3 =>
-      'Nothing here yet. Start your visual progress journal.';
+  String get homeEmptyPhotos_v3 => 'まだ何もありません。視覚的な進捗ジャーナルを始めましょう。';
 
   @override
-  String get homeEmptyPhotos_v4 =>
-      'No photos logged. Add one to track visual changes over time.';
+  String get homeEmptyPhotos_v4 => '写真が記録されていません。追加して、時間の経過による変化を追跡しましょう。';
 
   @override
-  String get homeEmptyPlans_v1 =>
-      'No plan yet. Let the AI build one around your schedule and goals.';
+  String get homeEmptyPlans_v1 => 'プランがまだありません。あなたのスケジュールと目標に合わせてAIがプランを作成します。';
 
   @override
-  String get homeEmptyPlans_v2 =>
-      'Plans empty. Generate a personalized training plan to get started.';
+  String get homeEmptyPlans_v2 => 'プランが空です。パーソナライズされたトレーニングプランを作成して始めましょう。';
 
   @override
-  String get homeEmptyPlans_v3 =>
-      'Nothing set up yet. Create a plan and stick to it.';
+  String get homeEmptyPlans_v3 => 'まだ設定されていません。プランを作成して継続しましょう。';
 
   @override
-  String get homeEmptyPlans_v4 =>
-      'No plan active. Start one to stop guessing what to do each day.';
+  String get homeEmptyPlans_v4 => 'アクティブなプランがありません。プランを開始して、毎日の迷いをなくしましょう。';
 
   @override
   String get homeEmptyPrograms_v1 =>
-      'No active program. Browse programs to find your next goal.';
+      'アクティブなプログラムがありません。プログラムを閲覧して、次の目標を見つけましょう。';
 
   @override
-  String get homeEmptyPrograms_v2 =>
-      'Programs give your training structure. Pick one to start.';
+  String get homeEmptyPrograms_v2 => 'プログラムはトレーニングに構造を与えます。1つ選んで始めましょう。';
 
   @override
   String get homeEmptyPrograms_v3 =>
-      'Nothing running yet. Start a program to unlock weekly plans.';
+      'まだ何も実行していません。プログラムを開始して、週ごとのプランをアンロックしましょう。';
 
   @override
-  String get homeEmptyPrograms_v4 =>
-      'No program active. Choose one that matches where you are.';
+  String get homeEmptyPrograms_v4 => 'アクティブなプログラムがありません。現在のレベルに合ったものを選びましょう。';
 
   @override
-  String get homeEmptyRecipes_v1 =>
-      'No recipes yet. Browse the library or ask your coach.';
+  String get homeEmptyRecipes_v1 => 'レシピがまだありません。ライブラリを閲覧するか、コーチに聞いてみましょう。';
 
   @override
-  String get homeEmptyRecipes_v2 =>
-      'Your recipe collection is empty. Add some meals you like.';
+  String get homeEmptyRecipes_v2 => 'レシピコレクションが空です。お気に入りの食事を追加しましょう。';
 
   @override
   String get homeEmptyRecipes_v3 =>
-      'Nothing saved here. Explore and save recipes you enjoy.';
+      'ここに保存されたものはありません。レシピを探索して、気に入ったものを保存しましょう。';
 
   @override
-  String get homeEmptyRecipes_v4 =>
-      'Recipe library is empty. Tap to discover new meals.';
+  String get homeEmptyRecipes_v4 => 'レシピライブラリが空です。タップして新しい食事を見つけましょう。';
 
   @override
   String get homeEmptyRecovery_v1 =>
-      'No recovery data. Log sleep, HRV, or soreness to get a score.';
+      '回復データがありません。睡眠、HRV、または筋肉痛を記録してスコアを取得しましょう。';
 
   @override
-  String get homeEmptyRecovery_v2 =>
-      'Recovery tracking is empty. Connect a wearable or log manually.';
+  String get homeEmptyRecovery_v2 => '回復の追跡が空です。ウェアラブルを接続するか、手動で記録してください。';
 
   @override
-  String get homeEmptyRecovery_v3 =>
-      'Nothing tracked yet. Recovery data helps you train smarter.';
+  String get homeEmptyRecovery_v3 => 'まだ何も追跡していません。回復データは、より賢いトレーニングに役立ちます。';
 
   @override
-  String get homeEmptyRecovery_v4 =>
-      'Recovery empty. Add today\'s data to protect your next session.';
+  String get homeEmptyRecovery_v4 => '回復データが空です。今日のデータを追加して、次のセッションに備えましょう。';
 
   @override
   String get homeEmptyScores_v1 =>
-      'No scores yet. Log a workout to generate your first readiness score.';
+      'スコアがまだありません。ワークアウトを記録して、最初のレディネススコアを生成しましょう。';
 
   @override
-  String get homeEmptyScores_v2 =>
-      'Scores appear after you start logging data. Keep at it.';
+  String get homeEmptyScores_v2 => 'スコアはデータの記録後に表示されます。継続しましょう。';
 
   @override
-  String get homeEmptyScores_v3 =>
-      'Nothing scored yet. Complete a session to see your first rating.';
+  String get homeEmptyScores_v3 => 'まだスコアがありません。セッションを完了して、最初の評価を確認しましょう。';
 
   @override
-  String get homeEmptyScores_v4 =>
-      'Score empty. More data means sharper insights — start logging.';
+  String get homeEmptyScores_v4 => 'スコアが空です。データが増えるほど洞察が鋭くなります。記録を始めましょう。';
 
   @override
-  String get homeEmptySleep_v1 =>
-      'No sleep data. Connect a wearable or log manually.';
+  String get homeEmptySleep_v1 => '睡眠データがありません。ウェアラブルを接続するか、手動で記録してください。';
 
   @override
-  String get homeEmptySleep_v2 =>
-      'Sleep tracking empty. Recovery starts with knowing your sleep.';
+  String get homeEmptySleep_v2 => '睡眠の追跡が空です。回復は睡眠を知ることから始まります。';
 
   @override
-  String get homeEmptySleep_v3 =>
-      'No sleep logged. Add last night\'s data to see recovery trends.';
+  String get homeEmptySleep_v3 => '睡眠が記録されていません。昨夜のデータを追加して、回復の傾向を確認しましょう。';
 
   @override
-  String get homeEmptySleep_v4 =>
-      'Sleep data missing. Log it and we\'ll factor it into your recovery score.';
+  String get homeEmptySleep_v4 => '睡眠データが不足しています。記録すれば、回復スコアに反映されます。';
 
   @override
-  String get homeEmptyTrends_v1 =>
-      'No trends yet. Log consistently for 7 days to see patterns.';
+  String get homeEmptyTrends_v1 => '傾向がまだありません。7日間継続して記録し、パターンを確認しましょう。';
 
   @override
-  String get homeEmptyTrends_v2 =>
-      'Trends need data. Keep logging and graphs will fill in.';
+  String get homeEmptyTrends_v2 => '傾向を確認するにはデータが必要です。記録を続けてグラフを埋めましょう。';
 
   @override
-  String get homeEmptyTrends_v3 =>
-      'Nothing to show yet. Come back after a week of tracking.';
+  String get homeEmptyTrends_v3 => 'まだ表示するものはありません。1週間追跡してから戻ってきてください。';
 
   @override
-  String get homeEmptyTrends_v4 =>
-      'Trend view empty. Consistency unlocks this — start logging daily.';
+  String get homeEmptyTrends_v4 => '傾向ビューが空です。継続することで表示されます。毎日記録を始めましょう。';
 
   @override
   String get homeEmptyVitals_v1 =>
@@ -16321,20 +16254,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeEmptyVitals_v4 => 'バイタルデータがありません。ウェアラブル端末を接続して自動同期しましょう。';
 
   @override
-  String get homeEmptyWater_v1 =>
-      'No water logged today. Hit your first glass.';
+  String get homeEmptyWater_v1 => '今日の水分補給が記録されていません。まずは1杯飲みましょう。';
 
   @override
-  String get homeEmptyWater_v2 =>
-      'Hydration tracking empty. Log your first cup.';
+  String get homeEmptyWater_v2 => '水分補給の追跡が空です。最初の1杯を記録しましょう。';
 
   @override
-  String get homeEmptyWater_v3 =>
-      'Nothing logged yet. Start your water intake for the day.';
+  String get homeEmptyWater_v3 => 'まだ記録がありません。今日の水分摂取を開始しましょう。';
 
   @override
-  String get homeEmptyWater_v4 =>
-      'No water logged. Stay ahead of thirst — log now.';
+  String get homeEmptyWater_v4 => '水分補給が記録されていません。喉が渇く前に、今すぐ記録しましょう。';
 
   @override
   String get homeEmptyWorkout_v1 => 'まだワークアウトがありません。タップして今日のセッションを作成しましょう。';
@@ -19472,8 +19401,8 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count items',
-      one: 'Logged 1 item',
+      other: '$countアイテムを記録しました',
+      one: '1アイテムを記録しました',
     );
     return '$_temp0';
   }
@@ -19483,8 +19412,8 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count photos ($kcal kcal)',
-      one: 'Logged 1 photo ($kcal kcal)',
+      other: '写真を$count枚記録しました ($kcal kcal)',
+      one: '写真を1枚記録しました ($kcal kcal)',
     );
     return '$_temp0';
   }
@@ -20160,7 +20089,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String loggedMealsSectionCal3(Object food) {
-    return '$food cal';
+    return '$food kcal';
   }
 
   @override
@@ -20220,7 +20149,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String loggedMealsSectionGProtein2(Object food) {
-    return '${food}g protein';
+    return '${food}g タンパク質';
   }
 
   @override
@@ -22937,7 +22866,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navYou => 'あなた';
 
   @override
-  String get neatAchievementCardNew => 'NEW!';
+  String get neatAchievementCardNew => '新規！';
 
   @override
   String get neatActivityCardActive => 'アクティブ';
@@ -24018,7 +23947,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — 友達';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -27654,45 +27583,44 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressGreat => '素晴らしい！';
 
   @override
-  String get progressMeasurements => 'Measurements';
+  String get progressMeasurements => '身体測定';
 
   @override
   String get progressOk => 'OK';
 
   @override
-  String get progressPhotoSaved => 'Photo Saved!';
+  String get progressPhotoSaved => '写真を保存しました！';
 
   @override
-  String get progressPhotoTileProgressPhotos => 'Progress Photos';
+  String get progressPhotoTileProgressPhotos => '進捗写真';
 
   @override
-  String get progressPhotoTileTakeYourFirstPhoto => 'Take your first photo';
+  String get progressPhotoTileTakeYourFirstPhoto => '最初の写真を撮影';
 
   @override
-  String get progressPhotos => 'Photos';
+  String get progressPhotos => '写真';
 
   @override
-  String get progressProgressTracking => 'Progress Tracking';
+  String get progressProgressTracking => '進捗トラッキング';
 
   @override
-  String get progressPrs30d => 'PRS (30D)';
+  String get progressPrs30d => 'PR (過去30日)';
 
   @override
-  String get progressScores => 'Scores';
+  String get progressScores => 'スコア';
 
   @override
   String get progressScreenExtCompleteWorkoutsTargetingTh =>
-      'Complete workouts targeting this muscle\\nto see your strength progress.';
+      'この筋肉をターゲットにしたワークアウトを完了して、\n筋力の進捗を確認しましょう。';
 
   @override
-  String get progressScreenExtDetails => 'Details';
+  String get progressScreenExtDetails => '詳細';
 
   @override
-  String get progressScreenExtNoDataForThis =>
-      'No data for this muscle group yet';
+  String get progressScreenExtNoDataForThis => 'この筋肉グループのデータはまだありません';
 
   @override
-  String get progressScreenExtProgressToNextLevel => 'Progress to next level';
+  String get progressScreenExtProgressToNextLevel => '次のレベルへ進む';
 
   @override
   String progressScreenExtSetsWk(Object weeklySets) {
@@ -27700,77 +27628,74 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressScreenPartView => 'View';
+  String get progressScreenPartView => '表示';
 
   @override
-  String get progressScreenUiAddPhoto => 'Add Photo';
+  String get progressScreenUiAddPhoto => '写真を追加';
 
   @override
   String get progressScreenUiAi100RatingBody =>
-      'AI /100 rating, body-fat rings & posture feedback';
+      'AIによる100点満点評価、体脂肪リング、姿勢フィードバック';
 
   @override
-  String get progressScreenUiBodyAnalyzer => 'Body Analyzer';
+  String get progressScreenUiBodyAnalyzer => 'ボディアナライザー';
 
   @override
-  String get progressScreenUiBodyMeasurements => 'Body Measurements';
+  String get progressScreenUiBodyMeasurements => '身体測定値';
 
   @override
-  String get progressScreenUiDetailedAnalytics => 'Detailed Analytics';
+  String get progressScreenUiDetailedAnalytics => '詳細分析';
 
   @override
-  String get progressScreenUiExerciseHistory => 'Exercise History';
+  String get progressScreenUiExerciseHistory => 'エクササイズ履歴';
 
   @override
-  String get progressScreenUiExerciseProgressions => 'Exercise Progressions';
+  String get progressScreenUiExerciseProgressions => 'エクササイズ進行状況';
 
   @override
-  String get progressScreenUiFailedToLoadMeasurements =>
-      'Failed to load measurements';
+  String get progressScreenUiFailedToLoadMeasurements => '測定値の読み込みに失敗しました';
 
   @override
-  String get progressScreenUiLatestByView => 'Latest by View';
+  String get progressScreenUiLatestByView => '最新の表示';
 
   @override
-  String get progressScreenUiLogMeasurement => 'Log Measurement';
+  String get progressScreenUiLogMeasurement => '測定値を記録';
 
   @override
-  String get progressScreenUiLogMeasurements => 'Log Measurements';
+  String get progressScreenUiLogMeasurements => '測定値を記録';
 
   @override
   String get progressScreenUiMasterEasierVariantsThen =>
-      'Master easier variants, then advance to harder ones';
+      '簡単なバリエーションをマスターしてから、より難しいものへ進みましょう';
 
   @override
-  String get progressScreenUiMuscleAnalytics => 'Muscle Analytics';
+  String get progressScreenUiMuscleAnalytics => '筋肉分析';
 
   @override
-  String get progressScreenUiNoProgressPhotosYet => 'No Progress Photos Yet';
+  String get progressScreenUiNoProgressPhotosYet => '進捗写真はまだありません';
 
   @override
-  String get progressScreenUiPerExerciseProgressPrs =>
-      'Per-exercise progress & PRs';
+  String get progressScreenUiPerExerciseProgressPrs => 'エクササイズごとの進捗とPR';
 
   @override
-  String get progressScreenUiPhotoProgress => 'Photo Progress';
+  String get progressScreenUiPhotoProgress => '写真による進捗';
 
   @override
-  String get progressScreenUiPleaseTryAgain => 'Please try again.';
+  String get progressScreenUiPleaseTryAgain => 'もう一度お試しください。';
 
   @override
-  String get progressScreenUiTakeFirstPhoto => 'Take First Photo';
+  String get progressScreenUiTakeFirstPhoto => '最初の写真を撮影';
 
   @override
   String get progressScreenUiTakePhotosFromDifferent =>
-      'Take photos from different angles to track your visual progress over time.';
+      'さまざまな角度から写真を撮り、視覚的な変化を記録しましょう。';
 
   @override
   String get progressScreenUiTrackYourBodyMeasurements =>
-      'Track your body measurements to see detailed progress beyond the scale.';
+      '体重計以外の詳細な進捗を確認するために、身体測定値を記録しましょう。';
 
   @override
-  String get progressScreenUiTrainingVolumeBalance =>
-      'Training volume & balance';
+  String get progressScreenUiTrainingVolumeBalance => 'トレーニングボリュームとバランス';
 
   @override
   String progressScreenWeight(Object formattedWeight) {
@@ -27783,10 +27708,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressSelectExistingPhoto => 'Select existing photo';
+  String get progressSelectExistingPhoto => '既存の写真を選択';
 
   @override
-  String get progressSelectViewType => 'Select View Type';
+  String get progressSelectViewType => '表示タイプを選択';
 
   @override
   String progressShareGalleryScreenViralFormats(Object length) {
@@ -27794,21 +27719,19 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareGalleryShareYourTransformation =>
-      'Share Your Transformation';
+  String get progressShareGalleryShareYourTransformation => '変化をシェアする';
 
   @override
-  String get progressShareGalleryTapToOpen => 'tap to open';
+  String get progressShareGalleryTapToOpen => 'タップして開く';
 
   @override
-  String get progressShareTemplatesANtransformationNstudy =>
-      'A\\nTRANSFORMATION\\nSTUDY';
+  String get progressShareTemplatesANtransformationNstudy => '変化の\n記録';
 
   @override
-  String get progressShareTemplatesBreaking => 'BREAKING';
+  String get progressShareTemplatesBreaking => '速報';
 
   @override
-  String get progressShareTemplatesConsistency => 'CONSISTENCY';
+  String get progressShareTemplatesConsistency => '継続';
 
   @override
   String progressShareTemplatesFromAgo(Object durationText) {
@@ -27816,8 +27739,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesFromILlStart =>
-      'FROM \"I\\\'LL START MONDAY\"';
+  String get progressShareTemplatesFromILlStart => '「月曜日から始める」から';
 
   @override
   String progressShareTemplatesHowSheLost(Object weightLostText) {
@@ -27825,10 +27747,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesInGreenBoxes => 'IN GREEN BOXES';
+  String get progressShareTemplatesInGreenBoxes => '緑のボックスで';
 
   @override
-  String get progressShareTemplatesInTheBooks => 'IN THE BOOKS';
+  String get progressShareTemplatesInTheBooks => '記録更新';
 
   @override
   String progressShareTemplatesLocalLegendShedsIn(
@@ -27844,7 +27766,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesMyTransformation => 'MY TRANSFORMATION';
+  String get progressShareTemplatesMyTransformation => '私の変化';
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
@@ -27852,13 +27774,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesOfConsistency => 'OF CONSISTENCY';
+  String get progressShareTemplatesOfConsistency => '継続の';
 
   @override
-  String get progressShareTemplatesOfDiscipline => 'of discipline.';
+  String get progressShareTemplatesOfDiscipline => '規律の。';
 
   @override
-  String get progressShareTemplatesOfPureWork => 'OF PURE WORK';
+  String get progressShareTemplatesOfPureWork => '努力の結晶';
 
   @override
   String progressShareTemplatesOfWork(Object durationText) {
@@ -27866,17 +27788,17 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesProgress => 'PROGRESS';
+  String get progressShareTemplatesProgress => '進捗';
 
   @override
-  String get progressShareTemplatesReportedBy => 'REPORTED BY';
+  String get progressShareTemplatesReportedBy => '報告者:';
 
   @override
   String get progressShareTemplatesSourcesCloseToThe =>
-      'Sources close to the subject confirm the shift is due to consistent training, honest eating, and refusing to skip leg day. Experts call it \"unprecedented dedication.\"';
+      '関係者によると、この変化は一貫したトレーニング、誠実な食事、そして脚のトレーニングをサボらないことによるものだそうです。専門家はこれを「前例のない献身」と呼んでいます。';
 
   @override
-  String get progressShareTemplatesTheDailyGains => 'THE DAILY GAINS';
+  String get progressShareTemplatesTheDailyGains => '日々の成果';
 
   @override
   String progressShareTemplatesTheGlowUp(Object durationText) {
@@ -27884,10 +27806,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTheTransformation => 'THE TRANSFORMATION';
+  String get progressShareTemplatesTheTransformation => '変化';
 
   @override
-  String get progressShareTemplatesTimeline => 'TIMELINE';
+  String get progressShareTemplatesTimeline => 'タイムライン';
 
   @override
   String progressShareTemplatesToLater(Object durationText) {
@@ -27895,7 +27817,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesToRightNow => 'to right now.';
+  String get progressShareTemplatesToRightNow => '今この瞬間まで。';
 
   @override
   String progressShareTemplatesTotal(Object totalWorkouts) {
@@ -27904,10 +27826,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTUESDAY';
+      '#TRANSFORMATION\nTUESDAY';
 
   @override
-  String get progressShareTemplatesTransformed => 'TRANSFORMED';
+  String get progressShareTemplatesTransformed => '変化しました';
 
   @override
   String progressShareTemplatesValue(Object daysBetween) {
@@ -27949,48 +27871,47 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressShareTemplatesZealovaMarket => 'ZEALOVA MARKET';
 
   @override
-  String get progressSignUpToUnlock => 'Sign Up to Unlock';
+  String get progressSignUpToUnlock => 'サインアップしてロック解除';
 
   @override
-  String get progressStrength => 'STRENGTH';
+  String get progressStrength => '筋力';
 
   @override
-  String get progressTakePhoto => 'Take Photo';
+  String get progressTakePhoto => '写真を撮影';
 
   @override
-  String get progressTemplateDayStreak => 'Day Streak';
+  String get progressTemplateDayStreak => '連続日数';
 
   @override
-  String get progressTemplatePrsThisMonth => 'PRs This Month';
+  String get progressTemplatePrsThisMonth => '今月のPR';
 
   @override
-  String get progressTemplateThisWeek => 'This Week';
+  String get progressTemplateThisWeek => '今週';
 
   @override
-  String get progressTemplateTotalLifted => 'Total Lifted';
+  String get progressTemplateTotalLifted => '総重量';
 
   @override
-  String get progressTemplateTotalWorkouts => 'TOTAL WORKOUTS';
+  String get progressTemplateTotalWorkouts => 'ワークアウト合計';
 
   @override
-  String get progressThisActionCannotBe => 'This action cannot be undone.';
+  String get progressThisActionCannotBe => 'この操作は取り消せません。';
 
   @override
   String get progressTrackYourFitnessJourney =>
-      'Track your fitness journey with progress photos, body measurements, and strength scores. See how far you\\\'ve come!';
+      '進捗写真、身体測定値、筋力スコアでフィットネスの旅を記録しましょう。これまでの成果を確認できます！';
 
   @override
-  String get progressUploadFailed => 'Upload Failed';
+  String get progressUploadFailed => 'アップロード失敗';
 
   @override
-  String get progressUploadingPhoto => 'Uploading photo...';
+  String get progressUploadingPhoto => '写真をアップロード中...';
 
   @override
-  String get progressUseCamera => 'Use camera';
+  String get progressUseCamera => 'カメラを使用';
 
   @override
-  String get progressWeCouldnTSave =>
-      'We couldn\\\'t save your photo. Please try again.';
+  String get progressWeCouldnTSave => '写真を保存できませんでした。もう一度お試しください。';
 
   @override
   String progressionChainCardStepOf(Object chain, Object currentStepOrder) {
@@ -28008,14 +27929,14 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get progressionPaceAutoDeloadWeeks => 'Auto Deload Weeks';
+  String get progressionPaceAutoDeloadWeeks => '自動ディロード週';
 
   @override
   String get progressionPaceControlHowQuicklyThe =>
-      'Control how quickly the AI increases your workout weights. Slower progression is safer for beginners, while faster suits experienced lifters.';
+      'AIがワークアウトの重量を増やすペースを調整します。初心者には遅めの進行が安全で、経験豊富なリフターには速めが適しています。';
 
   @override
-  String get progressionPaceDeloadFrequency => 'Deload Frequency';
+  String get progressionPaceDeloadFrequency => 'ディロード頻度';
 
   @override
   String get progressionPaceDeloadSettings => 'ディロード設定';
@@ -28024,19 +27945,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressionPaceFineTuneSettings => '詳細設定';
 
   @override
-  String get progressionPaceHowManyWeeksBefore =>
-      'How many weeks before increasing weight';
+  String get progressionPaceHowManyWeeksBefore => '重量を増やすまでの週数';
 
   @override
-  String get progressionPaceHowMuchToIncrease =>
-      'How much to increase weight each progression';
+  String get progressionPaceHowMuchToIncrease => '進行ごとの重量増加量';
 
   @override
-  String get progressionPacePeriodicallyReduceIntensity =>
-      'Periodically reduce intensity for recovery';
+  String get progressionPacePeriodicallyReduceIntensity => '回復のために定期的に強度を下げます';
 
   @override
-  String get progressionPaceProgressionPace => 'Progression Pace';
+  String get progressionPaceProgressionPace => '進行ペース';
 
   @override
   String get progressionPaceProgressionSpeed => '進捗ペース';
@@ -29861,7 +29779,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get readinessCheckinCardSubmitCheckIn => 'チェックインを送信';
 
   @override
-  String get readinessCheckinCardSubmitting => 'Submitting...';
+  String get readinessCheckinCardSubmitting => '送信中...';
 
   @override
   String get readinessCheckinCardTodaySReadiness => '今日のレディネス';
@@ -33078,7 +32996,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String setTrackingSectionValue(Object reps) {
-    return ')×(reps)';
+    return ')×(レップ)';
   }
 
   @override
@@ -33260,7 +33178,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsAppleHealth => 'Apple Health';
 
   @override
-  String get settingsBeastMode => 'Beast Mode';
+  String get settingsBeastMode => 'ビーストモード';
 
   @override
   String settingsCardAvoided(Object length) {
@@ -33305,8 +33223,8 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       n,
       locale: localeName,
-      other: '$n days selected',
-      one: '1 day selected',
+      other: '$n日間選択中',
+      one: '1日選択中',
     );
     return '$_temp0';
   }
@@ -33660,7 +33578,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String settingsScreenExtWhyIBuilt(Object appName) {
-    return 'Why I built $appName';
+    return '$appNameを開発した理由';
   }
 
   @override
@@ -33920,12 +33838,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String shareWeeklySummarySheetMyWeek(Object appName, Object dateRange) {
-    return 'My $appName week — $dateRange';
+    return '私の$appName週間 — $dateRange';
   }
 
   @override
   String shareWeeklySummarySheetMyWeeklyReport(Object appName) {
-    return 'My $appName Weekly Report';
+    return '私の$appName週間レポート';
   }
 
   @override
@@ -35122,10 +35040,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return '選択した目標: $_selectedGoal 歩';
   }
 
@@ -35133,8 +35048,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return '歩数目標スライダー、$_minGoal 歩から $_maxGoal 歩まで';
   }
@@ -35620,7 +35533,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return '$used個の提案枠をすべて使い切りました。既存の機能への投票をお願いします！';
   }
 
   @override
@@ -35779,7 +35692,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get summaryCardHours => '時間';
 
   @override
-  String get summaryCardPrs => 'PRs';
+  String get summaryCardPrs => 'PR';
 
   @override
   String get summaryCardShareYourWrapped => 'Wrappedをシェア';
@@ -35794,7 +35707,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get summaryCardioSession => '有酸素セッション';
 
   @override
-  String get summaryCardsPrs => 'PRs';
+  String get summaryCardsPrs => 'PR';
 
   @override
   String get summaryCardsStreak => 'ストリーク';
@@ -38635,7 +38548,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String weeklyCheckinSheetEveryWeekAnalysesYour(Object appName) {
-    return 'Every week, $appName analyses your food logs to calculate how many calories your body is actually burning — then suggests smarter calorie & macro targets based on your real progress.';
+    return '$appNameは毎週、あなたの食事ログを分析して実際の消費カロリーを算出します。そして、あなたの進捗に基づいたより賢いカロリーとマクロの目標を提案します。';
   }
 
   @override
@@ -38968,7 +38881,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get weeklyRecapStartThisWeek => '今週を始める →';
 
   @override
-  String get weeklyRecapTemplatePrs => 'PRs';
+  String get weeklyRecapTemplatePrs => 'PR';
 
   @override
   String get weeklyRecapTemplateStreak => '継続日数';
@@ -39073,7 +38986,7 @@ class AppLocalizationsJa extends AppLocalizations {
       '予定されているワークアウトはありません。ホームからプランを生成してください。';
 
   @override
-  String get weeklyWrappedPrs => 'PRs';
+  String get weeklyWrappedPrs => 'PR';
 
   @override
   String get weeklyWrappedSets => 'セット数';
@@ -39762,7 +39675,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String workoutCompleteScreenWorkout(Object appName) {
-    return '$appName Workout';
+    return '$appName ワークアウト';
   }
 
   @override

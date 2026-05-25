@@ -777,7 +777,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get addGymSheetSkip => 'Salta';
 
   @override
-  String get addGymSheetSplitBodyPart => 'Body Part';
+  String get addGymSheetSplitBodyPart => 'Parte del corpo';
 
   @override
   String get addGymSheetSplitDesc3Days => '3 giorni';
@@ -851,7 +851,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String agentInfoHeaderSupportAgent(Object appName) {
-    return '$appName Support Agent';
+    return 'Agente di supporto $appName';
   }
 
   @override
@@ -4093,11 +4093,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => 'Seleziona un nuovo coach AI';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Usa $_customName';
   }
 
@@ -4608,7 +4604,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '(daysPerWeek)g/sett · (duration)';
   }
 
   @override
@@ -4739,7 +4735,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get comparisonGap => 'Spazio';
 
   @override
-  String get comparisonGhost => 'Ghost';
+  String get comparisonGhost => 'Fantasma';
 
   @override
   String get comparisonLogo => 'Logo';
@@ -8565,7 +8561,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get editWeightsQuantity => 'Quantità';
 
   @override
-  String get editWeightsSet => 'Set';
+  String get editWeightsSet => 'Serie';
 
   @override
   String get editWeightsSetQuantity => 'Imposta quantità';
@@ -8731,7 +8727,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get editableFitnessCardPrep => 'Preparazione';
 
   @override
-  String get editableFitnessCardSet => 'Set';
+  String get editableFitnessCardSet => 'Serie';
 
   @override
   String get editableFitnessCardSteps => 'Passi';
@@ -19169,7 +19165,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String intensityPromptSheetSet(Object exerciseName, Object setNumber) {
-    return 'Set $setNumber · $exerciseName';
+    return 'Serie $setNumber · $exerciseName';
   }
 
   @override
@@ -21351,7 +21347,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '(riga)\" : \"\")';
   }
 
   @override
@@ -21461,7 +21457,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String masteriesGridLv(Object level) {
-    return 'Lv.$level';
+    return 'Liv.$level';
   }
 
   @override
@@ -23853,7 +23849,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String myLibraryTabPartHistoryTimelineCardValue(Object item) {
-    return ')(item)%';
+    return ')(elemento)%';
   }
 
   @override
@@ -24973,12 +24969,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String numberInputWidgetsTarget(Object targetReps) {
-    return 'Target ($targetReps)';
+    return 'Obiettivo ($targetReps)';
   }
 
   @override
   String numberInputWidgetsTarget2(Object targetReps) {
-    return 'Target: $targetReps';
+    return 'Obiettivo: $targetReps';
   }
 
   @override
@@ -25121,7 +25117,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Amici';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -29607,16 +29603,16 @@ class AppLocalizationsIt extends AppLocalizations {
   String get quickActionsRow100Ml => '100 ml';
 
   @override
-  String get quickActionsRow125L => '1.25 L';
+  String get quickActionsRow125L => '1,25 L';
 
   @override
   String get quickActionsRow150Ml => '150 ml';
 
   @override
-  String get quickActionsRow15L => '1.5 L';
+  String get quickActionsRow15L => '1,5 L';
 
   @override
-  String get quickActionsRow1l => '1L';
+  String get quickActionsRow1l => '1 L';
 
   @override
   String get quickActionsRow2 => 'Riga 2';
@@ -29628,7 +29624,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get quickActionsRow250ml => '250ml';
 
   @override
-  String get quickActionsRow25L => '2.5 L';
+  String get quickActionsRow25L => '2,5 L';
 
   @override
   String get quickActionsRow2L => '2 L';
@@ -29865,7 +29861,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get quickAdjustVerySore => 'Molto dolorante';
 
   @override
-  String get quickLogFabBatch => 'Batch';
+  String get quickLogFabBatch => 'Lotto';
 
   @override
   String get quickLogFabListening => 'In ascolto...';
@@ -33315,7 +33311,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get restTimerOverlayCoachReview => 'COACH REVIEW';
+  String get restTimerOverlayCoachReview => 'REVISIONE COACH';
 
   @override
   String get restTimerOverlayGetTipsForYour =>
@@ -34605,7 +34601,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get setTrackingOverlayTapToAddNotes => 'Tocca per aggiungere note...';
 
   @override
-  String get setTrackingOverlayTarget => 'TARGET';
+  String get setTrackingOverlayTarget => 'OBIETTIVO';
 
   @override
   String setTrackingOverlayUi1Of(Object totalExercises, Object widget) {
@@ -34794,7 +34790,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get setTrackingTableSet => 'Serie';
 
   @override
-  String get setTrackingTableTarget => 'TARGET';
+  String get setTrackingTableTarget => 'OBIETTIVO';
 
   @override
   String get setTrackingTableTrainingGoalExerciseType =>
@@ -34841,7 +34837,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsAppleHealth => 'Apple Health';
 
   @override
-  String get settingsBeastMode => 'Beast Mode';
+  String get settingsBeastMode => 'Modalità Beast';
 
   @override
   String settingsCardAvoided(Object length) {
@@ -35856,7 +35852,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get smartInsightCardSmartInsight => 'Smart insight';
+  String get smartInsightCardSmartInsight => 'Approfondimento smart';
 
   @override
   String get snappedEquipmentCouldnTReuseThat =>
@@ -36776,10 +36772,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Obiettivo selezionato: $_selectedGoal passi';
   }
 
@@ -36787,8 +36780,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Cursore obiettivo passi, da $_minGoal a $_maxGoal passi';
   }
@@ -37296,7 +37287,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return 'Hai utilizzato tutti i $used suggerimenti a tua disposizione. Vota invece le funzionalità esistenti!';
   }
 
   @override

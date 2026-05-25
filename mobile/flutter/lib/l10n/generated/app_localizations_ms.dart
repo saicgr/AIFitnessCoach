@@ -77,7 +77,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String accuracyFeedbackSnackbarCal(Object calories, Object displayName) {
-    return '$displayName — $calories cal';
+    return '$displayName — $calories kal';
   }
 
   @override
@@ -3086,7 +3086,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String cardioHistoryScreenCal(Object calories) {
-    return '$calories cal';
+    return '$calories kal';
   }
 
   @override
@@ -4077,11 +4077,7 @@ class AppLocalizationsMs extends AppLocalizations {
       'Pilih persona jurulatih AI baharu';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Gunakan $_customName';
   }
 
@@ -4617,17 +4613,17 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String companionPickerSheetCal(Object item) {
-    return '$item cal';
+    return '$item kal';
   }
 
   @override
   String companionPickerSheetCal2(Object estCalories) {
-    return '$estCalories cal';
+    return '$estCalories kal';
   }
 
   @override
   String companionPickerSheetCal3(Object _selectedCalTotal) {
-    return '$_selectedCalTotal cal';
+    return '$_selectedCalTotal kal';
   }
 
   @override
@@ -4811,7 +4807,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get comparisonViewUiSelect2Photos => 'Pilih 2 foto';
 
   @override
-  String get comparisonViewUiU00b7 => '  \\u00B7  ';
+  String get comparisonViewUiU00b7 => '  ·  ';
 
   @override
   String comparisonViewUiValue(Object username) {
@@ -5514,7 +5510,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get customCoachFormMaximum => 'Maksimum';
 
   @override
-  String get customCoachFormMinimal => 'Minimal';
+  String get customCoachFormMinimal => 'Minimum';
 
   @override
   String customColorLabCardMatched(Object displayName) {
@@ -9483,7 +9479,7 @@ class AppLocalizationsMs extends AppLocalizations {
       'Lengkapkan lebih banyak sesi untuk melihat trend';
 
   @override
-  String get exerciseAnalyticsDrop => 'Drop';
+  String get exerciseAnalyticsDrop => 'Gugur';
 
   @override
   String get exerciseAnalyticsInviteFriends => 'Jemput rakan';
@@ -9693,7 +9689,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get exerciseDetailScreenSetup => 'Persediaan';
 
   @override
-  String get exerciseDetailScreenStaple => 'Staple';
+  String get exerciseDetailScreenStaple => 'Utama';
 
   @override
   String get exerciseDetailScreenTempo => 'Tempo';
@@ -9810,7 +9806,7 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String get exerciseDetailSheetStaple => 'Staple';
+  String get exerciseDetailSheetStaple => 'Utama';
 
   @override
   String get exerciseDetailSheetTrackYourMaxStrength =>
@@ -10932,12 +10928,12 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String exerciseScienceResearchScreenEveryWorkoutParameterIn(Object appName) {
-    return 'Every workout parameter in $appName is derived from peer-reviewed exercise science. Tap a paper to see details.';
+    return 'Setiap parameter senaman dalam $appName diperoleh daripada sains senaman yang disemak oleh rakan setara. Ketik kertas kajian untuk melihat butiran.';
   }
 
   @override
   String exerciseScienceResearchScreenHowUsesThis(Object appName) {
-    return 'How $appName uses this';
+    return 'Bagaimana $appName menggunakannya';
   }
 
   @override
@@ -12897,7 +12893,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get fitnessAssessmentPlankHold => 'Tahan Plank';
 
   @override
-  String get fitnessAssessmentPullUps => 'Pull-ups';
+  String get fitnessAssessmentPullUps => 'Pull-up';
 
   @override
   String get fitnessAssessmentPushUps => 'Tekan Tubi';
@@ -13333,7 +13329,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
-    return '$adjustedCal cal';
+    return '$adjustedCal kal';
   }
 
   @override
@@ -13450,11 +13446,11 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String get foodBrowserPanelKcal => ' kcal';
+  String get foodBrowserPanelKcal => ' kal';
 
   @override
   String foodBrowserPanelKcal2(Object totalCal) {
-    return '$totalCal kcal';
+    return '$totalCal kal';
   }
 
   @override
@@ -16302,7 +16298,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String heroNutritionCardKcal(Object calorieTarget, Object caloriesConsumed) {
-    return '$caloriesConsumed / $calorieTarget kcal';
+    return '$caloriesConsumed / $calorieTarget kal';
   }
 
   @override
@@ -21233,7 +21229,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '(baris)\" : \"\")';
   }
 
   @override
@@ -24997,7 +24993,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Rakan';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -25090,7 +25086,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get nutritionFastingCardGoalWeight => 'Berat Sasaran';
 
   @override
-  String get nutritionFastingCardMacros => 'Macros';
+  String get nutritionFastingCardMacros => 'Makro';
 
   @override
   String get nutritionFastingCardMaintainWeight => 'Kekalkan Berat';
@@ -26309,7 +26305,7 @@ class AppLocalizationsMs extends AppLocalizations {
       'Tab Statistik & Ganjaran mempunyai semua tambahan.';
 
   @override
-  String get overviewStreak => 'Streak';
+  String get overviewStreak => 'Rentetan';
 
   @override
   String overviewTabReady(Object ready) {
@@ -26350,7 +26346,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get paceChartExpand => 'Kembangkan';
 
   @override
-  String get paceChartPace => 'Pace';
+  String get paceChartPace => 'Rentak';
 
   @override
   String parsedExercisesPreviewSheetEdit(Object name) {
@@ -26865,7 +26861,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get personalGoalsPersonalRecords => 'Rekod Peribadi';
 
   @override
-  String get personalGoalsReps => ' reps';
+  String get personalGoalsReps => ' ulangan';
 
   @override
   String personalGoalsScreenDeleted(Object exerciseName) {
@@ -30942,7 +30938,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get quizTrainingStyleBestFor56 => 'Terbaik untuk 5-6 hari/minggu';
 
   @override
-  String get quizTrainingStyleBodyPartSplit => 'Body Part Split';
+  String get quizTrainingStyleBodyPartSplit => 'Pembahagian Bahagian Badan';
 
   @override
   String get quizTrainingStyleChestBackShouldersArms =>
@@ -33444,7 +33440,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String saunaDialogLogMinSauna(Object selectedMinutes) {
-    return 'Log ${selectedMinutes}min Sauna';
+    return 'Log Sauna ${selectedMinutes}min';
   }
 
   @override
@@ -36573,10 +36569,7 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Matlamat dipilih: $_selectedGoal langkah';
   }
 
@@ -36584,8 +36577,6 @@ class AppLocalizationsMs extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Peluncur matlamat langkah, dari $_minGoal hingga $_maxGoal langkah';
   }
@@ -41045,7 +41036,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -44051,7 +44042,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get xpGoalsScreenInventory => 'Inventori';
 
   @override
-  String get xpGoalsScreenLegendary => 'LEGENDARY';
+  String get xpGoalsScreenLegendary => 'LEGENDA';
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
@@ -44077,7 +44068,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get xpGoalsScreenLogWeight => 'Rekod berat';
 
   @override
-  String get xpGoalsScreenMilestone => 'MILESTONE';
+  String get xpGoalsScreenMilestone => 'BATU AJAR';
 
   @override
   String get xpGoalsScreenMilestoneLegend =>
@@ -44087,7 +44078,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get xpGoalsScreenNoLevelsAvailable => 'Tiada tahap tersedia';
 
   @override
-  String get xpGoalsScreenReward => 'REWARD';
+  String get xpGoalsScreenReward => 'GANJARAN';
 
   @override
   String get xpGoalsScreenSetFirstPersonalRecord =>

@@ -305,7 +305,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activeWorkoutHelperPrimaryMuscle => 'Músculo Principal';
 
   @override
-  String get activeWorkoutHelperProTip => 'Pro Tip';
+  String get activeWorkoutHelperProTip => 'Dica Pro';
 
   @override
   String get activeWorkoutHelperSecondaryMuscles => 'Músculos Secundários';
@@ -4091,11 +4091,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Selecione uma nova persona de treinador IA';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return 'Usar $_customName';
   }
 
@@ -4605,7 +4601,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '(daysPerWeek)d/sem\") · (duration)';
   }
 
   @override
@@ -6867,7 +6863,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String demoActiveWorkoutScreenUi1Reps(Object _currentExerciseReps) {
-    return '$_currentExerciseReps reps';
+    return '$_currentExerciseReps repetições';
   }
 
   @override
@@ -12657,7 +12653,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String fatigueAlertModalReps(Object newReps) {
-    return '$newReps reps';
+    return '$newReps repetições';
   }
 
   @override
@@ -21331,7 +21327,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '(linha)\" : \"\")';
   }
 
   @override
@@ -25075,7 +25071,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
+    return ') (unidade)';
   }
 
   @override
@@ -25095,7 +25091,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get nutrientRushGameNutrientRushFriends => 'Nutrient Rush — Amigos';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'E$_stageNumber';
   }
 
@@ -25308,7 +25304,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCm(Object height) {
-    return '6.25 × $height cm';
+    return '6,25 × $height cm';
   }
 
   @override
@@ -28909,7 +28905,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Falha ao processar a foto. Tente novamente.';
 
   @override
-  String get progressFitness => 'FITNESS';
+  String get progressFitness => 'APTIDÃO';
 
   @override
   String get progressGreat => 'Ótimo!';
@@ -33235,7 +33231,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get restTimerOverlayAiWeightCoach => 'AI WEIGHT COACH';
+  String get restTimerOverlayAiWeightCoach => 'TREINADOR DE PESO IA';
 
   @override
   String get restTimerOverlayAnalyzingYourPerformance =>
@@ -33247,7 +33243,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get restTimerOverlayCoachReview => 'COACH REVIEW';
+  String get restTimerOverlayCoachReview => 'AVALIAÇÃO DO TREINADOR';
 
   @override
   String get restTimerOverlayGetTipsForYour =>
@@ -33269,11 +33265,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get restTimerOverlayRateLastSet => 'Avaliar última série';
 
   @override
-  String get restTimerOverlayRirRepsInReserve => 'RIR (Reps in Reserve)';
+  String get restTimerOverlayRirRepsInReserve => 'RIR (Repetições em Reserva)';
 
   @override
   String get restTimerOverlayRpeRateOfPerceived =>
-      'RPE (Rate of Perceived Exertion)';
+      'RPE (Taxa de Esforço Percebido)';
 
   @override
   String restTimerOverlayS(Object restSecondsRemaining) {
@@ -33298,7 +33294,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String restTimerOverlayUiReps(Object reps) {
-    return '$reps reps';
+    return '$reps repetições';
   }
 
   @override
@@ -33496,7 +33492,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get rpeOneRepLeft => '1 rep restante';
 
   @override
-  String get rpePillRpeRateOfPerceived => 'RPE — Rate of Perceived Exertion';
+  String get rpePillRpeRateOfPerceived => 'RPE — Taxa de Esforço Percebido';
 
   @override
   String get rpeRirHelpsAdjustNextSet =>
@@ -34398,7 +34394,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String setRowNReps(Object count) {
-    return '$count reps';
+    return '$count repetições';
   }
 
   @override
@@ -34577,7 +34573,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String setTrackingSectionValue(Object reps) {
-    return ')×(reps)';
+    return ')×(repetições)';
   }
 
   @override
@@ -35972,7 +35968,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get socialSortRecent => 'Recente';
 
   @override
-  String get socialSortTop => 'Top';
+  String get socialSortTop => 'Populares';
 
   @override
   String get socialSortTrending => 'Em alta';
@@ -36022,37 +36018,37 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get soundSettingsPlaySoundWhenEntire =>
-      'Play sound when entire workout ends';
+      'Tocar som quando o treino terminar';
 
   @override
   String get soundSettingsPlaySoundWhenRest =>
-      'Play sound when rest period ends';
+      'Tocar som quando o período de descanso terminar';
 
   @override
   String get soundSettingsPlaySoundsDuringCountdown =>
-      'Play sounds during countdown (3, 2, 1)';
+      'Tocar sons durante a contagem regressiva (3, 2, 1)';
 
   @override
-  String get soundSettingsRestTimerEnd => 'Rest Timer End';
+  String get soundSettingsRestTimerEnd => 'Fim do Temporizador de Descanso';
 
   @override
-  String get soundSettingsSound => 'Sound';
+  String get soundSettingsSound => 'Som';
 
   @override
-  String get soundSettingsSoundEffects => 'Sound Effects';
+  String get soundSettingsSoundEffects => 'Efeitos Sonoros';
 
   @override
-  String get soundSettingsSoundVolume => 'Sound Volume';
+  String get soundSettingsSoundVolume => 'Volume do Som';
 
   @override
   String get soundSettingsTapToSelectLong =>
-      'Tap to select. Long-press to preview.';
+      'Toque para selecionar. Pressione e segure para visualizar.';
 
   @override
-  String get soundSettingsWorkoutCompletion => 'Workout Completion';
+  String get soundSettingsWorkoutCompletion => 'Conclusão do Treino';
 
   @override
-  String get splitsChartSplits => 'Splits';
+  String get splitsChartSplits => 'Divisões';
 
   @override
   String stackedBannerPanelCrateOpenedYouGot(Object rewardName) {
@@ -36070,26 +36066,26 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get stackedBannerPanelDismissAll => 'Dismiss All';
+  String get stackedBannerPanelDismissAll => 'Dispensar Tudo';
 
   @override
-  String get stackedBannerPanelDismissAnyway => 'Dismiss Anyway';
+  String get stackedBannerPanelDismissAnyway => 'Dispensar Mesmo Assim';
 
   @override
-  String get stackedBannerPanelFailedToClaimCrate => 'Failed to claim crate';
+  String get stackedBannerPanelFailedToClaimCrate => 'Falha ao resgatar caixa';
 
   @override
-  String get stackedBannerPanelFollowUsOnInstagram => 'Follow us on Instagram';
+  String get stackedBannerPanelFollowUsOnInstagram => 'Siga-nos no Instagram';
 
   @override
   String get stackedBannerPanelGetHelpShareWins =>
-      'Get help, share wins, and request features on Discord';
+      'Obtenha ajuda, compartilhe conquistas e peça recursos no Discord';
 
   @override
-  String get stackedBannerPanelJoinTheCommunity => 'Join the Community';
+  String get stackedBannerPanelJoinTheCommunity => 'Junte-se à Comunidade';
 
   @override
-  String get stackedBannerPanelKeepItUp => 'Keep it up!';
+  String get stackedBannerPanelKeepItUp => 'Continue assim!';
 
   @override
   String stackedBannerPanelLbs(Object exerciseName, Object weightLbs) {
@@ -36106,21 +36102,21 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get stackedBannerPanelNewPr => 'New PR!';
+  String get stackedBannerPanelNewPr => 'Novo PR!';
 
   @override
   String get stackedBannerPanelNoCratesAvailableRight =>
-      'No crates available right now';
+      'Nenhuma caixa disponível no momento';
 
   @override
-  String get stackedBannerPanelOpenAll => 'Open All';
+  String get stackedBannerPanelOpenAll => 'Abrir Tudo';
 
   @override
   String get stackedBannerPanelOpenThemBeforeDismissing =>
-      'Open them before dismissing?';
+      'Abrir antes de dispensar?';
 
   @override
-  String get stackedBannerPanelOpeningCrate => 'Opening crate...';
+  String get stackedBannerPanelOpeningCrate => 'Abrindo caixa...';
 
   @override
   String stackedBannerPanelRenewsInDaysFor(
@@ -36132,11 +36128,12 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get stackedBannerPanelSubscriptionRenewing => 'Subscription Renewing';
+  String get stackedBannerPanelSubscriptionRenewing =>
+      'Renovação da Assinatura';
 
   @override
   String get stackedBannerPanelTapToRevisitYour =>
-      'Tap to revisit your gym personality';
+      'Toque para rever sua personalidade de treino';
 
   @override
   String stackedBannerPanelValue(Object eventName, Object timeStr) {
@@ -36178,7 +36175,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get stackedBannerPanelYouHaveUnopenedCrates =>
-      'You have unopened crates!';
+      'Você tem caixas não abertas!';
 
   @override
   String stackedBannerPanelYouReAwayFrom(Object remaining, Object workoutWord) {
@@ -36191,173 +36188,175 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get stapleChoiceAddAs => 'Add as';
+  String get stapleChoiceAddAs => 'Adicionar como';
 
   @override
-  String get stapleChoiceAdvancedOptional => 'Advanced (optional)';
+  String get stapleChoiceAdvancedOptional => 'Avançado (opcional)';
 
   @override
-  String get stapleChoiceAllProfiles => 'All Profiles';
+  String get stapleChoiceAllProfiles => 'Todos os perfis';
 
   @override
-  String get stapleChoiceBand => 'Band';
+  String get stapleChoiceBand => 'Elástico';
 
   @override
-  String get stapleChoiceCustom => 'Custom';
+  String get stapleChoiceCustom => 'Personalizado';
 
   @override
-  String get stapleChoiceCustomizeOptional => 'Customize (optional)';
+  String get stapleChoiceCustomizeOptional => 'Personalizar (opcional)';
 
   @override
-  String get stapleChoiceDiscard => 'Discard';
+  String get stapleChoiceDiscard => 'Descartar';
 
   @override
-  String get stapleChoiceDiscardSelection => 'Discard selection?';
+  String get stapleChoiceDiscardSelection => 'Descartar seleção?';
 
   @override
-  String get stapleChoiceDistance => 'Distance';
+  String get stapleChoiceDistance => 'Distância';
 
   @override
-  String get stapleChoiceDotsYourWorkoutDays => 'Dots = your workout days';
+  String get stapleChoiceDotsYourWorkoutDays => 'Pontos = seus dias de treino';
 
   @override
-  String get stapleChoiceDuration => 'Duration';
+  String get stapleChoiceDuration => 'Duração';
 
   @override
   String get stapleChoiceEGFocusOn =>
-      'e.g. Focus on squeeze at top, slow eccentric';
+      'ex: Foco na contração no topo, excêntrica lenta';
 
   @override
-  String get stapleChoiceEveryDay => 'Every Day';
+  String get stapleChoiceEveryDay => 'Todos os dias';
 
   @override
-  String get stapleChoiceGoBack => 'Go Back';
+  String get stapleChoiceGoBack => 'Voltar';
 
   @override
-  String get stapleChoiceHoldDuration => 'Hold duration';
+  String get stapleChoiceHoldDuration => 'Duração da isometria';
 
   @override
-  String get stapleChoiceIncline => 'Incline';
+  String get stapleChoiceIncline => 'Inclinação';
 
   @override
-  String get stapleChoiceMoreOptional => 'More (optional)';
+  String get stapleChoiceMoreOptional => 'Mais (opcional)';
 
   @override
-  String get stapleChoiceNextWorkout => 'Next workout';
+  String get stapleChoiceNextWorkout => 'Próximo treino';
 
   @override
-  String get stapleChoiceNotes => 'Notes';
+  String get stapleChoiceNotes => 'Notas';
 
   @override
   String get stapleChoiceReplaceAnExerciseIn =>
-      'Replace an exercise in today\'s workout';
+      'Substituir um exercício no treino de hoje';
 
   @override
-  String get stapleChoiceReps => 'Reps';
+  String get stapleChoiceReps => 'Repetições';
 
   @override
-  String get stapleChoiceRest => 'Rest';
+  String get stapleChoiceRest => 'Descanso';
 
   @override
-  String get stapleChoiceRpeEffort => 'RPE (effort)';
+  String get stapleChoiceRpeEffort => 'RPE (esforço)';
 
   @override
-  String get stapleChoiceSets => 'Sets';
+  String get stapleChoiceSets => 'Séries';
 
   @override
-  String get stapleChoiceSheetCardioSettings => 'Cardio Settings';
+  String get stapleChoiceSheetCardioSettings => 'Configurações de cardio';
 
   @override
-  String get stapleChoiceSheetCouldNotLoadWorkout => 'Could not load workout';
+  String get stapleChoiceSheetCouldNotLoadWorkout =>
+      'Não foi possível carregar o treino';
 
   @override
-  String get stapleChoiceSheetDistance => 'Distance';
+  String get stapleChoiceSheetDistance => 'Distância';
 
   @override
-  String get stapleChoiceSheetDuration => 'Duration';
+  String get stapleChoiceSheetDuration => 'Duração';
 
   @override
-  String get stapleChoiceSheetIncline => 'Incline';
+  String get stapleChoiceSheetIncline => 'Inclinação';
 
   @override
-  String get stapleChoiceSheetNoExercisesInWorkout => 'No exercises in workout';
+  String get stapleChoiceSheetNoExercisesInWorkout =>
+      'Nenhum exercício no treino';
 
   @override
-  String get stapleChoiceSheetNoWorkoutAvailable => 'No workout available';
+  String get stapleChoiceSheetNoWorkoutAvailable => 'Nenhum treino disponível';
 
   @override
-  String get stapleChoiceSheetResistance => 'Resistance';
+  String get stapleChoiceSheetResistance => 'Resistência';
 
   @override
-  String get stapleChoiceSheetSpeed => 'Speed';
+  String get stapleChoiceSheetSpeed => 'Velocidade';
 
   @override
-  String get stapleChoiceSheetStrokeRate => 'Stroke Rate';
+  String get stapleChoiceSheetStrokeRate => 'Cadência';
 
   @override
-  String get stapleChoiceSpeed => 'Speed';
+  String get stapleChoiceSpeed => 'Velocidade';
 
   @override
-  String get stapleChoiceSwapWithExercise => 'Swap with exercise';
+  String get stapleChoiceSwapWithExercise => 'Trocar com exercício';
 
   @override
-  String get stapleChoiceTargetDays => 'Target Days';
+  String get stapleChoiceTargetDays => 'Dias alvo';
 
   @override
   String get stapleChoiceTempo => 'Tempo';
 
   @override
-  String get stapleChoiceWeight => 'Weight';
+  String get stapleChoiceWeight => 'Peso';
 
   @override
-  String get stapleChoiceWhenToApply => 'When to apply';
+  String get stapleChoiceWhenToApply => 'Quando aplicar';
 
   @override
-  String get stapleChoiceWhichGymProfile => 'Which gym profile?';
+  String get stapleChoiceWhichGymProfile => 'Qual perfil de academia?';
 
   @override
-  String get stapleChoiceWorkoutDays => 'Workout Days';
+  String get stapleChoiceWorkoutDays => 'Dias de treino';
 
   @override
   String get stapleChoiceYourExerciseWonT =>
-      'Your exercise won\\\'t be saved as a staple.';
+      'Seu exercício não será salvo como um item básico.';
 
   @override
-  String get stapleExercisesBikeSettings => 'Bike Settings';
+  String get stapleExercisesBikeSettings => 'Configurações da bicicleta';
 
   @override
-  String get stapleExercisesCardioSettings => 'Cardio Settings';
+  String get stapleExercisesCardioSettings => 'Configurações de cardio';
 
   @override
-  String get stapleExercisesDuration => 'Duration';
+  String get stapleExercisesDuration => 'Duração';
 
   @override
-  String get stapleExercisesDurationSetsRest => 'Duration / Sets / Rest';
+  String get stapleExercisesDurationSetsRest => 'Duração / Séries / Descanso';
 
   @override
-  String get stapleExercisesEG812 => 'e.g. 8-12';
+  String get stapleExercisesEG812 => 'ex: 8-12';
 
   @override
-  String get stapleExercisesEllipticalSettings => 'Elliptical Settings';
+  String get stapleExercisesEllipticalSettings => 'Configurações do elíptico';
 
   @override
   String get stapleExercisesHighlightedYourWorkoutDay =>
-      'Highlighted = your workout days';
+      'Destacado = seus dias de treino';
 
   @override
-  String get stapleExercisesIncline => 'Incline';
+  String get stapleExercisesIncline => 'Inclinação';
 
   @override
-  String get stapleExercisesRemove => 'Remove';
+  String get stapleExercisesRemove => 'Remover';
 
   @override
-  String get stapleExercisesRemoveStaple => 'Remove Staple?';
+  String get stapleExercisesRemoveStaple => 'Remover item básico?';
 
   @override
-  String get stapleExercisesReps => 'Reps';
+  String get stapleExercisesReps => 'Repetições';
 
   @override
-  String get stapleExercisesResistance => 'Resistance';
+  String get stapleExercisesResistance => 'Resistência';
 
   @override
   String get stapleExercisesRest => 'Descanso';
@@ -36529,7 +36528,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String statsPrsTemplatePrs(Object totalPRCount) {
-    return '$totalPRCount PRs';
+    return '$totalPRCount recordes';
   }
 
   @override
@@ -36701,10 +36700,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Objetivo selecionado: $_selectedGoal passos';
   }
 
@@ -36712,8 +36708,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Seletor de objetivo de passos, de $_minGoal a $_maxGoal passos';
   }
@@ -37386,7 +37380,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get summaryCardHours => 'Horas';
 
   @override
-  String get summaryCardPrs => 'PRs';
+  String get summaryCardPrs => 'Recordes';
 
   @override
   String get summaryCardShareYourWrapped => 'Partilhe o seu resumo';
@@ -37401,7 +37395,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get summaryCardioSession => 'Sessão de cardio';
 
   @override
-  String get summaryCardsPrs => 'PRs';
+  String get summaryCardsPrs => 'Recordes';
 
   @override
   String get summaryCardsStreak => 'Sequência';
@@ -37761,7 +37755,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get supersetExercisePickerAddExercisesToYour =>
-      'Add exercises to your workout first';
+      'Adicione exercícios ao seu treino primeiro';
 
   @override
   String get supersetExercisePickerSearchExercises => 'Pesquisar exercícios...';
@@ -43201,7 +43195,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get workoutShowcaseSideA => 'LADO A';
 
   @override
-  String get workoutShowcaseSuperset => 'Superset';
+  String get workoutShowcaseSuperset => 'Supersérie';
 
   @override
   String workoutShowcaseTapToLogSet(Object arg0) {
@@ -44495,5 +44489,5 @@ class AppLocalizationsPt extends AppLocalizations {
   String get youTrophies => 'Troféus';
 
   @override
-  String get youWrapped => 'Wrapped';
+  String get youWrapped => 'Retrospectiva';
 }

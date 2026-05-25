@@ -258,7 +258,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String activeFilterChipsAvoid(Object avoid) {
-    return 'Avoid: $avoid';
+    return 'Kaçınılacak: $avoid';
   }
 
   @override
@@ -477,7 +477,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String activityHeatmapTimes(Object timesPerformed) {
-    return '$timesPerformed times';
+    return '$timesPerformed kez';
   }
 
   @override
@@ -851,7 +851,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String agentInfoHeaderSupportAgent(Object appName) {
-    return '$appName Support Agent';
+    return '$appName Destek Temsilcisi';
   }
 
   @override
@@ -1073,7 +1073,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetBulkingCalorieDenseThat(Object meal) {
-    return 'Bulking — calorie-dense $meal that doesn\'t feel like a chore to eat. Macros.';
+    return 'Hacim kazanma (Bulking) — $meal için hazırlaması zahmetli olmayan, kalori yoğunluklu bir öneri. Makrolar.';
   }
 
   @override
@@ -1093,22 +1093,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetDropALowCal(Object meal) {
-    return 'Drop a low-cal $meal swap that still hits my macros. Keep it hype, include macros.';
+    return '$meal için makrolarıma uygun, düşük kalorili bir alternatif öner. Havalı olsun, makroları ekle.';
   }
 
   @override
   String aiCoachMealSuggestionSheetFastingFriendlyIdeaThat(Object meal) {
-    return 'Fasting-friendly $meal idea that won\'t spike insulin hard. One pick, macros, why it works.';
+    return 'İnsülini çok yükseltmeyecek, oruç dostu $meal fikri. Tek bir seçenek, makrolar ve neden işe yaradığı.';
   }
 
   @override
   String aiCoachMealSuggestionSheetFeelingAnxiousPickWith(Object meal) {
-    return 'Feeling anxious — $meal pick with calming nutrients (magnesium, omega-3, etc.)? Macros and why.';
+    return 'Kaygılı hissediyorum — sakinleştirici besinler (magnezyum, omega-3 vb.) içeren bir $meal seçimi? Makrolar ve nedenleri.';
   }
 
   @override
   String aiCoachMealSuggestionSheetFeelingStressedAndReaching(Object meal) {
-    return 'Feeling stressed and reaching for food. Give me a $meal pick that actually calms me down, not just sugar. Macros.';
+    return 'Stresliyim ve yemek yemek istiyorum. Sadece şeker değil, beni gerçekten sakinleştirecek bir $meal önerisi ver. Makrolar.';
   }
 
   @override
@@ -1116,7 +1116,7 @@ class AppLocalizationsTr extends AppLocalizations {
     Object meal,
     Object workoutType,
   ) {
-    return 'Got a $workoutType later today. Solid pre-workout $meal bite to load up right? Macros + timing.';
+    return 'Bugün ilerleyen saatlerde $workoutType antrenmanım var. Enerji depolamak için sağlam bir antrenman öncesi $meal önerisi? Makrolar + zamanlama.';
   }
 
   @override
@@ -1139,12 +1139,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetHowAmITracking(Object meal) {
-    return 'How am I tracking against my calorie target today? If I\'m behind, what $meal closes the gap?';
+    return 'Bugünkü kalori hedefime göre durumum nasıl? Eğer geride kaldıysam, arayı kapatacak $meal ne olabilir?';
   }
 
   @override
   String aiCoachMealSuggestionSheetIMAngryAnd(Object meal) {
-    return 'I\'m angry and want to stress-eat. Give me a $meal pick that takes the edge off without wrecking my macros. Short and real.';
+    return 'Sinirliyim ve stresle yemek yemek istiyorum. Makrolarımı bozmadan beni rahatlatacak bir $meal önerisi ver. Kısa ve öz olsun.';
   }
 
   @override
@@ -1154,17 +1154,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetIMCuttingIdea(Object meal) {
-    return 'I\'m cutting. $meal idea that\'s high-satiety, protein-forward, under budget. Macros.';
+    return 'Definasyondayım (Cutting). Bütçeyi aşmayan, protein odaklı ve tok tutan bir $meal fikri. Makrolar.';
   }
 
   @override
   String aiCoachMealSuggestionSheetIMHuntingFor(Object meal) {
-    return 'I\'m hunting for a high-protein $meal option. One pick, full macros, and why it\'s fire.';
+    return 'Yüksek proteinli bir $meal seçeneği arıyorum. Tek bir seçenek, tam makrolar ve neden harika olduğu.';
   }
 
   @override
   String aiCoachMealSuggestionSheetINeedMoreFiber(Object meal) {
-    return 'I need more fiber. What\'s a $meal idea that bumps it up without going wild on carbs?';
+    return 'Daha fazla lif almam lazım. Karbonhidratı abartmadan lif miktarını artıracak bir $meal fikri nedir?';
   }
 
   @override
@@ -1180,7 +1180,7 @@ class AppLocalizationsTr extends AppLocalizations {
     Object budgetTail,
     Object meal,
   ) {
-    return 'Italian or comfort $meal — one real pick, macros, lighter swap if needed.$budgetTail';
+    return 'İtalyan veya rahatlatıcı bir $meal — tek bir gerçek seçenek, makrolar, gerekirse daha hafif bir alternatif.$budgetTail';
   }
 
   @override
@@ -1188,17 +1188,17 @@ class AppLocalizationsTr extends AppLocalizations {
     Object meal,
     Object workoutType,
   ) {
-    return 'Just finished my $workoutType. Recovery $meal that lines up with what I already ate?';
+    return '$workoutType antrenmanımı yeni bitirdim. Daha önce yediklerimle uyumlu bir toparlanma (recovery) $meal önerisi?';
   }
 
   @override
   String aiCoachMealSuggestionSheetKeepingSpendTightCheap(Object meal) {
-    return 'Keeping spend tight — cheap $meal idea with solid macros. One pick, rough cost, macros.';
+    return 'Bütçeyi kısıtlı tutuyorum — sağlam makrolara sahip ucuz bir $meal fikri. Tek bir seçenek, yaklaşık maliyet, makrolar.';
   }
 
   @override
   String aiCoachMealSuggestionSheetLoggingMyHitMe(Object meal) {
-    return 'Logging my $meal. Hit me with something that fits my day so far — one pick, macros, short and real.';
+    return '$meal öğünümü kaydediyorum. Günün geri kalanına uyacak bir şey öner — tek bir seçenek, makrolar, kısa ve öz.';
   }
 
   @override
@@ -1211,7 +1211,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetLowSugarPickThat(Object meal) {
-    return 'Low-sugar $meal pick that still tastes like a win. Macros and why it\'s low-sugar.';
+    return 'Tadı güzel ama düşük şekerli bir $meal seçimi. Makrolar ve neden düşük şekerli olduğu.';
   }
 
   @override
@@ -1242,7 +1242,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetNoStoveNoOven(Object meal) {
-    return 'No stove, no oven — what\'s a solid no-cook $meal I can throw together in 5 min? Macros too.';
+    return 'Ocak veya fırın yok — 5 dakikada hazırlayabileceğim pratik bir $meal önerisi? Makrolar da olsun.';
   }
 
   @override
@@ -1265,7 +1265,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetRunningOnFumesPick(Object meal) {
-    return 'Running on fumes. $meal pick that gives real energy (no crash), with macros.';
+    return 'Tükendim. Enerji verecek (çöküş yaşatmayacak) bir $meal seçimi, makrolarıyla birlikte.';
   }
 
   @override
@@ -1280,12 +1280,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachMealSuggestionSheetTodaySARecovery(Object meal) {
-    return 'Today\'s a recovery day. How should my $meal look — macros, portion, any tweaks vs training days?';
+    return 'Bugün toparlanma (recovery) günü. $meal öğünüm nasıl olmalı? Makrolar, porsiyon ve antrenman günlerine göre farklar.';
   }
 
   @override
   String aiCoachMealSuggestionSheetVegetarianIdeaThatStill(Object meal) {
-    return 'Vegetarian $meal idea that still hits protein. One pick, macros, and prep notes.';
+    return 'Protein değerini koruyan vejetaryen bir $meal fikri. Tek bir seçenek, makrolar ve hazırlık notları.';
   }
 
   @override
@@ -1322,7 +1322,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiCoachPageTapToChange(Object tagline) {
-    return '$tagline · Tap to change';
+    return '$tagline · Değiştirmek için dokun';
   }
 
   @override
@@ -1398,7 +1398,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String aiDataUsageScreenSendsYourFitnessProfile(Object appName) {
-    return '$appName sends your fitness profile, chats, food photos, and form videos to models that generate personalized guidance. Here is exactly what happens.';
+    return '$appName, kişiselleştirilmiş rehberlik sunan modellere fitness profilinizi, sohbetlerinizi, yemek fotoğraflarınızı ve form videolarınızı gönderir. İşte tam olarak olanlar.';
   }
 
   @override
@@ -2463,7 +2463,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String badgeHubScreenTotal(Object count) {
-    return '$count total';
+    return 'Toplam $count';
   }
 
   @override
@@ -2636,7 +2636,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String bodyAgeBadgeBodyAge(Object bodyAge) {
-    return 'Body age $bodyAge';
+    return 'Vücut yaşı $bodyAge';
   }
 
   @override
@@ -2644,7 +2644,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String bodyAgeBadgeYrVsActual(Object delta, Object sign) {
-    return '$sign$delta yr vs actual';
+    return 'Gerçek yaşa göre $sign$delta yıl';
   }
 
   @override
@@ -2672,7 +2672,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String bodyAnalyzerCaptureScreenNoPhotosYetCapture(Object label) {
-    return 'No $label photos yet — capture one from Progress.';
+    return 'Henüz $label fotoğrafı yok — İlerleme (Progress) kısmından bir tane çekin.';
   }
 
   @override
@@ -2751,7 +2751,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String breathPromptWidgetStartsInS(Object _sessionSecondsLeft) {
-    return 'Starts in ${_sessionSecondsLeft}s';
+    return '$_sessionSecondsLeft saniye içinde başlıyor';
   }
 
   @override
@@ -4066,11 +4066,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coachSelectionScreenSelectANewAi => 'Yeni bir AI koç kişiliği seç';
 
   @override
-  String coachSelectionScreenUse(
-    Object _customName,
-    Object customName,
-    Object name,
-  ) {
+  String coachSelectionScreenUse(Object _customName) {
     return '$_customName kullan';
   }
 
@@ -4123,7 +4119,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String collapsedBannerStripGoals(Object completedGoals, Object totalGoals) {
-    return '$completedGoals/$totalGoals goals';
+    return '$completedGoals/$totalGoals hedef';
   }
 
   @override
@@ -5358,12 +5354,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String createGoalSheetTargetBestInOne(Object fullLabel) {
-    return 'Target $fullLabel (best in one session)';
+    return '$fullLabel hedefi (tek seansta en iyi)';
   }
 
   @override
   String createGoalSheetTargetTotalThisWeek(Object fullLabel) {
-    return 'Target $fullLabel (total this week)';
+    return '$fullLabel hedefi (bu hafta toplam)';
   }
 
   @override
@@ -5507,7 +5503,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String customColorLabCardMatched(Object displayName) {
-    return 'Matched: $displayName';
+    return 'Eşleşen: $displayName';
   }
 
   @override
@@ -5930,7 +5926,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customizeRingsAdd => 'Ekle';
 
   @override
-  String get customizeRingsCore => 'Core';
+  String get customizeRingsCore => 'Merkez';
 
   @override
   String get customizeRingsCustomizeYourRings => 'Halkalarını özelleştir';
@@ -6010,7 +6006,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String cycleInsightsChartsValue(Object pct) {
-    return '$pct%';
+    return '%$pct';
   }
 
   @override
@@ -6236,7 +6232,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String cycleStatusCardDay(Object day) {
-    return '· Day $day';
+    return '· $day. Gün';
   }
 
   @override
@@ -8356,7 +8352,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String editTargetsSheetValue(Object label, Object pct) {
-    return '$label $pct%';
+    return '$label %$pct';
   }
 
   @override
@@ -8746,7 +8742,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String emailPreferencesSectionControlWhatEmailsYou(Object appName) {
-    return 'Control what emails you receive from $appName';
+    return '$appName uygulamasından hangi e-postaları alacağınızı kontrol edin';
   }
 
   @override
@@ -8829,7 +8825,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get emailSignInSignUp => 'Kaydol';
 
   @override
-  String get emailSignInYouExampleCom => 'you@example.com';
+  String get emailSignInYouExampleCom => 'siz@example.com';
 
   @override
   String get emailVerificationBannerResend => 'Yeniden gönder';
@@ -8905,7 +8901,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String enhancedEmptyStateTryAsking2(Object name) {
-    return 'Try asking $name';
+    return '$name kişisine sormayı deneyin';
   }
 
   @override
@@ -9263,7 +9259,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String equipmentSelectorSelected(Object selectedCount) {
-    return '$selectedCount selected';
+    return '$selectedCount seçildi';
   }
 
   @override
@@ -10909,12 +10905,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String exerciseScienceResearchScreenEveryWorkoutParameterIn(Object appName) {
-    return 'Every workout parameter in $appName is derived from peer-reviewed exercise science. Tap a paper to see details.';
+    return '$appName içindeki her antrenman parametresi hakem değerlendirmesinden geçmiş egzersiz bilimine dayanır. Detayları görmek için bir makaleye dokunun.';
   }
 
   @override
   String exerciseScienceResearchScreenHowUsesThis(Object appName) {
-    return 'How $appName uses this';
+    return '$appName bunu nasıl kullanıyor';
   }
 
   @override
@@ -11448,7 +11444,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String exportDialogPartExportDataDialogExportData(Object appName) {
-    return 'Export $appName Data';
+    return '$appName Verilerini Dışa Aktar';
   }
 
   @override
@@ -11548,7 +11544,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Strava / Garmin Connect / Komoot';
 
   @override
-  String get fastingAiInsightAiInsight => 'AI Insight';
+  String get fastingAiInsightAiInsight => 'AI İçgörüsü';
 
   @override
   String get fastingAiInsightCouldnTLoadYour =>
@@ -11706,7 +11702,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String fastingEditSheetHM(Object h, Object m) {
-    return '${h}h ${m}m';
+    return '${h}s ${m}d';
   }
 
   @override
@@ -11775,7 +11771,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String fastingHistoryListValue(Object completionPercent) {
-    return '$completionPercent%';
+    return '%$completionPercent';
   }
 
   @override
@@ -11810,11 +11806,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fastingImpactActivityCalendar => 'Aktivite Takvimi';
 
   @override
-  String get fastingImpactAiInsights => 'AI Insights';
+  String get fastingImpactAiInsights => 'AI İçgörüleri';
 
   @override
   String fastingImpactCardCorrelation(Object displayName) {
-    return 'Correlation: $displayName';
+    return 'Korelasyon: $displayName';
   }
 
   @override
@@ -12062,7 +12058,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String fastingScoreCardValue2(Object value) {
-    return '$value%';
+    return '%$value';
   }
 
   @override
@@ -12501,7 +12497,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String fastingZoneTimelineH(Object startHour) {
-    return '${startHour}h';
+    return '${startHour}s';
   }
 
   @override
@@ -13190,7 +13186,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String focusAreasSelectorSelected(Object selectedCount) {
-    return '$selectedCount selected';
+    return '$selectedCount seçildi';
   }
 
   @override
@@ -13309,7 +13305,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String foodAnalysisResultCardCal(Object adjustedCal) {
-    return '$adjustedCal cal';
+    return '$adjustedCal kal';
   }
 
   @override
@@ -14204,7 +14200,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String founderNoteSheetANoteFrom(Object _founderName) {
-    return 'A NOTE FROM $_founderName';
+    return '$_founderName KİŞİSİNDEN BİR NOT';
   }
 
   @override
@@ -15697,14 +15693,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String healthConnectOnboardingScreenConnect(Object _platformName) {
-    return 'Connect $_platformName';
+    return '$_platformName Bağla';
   }
 
   @override
   String healthConnectOnboardingScreenConnectSoZealovaCan(
     Object _platformName,
   ) {
-    return 'Connect $_platformName so Zealova can turn your ';
+    return 'Zealova\'nın verilerinizi kullanabilmesi için $_platformName bağlantısını kurun: ';
   }
 
   @override
@@ -17097,7 +17093,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String homeMySpaceScreenLayoutApplied(Object name) {
-    return '$name layout applied';
+    return '$name düzeni uygulandı';
   }
 
   @override
@@ -18438,7 +18434,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String injuriesSelectorSelected(Object selectedCount) {
-    return '$selectedCount selected';
+    return '$selectedCount seçildi';
   }
 
   @override
@@ -19452,7 +19448,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String leaderboardLockedStateWorkouts(Object workoutsCompleted) {
-    return '$workoutsCompleted / 10 workouts';
+    return '$workoutsCompleted / 10 antrenman';
   }
 
   @override
@@ -19901,7 +19897,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String logCardioScreenSessionLogged(Object formattedDuration, Object label) {
-    return '$label session logged - $formattedDuration';
+    return '$label antrenmanı kaydedildi - $formattedDuration';
   }
 
   @override
@@ -19948,7 +19944,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealHealth => 'Sağlık';
 
   @override
-  String get logMealHelpersEcoScore => 'Eco-Score ';
+  String get logMealHelpersEcoScore => 'Eko-Puan ';
 
   @override
   String logMealHelpersNova(Object group) {
@@ -20930,12 +20926,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String loggedMealsSectionCal3(Object food) {
-    return '$food cal';
+    return '$food kal';
   }
 
   @override
   String loggedMealsSectionCopyTo(Object name) {
-    return 'Copy $name to...';
+    return '$name öğesini kopyala...';
   }
 
   @override
@@ -21010,22 +21006,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String loggedMealsSectionMoveTo(Object name) {
-    return 'Move $name to...';
+    return '$name öğesini taşı...';
   }
 
   @override
   String loggedMealsSectionRemoved2(Object removedName) {
-    return 'Removed $removedName';
+    return '$removedName kaldırıldı';
   }
 
   @override
   String loggedMealsSectionRemoved3(Object name) {
-    return 'Removed $name';
+    return '$name kaldırıldı';
   }
 
   @override
   String loggedMealsSectionSwap(Object existingName) {
-    return 'Swap $existingName';
+    return '$existingName ile değiştir';
   }
 
   @override
@@ -21272,7 +21268,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String markFastingDaySheetHours(Object _estimatedHours) {
-    return '$_estimatedHours hours';
+    return '$_estimatedHours saat';
   }
 
   @override
@@ -21281,7 +21277,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String masteriesGridLv(Object level) {
-    return 'Lv.$level';
+    return 'Sv.$level';
   }
 
   @override
@@ -21412,7 +21408,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String measurementBodyViewMore(Object length) {
-    return '+$length More';
+    return '+$length Daha fazla';
   }
 
   @override
@@ -22608,7 +22604,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String milestoneCelebrationDialogPts(Object points) {
-    return '+$points PTS';
+    return '+$points PUAN';
   }
 
   @override
@@ -22745,7 +22741,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get missedWorkoutBannerWhyAreYouSkipping => 'Neden atlıyorsunuz?';
 
   @override
-  String get missedWorkoutBannerWorkoutSkipped => 'Workout skipped';
+  String get missedWorkoutBannerWorkoutSkipped => 'Antrenman atlandı';
 
   @override
   String missedWorkoutBannerYouMissed(Object dayPossessive, Object name) {
@@ -24400,7 +24396,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String notificationPrimeScreenTurnOnNotificationsSo(Object appName) {
-    return 'Turn on notifications so $appName can coach you when it matters most.';
+    return 'Bildirimleri aç, böylece $appName en önemli anlarda sana koçluk yapabilir.';
   }
 
   @override
@@ -24926,7 +24922,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Nutrient Rush — Arkadaşlar';
 
   @override
-  String nutrientRushGameS(Object _stageNumber, Object stageNumber) {
+  String nutrientRushGameS(Object _stageNumber) {
     return 'S$_stageNumber';
   }
 
@@ -26006,12 +26002,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String onboardingConfidenceScreenHowConfidentAreYou(Object name) {
-    return '$name, how confident are you you\'ll get there?';
+    return '$name, oraya ulaşacağından ne kadar eminsin?';
   }
 
   @override
   String onboardingConfidenceScreenOutOf(Object value) {
-    return '$value out of 10';
+    return '10 üzerinden $value';
   }
 
   @override
@@ -26684,12 +26680,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String paywallTimelineScreenFirstCharge(Object dateFormat) {
-    return 'First charge: $dateFormat';
+    return 'İlk ödeme: $dateFormat';
   }
 
   @override
   String paywallTimelineScreenYouLlBeCharged(Object dateFormat) {
-    return 'You\\\'ll be charged on $dateFormat. Cancel anytime before - no questions asked.';
+    return '$dateFormat tarihinde ücretlendirileceksin. İstediğin zaman iptal edebilirsin, soru sorulmaz.';
   }
 
   @override
@@ -27915,7 +27911,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String preAuthReferralChipCodeWillApplyAfter(Object _pendingCode) {
-    return 'Code $_pendingCode will apply after signup';
+    return '$_pendingCode kodu kayıt olduktan sonra uygulanacak';
   }
 
   @override
@@ -28334,7 +28330,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String programMenuButtonGeneratedFreshWorkouts(Object generatedCount) {
-    return 'Generated $generatedCount fresh workouts!';
+    return '$generatedCount yeni antrenman oluşturuldu!';
   }
 
   @override
@@ -29108,7 +29104,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressionPaceProgressionSpeed => 'Gelişim Hızı';
 
   @override
-  String get progressionPaceProgressiveOverload => 'Progressive Overload';
+  String get progressionPaceProgressiveOverload => 'Kademeli Yükleme';
 
   @override
   String get progressionPaceSaveSettings => 'Ayarları Kaydet';
@@ -29241,7 +29237,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String protocolSelectorChipHFast(Object fastingHours) {
-    return '${fastingHours}h fast';
+    return '$fastingHours saat açlık';
   }
 
   @override
@@ -29563,12 +29559,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String quickActionsSheetPartHeroActionCardFailedToEndFast(Object e) {
-    return 'Failed to end fast: $e';
+    return 'Açlık sonlandırılamadı: $e';
   }
 
   @override
   String quickActionsSheetPartHeroActionCardHM(Object hours, Object mins) {
-    return '${hours}h ${mins}m';
+    return '${hours}s ${mins}d';
   }
 
   @override
@@ -30606,7 +30602,7 @@ class AppLocalizationsTr extends AppLocalizations {
     Object availablePoints,
     Object maxTotalPoints,
   ) {
-    return '$availablePoints/$maxTotalPoints available';
+    return '$availablePoints/$maxTotalPoints kullanılabilir';
   }
 
   @override
@@ -30920,7 +30916,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Could not load predictions.\\n$message';
+    return 'Tahminler yüklenemedi.\\n$message';
   }
 
   @override
@@ -32642,7 +32638,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String reportMessageSheetFailedToSubmitReport(Object e) {
-    return 'Failed to submit report: $e';
+    return 'Rapor gönderilemedi: $e';
   }
 
   @override
@@ -32690,12 +32686,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String reportReceiptTemplateReportReceipt(Object periodLabel) {
-    return 'REPORT RECEIPT · $periodLabel';
+    return 'ANTRENMAN FİŞİ · $periodLabel';
   }
 
   @override
   String reportReceiptTemplateTotal(Object unit) {
-    return 'TOTAL $unit';
+    return 'TOPLAM $unit';
   }
 
   @override
@@ -32943,7 +32939,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'İdeal dinlenme süresi hesaplanıyor';
 
   @override
-  String get restSuggestionCardAiRestCoach => 'AI REST COACH';
+  String get restSuggestionCardAiRestCoach => 'YAPAY ZEKA DİNLENME KOÇU';
 
   @override
   String get restSuggestionCardCalculatingOptimalRestTime =>
@@ -33003,17 +32999,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String restTimerCardS(Object value) {
-    return '${value}s';
+    return '${value}sn';
   }
 
   @override
   String restTimerCardS2(Object restTimerBaseRest) {
-    return '${restTimerBaseRest}s';
+    return '${restTimerBaseRest}sn';
   }
 
   @override
   String restTimerCardS3(Object s) {
-    return '${s}s';
+    return '${s}sn';
   }
 
   @override
@@ -33026,7 +33022,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get restTimerOverlayAiWeightCoach => 'AI WEIGHT COACH';
+  String get restTimerOverlayAiWeightCoach => 'YAPAY ZEKA AĞIRLIK KOÇU';
 
   @override
   String get restTimerOverlayAnalyzingYourPerformance =>
@@ -33038,7 +33034,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get restTimerOverlayCoachReview => 'COACH REVIEW';
+  String get restTimerOverlayCoachReview => 'KOÇ DEĞERLENDİRMESİ';
 
   @override
   String get restTimerOverlayGetTipsForYour =>
@@ -33060,11 +33056,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get restTimerOverlayRateLastSet => 'Son Seti Değerlendir';
 
   @override
-  String get restTimerOverlayRirRepsInReserve => 'RIR (Reps in Reserve)';
+  String get restTimerOverlayRirRepsInReserve => 'RIR (Yedekteki Tekrar)';
 
   @override
   String get restTimerOverlayRpeRateOfPerceived =>
-      'RPE (Rate of Perceived Exertion)';
+      'RPE (Algılanan Zorluk Derecesi)';
 
   @override
   String restTimerOverlayS(Object restSecondsRemaining) {
@@ -33170,7 +33166,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get rewardsYourEmailExampleCom => 'your.email@example.com';
+  String get rewardsYourEmailExampleCom => 'epostaniz@example.com';
 
   @override
   String get ringCatalogCycleDay => 'Döngü günü';
@@ -33286,7 +33282,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rpeOneRepLeft => '1 tekrar kaldı';
 
   @override
-  String get rpePillRpeRateOfPerceived => 'RPE — Rate of Perceived Exertion';
+  String get rpePillRpeRateOfPerceived => 'RPE — Algılanan Zorluk Derecesi';
 
   @override
   String get rpeRirHelpsAdjustNextSet =>
@@ -34355,7 +34351,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String setTrackingSectionValue(Object reps) {
-    return ')×(reps)';
+    return ')×(tekrar)';
   }
 
   @override
@@ -35551,7 +35547,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String smartInsightCardDays(Object n) {
-    return '$n days';
+    return '$n gün';
   }
 
   @override
@@ -35826,17 +35822,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String stackedBannerPanelCrateOpenedYouGot(Object rewardName) {
-    return '🎁 Crate opened! You got $rewardName';
+    return '🎁 Kasa açıldı! $rewardName kazandın';
   }
 
   @override
   String stackedBannerPanelCratesAvailable(Object displayCount) {
-    return '$displayCount Crates Available!';
+    return '$displayCount Kasa Mevcut!';
   }
 
   @override
   String stackedBannerPanelCratesReadyToOpen(Object displayCount) {
-    return '$displayCount crates ready to open';
+    return '$displayCount kasa açılmaya hazır';
   }
 
   @override
@@ -35873,7 +35869,7 @@ class AppLocalizationsTr extends AppLocalizations {
     Object exercisesCount,
     Object missedDescription,
   ) {
-    return '$missedDescription · ${durationMinutes}min · $exercisesCount exercises';
+    return '$missedDescription · ${durationMinutes}dk · $exercisesCount egzersiz';
   }
 
   @override
@@ -35898,7 +35894,7 @@ class AppLocalizationsTr extends AppLocalizations {
     Object formattedAmount,
     Object tierLabel,
   ) {
-    return '$tierLabel renews in $days days for $formattedAmount';
+    return '$tierLabel $days gün içinde $formattedAmount tutarıyla yenilenir';
   }
 
   @override
@@ -35915,7 +35911,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String stackedBannerPanelWorkoutTipsMealIdeas(Object marketingDomain) {
-    return 'Workout tips, meal ideas, and community highlights @$marketingDomain';
+    return 'Antrenman ipuçları, yemek fikirleri ve topluluk öne çıkanları @$marketingDomain';
   }
 
   @override
@@ -35923,7 +35919,7 @@ class AppLocalizationsTr extends AppLocalizations {
     Object totalWorkouts,
     Object volumeStr,
   ) {
-    return '$totalWorkouts workouts · $volumeStr lifted';
+    return '$totalWorkouts antrenman · $volumeStr kaldırıldı';
   }
 
   @override
@@ -35933,7 +35929,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String stackedBannerPanelWrapped2(Object month) {
-    return '$month Wrapped';
+    return '$month Özeti';
   }
 
   @override
@@ -35943,7 +35939,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String stackedBannerPanelXXpActive(Object xpMultiplier) {
-    return '${xpMultiplier}x XP Active';
+    return '${xpMultiplier}x XP Aktif';
   }
 
   @override
@@ -35952,12 +35948,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String stackedBannerPanelYouReAwayFrom(Object remaining, Object workoutWord) {
-    return 'You\'re $remaining $workoutWord away from your weekly goal';
+    return 'Haftalık hedefine ulaşmana $remaining $workoutWord kaldı';
   }
 
   @override
   String stackedBannerPanelYourWrappedIsHere(Object month) {
-    return 'Your $month Wrapped Is Here';
+    return '$month Özeti Hazır';
   }
 
   @override
@@ -36300,7 +36296,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String statsPrsTemplatePrs(Object totalPRCount) {
-    return '$totalPRCount PRs';
+    return '$totalPRCount PR';
   }
 
   @override
@@ -36471,10 +36467,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String stepGoalEditorSheetSelectedGoalSteps(
-    Object _selectedGoal,
-    Object steps,
-  ) {
+  String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
     return 'Seçilen hedef: $_selectedGoal adım';
   }
 
@@ -36482,8 +36475,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String stepGoalEditorSheetStepGoalSliderFrom(
     Object _maxGoal,
     Object _minGoal,
-    Object maxGoal,
-    Object minGoal,
   ) {
     return 'Adım hedefi kaydırıcısı, $_minGoal ile $_maxGoal adım arası';
   }
@@ -36685,7 +36676,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String streakSavedDialogWeUsedStreakShield(Object savedStreakCount) {
-    return 'We used 1 Streak Shield to keep your $savedStreakCount-day streak alive.';
+    return '$savedStreakCount günlük serini korumak için 1 adet Seri Kalkanı kullandık.';
   }
 
   @override
@@ -36989,7 +36980,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String suggestFeatureSheetYouVeUsedAll(Object used) {
-    return 'You\\\'ve used all $used of your $used suggestions. Vote on existing features instead!';
+    return '$used öneri hakkının tamamını kullandın. Bunun yerine mevcut özelliklere oy ver!';
   }
 
   @override
@@ -37006,7 +36997,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestedReplyChipsBodyweightVersion => 'Vücut ağırlığı versiyonu';
 
   @override
-  String get suggestedReplyChipsCycleadjusted => 'cycleAdjusted';
+  String get suggestedReplyChipsCycleadjusted => 'döngüAyarlı';
 
   @override
   String get suggestedReplyChipsHowShouldITrain =>
@@ -37034,7 +37025,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestedReplyChipsPlanTomorrow => 'Yarını planla';
 
   @override
-  String get suggestedReplyChipsPreworkoutfuelgap => 'preWorkoutFuelGap';
+  String get suggestedReplyChipsPreworkoutfuelgap =>
+      'antrenmanÖncesiYakıtBoşluğu';
 
   @override
   String get suggestedReplyChipsQuickCheck => 'Hızlı kontrol';
@@ -37043,7 +37035,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestedReplyChipsRecapDetails => 'Özet detaylar';
 
   @override
-  String get suggestedReplyChipsRecoverylighter => 'recoveryLighter';
+  String get suggestedReplyChipsRecoverylighter => 'dahaHafifToparlanma';
 
   @override
   String get suggestedReplyChipsStartAnyway => 'Yine de başlat';
@@ -37895,7 +37887,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String syncedWorkoutDetailScreenAppDetailedSamplesMay(Object sourceApp) {
-    return 'app, detailed samples may not reach $sourceApp.';
+    return 'uygulama, ayrıntılı örnekler $sourceApp uygulamasına ulaşmayabilir.';
   }
 
   @override
@@ -37915,7 +37907,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String syncedWorkoutDetailScreenCoach(Object _insight) {
-    return 'Coach: $_insight';
+    return 'Koç: $_insight';
   }
 
   @override
@@ -37945,7 +37937,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String syncedWorkoutDetailScreenOnlyASummaryWas(Object sourceApp) {
-    return 'Only a summary was shared from $sourceApp';
+    return '$sourceApp üzerinden yalnızca bir özet paylaşıldı';
   }
 
   @override
@@ -37955,7 +37947,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String syncedWorkoutDetailScreenTrimpFromHrReserve(Object trimp) {
-    return 'TRIMP $trimp · from HR reserve, duration, and recovery';
+    return 'TRIMP $trimp · HR reserve, süre ve toparlanmadan';
   }
 
   @override
@@ -38247,7 +38239,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String templatePickerSheetTheOriginalHomeScreen(Object appName) {
-    return 'The original $appName home screen experience';
+    return 'Orijinal $appName ana ekran deneyimi';
   }
 
   @override
@@ -38473,7 +38465,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String todayCycleLengthSparklineD(Object last) {
-    return '${last}d';
+    return '${last}g';
   }
 
   @override
@@ -38686,7 +38678,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String trainingLoadScreenCouldNotLoadTraining(Object message) {
-    return 'Could not load training load: $message';
+    return 'Antrenman yükü yüklenemedi: $message';
   }
 
   @override
@@ -38694,7 +38686,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String trainingMethodsScreenRest(Object restDisplayHint) {
-    return 'Rest: $restDisplayHint';
+    return 'Dinlenme: $restDisplayHint';
   }
 
   @override
@@ -39125,7 +39117,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String trophyCeremonyOverlayLv(Object level) {
-    return 'Lv.$level';
+    return 'Sv.$level';
   }
 
   @override
@@ -39139,7 +39131,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String trophyFilterSheetApplyFilters(Object activeFilterCount) {
-    return 'Apply $activeFilterCount Filters';
+    return '$activeFilterCount Filtreyi Uygula';
   }
 
   @override
@@ -39870,7 +39862,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String warmupSettingsSectionMin(Object label, Object minutes) {
-    return '$label ($minutes min)';
+    return '$label ($minutes dk)';
   }
 
   @override
@@ -41389,7 +41381,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutDaysSelectorDaysWeek(Object length) {
-    return '$length days/week';
+    return '$length gün/hafta';
   }
 
   @override
@@ -42220,7 +42212,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutMetricChartNotEnoughDataTo(Object label) {
-    return 'Not enough $label data to chart.';
+    return 'Grafik oluşturmak için yeterli $label verisi yok.';
   }
 
   @override
@@ -42872,27 +42864,27 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutShowcaseScreenDay(Object day) {
-    return 'Day $day';
+    return '$day. Gün';
   }
 
   @override
   String workoutShowcaseScreenDuration(Object duration) {
-    return 'DURATION: $duration';
+    return 'SÜRE: $duration';
   }
 
   @override
   String workoutShowcaseScreenPrs(Object prs) {
-    return 'PRS:      $prs';
+    return 'PR\'LAR:      $prs';
   }
 
   @override
   String workoutShowcaseScreenPrsEntered(Object prs) {
-    return '$prs PRS · ENTERED';
+    return '$prs PR · GİRİLDİ';
   }
 
   @override
   String workoutShowcaseScreenSession(Object title) {
-    return 'SESSION: $title';
+    return 'OTURUM: $title';
   }
 
   @override
@@ -42901,7 +42893,7 @@ class AppLocalizationsTr extends AppLocalizations {
     Object prs,
     Object volume,
   ) {
-    return 'TOTAL  $duration · $volume · $prs PRS';
+    return 'TOPLAM  $duration · $volume · $prs PR';
   }
 
   @override
@@ -42911,17 +42903,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutShowcaseScreenVolZealovaPress(Object day) {
-    return 'VOL. $day · ZEALOVA PRESS';
+    return 'HACİM $day · ZEALOVA PRESS';
   }
 
   @override
   String workoutShowcaseScreenVolume(Object volume) {
-    return 'VOLUME:   $volume';
+    return 'HACİM:   $volume';
   }
 
   @override
   String workoutShowcaseScreenYouDay(Object day) {
-    return '@you · day $day';
+    return '@you · $day. gün';
   }
 
   @override
@@ -43146,7 +43138,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedMS(Object m, Object s) {
-    return '${m}m ${s}s';
+    return '${m}dk ${s}sn';
   }
 
   @override
@@ -43232,7 +43224,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedS(Object duration) {
-    return '${duration}s';
+    return '${duration}sn';
   }
 
   @override
@@ -43287,12 +43279,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedValue2(Object progressPct) {
-    return '$progressPct%';
+    return '%$progressPct';
   }
 
   @override
   String workoutSummaryAdvancedValue3(Object adherencePct) {
-    return '$adherencePct%';
+    return '%$adherencePct';
   }
 
   @override
@@ -43606,7 +43598,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutUiModeSheetMode(Object title) {
-    return '$title mode';
+    return '$title modu';
   }
 
   @override
@@ -44077,12 +44069,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String xpHeroTileLv(Object level) {
-    return 'Lv $level';
+    return '$level. Seviye';
   }
 
   @override
   String xpHeroTileLv2(Object label, Object nextLevel) {
-    return 'Lv $nextLevel → $label';
+    return '$nextLevel. Seviye → $label';
   }
 
   @override
@@ -44112,7 +44104,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String xpLeaderboardScreenLvl(Object currentLevel) {
-    return 'Lvl $currentLevel';
+    return '$currentLevel. Seviye';
   }
 
   @override
@@ -44195,7 +44187,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String xpProgressCardPrestigeN(Object level) {
-    return 'Prestige $level';
+    return 'Prestij $level';
   }
 
   @override
