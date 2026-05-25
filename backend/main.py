@@ -680,6 +680,21 @@ async def _redis_keepalive_loop():
             logger.warning("Redis keepalive ping failed")
 
 
+async def _share_media_cleanup_loop():
+    """Periodically purge downloaded social-media payloads that have been
+    extracted (>30 min completed) and hard-purge rows >30 days old that
+    still carry media keys. See jobs/share_media_cleanup_worker.py."""
+    from jobs.share_media_cleanup_worker import run as _share_cleanup_tick
+    # Stagger the first run so cold-start isn't slammed.
+    await asyncio.sleep(120)
+    while True:
+        try:
+            await _share_cleanup_tick()
+        except Exception as e:
+            logger.warning(f"[ShareMediaCleanup] tick failed: {e}", exc_info=True)
+        await asyncio.sleep(30 * 60)  # 30 minutes
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -775,6 +790,10 @@ async def lifespan(app: FastAPI):
     _create_safe_task(_resume_pending_media_jobs(), name="resume-pending-media-jobs")
     _create_safe_task(_prewarm_inflammation_cache(), name="prewarm-inflammation-cache")
     _create_safe_task(_refresh_exercise_library_mv_if_dirty(), name="refresh-exercise-library-mv")
+    # Imports feature — delete downloaded IG/TikTok media after extraction
+    # completes (App Store compliance) + purge any rows >30d old still
+    # carrying media. Runs every 30 minutes.
+    _create_safe_task(_share_media_cleanup_loop(), name="share-media-cleanup")
 
     total_startup = time.time() - startup_start
     logger.info(f"Startup complete in {total_startup:.2f}s (server ready, background tasks running)")

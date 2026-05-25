@@ -112,3 +112,15 @@ reportlab>=4.2.0               # PDF export for the reverse-direction pipeline
 polyline>=2.0.0                # Decode Google encoded polylines → GPX waypoints
 cryptography>=42.0.0           # AES-GCM Fernet token encryption for oauth_sync_accounts
 PyJWT[crypto]>=2.8.0           # ES256 client_secret signing for Apple Sign-In token revocation
+
+# --- Imports feature (share-sheet → auto-route) ----------------------------
+# YouTube path is OFFICIAL APIs ONLY (App Store Guideline 5.2.3 compliance):
+#   - youtube-transcript-api: caption track via YouTube's own API
+#   - google-api-python-client: YouTube Data API v3 (metadata + chapters)
+# yt-dlp is used ONLY for Instagram / TikTok where no official path exists.
+# yt-dlp downloads media to S3 with the `imports/social/` prefix; the
+# existing media-cleanup cron purges those keys after extraction.
+yt-dlp>=2024.5.27              # IG/TikTok video + caption fetcher (NOT YouTube)
+youtube-transcript-api>=0.6.2  # Captions via the official YT caption endpoint
+google-api-python-client>=2.130 # YouTube Data API v3 client
+webvtt-py>=0.5.1               # WebVTT caption parsing (yt-dlp subtitle path)

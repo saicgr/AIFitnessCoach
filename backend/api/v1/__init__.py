@@ -589,3 +589,15 @@ from . import cardio_correlation_endpoints; router.include_router(cardio_correla
 # SLICE_GPX_EXPORT — GET /cardio-logs/{id}/export?format=gpx|tcx|fit. Returns
 # StreamingResponse with Content-Disposition for share-sheet filename.
 from . import cardio_exports; router.include_router(cardio_exports.router, tags=["Cardio Exports"])
+
+# Imports feature — system share-sheet payload handling. Wraps the existing
+# VisionService + Gemini intent classifier and ships /share/* endpoints
+# powering the iOS Share Extension, Android ACTION_SEND, and Profile → Imports.
+from . import share as _share_module; router.include_router(_share_module.router, tags=["Imports"])
+
+# Imports — orchestrator endpoints (URL fetch / audio / PDF). Separate module
+# so /share remains readable; both files share the same `share` URL prefix.
+from . import share_orchestrator as _share_orch_module; router.include_router(_share_orch_module.router, tags=["Imports"])
+
+# Imports — saved_tips persistence + list (tip_save intent target).
+from . import saved_tips as _saved_tips_module; router.include_router(_saved_tips_module.router, tags=["Imports"])
