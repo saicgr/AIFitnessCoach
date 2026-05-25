@@ -14,6 +14,7 @@ import '../../../data/models/subjective_feedback.dart';
 import '../../../data/providers/subjective_feedback_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Pre-workout check-in widget displayed before the workout begins.
 /// Quick, skippable - designed to take less than 5 seconds.
 class PreWorkoutCheckin extends ConsumerStatefulWidget {
@@ -66,7 +67,7 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
             children: [
               // Header
               Text(
-                'How are you feeling?',
+                AppLocalizations.of(context).quickAdjustHowAreYouFeeling,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -77,7 +78,7 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
               const SizedBox(height: 8),
 
               Text(
-                'Quick check before your workout',
+                AppLocalizations.of(context).preWorkoutCheckinQuickCheckBeforeYour,
                 style: TextStyle(
                   fontSize: 16,
                   color: textSecondary,
@@ -122,8 +123,8 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
-                          'Start Workout',
+                      : Text(
+                          AppLocalizations.of(context).warmupPhaseStartWorkout,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -139,7 +140,7 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
               TextButton(
                 onPressed: _isSubmitting ? null : _handleSkip,
                 child: Text(
-                  'Skip check-in',
+                  AppLocalizations.of(context).preWorkoutCheckinSkipCheckIn,
                   style: TextStyle(
                     fontSize: 16,
                     color: textSecondary,
@@ -162,7 +163,7 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
                     color: textSecondary,
                   ),
                   label: Text(
-                    'Add more details',
+                    AppLocalizations.of(context).preWorkoutCheckinAddMoreDetails,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -261,7 +262,7 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
         Row(
           children: [
             Text(
-              'Energy level',
+              AppLocalizations.of(context).preWorkoutCheckinEnergyLevel,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -327,7 +328,7 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
         Row(
           children: [
             Text(
-              'How was your sleep?',
+              AppLocalizations.of(context).preWorkoutCheckinHowWasYourSleep,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -455,7 +456,7 @@ class _PreWorkoutCheckinSheetState extends ConsumerState<PreWorkoutCheckinSheet>
             children: [
               // Header
               Text(
-                'How are you feeling?',
+                AppLocalizations.of(context).quickAdjustHowAreYouFeeling,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -538,7 +539,7 @@ class _PreWorkoutCheckinSheetState extends ConsumerState<PreWorkoutCheckinSheet>
                         side: BorderSide(color: textSecondary.withValues(alpha: 0.3)),
                       ),
                       child: Text(
-                        'Skip',
+                        AppLocalizations.of(context).onboardingSkip,
                         style: TextStyle(color: textSecondary),
                       ),
                     ),
@@ -563,8 +564,8 @@ class _PreWorkoutCheckinSheetState extends ConsumerState<PreWorkoutCheckinSheet>
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text(
-                              'Start Workout',
+                          : Text(
+                              AppLocalizations.of(context).warmupPhaseStartWorkout,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,

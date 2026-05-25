@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/providers/unified_notifications_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Notification bell button with unread count badge
 /// Used in the home screen header
 class NotificationBellButton extends ConsumerWidget {
@@ -30,7 +31,7 @@ class NotificationBellButton extends ConsumerWidget {
             color: unreadCount > 0 ? AppColors.cyan : textMuted,
             size: 24,
           ),
-          tooltip: 'Notifications',
+          tooltip: AppLocalizations.of(context).permissionsPrimerNotifications,
           onPressed: () {
             HapticService.light();
             context.push('/notifications');

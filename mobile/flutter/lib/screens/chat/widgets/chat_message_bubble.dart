@@ -27,6 +27,7 @@ import 'voice_message_widget.dart';
 import 'chat_media_widgets.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A single chat message bubble (user, assistant, system, or error)
 class ChatMessageBubble extends ConsumerWidget {
   final ChatMessage message;
@@ -252,7 +253,7 @@ class ChatMessageBubble extends ConsumerWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Uploading...',
+                        AppLocalizations.of(context).storyCreateUploading,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -542,13 +543,13 @@ class ChatMessageBubble extends ConsumerWidget {
             children: [
                 ListTile(
                   leading: const Icon(Icons.copy, size: 20),
-                  title: const Text('Copy'),
+                  title: Text(AppLocalizations.of(context).milestoneCelebrationCopy),
                   onTap: () {
                     Navigator.pop(ctx);
                     Clipboard.setData(ClipboardData(text: message.content));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Copied'),
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context).chatMessageBubbleCopied),
                         duration: Duration(seconds: 1),
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -558,7 +559,7 @@ class ChatMessageBubble extends ConsumerWidget {
                 if (!isUser && onRegenerate != null)
                   ListTile(
                     leading: const Icon(Icons.refresh, size: 20),
-                    title: const Text('Regenerate'),
+                    title: Text(AppLocalizations.of(context).workoutActionsRegenerate),
                     onTap: () {
                       Navigator.pop(ctx);
                       onRegenerate!();
@@ -570,7 +571,7 @@ class ChatMessageBubble extends ConsumerWidget {
                       message.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                       size: 20,
                     ),
-                    title: Text(message.isPinned ? 'Unpin' : 'Pin'),
+                    title: Text(message.isPinned ? AppLocalizations.of(context).pinnedMessageBarUnpin : AppLocalizations.of(context).menuAnalysisHistoryPin),
                     onTap: () {
                       Navigator.pop(ctx);
                       ref.read(chatMessagesProvider.notifier).togglePin(message.id!);
@@ -579,18 +580,18 @@ class ChatMessageBubble extends ConsumerWidget {
                 if (isUser)
                   ListTile(
                     leading: const Icon(Icons.delete_outline, size: 20, color: AppColors.error),
-                    title: const Text('Delete', style: TextStyle(color: AppColors.error)),
+                    title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
                     onTap: () {
                       Navigator.pop(ctx);
                       showDialog(
                         context: context,
                         builder: (dlgCtx) => AlertDialog(
-                          title: const Text('Delete this message?'),
-                          content: const Text('This action cannot be undone.'),
+                          title: Text(AppLocalizations.of(context).chatMessageBubbleDeleteThisMessage),
+                          content: Text(AppLocalizations.of(context).workoutActionsThisActionCannotBe),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(dlgCtx),
-                              child: const Text('Cancel'),
+                              child: Text(AppLocalizations.of(context).buttonCancel),
                             ),
                             TextButton(
                               onPressed: () {
@@ -603,7 +604,7 @@ class ChatMessageBubble extends ConsumerWidget {
                                   ref.read(chatMessagesProvider.notifier).state = AsyncValue.data(updated);
                                 }
                               },
-                              child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+                              child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
                             ),
                           ],
                         ),
@@ -613,7 +614,7 @@ class ChatMessageBubble extends ConsumerWidget {
                 if (!isUser)
                   ListTile(
                     leading: const Icon(Icons.flag_outlined, size: 20, color: AppColors.orange),
-                    title: const Text('Report'),
+                    title: Text(AppLocalizations.of(context).logMealSheetReport),
                     onTap: () {
                       Navigator.pop(ctx);
                       showReportMessageSheet(
@@ -671,7 +672,7 @@ class ChatMessageBubble extends ConsumerWidget {
                   onPressed: onRetry,
                   icon: Icon(Icons.refresh, size: 14,
                       color: isDark ? Colors.red[300] : Colors.red[600]),
-                  label: Text('Retry',
+                  label: Text(AppLocalizations.of(context).buttonRetry,
                       style: TextStyle(fontSize: 12,
                           color: isDark ? Colors.red[300] : Colors.red[600])),
                   style: TextButton.styleFrom(
@@ -925,7 +926,7 @@ class _WorkoutContextMessageState extends State<_WorkoutContextMessage>
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Workout context',
+                  AppLocalizations.of(context).chatMessageBubbleWorkoutContext,
                   style: TextStyle(
                     color: widget.textColor.withValues(alpha: 0.7),
                     fontSize: 11,

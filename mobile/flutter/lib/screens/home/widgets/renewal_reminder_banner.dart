@@ -7,6 +7,7 @@ import '../../../data/providers/billing_reminder_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A banner that shows when the user's subscription is renewing soon (within 5 days)
 class RenewalReminderBanner extends ConsumerWidget {
   const RenewalReminderBanner({super.key});
@@ -233,7 +234,7 @@ class _RenewalBannerContentState extends ConsumerState<_RenewalBannerContent>
                             ),
                           ),
                           child: Text(
-                            'Manage',
+                            AppLocalizations.of(context).syncedWorkoutDetailManage,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -248,7 +249,7 @@ class _RenewalBannerContentState extends ConsumerState<_RenewalBannerContent>
                           child: Opacity(
                             opacity: _isDismissing ? 0.5 : 1.0,
                             child: Text(
-                              'Dismiss',
+                              AppLocalizations.of(context).upgradePromptDismiss,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: textSecondary,

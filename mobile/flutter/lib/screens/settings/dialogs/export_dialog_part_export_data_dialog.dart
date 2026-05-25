@@ -126,7 +126,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Text(
-          'Export Info',
+          AppLocalizations.of(context).measurementsScreenPartExportInfo,
           style: TextStyle(
             color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             fontSize: 18,
@@ -138,7 +138,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Data categories & columns
-              Text('Exported Data', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.cyan)),
+              Text(AppLocalizations.of(context).exportDialogPartExportedData, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.cyan)),
               const SizedBox(height: 8),
               _dataCategory('Profile', 'name, email, fitness_level, goals, equipment, height, weight, age, gender', isDark),
               _dataCategory('Body Metrics', 'date, weight, waist, hip, neck, body_fat, heart_rate, blood_pressure', isDark),
@@ -151,7 +151,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
               const SizedBox(height: 14),
 
               // Formats
-              Text('Formats', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.cyan)),
+              Text(AppLocalizations.of(context).measurementsScreenPartFormats, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.cyan)),
               const SizedBox(height: 8),
               _formatInfoRow(Icons.folder_zip_outlined, 'CSV/ZIP',
                   'Comma-separated values in a ZIP archive. Opens in Excel, Google Sheets, or any spreadsheet app.', isDark),
@@ -173,7 +173,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Got it', style: TextStyle(color: AppColors.cyan)),
+            child: Text(AppLocalizations.of(context).weightIncrementsGotIt, style: TextStyle(color: AppColors.cyan)),
           ),
         ],
       ),
@@ -260,7 +260,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Time Range',
+              AppLocalizations.of(context).exportDialogPartTimeRange,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -307,7 +307,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                 children: [
                   Expanded(
                     child: DatePickerButton(
-                      label: 'Start',
+                      label: AppLocalizations.of(context).buttonStart,
                       date: _customStartDate,
                       onTap: () => _selectDate(context, true),
                       isDark: isDark,
@@ -316,7 +316,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DatePickerButton(
-                      label: 'End',
+                      label: AppLocalizations.of(context).quickActionsSheetEnd,
                       date: _customEndDate,
                       onTap: () => _selectDate(context, false),
                       isDark: isDark,
@@ -332,7 +332,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
             Row(
               children: [
                 Text(
-                  'Export Format',
+                  AppLocalizations.of(context).exportDialogPartExportFormat,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -369,7 +369,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'CSV/ZIP',
+                        AppLocalizations.of(context).exportDialogPartCsvZip,
                         style: TextStyle(
                           fontSize: 12,
                           color: _selectedFormat == ExportFormat.csvZip
@@ -405,7 +405,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Plain Text',
+                        AppLocalizations.of(context).exportDialogPartPlainText,
                         style: TextStyle(
                           fontSize: 12,
                           color: _selectedFormat == ExportFormat.plainText
@@ -477,7 +477,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Excel',
+                        AppLocalizations.of(context).exportDialogPartExcel,
                         style: TextStyle(
                           fontSize: 12,
                           color: _selectedFormat == ExportFormat.excel
@@ -513,7 +513,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Parquet',
+                        AppLocalizations.of(context).exportDialogPartParquet,
                         style: TextStyle(
                           fontSize: 12,
                           color: _selectedFormat == ExportFormat.parquet
@@ -545,7 +545,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
               children: [
                 Expanded(
                   child: Text(
-                    'Data to export',
+                    AppLocalizations.of(context).exportDialogPartDataToExport,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -584,7 +584,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Profile is always included.',
+              AppLocalizations.of(context).exportDialogPartProfileIsAlwaysIncluded,
               style: TextStyle(
                 fontSize: 11,
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -644,7 +644,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
             const SizedBox(height: 12),
             Text(
               _selectedFormat == ExportFormat.csvZip
-                  ? 'Your data will be exported as a ZIP file containing CSV files.'
+                  ? AppLocalizations.of(context).exportDialogPartYourDataWillBe
                   : _selectedFormat == ExportFormat.plainText
                       ? 'Your data will be exported as a readable plain text file.'
                       : _selectedFormat == ExportFormat.json
@@ -664,7 +664,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Cancel',
+            AppLocalizations.of(context).buttonCancel,
             style: TextStyle(
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
             ),
@@ -683,7 +683,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                   );
                 },
           child: Text(
-            'Export',
+            AppLocalizations.of(context).syncDetailsExport,
             style: TextStyle(
               color: _selectedCategories.isEmpty
                   ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted)

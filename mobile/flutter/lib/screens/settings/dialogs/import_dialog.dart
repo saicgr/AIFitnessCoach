@@ -8,6 +8,7 @@ import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the import data dialog.
 void showImportDialog(BuildContext context, WidgetRef ref) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -69,7 +70,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Cancel',
+            AppLocalizations.of(context).buttonCancel,
             style: TextStyle(
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
             ),
@@ -81,7 +82,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
             await _importData(context, ref);
           },
           child: Text(
-            'Select File',
+            AppLocalizations.of(context).importSelectFile,
             style: TextStyle(color: AppColors.purple),
           ),
         ),
@@ -149,7 +150,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
               ),
               const SizedBox(height: 16),
               Text(
-                'This will import:',
+                AppLocalizations.of(context).importThisWillImport,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -173,7 +174,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
               ),
               const SizedBox(height: 12),
               Text(
-                'New data will be added alongside your existing data.',
+                AppLocalizations.of(context).importNewDataWillBe,
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -185,7 +186,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: Text(
-                'Cancel',
+                AppLocalizations.of(context).buttonCancel,
                 style: TextStyle(
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                 ),
@@ -194,7 +195,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
-                'Import',
+                AppLocalizations.of(context).recipesImport,
                 style: TextStyle(color: AppColors.purple),
               ),
             ),
@@ -260,7 +261,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
                   Icon(Icons.check_circle, color: AppColors.success, size: 24),
                   const SizedBox(width: 12),
                   Text(
-                    'Import Successful',
+                    AppLocalizations.of(context).importImportSuccessful,
                     style: TextStyle(
                       color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                     ),
@@ -277,7 +278,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
-                    'OK',
+                    AppLocalizations.of(context).healthSyncOk,
                     style: TextStyle(color: AppColors.success),
                   ),
                 ),

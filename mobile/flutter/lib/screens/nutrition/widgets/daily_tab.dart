@@ -17,6 +17,7 @@ import 'logged_meals_section.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
 import 'goal_row.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class DailyTab extends ConsumerStatefulWidget {
   final String userId;
   final DailyNutritionSummary? summary;
@@ -223,7 +224,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                           Icon(Icons.track_changes, color: teal, size: 24),
                           const SizedBox(width: 12),
                           Text(
-                            'Your Daily Goals',
+                            AppLocalizations.of(context).dailyYourDailyGoals,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -234,7 +235,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tap settings icon to adjust these targets',
+                        AppLocalizations.of(context).dailyTapSettingsIconTo,
                         style: TextStyle(
                           fontSize: 13,
                           color: textMuted,
@@ -245,7 +246,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                       // Goals list
                       GoalRow(
                         icon: Icons.local_fire_department,
-                        label: 'Calories',
+                        label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                         value: '${prefsState.currentCalorieTarget}',
                         unit: 'kcal',
                         color: teal,
@@ -254,7 +255,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                       const SizedBox(height: 12),
                       GoalRow(
                         icon: Icons.egg_outlined,
-                        label: 'Protein',
+                        label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                         value: '${prefsState.currentProteinTarget}',
                         unit: 'g',
                         color: purple,
@@ -263,7 +264,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                       const SizedBox(height: 12),
                       GoalRow(
                         icon: Icons.grain,
-                        label: 'Carbohydrates',
+                        label: AppLocalizations.of(context).dailyCarbohydrates,
                         value: '${prefsState.currentCarbsTarget}',
                         unit: 'g',
                         color: orange,
@@ -272,7 +273,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                       const SizedBox(height: 12),
                       GoalRow(
                         icon: Icons.water_drop_outlined,
-                        label: 'Fat',
+                        label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                         value: '${prefsState.currentFatTarget}',
                         unit: 'g',
                         color: coral,
@@ -281,7 +282,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                       const SizedBox(height: 12),
                       GoalRow(
                         icon: Icons.eco_outlined,
-                        label: 'Fiber',
+                        label: AppLocalizations.of(context).recipeBuilderSheetFiber,
                         value: '30',
                         unit: 'g',
                         color: AppColors.cyan,
@@ -310,7 +311,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                         ),
                       ),
                       icon: const Icon(Icons.settings, size: 18),
-                      label: const Text('Edit Goals in Settings'),
+                      label: Text(AppLocalizations.of(context).dailyEditGoalsInSettings),
                     ),
                   ),
                 ),
@@ -530,7 +531,7 @@ class _PinnedNutrientsEditSheetState
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update pinned nutrients')),
+        SnackBar(content: Text(AppLocalizations.of(context).nutrientExplorerFailedToUpdatePinned)),
       );
       setState(() => _saving = false);
     }
@@ -566,7 +567,7 @@ class _PinnedNutrientsEditSheetState
             Row(
               children: [
                 Text(
-                  'Pin nutrients',
+                  AppLocalizations.of(context).dailyPinNutrients,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -594,7 +595,7 @@ class _PinnedNutrientsEditSheetState
             ),
             const SizedBox(height: 4),
             Text(
-              'Pick the nutrients you want to see at the top of the Daily tab.',
+              AppLocalizations.of(context).dailyPickTheNutrientsYou,
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
             const SizedBox(height: 14),
@@ -673,7 +674,7 @@ class _PinnedNutrientsEditSheetState
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Save',
+                    : Text(AppLocalizations.of(context).buttonSave,
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold)),
               ),
@@ -811,7 +812,7 @@ class _LeftoversCarousel extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 4, bottom: 8),
                 child: Text(
-                  'Leftovers ready to log',
+                  AppLocalizations.of(context).dailyLeftoversReadyToLog,
                   style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
                 ),
               ),
@@ -871,12 +872,12 @@ class _LeftoversCarousel extends ConsumerWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    ev.isExpired ? 'EXPIRED' : 'TAP TO LOG',
+                                    ev.isExpired ? AppLocalizations.of(context).recipesExpired : AppLocalizations.of(context).dailyTapToLog,
                                     style: TextStyle(fontSize: 9, color: warningColor, fontWeight: FontWeight.w800, letterSpacing: 0.4),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    ev.recipeName ?? 'Cooked dish',
+                                    ev.recipeName ?? AppLocalizations.of(context).recipesCookedDish,
                                     style: TextStyle(color: text, fontSize: 13, fontWeight: FontWeight.w700),
                                     maxLines: 1, overflow: TextOverflow.ellipsis,
                                   ),

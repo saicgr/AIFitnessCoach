@@ -7,6 +7,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'strain_dashboard_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class ReportStrainScreen extends ConsumerStatefulWidget {
   const ReportStrainScreen({super.key});
   @override
@@ -27,7 +28,7 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
   void dispose() { _notesController.dispose(); super.dispose(); }
 
   Future<void> _submit() async {
-    if (_selectedMuscles.isEmpty) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select at least one muscle group'))); return; }
+    if (_selectedMuscles.isEmpty) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).reportStrainSelectAtLeastOne))); return; }
     setState(() => _isSubmitting = true);
     try {
       final apiClient = ref.read(apiClientProvider);
@@ -63,7 +64,7 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
       // Refresh the dashboard
       ref.read(strainDashboardProvider.notifier).loadData();
 
-      if (mounted) { context.pop(); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Strain report submitted'), backgroundColor: AppColors.success)); }
+      if (mounted) { context.pop(); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).reportStrainStrainReportSubmitted), backgroundColor: AppColors.success)); }
     } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error)); } finally { if (mounted) setState(() => _isSubmitting = false); }
   }
 
@@ -76,7 +77,7 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
     final el = d ? AppColors.elevated : AppColorsLight.elevated;
     return Scaffold(
       backgroundColor: bg,
-      appBar: const PillAppBar(title: 'Report Strain'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).reportStrainReportStrain),
       body: SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _section('Affected Muscles', _buildMuscleGrid(d, tp, tm, el)),
         const SizedBox(height: 24),
@@ -106,9 +107,9 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
     return Column(children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('1', style: TextStyle(color: tm)), Text('$value', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)), Text('10', style: TextStyle(color: tm))]), Slider(value: value.toDouble(), min: 1, max: 10, divisions: 9, activeColor: color, onChanged: (v) => onChanged(v.round())), Text(hint, style: TextStyle(fontSize: 12, color: tm))]);
   }
 
-  Widget _buildRestToggle(bool d, Color tp, Color tm, Color el) => Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: el, borderRadius: BorderRadius.circular(12)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Request Rest Day', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 4), Text('AI will suggest lighter workouts', style: TextStyle(fontSize: 12, color: tm))])), Switch(value: _needsRest, onChanged: (v) => setState(() => _needsRest = v), activeThumbColor: AppColors.orange)]));
+  Widget _buildRestToggle(bool d, Color tp, Color tm, Color el) => Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: el, borderRadius: BorderRadius.circular(12)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(AppLocalizations.of(context).reportStrainRequestRestDay, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 4), Text(AppLocalizations.of(context).reportStrainAiWillSuggestLighter, style: TextStyle(fontSize: 12, color: tm))])), Switch(value: _needsRest, onChanged: (v) => setState(() => _needsRest = v), activeThumbColor: AppColors.orange)]));
 
   Widget _buildNotesField(bool d, Color tp, Color tm, Color el) => TextField(controller: _notesController, maxLines: 3, style: TextStyle(color: tp), decoration: InputDecoration(hintText: 'Any additional details...', hintStyle: TextStyle(color: tm), filled: true, fillColor: el, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)));
 
-  Widget _buildSubmitButton(bool d) => SizedBox(width: double.infinity, height: 56, child: ElevatedButton(onPressed: _isSubmitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))), child: _isSubmitting ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Submit Report', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
+  Widget _buildSubmitButton(bool d) => SizedBox(width: double.infinity, height: 56, child: ElevatedButton(onPressed: _isSubmitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))), child: _isSubmitting ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(AppLocalizations.of(context).reportStrainSubmitReport, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
 }

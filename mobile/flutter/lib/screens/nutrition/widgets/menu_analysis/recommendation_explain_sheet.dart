@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../services/menu_recommendation_service.dart';
 import '../../../../widgets/glass_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// "Why this pick?" glass sheet — renders the top positive + negative
 /// signal contributions with substituted user numbers so the
 /// recommendation feels transparent instead of magical.
@@ -65,7 +66,7 @@ class RecommendationExplainSheet extends StatelessWidget {
               child: FilledButton(
                 onPressed: () => Navigator.pop(context),
                 style: FilledButton.styleFrom(backgroundColor: AppColors.orange),
-                child: const Text('Got it'),
+                child: Text(AppLocalizations.of(context).weightIncrementsGotIt),
               ),
             ),
           ],

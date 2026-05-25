@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Lifecycle of the undo card within a single chat bubble.
 enum _UndoUiState { idle, undoing, undone, failed, expired }
 
@@ -149,7 +150,7 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('Undo'),
+                child: Text(AppLocalizations.of(context).workoutUiBuildersUndo),
               )
             : const SizedBox.shrink();
         break;
@@ -162,7 +163,7 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
         break;
       case _UndoUiState.undone:
         trailing = Text(
-          'Removed',
+          AppLocalizations.of(context).eventLoggedUndoRemoved,
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.error,
           ),
@@ -176,12 +177,12 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
             minimumSize: const Size(0, 32),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text('Retry'),
+          child: Text(AppLocalizations.of(context).buttonRetry),
         );
         break;
       case _UndoUiState.expired:
         trailing = Text(
-          'Saved',
+          AppLocalizations.of(context).savedHubSaved,
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

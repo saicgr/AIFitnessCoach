@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/inflammation_analysis.dart';
 import '../../../data/providers/inflammation_analysis_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Colors for inflammation display - monochrome
 class InflammationColors {
   static Color get inflammatory => AppColors.textMuted; // Gray for inflammatory
@@ -214,7 +215,7 @@ class _InflammationLoadingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Analyzing ingredients...',
+                  AppLocalizations.of(context).inflammationAnalysisAnalyzingIngredients,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -225,7 +226,7 @@ class _InflammationLoadingCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'AI is checking for inflammatory compounds',
+                  AppLocalizations.of(context).inflammationAnalysisAiIsCheckingFor,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
               ],
@@ -266,13 +267,13 @@ class _InflammationErrorCard extends StatelessWidget {
           Icon(Icons.info_outline, color: textMuted, size: 24),
           const SizedBox(height: 8),
           Text(
-            'Ingredient analysis unavailable',
+            AppLocalizations.of(context).inflammationAnalysisIngredientAnalysisUnavailabl,
             style: TextStyle(fontSize: 13, color: textMuted),
           ),
           const SizedBox(height: 8),
           TextButton(
             onPressed: onRetry,
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context).buttonRetry),
           ),
         ],
       ),
@@ -337,7 +338,7 @@ class _InflammationScoreHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Inflammation Score',
+                  AppLocalizations.of(context).loggedMealsInflammationScore,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -385,7 +386,7 @@ class _InflammationCountsRow extends StatelessWidget {
         children: [
           _CountChip(
             count: antiInflammatoryCount,
-            label: 'Good',
+            label: AppLocalizations.of(context).scoreExplainGood,
             color: InflammationColors.antiInflammatory,
             icon: Icons.thumb_up_outlined,
             isDark: isDark,
@@ -393,7 +394,7 @@ class _InflammationCountsRow extends StatelessWidget {
           const SizedBox(width: 8),
           _CountChip(
             count: neutralCount,
-            label: 'Neutral',
+            label: AppLocalizations.of(context).inflammationAnalysisNeutral,
             color: InflammationColors.neutral,
             icon: Icons.remove,
             isDark: isDark,
@@ -401,7 +402,7 @@ class _InflammationCountsRow extends StatelessWidget {
           const SizedBox(width: 8),
           _CountChip(
             count: inflammatoryCount,
-            label: 'Concern',
+            label: AppLocalizations.of(context).inflammationAnalysisConcern,
             color: InflammationColors.inflammatory,
             icon: Icons.warning_amber_outlined,
             isDark: isDark,
@@ -507,7 +508,7 @@ class _IngredientsSectionState extends State<_IngredientsSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Ingredients Analysis',
+            AppLocalizations.of(context).inflammationAnalysisIngredientsAnalysis,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -535,7 +536,7 @@ class _IngredientsSectionState extends State<_IngredientsSection> {
                 children: [
                   Text(
                     _expanded
-                        ? 'Show less'
+                        ? AppLocalizations.of(context).quickWorkoutSheetShowLess
                         : 'Show ${sortedIngredients.length - 6} more',
                     style: TextStyle(
                       fontSize: 13,

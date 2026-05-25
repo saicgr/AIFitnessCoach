@@ -9,6 +9,7 @@ import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Compact Apple-Watch-style concentric macro rings tile. Outer=Protein,
 /// middle=Carbs, inner=Fat. Below the rings, three legend chips show current
 /// grams vs target for each macro so the user can read progress without
@@ -84,7 +85,7 @@ class MacroRingsCard extends ConsumerWidget {
                 Icon(Icons.pie_chart_outline, size: 16, color: textMuted),
                 const SizedBox(width: 6),
                 Text(
-                  'Macros',
+                  AppLocalizations.of(context).nutritionFastingCardMacros,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

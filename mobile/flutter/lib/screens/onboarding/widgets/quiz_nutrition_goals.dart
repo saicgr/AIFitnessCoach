@@ -7,6 +7,7 @@ import 'calorie_macro_estimator.dart';
 import 'onboarding_theme.dart';
 import 'scroll_hint_arrow.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Nutrition goals and dietary restrictions for the pre-auth quiz.
 /// Collects both nutrition goals and any dietary restrictions.
 /// Shows calculated daily targets preview when user data is available.
@@ -155,7 +156,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
               children: [
                 if (widget.showHeader) ...[
                   Text(
-                    'What are your nutrition goals?',
+                    AppLocalizations.of(context).quizNutritionGoalsWhatAreYourNutrition,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -165,7 +166,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                   ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
                   const SizedBox(height: 8),
                   Text(
-                    'Select all that apply',
+                    AppLocalizations.of(context).quizNutritionGoalsSelectAllThatApply,
                     style: TextStyle(
                       fontSize: 14,
                       color: t.textSecondary,
@@ -241,7 +242,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                 if (widget.onRestrictionToggle != null) ...[
                   const SizedBox(height: 28),
                   Text(
-                    'Any dietary restrictions?',
+                    AppLocalizations.of(context).quizNutritionGoalsAnyDietaryRestrictions,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -250,7 +251,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                   ).animate().fadeIn(delay: 400.ms),
                   const SizedBox(height: 4),
                   Text(
-                    'Helps personalize meal suggestions',
+                    AppLocalizations.of(context).quizNutritionGoalsHelpsPersonalizeMealSuggest,
                     style: TextStyle(
                       fontSize: 12,
                       color: t.textSecondary,
@@ -323,7 +324,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                 if (widget.onMealsPerDayChanged != null) ...[
                   const SizedBox(height: 28),
                   Text(
-                    'Meals + snacks per day?',
+                    AppLocalizations.of(context).quizNutritionGoalsMealsSnacksPerDay,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -332,7 +333,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                   ).animate().fadeIn(delay: 550.ms),
                   const SizedBox(height: 4),
                   Text(
-                    'Include all meals and snacks',
+                    AppLocalizations.of(context).quizNutritionGoalsIncludeAllMealsAnd,
                     style: TextStyle(
                       fontSize: 12,
                       color: t.textSecondary,
@@ -441,7 +442,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Your Estimated Daily Targets',
+                      AppLocalizations.of(context).quizNutritionGoalsYourEstimatedDailyTargets,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

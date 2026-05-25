@@ -40,6 +40,7 @@ import '../models/workout_state.dart';
 import '../providers/active_workout_session_provider.dart';
 import '../widgets/quit_workout_dialog.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Mixin providing workout flow control: pause, quit, minimize,
 /// warmup/stretch phases, and workout completion/finalization.
 mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
@@ -810,7 +811,7 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Complete workout now?'),
+        title: Text(AppLocalizations.of(context).workoutFlowMixinCompleteWorkoutNow),
         content: const Text(
           'Any sets you haven’t logged will be saved as zero (0 weight, '
           '0 reps). You’ll go straight to the workout summary.',
@@ -818,11 +819,11 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep going'),
+            child: Text(AppLocalizations.of(context).workoutFlowMixinKeepGoing),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Complete'),
+            child: Text(AppLocalizations.of(context).workoutFlowMixinComplete),
           ),
         ],
       ),

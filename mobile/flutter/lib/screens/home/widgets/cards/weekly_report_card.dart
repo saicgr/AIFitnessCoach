@@ -9,6 +9,7 @@ import '../../../../data/providers/consistency_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Home-screen entry point into Reports & Insights.
 ///
 /// Shows a compact this-week progress ring + current streak + PR count and
@@ -108,7 +109,7 @@ class WeeklyReportCard extends ConsumerWidget {
                                 color: cyan, size: 16),
                             const SizedBox(width: 6),
                             Text(
-                              'Reports & Insights',
+                              AppLocalizations.of(context).weeklyReportCardReportsInsights,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -143,7 +144,7 @@ class WeeklyReportCard extends ConsumerWidget {
                             ],
                             _Chip(
                               icon: Icons.arrow_forward_rounded,
-                              label: 'View report',
+                              label: AppLocalizations.of(context).weeklyReportCardViewReport,
                               color: cyan,
                             ),
                           ],

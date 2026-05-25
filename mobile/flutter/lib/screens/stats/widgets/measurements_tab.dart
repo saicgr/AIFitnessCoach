@@ -11,6 +11,7 @@ import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'measurements_tab_ui.dart';
 
 
@@ -422,7 +423,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                       child: isSubmitting
                           ? const SizedBox(width: 20, height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          : Text(AppLocalizations.of(context).buttonSave, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -506,7 +507,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => setState(() => _selectedPeriod = 'all'),
-                child: Text('View all', style: TextStyle(color: cyan)),
+                child: Text(AppLocalizations.of(context).measurementsViewAll, style: TextStyle(color: cyan)),
               ),
             ],
           ],
@@ -530,7 +531,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
               style: TextStyle(fontSize: 13, color: textMuted),
             ),
             const SizedBox(height: 8),
-            Text('Log again to see trends', style: TextStyle(fontSize: 12, color: textMuted)),
+            Text(AppLocalizations.of(context).measurementsLogAgainToSee, style: TextStyle(fontSize: 12, color: textMuted)),
           ],
         ),
       );

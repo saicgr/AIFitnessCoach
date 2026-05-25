@@ -14,6 +14,7 @@ import '../main_shell.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'floating_chat_provider.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Resolves the currently selected [CoachPersona] from AI settings.
 CoachPersona? _resolveCoach(String? coachPersonaId) {
   if (coachPersonaId == null || coachPersonaId.isEmpty) return null;
@@ -335,7 +336,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                         ),
                       ),
                       Text(
-                        _isLoading ? 'Typing...' : 'Online',
+                        _isLoading ? AppLocalizations.of(context).globalChatBubbleTyping : AppLocalizations.of(context).globalChatBubbleOnline,
                         style: TextStyle(
                           fontSize: 12,
                           color: _isLoading
@@ -352,12 +353,12 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     widget.onClose();
                     context.push('/coach-selection?fromSettings=true');
                   },
-                  tooltip: 'Change coach',
+                  tooltip: AppLocalizations.of(context).workoutAiCoachChangeCoach,
                 ),
                 IconButton(
                   icon: Icon(Icons.close, color: textMuted),
                   onPressed: widget.onClose,
-                  tooltip: 'Close',
+                  tooltip: AppLocalizations.of(context).commonClose,
                 ),
               ],
             ),
@@ -379,10 +380,10 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                         color: isDark ? AppColors.error : AppColorsLight.error,
                         size: 40),
                     const SizedBox(height: 12),
-                    Text('Error loading messages', style: TextStyle(color: textMuted)),
+                    Text(AppLocalizations.of(context).globalChatBubbleErrorLoadingMessages, style: TextStyle(color: textMuted)),
                     TextButton(
                       onPressed: () => ref.read(chatMessagesProvider.notifier).loadHistory(),
-                      child: const Text('Retry'),
+                      child: Text(AppLocalizations.of(context).buttonRetry),
                     ),
                   ],
                 ),
@@ -428,7 +429,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     minLines: 1,
                     style: TextStyle(fontSize: 14, color: textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Ask your AI coach...',
+                      hintText: AppLocalizations.of(context).globalChatBubbleAskYourAiCoach,
                       hintStyle: TextStyle(color: textMuted),
                       filled: true,
                       fillColor: glassSurface,
@@ -509,7 +510,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           ),
           const SizedBox(height: 16),
           Text(
-            'How can I help you today?',
+            AppLocalizations.of(context).globalChatBubbleHowCanIHelp,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -518,7 +519,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Ask me anything about fitness',
+            AppLocalizations.of(context).globalChatBubbleAskMeAnythingAbout,
             style: TextStyle(
               fontSize: 14,
               color: textSecondary,

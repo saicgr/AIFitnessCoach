@@ -60,7 +60,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
             children: [
               // Title
               Text(
-                'Daily Check-in',
+                AppLocalizations.of(context).injuryDetailScreenDailyCheckIn,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -124,7 +124,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                 maxLines: 3,
                 style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Any notes about how it feels today...',
+                  hintText: AppLocalizations.of(context).injuryDetailScreenAnyNotesAboutHow,
                   hintStyle: TextStyle(color: textMuted),
                   filled: true,
                   fillColor: isDark ? AppColors.pureBlack : Colors.grey[100],
@@ -178,8 +178,8 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Log Check-in',
+                      : Text(
+                          AppLocalizations.of(context).injuryDetailScreenLogCheckIn,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

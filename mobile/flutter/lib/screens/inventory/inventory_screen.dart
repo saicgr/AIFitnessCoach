@@ -13,6 +13,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/level_up_catch_up_banner.dart';
 import '../home/widgets/daily_crate_banner.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'inventory_screen_part_consumable_card.dart';
 
 part 'inventory_screen_ui.dart';
@@ -53,12 +54,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Row(
                 children: [
                   Icon(Icons.flash_on, color: Colors.white),
                   SizedBox(width: 8),
-                  Text('2x XP activated for 24 hours!'),
+                  Text(AppLocalizations.of(context).inventory2xXpActivatedFor),
                 ],
               ),
               backgroundColor: Color(0xFF9C27B0),
@@ -66,8 +67,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to activate 2x XP token. Please try again.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).inventoryFailedToActivate2x),
               backgroundColor: Colors.red,
             ),
           );
@@ -89,7 +90,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result.message ?? 'Failed to open crate'),
+              content: Text(result.message ?? AppLocalizations.of(context).inventoryFailedToOpenCrate),
               backgroundColor: Colors.red,
             ),
           );
@@ -145,7 +146,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'You received:',
+              AppLocalizations.of(context).inventoryYouReceived,
               style: TextStyle(
                 color: textMuted,
                 fontSize: 14,
@@ -164,7 +165,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             if (reward.isXP) ...[
               const SizedBox(height: 4),
               Text(
-                'Added to your XP total',
+                AppLocalizations.of(context).inventoryAddedToYourXp,
                 style: TextStyle(
                   color: textMuted,
                   fontSize: 13,
@@ -173,7 +174,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ] else ...[
               const SizedBox(height: 4),
               Text(
-                'Added to your inventory',
+                AppLocalizations.of(context).inventoryAddedToYourInventory,
                 style: TextStyle(
                   color: textMuted,
                   fontSize: 13,
@@ -194,8 +195,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Awesome!',
+              child: Text(
+                AppLocalizations.of(context).inventoryAwesome,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -237,7 +238,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             Icon(Icons.verified_user, color: const Color(0xFF3B82F6)),
             const SizedBox(width: 8),
             Text(
-              'Trust Levels',
+              AppLocalizations.of(context).inventoryTrustLevels,
               style: TextStyle(color: textColor),
             ),
           ],
@@ -277,7 +278,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Trust level affects XP earned from workouts and activities.',
+              AppLocalizations.of(context).inventoryTrustLevelAffectsXp,
               style: TextStyle(
                 color: textMuted,
                 fontSize: 13,
@@ -289,7 +290,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(foregroundColor: accentColor),
-            child: const Text('Got it'),
+            child: Text(AppLocalizations.of(context).weightIncrementsGotIt),
           ),
         ],
       ),
@@ -422,7 +423,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            'Inventory',
+                            AppLocalizations.of(context).xpGoalsScreenInventory,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -455,7 +456,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
                       // Consumables Section
                       Text(
-                        'Items',
+                        AppLocalizations.of(context).statsRewardsItems,
                         style: TextStyle(
                           color: textColor,
                           fontSize: 18,
@@ -492,7 +493,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         description: 'Protect your streak for 1 missed day',
                         count: consumables?.streakShield ?? 0,
                         actionLabel: null, // Auto-used when needed
-                        helperText: 'Used automatically when you miss a day',
+                        helperText: AppLocalizations.of(context).inventoryUsedAutomaticallyWhenYou,
                         isDark: isDark,
                         elevatedColor: elevatedColor,
                         textColor: textColor,
@@ -503,7 +504,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
                       // Crates Section
                       Text(
-                        'Crates',
+                        AppLocalizations.of(context).inventoryCrates,
                         style: TextStyle(
                           color: textColor,
                           fontSize: 18,
@@ -512,7 +513,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Open crates to receive XP or consumable items',
+                        AppLocalizations.of(context).inventoryOpenCratesToReceive,
                         style: TextStyle(
                           color: textMuted,
                           fontSize: 14,
@@ -719,10 +720,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Text(
-                          '⚡ 2x XP ACTIVE',
+                          AppLocalizations.of(context).inventory2xXpActive,
                           style: TextStyle(
                             color: boostHighlight,
                             fontSize: 15,
@@ -736,7 +737,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Every XP earned right now is doubled.',
+                      AppLocalizations.of(context).inventoryEveryXpEarnedRight,
                       style: TextStyle(
                         color: textColor.withValues(alpha: 0.85),
                         fontSize: 12,
@@ -790,7 +791,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 ),
               ),
               Text(
-                'of 24h boost',
+                AppLocalizations.of(context).inventoryOf24hBoost,
                 style: TextStyle(
                   color: textMuted,
                   fontSize: 11,
@@ -879,7 +880,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   Row(
                     children: [
                       Text(
-                        'Merch Rewards',
+                        AppLocalizations.of(context).merchClaimsMerchRewards,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -909,7 +910,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   const SizedBox(height: 4),
                   Text(
                     activeCount == 0
-                        ? 'First unlock: Level 50 — free sticker pack'
+                        ? AppLocalizations.of(context).inventoryFirstUnlockLevel50
                         : pendingCount > 0
                             ? "Tap to accept — we'll reach out by email"
                             : '$activeCount reward${activeCount == 1 ? "" : "s"} earned',
@@ -963,7 +964,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Refer friends, earn merch faster',
+                    AppLocalizations.of(context).inventoryReferFriendsEarnMerch,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -972,7 +973,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '3 refs → Sticker · 10 → Shaker · 25 → T-Shirt',
+                    AppLocalizations.of(context).inventory3RefsSticker10,
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
                 ],
@@ -1023,7 +1024,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Cosmetics',
+                    AppLocalizations.of(context).inventoryCosmetics,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -1037,7 +1038,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          'Tap to browse or change',
+                          AppLocalizations.of(context).inventoryTapToBrowseOr,
                           style: TextStyle(fontSize: 12, color: textMuted),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1074,7 +1075,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Icon(Icons.lightbulb_outline, color: AppColors.warning, size: 20),
               const SizedBox(width: 8),
               Text(
-                'How to Earn Items',
+                AppLocalizations.of(context).inventoryHowToEarnItems,
                 style: TextStyle(
                   color: textColor,
                   fontSize: 16,
@@ -1086,32 +1087,32 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           const SizedBox(height: 16),
           _buildEarnMethod(
             icon: Icons.calendar_today,
-            title: 'Daily Crates',
-            description: 'Pick 1 of 3 crates daily',
+            title: AppLocalizations.of(context).inventoryScreenUiDailyCrates,
+            description: AppLocalizations.of(context).inventoryScreenUiPick1Of3,
             textColor: textColor,
             textMuted: textMuted,
           ),
           const SizedBox(height: 12),
           _buildEarnMethod(
             icon: Icons.local_fire_department,
-            title: 'Streak Milestones',
-            description: '7, 30, 100 day streaks',
+            title: AppLocalizations.of(context).inventoryStreakMilestones,
+            description: AppLocalizations.of(context).inventory730100Day,
             textColor: textColor,
             textMuted: textMuted,
           ),
           const SizedBox(height: 12),
           _buildEarnMethod(
             icon: Icons.emoji_events,
-            title: 'Level Up Rewards',
-            description: 'Every 5 levels',
+            title: AppLocalizations.of(context).inventoryLevelUpRewards,
+            description: AppLocalizations.of(context).inventoryEvery5Levels,
             textColor: textColor,
             textMuted: textMuted,
           ),
           const SizedBox(height: 12),
           _buildEarnMethod(
             icon: Icons.check_circle,
-            title: 'Complete All Daily Goals',
-            description: 'Unlock Activity Crate',
+            title: AppLocalizations.of(context).inventoryCompleteAllDailyGoals,
+            description: AppLocalizations.of(context).inventoryUnlockActivityCrate,
             textColor: textColor,
             textMuted: textMuted,
           ),

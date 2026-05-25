@@ -11,6 +11,7 @@ import '../../../data/services/api_client.dart';
 import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Provider for fasting settings state
 final fastingSettingsProvider =
     StateNotifierProvider<FastingSettingsNotifier, FastingSettingsState>((ref) {
@@ -221,8 +222,8 @@ class NutritionFastingSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeader(
-            title: 'NUTRITION & FASTING',
-            subtitle: 'Configure your eating schedule',
+            title: AppLocalizations.of(context).nutritionFastingNutritionFasting,
+            subtitle: AppLocalizations.of(context).nutritionFastingConfigureYourEatingSchedule,
             helpTitle: 'Nutrition & Fasting Explained',
             helpItems: helpItems,
           ),
@@ -241,8 +242,8 @@ class NutritionFastingSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'NUTRITION & FASTING',
-          subtitle: 'Configure your eating schedule',
+          title: AppLocalizations.of(context).nutritionFastingNutritionFasting,
+          subtitle: AppLocalizations.of(context).nutritionFastingConfigureYourEatingSchedule,
           helpTitle: 'Nutrition & Fasting Explained',
           helpItems: helpItems,
         ),
@@ -285,7 +286,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Intermittent Fasting',
+                    AppLocalizations.of(context).nutritionFastingIntermittentFasting,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -326,7 +327,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Protocol',
+                        AppLocalizations.of(context).nutritionFastingProtocol,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -359,7 +360,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                   Icon(Icons.bedtime_outlined, color: accentColor, size: 20),
                   const SizedBox(width: 10),
                   Text(
-                    'Sleep',
+                    AppLocalizations.of(context).sleepDetailSleep,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -369,7 +370,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                   const Spacer(),
                   // Compact time pickers in a row
                   _CompactTimePicker(
-                    label: 'Wake',
+                    label: AppLocalizations.of(context).nutritionFastingWake,
                     time: settingsState.wakeTime,
                     onTap: () => _showTimePicker(
                       context,
@@ -386,7 +387,7 @@ class _NutritionFastingCard extends ConsumerWidget {
                   Text('→', style: TextStyle(color: textMuted, fontSize: 12)),
                   const SizedBox(width: 8),
                   _CompactTimePicker(
-                    label: 'Sleep',
+                    label: AppLocalizations.of(context).sleepDetailSleep,
                     time: settingsState.sleepTime,
                     onTap: () => _showTimePicker(
                       context,
@@ -592,7 +593,7 @@ class _ProtocolSelectorSheet extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Fasting Protocol',
+              AppLocalizations.of(context).nutritionFastingFastingProtocol,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

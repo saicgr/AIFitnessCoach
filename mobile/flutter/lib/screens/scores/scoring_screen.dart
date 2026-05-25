@@ -12,6 +12,7 @@ import 'widgets/score_breakdown_section.dart';
 import 'widgets/nutrition_score_card.dart';
 import 'widgets/consistency_score_card.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full scoring screen showing detailed fitness score breakdown.
 class ScoringScreen extends ConsumerStatefulWidget {
   const ScoringScreen({super.key});
@@ -76,7 +77,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           // App bar
           SliverToBoxAdapter(
             child: PillAppBar(
-              title: 'Fitness Score',
+              title: AppLocalizations.of(context).strengthFitnessScore,
               actions: [
                 PillAppBarAction(
                   icon: Icons.refresh,
@@ -192,7 +193,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'How Scores Are Calculated',
+                AppLocalizations.of(context).scoringHowScoresAreCalculated,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -208,7 +209,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           _buildWeightItem('Readiness', '10%', textMuted),
           const SizedBox(height: 8),
           Text(
-            'Your overall fitness score combines these factors to give you a comprehensive view of your fitness journey.',
+            AppLocalizations.of(context).scoringYourOverallFitnessScore,
             style: TextStyle(
               fontSize: 12,
               color: textMuted,

@@ -5,6 +5,7 @@ import '../widgets/section_header.dart';
 import 'audio_settings_section.dart';
 import 'sound_settings_section.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Collapsible "Audio" card that groups Sound Effects and Workout Audio
 /// under a single expandable tile. Header reads "AUDIO" (not "ADVANCED
 /// AUDIO") because the Notifications card already exposes its own
@@ -60,7 +61,7 @@ class _AdvancedAudioSectionState extends State<AdvancedAudioSection> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Sound effects & workout audio',
+                              AppLocalizations.of(context).advancedAudioSoundEffectsWorkoutAudio,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
@@ -68,7 +69,7 @@ class _AdvancedAudioSectionState extends State<AdvancedAudioSection> {
                               ),
                             ),
                             Text(
-                              'Countdown, rest timer, voice announcements',
+                              AppLocalizations.of(context).advancedAudioCountdownRestTimerVoice,
                               style: TextStyle(fontSize: 12, color: textMuted),
                             ),
                           ],

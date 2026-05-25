@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Instagram-Story template: period-level summary (1W / 1M / 3M / 6M / 1Y).
 /// 2x2 grid of big numbers with previous-period deltas.
 ///
@@ -120,8 +121,8 @@ class InsightsSummaryTemplate extends StatelessWidget {
                     letterSpacing: 6,
                   ),
                 ),
-                const Text(
-                  'SUMMARY',
+                Text(
+                  AppLocalizations.of(context).insightsSummaryTemplateSummary,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 26,
@@ -132,7 +133,7 @@ class InsightsSummaryTemplate extends StatelessWidget {
                 const SizedBox(height: 18),
                 _BigStatTile(
                   icon: Icons.fitness_center_rounded,
-                  label: 'WORKOUTS',
+                  label: AppLocalizations.of(context).weeklyRecapTemplateWorkouts,
                   value: '$workoutsCompleted',
                   delta: _calcDelta(workoutsCompleted, prevWorkouts),
                   color: const Color(0xFF00D9FF),
@@ -151,7 +152,7 @@ class InsightsSummaryTemplate extends StatelessWidget {
                     Expanded(
                       child: _HalfTile(
                         icon: Icons.local_fire_department_rounded,
-                        label: 'CALORIES',
+                        label: AppLocalizations.of(context).retro80sTemplateCalories,
                         value: _fmtCalories(totalCalories),
                         color: const Color(0xFFF97316),
                       ),
@@ -160,7 +161,7 @@ class InsightsSummaryTemplate extends StatelessWidget {
                     Expanded(
                       child: _HalfTile(
                         icon: Icons.emoji_events_rounded,
-                        label: 'PRs',
+                        label: AppLocalizations.of(context).weeklyWrappedPrs,
                         value: '$totalPrs',
                         color: const Color(0xFFFBBF24),
                       ),

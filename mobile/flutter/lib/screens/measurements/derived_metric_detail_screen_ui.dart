@@ -107,7 +107,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Trends',
+            AppLocalizations.of(context).progressChartsTrends,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -125,7 +125,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
                         Icon(Icons.show_chart, size: 40, color: textMuted),
                         const SizedBox(height: 8),
                         Text(
-                          'Insufficient data',
+                          AppLocalizations.of(context).derivedMetricDetailInsufficientData,
                           style: TextStyle(color: textMuted),
                         ),
                         const SizedBox(height: 4),
@@ -225,7 +225,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
         children: [
           Expanded(
             child: _StatItem(
-              label: 'Min',
+              label: AppLocalizations.of(context).syncedWorkoutDetailMin,
               value: '${_formatValue(min)} $unit',
               color: AppColors.success,
             ),
@@ -237,7 +237,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
           ),
           Expanded(
             child: _StatItem(
-              label: 'Avg',
+              label: AppLocalizations.of(context).syncedWorkoutDetailAvg,
               value: '${_formatValue(avg)} $unit',
               color: cyan,
             ),
@@ -249,7 +249,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
           ),
           Expanded(
             child: _StatItem(
-              label: 'Max',
+              label: AppLocalizations.of(context).strengthOverviewCardMax,
               value: '${_formatValue(max)} $unit',
               color: AppColors.error,
             ),
@@ -302,7 +302,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
             child: Column(
               children: [
                 Text(
-                  'Weekly Rate',
+                  AppLocalizations.of(context).nutritionFastingCardWeeklyRate,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
                 const SizedBox(height: 4),
@@ -326,7 +326,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
             child: Column(
               children: [
                 Text(
-                  'Monthly Rate',
+                  AppLocalizations.of(context).derivedMetricDetailMonthlyRate,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
                 const SizedBox(height: 4),
@@ -443,7 +443,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'BASED ON',
+            AppLocalizations.of(context).derivedMetricDetailBasedOn,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -509,7 +509,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
                   Icon(Icons.history, size: 40, color: textMuted),
                   const SizedBox(height: 8),
                   Text(
-                    'No history yet',
+                    AppLocalizations.of(context).volumeHistoryNoHistoryYet,
                     style: TextStyle(color: textMuted),
                   ),
                 ],

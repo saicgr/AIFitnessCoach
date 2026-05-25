@@ -53,6 +53,7 @@ import '../../../core/providers/window_mode_provider.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/models/set_progression.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'workout_ui_builders_mixin_part_drag_action_zone.dart';
 
 part 'workout_ui_builders_mixin_ui_1.dart';
@@ -440,13 +441,13 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
                         width: 1,
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.info_outline, color: Colors.white, size: 14),
                         SizedBox(width: 4),
                         Text(
-                          'How to',
+                          AppLocalizations.of(context).workoutUiBuildersHowTo,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11,
@@ -706,7 +707,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
           // Quick actions
           buildLandscapeMiniChip(
             icon: Icons.water_drop,
-            label: 'Drink',
+            label: AppLocalizations.of(context).workoutUiBuildersDrink,
             onTap: showHydrationDialogImpl,
             isDark: isDark,
             chipBackground: chipBackground,
@@ -715,7 +716,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
           ),
           buildLandscapeMiniChip(
             icon: Icons.sticky_note_2_outlined,
-            label: 'Note',
+            label: AppLocalizations.of(context).workoutUiBuildersNote,
             onTap: () => showNotesSheet(exercises[viewingExerciseIndex]),
             isDark: isDark,
             chipBackground: chipBackground,
@@ -796,7 +797,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
                 Expanded(
                   child: _DragActionZone(
                     icon: Icons.delete_outline_rounded,
-                    label: 'Delete',
+                    label: AppLocalizations.of(context).buttonDelete,
                     color: Colors.red,
                     isDark: isDark,
                     onAccept: (draggedIndex) {
@@ -813,7 +814,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
                 Expanded(
                   child: _DragActionZone(
                     icon: Icons.swap_horiz_rounded,
-                    label: 'Swap',
+                    label: AppLocalizations.of(context).workoutUiBuildersSwap,
                     color: AppColors.orange,
                     isDark: isDark,
                     onAccept: (draggedIndex) {
@@ -947,7 +948,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
                   .shake(duration: 300.ms),
               const SizedBox(height: 24),
               Text(
-                'Saving workout...',
+                AppLocalizations.of(context).workoutUiBuildersSavingWorkout,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

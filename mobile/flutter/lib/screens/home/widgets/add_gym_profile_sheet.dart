@@ -11,6 +11,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import 'gym_equipment_sheet.dart';
 import 'import_equipment_sheet.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 part 'add_gym_profile_sheet_part_equipment_follow_up.dart';
 

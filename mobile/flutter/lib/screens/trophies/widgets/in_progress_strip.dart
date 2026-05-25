@@ -7,6 +7,7 @@ import '../../../core/utils/safe_num.dart';
 import '../../../data/models/trophy.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Horizontal strip of in-progress trophies (badges the user hasn't yet
 /// earned but is making progress toward). Card shows icon, title,
 /// progress bar, and — where applicable — a reset-date pill.
@@ -153,7 +154,7 @@ class _EmptyInProgress extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Text(
-        'Log a workout to unlock your first badges in progress.',
+        AppLocalizations.of(context).inProgressStripLogAWorkoutTo,
         style: TextStyle(color: muted, fontSize: 13, height: 1.35),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/models/trophy.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Colourful gradient tile showcasing up to 6 recently-earned trophies as
 /// an artful cluster (not a grid). Matches the purple→pink→red reference
 /// and stays alive even when the user has no trophies yet (renders an
@@ -193,8 +194,8 @@ class _EmptyShowcase extends StatelessWidget {
             style: TextStyle(fontSize: 44),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Log your first workout to earn your first badge',
+          Text(
+            AppLocalizations.of(context).myBadgesShowcaseLogYourFirstWorkout,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,

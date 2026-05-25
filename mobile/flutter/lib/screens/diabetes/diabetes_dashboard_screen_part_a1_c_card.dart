@@ -80,7 +80,7 @@ class _A1CCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Latest',
+                        AppLocalizations.of(context).flexibilityProgressChartLatest,
                         style: TextStyle(
                           fontSize: 11,
                           color: textMuted,
@@ -141,7 +141,7 @@ class _A1CCard extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              'Estimated',
+                              AppLocalizations.of(context).diabetesDashboardScreenEstimated,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: textMuted,
@@ -181,7 +181,7 @@ class _A1CCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Based on readings',
+                          AppLocalizations.of(context).diabetesDashboardScreenBasedOnReadings,
                           style: TextStyle(
                             fontSize: 10,
                             color: textMuted,
@@ -275,7 +275,7 @@ class _RecentReadingsCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Recent Readings',
+                AppLocalizations.of(context).diabetesDashboardScreenRecentReadings,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -301,9 +301,9 @@ class _RecentReadingsCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('All Blood Glucose Readings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary)),
+                            Text(AppLocalizations.of(context).diabetesDashboardScreenAllBloodGlucoseReadings, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary)),
                             const SizedBox(height: 16),
-                            Expanded(child: ListView(controller: controller, children: const [Center(child: Text('No additional readings available'))])),
+                            Expanded(child: ListView(controller: controller, children: [Center(child: Text(AppLocalizations.of(context).diabetesDashboardScreenNoAdditionalReadingsAvailab))])),
                           ],
                         ),
                       ),
@@ -318,7 +318,7 @@ class _RecentReadingsCard extends StatelessWidget {
                   });
                 },
                 child: Text(
-                  'See All',
+                  AppLocalizations.of(context).weightTrackingCardSeeAll,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.cyan,
@@ -434,7 +434,7 @@ class _ReadingItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              reading.source == 'cgm' ? 'CGM' : 'Manual',
+              reading.source == 'cgm' ? 'CGM' : AppLocalizations.of(context).diabetesDashboardScreenManual,
               style: TextStyle(
                 fontSize: 9,
                 color: textMuted,
@@ -530,7 +530,7 @@ class _HealthConnectSyncCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Health Connect',
+                  AppLocalizations.of(context).settingsHealthConnect,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -547,7 +547,7 @@ class _HealthConnectSyncCard extends StatelessWidget {
                   )
                 else
                   Text(
-                    'Sync your glucose data',
+                    AppLocalizations.of(context).diabetesDashboardScreenSyncYourGlucoseData,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,
@@ -575,12 +575,12 @@ class _HealthConnectSyncCard extends StatelessWidget {
                       color: Colors.white,
                     ),
                   )
-                : const Row(
+                : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.sync, size: 18),
                       SizedBox(width: 6),
-                      Text('Sync'),
+                      Text(AppLocalizations.of(context).diabetesDashboardScreenSync),
                     ],
                   ),
           ),

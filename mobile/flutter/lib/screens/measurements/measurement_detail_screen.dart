@@ -19,6 +19,7 @@ import '../../core/constants/branding.dart';
 import '../../widgets/trends/trend_chart.dart';
 import '../../widgets/trends/trend_correlation.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'measurement_detail_screen_part_stat_item.dart';
 
 part 'measurement_detail_screen_ui.dart';
@@ -153,7 +154,7 @@ class _MeasurementDetailScreenState
                                 minWidth: 36, minHeight: 36),
                             icon: LineIcon('custom_trend',
                                 color: textMuted, size: 22),
-                            tooltip: 'View trends',
+                            tooltip: AppLocalizations.of(context).measurementDetailViewTrends,
                             onPressed: () {
                               HapticService.light();
                               context.push('/trends/custom',
@@ -177,7 +178,7 @@ class _MeasurementDetailScreenState
                                 border: Border.all(color: cardBorder),
                               ),
                               child: Text(
-                                _isMetric ? 'Metric' : 'Imperial',
+                                _isMetric ? AppLocalizations.of(context).measurementsScreenPartMetric : AppLocalizations.of(context).measurementsScreenPartImperial,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: cyan,
@@ -322,7 +323,7 @@ class _MeasurementDetailScreenState
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'HISTORY',
+                        AppLocalizations.of(context).measurementDetailHistory,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -534,7 +535,7 @@ class _MeasurementDetailScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Trends',
+            AppLocalizations.of(context).progressChartsTrends,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -552,19 +553,19 @@ class _MeasurementDetailScreenState
                         Icon(Icons.show_chart, size: 40, color: textMuted),
                         const SizedBox(height: 8),
                         Text(
-                          'No data in this range',
+                          AppLocalizations.of(context).trendChartNoDataInThis,
                           style: TextStyle(color: textMuted),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Try selecting a wider time range or log a new entry',
+                          AppLocalizations.of(context).measurementDetailTrySelectingAWider,
                           style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: () => _showAddMeasurementSheet(context),
-                          child: Text('Add Entry', style: TextStyle(color: cyan)),
+                          child: Text(AppLocalizations.of(context).metricsDashboardAddEntry, style: TextStyle(color: cyan)),
                         ),
                       ],
                     ),
@@ -666,7 +667,7 @@ class _MeasurementDetailScreenState
         children: [
           Expanded(
             child: _StatItem(
-              label: 'Min',
+              label: AppLocalizations.of(context).syncedWorkoutDetailMin,
               value: '${_formatValue(min)} $unit',
               color: AppColors.success,
             ),
@@ -678,7 +679,7 @@ class _MeasurementDetailScreenState
           ),
           Expanded(
             child: _StatItem(
-              label: 'Avg',
+              label: AppLocalizations.of(context).syncedWorkoutDetailAvg,
               value: '${_formatValue(avg)} $unit',
               color: cyan,
             ),
@@ -690,7 +691,7 @@ class _MeasurementDetailScreenState
           ),
           Expanded(
             child: _StatItem(
-              label: 'Max',
+              label: AppLocalizations.of(context).strengthOverviewCardMax,
               value: '${_formatValue(max)} $unit',
               color: AppColors.error,
             ),
@@ -726,19 +727,19 @@ class _MeasurementDetailScreenState
             ? AppColors.elevated
             : AppColorsLight.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Entry?'),
+        title: Text(AppLocalizations.of(context).workoutHistoryImportDeleteEntry),
         content: Text(
           'Delete this ${entry.type.displayName} entry from ${DateFormat('MMM d, y').format(entry.recordedAt)}?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -879,7 +880,7 @@ class _MeasurementDetailScreenState
 
                 // Notes input
                 Text(
-                  'NOTES (OPTIONAL)',
+                  AppLocalizations.of(context).measurementsScreenPartNotesOptional,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -892,7 +893,7 @@ class _MeasurementDetailScreenState
                   controller: notesController,
                   maxLines: 2,
                   decoration: InputDecoration(
-                    hintText: 'Add any notes...',
+                    hintText: AppLocalizations.of(context).measurementsScreenPartAddAnyNotes,
                     filled: true,
                     fillColor: elevated,
                     border: OutlineInputBorder(
@@ -913,8 +914,8 @@ class _MeasurementDetailScreenState
                             final valueText = valueController.text.trim();
                             if (valueText.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please enter a value'),
+                                SnackBar(
+                                  content: Text(AppLocalizations.of(context).measurementsScreenPartPleaseEnterAValue),
                                   backgroundColor: AppColors.error,
                                 ),
                               );
@@ -924,8 +925,8 @@ class _MeasurementDetailScreenState
                             final value = double.tryParse(valueText);
                             if (value == null || value <= 0) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please enter a valid number'),
+                                SnackBar(
+                                  content: Text(AppLocalizations.of(context).recordAttemptPleaseEnterAValid),
                                   backgroundColor: AppColors.error,
                                 ),
                               );
@@ -1012,8 +1013,8 @@ class _MeasurementDetailScreenState
                               color: isDark ? AppColors.pureBlack : Colors.white,
                             ),
                           )
-                        : const Text(
-                            'Save',
+                        : Text(
+                            AppLocalizations.of(context).buttonSave,
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 16),
                           ),

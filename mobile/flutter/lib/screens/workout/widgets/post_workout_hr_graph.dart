@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/heart_rate_stream_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Apple Watch / Strava–style HR summary for the workout-complete screen.
 ///
 /// Renders:
@@ -84,7 +85,7 @@ class PostWorkoutHrGraph extends ConsumerWidget {
               const Icon(Icons.favorite_rounded, size: 18, color: Color(0xFFEF4444)),
               const SizedBox(width: 6),
               Text(
-                'Heart rate',
+                AppLocalizations.of(context).ringCatalogHeartRate,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -207,11 +208,11 @@ class PostWorkoutHrGraph extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _Stat(label: 'Avg', value: '$avg'),
-              _Stat(label: 'Peak', value: '$peak'),
-              _Stat(label: 'Min', value: '$low'),
+              _Stat(label: AppLocalizations.of(context).syncedWorkoutDetailAvg, value: '$avg'),
+              _Stat(label: AppLocalizations.of(context).syncedWorkoutDetailPeak, value: '$peak'),
+              _Stat(label: AppLocalizations.of(context).syncedWorkoutDetailMin, value: '$low'),
               _Stat(
-                label: '60s rec.',
+                label: AppLocalizations.of(context).postWorkoutHr60sRec,
                 value: recovery > 0 ? '−$recovery' : '—',
               ),
             ],
@@ -282,7 +283,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'No heart-rate data captured. Wear a strap (e.g. Amazfit Helios) and grant Health permissions to see live HR + post-workout graph.',
+              AppLocalizations.of(context).postWorkoutHrNoHeartRateData,
               style: TextStyle(
                 fontSize: 12,
                 color: isDark

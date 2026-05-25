@@ -7,6 +7,7 @@ import '../core/providers/week_start_provider.dart';
 import '../core/theme/accent_color_provider.dart';
 import '../data/services/haptic_service.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Horizontal, week-paginated date strip shared by the Nutrition tab and the
 /// Sleep / Combined-Health detail screens.
 ///
@@ -167,7 +168,7 @@ class _DateStripState extends ConsumerState<DateStrip> {
                 size: 18,
                 color: textMuted,
               ),
-              tooltip: 'Pick a date',
+              tooltip: AppLocalizations.of(context).scheduleMealPickADate,
               onPressed: () => _openPicker(context),
               splashRadius: 20,
               constraints: const BoxConstraints.tightFor(width: 36, height: 36),

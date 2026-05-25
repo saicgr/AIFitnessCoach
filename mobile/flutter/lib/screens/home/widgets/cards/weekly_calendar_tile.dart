@@ -8,6 +8,7 @@ import '../../../../data/models/home_layout.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Weekly Calendar Card - Shows 7-day workout overview
 class WeeklyCalendarCard extends ConsumerWidget {
   final TileSize size;
@@ -94,7 +95,7 @@ class WeeklyCalendarCard extends ConsumerWidget {
                 Icon(Icons.calendar_today, color: accentColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'This Week',
+                  AppLocalizations.of(context).workoutCompleteThisWeek,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,

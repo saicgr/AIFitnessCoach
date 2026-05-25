@@ -365,7 +365,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                 child: Text(
-                  'Filter by Country',
+                  AppLocalizations.of(context).foodBrowserPanelFilterByCountry,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -387,7 +387,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                     autofocus: true,
                     style: TextStyle(fontSize: 14, color: textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Search countries…',
+                      hintText: AppLocalizations.of(context).foodBrowserPanelSearchCountries,
                       hintStyle: TextStyle(color: textMuted, fontSize: 14),
                       prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
                       border: InputBorder.none,
@@ -414,7 +414,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                         title: Row(
                           children: [
                             Text(
-                              'All Countries',
+                              AppLocalizations.of(context).foodBrowserPanelAllCountries,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
@@ -429,7 +429,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                                   color: cyan.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: Text('Default', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cyan)),
+                                child: Text(AppLocalizations.of(context).foodBrowserPanelDefault, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cyan)),
                               ),
                             ],
                           ],
@@ -445,7 +445,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.all(4),
-                                  child: Text('Set Default', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cyan)),
+                                  child: Text(AppLocalizations.of(context).foodBrowserPanelSetDefault, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cyan)),
                                 ),
                               ),
                             if (isActive) Icon(Icons.check, size: 18, color: cyan),
@@ -482,7 +482,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                                 color: cyan.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: Text('Default', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cyan)),
+                              child: Text(AppLocalizations.of(context).foodBrowserPanelDefault, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cyan)),
                             ),
                           ],
                         ],
@@ -498,7 +498,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(4),
-                                child: Text('Set Default', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cyan)),
+                                child: Text(AppLocalizations.of(context).foodBrowserPanelSetDefault, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cyan)),
                               ),
                             ),
                           if (isActive) Icon(Icons.check, size: 18, color: cyan),
@@ -563,7 +563,7 @@ class _BrowseSectionHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'See all',
+                    AppLocalizations.of(context).profileScreenPartSeeAll,
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: teal),
                   ),
                   Icon(Icons.chevron_right, size: 16, color: teal),

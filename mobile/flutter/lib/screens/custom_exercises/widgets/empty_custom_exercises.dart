@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Empty state widget for when user has no custom exercises
 class EmptyCustomExercises extends StatelessWidget {
   final VoidCallback? onCreatePressed;
@@ -45,7 +46,7 @@ class EmptyCustomExercises extends StatelessWidget {
 
             // Title
             Text(
-              'Create Your Own Exercises',
+              AppLocalizations.of(context).emptyCustomExercisesCreateYourOwnExercises,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -55,7 +56,7 @@ class EmptyCustomExercises extends StatelessWidget {
 
             // Description
             Text(
-              'Build custom exercises tailored to your needs, or combine multiple movements into powerful combos.',
+              AppLocalizations.of(context).emptyCustomExercisesBuildCustomExercisesTailore,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: textSecondary,
                   ),
@@ -119,11 +120,11 @@ class EmptyCustomExercises extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(Icons.add),
                     SizedBox(width: 8),
                     Text(
-                      'Create Your First Exercise',
+                      AppLocalizations.of(context).emptyCustomExercisesCreateYourFirstExercise,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,

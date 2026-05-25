@@ -26,6 +26,7 @@ import 'widgets/foldable_quiz_scaffold.dart';
 import '../../data/models/ai_profile_payload.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'coach_selection_screen_ui.dart';
 
 
@@ -136,7 +137,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Create Your Own Coach',
+                                AppLocalizations.of(context).coachSelectionScreenCreateYourOwnCoach,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -144,7 +145,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                 ),
                               ),
                               Text(
-                                'Design a coach that matches your vibe',
+                                AppLocalizations.of(context).coachSelectionDesignACoachThat,
                                 style: TextStyle(fontSize: 13, color: textSecondary),
                               ),
                             ],
@@ -214,7 +215,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                     Row(
                                       children: [
                                         Text(
-                                          'Coach Ace',
+                                          AppLocalizations.of(context).coachSelectionCoachAce,
                                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
                                         ),
                                         const SizedBox(width: 8),
@@ -224,13 +225,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                             color: exampleColor.withValues(alpha: 0.15),
                                             borderRadius: BorderRadius.circular(6),
                                           ),
-                                          child: const Text('CUSTOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: exampleColor, letterSpacing: 0.5)),
+                                          child: Text(AppLocalizations.of(context).exercisePickerSheetCustom, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: exampleColor, letterSpacing: 0.5)),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Motivational & Encouraging',
+                                      AppLocalizations.of(context).coachSelectionMotivationalEncouraging,
                                       style: TextStyle(fontSize: 12, color: textSecondary),
                                     ),
                                     const SizedBox(height: 4),
@@ -240,7 +241,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                         Icon(Icons.image_outlined, size: 11, color: textSecondary.withValues(alpha: 0.7)),
                                         const SizedBox(width: 4),
                                         Text(
-                                          'AI-generated avatar',
+                                          AppLocalizations.of(context).coachSelectionAiGeneratedAvatar,
                                           style: TextStyle(fontSize: 10, color: textSecondary.withValues(alpha: 0.7), fontStyle: FontStyle.italic),
                                         ),
                                       ],
@@ -263,12 +264,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Appearance', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary)),
+                                Text(AppLocalizations.of(context).settingsAppearance, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary)),
                                 const SizedBox(height: 10),
                                 // Gender row
                                 Row(
                                   children: [
-                                    Text('Gender', style: TextStyle(fontSize: 11, color: textSecondary)),
+                                    Text(AppLocalizations.of(context).quizBodyMetricsGender, style: TextStyle(fontSize: 11, color: textSecondary)),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: SingleChildScrollView(
@@ -302,7 +303,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                 // Ethnicity row
                                 Row(
                                   children: [
-                                    Text('Look', style: TextStyle(fontSize: 11, color: textSecondary)),
+                                    Text(AppLocalizations.of(context).coachSelectionLook, style: TextStyle(fontSize: 11, color: textSecondary)),
                                     const SizedBox(width: 18),
                                     Expanded(
                                       child: SingleChildScrollView(
@@ -336,7 +337,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                 // Body type row
                                 Row(
                                   children: [
-                                    Text('Build', style: TextStyle(fontSize: 11, color: textSecondary)),
+                                    Text(AppLocalizations.of(context).recipesBuild, style: TextStyle(fontSize: 11, color: textSecondary)),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: SingleChildScrollView(
@@ -405,12 +406,12 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                   children: [
                                     Icon(Icons.chat_bubble_outline, size: 13, color: exampleColor),
                                     const SizedBox(width: 6),
-                                    Text('Sample Message', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: exampleColor)),
+                                    Text(AppLocalizations.of(context).coachSelectionSampleMessage, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: exampleColor)),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "LET'S GOOO! Time to crush those gains today! You've been on a 5-day streak and I'm not letting you break it. Ready to make some magic happen?",
+                                  AppLocalizations.of(context).coachSelectionLetSGoooTime,
                                   style: TextStyle(fontSize: 13, color: textPrimary, height: 1.4),
                                 ),
                               ],
@@ -423,7 +424,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
                     // Feature highlights
                     Text(
-                      'What you\'ll be able to customize',
+                      AppLocalizations.of(context).coachSelectionWhatYouLlBe,
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: textPrimary),
                     ),
                     const SizedBox(height: 12),
@@ -440,7 +441,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
                     // ── Real input section (functional, not preview) ──────
                     Text(
-                      'Name your coach',
+                      AppLocalizations.of(context).coachSelectionNameYourCoach,
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -469,7 +470,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: textPrimary),
                               decoration: InputDecoration(
-                                hintText: 'e.g. Atlas, Riley, Sensei',
+                                hintText: AppLocalizations.of(context).coachSelectionEGAtlasRiley,
                                 counterText: '',
                                 filled: true,
                                 fillColor: elevated,
@@ -490,7 +491,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Coaching style',
+                              AppLocalizations.of(context).coachSelectionCoachingStyle,
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -549,7 +550,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Communication tone',
+                              AppLocalizations.of(context).coachSelectionCommunicationTone,
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -610,7 +611,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                             Row(
                               children: [
                                 Text(
-                                  'Encouragement',
+                                  AppLocalizations.of(context).coachSelectionEncouragement,
                                   style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,

@@ -12,6 +12,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/workout_import_preview.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Result returned by the preview sheet via [Navigator.pop].
 class WorkoutImportPreviewAction {
   const WorkoutImportPreviewAction._(this.confirmed);
@@ -72,7 +73,7 @@ class _PreviewSheetBody extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Preview import', style: theme.textTheme.titleLarge),
+                    Text(AppLocalizations.of(context).workoutImportPreviewPreviewImport, style: theme.textTheme.titleLarge),
                     Text(
                       filename,
                       maxLines: 1,
@@ -234,22 +235,22 @@ class _RowCountRow extends StatelessWidget {
     return Row(
       children: [
         _StatTile(
-          label: 'Strength rows',
+          label: AppLocalizations.of(context).workoutImportPreviewStrengthRows,
           value: preview.strengthRowCount.toString(),
           icon: Icons.fitness_center_rounded,
           accent: accent,
         ),
         const SizedBox(width: 10),
         _StatTile(
-          label: 'Cardio rows',
+          label: AppLocalizations.of(context).workoutImportPreviewCardioRows,
           value: preview.cardioRowCount.toString(),
           icon: Icons.directions_run_rounded,
           accent: accent,
         ),
         const SizedBox(width: 10),
         _StatTile(
-          label: 'Template',
-          value: preview.hasTemplate ? 'Yes' : 'No',
+          label: AppLocalizations.of(context).workoutImportPreviewTemplate,
+          value: preview.hasTemplate ? AppLocalizations.of(context).commonYes : AppLocalizations.of(context).workoutImportPreviewNo,
           icon: Icons.event_note_rounded,
           accent: accent,
         ),
@@ -327,7 +328,7 @@ class _WarningsBlock extends StatelessWidget {
               Icon(Icons.warning_amber_rounded, color: warn, size: 18),
               const SizedBox(width: 8),
               Text(
-                'Heads up',
+                AppLocalizations.of(context).workoutImportPreviewHeadsUp,
                 style: theme.textTheme.titleSmall?.copyWith(color: warn),
               ),
             ],
@@ -360,7 +361,7 @@ class _UnresolvedBlock extends StatelessWidget {
           children: [
             const Icon(Icons.help_outline_rounded, size: 18),
             const SizedBox(width: 6),
-            Text('Unmatched exercises', style: theme.textTheme.titleSmall),
+            Text(AppLocalizations.of(context).workoutImportPreviewUnmatchedExercises, style: theme.textTheme.titleSmall),
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -377,7 +378,7 @@ class _UnresolvedBlock extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'These will still import — you can map them to canonical names after the job finishes.',
+          AppLocalizations.of(context).workoutImportPreviewTheseWillStillImport,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -421,7 +422,7 @@ class _SampleRowsBlock extends StatelessWidget {
     final theme = Theme.of(context);
     if (sampleRows.isEmpty) {
       return Text(
-        'No sample rows produced (the file may be empty or unrecognised).',
+        AppLocalizations.of(context).workoutImportPreviewNoSampleRowsProduced,
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),
@@ -438,7 +439,7 @@ class _SampleRowsBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Sample rows', style: theme.textTheme.titleSmall),
+        Text(AppLocalizations.of(context).workoutImportPreviewSampleRows, style: theme.textTheme.titleSmall),
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
@@ -498,7 +499,7 @@ class _ActionRow extends StatelessWidget {
               HapticService.light();
               Navigator.of(context).pop(WorkoutImportPreviewAction.cancel);
             },
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
         ),
         const SizedBox(width: 12),
@@ -513,7 +514,7 @@ class _ActionRow extends StatelessWidget {
                 : null,
             style: FilledButton.styleFrom(backgroundColor: accent),
             icon: const Icon(Icons.check_rounded),
-            label: const Text('Looks right — Import'),
+            label: Text(AppLocalizations.of(context).workoutImportPreviewLooksRightImport),
           ),
         ),
       ],

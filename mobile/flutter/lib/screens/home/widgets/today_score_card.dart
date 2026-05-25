@@ -36,6 +36,7 @@ import '../../../data/services/health_service.dart' show healthSyncProvider;
 import '../../../core/animations/celebration_animations.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class TodayScoreCard extends ConsumerWidget {
   const TodayScoreCard({super.key});
 
@@ -116,7 +117,7 @@ class _Header extends ConsumerWidget {
       child: Row(
         children: [
           Text(
-            'Today',
+            AppLocalizations.of(context).todayScoreCardToday,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -215,7 +216,7 @@ class _CustomizePill extends StatelessWidget {
             Icon(Icons.edit_outlined, size: 13, color: c.textSecondary),
             const SizedBox(width: 4),
             Text(
-              'Edit',
+              AppLocalizations.of(context).commonEdit,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -550,7 +551,7 @@ class _ConnectChip extends StatelessWidget {
           border: Border.all(color: accent.withValues(alpha: 0.32), width: 0.6),
         ),
         child: Text(
-          'Connect',
+          AppLocalizations.of(context).unifiedHomeWidgetsConnect,
           style: TextStyle(
             fontSize: 10.5,
             fontWeight: FontWeight.w700,
@@ -598,7 +599,7 @@ class _CustomizeCell extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'CUSTOMIZE',
+              AppLocalizations.of(context).todayScoreCardCustomize,
               style: TextStyle(
                 fontSize: 9.5,
                 fontWeight: FontWeight.w800,

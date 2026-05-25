@@ -4,6 +4,7 @@ import '../../../../widgets/glass_sheet.dart';
 import 'sheet_theme_colors.dart';
 import 'section_title.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Model for a training program
 class TrainingProgram {
   final String id;
@@ -153,12 +154,12 @@ class TrainingProgramSelector extends StatelessWidget {
             children: [
               SectionTitle(
                 icon: Icons.calendar_month,
-                title: 'Training Program',
+                title: AppLocalizations.of(context).trainingProgramSelectorTrainingProgram,
                 iconColor: colors.purple,
               ),
               const SizedBox(height: 4),
               Text(
-                'Choose your training split',
+                AppLocalizations.of(context).trainingProgramSelectorChooseYourTrainingSplit,
                 style: TextStyle(fontSize: 13, color: colors.textMuted),
               ),
             ],
@@ -357,7 +358,7 @@ class _CustomProgramSheetState extends State<_CustomProgramSheet> {
                   Icon(Icons.tune, color: colors.purple, size: 24),
                   const SizedBox(width: 12),
                   Text(
-                    'Custom Program',
+                    AppLocalizations.of(context).trainingProgramSelectorCustomProgram,
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: 20,
@@ -368,7 +369,7 @@ class _CustomProgramSheetState extends State<_CustomProgramSheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Describe what you want to train for and AI will create a personalized program.',
+                AppLocalizations.of(context).trainingProgramSelectorDescribeWhatYouWant,
                 style: TextStyle(
                   color: colors.textSecondary,
                   fontSize: 14,
@@ -384,7 +385,7 @@ class _CustomProgramSheetState extends State<_CustomProgramSheet> {
                 maxLines: 2,
                 maxLength: 200,
                 decoration: InputDecoration(
-                  hintText: 'e.g., "Train for HYROX competition"',
+                  hintText: AppLocalizations.of(context).trainingProgramSelectorEGTrainFor,
                   hintStyle: TextStyle(color: colors.textMuted),
                   filled: true,
                   fillColor: colors.glassSurface,
@@ -409,7 +410,7 @@ class _CustomProgramSheetState extends State<_CustomProgramSheet> {
 
               // Examples
               Text(
-                'Examples',
+                AppLocalizations.of(context).trainingProgramSelectorExamples,
                 style: TextStyle(
                   color: colors.textMuted,
                   fontSize: 12,
@@ -465,8 +466,8 @@ class _CustomProgramSheetState extends State<_CustomProgramSheet> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Save Custom Program',
+                  child: Text(
+                    AppLocalizations.of(context).trainingProgramSelectorSaveCustomProgram,
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),

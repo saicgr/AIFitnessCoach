@@ -43,6 +43,7 @@ import 'widgets/masteries_grid.dart';
 import 'widgets/my_badges_showcase.dart';
 import 'widgets/personal_bests_grid.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class BadgeHubScreen extends ConsumerStatefulWidget {
   const BadgeHubScreen({super.key});
 
@@ -91,7 +92,7 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Reward Your Progress',
+                AppLocalizations.of(context).badgeHubRewardYourProgress,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -101,26 +102,26 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
               const SizedBox(height: 12),
               _HelpRow(
                 icon: Icons.workspace_premium_outlined,
-                title: 'Badges',
-                body: 'One-time trophies for hitting milestones — time goals, consistency runs, big PRs.',
+                title: AppLocalizations.of(context).badgeHubBadges,
+                body: AppLocalizations.of(context).badgeHubOneTimeTrophiesFor,
                 isDark: isDark,
               ),
               _HelpRow(
                 icon: Icons.timer_outlined,
-                title: 'In Progress',
-                body: 'Weekly or daily challenges you can chase. They reset on a schedule so you can always re-earn them.',
+                title: AppLocalizations.of(context).featureVotingInProgress,
+                body: AppLocalizations.of(context).badgeHubWeeklyOrDailyChallenges,
                 isDark: isDark,
               ),
               _HelpRow(
                 icon: Icons.military_tech_outlined,
-                title: 'Masteries',
-                body: 'Levelled badges that keep climbing as you log more steps, calories, sessions, or distance.',
+                title: AppLocalizations.of(context).badgeHubMasteries,
+                body: AppLocalizations.of(context).badgeHubLevelledBadgesThatKeep,
                 isDark: isDark,
               ),
               _HelpRow(
                 icon: Icons.emoji_events_outlined,
-                title: 'Personal Bests',
-                body: 'Your highest lifts, longest sessions, biggest workouts. Beat them to upgrade the medal.',
+                title: AppLocalizations.of(context).badgeHubPersonalBests,
+                body: AppLocalizations.of(context).badgeHubYourHighestLiftsLongest,
                 isDark: isDark,
               ),
             ],
@@ -147,7 +148,7 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: PillAppBar(
-        title: 'Badges',
+        title: AppLocalizations.of(context).badgeHubBadges,
         actions: [
           PillAppBarAction(
             icon: Icons.info_outline,
@@ -172,7 +173,7 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
 
             // 2. MY BADGES — recently earned showcase
             _SectionHeader(
-              label: 'MY BADGES',
+              label: AppLocalizations.of(context).badgeHubMyBadges,
               fg: fg,
               trailing: earned.isNotEmpty
                   ? () => context.push('/trophy-room')
@@ -189,19 +190,19 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
             const SizedBox(height: 24),
 
             // 3. IN PROGRESS — strip with progress bars + resets
-            _SectionHeader(label: 'IN PROGRESS', fg: fg),
+            _SectionHeader(label: AppLocalizations.of(context).badgeHubInProgress2, fg: fg),
             const SizedBox(height: 10),
             InProgressStrip(trophies: inProgress.take(8).toList()),
             const SizedBox(height: 24),
 
             // 4. CHALLENGES — JOIN buttons for active async challenges
-            _SectionHeader(label: 'CHALLENGES', fg: fg),
+            _SectionHeader(label: AppLocalizations.of(context).badgeHubChallenges, fg: fg),
             const SizedBox(height: 10),
             const ChallengesStrip(),
             const SizedBox(height: 24),
 
             // 5. PERSONAL BESTS — 3-col medal grid
-            _SectionHeader(label: 'PERSONAL BESTS', fg: fg),
+            _SectionHeader(label: AppLocalizations.of(context).badgeHubPersonalBests2, fg: fg),
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -217,7 +218,7 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
             const SizedBox(height: 24),
 
             // 6. MASTERIES — hex grid of levelled badges
-            _SectionHeader(label: 'MASTERIES', fg: fg),
+            _SectionHeader(label: AppLocalizations.of(context).badgeHubMasteries2, fg: fg),
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -337,7 +338,7 @@ class _AllBadgesFooter extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'All available badges',
+                  AppLocalizations.of(context).badgeHubAllAvailableBadges,
                   style: TextStyle(
                     color: fg,
                     fontSize: 15,

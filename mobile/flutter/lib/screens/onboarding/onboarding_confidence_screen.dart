@@ -9,6 +9,7 @@ import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Onboarding conversion v6 — confidence slider (commitment elicitation).
 ///
 /// Shown just before the plan preview / paywall. Asking the user to rate
@@ -66,7 +67,7 @@ class _OnboardingConfidenceScreenState
   ({String title, String body}) _reassurance(int v) {
     if (v <= 3) {
       return (
-        title: 'Starting unsure is honest.',
+        title: AppLocalizations.of(context).onboardingConfidenceStartingUnsureIsHonest,
         body: 'And it is common. The plan does the deciding for you, so '
             'all you bring is showing up. Confidence gets built by doing, '
             'not before you start.',
@@ -74,14 +75,14 @@ class _OnboardingConfidenceScreenState
     }
     if (v <= 6) {
       return (
-        title: 'A realistic place to start.',
+        title: AppLocalizations.of(context).onboardingConfidenceARealisticPlaceTo,
         body: 'The plan adjusts every week to what you actually did, so '
             'it keeps pace with real life instead of a perfect version '
             'of it.',
       );
     }
     return (
-      title: 'That belief will carry you.',
+      title: AppLocalizations.of(context).onboardingConfidenceThatBeliefWillCarry,
       body: 'The plan will keep pace and push harder the moment you are '
           'ready for more. Your job is just to keep showing up.',
     );
@@ -129,7 +130,7 @@ class _OnboardingConfidenceScreenState
                   const SizedBox(height: 28),
                   Text(
                     name.isEmpty
-                        ? "How confident are you you'll get there?"
+                        ? AppLocalizations.of(context).onboardingConfidenceHowConfidentAreYou
                         : "$name, how confident are you you'll get there?",
                     style: TextStyle(
                       fontSize: 25,
@@ -141,7 +142,7 @@ class _OnboardingConfidenceScreenState
                   ).animate().fadeIn().slideY(begin: -0.1),
                   const SizedBox(height: 6),
                   Text(
-                    'Be honest. There is no wrong answer here.',
+                    AppLocalizations.of(context).onboardingConfidenceBeHonestThereIs,
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.4,
@@ -205,10 +206,10 @@ class _OnboardingConfidenceScreenState
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Not sure yet',
+                      Text(AppLocalizations.of(context).onboardingConfidenceNotSureYet,
                           style: TextStyle(
                               fontSize: 12, color: t.textMuted)),
-                      Text('Fully in',
+                      Text(AppLocalizations.of(context).onboardingConfidenceFullyIn,
                           style: TextStyle(
                               fontSize: 12, color: t.textMuted)),
                     ],
@@ -275,7 +276,7 @@ class _ConfidenceContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Continue',
+      label: AppLocalizations.of(context).onboardingContinueButton,
       child: GestureDetector(
         onTap: onTap,
         child: Container(
@@ -294,12 +295,12 @@ class _ConfidenceContinueButton extends StatelessWidget {
               ),
             ],
           ),
-          child: const Center(
+          child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Continue',
+                  AppLocalizations.of(context).onboardingContinueButton,
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,

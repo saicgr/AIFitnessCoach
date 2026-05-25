@@ -10,6 +10,7 @@ import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../measurement_unit_conversion.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A compact pill that both shows a measurement value and becomes its own
 /// inline editor on tap. Writes to the DB immediately on ✓ — no intermediate
 /// bottom sheet. Long-press navigates to the full detail screen.
@@ -156,8 +157,8 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
     } else {
       HapticService.error();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save — try again'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).measurementValuePillCouldNotSaveTry),
           backgroundColor: AppColors.error,
           duration: Duration(seconds: 2),
         ),

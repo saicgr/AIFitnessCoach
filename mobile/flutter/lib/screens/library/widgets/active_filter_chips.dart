@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../providers/library_providers.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Single active filter chip with remove button
 class ActiveFilterChip extends StatelessWidget {
   final String label;
@@ -153,7 +154,7 @@ class ActiveFilterChipsList extends ConsumerWidget {
                     border: Border.all(color: textMuted.withOpacity(0.5)),
                   ),
                   child: Text(
-                    'Clear all',
+                    AppLocalizations.of(context).settingsCardPartClearAll,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,

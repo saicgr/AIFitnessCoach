@@ -23,6 +23,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../home/widgets/regenerate_workout_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RegenerateWithNewEquipmentDialog {
   /// Shows the choice dialog. Returns the *new* workout if the user
   /// regenerated and approved it; null if they chose Continue or cancelled.
@@ -65,7 +66,7 @@ class RegenerateWithNewEquipmentDialog {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text('Equipment updated',
+                    child: Text(AppLocalizations.of(context).workoutDetailScreenEquipmentUpdated,
                         style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
@@ -95,7 +96,7 @@ class RegenerateWithNewEquipmentDialog {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text('Regenerate this workout',
+                child: Text(AppLocalizations.of(context).regenerateWithNewRegenerateThisWorkout,
                     style: TextStyle(fontWeight: FontWeight.w700)),
               ),
               const SizedBox(height: 8),
@@ -110,7 +111,7 @@ class RegenerateWithNewEquipmentDialog {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                child: Text('Continue current',
+                child: Text(AppLocalizations.of(context).regenerateWithNewContinueCurrent,
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -118,7 +119,7 @@ class RegenerateWithNewEquipmentDialog {
               ),
               const SizedBox(height: 4),
               Text(
-                'Either way, future workouts will use your updated equipment.',
+                AppLocalizations.of(context).regenerateWithNewEitherWayFutureWorkouts,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 11,

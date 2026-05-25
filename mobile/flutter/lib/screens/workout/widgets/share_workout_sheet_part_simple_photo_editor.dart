@@ -29,14 +29,14 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.background : AppColorsLight.background,
       appBar: AppBar(
-        title: const Text('Edit Image'),
+        title: Text(AppLocalizations.of(context).shareWorkoutSheetEditImage),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           TextButton(
             onPressed: _isSharing ? null : _shareEdited,
             child: Text(
-              'Share',
+              AppLocalizations.of(context).commonShare,
               style: TextStyle(
                 color: AppColors.cyan,
                 fontWeight: FontWeight.bold,
@@ -77,7 +77,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
                   children: [
                     Icon(Icons.brightness_6_rounded, color: AppColors.cyan),
                     const SizedBox(width: 12),
-                    const Text('Brightness'),
+                    Text(AppLocalizations.of(context).shareWorkoutSheetBrightness),
                     const Spacer(),
                     Text('${(_brightness * 100).toInt()}%'),
                   ],
@@ -97,7 +97,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
                   children: [
                     Icon(Icons.contrast_rounded, color: AppColors.purple),
                     const SizedBox(width: 12),
-                    const Text('Contrast'),
+                    Text(AppLocalizations.of(context).shareWorkoutSheetContrast),
                     const Spacer(),
                     Text('${(_contrast * 100).toInt()}%'),
                   ],
@@ -122,7 +122,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
                       });
                     },
                     icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Reset'),
+                    label: Text(AppLocalizations.of(context).trophyFilterReset),
                   ),
                 ),
               ],
@@ -277,8 +277,8 @@ class _ImagePreviewDialog extends StatelessWidget {
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Pinch to zoom • Tap anywhere to close',
+                child: Text(
+                  AppLocalizations.of(context).shareWorkoutSheetPinchToZoomTap,
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 13,

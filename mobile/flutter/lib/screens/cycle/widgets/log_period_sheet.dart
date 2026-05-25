@@ -21,6 +21,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the period-logging sheet. Returns true when a period was written.
 ///
 /// Uses the canonical [GlassSheet] so the look matches every other sheet in
@@ -88,7 +89,7 @@ class _LogPeriodBodyState extends ConsumerState<_LogPeriodBody> {
                     color: CyclePhaseColors.menstrual),
                 const SizedBox(width: 8),
                 Text(
-                  open != null ? 'Log period' : 'Log a new period',
+                  open != null ? AppLocalizations.of(context).logPeriodLogPeriod : AppLocalizations.of(context).logPeriodLogANewPeriod,
                   style: TextStyle(
                     color: fg,
                     fontSize: 18,
@@ -125,7 +126,7 @@ class _LogPeriodBodyState extends ConsumerState<_LogPeriodBody> {
               const SizedBox(height: 14),
               Center(
                 child: Text(
-                  '— or start a new period —',
+                  AppLocalizations.of(context).logPeriodOrStartANew,
                   style: TextStyle(
                     color: fg.withValues(alpha: 0.4),
                     fontSize: 11,
@@ -137,7 +138,7 @@ class _LogPeriodBodyState extends ConsumerState<_LogPeriodBody> {
 
             // New-period date pickers.
             _DateRow(
-              label: 'Start date (Day 1)',
+              label: AppLocalizations.of(context).logPeriodStartDateDay1,
               date: _startDate,
               fg: fg,
               accent: accent,
@@ -145,7 +146,7 @@ class _LogPeriodBodyState extends ConsumerState<_LogPeriodBody> {
             ),
             const SizedBox(height: 10),
             _DateRow(
-              label: 'End date (optional)',
+              label: AppLocalizations.of(context).logPeriodEndDateOptional,
               date: _endDate,
               fg: fg,
               accent: accent,
@@ -169,7 +170,7 @@ class _LogPeriodBodyState extends ConsumerState<_LogPeriodBody> {
                             strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.check_rounded),
-                label: Text(_saving ? 'Saving…' : 'Save period'),
+                label: Text(_saving ? AppLocalizations.of(context).sleepDetailSaving : AppLocalizations.of(context).logPeriodSavePeriod),
               ),
             ),
         ],
@@ -249,7 +250,7 @@ class _LogPeriodBodyState extends ConsumerState<_LogPeriodBody> {
       HapticService.success();
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Period logged')),
+        SnackBar(content: Text(AppLocalizations.of(context).logPeriodPeriodLogged)),
       );
     }
   }
@@ -296,7 +297,7 @@ class _OpenPeriodCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Period in progress',
+                  AppLocalizations.of(context).logPeriodPeriodInProgress,
                   style: TextStyle(
                     color: fg,
                     fontSize: 13,
@@ -321,7 +322,7 @@ class _OpenPeriodCard extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),
             onPressed: saving ? null : onClose,
-            child: const Text('End today'),
+            child: Text(AppLocalizations.of(context).logPeriodEndToday),
           ),
         ],
       ),

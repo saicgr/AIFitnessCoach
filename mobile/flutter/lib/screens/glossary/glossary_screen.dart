@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Fitness glossary data - term and definition pairs
 class GlossaryTerm {
   final String term;
@@ -149,7 +150,7 @@ class _GlossaryScreenState extends ConsumerState<GlossaryScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-      appBar: const PillAppBar(title: 'Glossary'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).profileGlossary),
       body: Column(
         children: [
           // Search bar
@@ -162,7 +163,7 @@ class _GlossaryScreenState extends ConsumerState<GlossaryScreen> {
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
               ),
               decoration: InputDecoration(
-                hintText: 'Search terms...',
+                hintText: AppLocalizations.of(context).glossarySearchTerms,
                 hintStyle: TextStyle(
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                 ),
@@ -214,7 +215,7 @@ class _GlossaryScreenState extends ConsumerState<GlossaryScreen> {
             child: terms.isEmpty
                 ? Center(
                     child: Text(
-                      'No terms found',
+                      AppLocalizations.of(context).glossaryNoTermsFound,
                       style: TextStyle(
                         color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                       ),

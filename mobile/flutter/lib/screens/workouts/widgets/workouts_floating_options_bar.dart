@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/floating_tab_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A single launcher entry in [WorkoutsFloatingOptionsBar].
 class WorkoutsOptionItem {
   final String label;
@@ -53,7 +54,7 @@ class WorkoutsFloatingOptionsBar extends StatelessWidget {
             // D5 — "Gym" reads ambiguously next to the in-tab gym
             // switcher; surface it as "Manage Gym". Remapped here (not in
             // workouts_screen.dart) so the bar's data contract is stable.
-            label: item.label == 'Gym' ? 'Manage Gym' : item.label,
+            label: item.label == AppLocalizations.of(context).workoutsGym ? AppLocalizations.of(context).workoutsFloatingOptionsManageGym : item.label,
             icon: item.icon,
           ),
       ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/flexibility_assessment.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card widget showing a flexibility test with optional assessment result
 class FlexibilityTestCard extends StatelessWidget {
   final FlexibilityTest test;
@@ -83,7 +84,7 @@ class FlexibilityTestCard extends StatelessWidget {
                       ),
                     ] else ...[
                       Text(
-                        'Not yet assessed',
+                        AppLocalizations.of(context).flexibilityTestCardNotYetAssessed,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.5),
                           fontStyle: FontStyle.italic,
@@ -101,7 +102,7 @@ class FlexibilityTestCard extends StatelessWidget {
                   hasAssessment ? Icons.update : Icons.add_circle_outline,
                   color: theme.colorScheme.primary,
                 ),
-                tooltip: hasAssessment ? 'Update Assessment' : 'Record Assessment',
+                tooltip: hasAssessment ? AppLocalizations.of(context).flexibilityTestCardUpdateAssessment : AppLocalizations.of(context).recordAssessmentRecordAssessment,
               ),
             ],
           ),

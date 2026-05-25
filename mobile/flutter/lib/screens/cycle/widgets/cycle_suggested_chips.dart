@@ -11,6 +11,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../cycle_chat.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class CycleSuggestedChips extends StatelessWidget {
   final CyclePhase? phase;
   final CycleTrackingMode mode;
@@ -37,7 +38,7 @@ class CycleSuggestedChips extends StatelessWidget {
             Icon(Icons.forum_rounded, size: 14, color: accent),
             const SizedBox(width: 6),
             Text(
-              'Ask your coach',
+              AppLocalizations.of(context).easyChatPillAskYourCoach,
               style: TextStyle(
                 color: fg.withValues(alpha: 0.6),
                 fontSize: 11,

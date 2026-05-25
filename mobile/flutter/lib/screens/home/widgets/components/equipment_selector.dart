@@ -4,6 +4,7 @@ import 'selectable_chip.dart';
 import 'quantity_selector.dart';
 import 'section_title.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Default list of equipment options
 const List<String> defaultEquipmentOptions = [
   'Full Gym',
@@ -125,7 +126,7 @@ class EquipmentSelector extends StatelessWidget {
             children: [
               SectionTitle(
                 icon: Icons.fitness_center,
-                title: 'Equipment Available',
+                title: AppLocalizations.of(context).equipmentSelectorEquipmentAvailable,
                 iconColor: colors.success,
               ),
               const Spacer(),
@@ -138,7 +139,7 @@ class EquipmentSelector extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Only generate exercises with selected equipment',
+            AppLocalizations.of(context).equipmentSelectorOnlyGenerateExercisesWith,
             style: TextStyle(fontSize: 12, color: colors.textMuted),
           ),
           const SizedBox(height: 12),
@@ -187,7 +188,7 @@ class EquipmentSelector extends StatelessWidget {
             TextField(
               controller: customInputController,
               decoration: InputDecoration(
-                hintText: 'Enter custom equipment (e.g., "TRX Bands")',
+                hintText: AppLocalizations.of(context).equipmentSelectorEnterCustomEquipmentE,
                 hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: colors.glassSurface,

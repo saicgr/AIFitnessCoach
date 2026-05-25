@@ -16,6 +16,7 @@ import '../screens/settings/widgets/dialog_bullet_point.dart';
 import 'app_snackbar.dart';
 import 'delete_account_progress_dialog.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Single source of truth for the Delete Account flow used by both the
 /// Profile screen and Settings → Danger Zone. Shows the confirmation dialog
 /// (with inline password field for email-auth users), runs the backend
@@ -36,7 +37,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
     final proceed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Active subscription'),
+        title: Text(AppLocalizations.of(context).deleteAccountFlowActiveSubscription),
         content: Text(
           'Deleting your account does NOT cancel your $storeName subscription. '
           'You will continue to be billed unless you cancel from the $storeName first.\n\n'
@@ -49,7 +50,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete anyway'),
+            child: Text(AppLocalizations.of(context).deleteAccountFlowDeleteAnyway),
           ),
         ],
       ),
@@ -82,7 +83,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
           Icon(Icons.delete_forever, color: AppColors.error, size: 24),
           const SizedBox(width: 12),
           Text(
-            'Delete Account?',
+            AppLocalizations.of(context).deleteAccountFlowDeleteAccount,
             style: TextStyle(
               color: isDark
                   ? AppColors.textPrimary
@@ -111,7 +112,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'This action cannot be undone!',
+                      AppLocalizations.of(context).deleteAccountFlowThisActionCannotBe,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.error,
@@ -124,7 +125,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
             ),
             const SizedBox(height: 16),
             Text(
-              'This will permanently delete:',
+              AppLocalizations.of(context).deleteAccountFlowThisWillPermanentlyDelete,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: isDark
@@ -150,7 +151,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
             ),
             const SizedBox(height: 16),
             Text(
-              'You will need to sign up again to use the app.',
+              AppLocalizations.of(context).deleteAccountFlowYouWillNeedTo,
               style: TextStyle(
                 fontSize: 13,
                 color: isDark
@@ -166,7 +167,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
                       size: 16, color: AppColors.error),
                   const SizedBox(width: 6),
                   Text(
-                    'Confirm with your password',
+                    AppLocalizations.of(context).deleteAccountFlowConfirmWithYourPassword,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -189,7 +190,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
                       : AppColorsLight.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Password',
+                  hintText: AppLocalizations.of(context).authPasswordHint,
                   hintStyle: TextStyle(
                     fontSize: 15,
                     color: (isDark
@@ -245,7 +246,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(false),
           child: Text(
-            'Cancel',
+            AppLocalizations.of(context).buttonCancel,
             style: TextStyle(
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
             ),
@@ -255,14 +256,14 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
           onPressed: () {
             if (!isOAuthUser && passwordController.text.isEmpty) {
               ScaffoldMessenger.of(dialogContext).showSnackBar(
-                const SnackBar(content: Text('Please enter your password')),
+                SnackBar(content: Text(AppLocalizations.of(context).deleteAccountFlowPleaseEnterYourPassword)),
               );
               return;
             }
             Navigator.of(dialogContext).pop(true);
           },
-          child: const Text(
-            'Delete Account',
+          child: Text(
+            AppLocalizations.of(context).settingsDeleteAccount,
             style: TextStyle(color: AppColors.error),
           ),
         ),
@@ -318,7 +319,7 @@ Future<void> _runDelete(
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Sign in again'),
+        title: Text(AppLocalizations.of(context).deleteAccountFlowSignInAgain),
         content: const Text(
           'Your session has expired. Please sign out and sign back in, '
           'then try deleting your account again.',
@@ -326,7 +327,7 @@ Future<void> _runDelete(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('OK'),
+            child: Text(AppLocalizations.of(context).healthSyncOk),
           ),
           TextButton(
             onPressed: () async {
@@ -334,7 +335,7 @@ Future<void> _runDelete(
               await ref.read(authStateProvider.notifier).signOut();
               router.go('/intro');
             },
-            child: const Text('Sign out'),
+            child: Text(AppLocalizations.of(context).settingsLogout),
           ),
         ],
       ),
@@ -377,14 +378,14 @@ Future<void> _runDelete(
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Re-authentication required'),
-          content: const Text(
-            'We could not verify your password. Reset your password first, then try deleting your account again.',
+          title: Text(AppLocalizations.of(context).deleteAccountFlowReAuthenticationRequired),
+          content: Text(
+            AppLocalizations.of(context).deleteAccountFlowWeCouldNotVerify,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('OK'),
+              child: Text(AppLocalizations.of(context).healthSyncOk),
             ),
             TextButton(
               onPressed: () async {
@@ -392,7 +393,7 @@ Future<void> _runDelete(
                 await ref.read(authStateProvider.notifier).signOut();
                 router.go('/intro');
               },
-              child: const Text('Reset password'),
+              child: Text(AppLocalizations.of(context).deleteAccountFlowResetPassword),
             ),
           ],
         ),

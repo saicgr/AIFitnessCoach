@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Result from the sauna dialog
 class SaunaDialogResult {
   final int durationMinutes;
@@ -51,7 +52,7 @@ Future<SaunaDialogResult?> showSaunaDialog({
                       const Icon(Icons.hot_tub_rounded, size: 28, color: accentColor),
                       const SizedBox(width: 12),
                       Text(
-                        'Log Sauna Time',
+                        AppLocalizations.of(context).saunaLogSaunaTime,
                         style: TextStyle(
                           color: textPrimary,
                           fontSize: 20,
@@ -109,7 +110,7 @@ Future<SaunaDialogResult?> showSaunaDialog({
                     keyboardType: TextInputType.number,
                     style: TextStyle(color: textPrimary, fontSize: 16),
                     decoration: InputDecoration(
-                      hintText: 'Custom duration',
+                      hintText: AppLocalizations.of(context).saunaCustomDuration,
                       hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
                       filled: true,
                       fillColor: elevated,

@@ -23,6 +23,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../widgets/info_badge.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'exercise_detail_sheet_part_log1_r_m_button.dart';
 part 'exercise_detail_sheet_part_exercise_action_buttons_state.dart';
 
@@ -376,7 +377,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Auto-play',
+                          AppLocalizations.of(context).exerciseDetailAutoPlay,
                           style: TextStyle(
                             fontSize: 11,
                             color: cyan,
@@ -405,7 +406,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
           ),
           const SizedBox(height: 12),
           Text(
-            _videoError ?? 'Video not available',
+            _videoError ?? AppLocalizations.of(context).exerciseDetailVideoNotAvailable,
             style: TextStyle(color: textMuted, fontSize: 12),
           ),
           // Retry button for failed loads
@@ -421,7 +422,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
               },
               icon: Icon(Icons.refresh, color: cyan, size: 18),
               label: Text(
-                'Retry',
+                AppLocalizations.of(context).buttonRetry,
                 style: TextStyle(color: cyan),
               ),
             ),
@@ -491,7 +492,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
             ),
             const SizedBox(height: 16),
             Text(
-              'Loading video...',
+              AppLocalizations.of(context).exerciseInfoLoadingVideo,
               style: TextStyle(
                 color: textMuted,
                 fontSize: 13,
@@ -500,7 +501,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
             ),
             const SizedBox(height: 4),
             Text(
-              'Will auto-play when ready',
+              AppLocalizations.of(context).exerciseDetailWillAutoPlayWhen,
               style: TextStyle(
                 color: textMuted.withOpacity(0.7),
                 fontSize: 11,
@@ -519,7 +520,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Action Guide',
+          AppLocalizations.of(context).exerciseDetailActionGuide,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: textPrimary,
@@ -541,7 +542,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
               Divider(color: textMuted.withValues(alpha: 0.2)),
               const SizedBox(height: 12),
               Text(
-                'Staple Options',
+                AppLocalizations.of(context).exerciseDetailStapleOptions,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -566,7 +567,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Got it', style: TextStyle(color: cyan)),
+            child: Text(AppLocalizations.of(context).weightIncrementsGotIt, style: TextStyle(color: cyan)),
           ),
         ],
       ),
@@ -719,21 +720,21 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
                         if (exercise.muscleGroup != null)
                           DetailBadge(
                             icon: Icons.accessibility_new,
-                            label: 'Muscle',
+                            label: AppLocalizations.of(context).strengthOverviewCardMuscle,
                             value: exercise.muscleGroup!,
                             color: purple,
                           ),
                         if (exercise.difficulty != null)
                           DetailBadge(
                             icon: Icons.signal_cellular_alt,
-                            label: 'Level',
+                            label: AppLocalizations.of(context).programSummaryLevel,
                             value: DifficultyUtils.getDisplayName(exercise.difficulty!),
                             color: DifficultyUtils.getColor(exercise.difficulty!),
                           ),
                         if (exercise.type != null)
                           DetailBadge(
                             icon: Icons.category,
-                            label: 'Type',
+                            label: AppLocalizations.of(context).workoutDetailType,
                             value: exercise.type!,
                             color: cyan,
                           ),
@@ -750,7 +751,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'EQUIPMENT NEEDED',
+                            AppLocalizations.of(context).exerciseDetailEquipmentNeeded,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -811,7 +812,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'INSTRUCTIONS',
+                            AppLocalizations.of(context).exerciseDetailInstructions,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -958,7 +959,7 @@ class _DownloadProgressChip extends StatelessWidget {
             const Icon(Icons.error_outline,
                 size: 14, color: Colors.redAccent),
             const SizedBox(width: 6),
-            const Text('Download failed',
+            Text(AppLocalizations.of(context).exerciseDetailDownloadFailed,
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -975,7 +976,7 @@ class _DownloadProgressChip extends StatelessWidget {
                   children: [
                     Icon(Icons.refresh, size: 12, color: cyan),
                     const SizedBox(width: 3),
-                    Text('Retry',
+                    Text(AppLocalizations.of(context).buttonRetry,
                         style: TextStyle(
                             color: cyan,
                             fontSize: 11,

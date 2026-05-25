@@ -16,6 +16,7 @@ import '../../../data/services/health_service.dart';
 import '../../nutrition/widgets/calories_burned_sheet.dart';
 import 'edit_tracking_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact single-row tracking strip: Goals, Calories+Macros, Water, Burned.
 class TodayStatsRow extends ConsumerWidget {
   const TodayStatsRow({super.key});
@@ -223,7 +224,7 @@ class _NutritionPill extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  ' kcal',
+                  AppLocalizations.of(context).unifiedHomeWidgetsKcal,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

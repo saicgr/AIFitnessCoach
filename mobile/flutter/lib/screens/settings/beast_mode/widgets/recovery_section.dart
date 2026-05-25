@@ -9,6 +9,7 @@ import '../../../../../widgets/app_snackbar.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class RecoverySection extends ConsumerStatefulWidget {
   final BeastThemeData theme;
 
@@ -115,10 +116,10 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Per-Muscle Recovery Grid',
+              Text(AppLocalizations.of(context).recoveryPerMuscleRecoveryGrid,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: t.textPrimary)),
               const SizedBox(height: 4),
-              Text('Color-coded: red <40% | yellow 40-70% | green >70%',
+              Text(AppLocalizations.of(context).recoveryColorCodedRed40,
                   style: TextStyle(fontSize: 11, color: t.textMuted)),
               const SizedBox(height: 12),
               if (!_recoveryLoaded)
@@ -141,10 +142,10 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Recovery Constants Editor',
+                        Text(AppLocalizations.of(context).recoveryRecoveryConstantsEditor,
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: t.textPrimary)),
                         const SizedBox(height: 4),
-                        Text('Per-muscle exponential decay rate (k values)',
+                        Text(AppLocalizations.of(context).recoveryPerMuscleExponentialDecay,
                             style: TextStyle(fontSize: 11, color: t.textMuted)),
                       ],
                     ),
@@ -154,7 +155,7 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
                       HapticService.light();
                       _resetRecoveryKValues();
                     },
-                    child: Text('Reset',
+                    child: Text(AppLocalizations.of(context).trophyFilterReset,
                         style: TextStyle(fontSize: 12, color: AppColors.orange, fontWeight: FontWeight.w600)),
                   ),
                 ],
@@ -171,10 +172,10 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('1RM Calculator Playground',
+              Text(AppLocalizations.of(context).recovery1rmCalculatorPlayground,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: t.textPrimary)),
               const SizedBox(height: 4),
-              Text('Compare Epley, Brzycki, and Mayhew estimates',
+              Text(AppLocalizations.of(context).recoveryCompareEpleyBrzyckiAnd,
                   style: TextStyle(fontSize: 11, color: t.textMuted)),
               const SizedBox(height: 16),
               Row(
@@ -185,7 +186,7 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: TextStyle(color: t.textPrimary, fontSize: 14),
                       decoration: InputDecoration(
-                        labelText: 'Weight (kg)',
+                        labelText: AppLocalizations.of(context).workoutHistoryImportWeightKg,
                         labelStyle: TextStyle(color: t.textMuted, fontSize: 12),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: t.cardBorder)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.orange)),
@@ -201,7 +202,7 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: t.textPrimary, fontSize: 14),
                       decoration: InputDecoration(
-                        labelText: 'Reps',
+                        labelText: AppLocalizations.of(context).workoutSummaryGeneralReps,
                         labelStyle: TextStyle(color: t.textMuted, fontSize: 12),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: t.cardBorder)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.orange)),

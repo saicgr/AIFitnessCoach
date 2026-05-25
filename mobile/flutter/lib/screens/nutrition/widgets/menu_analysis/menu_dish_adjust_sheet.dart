@@ -32,6 +32,7 @@ import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/menu_item.dart';
 import '../../../../widgets/glass_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Outcome of the per-dish adjustment step.
 class MenuDishAdjustResult {
   /// Portion multiplier to apply to the dish itself (1.0 = as-served).
@@ -201,7 +202,7 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
 
     if (note.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add a bit more detail to refine.')),
+        SnackBar(content: Text(AppLocalizations.of(context).menuDishAdjustAddABitMore)),
       );
       return;
     }
@@ -223,8 +224,8 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
 
     if (corrected == null || corrected.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Couldn't refine that — try rewording it."),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).menuDishAdjustCouldnTRefineThat),
         ),
       );
       return;
@@ -287,7 +288,7 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Adjust this dish',
+                  AppLocalizations.of(context).menuDishAdjustAdjustThisDish,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -310,13 +311,13 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
           ),
           const SizedBox(height: 2),
           Text(
-            'Menu macros are "as served" — tell us what you actually ate.',
+            AppLocalizations.of(context).menuDishAdjustMenuMacrosAreAs,
             style: TextStyle(fontSize: 11, color: colors.textMuted),
           ),
           const SizedBox(height: 14),
           // ── Quick-adjust chips ──
           Text(
-            'How much did you eat?',
+            AppLocalizations.of(context).menuDishAdjustHowMuchDidYou,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -335,7 +336,7 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
           const SizedBox(height: 16),
           // ── Free-text correction ──
           Text(
-            'Or describe it',
+            AppLocalizations.of(context).menuDishAdjustOrDescribeIt,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -402,7 +403,7 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
                   onPressed: _refining
                       ? null
                       : () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context).buttonCancel),
                 ),
               ),
               const SizedBox(width: 12),
@@ -418,7 +419,7 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
                               CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check, size: 18),
-                  label: Text(_refining ? 'Refining…' : 'Apply'),
+                  label: Text(_refining ? AppLocalizations.of(context).menuDishAdjustRefining : AppLocalizations.of(context).setAdjustmentSheetApply),
                   style: FilledButton.styleFrom(backgroundColor: accent),
                 ),
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme_colors.dart';
 import 'fasting_stage_model.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A single page in the swipeable fasting timeline.
 ///
 /// Pages come from two sources: the 7 live metabolic stages and the
@@ -107,7 +108,7 @@ class _FastingTimelinePagerState extends State<FastingTimelinePager> {
           icon: Icons.timelapse_rounded,
           hourLabel: mark.label,
           title: 'Extended fast · ${mark.label}',
-          tagline: 'Advanced territory',
+          tagline: AppLocalizations.of(context).fastingTimelinePagerAdvancedTerritory,
           body: mark.effect,
           milestones: const [],
           safety: mark.safety,

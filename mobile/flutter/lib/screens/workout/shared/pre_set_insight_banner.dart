@@ -25,6 +25,7 @@ import '../../../core/services/haptic_service.dart';
 import '../../../core/services/pre_set_insight_engine.dart' show InsightTone;
 import '../../../core/theme/accent_color_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // Re-export the engine's `InsightTone` so existing callers that import only
 // this file (e.g. the Simple focal card) keep compiling without a second
 // import. The engine is the source of truth — the copy pools switch on it.
@@ -219,7 +220,7 @@ class _DismissButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Dismiss insight',
+      label: AppLocalizations.of(context).preSetInsightDismissInsight,
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,

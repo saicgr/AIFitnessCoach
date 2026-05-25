@@ -20,6 +20,7 @@ import '../../../data/models/workout_import_job.dart';
 import '../../../data/repositories/workout_history_import_file_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Show the polling progress sheet. Returns the final [WorkoutImportJob] on
 /// completion / failure. Returns `null` only if the user forcibly dismissed
 /// the sheet AFTER the job entered a terminal state.
@@ -149,9 +150,9 @@ class _ProgressSheetBodyState extends State<_ProgressSheetBody>
       canPop: _isTerminal,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && !_isTerminal) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             behavior: SnackBarBehavior.floating,
-            content: Text('Import is still in progress — please wait.'),
+            content: Text(AppLocalizations.of(context).workoutImportProgressImportIsStillIn),
           ));
         }
       },
@@ -161,10 +162,10 @@ class _ProgressSheetBodyState extends State<_ProgressSheetBody>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Importing workout history', style: theme.textTheme.titleLarge),
+            Text(AppLocalizations.of(context).workoutImportProgressImportingWorkoutHistory, style: theme.textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              widget.sourceAppLabel ?? 'This usually finishes in 10–30 seconds.',
+              widget.sourceAppLabel ?? AppLocalizations.of(context).workoutImportProgressThisUsuallyFinishesIn,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

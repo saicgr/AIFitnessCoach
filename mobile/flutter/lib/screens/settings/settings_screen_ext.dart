@@ -125,7 +125,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                     fontSize: 15,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Search settings...',
+                    hintText: AppLocalizations.of(context).settingsScreenExtSearchSettings,
                     hintStyle: TextStyle(
                       color: textMuted,
                       fontSize: 14,
@@ -250,9 +250,9 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tutorials & Hints', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary)),
+              Text(AppLocalizations.of(context).settingsTutorialsHints, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary)),
               const SizedBox(height: 4),
-              Text('Replay the onboarding walkthrough, individual screen tours, or reset inline hints.', style: TextStyle(fontSize: 13, color: textMuted)),
+              Text(AppLocalizations.of(context).settingsScreenExtReplayTheOnboardingWalkthro, style: TextStyle(fontSize: 13, color: textMuted)),
               const SizedBox(height: 16),
               // Primary: re-fire the entire first-run sequence the user saw at
               // onboarding. Clears every tour key + inline-hint flag in one
@@ -262,8 +262,8 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.replay_rounded, size: 18),
-                  label: const Text(
-                    'Replay onboarding walkthrough',
+                  label: Text(
+                    AppLocalizations.of(context).settingsScreenExtReplayOnboardingWalkthrough,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   onPressed: () async {
@@ -293,7 +293,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('REPLAY INDIVIDUAL TOURS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6)),
+              Text(AppLocalizations.of(context).settingsScreenExtReplayIndividualTours, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6)),
               const SizedBox(height: 6),
               Flexible(
                 child: ListView(
@@ -321,7 +321,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                               AppSnackBar.info(context, '$label tutorial will replay on next visit');
                             }
                           },
-                          child: Text('Replay', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          child: Text(AppLocalizations.of(context).settingsScreenExtReplay, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                         ),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         tileColor: elevated.withValues(alpha: 0.5),
@@ -333,10 +333,10 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
               const SizedBox(height: 16),
               Divider(color: cardBorder.withValues(alpha: 0.4), height: 1),
               const SizedBox(height: 16),
-              Text('INLINE HINTS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6)),
+              Text(AppLocalizations.of(context).settingsScreenExtInlineHints, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6)),
               const SizedBox(height: 6),
               Text(
-                'Small empty-state hints scattered through the app. Reset them to see the help text again.',
+                AppLocalizations.of(context).settingsScreenExtSmallEmptyStateHints,
                 style: TextStyle(fontSize: 12, color: textMuted),
               ),
               const SizedBox(height: 10),
@@ -344,7 +344,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   icon: Icon(Icons.tips_and_updates_outlined, size: 18, color: textPrimary),
-                  label: Text('Reset inline hints', style: TextStyle(fontSize: 14, color: textPrimary)),
+                  label: Text(AppLocalizations.of(context).settingsScreenExtResetInlineHints, style: TextStyle(fontSize: 14, color: textPrimary)),
                   onPressed: () async {
                     final cleared = await Tooltips.resetAll();
                     if (!ctx.mounted) return;
@@ -412,7 +412,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Your AI-powered personal fitness coach. Get personalized workout plans, track your progress, and achieve your fitness goals.',
+                  AppLocalizations.of(context).settingsScreenExtYourAiPoweredPersonal,
                   style: TextStyle(
                     color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                     height: 1.5,
@@ -469,7 +469,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'A note from Chetan',
+                                AppLocalizations.of(context).settingsScreenExtANoteFromChetan,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
@@ -506,7 +506,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Close',
+              AppLocalizations.of(context).commonClose,
               style: TextStyle(
                 color: isDark ? AppColors.cyan : AppColorsLight.cyan,
               ),

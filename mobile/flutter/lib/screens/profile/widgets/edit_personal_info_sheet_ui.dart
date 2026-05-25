@@ -102,7 +102,7 @@ extension _EditPersonalInfoSheetStateUI on _EditPersonalInfoSheetState {
                     )
                   : Icon(Icons.cloud_upload, color: cyan),
               label: Text(
-                _isUploadingPhoto ? 'Uploading...' : 'Upload Photo',
+                _isUploadingPhoto ? AppLocalizations.of(context).storyCreateUploading : AppLocalizations.of(context).editPersonalInfoUploadPhoto,
                 style: TextStyle(color: cyan, fontWeight: FontWeight.w600),
               ),
             ),
@@ -111,7 +111,7 @@ extension _EditPersonalInfoSheetStateUI on _EditPersonalInfoSheetState {
         const SizedBox(height: 8),
         Center(
           child: Text(
-            'Tap to change photo',
+            AppLocalizations.of(context).editPersonalInfoTapToChangePhoto,
             style: TextStyle(fontSize: 12, color: textMuted),
           ),
         ),

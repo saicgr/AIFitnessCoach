@@ -103,8 +103,8 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
 
     if (exercises.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No exercises in current workout to replace'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exerciseDetailSheetNoExercisesInCurrent),
           backgroundColor: AppColors.orange,
         ),
       );
@@ -121,7 +121,7 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Replace which exercise?',
+          AppLocalizations.of(context).exerciseDetailSheetReplaceWhichExercise,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: textPrimary,
@@ -153,7 +153,7 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: textMuted)),
+            child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted)),
           ),
         ],
       ),
@@ -430,7 +430,7 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
               children: [
                 _buildFloatingIcon(
                   icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-                  label: 'Favorite',
+                  label: AppLocalizations.of(context).recipeDetailFavorite,
                   isActive: isFavorite,
                   activeColor: AppColors.error,
                   inactiveColor: textMuted,
@@ -441,7 +441,7 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
                 ),
                 _buildFloatingIcon(
                   icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
-                  label: 'Queue',
+                  label: AppLocalizations.of(context).myExercisesQueue,
                   isActive: isQueued,
                   activeColor: Theme.of(context).colorScheme.primary,
                   inactiveColor: textMuted,
@@ -455,7 +455,7 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
                 ),
                 _buildFloatingIcon(
                   icon: isAvoided ? Icons.block : Icons.block_outlined,
-                  label: 'Avoid',
+                  label: AppLocalizations.of(context).menuFilterAvoid,
                   isActive: isAvoided,
                   activeColor: AppColors.orange,
                   inactiveColor: textMuted,
@@ -466,7 +466,7 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
                 ),
                 _buildFloatingIcon(
                   icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
-                  label: 'Staple',
+                  label: AppLocalizations.of(context).expandedExerciseCardStaple,
                   isActive: isStaple || _showStaplePills,
                   activeColor: purple,
                   inactiveColor: textMuted,

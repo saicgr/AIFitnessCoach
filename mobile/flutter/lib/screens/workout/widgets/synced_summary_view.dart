@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Read-only summary view for workouts imported from Apple Health,
 /// Health Connect, Garmin, or Fitbit.
 ///
@@ -41,31 +42,31 @@ class SyncedSummaryView extends StatelessWidget {
       if (duration != null && duration > 0)
         _StatTile(
           icon: Icons.timer_outlined,
-          label: 'Duration',
+          label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
           value: '${duration}m',
         ),
       if (calories != null && calories > 0)
         _StatTile(
           icon: Icons.local_fire_department_rounded,
-          label: 'Calories',
+          label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
           value: '$calories',
         ),
       if (distanceM != null && distanceM > 0)
         _StatTile(
           icon: Icons.straighten_rounded,
-          label: 'Distance',
+          label: AppLocalizations.of(context).workoutImportDistance,
           value: _formatDistance(distanceM),
         ),
       if (avgHr != null && avgHr > 0)
         _StatTile(
           icon: Icons.favorite_outline,
-          label: 'Avg HR',
+          label: AppLocalizations.of(context).workoutDayDetailAvgHr,
           value: '$avgHr bpm',
         ),
       if (maxHr != null && maxHr > 0)
         _StatTile(
           icon: Icons.monitor_heart_outlined,
-          label: 'Max HR',
+          label: AppLocalizations.of(context).workoutDayDetailMaxHr,
           value: '$maxHr bpm',
         ),
     ];
@@ -126,7 +127,7 @@ class SyncedSummaryView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                'No activity metrics were captured for this session.',
+                AppLocalizations.of(context).syncedSummaryNoActivityMetricsWere,
                 style: TextStyle(color: textSecondary, fontSize: 14),
               ),
             ),
@@ -155,7 +156,7 @@ class SyncedSummaryView extends StatelessWidget {
                         color: AppColors.cyan, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'Synced Activity',
+                      AppLocalizations.of(context).syncedSummarySyncedActivity,
                       style: TextStyle(
                         color: textPrimary,
                         fontSize: 16,

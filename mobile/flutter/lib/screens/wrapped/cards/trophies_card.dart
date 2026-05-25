@@ -8,6 +8,7 @@ import '../../../data/models/wrapped_data.dart';
 import '../../../data/providers/xp_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Wrapped slide showing the trophies earned in the Wrapped period.
 /// Shares the same sunburst-on-black visual language as the app-open
 /// celebration ceremony so the two surfaces feel like one flow.
@@ -81,7 +82,7 @@ class WrappedTrophiesCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'YOUR BADGES',
+              AppLocalizations.of(context).trophiesCardYourBadges,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.55),
                 fontSize: 13,
@@ -92,7 +93,7 @@ class WrappedTrophiesCard extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               inPeriod.isEmpty
-                  ? 'No new badges this period — yet.'
+                  ? AppLocalizations.of(context).trophiesCardNoNewBadgesThis
                   : inPeriod.length == 1
                       ? '1 new badge this period'
                       : '${inPeriod.length} new badges this period',
@@ -216,7 +217,7 @@ class _WrappedTrophiesEmpty extends StatelessWidget {
           const Text('🏆', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
           Text(
-            'Keep showing up — badges unlock as you hit milestones.',
+            AppLocalizations.of(context).trophiesCardKeepShowingUpBadges,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.72),

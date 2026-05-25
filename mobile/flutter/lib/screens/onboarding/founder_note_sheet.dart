@@ -13,6 +13,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'pre_auth_quiz_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Founder Note Sheet — Onboarding v5.1
 ///
 /// Shown one time, immediately after a successful sign-in (Base Camp pattern,
@@ -253,7 +254,7 @@ class FounderNoteSheet extends ConsumerWidget {
                         //    Locked copy lives in
                         //    /Users/saichetangrandhe/.claude/plans/1-image-17-i-logged-steady-backus.md
                         Text(
-                          "I used to log every meal for two weeks straight, feel proud of myself, then walk into a Thai place I couldn't read, eat what looked safest, and quietly stop opening the app. Three weeks later I'd reinstall a different one, swear this was the time, and run the same loop again. Every app logged my data, none of them noticed when I went silent — they were ledgers, not coaches.",
+                          AppLocalizations.of(context).founderNoteIUsedToLog,
                           style: TextStyle(
                             fontSize: 15,
                             color: textPrimary,
@@ -262,7 +263,7 @@ class FounderNoteSheet extends ConsumerWidget {
                         ).animate().fadeIn(delay: 480.ms),
                         const SizedBox(height: 10),
                         Text(
-                          "The friends who actually got lean had a person texting them. Real accountability costs about two hundred dollars a month, which is exactly why most of us never have it, and exactly why the gap between \"tracking\" and \"changing\" stays open for years.",
+                          AppLocalizations.of(context).founderNoteTheFriendsWhoActually,
                           style: TextStyle(
                             fontSize: 15,
                             color: textPrimary,
@@ -271,7 +272,7 @@ class FounderNoteSheet extends ConsumerWidget {
                         ).animate().fadeIn(delay: 540.ms),
                         const SizedBox(height: 10),
                         Text(
-                          "So I built the person, not the ledger. Snap that menu in Bangkok and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.",
+                          AppLocalizations.of(context).founderNoteSoIBuiltThe,
                           style: TextStyle(
                             fontSize: 15,
                             color: textPrimary,
@@ -333,7 +334,7 @@ class FounderNoteSheet extends ConsumerWidget {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Founder, solo, still on version one.',
+                                    AppLocalizations.of(context).founderNoteFounderSoloStillOn,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: textSecondary,
@@ -362,14 +363,14 @@ class FounderNoteSheet extends ConsumerWidget {
                     children: [
                       _InlineSocialLink(
                         icon: FontAwesomeIcons.discord,
-                        label: 'Discord',
+                        label: AppLocalizations.of(context).founderNoteDiscord,
                         color: const Color(0xFF5865F2),
                         onTap: () => _open(AppLinks.discord),
                       ),
                       const SizedBox(width: 22),
                       _InlineSocialLink(
                         icon: FontAwesomeIcons.instagram,
-                        label: 'Instagram',
+                        label: AppLocalizations.of(context).wrappedShareInstagram,
                         color: const Color(0xFFE1306C),
                         onTap: () => _open(AppLinks.instagram),
                       ),

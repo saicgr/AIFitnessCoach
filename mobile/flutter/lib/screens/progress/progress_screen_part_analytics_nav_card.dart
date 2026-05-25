@@ -67,7 +67,7 @@ class _AnalyticsNavCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'View',
+                    AppLocalizations.of(context).setTrackingOverlayView,
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: color,
                       fontWeight: FontWeight.w600,

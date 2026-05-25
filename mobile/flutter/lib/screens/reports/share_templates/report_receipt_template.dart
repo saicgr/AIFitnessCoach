@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../workout/widgets/share_templates/_share_common.dart';
 import '_report_common.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Receipt — cream-paper "ZEALOVA GYM RECEIPT" with each highlight rendered
 /// as a monospaced line item and the hero value stamped at the bottom.
 /// Locks out with a ShareLockOverlay when there are no highlights to print.
@@ -52,8 +53,8 @@ class ReportReceiptTemplate extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'ZEALOVA GYM',
+                    Text(
+                      AppLocalizations.of(context).reportReceiptTemplateZealovaGym,
                       style: TextStyle(
                         fontFamily: 'Courier',
                         fontWeight: FontWeight.w900,
@@ -76,11 +77,11 @@ class ReportReceiptTemplate extends StatelessWidget {
                     const _DashedDivider(),
                     const SizedBox(height: 10),
                     _ReceiptRow(
-                      label: 'CUSTOMER',
+                      label: AppLocalizations.of(context).reportReceiptTemplateCustomer,
                       value: customer,
                     ),
                     _ReceiptRow(
-                      label: 'REPORT',
+                      label: AppLocalizations.of(context).reportReceiptTemplateReport,
                       value: data.title.toUpperCase(),
                     ),
                     const SizedBox(height: 10),

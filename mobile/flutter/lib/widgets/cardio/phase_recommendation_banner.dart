@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/cardio_phase_repository.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Subtle pastel banner that surfaces a period-aware cardio intensity
 /// recommendation on the cardio plan + log-cardio start screens.
 ///
@@ -224,7 +225,7 @@ class PhaseRecommendationBanner extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
-                'Got it',
+                AppLocalizations.of(context).weightIncrementsGotIt,
                 style: TextStyle(color: accent, fontWeight: FontWeight.w600),
               ),
             ),

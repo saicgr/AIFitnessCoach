@@ -8,6 +8,7 @@ import '../../../data/providers/home_layout_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for picking layout templates
 class TemplatePickerSheet extends ConsumerWidget {
   final Function(HomeLayoutTemplate template) onTemplateSelected;
@@ -75,7 +76,7 @@ class TemplatePickerSheet extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Templates',
+                            AppLocalizations.of(context).templatePickerTemplates,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -84,7 +85,7 @@ class TemplatePickerSheet extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Start with a pre-designed layout',
+                            AppLocalizations.of(context).templatePickerStartWithAPre,
                             style: TextStyle(
                               fontSize: 13,
                               color: textMuted,
@@ -111,7 +112,7 @@ class TemplatePickerSheet extends ConsumerWidget {
                         Icon(Icons.error_outline, color: AppColors.error, size: 48),
                         const SizedBox(height: 16),
                         Text(
-                          'Failed to load templates',
+                          AppLocalizations.of(context).templatePickerFailedToLoadTemplates,
                           style: TextStyle(color: textColor),
                         ),
                       ],
@@ -255,8 +256,8 @@ class TemplatePickerSheet extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'Use This Template',
+                  child: Text(
+                    AppLocalizations.of(context).templatePickerUseThisTemplate,
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),

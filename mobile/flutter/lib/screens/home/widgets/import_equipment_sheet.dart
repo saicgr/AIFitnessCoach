@@ -29,6 +29,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../chat/widgets/media_picker_helper.dart';
 import 'import_equipment_result_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Maximum wall-clock time we will poll the job before surfacing a timeout.
 const _kPollTimeout = Duration(seconds: 60);
 
@@ -414,7 +415,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Import Equipment',
+                        AppLocalizations.of(context).importEquipmentImportEquipment,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -422,7 +423,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
                         ),
                       ),
                       Text(
-                        'Let AI read your gym\'s equipment list',
+                        AppLocalizations.of(context).importEquipmentLetAiReadYour,
                         style:
                             TextStyle(fontSize: 12, color: textSecondary),
                       ),
@@ -468,7 +469,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
           icon: Icons.picture_as_pdf_rounded,
           tint: const Color(0xFFE11D48),
           label: 'Upload PDF or Word',
-          description: 'Your gym\'s equipment list or facility brochure',
+          description: AppLocalizations.of(context).importEquipmentYourGymSEquipment,
           onTap: _pickPdf,
         ),
         const SizedBox(height: 12),
@@ -522,7 +523,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Everything imported goes to a review screen — we never overwrite your equipment without your confirmation.',
+                  AppLocalizations.of(context).importEquipmentEverythingImportedGoesTo,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ),
@@ -544,7 +545,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isUrl ? 'Paste the URL' : 'Paste equipment text',
+            isUrl ? AppLocalizations.of(context).importEquipmentPasteTheUrl : AppLocalizations.of(context).importEquipmentPasteEquipmentText,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -554,7 +555,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
           const SizedBox(height: 4),
           Text(
             isUrl
-                ? 'Any public webpage listing gym equipment.'
+                ? AppLocalizations.of(context).importEquipmentAnyPublicWebpageListing
                 : 'Copy/paste a list from anywhere — we will extract equipment names.',
             style: TextStyle(fontSize: 13, color: textSecondary),
           ),
@@ -583,7 +584,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
               decoration: _inputDecoration(
                 isDark: isDark,
                 hint:
-                    'e.g.\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...',
+                    AppLocalizations.of(context).importEquipmentEGNdumbbells5,
                 icon: Icons.text_fields_rounded,
                 textSecondary: textSecondary,
                 accent: accent,
@@ -602,8 +603,8 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Analyze',
+              child: Text(
+                AppLocalizations.of(context).nutritionShowcaseAnalyze,
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
               ),
             ),
@@ -659,7 +660,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
             ),
             const SizedBox(height: 24),
             Text(
-              _working.isNotEmpty ? _working : 'Working...',
+              _working.isNotEmpty ? _working : AppLocalizations.of(context).importExerciseWorking,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -669,7 +670,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'This usually takes 10–30 seconds.',
+              AppLocalizations.of(context).importEquipmentThisUsuallyTakes10,
               style: TextStyle(fontSize: 12, color: textSecondary),
             ),
           ],
@@ -692,7 +693,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
               size: 56, color: Colors.red.shade400),
           const SizedBox(height: 16),
           Text(
-            'Import failed',
+            AppLocalizations.of(context).workoutImportSummaryImportFailed,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -711,7 +712,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
             children: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('Close', style: TextStyle(color: textSecondary)),
+                child: Text(AppLocalizations.of(context).commonClose, style: TextStyle(color: textSecondary)),
               ),
               const SizedBox(width: 8),
               ElevatedButton(
@@ -723,7 +724,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text('Try again'),
+                child: Text(AppLocalizations.of(context).workoutReviewTryAgain),
               ),
             ],
           ),

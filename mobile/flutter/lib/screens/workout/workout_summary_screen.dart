@@ -18,6 +18,7 @@ import 'widgets/synced_summary_view.dart';
 import '../../shareables/adapters/workout_adapter.dart';
 import '../../shareables/shareable_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'workout_summary_screen_ui.dart';
 
 
@@ -66,7 +67,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : Colors.white,
-      appBar: const PillAppBar(title: 'Workout Summary'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).workoutSummaryWorkoutSummary),
       floatingActionButton: FutureBuilder<WorkoutSummaryResponse?>(
         future: _summaryFuture,
         builder: (context, snapshot) {
@@ -82,7 +83,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
             backgroundColor: accentColor,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add, size: 20),
-            label: const Text('Add Exercise'),
+            label: Text(AppLocalizations.of(context).workoutSummaryAddExercise),
           );
         },
       ),
@@ -186,7 +187,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                 color: isDark ? AppColors.textMuted : Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
-              'Failed to load summary',
+              AppLocalizations.of(context).workoutSummaryScreenFailedToLoadSummary,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -195,7 +196,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Please check your connection and try again.',
+              AppLocalizations.of(context).workoutSummaryScreenPleaseCheckYourConnection,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -206,7 +207,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
             FilledButton.icon(
               onPressed: _retry,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: FilledButton.styleFrom(
                 backgroundColor:
                     isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey.shade200,
@@ -302,13 +303,13 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                     });
                   },
                   icon: Icon(Icons.unfold_more, size: 16, color: isDark ? AppColors.textMuted : Colors.grey),
-                  label: Text('Expand All', style: TextStyle(fontSize: 12, color: isDark ? AppColors.textMuted : Colors.grey)),
+                  label: Text(AppLocalizations.of(context).workoutSummaryExpandAll, style: TextStyle(fontSize: 12, color: isDark ? AppColors.textMuted : Colors.grey)),
                 )
               else
                 TextButton.icon(
                   onPressed: () => setState(() => _expandedExercises.clear()),
                   icon: Icon(Icons.unfold_less, size: 16, color: isDark ? AppColors.textMuted : Colors.grey),
-                  label: Text('Collapse All', style: TextStyle(fontSize: 12, color: isDark ? AppColors.textMuted : Colors.grey)),
+                  label: Text(AppLocalizations.of(context).workoutSummaryCollapseAll, style: TextStyle(fontSize: 12, color: isDark ? AppColors.textMuted : Colors.grey)),
                 ),
             ],
           ),
@@ -427,7 +428,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          workout?.name ?? 'Workout',
+          workout?.name ?? AppLocalizations.of(context).navWorkout,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -456,7 +457,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                isTracked ? 'Tracked' : 'Manually Marked Done',
+                isTracked ? AppLocalizations.of(context).workoutSummaryTracked : AppLocalizations.of(context).workoutSummaryManuallyMarkedDone,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -744,8 +745,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                 if (!context.mounted) return;
                 if (shareable == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('No workout data to share yet'),
+                    SnackBar(
+                      content: Text(AppLocalizations.of(context).workoutSummaryNoWorkoutDataTo),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -755,7 +756,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               }
             : null,
         icon: const Icon(Icons.share, size: 18),
-        label: const Text('Share Workout'),
+        label: Text(AppLocalizations.of(context).workoutSummaryShareWorkout),
         style: OutlinedButton.styleFrom(
           foregroundColor: isDark ? AppColors.textPrimary : Colors.black87,
           side: BorderSide(
@@ -791,8 +792,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               )
             : const Icon(Icons.undo, size: 18),
         label: Text(_isReverting
-            ? 'Reverting...'
-            : 'Revert - Mark as Not Done'),
+            ? AppLocalizations.of(context).workoutSummaryReverting
+            : AppLocalizations.of(context).workoutSummaryRevertMarkAsNot),
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.error.withValues(alpha: 0.9),
           foregroundColor: Colors.white,
@@ -819,7 +820,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
         if (mounted) context.pop();
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to revert workout')),
+          SnackBar(content: Text(AppLocalizations.of(context).workoutSummaryFailedToRevertWorkout)),
         );
       }
     } catch (e) {
@@ -857,7 +858,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           _retry();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sets updated successfully')),
+              SnackBar(content: Text(AppLocalizations.of(context).workoutSummarySetsUpdatedSuccessfully)),
             );
           }
         } catch (e) {
@@ -1003,7 +1004,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'No sets logged for this workout',
+                  AppLocalizations.of(context).workoutSummaryNoSetsLoggedFor,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1012,7 +1013,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Add a set or edit an exercise to populate this summary.',
+                  AppLocalizations.of(context).workoutSummaryAddASetOr,
                   style: TextStyle(
                     fontSize: 12,
                     color:
@@ -1056,7 +1057,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bodyweight session',
+                  AppLocalizations.of(context).workoutSummaryBodyweightSession,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

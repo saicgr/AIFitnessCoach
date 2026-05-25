@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Circular timer widget showing fasting progress and current zone
 class FastingTimerWidget extends ConsumerWidget {
   final FastingRecord? activeFast;
@@ -240,7 +241,7 @@ class FastingTimerWidget extends ConsumerWidget {
                 size: 20,
               ),
               label: Text(
-                'End Fast',
+                AppLocalizations.of(context).heroFastingCardEndFast,
                 style: TextStyle(
                   color: accentColor,
                   fontWeight: FontWeight.w600,

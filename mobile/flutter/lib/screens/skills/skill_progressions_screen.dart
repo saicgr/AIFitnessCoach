@@ -13,6 +13,7 @@ import 'widgets/progression_chain_card.dart';
 import 'widgets/category_filter_chips.dart';
 import 'widgets/skill_progress_summary_card.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen displaying all available skill progressions
 class SkillProgressionsScreen extends ConsumerStatefulWidget {
   const SkillProgressionsScreen({super.key});
@@ -136,14 +137,14 @@ class _SkillProgressionsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Skill Progressions',
+                  AppLocalizations.of(context).skillsSkillProgressions,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Master bodyweight skills step by step',
+                  AppLocalizations.of(context).skillProgressionsMasterBodyweightSkillsStep,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: isDark
                             ? AppColors.textSecondary
@@ -168,9 +169,9 @@ class _SkillProgressionsScreenState
     return SegmentedTabBar(
       controller: _tabController,
       showIcons: false,
-      tabs: const [
-        SegmentedTabItem(label: 'My Progress'),
-        SegmentedTabItem(label: 'All Skills'),
+      tabs: [
+        SegmentedTabItem(label: AppLocalizations.of(context).skillProgressionsMyProgress),
+        SegmentedTabItem(label: AppLocalizations.of(context).skillProgressionsAllSkills),
       ],
     );
   }
@@ -199,7 +200,7 @@ class _SkillProgressionsScreenState
 
           // Active progressions header
           Text(
-            'Active Progressions',
+            AppLocalizations.of(context).skillProgressionsActiveProgressions,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -224,7 +225,7 @@ class _SkillProgressionsScreenState
           // Discover more section
           if (state.availableChains.isNotEmpty) ...[
             Text(
-              'Discover More Skills',
+              AppLocalizations.of(context).skillProgressionsDiscoverMoreSkills,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -349,14 +350,14 @@ class _SkillProgressionsScreenState
             ),
             const SizedBox(height: 24),
             Text(
-              'Start Your Journey',
+              AppLocalizations.of(context).skillProgressionsStartYourJourney,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Choose a skill progression to begin mastering bodyweight movements step by step.',
+              AppLocalizations.of(context).skillProgressionsChooseASkillProgression,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: textSecondary,
@@ -369,7 +370,7 @@ class _SkillProgressionsScreenState
                 _tabController.animateTo(1);
               },
               icon: const Icon(Icons.explore_rounded),
-              label: const Text('Browse Skills'),
+              label: Text(AppLocalizations.of(context).skillProgressionsBrowseSkills),
               style: FilledButton.styleFrom(
                 backgroundColor: cyan,
                 padding: const EdgeInsets.symmetric(
@@ -399,7 +400,7 @@ class _SkillProgressionsScreenState
           ),
           const SizedBox(height: 16),
           Text(
-            'No skills in this category',
+            AppLocalizations.of(context).skillProgressionsNoSkillsInThis,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: textSecondary,
                 ),
@@ -425,7 +426,7 @@ class _SkillProgressionsScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'Something went wrong',
+              AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
@@ -442,7 +443,7 @@ class _SkillProgressionsScreenState
             FilledButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try Again'),
+              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
               style: FilledButton.styleFrom(backgroundColor: cyan),
             ),
           ],

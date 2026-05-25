@@ -12,6 +12,7 @@ import '../providers/library_providers.dart';
 import '../providers/muscle_group_images_provider.dart';
 import '../widgets/compact_split_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Main discovery tab for the Library screen.
 ///
 /// Shows AI hero card, personalized "For You" splits, category-organized
@@ -131,7 +132,7 @@ class _AiHeroCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'What should I train?',
+                            AppLocalizations.of(context).discoverWhatShouldITrain,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -140,7 +141,7 @@ class _AiHeroCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Get a personalized AI recommendation',
+                            AppLocalizations.of(context).discoverGetAPersonalizedAi,
                             style: TextStyle(
                               fontSize: 13,
                               color: isDark
@@ -197,7 +198,7 @@ class _ForYouSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'For You',
+                AppLocalizations.of(context).discoverForYou,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -206,7 +207,7 @@ class _ForYouSection extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Matched to your gym profile',
+                AppLocalizations.of(context).discoverMatchedToYourGym,
                 style: TextStyle(
                   fontSize: 13,
                   color: textSecondary,
@@ -230,7 +231,7 @@ class _ForYouSection extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Text(
-                'Complete your profile to get personalized recommendations',
+                AppLocalizations.of(context).discoverCompleteYourProfileTo,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
@@ -288,7 +289,7 @@ class _ForYouSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Not sure? Ask AI',
+                  AppLocalizations.of(context).discoverNotSureAskAi,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -362,7 +363,7 @@ class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Training Plans',
+                AppLocalizations.of(context).discoverTrainingPlans,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -378,7 +379,7 @@ class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
                   context.push('/library/splits$qs');
                 },
                 child: Text(
-                  'View All',
+                  AppLocalizations.of(context).workoutHistoryImportViewAll,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -495,7 +496,7 @@ class _BrowseSection extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'Browse by Muscle',
+            AppLocalizations.of(context).discoverBrowseByMuscle,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -548,7 +549,7 @@ class _BrowseSection extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'Browse by Equipment',
+            AppLocalizations.of(context).discoverBrowseByEquipment,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -591,7 +592,7 @@ class _BrowseSection extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'Browse by Category',
+            AppLocalizations.of(context).discoverBrowseByCategory,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,

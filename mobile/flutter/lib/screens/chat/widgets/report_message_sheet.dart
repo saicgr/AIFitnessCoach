@@ -5,6 +5,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Report categories for AI messages
 enum ReportCategory {
   wrongAdvice('Wrong advice', Icons.error_outline),
@@ -89,7 +90,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Report this response',
+                          AppLocalizations.of(context).reportMessageReportThisResponse,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -97,7 +98,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                           ),
                         ),
                         Text(
-                          'Help us improve our AI coach',
+                          AppLocalizations.of(context).reportMessageHelpUsImproveOur,
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -117,7 +118,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
 
               // Category selection label
               Text(
-                'What\'s wrong with this response?',
+                AppLocalizations.of(context).reportMessageWhatSWrongWith,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -174,7 +175,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
 
               // Reason text field
               Text(
-                'Additional details (optional)',
+                AppLocalizations.of(context).reportMessageAdditionalDetailsOptional,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -189,7 +190,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                 maxLines: 3,
                 maxLength: 500,
                 decoration: InputDecoration(
-                  hintText: 'Tell us more about the issue...',
+                  hintText: AppLocalizations.of(context).reportMessageTellUsMoreAbout,
                   hintStyle: TextStyle(color: textSecondary),
                   filled: true,
                   fillColor: isDark ? AppColors.nearBlack : AppColorsLight.nearWhite,
@@ -228,7 +229,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                         ),
                       ),
                       child: Text(
-                        'Cancel',
+                        AppLocalizations.of(context).buttonCancel,
                         style: TextStyle(
                           color: textSecondary,
                           fontWeight: FontWeight.w600,
@@ -263,8 +264,8 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Submit Report',
+                          : Text(
+                              AppLocalizations.of(context).reportStrainSubmitReport,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -310,11 +311,11 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
               Icon(Icons.check_circle, color: Colors.white, size: 20),
               SizedBox(width: 8),
-              Text('Report submitted. Thank you for your feedback!'),
+              Text(AppLocalizations.of(context).reportMessageReportSubmittedThankYou),
             ],
           ),
           backgroundColor: AppColors.success,

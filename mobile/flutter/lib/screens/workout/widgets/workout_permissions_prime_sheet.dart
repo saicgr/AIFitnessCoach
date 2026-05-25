@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Soft pre-permission sheet shown at the start of the user's first workout.
 ///
 /// Voice (microphone) and Bluetooth (Nearby Devices on Android) system prompts
@@ -78,7 +79,7 @@ class WorkoutPermissionsPrimeSheet extends StatelessWidget {
               ),
             ),
             Text(
-              'Two quick heads-ups',
+              AppLocalizations.of(context).workoutPermissionsPrimeTwoQuickHeadsUps,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -88,7 +89,7 @@ class WorkoutPermissionsPrimeSheet extends StatelessWidget {
             ).animate().fadeIn(duration: 250.ms),
             const SizedBox(height: 6),
             Text(
-              'You may see these system prompts during your workout. Both are optional — skip either and the workout still works.',
+              AppLocalizations.of(context).workoutPermissionsPrimeYouMaySeeThese,
               style: TextStyle(
                 fontSize: 14,
                 color: textSecondary,
@@ -98,18 +99,18 @@ class WorkoutPermissionsPrimeSheet extends StatelessWidget {
             const SizedBox(height: 20),
             _PermissionRow(
               icon: Icons.mic_rounded,
-              title: 'Microphone',
+              title: AppLocalizations.of(context).workoutPermissionsPrimeMicrophone,
               subtitle:
-                  'Tap the mic mid-set to ask questions or log notes by voice.',
+                  AppLocalizations.of(context).workoutPermissionsPrimeTapTheMicMid,
               accent: accent,
               isDark: isDark,
             ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.1, end: 0),
             const SizedBox(height: 12),
             _PermissionRow(
               icon: Icons.bluetooth_searching_rounded,
-              title: 'Nearby devices',
+              title: AppLocalizations.of(context).workoutPermissionsPrimeNearbyDevices,
               subtitle:
-                  'Lets us auto-connect a BLE heart-rate strap if one is nearby.',
+                  AppLocalizations.of(context).workoutPermissionsPrimeLetsUsAutoConnect,
               accent: accent,
               isDark: isDark,
             ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.1, end: 0),
@@ -130,8 +131,8 @@ class WorkoutPermissionsPrimeSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text(
-                  'Got it, let\u2019s go',
+                child: Text(
+                  AppLocalizations.of(context).workoutPermissionsPrimeGotItLetU2019s,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),

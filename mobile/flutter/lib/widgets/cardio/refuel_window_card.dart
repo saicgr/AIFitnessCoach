@@ -7,6 +7,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/refuel_repository.dart';
 import '../../screens/pillar/widgets/ask_coach_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Card that shows post-cardio refuel guidance (water / carbs / protein
 /// targets + a one-line rationale + a "Log meal" CTA + an Ask-Coach button).
 ///
@@ -67,7 +68,7 @@ class _RefuelCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '🥤 Recovery window',
+                  AppLocalizations.of(context).refuelWindowCardRecoveryWindow,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -87,7 +88,7 @@ class _RefuelCard extends StatelessWidget {
                   'window_minutes': prescription.windowMinutes,
                   'rationale': prescription.rationale,
                 },
-                semanticLabel: 'Ask coach about recovery refuel',
+                semanticLabel: AppLocalizations.of(context).refuelWindowCardAskCoachAboutRecovery,
               ),
             ],
           ),
@@ -107,7 +108,7 @@ class _RefuelCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MacroCell(
-                  label: 'Water',
+                  label: AppLocalizations.of(context).unifiedHomeWidgetsWater,
                   value: '${prescription.waterMl}',
                   unit: 'ml',
                   isDark: isDark,
@@ -119,7 +120,7 @@ class _RefuelCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _MacroCell(
-                  label: 'Carbs',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   value: '${prescription.carbsG}',
                   unit: 'g',
                   isDark: isDark,
@@ -131,7 +132,7 @@ class _RefuelCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _MacroCell(
-                  label: 'Protein',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   value: '${prescription.proteinG}',
                   unit: 'g',
                   isDark: isDark,
@@ -162,8 +163,8 @@ class _RefuelCard extends StatelessWidget {
                 foregroundColor: accent,
               ),
               icon: const Icon(Icons.restaurant_outlined, size: 16),
-              label: const Text(
-                'Log meal',
+              label: Text(
+                AppLocalizations.of(context).refuelWindowCardLogMeal,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

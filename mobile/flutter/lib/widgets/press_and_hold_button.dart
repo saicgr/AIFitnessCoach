@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// A button that requires a press-and-hold gesture to confirm an action.
 /// Shows a progress fill expanding left-to-right as the user holds.
 class PressAndHoldButton extends StatefulWidget {
@@ -131,7 +132,7 @@ class _PressAndHoldButtonState extends State<PressAndHoldButton>
           opacity: _completed ? 0.0 : 0.6,
           duration: const Duration(milliseconds: 200),
           child: Text(
-            'Press and hold to acknowledge',
+            AppLocalizations.of(context).pressAndHoldPressAndHoldTo,
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).brightness == Brightness.dark

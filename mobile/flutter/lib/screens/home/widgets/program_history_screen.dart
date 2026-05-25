@@ -10,6 +10,7 @@ import '../../../widgets/pill_app_bar.dart';
 import '../../../core/services/posthog_service.dart';
 import 'components/sheet_theme_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class ProgramHistoryScreen extends ConsumerStatefulWidget {
   const ProgramHistoryScreen({super.key});
 
@@ -98,7 +99,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
     // Show confirmation dialog
     final confirmed = await AppDialog.confirm(
       context,
-      title: 'Restore Program?',
+      title: AppLocalizations.of(context).programHistoryRestoreProgram,
       message: 'This will restore "${program.displayName}" as your current program. '
           'You can regenerate workouts after restoring.',
       confirmText: 'Restore',
@@ -120,8 +121,8 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Program restored successfully!'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).programHistoryProgramRestoredSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -148,8 +149,8 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0E21) : Colors.grey[50],
-      appBar: const PillAppBar(
-        title: 'Program History',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).programHistoryProgramHistory,
       ),
       body: _isLoading
           // Layout-matched skeleton — only on a true cold-cache first open.
@@ -177,7 +178,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
             Icon(Icons.error_outline, size: 64, color: colors.error),
             const SizedBox(height: 16),
             Text(
-              'Failed to load program history',
+              AppLocalizations.of(context).programHistoryFailedToLoadProgram,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -186,7 +187,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'Unknown error',
+              _errorMessage ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
               style: TextStyle(fontSize: 14, color: colors.textMuted),
               textAlign: TextAlign.center,
             ),
@@ -194,7 +195,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
             FilledButton.icon(
               onPressed: _loadProgramHistory,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -212,7 +213,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
             Icon(Icons.history, size: 64, color: colors.textMuted),
             const SizedBox(height: 16),
             Text(
-              'No Program History Yet',
+              AppLocalizations.of(context).programHistoryNoProgramHistoryYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -221,7 +222,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'When you customize your program, snapshots will be saved here.',
+              AppLocalizations.of(context).programHistoryWhenYouCustomizeYour,
               style: TextStyle(fontSize: 14, color: colors.textMuted),
               textAlign: TextAlign.center,
             ),
@@ -286,7 +287,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
                       border: Border.all(color: colors.cyan),
                     ),
                     child: Text(
-                      'CURRENT',
+                      AppLocalizations.of(context).workoutActionsCurrent,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -402,7 +403,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
                   onPressed: () => _restoreProgram(program),
                   icon: Icon(Icons.restore, size: 18, color: colors.cyan),
                   label: Text(
-                    'Restore Program',
+                    AppLocalizations.of(context).programHistoryRestoreProgram2,
                     style: TextStyle(color: colors.cyan),
                   ),
                   style: OutlinedButton.styleFrom(

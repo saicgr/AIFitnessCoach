@@ -186,7 +186,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              'Your Progress',
+              AppLocalizations.of(context).skillProgressSummaryYourProgress,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -401,7 +401,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Add Tile',
+                            AppLocalizations.of(context).tilePickerAddTile,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -443,7 +443,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Discover',
+                            AppLocalizations.of(context).navDiscover,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -464,7 +464,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
-            'Drag to reorder • Tap size to resize • Tap eye to hide',
+            AppLocalizations.of(context).homeScreenUiDragToReorderTap,
             style: TextStyle(
               fontSize: 13,
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -540,7 +540,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Add Tile',
+                            AppLocalizations.of(context).tilePickerAddTile,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -582,7 +582,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Discover',
+                            AppLocalizations.of(context).navDiscover,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -603,7 +603,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
-            'Drag to reorder • Tap size to resize • Tap eye to hide',
+            AppLocalizations.of(context).homeScreenUiDragToReorderTap,
             style: TextStyle(
               fontSize: 13,
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

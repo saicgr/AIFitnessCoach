@@ -30,6 +30,7 @@ import '../../widgets/nav_bar_hider_mixin.dart';
 import 'menu_analysis_sheet.dart';
 import 'recipes/recipe_detail_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: saved foods (DB-backed, newest first)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -187,7 +188,7 @@ class _SavedHubScreenState extends ConsumerState<SavedHubScreen>
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Saved',
+                    AppLocalizations.of(context).savedHubSaved,
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: 22,
@@ -281,7 +282,7 @@ class _SavedHubBottomBar extends StatelessWidget {
             icon: Icon(Icons.check_rounded,
                 size: 20, color: colors.accentContrast),
             label: Text(
-              'Done',
+              AppLocalizations.of(context).commonDone,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
@@ -319,8 +320,8 @@ class _RecipesTab extends ConsumerWidget {
       return _EmptyState(
         colors: colors,
         icon: Icons.bookmark_border_rounded,
-        title: 'Nothing saved yet',
-        hint: 'Sign in to see your saved recipes here.',
+        title: AppLocalizations.of(context).savedHubNothingSavedYet,
+        hint: AppLocalizations.of(context).savedHubSignInToSee,
       );
     }
     final async = ref.watch(favoriteRecipesProvider(userId));
@@ -341,8 +342,8 @@ class _RecipesTab extends ConsumerWidget {
           return _EmptyState(
             colors: colors,
             icon: Icons.restaurant_menu_rounded,
-            title: 'Nothing saved yet',
-            hint: 'Tap ♥ on any recipe in Discover or your library to save it here.',
+            title: AppLocalizations.of(context).savedHubNothingSavedYet,
+            hint: AppLocalizations.of(context).savedHubTapOnAnyRecipe,
           );
         }
         // RecipeSummary has no per-favorite saved-at field on the backend;
@@ -417,8 +418,8 @@ class _FoodsTab extends ConsumerWidget {
       return _EmptyState(
         colors: colors,
         icon: Icons.bookmark_border_rounded,
-        title: 'Nothing saved yet',
-        hint: 'Sign in to see your saved foods here.',
+        title: AppLocalizations.of(context).savedHubNothingSavedYet,
+        hint: AppLocalizations.of(context).savedHubSignInToSee2,
       );
     }
     final async = ref.watch(savedFoodsHubProvider(userId));
@@ -433,8 +434,8 @@ class _FoodsTab extends ConsumerWidget {
           return _EmptyState(
             colors: colors,
             icon: Icons.lunch_dining_rounded,
-            title: 'Nothing saved yet',
-            hint: 'Save a meal or food from the food log to quick-add it later.',
+            title: AppLocalizations.of(context).savedHubNothingSavedYet,
+            hint: AppLocalizations.of(context).savedHubSaveAMealOr,
           );
         }
         return RefreshIndicator(
@@ -502,8 +503,8 @@ class _MenusTab extends ConsumerWidget {
           return _EmptyState(
             colors: colors,
             icon: Icons.menu_book_rounded,
-            title: 'Nothing saved yet',
-            hint: 'Scan a restaurant menu or buffet — saved scans land here.',
+            title: AppLocalizations.of(context).savedHubNothingSavedYet,
+            hint: AppLocalizations.of(context).savedHubScanARestaurantMenu,
           );
         }
         return RefreshIndicator(
@@ -786,7 +787,7 @@ class _ErrorState extends StatelessWidget {
                 size: 46, color: colors.accent.withValues(alpha: 0.6)),
             const SizedBox(height: 12),
             Text(
-              "Couldn't load your saved items.",
+              AppLocalizations.of(context).savedHubCouldnTLoadYour,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -796,7 +797,7 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Check your connection and try again.',
+              AppLocalizations.of(context).savedHubCheckYourConnectionAnd,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: colors.textMuted),
             ),
@@ -804,7 +805,7 @@ class _ErrorState extends StatelessWidget {
             TextButton(
               onPressed: onRetry,
               style: TextButton.styleFrom(foregroundColor: colors.accent),
-              child: const Text('Try again'),
+              child: Text(AppLocalizations.of(context).workoutReviewTryAgain),
             ),
           ],
         ),

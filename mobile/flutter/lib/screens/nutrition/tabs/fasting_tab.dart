@@ -16,6 +16,7 @@ import '../../fasting/widgets/protocol_selector_sheet.dart';
 import '../../fasting/widgets/fasting_settings_sheet.dart';
 import '../../fasting/widgets/fasting_history_list.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Full Fasting tab for the nutrition screen - complete fasting experience with Timer + History tabs
 class FastingTab extends ConsumerStatefulWidget {
   final String userId;
@@ -154,9 +155,9 @@ class _FastingTabState extends ConsumerState<FastingTab>
             child: SegmentedTabBar(
               controller: _tabController!,
               showIcons: false,
-              tabs: const [
-                SegmentedTabItem(label: 'Timer', icon: Icons.timer_outlined),
-                SegmentedTabItem(label: 'History', icon: Icons.history),
+              tabs: [
+                SegmentedTabItem(label: AppLocalizations.of(context).fastingTimer, icon: Icons.timer_outlined),
+                SegmentedTabItem(label: AppLocalizations.of(context).workoutHistory, icon: Icons.history),
               ],
             ),
           ),
@@ -245,7 +246,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
             TextButton(
               onPressed: () => _showProtocolSelector(context),
               child: Text(
-                'Edit Schedule',
+                AppLocalizations.of(context).fastingEditSchedule,
                 style: TextStyle(
                   fontSize: 14,
                   color: textSecondary,
@@ -442,7 +443,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    hasFast ? 'End Fast' : 'Start Fast',
+                    hasFast ? AppLocalizations.of(context).heroFastingCardEndFast : AppLocalizations.of(context).heroFastingCardStartFast,
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -552,7 +553,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
             ),
             const SizedBox(height: 12),
             Text(
-              'Start your first fast to build stats',
+              AppLocalizations.of(context).fastingStartYourFirstFast,
               style: TextStyle(
                 fontSize: 16,
                 color: textSecondary,
@@ -576,7 +577,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
         _buildStatCard(
           icon: Icons.local_fire_department,
           value: '${fastingState.streak?.currentStreak ?? 0}',
-          label: 'Streak',
+          label: AppLocalizations.of(context).xpProgressCardStreak,
           elevated: elevated,
           accentColor: accentColor,
           textPrimary: textPrimary,
@@ -585,7 +586,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
         _buildStatCard(
           icon: Icons.check_circle_outline,
           value: '${stats.completedFasts}',
-          label: 'Total Fasts',
+          label: AppLocalizations.of(context).fastingTotalFasts,
           elevated: elevated,
           accentColor: accentColor,
           textPrimary: textPrimary,
@@ -594,7 +595,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
         _buildStatCard(
           icon: Icons.schedule,
           value: '${(stats.avgDurationMinutes / 60).toStringAsFixed(1)}h',
-          label: 'Avg Duration',
+          label: AppLocalizations.of(context).fastingScreenRedesignedAvgDuration,
           elevated: elevated,
           accentColor: accentColor,
           textPrimary: textPrimary,
@@ -603,7 +604,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
         _buildStatCard(
           icon: Icons.star_outline,
           value: '${(stats.longestFastMinutes / 60).toStringAsFixed(1)}h',
-          label: 'Longest Fast',
+          label: AppLocalizations.of(context).fastingScreenRedesignedLongestFast,
           elevated: elevated,
           accentColor: accentColor,
           textPrimary: textPrimary,
@@ -675,7 +676,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
               ),
               const SizedBox(height: 16),
               Text(
-                'No fasting history yet',
+                AppLocalizations.of(context).fastingScreenRedesignedNoFastingHistoryYet,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -684,7 +685,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
               ),
               const SizedBox(height: 8),
               Text(
-                'Complete your first fast to see it here',
+                AppLocalizations.of(context).fastingCompleteYourFirstFast,
                 style: TextStyle(
                   fontSize: 14,
                   color: textMuted,
@@ -731,7 +732,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
             ),
             const SizedBox(height: 24),
             Text(
-              'Fasting Tracker',
+              AppLocalizations.of(context).fastingScreenRedesignedFastingTracker,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -740,7 +741,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
             ),
             const SizedBox(height: 12),
             Text(
-              'Track your intermittent fasting with smart zone notifications, progress insights, and detailed history.',
+              AppLocalizations.of(context).fastingTrackYourIntermittentFastin,
               style: TextStyle(
                 fontSize: 15,
                 color: textSecondary,
@@ -769,13 +770,13 @@ class _FastingTabState extends ConsumerState<FastingTab>
                   ),
                   elevation: 0,
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.rocket_launch, size: 20),
                     SizedBox(width: 10),
                     Text(
-                      'Sign Up to Unlock',
+                      AppLocalizations.of(context).progressSignUpToUnlock,
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -848,24 +849,24 @@ class _FastingTabState extends ConsumerState<FastingTab>
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            'End Fast?',
+            AppLocalizations.of(context).fastingEndFast,
             style: TextStyle(color: textPrimary),
           ),
           content: Text(
-            'Are you sure you want to end your fast now?',
+            AppLocalizations.of(context).fastingAreYouSureYou,
             style: TextStyle(color: textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context).buttonCancel),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 await _endFast(userId);
               },
-              child: const Text('End Fast'),
+              child: Text(AppLocalizations.of(context).heroFastingCardEndFast),
             ),
           ],
         );

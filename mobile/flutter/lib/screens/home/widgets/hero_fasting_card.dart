@@ -8,6 +8,7 @@ import '../../../data/providers/fasting_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Hero fasting card - prominent action-focused fasting display
 /// Shows current fast progress or start fast button
 class HeroFastingCard extends ConsumerStatefulWidget {
@@ -124,7 +125,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  hasFast ? 'FASTING' : 'NOT FASTING',
+                  hasFast ? AppLocalizations.of(context).heroFastingCardFasting : AppLocalizations.of(context).heroFastingCardNotFasting,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -241,13 +242,13 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.check_circle_outline, size: 20),
                         SizedBox(width: 8),
                         Text(
-                          'End Fast',
+                          AppLocalizations.of(context).heroFastingCardEndFast,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -267,7 +268,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'Ready to fast?',
+                  AppLocalizations.of(context).heroFastingCardReadyToFast,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -289,11 +290,11 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _FastingBenefit(icon: Icons.local_fire_department, label: 'Burn fat', isDark: isDark),
+                    _FastingBenefit(icon: Icons.local_fire_department, label: AppLocalizations.of(context).heroFastingCardBurnFat, isDark: isDark),
                     const SizedBox(width: 16),
-                    _FastingBenefit(icon: Icons.auto_fix_high, label: 'Autophagy', isDark: isDark),
+                    _FastingBenefit(icon: Icons.auto_fix_high, label: AppLocalizations.of(context).heroFastingCardAutophagy, isDark: isDark),
                     const SizedBox(width: 16),
-                    _FastingBenefit(icon: Icons.bolt, label: 'Energy', isDark: isDark),
+                    _FastingBenefit(icon: Icons.bolt, label: AppLocalizations.of(context).workoutSummaryGeneralEnergy, isDark: isDark),
                   ],
                 ),
 
@@ -324,13 +325,13 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.play_arrow_rounded, size: 24),
                         SizedBox(width: 8),
                         Text(
-                          'Start Fast',
+                          AppLocalizations.of(context).heroFastingCardStartFast,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -355,7 +356,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                   color: textSecondary,
                 ),
                 label: Text(
-                  'View Details',
+                  AppLocalizations.of(context).heroWorkoutCardViewDetails,
                   style: TextStyle(
                     color: textSecondary,
                     fontSize: 12,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'sheet_theme_colors.dart';
 import 'section_title.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// A widget for selecting program duration in weeks
 class ProgramDurationSelector extends StatelessWidget {
   /// Selected number of weeks
@@ -37,7 +38,7 @@ class ProgramDurationSelector extends StatelessWidget {
           children: [
             SectionTitle(
               icon: Icons.date_range,
-              title: 'Program Duration',
+              title: AppLocalizations.of(context).programDurationSelectorProgramDuration,
               iconColor: colors.purple,
               badge: _getProgramDurationLabel(),
             ),
@@ -45,7 +46,7 @@ class ProgramDurationSelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'How far ahead to schedule workouts',
+          AppLocalizations.of(context).programDurationSelectorHowFarAheadTo,
           style: TextStyle(fontSize: 13, color: colors.textMuted),
         ),
         const SizedBox(height: 12),

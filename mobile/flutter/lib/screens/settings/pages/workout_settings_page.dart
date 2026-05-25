@@ -13,6 +13,7 @@ import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/weight_increments_sheet.dart';
 import '../widgets/widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Sub-page for Workout Settings + Exercise Preferences.
 class WorkoutSettingsPage extends ConsumerStatefulWidget {
   const WorkoutSettingsPage({super.key});
@@ -57,7 +58,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Workout Settings',
+        title: AppLocalizations.of(context).workoutSettingsWorkoutSettings,
       ),
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -66,30 +67,30 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
             children: [
               // ── Program ──
               SectionHeader(
-                title: 'PROGRAM',
-                subtitle: 'What you train and when',
+                title: AppLocalizations.of(context).workoutSettingsProgram,
+                subtitle: AppLocalizations.of(context).workoutSettingsWhatYouTrainAnd,
               ),
               const SizedBox(height: 12),
               SettingsCard(
                 items: [
                   SettingItemData(
                     icon: Icons.fitness_center,
-                    title: 'Workout Type',
-                    subtitle: 'Strength, cardio, or mixed',
+                    title: AppLocalizations.of(context).workoutSettingsWorkoutType,
+                    subtitle: AppLocalizations.of(context).workoutSettingsStrengthCardioOrMixed,
                     isWorkoutTypeSelector: true,
                     iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
                   SettingItemData(
                     icon: Icons.view_week,
-                    title: 'Training Split',
-                    subtitle: 'Push/Pull/Legs, Full Body, etc.',
+                    title: AppLocalizations.of(context).workoutSettingsTrainingSplit,
+                    subtitle: AppLocalizations.of(context).workoutSettingsPushPullLegsFull,
                     isTrainingSplitSelector: true,
                     iconColor: isDark ? AppColors.waterBlue : AppColorsLight.waterBlue,
                   ),
                   SettingItemData(
                     icon: Icons.calendar_month,
-                    title: 'Workout Days',
-                    subtitle: 'Which days you train',
+                    title: AppLocalizations.of(context).workoutSettingsWorkoutDays,
+                    subtitle: AppLocalizations.of(context).workoutSettingsWhichDaysYouTrain,
                     isWorkoutDaysSelector: true,
                     iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
                   ),
@@ -100,44 +101,44 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
 
               // ── Progression & Load ──
               SectionHeader(
-                title: 'PROGRESSION & LOAD',
-                subtitle: 'How heavy and how fast you progress',
+                title: AppLocalizations.of(context).workoutSettingsProgressionLoad,
+                subtitle: AppLocalizations.of(context).workoutSettingsHowHeavyAndHow,
               ),
               const SizedBox(height: 12),
               SettingsCard(
                 items: [
                   SettingItemData(
                     icon: Icons.speed,
-                    title: 'My 1RMs',
-                    subtitle: 'View and edit your max lifts',
+                    title: AppLocalizations.of(context).workoutSettingsMy1rms,
+                    subtitle: AppLocalizations.of(context).workoutSettingsViewAndEditYour,
                     isMyOneRMsScreen: true,
                     iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
                   ),
                   SettingItemData(
                     icon: Icons.percent,
-                    title: 'Training Intensity',
-                    subtitle: 'Work at a percentage of your max',
+                    title: AppLocalizations.of(context).workoutSettingsTrainingIntensity,
+                    subtitle: AppLocalizations.of(context).workoutSettingsWorkAtAPercentage,
                     isTrainingIntensitySelector: true,
                     iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
                   ),
                   SettingItemData(
                     icon: Icons.trending_up,
-                    title: 'Progression Pace',
-                    subtitle: 'How fast to increase weights',
+                    title: AppLocalizations.of(context).workoutSettingsProgressionPace,
+                    subtitle: AppLocalizations.of(context).workoutSettingsHowFastToIncrease,
                     isProgressionPaceSelector: true,
                     iconColor: isDark ? AppColors.green : AppColorsLight.green,
                   ),
                   SettingItemData(
                     icon: Icons.tune,
-                    title: 'Weekly Variety',
-                    subtitle: 'How much exercises change each week',
+                    title: AppLocalizations.of(context).workoutSettingsWeeklyVariety,
+                    subtitle: AppLocalizations.of(context).workoutSettingsHowMuchExercisesChange,
                     isVariationSlider: true,
                     iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
                   ),
                   SettingItemData(
                     icon: Icons.replay_circle_filled_outlined,
-                    title: 'Progression & Deload',
-                    subtitle: 'Auto-deload, deload frequency & weeks to progress',
+                    title: AppLocalizations.of(context).workoutSettingsProgressionDeload,
+                    subtitle: AppLocalizations.of(context).workoutSettingsAutoDeloadDeloadFrequency,
                     onTap: () =>
                         GoRouter.of(context).push('/settings/progression-pace'),
                     iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
@@ -149,15 +150,15 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
 
               // ── Live Coaching ──
               SectionHeader(
-                title: 'LIVE COACHING',
-                subtitle: 'What happens during a workout',
+                title: AppLocalizations.of(context).workoutSettingsLiveCoaching,
+                subtitle: AppLocalizations.of(context).workoutSettingsWhatHappensDuringA,
               ),
               const SizedBox(height: 12),
               SettingsCard(
                 items: [
                   SettingItemData(
                     icon: Icons.monitor_heart_outlined,
-                    title: 'Fatigue Detection',
+                    title: AppLocalizations.of(context).workoutSettingsFatigueDetection,
                     subtitle: ref.watch(fatigueAlertsEnabledProvider)
                         ? 'ON — Alerts when performance drops'
                         : 'OFF — No fatigue alerts',
@@ -176,7 +177,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                   ),
                   SettingItemData(
                     icon: Icons.auto_awesome_outlined,
-                    title: 'Pre-Set Insights',
+                    title: AppLocalizations.of(context).workoutSettingsPreSetInsights,
                     subtitle: ref.watch(preSetInsightEnabledProvider)
                         ? 'ON — Data-grounded tip above Set 1'
                         : 'OFF — No pre-set banner',
@@ -197,7 +198,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                   ),
                   SettingItemData(
                     icon: Icons.checklist_rounded,
-                    title: 'Incomplete Exercise Warning',
+                    title: AppLocalizations.of(context).workoutSettingsIncompleteExerciseWarning,
                     subtitle: !_skipWarningDismissed
                         ? 'ON — Warns before finishing with unlogged sets'
                         : 'OFF — No warning on incomplete logs',
@@ -217,30 +218,30 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
 
               // ── Units & Tracking ──
               SectionHeader(
-                title: 'UNITS & TRACKING',
-                subtitle: 'How weights are displayed and logged',
+                title: AppLocalizations.of(context).workoutSettingsUnitsTracking,
+                subtitle: AppLocalizations.of(context).workoutSettingsHowWeightsAreDisplayed,
               ),
               const SizedBox(height: 12),
               SettingsCard(
                 items: [
                   SettingItemData(
                     icon: Icons.swap_horiz,
-                    title: 'Workout Weight Unit',
+                    title: AppLocalizations.of(context).workoutSettingsWorkoutWeightUnit,
                     subtitle: ref.watch(workoutWeightUnitProvider) == 'kg' ? 'Kilograms (kg)' : 'Pounds (lbs)',
                     onTap: () => _showWorkoutWeightUnitSelector(context, ref),
                     iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
                   ),
                   SettingItemData(
                     icon: Icons.tune,
-                    title: 'Weight Increments',
+                    title: AppLocalizations.of(context).workoutSettingsWeightIncrements,
                     subtitle: 'Step size: ${ref.watch(weightIncrementsProvider).unit.toUpperCase()} · Tap to customize',
                     onTap: () => showWeightIncrementsSheet(context),
                     iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                   ),
                   SettingItemData(
                     icon: Icons.show_chart,
-                    title: 'Progress Charts',
-                    subtitle: 'Visualize strength & volume over time',
+                    title: AppLocalizations.of(context).workoutSettingsProgressCharts,
+                    subtitle: AppLocalizations.of(context).workoutSettingsVisualizeStrengthVolumeOv,
                     isProgressChartsScreen: true,
                     iconColor: isDark ? AppColors.green : AppColorsLight.green,
                   ),
@@ -251,24 +252,24 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
 
               // ── Exercise Preferences ──
               SectionHeader(
-                title: 'EXERCISE PREFERENCES',
-                subtitle: 'Customize which exercises appear in workouts',
+                title: AppLocalizations.of(context).workoutSettingsExercisePreferences,
+                subtitle: AppLocalizations.of(context).workoutSettingsCustomizeWhichExercisesAppe,
               ),
               const SizedBox(height: 12),
               SettingsCard(
                 items: [
                   SettingItemData(
                     icon: Icons.fitness_center,
-                    title: 'My Exercises',
-                    subtitle: 'Favorites, avoided, and queue',
+                    title: AppLocalizations.of(context).workoutSettingsMyExercises,
+                    subtitle: AppLocalizations.of(context).workoutSettingsFavoritesAvoidedAndQueue,
                     onTap: () =>
                         GoRouter.of(context).push('/settings/my-exercises'),
                     iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
                   SettingItemData(
                     icon: Icons.history,
-                    title: 'Import Workout History',
-                    subtitle: 'Add past workouts for better AI weights',
+                    title: AppLocalizations.of(context).workoutSettingsImportWorkoutHistory,
+                    subtitle: AppLocalizations.of(context).workoutSettingsAddPastWorkoutsFor,
                     isWorkoutHistoryImport: true,
                     iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                   ),
@@ -301,7 +302,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Workout Weight Unit',
+                  AppLocalizations.of(context).workoutSettingsWorkoutWeightUnit,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
                 ),
               ),
@@ -309,7 +310,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Unit for logging exercise weights during workouts',
+                  AppLocalizations.of(context).workoutSettingsUnitForLoggingExercise,
                   style: TextStyle(fontSize: 13, color: textMuted),
                 ),
               ),

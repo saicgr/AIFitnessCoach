@@ -8,6 +8,7 @@ import '../../../data/models/hormonal_health.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
 import '../../onboarding/cycle_onboarding_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// SharedPreferences key — set once the prompt has been actioned (set up or
 /// dismissed) so it never reappears for this user/device.
 const _kCycleHomePromptDismissedKey = 'cycle_setup_home_prompt_dismissed';
@@ -119,7 +120,7 @@ class _CycleSetupHomePromptState extends ConsumerState<CycleSetupHomePrompt> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Track your cycle',
+                    AppLocalizations.of(context).cycleSetupHomeTrackYourCycle,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -133,7 +134,7 @@ class _CycleSetupHomePromptState extends ConsumerState<CycleSetupHomePrompt> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   icon: Icon(Icons.close_rounded, size: 18, color: textMuted),
-                  tooltip: 'Dismiss',
+                  tooltip: AppLocalizations.of(context).upgradePromptDismiss,
                   onPressed: () async {
                     await _markDismissed();
                     if (mounted) {
@@ -178,8 +179,8 @@ class _CycleSetupHomePromptState extends ConsumerState<CycleSetupHomePrompt> {
                         ref.invalidate(hormonalProfileProvider);
                       }
                     },
-                    child: const Text(
-                      'Set up',
+                    child: Text(
+                      AppLocalizations.of(context).cycleSetupHomeSetUp,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: Colors.white,

@@ -19,6 +19,7 @@ import 'hero_nutrition_card.dart';
 import 'week_calendar_strip.dart';
 import 'swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Sectioned hero area with tab pills (Workouts | Nutrition | Fasting).
 /// Calendar strip only shows for the Workouts tab.
 class SectionedHeroArea extends ConsumerStatefulWidget {
@@ -354,7 +355,7 @@ class _HeroOverflowMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final showSynced = ref.watch(showSyncedInCarouselProvider);
     return PopupMenuButton<_HeroOverflowAction>(
-      tooltip: 'Calendar display options',
+      tooltip: AppLocalizations.of(context).workoutPlannerCalendarDisplayOptions,
       icon: Icon(Icons.tune, size: 18, color: tint),
       padding: EdgeInsets.zero,
       onSelected: (action) {
@@ -377,11 +378,11 @@ class _HeroOverflowMenu extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  startsSunday ? 'Start week on Monday' : 'Start week on Sunday',
+                  startsSunday ? AppLocalizations.of(context).workoutPlannerStartWeekOnMonday : AppLocalizations.of(context).sectionedHeroAreaStartWeekOnSunday,
                 ),
               ),
               Text(
-                startsSunday ? 'Sun' : 'Mon',
+                startsSunday ? AppLocalizations.of(context).workoutPlannerSun : AppLocalizations.of(context).workoutPlannerMon,
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ],
@@ -396,7 +397,7 @@ class _HeroOverflowMenu extends ConsumerWidget {
                 size: 18,
               ),
               const SizedBox(width: 10),
-              const Expanded(child: Text('Show synced workouts')),
+              Expanded(child: Text(AppLocalizations.of(context).workoutPlannerShowSyncedWorkouts)),
               Switch.adaptive(
                 value: showSynced,
                 onChanged: (_) {

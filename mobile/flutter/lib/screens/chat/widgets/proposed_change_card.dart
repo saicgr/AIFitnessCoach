@@ -10,6 +10,7 @@ import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Lifecycle of the card within a single message bubble.
 enum _ProposalUiState { idle, applying, applied, dismissed, failed, expired }
 
@@ -200,19 +201,19 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
         return _StatusRow(
           icon: Icons.check_circle_rounded,
           color: AppColors.green,
-          label: 'Applied',
+          label: AppLocalizations.of(context).proposedChangeCardApplied,
         );
       case _ProposalUiState.dismissed:
         return _StatusRow(
           icon: Icons.check_circle_outline,
           color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-          label: 'Dismissed',
+          label: AppLocalizations.of(context).proposedChangeCardDismissed,
         );
       case _ProposalUiState.expired:
         return _StatusRow(
           icon: Icons.schedule,
           color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-          label: 'Expired — ask again for a fresh suggestion',
+          label: AppLocalizations.of(context).proposedChangeCardExpiredAskAgainFor,
         );
       case _ProposalUiState.applying:
       case _ProposalUiState.idle:
@@ -248,8 +249,8 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                           ? AppColors.textSecondary
                           : AppColorsLight.textSecondary,
                     ),
-                    child: const Text(
-                      'Not now',
+                    child: Text(
+                      AppLocalizations.of(context).proposedChangeCardNotNow,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -285,8 +286,8 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                                   Colors.white),
                             ),
                           )
-                        : const Text(
-                            'Apply change',
+                        : Text(
+                            AppLocalizations.of(context).proposedChangeCardApplyChange,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,

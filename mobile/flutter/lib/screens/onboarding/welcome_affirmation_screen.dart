@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Welcome Affirmation — Onboarding v5 / Cal AI pattern
 ///
 /// Single affirming screen shown immediately after the user taps
@@ -64,7 +65,7 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
 
               // ── Headline
               Text(
-                'Great choice.',
+                AppLocalizations.of(context).welcomeAffirmationGreatChoice,
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -80,7 +81,7 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
               const SizedBox(height: 12),
 
               Text(
-                "You're in the right place.\nLet's build your plan together.",
+                AppLocalizations.of(context).welcomeAffirmationYouReInThe,
                 style: TextStyle(
                   fontSize: 17,
                   color: textSecondary,
@@ -141,7 +142,7 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Most users hit their first milestone within 30 days",
+                            AppLocalizations.of(context).welcomeAffirmationMostUsersHitTheir,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -151,7 +152,7 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'You\'re about to be one of them.',
+                            AppLocalizations.of(context).welcomeAffirmationYouReAboutTo,
                             style: TextStyle(
                               fontSize: 12,
                               color: textSecondary,
@@ -225,8 +226,8 @@ class _ContinueButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                "Let's begin",
+              Text(
+                AppLocalizations.of(context).welcomeAffirmationLetSBegin,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,

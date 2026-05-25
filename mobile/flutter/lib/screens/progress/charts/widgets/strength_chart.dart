@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/progress_charts.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Strength Trends — multi-series line chart of strength progression per
 /// muscle group.
 ///
@@ -123,7 +124,7 @@ class StrengthChart extends ConsumerWidget {
               Icon(Icons.show_chart, color: colors.accent),
               const SizedBox(width: 8),
               Text(
-                'Strength Trends',
+                AppLocalizations.of(context).strengthChartStrengthTrends,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

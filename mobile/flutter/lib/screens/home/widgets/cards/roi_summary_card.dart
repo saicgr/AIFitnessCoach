@@ -6,6 +6,7 @@ import '../../../../data/providers/milestones_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// ROI Summary Card for home screen.
 /// Shows "Your Fitness Journey" with key ROI metrics.
 /// Taps to navigate to the full milestones screen.
@@ -137,7 +138,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                     _StatItem(
                       icon: Icons.fitness_center,
                       value: '${roi.totalWorkouts}',
-                      label: 'Workouts',
+                      label: AppLocalizations.of(context).workoutListTitle,
                       iconColor: AppColors.cyan,
                       isDark: isDark,
                     ),
@@ -145,7 +146,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                     _StatItem(
                       icon: Icons.schedule,
                       value: '${roi.totalHoursInvested.toStringAsFixed(1)}h',
-                      label: 'Invested',
+                      label: AppLocalizations.of(context).roiSummaryCardInvested,
                       iconColor: AppColors.orange,
                       isDark: isDark,
                     ),
@@ -153,7 +154,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                     _StatItem(
                       icon: Icons.local_fire_department,
                       value: _formatCalories(roi.estimatedCaloriesBurned),
-                      label: 'Calories',
+                      label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                       iconColor: AppColors.coral,
                       isDark: isDark,
                     ),
@@ -265,7 +266,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Loading your progress...',
+                AppLocalizations.of(context).roiSummaryCardLoadingYourProgress,
                 style: TextStyle(
                   fontSize: 13,
                   color: textMuted,
@@ -323,7 +324,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Start Your Journey',
+                        AppLocalizations.of(context).skillProgressionsStartYourJourney,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -332,7 +333,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Complete your first workout to begin tracking your progress!',
+                        AppLocalizations.of(context).roiSummaryCardCompleteYourFirstWorkout,
                         style: TextStyle(
                           fontSize: 13,
                           color: textMuted,

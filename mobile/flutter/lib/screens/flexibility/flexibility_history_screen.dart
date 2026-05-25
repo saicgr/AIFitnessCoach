@@ -10,6 +10,7 @@ import '../../data/providers/trend_series_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen showing flexibility assessment history
 class FlexibilityHistoryScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -56,7 +57,7 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
 
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Assessment History',
+        title: AppLocalizations.of(context).flexibilityHistoryAssessmentHistory,
         actions: [
           PillAppBarAction(
             customIcon: LineIcon(
@@ -81,7 +82,7 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
               child: Row(
                 children: [
                   FilterChip(
-                    label: const Text('All'),
+                    label: Text(AppLocalizations.of(context).syncedWorkoutsHistoryAll),
                     selected: _selectedTestType == null,
                     onSelected: (_) {
                       setState(() => _selectedTestType = null);
@@ -163,12 +164,12 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
             ),
             const SizedBox(height: 16),
             Text(
-              'No Assessments Yet',
+              AppLocalizations.of(context).flexibilityHistoryNoAssessmentsYet,
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete some flexibility tests to see your history here',
+              AppLocalizations.of(context).flexibilityHistoryCompleteSomeFlexibilityTest,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -340,7 +341,7 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
               if (assessment.notes != null && assessment.notes!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  'Notes',
+                  AppLocalizations.of(context).syncedWorkoutDetailNotes,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -366,7 +367,7 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
                     }
                   },
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  label: const Text('Delete Assessment', style: TextStyle(color: Colors.red)),
+                  label: Text(AppLocalizations.of(context).flexibilityHistoryDeleteAssessment, style: TextStyle(color: Colors.red)),
                 ),
               ),
             ],
@@ -403,17 +404,17 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Assessment?'),
-        content: const Text('This action cannot be undone.'),
+        title: Text(AppLocalizations.of(context).flexibilityHistoryDeleteAssessment2),
+        content: Text(AppLocalizations.of(context).workoutActionsThisActionCannotBe),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/health_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Stage-proportion hypnogram for one night's main sleep.
 ///
 /// A true minute-by-minute hypnogram is only possible for nights still
@@ -59,7 +60,7 @@ class SleepHypnogram extends StatelessWidget {
         // REM, Light, Deep. Each row's filled span is proportional to its
         // share of time-in-bed.
         _StageRow(
-          label: 'Awake',
+          label: AppLocalizations.of(context).sleepHypnogramAwake,
           color: AppColors.warning,
           minutes: awake,
           totalMinutes: _spanTotal(deep, light, rem, awake),
@@ -75,7 +76,7 @@ class SleepHypnogram extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         _StageRow(
-          label: 'Light',
+          label: AppLocalizations.of(context).settingsThemeLight,
           color: AppColors.purple.withValues(alpha: 0.55),
           minutes: light,
           totalMinutes: _spanTotal(deep, light, rem, awake),
@@ -83,7 +84,7 @@ class SleepHypnogram extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         _StageRow(
-          label: 'Deep',
+          label: AppLocalizations.of(context).sleepHypnogramDeep,
           color: AppColors.purple,
           minutes: deep,
           totalMinutes: _spanTotal(deep, light, rem, awake),

@@ -7,6 +7,7 @@ import '../../../core/widgets/line_icon.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Fasting section for the Nutrition → Fuel tab.
 ///
 /// Fasting is an eating-window behaviour, so it belongs alongside the
@@ -50,7 +51,7 @@ class FastingPanel extends ConsumerWidget {
           children: [
             LineIcon('fasting', color: c.accent, size: 22),
             const SizedBox(width: 9),
-            Text('Intermittent Fasting',
+            Text(AppLocalizations.of(context).nutritionFastingIntermittentFasting,
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -81,7 +82,7 @@ class FastingPanel extends ConsumerWidget {
           children: [
             LineIcon('fasting', color: c.accent, size: 22),
             const SizedBox(width: 9),
-            Text('Fasting',
+            Text(AppLocalizations.of(context).unifiedHomeWidgetsFasting,
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,

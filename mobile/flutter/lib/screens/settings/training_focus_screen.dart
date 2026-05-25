@@ -9,6 +9,7 @@ import '../../data/services/api_client.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen for editing training focus settings:
 /// - Primary goal (hypertrophy, strength, or both)
 /// - Muscle focus points (allocate 5 points to priority muscles)
@@ -79,8 +80,8 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Training focus updated'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).trainingFocusTrainingFocusUpdated),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -114,7 +115,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : Colors.white,
       appBar: PillAppBar(
-        title: 'Training Focus',
+        title: AppLocalizations.of(context).trainingFocusTrainingFocus,
         actions: [
           PillAppBarAction(
             icon: _isLoading ? Icons.hourglass_empty : Icons.check_rounded,
@@ -128,7 +129,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
         children: [
           // Primary Goal Section
           Text(
-            'PRIMARY TRAINING GOAL',
+            AppLocalizations.of(context).trainingFocusPrimaryTrainingGoal,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -142,7 +143,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
 
           // Muscle Focus Section
           Text(
-            'MUSCLE FOCUS POINTS',
+            AppLocalizations.of(context).trainingFocusMuscleFocusPoints,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -152,7 +153,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Allocate up to 5 focus points to prioritize specific muscle groups',
+            AppLocalizations.of(context).trainingFocusAllocateUpTo5,
             style: TextStyle(
               fontSize: 13,
               color: textSecondary,
@@ -276,7 +277,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Focus Points',
+                AppLocalizations.of(context).trainingFocusFocusPoints,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

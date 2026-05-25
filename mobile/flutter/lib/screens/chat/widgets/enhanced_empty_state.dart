@@ -8,6 +8,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class EnhancedEmptyState extends StatelessWidget {
   final CoachPersona coach;
   final void Function(String prompt) onSuggestionTap;
@@ -82,7 +83,7 @@ class EnhancedEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            coach.tagline.isNotEmpty ? coach.tagline : 'Your personal fitness assistant',
+            coach.tagline.isNotEmpty ? coach.tagline : AppLocalizations.of(context).enhancedEmptyStateYourPersonalFitnessAssistan,
             style: TextStyle(
               fontSize: 14,
               color: colors.textSecondary,
@@ -95,7 +96,7 @@ class EnhancedEmptyState extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'TRY ASKING...',
+              AppLocalizations.of(context).enhancedEmptyStateTryAsking,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -260,7 +261,7 @@ class _SuggestionsSheet extends StatelessWidget {
                           icon: Icon(Icons.close_rounded,
                               color: colors.textMuted),
                           onPressed: () => Navigator.of(context).pop(),
-                          tooltip: 'Close',
+                          tooltip: AppLocalizations.of(context).commonClose,
                         ),
                       ],
                     ),

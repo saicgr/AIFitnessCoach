@@ -14,6 +14,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'share_templates/pr_share_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Show full screen PR celebration
 Future<void> showPRFullCelebration({
   required BuildContext context,
@@ -188,7 +189,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                 // Title
                 if (_showContent)
                   Text(
-                    'NEW PERSONAL RECORD!',
+                    AppLocalizations.of(context).prShareCardNewPersonalRecord,
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -228,7 +229,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
                               Icon(
                                 Icons.show_chart,
@@ -237,7 +238,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                               ),
                               SizedBox(width: 6),
                               Text(
-                                '6-MONTH BEST 1RM',
+                                AppLocalizations.of(context).prFullCelebration6MonthBest1rm,
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -275,7 +276,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                           child: ElevatedButton.icon(
                             onPressed: _showShareSheet,
                             icon: const Icon(Icons.share),
-                            label: const Text('Share Your Achievement'),
+                            label: Text(AppLocalizations.of(context).prFullCelebrationShareYourAchievement),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFFFD700),
                               foregroundColor: Colors.black,
@@ -299,8 +300,8 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                         // Continue button
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text(
-                            'Continue Workout',
+                          child: Text(
+                            AppLocalizations.of(context).prFullCelebrationContinueWorkout,
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.white70,
@@ -610,8 +611,8 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
                 const SizedBox(height: 24),
 
                 // Title
-                const Text(
-                  'YOU\'RE ON FIRE!',
+                Text(
+                  AppLocalizations.of(context).prFullCelebrationYouReOnFire,
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -677,8 +678,8 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Continue',
+                      child: Text(
+                        AppLocalizations.of(context).onboardingContinueButton,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

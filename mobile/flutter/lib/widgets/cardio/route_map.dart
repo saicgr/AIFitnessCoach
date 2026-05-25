@@ -29,6 +29,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../utils/route_privacy.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class RouteMap extends StatelessWidget {
   /// Full recorded polyline. Will be trimmed by [obfuscateMeters] before
   /// rendering. Pass an empty list to render [EmptyRouteState] directly.
@@ -149,7 +150,7 @@ class RouteMap extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   child: Text(
-                    '© OpenStreetMap contributors',
+                    AppLocalizations.of(context).routeMapOpenstreetmapContributors,
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.black.withValues(alpha: 0.75),

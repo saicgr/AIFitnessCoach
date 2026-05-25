@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Represents different streak milestones with their properties
 enum StreakMilestone {
   bronze(3, 6, 'Getting Started'),
@@ -310,7 +311,7 @@ class _StreakBadgesState extends State<StreakBadges>
                       )
                     else
                       Text(
-                        'Hit your goal to start a streak!',
+                        AppLocalizations.of(context).streakBadgesHitYourGoalTo,
                         style: TextStyle(
                           fontSize: 13,
                           color: textMuted,
@@ -511,7 +512,7 @@ class _PersonalBestBadgeState extends State<_PersonalBestBadge>
                 ),
               ],
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
@@ -521,7 +522,7 @@ class _PersonalBestBadgeState extends State<_PersonalBestBadge>
                 ),
                 SizedBox(width: 4),
                 Text(
-                  'NEW BEST!',
+                  AppLocalizations.of(context).streakBadgesNewBest,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

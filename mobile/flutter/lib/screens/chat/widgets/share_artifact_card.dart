@@ -13,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class ShareArtifactCard extends StatelessWidget {
   final Map<String, dynamic> data;
 
@@ -73,7 +74,7 @@ class ShareArtifactCard extends StatelessWidget {
           border: Border.all(color: AppColors.error.withOpacity(0.4)),
         ),
         child: Text(
-          _error ?? 'Could not create share link.',
+          _error ?? AppLocalizations.of(context).shareArtifactCardCouldNotCreateShare,
           style: const TextStyle(fontSize: 13, color: AppColors.error),
         ),
       );
@@ -137,7 +138,7 @@ class ShareArtifactCard extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () => _onCopyShare(context),
                   icon: const Icon(Icons.ios_share_rounded, size: 16),
-                  label: const Text('Copy & share'),
+                  label: Text(AppLocalizations.of(context).shareArtifactCardCopyShare),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.cyan,
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -158,7 +159,7 @@ class ShareArtifactCard extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () => _onOpenInApp(context),
                   icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                  label: const Text('Open in app'),
+                  label: Text(AppLocalizations.of(context).shareArtifactCardOpenInApp),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.textPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 12),

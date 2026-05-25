@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/hormonal_health.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// A reusable, chart-agnostic overlay that shades menstrual / follicular /
 /// fertile / luteal cycle-phase **columns** behind any time-series chart, plus
 /// a compact tappable legend.
@@ -412,7 +413,7 @@ class _LegendChip extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Got it'),
+                child: Text(AppLocalizations.of(context).weightIncrementsGotIt),
               ),
             ],
           ),

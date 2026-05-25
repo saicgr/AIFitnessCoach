@@ -19,6 +19,7 @@ import '../../data/providers/xp_provider.dart';
 import 'widgets/exercise_add_sheet.dart';
 import 'widgets/exercise_set_tracker.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// List-based workout screen similar to Strong app
 class ListWorkoutScreen extends ConsumerStatefulWidget {
   final Workout workout;
@@ -261,8 +262,8 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
       // Show confirmation dialog
       final confirm = await AppDialog.confirm(
         context,
-        title: 'No Sets Completed',
-        message: 'You haven\'t completed any sets. Are you sure you want to finish?',
+        title: AppLocalizations.of(context).listWorkoutNoSetsCompleted,
+        message: AppLocalizations.of(context).listWorkoutYouHavenTCompleted,
         confirmText: 'Finish Anyway',
         confirmColor: AppColors.warning,
         icon: Icons.warning_amber_rounded,
@@ -523,8 +524,8 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text(
-              'Finish',
+            child: Text(
+              AppLocalizations.of(context).stretchPhaseFinish,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
@@ -555,13 +556,13 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.cardBorder, style: BorderStyle.solid),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add, color: AppColors.cyan, size: 24),
             SizedBox(width: 8),
             Text(
-              'Add Exercise',
+              AppLocalizations.of(context).workoutSummaryAddExercise,
               style: TextStyle(
                 color: AppColors.cyan,
                 fontWeight: FontWeight.bold,

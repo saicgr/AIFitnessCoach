@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card 4: Consistency card - calendar heatmap + streak + consistency %
 class WrappedConsistencyCard extends StatelessWidget {
   final WrappedData data;
@@ -72,7 +73,7 @@ class WrappedConsistencyCard extends StatelessWidget {
 
                   // Header
                   Text(
-                    'CONSISTENCY',
+                    AppLocalizations.of(context).progressShareTemplatesConsistency,
                     style: TextStyle(
                       color: const Color(0xFF4ADE80).withValues(alpha: 0.9),
                       fontSize: 16,
@@ -95,7 +96,7 @@ class WrappedConsistencyCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'of days you showed up',
+                    AppLocalizations.of(context).consistencyCardOfDaysYouShowed,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 15,
@@ -140,7 +141,7 @@ class WrappedConsistencyCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Day Best\nStreak',
+                          AppLocalizations.of(context).consistencyCardDayBestNstreak,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.6),
                             fontSize: 13,

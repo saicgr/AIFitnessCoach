@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/milestone.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Full-screen celebration dialog for newly achieved milestones.
 /// Shows confetti animation and allows sharing to social platforms.
 class MilestoneCelebrationDialog extends StatefulWidget {
@@ -149,7 +150,7 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
 
                   // Celebration text
                   Text(
-                    'MILESTONE ACHIEVED!',
+                    AppLocalizations.of(context).milestoneCelebrationMilestoneAchieved,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -306,7 +307,7 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
                     child: Column(
                       children: [
                         Text(
-                          'Share your achievement',
+                          AppLocalizations.of(context).milestoneCelebrationShareYourAchievement,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.white.withOpacity(0.6),
@@ -318,7 +319,7 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
                           children: [
                             _ShareButton(
                               icon: Icons.copy,
-                              label: 'Copy',
+                              label: AppLocalizations.of(context).milestoneCelebrationCopy,
                               onTap: () {
                                 HapticService.light();
                                 widget.onShare('copy');
@@ -327,7 +328,7 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
                             const SizedBox(width: 16),
                             _ShareButton(
                               icon: Icons.share,
-                              label: 'Share',
+                              label: AppLocalizations.of(context).commonShare,
                               onTap: () {
                                 HapticService.light();
                                 widget.onShare('share');
@@ -359,8 +360,8 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
+                        child: Text(
+                          AppLocalizations.of(context).onboardingContinueButton,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

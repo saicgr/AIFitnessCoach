@@ -12,6 +12,7 @@ import '../../widgets/trends/trend_chart.dart';
 import '../../widgets/trends/trend_correlation.dart';
 
 
+import '../../l10n/generated/app_localizations.dart';
 part 'derived_metric_detail_screen_part_derived_metric_type.dart';
 part 'derived_metric_detail_screen_part_stat_item.dart';
 
@@ -246,7 +247,7 @@ class _DerivedMetricDetailScreenState
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'HISTORY',
+                            AppLocalizations.of(context).measurementDetailHistory,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -546,7 +547,7 @@ class _DerivedMetricDetailScreenState
         final lbm = weightKg * (1 - bf / 100);
         return (
           value: lbm,
-          label: 'Lean Mass',
+          label: AppLocalizations.of(context).derivedMetricDetailLeanMass,
           color: AppColors.success,
           info:
               'Your lean body mass is the total weight minus fat. Higher lean mass generally indicates more muscle.',
@@ -629,31 +630,31 @@ class _DerivedMetricDetailScreenState
   ({String label, Color color, String info}) _getBmiCategory(double bmi) {
     if (bmi < 18.5) {
       return (
-        label: 'Underweight',
+        label: AppLocalizations.of(context).derivedMetricDetailUnderweight,
         color: AppColors.orange,
         info:
             'A BMI below 18.5 is considered underweight. Consider consulting a healthcare professional about nutrition strategies.',
       );
     } else if (bmi < 25) {
       return (
-        label: 'Normal',
+        label: AppLocalizations.of(context).derivedMetricDetailNormal,
         color: AppColors.success,
         info:
-            'A BMI between 18.5 and 24.9 is considered a healthy weight range. Keep up the good work!',
+            AppLocalizations.of(context).derivedMetricDetailABmiBetween18,
       );
     } else if (bmi < 30) {
       return (
-        label: 'Overweight',
+        label: AppLocalizations.of(context).derivedMetricDetailOverweight,
         color: AppColors.orange,
         info:
-            'A BMI between 25 and 29.9 is considered overweight. Note: BMI does not differentiate muscle from fat.',
+            AppLocalizations.of(context).derivedMetricDetailABmiBetween25,
       );
     } else {
       return (
-        label: 'Obese',
+        label: AppLocalizations.of(context).derivedMetricDetailObese,
         color: AppColors.error,
         info:
-            'A BMI of 30 or above is classified as obese. Consider consulting a healthcare professional for guidance.',
+            AppLocalizations.of(context).derivedMetricDetailABmiOf30,
       );
     }
   }
@@ -663,21 +664,21 @@ class _DerivedMetricDetailScreenState
     if (isMale) {
       if (whr < 0.90) {
         return (
-          label: 'Low Risk',
+          label: AppLocalizations.of(context).derivedMetricDetailLowRisk,
           color: AppColors.success,
           info:
               'A WHR below 0.90 for men indicates low cardiovascular risk. WHO considers this a healthy range.',
         );
       } else if (whr < 1.0) {
         return (
-          label: 'Moderate Risk',
+          label: AppLocalizations.of(context).derivedMetricDetailModerateRisk,
           color: AppColors.orange,
           info:
               'A WHR between 0.90 and 1.0 for men indicates moderate health risk. Focus on waist-reducing exercises.',
         );
       } else {
         return (
-          label: 'High Risk',
+          label: AppLocalizations.of(context).derivedMetricDetailHighRisk,
           color: AppColors.error,
           info:
               'A WHR above 1.0 for men indicates increased cardiovascular risk. Consider lifestyle changes.',
@@ -686,21 +687,21 @@ class _DerivedMetricDetailScreenState
     } else {
       if (whr < 0.80) {
         return (
-          label: 'Low Risk',
+          label: AppLocalizations.of(context).derivedMetricDetailLowRisk,
           color: AppColors.success,
           info:
               'A WHR below 0.80 for women indicates low cardiovascular risk. WHO considers this a healthy range.',
         );
       } else if (whr < 0.85) {
         return (
-          label: 'Moderate Risk',
+          label: AppLocalizations.of(context).derivedMetricDetailModerateRisk,
           color: AppColors.orange,
           info:
               'A WHR between 0.80 and 0.85 for women indicates moderate health risk. Focus on waist-reducing exercises.',
         );
       } else {
         return (
-          label: 'High Risk',
+          label: AppLocalizations.of(context).derivedMetricDetailHighRisk,
           color: AppColors.error,
           info:
               'A WHR above 0.85 for women indicates increased cardiovascular risk. Consider lifestyle changes.',
@@ -712,31 +713,31 @@ class _DerivedMetricDetailScreenState
   ({String label, Color color, String info}) _getWhtrCategory(double whtr) {
     if (whtr < 0.4) {
       return (
-        label: 'Underweight',
+        label: AppLocalizations.of(context).derivedMetricDetailUnderweight,
         color: AppColors.orange,
         info:
             'A WHtR below 0.4 may indicate being underweight. Consider consulting a healthcare professional.',
       );
     } else if (whtr < 0.5) {
       return (
-        label: 'Healthy',
+        label: AppLocalizations.of(context).derivedMetricDetailHealthy,
         color: AppColors.success,
         info:
-            'A WHtR between 0.4 and 0.5 is considered healthy. Your waist is less than half your height.',
+            AppLocalizations.of(context).derivedMetricDetailAWhtrBetween0,
       );
     } else if (whtr < 0.6) {
       return (
-        label: 'Overweight',
+        label: AppLocalizations.of(context).derivedMetricDetailOverweight,
         color: AppColors.orange,
         info:
-            'A WHtR between 0.5 and 0.6 indicates increased abdominal fat. Focus on reducing waist circumference.',
+            AppLocalizations.of(context).derivedMetricDetailAWhtrBetween02,
       );
     } else {
       return (
-        label: 'Obese',
+        label: AppLocalizations.of(context).derivedMetricDetailObese,
         color: AppColors.error,
         info:
-            'A WHtR above 0.6 indicates significant abdominal fat and increased health risk.',
+            AppLocalizations.of(context).derivedMetricDetailAWhtrAbove0,
       );
     }
   }
@@ -746,35 +747,35 @@ class _DerivedMetricDetailScreenState
     if (isMale) {
       if (ffmi < 18) {
         return (
-          label: 'Below Average',
+          label: AppLocalizations.of(context).derivedMetricDetailBelowAverage,
           color: AppColors.orange,
           info:
               'An FFMI below 18 for men is below average. Focus on progressive overload and adequate protein.',
         );
       } else if (ffmi < 20) {
         return (
-          label: 'Average',
+          label: AppLocalizations.of(context).derivedMetricDetailAverage,
           color: AppColors.success,
           info:
               'An FFMI of 18-20 for men is average. You have a solid foundation of muscle.',
         );
       } else if (ffmi < 22) {
         return (
-          label: 'Above Average',
+          label: AppLocalizations.of(context).derivedMetricDetailAboveAverage,
           color: AppColors.success,
           info:
               'An FFMI of 20-22 for men is above average. You have notably more muscle than most.',
         );
       } else if (ffmi < 25) {
         return (
-          label: 'Excellent',
+          label: AppLocalizations.of(context).scoreColorsExcellent,
           color: AppColors.info,
           info:
               'An FFMI of 22-25 for men is excellent, near the natural limit. Outstanding muscular development.',
         );
       } else {
         return (
-          label: 'Superior',
+          label: AppLocalizations.of(context).derivedMetricDetailSuperior,
           color: AppColors.purple,
           info:
               'An FFMI above 25 for men exceeds the typical natural limit (~25). Exceptional muscularity.',
@@ -783,35 +784,35 @@ class _DerivedMetricDetailScreenState
     } else {
       if (ffmi < 14) {
         return (
-          label: 'Below Average',
+          label: AppLocalizations.of(context).derivedMetricDetailBelowAverage,
           color: AppColors.orange,
           info:
               'An FFMI below 14 for women is below average. Focus on resistance training and nutrition.',
         );
       } else if (ffmi < 16) {
         return (
-          label: 'Average',
+          label: AppLocalizations.of(context).derivedMetricDetailAverage,
           color: AppColors.success,
           info:
               'An FFMI of 14-16 for women is average. You have a solid foundation of muscle.',
         );
       } else if (ffmi < 18) {
         return (
-          label: 'Above Average',
+          label: AppLocalizations.of(context).derivedMetricDetailAboveAverage,
           color: AppColors.success,
           info:
               'An FFMI of 16-18 for women is above average. Impressive muscular development.',
         );
       } else if (ffmi < 21) {
         return (
-          label: 'Excellent',
+          label: AppLocalizations.of(context).scoreColorsExcellent,
           color: AppColors.info,
           info:
               'An FFMI of 18-21 for women is excellent. Outstanding lean mass for your height.',
         );
       } else {
         return (
-          label: 'Superior',
+          label: AppLocalizations.of(context).derivedMetricDetailSuperior,
           color: AppColors.purple,
           info:
               'An FFMI above 21 for women is exceptional. Elite-level muscularity.',
@@ -826,21 +827,21 @@ class _DerivedMetricDetailScreenState
     if (isMale) {
       if (ratio < 1.4) {
         return (
-          label: 'Narrow',
+          label: AppLocalizations.of(context).derivedMetricDetailNarrow,
           color: AppColors.orange,
           info:
               'A shoulder-to-waist ratio below 1.4 for men indicates a narrow frame. Target shoulder exercises to build width.',
         );
       } else if (ratio < 1.6) {
         return (
-          label: 'Average',
+          label: AppLocalizations.of(context).derivedMetricDetailAverage,
           color: AppColors.success,
           info:
               'A shoulder-to-waist ratio of 1.4-1.6 for men is average. Good overall proportions.',
         );
       } else {
         return (
-          label: 'V-Taper',
+          label: AppLocalizations.of(context).derivedMetricDetailVTaper,
           color: AppColors.info,
           info:
               'A shoulder-to-waist ratio above 1.6 for men indicates a strong V-taper. Excellent aesthetics!',
@@ -849,21 +850,21 @@ class _DerivedMetricDetailScreenState
     } else {
       if (ratio < 1.3) {
         return (
-          label: 'Narrow',
+          label: AppLocalizations.of(context).derivedMetricDetailNarrow,
           color: AppColors.orange,
           info:
               'A shoulder-to-waist ratio below 1.3 for women indicates narrower shoulders relative to waist.',
         );
       } else if (ratio < 1.5) {
         return (
-          label: 'Average',
+          label: AppLocalizations.of(context).derivedMetricDetailAverage,
           color: AppColors.success,
           info:
               'A shoulder-to-waist ratio of 1.3-1.5 for women is average. Well-balanced proportions.',
         );
       } else {
         return (
-          label: 'Athletic',
+          label: AppLocalizations.of(context).derivedMetricDetailAthletic,
           color: AppColors.info,
           info:
               'A shoulder-to-waist ratio above 1.5 for women indicates athletic build with broader shoulders.',
@@ -876,24 +877,24 @@ class _DerivedMetricDetailScreenState
       double ratio) {
     if (ratio < 1.1) {
       return (
-        label: 'Narrow',
+        label: AppLocalizations.of(context).derivedMetricDetailNarrow,
         color: AppColors.orange,
         info:
-            'A chest-to-waist ratio below 1.1 indicates a narrow chest relative to waist. Focus on chest and back exercises.',
+            AppLocalizations.of(context).derivedMetricDetailAChestToWaist,
       );
     } else if (ratio < 1.3) {
       return (
-        label: 'Average',
+        label: AppLocalizations.of(context).derivedMetricDetailAverage,
         color: AppColors.success,
         info:
-            'A chest-to-waist ratio of 1.1-1.3 is average. Healthy proportions between chest and waist.',
+            AppLocalizations.of(context).derivedMetricDetailAChestToWaist2,
       );
     } else {
       return (
-        label: 'Athletic',
+        label: AppLocalizations.of(context).derivedMetricDetailAthletic,
         color: AppColors.info,
         info:
-            'A chest-to-waist ratio above 1.3 indicates a well-developed chest relative to waist. Great proportions!',
+            AppLocalizations.of(context).derivedMetricDetailAChestToWaist3,
       );
     }
   }
@@ -902,31 +903,31 @@ class _DerivedMetricDetailScreenState
       double symmetry) {
     if (symmetry >= 97) {
       return (
-        label: 'Excellent',
+        label: AppLocalizations.of(context).scoreColorsExcellent,
         color: AppColors.success,
         info:
-            'Near-perfect symmetry (97%+). Both sides are very well balanced.',
+            AppLocalizations.of(context).derivedMetricDetailNearPerfectSymmetry97,
       );
     } else if (symmetry >= 93) {
       return (
-        label: 'Good',
+        label: AppLocalizations.of(context).scoreExplainGood,
         color: AppColors.success,
         info:
-            'Good symmetry (93-97%). Minor difference that is within normal range.',
+            AppLocalizations.of(context).derivedMetricDetailGoodSymmetry9397,
       );
     } else if (symmetry >= 88) {
       return (
-        label: 'Moderate',
+        label: AppLocalizations.of(context).scoreExplainModerate,
         color: AppColors.orange,
         info:
-            'Moderate asymmetry (88-93%). Consider adding unilateral exercises to address the imbalance.',
+            AppLocalizations.of(context).derivedMetricDetailModerateAsymmetry8893,
       );
     } else {
       return (
-        label: 'Imbalanced',
+        label: AppLocalizations.of(context).muscleBalanceChartImbalanced,
         color: AppColors.error,
         info:
-            'Significant asymmetry (below 88%). Focus on unilateral training for the weaker side.',
+            AppLocalizations.of(context).derivedMetricDetailSignificantAsymmetryBelow8,
       );
     }
   }

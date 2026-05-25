@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/utils/leaderboard_tier_color.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shared row decorations for every Discover leaderboard row.
 ///
 /// These are intentionally stateless and tight-layout so the inline row
@@ -40,7 +41,7 @@ class RankDeltaChip extends StatelessWidget {
       // 30dp widths and reads as broken layout). Arrows start appearing
       // once the weekly archive has at least one prior week of data.
       return Semantics(
-        label: 'No previous rank data yet',
+        label: AppLocalizations.of(context).leaderboardRowAdornmentsNoPreviousRankData,
         child: SizedBox(
           width: 30,
           child: Text(
@@ -66,7 +67,7 @@ class RankDeltaChip extends StatelessWidget {
 
     return Semantics(
       label: d == 0
-          ? 'Rank unchanged'
+          ? AppLocalizations.of(context).leaderboardRowAdornmentsRankUnchanged
           : (d > 0 ? 'Up $absStr places' : 'Down $absStr places'),
       child: SizedBox(
         width: 30,

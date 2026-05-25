@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows a picker to select an exercise from the current workout exercises
 Future<WorkoutExercise?> showSupersetExercisePicker(
   BuildContext context, {
@@ -109,7 +110,7 @@ class _SupersetExercisePickerState extends State<_SupersetExercisePicker> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search exercises...',
+                hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
                 hintStyle: TextStyle(color: textMuted),
                 prefixIcon: Icon(Icons.search, color: textMuted),
                 filled: true,
@@ -153,7 +154,7 @@ class _SupersetExercisePickerState extends State<_SupersetExercisePicker> {
                         if (widget.exercises.isEmpty) ...[
                           const SizedBox(height: 8),
                           Text(
-                            'Add exercises to your workout first',
+                            AppLocalizations.of(context).supersetExercisePickerAddExercisesToYour,
                             style: TextStyle(
                               fontSize: 12,
                               color: textMuted,

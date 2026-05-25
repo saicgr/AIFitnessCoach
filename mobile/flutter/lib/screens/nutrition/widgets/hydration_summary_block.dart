@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/hydration_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact hydration summary block for the Daily tab
 class HydrationSummaryBlock extends ConsumerWidget {
   final bool isDark;
@@ -73,7 +74,7 @@ class HydrationSummaryBlock extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Hydration',
+                  AppLocalizations.of(context).workoutSummaryAdvancedHydration,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -140,7 +141,7 @@ class HydrationSummaryBlock extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'Tap to view details',
+                  AppLocalizations.of(context).weeklySummaryTapToViewDetails,
                   style: TextStyle(
                     fontSize: 11,
                     color: textSecondary,

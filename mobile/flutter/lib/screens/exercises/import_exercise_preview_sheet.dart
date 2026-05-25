@@ -21,6 +21,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/models/custom_exercise.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Canonical body-part values accepted by the backend.
 const List<String> _bodyParts = [
   'chest',
@@ -341,18 +342,18 @@ class _ImportExercisePreviewSheetState
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Discard imported exercise?'),
+        title: Text(AppLocalizations.of(context).importExercisePreviewDiscardImportedExercise),
         content: const Text(
             'This will remove the auto-saved exercise and its AI index entry. '
             'You can always import again.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Discard',
+            child: Text(AppLocalizations.of(context).syncDetailsDiscard,
                 style: TextStyle(color: AppColors.error)),
           ),
         ],
@@ -573,7 +574,7 @@ class _ImportExercisePreviewSheetState
           Expanded(
             child: Text(
               widget.duplicate
-                  ? 'Already in your exercises'
+                  ? AppLocalizations.of(context).importExercisePreviewAlreadyInYourExercises
                   : 'Review AI extraction',
               style: TextStyle(
                 color: textPrimary,
@@ -660,8 +661,8 @@ class _ImportExercisePreviewSheetState
               color: AppColors.success.withOpacity(0.15),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Text(
-              'AI-searchable',
+            child: Text(
+              AppLocalizations.of(context).importExercisePreviewAiSearchable,
               style: TextStyle(
                 fontSize: 11,
                 color: AppColors.success,
@@ -903,7 +904,7 @@ class _ImportExercisePreviewSheetState
               }),
               icon: Icon(Icons.add, color: accent, size: 18),
               label: Text(
-                'Add step',
+                AppLocalizations.of(context).importExercisePreviewAddStep,
                 style: TextStyle(color: accent, fontWeight: FontWeight.w600),
               ),
             ),
@@ -953,7 +954,7 @@ class _ImportExercisePreviewSheetState
                   child: OutlinedButton(
                     onPressed:
                         busy ? null : () => Navigator.pop(context, false),
-                    child: const Text('Close'),
+                    child: Text(AppLocalizations.of(context).commonClose),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -964,7 +965,7 @@ class _ImportExercisePreviewSheetState
                       backgroundColor: accent,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Use existing'),
+                    child: Text(AppLocalizations.of(context).importExercisePreviewUseExisting),
                   ),
                 ),
               ],
@@ -982,8 +983,8 @@ class _ImportExercisePreviewSheetState
                           )
                         : const Icon(Icons.delete_outline,
                             color: AppColors.error),
-                    label: const Text(
-                      'Discard',
+                    label: Text(
+                      AppLocalizations.of(context).syncDetailsDiscard,
                       style: TextStyle(color: AppColors.error),
                     ),
                     style: OutlinedButton.styleFrom(
@@ -1014,7 +1015,7 @@ class _ImportExercisePreviewSheetState
                           )
                         : const Icon(Icons.check_circle_outline, size: 18),
                     label: Text(
-                      _saving ? 'Saving...' : 'Save exercise',
+                      _saving ? AppLocalizations.of(context).workoutReviewSaving : AppLocalizations.of(context).importExercisePreviewSaveExercise,
                       style: const TextStyle(
                           fontWeight: FontWeight.w700, fontSize: 14),
                     ),

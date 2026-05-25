@@ -9,6 +9,7 @@ import '../../../../../widgets/app_snackbar.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class DataSyncSection extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -25,8 +26,8 @@ class DataSyncSection extends ConsumerWidget {
           child: _navTile(
             context,
             icon: Icons.notifications_active_outlined,
-            title: 'Notification Tester',
-            subtitle: 'Send test notifications',
+            title: AppLocalizations.of(context).dataSyncNotificationTester,
+            subtitle: AppLocalizations.of(context).dataSyncSendTestNotifications,
             route: '/settings/sound-notifications',
           ),
         ),
@@ -37,8 +38,8 @@ class DataSyncSection extends ConsumerWidget {
           child: _actionTile(
             context,
             icon: Icons.cleaning_services_outlined,
-            title: 'Clear All Caches',
-            subtitle: 'Free memory by clearing in-memory caches',
+            title: AppLocalizations.of(context).dataSyncClearAllCaches,
+            subtitle: AppLocalizations.of(context).dataSyncFreeMemoryByClearing,
             onTap: () async {
               HapticService.medium();
               await DataCacheService.instance.clearAll();
@@ -55,13 +56,13 @@ class DataSyncSection extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Device Info', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
+              Text(AppLocalizations.of(context).dataSyncDeviceInfo, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
               const SizedBox(height: 12),
               FutureBuilder<PackageInfo>(
                 future: PackageInfo.fromPlatform(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return Text('Loading...', style: TextStyle(fontSize: 12, color: theme.textMuted));
+                    return Text(AppLocalizations.of(context).weekProgressStripLoading, style: TextStyle(fontSize: 12, color: theme.textMuted));
                   }
                   final info = snapshot.data!;
                   return Column(

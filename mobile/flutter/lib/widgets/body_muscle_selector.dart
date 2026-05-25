@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:muscle_selector/muscle_selector.dart';
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Mapping from muscle_selector package group names to our backend muscle names
 const Map<String, String> packageGroupToBackendMuscle = {
   'chest': 'chest',
@@ -167,7 +168,7 @@ class _BodyMuscleSelectorWidgetState extends State<BodyMuscleSelectorWidget> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Loading body diagram...',
+                              AppLocalizations.of(context).bodyScoreOverlayLoadingBodyDiagram,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: textMuted,
@@ -218,7 +219,7 @@ class _BodyMuscleSelectorWidgetState extends State<BodyMuscleSelectorWidget> {
         // Instruction text
         const SizedBox(height: 12),
         Text(
-          'Tap on a muscle to select • Pinch to zoom',
+          AppLocalizations.of(context).bodyMuscleSelectorTapOnAMuscle,
           style: TextStyle(
             fontSize: 12,
             color: textMuted,

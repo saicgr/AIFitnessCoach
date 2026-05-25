@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Onboarding v5 — Body Metrics + Fast-Path Fork
 ///
 /// Replaces the legacy "Want better results? + 4 benefit cards" gate with a
@@ -196,7 +197,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
         children: [
           const SizedBox(height: 4),
           Text(
-            'A few quick measurements',
+            AppLocalizations.of(context).quizPersonalizationGateAFewQuickMeasurements,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -207,7 +208,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
           ).animate().fadeIn(delay: 100.ms),
           const SizedBox(height: 2),
           Text(
-            'Used to personalize your plan and projection',
+            AppLocalizations.of(context).quizPersonalizationGateUsedToPersonalizeYour,
             style: TextStyle(
               fontSize: 13,
               color: t.textSecondary,
@@ -237,21 +238,21 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   Row(
                     children: [
                       _GenderChip(
-                        label: 'Male',
+                        label: AppLocalizations.of(context).quizPersonalizationGateMale,
                         selected: _gender == 'male',
                         onTap: () => setState(() => _gender = 'male'),
                         t: t,
                       ),
                       const SizedBox(width: 8),
                       _GenderChip(
-                        label: 'Female',
+                        label: AppLocalizations.of(context).quizPersonalizationGateFemale,
                         selected: _gender == 'female',
                         onTap: () => setState(() => _gender = 'female'),
                         t: t,
                       ),
                       const SizedBox(width: 8),
                       _GenderChip(
-                        label: 'Other',
+                        label: AppLocalizations.of(context).selectableChipOther,
                         selected: _gender == 'other',
                         onTap: () => setState(() => _gender = 'other'),
                         t: t,
@@ -266,7 +267,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   // unit toggle at the bottom. Same shape for all three
                   // fields so the section reads as a tidy column of cards.
                   _MetricCard(
-                    label: 'HEIGHT',
+                    label: AppLocalizations.of(context).quizPersonalizationGateHeight,
                     units: const ['cm', 'in'],
                     selectedUnit: _heightInCm ? 'cm' : 'in',
                     onUnitChanged: (u) {
@@ -335,7 +336,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   const SizedBox(height: 8),
 
                   _MetricCard(
-                    label: 'CURRENT WEIGHT',
+                    label: AppLocalizations.of(context).quizPersonalizationGateCurrentWeight,
                     units: const ['kg', 'lb'],
                     selectedUnit: _weightInKg ? 'kg' : 'lb',
                     onUnitChanged: (u) {
@@ -369,7 +370,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   const SizedBox(height: 8),
 
                   _MetricCard(
-                    label: 'GOAL WEIGHT',
+                    label: AppLocalizations.of(context).quizPersonalizationGateGoalWeight,
                     units: const ['kg', 'lb'],
                     selectedUnit: _weightInKg ? 'kg' : 'lb',
                     onUnitChanged: (u) {
@@ -451,7 +452,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Quick start',
+                              AppLocalizations.of(context).quizPersonalizationGateQuickStart,
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
@@ -484,7 +485,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Fine-tune (2 min)',
+                      AppLocalizations.of(context).quizPersonalizationGateFineTune2Min,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

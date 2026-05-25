@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/mood.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card showing mood check-in streaks
 class MoodStreakCard extends StatelessWidget {
   final MoodStreaks streaks;
@@ -33,7 +34,7 @@ class MoodStreakCard extends StatelessWidget {
               icon: Icons.local_fire_department,
               iconColor: streaks.currentStreak > 0 ? Colors.orange : textSecondary,
               value: streaks.currentStreak.toString(),
-              label: 'Current Streak',
+              label: AppLocalizations.of(context).moodStreakCardCurrentStreak,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
               isHighlighted: streaks.currentStreak > 0,
@@ -50,7 +51,7 @@ class MoodStreakCard extends StatelessWidget {
               icon: Icons.emoji_events,
               iconColor: streaks.longestStreak > 0 ? Colors.amber : textSecondary,
               value: streaks.longestStreak.toString(),
-              label: 'Best Streak',
+              label: AppLocalizations.of(context).summaryCardBestStreak,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
               isHighlighted: streaks.longestStreak > 0,

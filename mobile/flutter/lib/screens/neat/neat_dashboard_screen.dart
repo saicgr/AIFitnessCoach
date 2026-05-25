@@ -7,6 +7,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'neat_dashboard_screen_part_neat_score_card.dart';
 part 'neat_dashboard_screen_part_streaks_card.dart';
 
@@ -427,7 +428,7 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Daily Activity',
+        title: AppLocalizations.of(context).neatDashboardDailyActivity,
         actions: [
           PillAppBarAction(icon: Icons.refresh, onTap: () {
             HapticService.light();
@@ -493,7 +494,7 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'Unable to Load Data',
+              AppLocalizations.of(context).neatDashboardUnableToLoadData,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -510,7 +511,7 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cyan,
                 foregroundColor: Colors.white,

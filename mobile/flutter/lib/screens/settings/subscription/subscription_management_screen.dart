@@ -15,6 +15,7 @@ import '../../../core/services/posthog_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'subscription_management_screen_ui.dart';
 
 
@@ -207,8 +208,8 @@ class _SubscriptionManagementScreenState
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Subscription resumed successfully'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).subscriptionManagementSubscriptionResumedSuccessfu),
               backgroundColor: AppColors.green,
             ),
           );
@@ -244,8 +245,8 @@ class _SubscriptionManagementScreenState
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open subscription settings'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).subscriptionManagementCouldNotOpenSubscription),
               backgroundColor: Colors.red,
             ),
           );
@@ -273,8 +274,8 @@ class _SubscriptionManagementScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
-        title: 'Manage Subscription',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).subscriptionManagementManageSubscription,
       ),
       // Always render the page from `subscriptionProvider` data (tier, trial
       // status) — the backend-only fields populate in-place when they arrive.
@@ -380,7 +381,7 @@ class _SubscriptionManagementScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to load subscription',
+              AppLocalizations.of(context).subscriptionManagementFailedToLoadSubscription,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -389,7 +390,7 @@ class _SubscriptionManagementScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Unknown error',
+              _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -400,7 +401,7 @@ class _SubscriptionManagementScreenState
             ElevatedButton.icon(
               onPressed: _loadSubscriptionDetails,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cyan,
                 foregroundColor: Colors.white,
@@ -540,7 +541,7 @@ class _SubscriptionManagementScreenState
           Icon(Icons.pause_circle, size: 14, color: Colors.amber.shade700),
           const SizedBox(width: 4),
           Text(
-            'Subscription Paused',
+            AppLocalizations.of(context).subscriptionManagementSubscriptionPaused,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -576,7 +577,7 @@ class _SubscriptionManagementScreenState
               Icon(Icons.receipt_long, color: AppColors.cyan, size: 20),
               const SizedBox(width: 10),
               Text(
-                'Billing Information',
+                AppLocalizations.of(context).subscriptionManagementBillingInformation,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -609,7 +610,7 @@ class _SubscriptionManagementScreenState
             ),
           ] else
             Text(
-              'No billing information available',
+              AppLocalizations.of(context).subscriptionManagementNoBillingInformationAvailab,
               style: TextStyle(fontSize: 14, color: textMuted),
             ),
         ],
@@ -660,8 +661,8 @@ class _SubscriptionManagementScreenState
         children: [
           _buildQuickLinkTile(
             icon: Icons.money_off,
-            title: 'Request Refund',
-            subtitle: 'Submit a refund request',
+            title: AppLocalizations.of(context).subscriptionManagementRequestRefund,
+            subtitle: AppLocalizations.of(context).subscriptionManagementSubmitARefundRequest,
             onTap: () => context.push('/request-refund'),
             textPrimary: textPrimary,
             textSecondary: textSecondary,
@@ -670,8 +671,8 @@ class _SubscriptionManagementScreenState
           ),
           _buildQuickLinkTile(
             icon: Icons.restore,
-            title: 'Restore Purchases',
-            subtitle: 'Sync with App Store / Play Store',
+            title: AppLocalizations.of(context).subscriptionManagementRestorePurchases,
+            subtitle: AppLocalizations.of(context).subscriptionManagementSyncWithAppStore,
             onTap: () async {
               HapticFeedback.lightImpact();
               final success =
@@ -681,7 +682,7 @@ class _SubscriptionManagementScreenState
                   SnackBar(
                     content: Text(
                       success
-                          ? 'Purchases restored successfully'
+                          ? AppLocalizations.of(context).subscriptionManagementPurchasesRestoredSuccessfull
                           : 'No purchases to restore',
                     ),
                     backgroundColor: success ? AppColors.green : Colors.orange,
@@ -858,7 +859,7 @@ class _SubscriptionManagementScreenState
           ),
           const SizedBox(height: 16),
           Text(
-            'Upgrade to Premium',
+            AppLocalizations.of(context).subscriptionManagementUpgradeToPremium,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -867,7 +868,7 @@ class _SubscriptionManagementScreenState
           ),
           const SizedBox(height: 8),
           Text(
-            'Get unlimited workouts, AI coaching, and more',
+            AppLocalizations.of(context).subscriptionManagementGetUnlimitedWorkoutsAi,
             style: TextStyle(
               fontSize: 14,
               color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -887,8 +888,8 @@ class _SubscriptionManagementScreenState
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'View Plans',
+              child: Text(
+                AppLocalizations.of(context).subscriptionManagementViewPlans,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

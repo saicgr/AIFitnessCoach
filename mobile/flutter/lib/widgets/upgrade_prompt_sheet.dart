@@ -7,6 +7,7 @@ import '../core/providers/usage_tracking_provider.dart';
 import 'glass_sheet.dart';
 import 'main_shell.dart' show floatingNavBarVisibleProvider;
 
+import '../l10n/generated/app_localizations.dart';
 /// Display names for known feature keys.
 const _featureDisplayNames = <String, String>{
   'food_scanning': 'Food Scans',
@@ -134,7 +135,7 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
 
                   // Title
                   Text(
-                    'Limit Reached',
+                    AppLocalizations.of(context).upgradePromptLimitReached,
                     style: textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: isDark
@@ -216,8 +217,8 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'See Premium Plans',
+                      child: Text(
+                        AppLocalizations.of(context).upgradePromptSeePremiumPlans,
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w600),
                       ),
@@ -229,7 +230,7 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
-                      'Dismiss',
+                      AppLocalizations.of(context).upgradePromptDismiss,
                       style: TextStyle(
                         color: isDark
                             ? AppColors.textMuted

@@ -11,6 +11,7 @@ import '../../../widgets/pill_app_bar.dart';
 import 'widgets/empty_state_with_suggestions.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Screen for managing favorite exercises.
 /// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class FavoriteExercisesScreen extends ConsumerWidget {
@@ -108,7 +109,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Favorite Exercises',
+        title: AppLocalizations.of(context).trainingPreferencesFavoriteExercises,
         actions: [
           PillAppBarAction(icon: Icons.add, onTap: () => _showAddExercisePicker(context, ref)),
         ],
@@ -224,7 +225,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'The AI will prioritize these exercises when generating your workouts.',
+                  AppLocalizations.of(context).favoriteExercisesTheAiWillPrioritize,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white : AppColorsLight.textPrimary,
@@ -278,7 +279,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: const Text('Remove Favorite?'),
+        title: Text(AppLocalizations.of(context).favoriteExercisesRemoveFavorite),
         content: Text(
           'Remove "$exerciseName" from your favorites? The AI will no longer prioritize this exercise.',
         ),
@@ -286,7 +287,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -295,7 +296,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
-              'Remove',
+              AppLocalizations.of(context).workoutPlanDrawerRemove,
               style: TextStyle(color: AppColors.error),
             ),
           ),

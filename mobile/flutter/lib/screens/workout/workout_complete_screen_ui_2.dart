@@ -155,7 +155,7 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'TOTAL WORKOUT',
+            AppLocalizations.of(context).workoutCompleteScreenTotalWorkout,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -169,7 +169,7 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
               // Volume comparison
               Expanded(
                 child: _buildComparisonStat(
-                  label: 'Volume',
+                  label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
                   current: '${workoutComp.currentTotalVolumeKg.toStringAsFixed(0)} kg',
                   diff: workoutComp.formattedVolumeDiff,
                   diffPercent: workoutComp.volumeDiffPercent,
@@ -181,7 +181,7 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
               // Duration comparison
               Expanded(
                 child: _buildComparisonStat(
-                  label: 'Duration',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                   current: _formatDuration(workoutComp.currentDurationSeconds ~/ 60),
                   diff: workoutComp.formattedDurationDiff,
                   diffPercent: workoutComp.durationDiffPercent,
@@ -193,7 +193,7 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
               // Reps comparison
               Expanded(
                 child: _buildComparisonStat(
-                  label: 'Total Reps',
+                  label: AppLocalizations.of(context).workoutCompleteScreenTotalReps,
                   current: '${workoutComp.currentTotalReps}',
                   diff: workoutComp.previousTotalReps != null
                       ? '${workoutComp.currentTotalReps - workoutComp.previousTotalReps! >= 0 ? '+' : ''}${workoutComp.currentTotalReps - workoutComp.previousTotalReps!}'
@@ -283,7 +283,7 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
         final textMutedChart = isDarkChart ? AppColors.textMuted : AppColorsLight.textMuted;
 
         if (sortedHistory.isEmpty) {
-          return Center(child: Text('No data', style: TextStyle(color: textMutedChart)));
+          return Center(child: Text(AppLocalizations.of(context).workoutCompleteScreenNoData, style: TextStyle(color: textMutedChart)));
         }
 
         return Row(

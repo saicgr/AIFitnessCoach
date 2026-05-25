@@ -9,6 +9,7 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/context_logging_service.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Compact fitness score card for home screen.
 /// Shows overall fitness score with strength and nutrition breakdown.
 /// Taps to navigate to the full scoring screen.
@@ -113,7 +114,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                         ),
                     const SizedBox(width: 8),
                     Text(
-                      'Fitness Score',
+                      AppLocalizations.of(context).strengthFitnessScore,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -148,7 +149,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                     // Strength score (left)
                     Expanded(
                       child: _ScoreItem(
-                        label: 'Strength',
+                        label: AppLocalizations.of(context).scoreBreakdownStrength,
                         score: strengthScore,
                         icon: Icons.fitness_center,
                         isDark: isDark,
@@ -165,7 +166,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                     // Nutrition score (right)
                     Expanded(
                       child: _ScoreItem(
-                        label: 'Nutrition',
+                        label: AppLocalizations.of(context).settingsNutritionSection,
                         score: nutritionScore,
                         icon: Icons.restaurant,
                         isDark: isDark,
@@ -180,14 +181,14 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                   children: [
                     _BottomIndicator(
                       icon: Icons.local_fire_department,
-                      label: 'Readiness',
+                      label: AppLocalizations.of(context).strengthOverviewCardReadiness,
                       value: '$readinessScore',
                       isDark: isDark,
                     ),
                     const SizedBox(width: 20),
                     _BottomIndicator(
                       icon: Icons.trending_up,
-                      label: 'Consistency',
+                      label: AppLocalizations.of(context).scoreBreakdownConsistency,
                       value: '$consistencyScore%',
                       isDark: isDark,
                     ),
@@ -237,7 +238,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Loading scores...',
+                AppLocalizations.of(context).fitnessScoreCardLoadingScores,
                 style: TextStyle(
                   fontSize: 13,
                   color: textMuted,
@@ -316,7 +317,7 @@ class _OverallScoreCircle extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'OVERALL',
+          AppLocalizations.of(context).overallScoreHeroOverall,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,

@@ -23,6 +23,7 @@ import '../../../core/services/haptic_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Pain severity ↔ encoded reason. Kept in sync with the avoided-list
 /// reason convention `pain:<severity>` consumed by analytics + future
 /// pain-history surfacing.
@@ -129,8 +130,8 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
     } else {
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save — please try again.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).reportPainCouldNotSavePlease),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -153,7 +154,7 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Pain on this exercise?',
+          Text(AppLocalizations.of(context).reportPainPainOnThisExercise,
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w700, color: fg)),
           const SizedBox(height: 4),
@@ -182,7 +183,7 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
             ],
           ),
           const SizedBox(height: 18),
-          Text('Skip this exercise',
+          Text(AppLocalizations.of(context).reportPainSkipThisExercise,
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -248,7 +249,7 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Skip & avoid',
+                  : Text(AppLocalizations.of(context).reportPainSkipAvoid,
                       style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
@@ -258,7 +259,7 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
             child: TextButton(
               onPressed:
                   _submitting ? null : () => Navigator.of(context).pop(false),
-              child: Text('Cancel',
+              child: Text(AppLocalizations.of(context).buttonCancel,
                   style: TextStyle(color: fg.withValues(alpha: 0.6))),
             ),
           ),

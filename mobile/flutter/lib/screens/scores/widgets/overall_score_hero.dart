@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/scores.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Large hero display for the overall fitness score.
 class OverallScoreHero extends StatelessWidget {
   final int overallScore;
@@ -118,7 +119,7 @@ class OverallScoreHero extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'OVERALL',
+                    AppLocalizations.of(context).overallScoreHeroOverall,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,

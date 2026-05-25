@@ -213,7 +213,7 @@ extension _MeasurementsScreenStateUI on _MeasurementsScreenState {
                   Icon(Icons.history, size: 40, color: textMuted),
                   const SizedBox(height: 8),
                   Text(
-                    'No history yet',
+                    AppLocalizations.of(context).volumeHistoryNoHistoryYet,
                     style: TextStyle(color: textMuted),
                   ),
                 ],
@@ -506,7 +506,7 @@ class _DerivedMetricCard extends StatelessWidget {
               )
             else
               Text(
-                'No data',
+                AppLocalizations.of(context).workoutCompleteScreenNoData,
                 style: TextStyle(fontSize: 10, color: textMuted),
               ),
           ],

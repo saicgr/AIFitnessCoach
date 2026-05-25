@@ -13,6 +13,7 @@ import '../../data/services/pending_referral_service.dart';
 import '../../widgets/glass_back_button.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class ReferralsScreen extends ConsumerWidget {
   const ReferralsScreen({super.key});
 
@@ -62,7 +63,7 @@ class ReferralsScreen extends ConsumerWidget {
                           Icon(Icons.group_add, size: 28, color: accent),
                           const SizedBox(width: 12),
                           Text(
-                            'Invite Friends',
+                            AppLocalizations.of(context).referralsInviteFriends,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -120,7 +121,7 @@ class ReferralsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            'All reward tiers',
+                            AppLocalizations.of(context).referralsAllRewardTiers,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -215,7 +216,7 @@ class _CodeCard extends StatelessWidget {
     HapticService.light();
     Clipboard.setData(ClipboardData(text: summary.referralCode));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Code copied!'), behavior: SnackBarBehavior.floating),
+      SnackBar(content: Text(AppLocalizations.of(context).referralsCodeCopied), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -243,7 +244,7 @@ class _CodeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'YOUR REFERRAL CODE',
+            AppLocalizations.of(context).referralsYourReferralCode,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -286,7 +287,7 @@ class _CodeCard extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: _share,
               icon: const Icon(Icons.share, size: 18),
-              label: const Text('Invite friends'),
+              label: Text(AppLocalizations.of(context).challengeCreateInviteFriends),
               style: ElevatedButton.styleFrom(
                 backgroundColor: accent,
                 foregroundColor: Colors.white,
@@ -298,14 +299,14 @@ class _CodeCard extends StatelessWidget {
           Row(
             children: [
               _StatChip(
-                label: 'Qualified',
+                label: AppLocalizations.of(context).referralsQualified,
                 value: '${summary.qualifiedCount}',
                 color: AppColors.green,
                 textMuted: textMuted,
               ),
               const SizedBox(width: 8),
               _StatChip(
-                label: 'Pending',
+                label: AppLocalizations.of(context).referralsPending,
                 value: '${summary.pendingCount}',
                 color: Colors.amber,
                 textMuted: textMuted,
@@ -385,7 +386,7 @@ class _NextTierCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Max tier reached',
+                    AppLocalizations.of(context).referralsMaxTierReached,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -393,7 +394,7 @@ class _NextTierCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "You've unlocked every referral reward. Legendary.",
+                    AppLocalizations.of(context).referralsYouVeUnlockedEvery,
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
                 ],
@@ -556,7 +557,7 @@ class _HowItWorksCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'How it works',
+            AppLocalizations.of(context).referralsHowItWorks,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -630,7 +631,7 @@ class _ErrorCard extends StatelessWidget {
         children: [
           Icon(Icons.error_outline, size: 40, color: textMuted),
           const SizedBox(height: 8),
-          Text('Failed to load referrals', style: TextStyle(color: textColor)),
+          Text(AppLocalizations.of(context).referralsFailedToLoadReferrals, style: TextStyle(color: textColor)),
           const SizedBox(height: 4),
           Text('$error',
               style: TextStyle(fontSize: 12, color: textMuted), textAlign: TextAlign.center),
@@ -638,7 +639,7 @@ class _ErrorCard extends StatelessWidget {
           TextButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text(AppLocalizations.of(context).buttonRetry),
             style: TextButton.styleFrom(foregroundColor: accent),
           ),
         ],
@@ -746,7 +747,7 @@ class _EnterCodeCardState extends ConsumerState<_EnterCodeCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Have a code from a friend?',
+                        AppLocalizations.of(context).referralsHaveACodeFrom,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -754,7 +755,7 @@ class _EnterCodeCardState extends ConsumerState<_EnterCodeCard> {
                         ),
                       ),
                       Text(
-                        _successMessage ?? 'Redeem it here — both of you get XP and a crate.',
+                        _successMessage ?? AppLocalizations.of(context).referralsRedeemItHereBoth,
                         style: TextStyle(
                           fontSize: 12,
                           color: _successMessage != null
@@ -802,7 +803,7 @@ class _EnterCodeCardState extends ConsumerState<_EnterCodeCard> {
                             fontFamily: 'monospace',
                           ),
                           decoration: InputDecoration(
-                            hintText: 'ABC123',
+                            hintText: AppLocalizations.of(context).referralsAbc123,
                             hintStyle: TextStyle(
                               color: widget.textMuted.withValues(alpha: 0.4),
                               letterSpacing: 4,
@@ -837,7 +838,7 @@ class _EnterCodeCardState extends ConsumerState<_EnterCodeCard> {
                                   ),
                                 )
                               : const Icon(Icons.check_rounded, size: 18),
-                          label: Text(_submitting ? 'Applying…' : 'Apply code'),
+                          label: Text(_submitting ? AppLocalizations.of(context).retuneProposalApplying : AppLocalizations.of(context).referralsApplyCode),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: widget.accent,
                             foregroundColor: Colors.white,

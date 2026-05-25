@@ -9,6 +9,7 @@ import '../../../../../widgets/app_snackbar.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class AboutSection extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -25,7 +26,7 @@ class AboutSection extends ConsumerWidget {
             future: PackageInfo.fromPlatform(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return Text('Loading build info...', style: TextStyle(fontSize: 12, color: theme.textMuted));
+                return Text(AppLocalizations.of(context).aboutLoadingBuildInfo, style: TextStyle(fontSize: 12, color: theme.textMuted));
               }
               final info = snapshot.data!;
               return Column(
@@ -52,7 +53,7 @@ class AboutSection extends ConsumerWidget {
                 if (context.canPop()) context.pop();
               },
               icon: const Icon(Icons.lock_outline, size: 18),
-              label: const Text('Disable Beast Mode'),
+              label: Text(AppLocalizations.of(context).aboutDisableBeastMode),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.error,
                 side: const BorderSide(color: AppColors.error),

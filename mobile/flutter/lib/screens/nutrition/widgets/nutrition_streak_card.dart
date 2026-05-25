@@ -8,6 +8,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact streak badge pinned near the top of the nutrition Daily tab.
 ///
 /// Shows:
@@ -89,12 +90,12 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
           .useStreakFreeze(widget.userId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
                 Icon(Icons.ac_unit, color: Colors.white, size: 18),
                 SizedBox(width: 8),
-                Text('Streak freeze used — your streak is safe.'),
+                Text(AppLocalizations.of(context).nutritionStreakCardStreakFreezeUsedYour),
               ],
             ),
             backgroundColor: AppColors.cyan,
@@ -150,7 +151,7 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
               Icon(Icons.local_fire_department_rounded, size: 16, color: fire),
               const SizedBox(width: 6),
               Text(
-                'Log a meal to start your streak',
+                AppLocalizations.of(context).nutritionStreakCardLogAMealTo,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -336,7 +337,7 @@ class _UseFreezeButton extends StatelessWidget {
               Icon(Icons.ac_unit_rounded, size: 14, color: ice),
             const SizedBox(width: 5),
             Text(
-              submitting ? 'Using…' : 'Use freeze',
+              submitting ? AppLocalizations.of(context).nutritionStreakCardUsing : AppLocalizations.of(context).streakExplainerUseFreeze,
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w800,
@@ -413,7 +414,7 @@ class _WeeklyProgress extends StatelessWidget {
         Row(
           children: [
             Text(
-              'This week',
+              AppLocalizations.of(context).nutritionStreakCardThisWeek,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -490,7 +491,7 @@ class _StreakDetailsSheet extends StatelessWidget {
                     color: fire, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  'Your streak',
+                  AppLocalizations.of(context).nutritionStreakCardYourStreak,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -503,7 +504,7 @@ class _StreakDetailsSheet extends StatelessWidget {
             _StatRow(
               icon: Icons.local_fire_department_rounded,
               color: fire,
-              label: 'Current',
+              label: AppLocalizations.of(context).workoutPlanDrawerCurrent,
               value: '${streak?.currentStreakDays ?? 0} days',
               textPrimary: textPrimary,
               textMuted: textMuted,
@@ -512,7 +513,7 @@ class _StreakDetailsSheet extends StatelessWidget {
             _StatRow(
               icon: Icons.emoji_events_rounded,
               color: AppColors.yellow,
-              label: 'Best ever',
+              label: AppLocalizations.of(context).nutritionStreakCardBestEver,
               value: '${streak?.longestStreakEver ?? 0} days',
               textPrimary: textPrimary,
               textMuted: textMuted,
@@ -521,7 +522,7 @@ class _StreakDetailsSheet extends StatelessWidget {
             _StatRow(
               icon: Icons.calendar_today_rounded,
               color: AppColors.purple,
-              label: 'Total days logged',
+              label: AppLocalizations.of(context).nutritionStreakCardTotalDaysLogged,
               value: '${streak?.totalDaysLogged ?? 0}',
               textPrimary: textPrimary,
               textMuted: textMuted,
@@ -530,7 +531,7 @@ class _StreakDetailsSheet extends StatelessWidget {
             _StatRow(
               icon: Icons.ac_unit_rounded,
               color: ice,
-              label: 'Freezes available',
+              label: AppLocalizations.of(context).nutritionStreakCardFreezesAvailable,
               value: '${streak?.freezesAvailable ?? 0}',
               textPrimary: textPrimary,
               textMuted: textMuted,
@@ -543,7 +544,7 @@ class _StreakDetailsSheet extends StatelessWidget {
                   onPressed: onUseFreeze,
                   icon: Icon(Icons.ac_unit_rounded, color: ice),
                   label: Text(
-                    'Use a freeze',
+                    AppLocalizations.of(context).nutritionStreakCardUseAFreeze,
                     style: TextStyle(
                       color: ice,
                       fontWeight: FontWeight.w700,

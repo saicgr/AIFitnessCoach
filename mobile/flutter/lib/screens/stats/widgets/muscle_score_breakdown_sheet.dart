@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Phase 4 — per-exercise contribution to a muscle's strength score.
 ///
 /// Tap-through from the strength tab: tap a muscle row → this sheet opens →
@@ -164,13 +165,13 @@ class _MuscleScoreBreakdownSheetState
             padding: const EdgeInsets.all(20),
             child: Text(
               _data?['note']?.toString() ??
-                  'No exercise data in the last 90 days.',
+                  AppLocalizations.of(context).muscleScoreBreakdownNoExerciseDataIn,
               style: TextStyle(color: textSecondary),
             ),
           )
         else ...[
           Text(
-            'Contribution to score',
+            AppLocalizations.of(context).strengthContributionToScore,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,

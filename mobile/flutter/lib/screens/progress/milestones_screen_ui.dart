@@ -71,7 +71,7 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: Text(
-                  'Upcoming',
+                  AppLocalizations.of(context).workoutsUpcoming,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -123,7 +123,7 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
             ),
             const SizedBox(height: 16),
             Text(
-              'No data yet',
+              AppLocalizations.of(context).milestonesScreenUiNoDataYet,
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -131,7 +131,7 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete workouts to see your ROI',
+              AppLocalizations.of(context).milestonesScreenUiCompleteWorkoutsToSee,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

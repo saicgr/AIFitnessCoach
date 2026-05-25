@@ -6,6 +6,7 @@ import '../../../data/repositories/xp_repository.dart' show DailyCratesState, Cr
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Banner showing available daily crates with tap to open selection
 ///
 /// Displays when user has unclaimed daily crates available.
@@ -194,7 +195,7 @@ class _DailyCrateBannerState extends ConsumerState<DailyCrateBanner>
                       Row(
                         children: [
                           Text(
-                            'Daily Crates Available!',
+                            AppLocalizations.of(context).dailyCrateBannerDailyCratesAvailable,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -225,7 +226,7 @@ class _DailyCrateBannerState extends ConsumerState<DailyCrateBanner>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Tap to pick your reward',
+                        AppLocalizations.of(context).dailyCrateBannerTapToPickYour,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -348,7 +349,7 @@ class _DailyCrateSelectionSheetState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result.message ?? 'Failed to claim crate'),
+              content: Text(result.message ?? AppLocalizations.of(context).stackedBannerPanelFailedToClaimCrate),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 6),
             ),
@@ -397,7 +398,7 @@ class _DailyCrateSelectionSheetState
               child: Column(
                 children: [
                   Text(
-                    '🎁 Pick Your Daily Crate',
+                    AppLocalizations.of(context).dailyCrateBannerPickYourDailyCrate,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -406,7 +407,7 @@ class _DailyCrateSelectionSheetState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Choose 1 crate to open today',
+                    AppLocalizations.of(context).dailyCrateBannerChoose1CrateTo,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -425,8 +426,8 @@ class _DailyCrateSelectionSheetState
                   if (widget.cratesState.dailyCrateAvailable)
                     _CrateOption(
                       crateType: 'daily',
-                      title: 'Daily Crate',
-                      subtitle: 'Basic rewards',
+                      title: AppLocalizations.of(context).dailyCrateBannerDailyCrate,
+                      subtitle: AppLocalizations.of(context).dailyCrateBannerBasicRewards,
                       icon: '📦',
                       color: const Color(0xFF78909C), // Blue grey
                       isLoading: _isLoading && _selectedCrate == 'daily',
@@ -440,7 +441,7 @@ class _DailyCrateSelectionSheetState
                   // Streak crate - requires 7+ day streak
                   _CrateOption(
                     crateType: 'streak',
-                    title: 'Streak Crate',
+                    title: AppLocalizations.of(context).dailyCrateBannerStreakCrate,
                     subtitle: widget.cratesState.streakCrateAvailable
                         ? 'Better rewards for 7+ day streak'
                         : 'Requires 7+ day streak',
@@ -461,7 +462,7 @@ class _DailyCrateSelectionSheetState
                   // Activity crate - requires all daily goals complete
                   _CrateOption(
                     crateType: 'activity',
-                    title: 'Activity Crate',
+                    title: AppLocalizations.of(context).dailyCrateBannerActivityCrate,
                     subtitle: widget.cratesState.activityCrateAvailable
                         ? 'Best rewards for completing all goals'
                         : 'Complete all daily goals to unlock',

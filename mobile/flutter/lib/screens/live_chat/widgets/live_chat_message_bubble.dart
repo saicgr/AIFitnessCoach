@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/live_chat_session.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Message bubble widget for live chat messages
 /// Supports different styling for user vs agent messages
 class LiveChatMessageBubble extends StatelessWidget {
@@ -53,7 +54,7 @@ class LiveChatMessageBubble extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(left: 4, bottom: 4),
                     child: Text(
-                      message.senderRole == SenderRole.agent ? 'Agent' : 'System',
+                      message.senderRole == SenderRole.agent ? AppLocalizations.of(context).liveChatMessageAgent : AppLocalizations.of(context).settingsThemeSystem,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

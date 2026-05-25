@@ -8,6 +8,7 @@ import '../../../data/repositories/subscription_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Request Refund Screen
 /// Allows users to request a refund with reason selection and optional comments
 class RequestRefundScreen extends ConsumerStatefulWidget {
@@ -158,8 +159,8 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
-        title: 'Request Refund',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).subscriptionManagementRequestRefund,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -187,7 +188,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Subscription Being Refunded',
+                        AppLocalizations.of(context).requestRefundSubscriptionBeingRefunded,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -216,7 +217,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                       const SizedBox(width: 8),
                       _InfoChip(
                         icon: Icons.schedule,
-                        label: _billingPeriod == 'one-time' ? 'One-time' : 'Per $_billingPeriod',
+                        label: _billingPeriod == AppLocalizations.of(context).requestRefundOneTime ? AppLocalizations.of(context).requestRefundOneTime2 : 'Per $_billingPeriod',
                         isDark: isDark,
                       ),
                     ],
@@ -239,7 +240,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
 
             // Reason selection
             Text(
-              'Reason for Refund',
+              AppLocalizations.of(context).requestRefundReasonForRefund,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -248,7 +249,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Please select the reason that best describes your situation',
+              AppLocalizations.of(context).requestRefundPleaseSelectTheReason,
               style: TextStyle(
                 fontSize: 13,
                 color: textMuted,
@@ -268,7 +269,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
 
             // Comments text area
             Text(
-              'Additional Comments (Optional)',
+              AppLocalizations.of(context).requestRefundAdditionalCommentsOptional,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -287,7 +288,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                 maxLines: 4,
                 maxLength: 500,
                 decoration: InputDecoration(
-                  hintText: 'Tell us more about your experience...',
+                  hintText: AppLocalizations.of(context).requestRefundTellUsMoreAbout,
                   hintStyle: TextStyle(color: textMuted),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(16),
@@ -354,7 +355,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Refund Policy',
+                          AppLocalizations.of(context).requestRefundRefundPolicy,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -363,7 +364,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Refund requests are typically processed within 5-7 business days. You will receive an email confirmation once your request is reviewed.',
+                          AppLocalizations.of(context).requestRefundRefundRequestsAreTypically,
                           style: TextStyle(
                             fontSize: 12,
                             color: textSecondary,
@@ -404,8 +405,8 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                           valueColor: AlwaysStoppedAnimation(Colors.white),
                         ),
                       )
-                    : const Text(
-                        'Submit Refund Request',
+                    : Text(
+                        AppLocalizations.of(context).requestRefundSubmitRefundRequest,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -421,7 +422,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  'Cancel',
+                  AppLocalizations.of(context).buttonCancel,
                   style: TextStyle(
                     color: textSecondary,
                     fontSize: 14,
@@ -598,7 +599,7 @@ class _RefundSuccessScreen extends StatelessWidget {
 
               // Title
               Text(
-                'Refund Request Submitted',
+                AppLocalizations.of(context).requestRefundRefundRequestSubmitted,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -630,7 +631,7 @@ class _RefundSuccessScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Request ID',
+                      AppLocalizations.of(context).requestRefundRequestId,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,
@@ -649,7 +650,7 @@ class _RefundSuccessScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Save this ID for your records',
+                      AppLocalizations.of(context).requestRefundSaveThisIdFor,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,
@@ -674,7 +675,7 @@ class _RefundSuccessScreen extends StatelessWidget {
                         Icon(Icons.email_outlined, color: AppColors.cyan, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Check your email',
+                          AppLocalizations.of(context).requestRefundCheckYourEmail,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -685,7 +686,7 @@ class _RefundSuccessScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'We will send you an email confirmation with details about your refund request. Processing typically takes 5-7 business days.',
+                      AppLocalizations.of(context).requestRefundWeWillSendYou,
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,
@@ -714,8 +715,8 @@ class _RefundSuccessScreen extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Done',
+                  child: Text(
+                    AppLocalizations.of(context).commonDone,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

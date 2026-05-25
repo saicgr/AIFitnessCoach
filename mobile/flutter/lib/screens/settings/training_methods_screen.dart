@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/models/set_progression.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Educational screen showing all set progression patterns with research-backed
 /// explanations, usage guidance, and adaptive behavior details.
 class TrainingMethodsScreen extends StatefulWidget {
@@ -26,7 +27,7 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: bg,
-        title: const Text('Training Methods'),
+        title: Text(AppLocalizations.of(context).trainingMethodsTrainingMethods),
         centerTitle: true,
       ),
       body: ListView(

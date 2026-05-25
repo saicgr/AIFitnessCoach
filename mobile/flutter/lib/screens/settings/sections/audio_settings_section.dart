@@ -9,6 +9,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../widgets/widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Combined workout audio section: voice announcements + audio behavior.
 class AudioSettingsSection extends StatelessWidget {
   const AudioSettingsSection({super.key});
@@ -17,8 +18,8 @@ class AudioSettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'WORKOUT AUDIO'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).audioSettingsWorkoutAudio),
         SizedBox(height: 12),
         _AudioCard(),
       ],
@@ -81,7 +82,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
               color: voiceState.isEnabled ? accent : textSecondary,
               size: 22,
             ),
-            title: const Text('Voice Announcements', style: TextStyle(fontSize: 15)),
+            title: Text(AppLocalizations.of(context).voiceAnnouncementsVoiceAnnouncements2, style: TextStyle(fontSize: 15)),
             subtitle: Text(
               'Announce exercises during rest periods',
               style: TextStyle(fontSize: 12, color: textMuted),
@@ -104,8 +105,8 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
             SettingSwitchTile(
               icon: Icons.queue_music,
               iconColor: AppColors.purple,
-              title: 'Background Music',
-              subtitle: 'Keep Spotify/music playing during workouts',
+              title: AppLocalizations.of(context).audioSettingsBackgroundMusic,
+              subtitle: AppLocalizations.of(context).audioSettingsKeepSpotifyMusicPlaying,
               value: prefs.allowBackgroundMusic,
               onChanged: (value) async {
                 HapticFeedback.lightImpact();
@@ -121,8 +122,8 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
             SettingSwitchTile(
               icon: Icons.graphic_eq,
               iconColor: AppColors.orange,
-              title: 'Audio Ducking',
-              subtitle: 'Lower music during voice announcements',
+              title: AppLocalizations.of(context).audioSettingsAudioDucking,
+              subtitle: AppLocalizations.of(context).audioSettingsLowerMusicDuringVoice,
               value: prefs.audioDucking,
               onChanged: (value) async {
                 HapticFeedback.lightImpact();
@@ -150,7 +151,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Voice volume & video',
+                          Text(AppLocalizations.of(context).audioSettingsVoiceVolumeVideo,
                               style: TextStyle(fontSize: 15)),
                           Text('Voice volume, ducking level, mute on videos',
                               style:
@@ -188,8 +189,8 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Voice volume & video',
+                  Text(
+                    AppLocalizations.of(context).audioSettingsVoiceVolumeVideo,
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -239,7 +240,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
                             ? ThemeColors.of(context).accent
                             : Colors.grey,
                         size: 20),
-                    title: const Text('Mute Voice During Videos', style: TextStyle(fontSize: 14)),
+                    title: Text(AppLocalizations.of(context).audioSettingsMuteVoiceDuringVideos, style: TextStyle(fontSize: 14)),
                     subtitle: Text('Silence announcements when watching demos', style: TextStyle(fontSize: 11, color: textMuted)),
                     value: p.muteDuringVideo,
                     activeThumbColor: ThemeColors.of(context).accent,

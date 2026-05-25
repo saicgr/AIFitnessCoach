@@ -18,6 +18,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/weight_increments_sheet.dart';
 import '../../settings/pages/workout_ui_mode_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Expandable card showing exercise preferences in the Workouts screen
 class ExercisePreferencesCard extends ConsumerStatefulWidget {
   /// Optional margin override. Defaults to horizontal 16px.
@@ -130,7 +131,7 @@ class _ExercisePreferencesCardState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Exercise Preferences',
+                          AppLocalizations.of(context).myExercisesExercisePreferences,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -138,7 +139,7 @@ class _ExercisePreferencesCardState
                           ),
                         ),
                         Text(
-                          'Favorites, avoided, queue',
+                          AppLocalizations.of(context).exercisePreferencesCardFavoritesAvoidedQueue,
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -189,7 +190,7 @@ class _ExercisePreferencesCardState
                         children: [
                           Expanded(
                             child: Text(
-                              'EXERCISE PREFERENCES',
+                              AppLocalizations.of(context).workoutSettingsExercisePreferences,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -210,7 +211,7 @@ class _ExercisePreferencesCardState
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  "What's this?",
+                                  AppLocalizations.of(context).sectionHeaderWhatSThis,
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: accentColor,
@@ -224,7 +225,7 @@ class _ExercisePreferencesCardState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Customize which exercises appear in workouts',
+                        AppLocalizations.of(context).workoutSettingsCustomizeWhichExercisesAppe,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -237,8 +238,8 @@ class _ExercisePreferencesCardState
                 _buildPreferenceItem(
                   context,
                   icon: Icons.fitness_center,
-                  title: 'Custom Exercises',
-                  subtitle: 'Your personal exercise library',
+                  title: AppLocalizations.of(context).netflixExercisesCustomExercises,
+                  subtitle: AppLocalizations.of(context).exercisePreferencesCardYourPersonalExerciseLibrary,
                   trailing: '$customCount exercises',
                   onTap: () => context.push('/settings/my-exercises?tab=4'),
                   isDark: isDark,
@@ -248,8 +249,8 @@ class _ExercisePreferencesCardState
                 _buildPreferenceItem(
                   context,
                   icon: Icons.favorite,
-                  title: 'Favorite Exercises',
-                  subtitle: 'AI will prioritize these',
+                  title: AppLocalizations.of(context).trainingPreferencesFavoriteExercises,
+                  subtitle: AppLocalizations.of(context).exercisePreferencesCardAiWillPrioritizeThese,
                   trailing: '$favoriteCount exercises',
                   onTap: () => context.push('/settings/favorite-exercises'),
                   isDark: isDark,
@@ -259,8 +260,8 @@ class _ExercisePreferencesCardState
                 _buildPreferenceItem(
                   context,
                   icon: Icons.lock,
-                  title: 'Staple Exercises',
-                  subtitle: 'Core lifts that never rotate',
+                  title: AppLocalizations.of(context).trainingPreferencesStapleExercises,
+                  subtitle: AppLocalizations.of(context).exercisePreferencesCardCoreLiftsThatNever,
                   trailing: '$stapleCount exercises',
                   onTap: () => context.push('/settings/staple-exercises'),
                   isDark: isDark,
@@ -270,8 +271,8 @@ class _ExercisePreferencesCardState
                 _buildPreferenceItem(
                   context,
                   icon: Icons.playlist_add,
-                  title: 'Exercise Queue',
-                  subtitle: 'Queue exercises for next workout',
+                  title: AppLocalizations.of(context).trainingPreferencesExerciseQueue,
+                  subtitle: AppLocalizations.of(context).trainingPreferencesQueueExercisesForNext,
                   trailing: '$queueCount queued',
                   onTap: () => context.push('/settings/exercise-queue'),
                   isDark: isDark,
@@ -281,8 +282,8 @@ class _ExercisePreferencesCardState
                 _buildPreferenceItem(
                   context,
                   icon: Icons.block,
-                  title: 'Exercises to Avoid',
-                  subtitle: 'Skip specific exercises',
+                  title: AppLocalizations.of(context).trainingPreferencesExercisesToAvoid,
+                  subtitle: AppLocalizations.of(context).trainingPreferencesSkipSpecificExercises,
                   trailing: avoidedCount > 0 ? '$avoidedCount avoided' : null,
                   onTap: () => context.push('/settings/avoided-exercises'),
                   isDark: isDark,
@@ -292,8 +293,8 @@ class _ExercisePreferencesCardState
                 _buildPreferenceItem(
                   context,
                   icon: Icons.accessibility_new,
-                  title: 'Muscles to Avoid',
-                  subtitle: 'Skip or reduce muscle groups',
+                  title: AppLocalizations.of(context).trainingPreferencesMusclesToAvoid,
+                  subtitle: AppLocalizations.of(context).trainingPreferencesSkipOrReduceMuscle,
                   trailing: null,
                   onTap: () => context.push('/settings/avoided-muscles'),
                   isDark: isDark,
@@ -303,8 +304,8 @@ class _ExercisePreferencesCardState
                 _buildPreferenceItem(
                   context,
                   icon: Icons.tune,
-                  title: 'Weight Increments',
-                  subtitle: 'Customize +/- step per equipment',
+                  title: AppLocalizations.of(context).workoutSettingsWeightIncrements,
+                  subtitle: AppLocalizations.of(context).exercisePreferencesCardCustomizeStepPerEquipme,
                   trailing: weightIncrementsState.unit.toUpperCase(),
                   onTap: () => showWeightIncrementsSheet(context),
                   isDark: isDark,
@@ -318,7 +319,7 @@ class _ExercisePreferencesCardState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'WARMUP & COOLDOWN',
+                        AppLocalizations.of(context).warmupSettingsWarmupCooldown,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -328,7 +329,7 @@ class _ExercisePreferencesCardState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Enable or disable workout phases',
+                        AppLocalizations.of(context).exercisePreferencesCardEnableOrDisableWorkout,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -340,8 +341,8 @@ class _ExercisePreferencesCardState
                 _buildToggleItem(
                   context,
                   icon: Icons.whatshot,
-                  title: 'Warmup Phase',
-                  subtitle: 'Dynamic warmup before workouts',
+                  title: AppLocalizations.of(context).exercisePreferencesCardWarmupPhase,
+                  subtitle: AppLocalizations.of(context).exercisePreferencesCardDynamicWarmupBeforeWorkouts,
                   value: warmupState.warmupEnabled,
                   onChanged: (value) {
                     HapticFeedback.lightImpact();
@@ -354,8 +355,8 @@ class _ExercisePreferencesCardState
                 _buildToggleItem(
                   context,
                   icon: Icons.self_improvement,
-                  title: 'Cooldown Stretch',
-                  subtitle: 'Stretching after workouts',
+                  title: AppLocalizations.of(context).exercisePreferencesCardCooldownStretch,
+                  subtitle: AppLocalizations.of(context).exercisePreferencesCardStretchingAfterWorkouts,
                   value: warmupState.stretchEnabled,
                   onChanged: (value) {
                     HapticFeedback.lightImpact();
@@ -368,8 +369,8 @@ class _ExercisePreferencesCardState
                 _buildToggleItem(
                   context,
                   icon: Icons.checklist_rounded,
-                  title: 'Incomplete Exercise Warning',
-                  subtitle: 'Warn before finishing with unlogged sets',
+                  title: AppLocalizations.of(context).workoutSettingsIncompleteExerciseWarning,
+                  subtitle: AppLocalizations.of(context).warmupSettingsWarnBeforeFinishingWith,
                   value: !_skipWarningDismissed,
                   onChanged: _toggleSkipWarning,
                   isDark: isDark,
@@ -467,7 +468,7 @@ class _ExercisePreferencesCardState
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Exercise Preferences Explained',
+                      AppLocalizations.of(context).exercisePreferencesCardExercisePreferencesExplained,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -578,7 +579,7 @@ class _ExercisePreferencesCardState
             children: [
               Expanded(
                 child: Text(
-                  'WORKOUT MODE',
+                  AppLocalizations.of(context).exercisePreferencesCardWorkoutMode,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

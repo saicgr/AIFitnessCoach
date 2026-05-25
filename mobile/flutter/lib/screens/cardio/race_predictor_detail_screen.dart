@@ -8,6 +8,7 @@ import '../../widgets/cardio/race_predictor_card.dart' show formatRaceTime;
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Race-time predictor detail screen.
 ///
 /// Self-contained for now — when the later MetricDetailScreen wave lands,
@@ -34,7 +35,7 @@ class RacePredictorDetailScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Race predictor',
+                      AppLocalizations.of(context).racePredictorDetailRacePredictor,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -99,13 +100,13 @@ class _Body extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'No predictions yet',
+                AppLocalizations.of(context).racePredictorDetailNoPredictionsYet,
                 style: theme.textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Log at least three runs, including one measured kilometre, and a prediction will appear.',
+                AppLocalizations.of(context).racePredictorDetailLogAtLeastThree,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -156,7 +157,7 @@ class _Body extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              'Ask coach',
+              AppLocalizations.of(context).workoutShowcaseAskCoach,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -221,7 +222,7 @@ class _BaseRunHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Your best run',
+            AppLocalizations.of(context).racePredictorDetailYourBestRun,
             style: theme.textTheme.labelMedium?.copyWith(
               color: onSurface.withValues(alpha: 0.6),
               letterSpacing: 0.4,
@@ -318,7 +319,7 @@ class _PredictionTile extends StatelessWidget {
           ),
           if (disabled)
             Text(
-              'Need more data',
+              AppLocalizations.of(context).racePredictorDetailNeedMoreData,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: onSurface.withValues(alpha: 0.5),
               ),
@@ -374,7 +375,7 @@ class _MethodologySection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'How predictions are calculated',
+            AppLocalizations.of(context).racePredictorDetailHowPredictionsAreCalculated,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),

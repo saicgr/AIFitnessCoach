@@ -263,7 +263,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
             child: Row(
               children: [
                 Text(
-                  'Add Ingredient',
+                  AppLocalizations.of(context).recipeBuilderSheetAddIngredient,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -273,7 +273,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                 const Spacer(),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Cancel', style: TextStyle(color: textMuted)),
+                  child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted)),
                 ),
               ],
             ),
@@ -290,7 +290,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                     controller: _nameController,
                     style: TextStyle(color: textPrimary),
                     decoration: InputDecoration(
-                      labelText: 'Ingredient Name',
+                      labelText: AppLocalizations.of(context).recipeBuilderSheetIngredientName,
                       labelStyle: TextStyle(color: textMuted),
                       hintText: 'e.g., Chicken breast, Oats, Banana',
                       hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
@@ -314,7 +314,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
                           decoration: InputDecoration(
-                            labelText: 'Amount',
+                            labelText: AppLocalizations.of(context).recipeBuilderSheetAmount,
                             labelStyle: TextStyle(color: textMuted),
                             filled: true,
                             fillColor: elevated,
@@ -375,7 +375,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           : Icon(Icons.auto_awesome, color: teal),
                       label: Text(
                         _isAnalyzing
-                            ? 'Analyzing...'
+                            ? AppLocalizations.of(context).recipeBuilderSheetAnalyzing
                             : 'Estimate Nutrition with AI',
                         style: TextStyle(color: teal),
                       ),
@@ -392,7 +392,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
 
                   // Nutrition Fields
                   Text(
-                    'NUTRITION (per amount above)',
+                    AppLocalizations.of(context).recipeBuilderSheetNutritionPerAmountAbove,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -408,7 +408,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                     keyboardType: TextInputType.number,
                     style: TextStyle(color: textPrimary),
                     decoration: InputDecoration(
-                      labelText: 'Calories',
+                      labelText: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                       labelStyle: TextStyle(color: textMuted),
                       suffixText: 'kcal',
                       suffixStyle: TextStyle(color: textMuted),
@@ -431,7 +431,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
                           decoration: InputDecoration(
-                            labelText: 'Protein',
+                            labelText: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                             labelStyle: TextStyle(color: textMuted),
                             suffixText: 'g',
                             suffixStyle: TextStyle(color: textMuted),
@@ -451,7 +451,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
                           decoration: InputDecoration(
-                            labelText: 'Carbs',
+                            labelText: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                             labelStyle: TextStyle(color: textMuted),
                             suffixText: 'g',
                             suffixStyle: TextStyle(color: textMuted),
@@ -476,7 +476,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
                           decoration: InputDecoration(
-                            labelText: 'Fat',
+                            labelText: AppLocalizations.of(context).weeklyCheckinSheetFat,
                             labelStyle: TextStyle(color: textMuted),
                             suffixText: 'g',
                             suffixStyle: TextStyle(color: textMuted),
@@ -496,7 +496,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
                           decoration: InputDecoration(
-                            labelText: 'Fiber',
+                            labelText: AppLocalizations.of(context).recipeBuilderSheetFiber,
                             labelStyle: TextStyle(color: textMuted),
                             suffixText: 'g',
                             suffixStyle: TextStyle(color: textMuted),
@@ -519,8 +519,8 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                     child: FilledButton.icon(
                       onPressed: _addIngredient,
                       icon: const Icon(Icons.add),
-                      label: const Text(
-                        'Add Ingredient',
+                      label: Text(
+                        AppLocalizations.of(context).recipeBuilderSheetAddIngredient,
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       style: FilledButton.styleFrom(
@@ -642,28 +642,28 @@ class _NutritionSummaryCard extends StatelessWidget {
           Row(
             children: [
               _MacroChip(
-                label: 'Protein',
+                label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                 value: protein,
                 color: proteinColor,
                 isDark: isDark,
               ),
               const SizedBox(width: 8),
               _MacroChip(
-                label: 'Carbs',
+                label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                 value: carbs,
                 color: carbsColor,
                 isDark: isDark,
               ),
               const SizedBox(width: 8),
               _MacroChip(
-                label: 'Fat',
+                label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                 value: fat,
                 color: fatColor,
                 isDark: isDark,
               ),
               const SizedBox(width: 8),
               _MacroChip(
-                label: 'Fiber',
+                label: AppLocalizations.of(context).recipeBuilderSheetFiber,
                 value: fiber,
                 color: fiberColor,
                 isDark: isDark,

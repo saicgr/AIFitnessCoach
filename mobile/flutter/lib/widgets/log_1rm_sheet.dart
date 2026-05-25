@@ -6,6 +6,7 @@ import '../data/repositories/workout_repository.dart';
 import '../data/services/api_client.dart';
 import 'glass_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Shows a bottom sheet to log 1RM for an exercise
 Future<Map<String, dynamic>?> showLog1RMSheet(
   BuildContext context,
@@ -90,14 +91,14 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
 
     if (weight == null || weight <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid weight')),
+        SnackBar(content: Text(AppLocalizations.of(context).log1rmPleaseEnterAValid)),
       );
       return;
     }
 
     if (reps == null || reps <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid rep count')),
+        SnackBar(content: Text(AppLocalizations.of(context).log1rmPleaseEnterAValid2)),
       );
       return;
     }
@@ -185,7 +186,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Log 1RM',
+                        AppLocalizations.of(context).restTimerOverlayLog1rm,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: textPrimary,
@@ -225,7 +226,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Current 1RM: ',
+                      AppLocalizations.of(context).log1rmCurrent1rm,
                       style: TextStyle(color: textSecondary),
                     ),
                     Text(
@@ -284,7 +285,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
 
             // Weight input
             Text(
-              'Weight (kg)',
+              AppLocalizations.of(context).workoutHistoryImportWeightKg,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: textSecondary,
@@ -329,7 +330,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
             // Reps input (only for estimate mode)
             if (!_isDirectMax) ...[
               Text(
-                'Reps Completed',
+                AppLocalizations.of(context).log1rmRepsCompleted,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: textSecondary,
@@ -374,7 +375,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
 
             // RPE slider
             Text(
-              'RPE (Rate of Perceived Exertion)',
+              AppLocalizations.of(context).restTimerOverlayRpeRateOfPerceived,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: textSecondary,
@@ -466,7 +467,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isPR ? 'NEW PR!' : 'Estimated 1RM',
+                            isPR ? AppLocalizations.of(context).log1rmNewPr : AppLocalizations.of(context).workoutSummaryAdvancedEstimated1rm,
                             style: TextStyle(
                               color: isPR ? AppColors.orange : AppColors.cyan,
                               fontWeight: FontWeight.w600,
@@ -517,8 +518,8 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Save 1RM',
+                    : Text(
+                        AppLocalizations.of(context).log1rmSave1rm,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -532,7 +533,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
             Center(
               child: Text(
                 _isDirectMax
-                    ? 'Enter the max weight you lifted for 1 rep'
+                    ? AppLocalizations.of(context).log1rmEnterTheMaxWeight
                     : 'Enter a set and we\'ll calculate your estimated 1RM',
                 style: TextStyle(
                   color: textMuted,

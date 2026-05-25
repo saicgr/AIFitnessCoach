@@ -8,6 +8,7 @@ import 'contextual_banner.dart';
 import '../../../widgets/double_xp_banner.dart';
 import 'daily_crate_banner.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact ~32dp strip that collapses all home screen banners into one line.
 ///
 /// **Collapsed view (~32dp):**
@@ -121,7 +122,7 @@ class _CollapsedBannerStripState extends ConsumerState<CollapsedBannerStrip> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Text(
-                      '\u00b7',
+                      AppLocalizations.of(context).foodAnalysisResultU00b7,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,
@@ -136,7 +137,7 @@ class _CollapsedBannerStripState extends ConsumerState<CollapsedBannerStrip> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      '2x',
+                      AppLocalizations.of(context).collapsedBannerStrip2x,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -151,7 +152,7 @@ class _CollapsedBannerStripState extends ConsumerState<CollapsedBannerStrip> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Text(
-                      '\u00b7',
+                      AppLocalizations.of(context).foodAnalysisResultU00b7,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,

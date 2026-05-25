@@ -22,6 +22,7 @@ import '../../../core/services/pre_set_insight_engine.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/utils/weight_utils.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Trend direction between two consecutive sessions.
 enum _Trend {
   up,      // weight up, or same weight + reps up
@@ -216,7 +217,7 @@ class ProgressionStrip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Target ',
+            AppLocalizations.of(context).workoutSummaryAdvancedTarget,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,

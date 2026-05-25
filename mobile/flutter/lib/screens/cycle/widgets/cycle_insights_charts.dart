@@ -17,6 +17,7 @@ import '../../../data/models/hormonal_health.dart';
 import '../cycle_chat.dart';
 import '../cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // ===========================================================================
 // Shared chart card scaffold
 // ===========================================================================
@@ -86,7 +87,7 @@ class _ChartCard extends StatelessWidget {
                           size: 11, color: accent),
                       const SizedBox(width: 4),
                       Text(
-                        'Ask',
+                        AppLocalizations.of(context).cycleTemperatureChartAsk,
                         style: TextStyle(
                           color: accent,
                           fontSize: 10,
@@ -139,7 +140,7 @@ class _CycleLengthHistoryChartState extends State<CycleLengthHistoryChart> {
 
     if (widget.cycleLengths.isEmpty) {
       return _ChartCard(
-        title: 'Cycle length history',
+        title: AppLocalizations.of(context).cycleInsightsChartsCycleLengthHistory,
         icon: Icons.bar_chart_rounded,
         accent: widget.accent,
         coachSeed: cycleDatumSeed('my cycle length history'),
@@ -177,7 +178,7 @@ class _CycleLengthHistoryChartState extends State<CycleLengthHistoryChart> {
     }
 
     return _ChartCard(
-      title: 'Cycle length history',
+      title: AppLocalizations.of(context).cycleInsightsChartsCycleLengthHistory,
       icon: Icons.bar_chart_rounded,
       accent: widget.accent,
       coachSeed: cycleDatumSeed(
@@ -355,7 +356,7 @@ class CycleSymptomHeatmap extends StatelessWidget {
 
     if (symptomCounts.isEmpty) {
       return _ChartCard(
-        title: 'Symptom patterns',
+        title: AppLocalizations.of(context).cycleInsightsChartsSymptomPatterns,
         icon: Icons.grid_view_rounded,
         accent: accent,
         coachSeed: cycleDatumSeed('my symptom patterns'),
@@ -371,7 +372,7 @@ class CycleSymptomHeatmap extends StatelessWidget {
     final maxCount = entries.first.value;
 
     return _ChartCard(
-      title: 'Symptom patterns',
+      title: AppLocalizations.of(context).cycleInsightsChartsSymptomPatterns,
       icon: Icons.grid_view_rounded,
       accent: accent,
       coachSeed: cycleDatumSeed(
@@ -488,7 +489,7 @@ class _CyclePhaseDonutState extends State<CyclePhaseDonut> {
         widget.phaseDays.values.fold<int>(0, (a, b) => a + b);
     if (total == 0) {
       return _ChartCard(
-        title: 'Phase distribution',
+        title: AppLocalizations.of(context).cycleInsightsChartsPhaseDistribution,
         icon: Icons.donut_large_rounded,
         accent: widget.accent,
         coachSeed: cycleDatumSeed('how my cycle splits across phases'),
@@ -504,7 +505,7 @@ class _CyclePhaseDonutState extends State<CyclePhaseDonut> {
         .toList();
 
     return _ChartCard(
-      title: 'Phase distribution',
+      title: AppLocalizations.of(context).cycleInsightsChartsPhaseDistribution,
       icon: Icons.donut_large_rounded,
       accent: widget.accent,
       coachSeed: cycleDatumSeed('how my cycle splits across phases'),
@@ -643,7 +644,7 @@ class CycleStatsBlock extends StatelessWidget {
     ];
 
     return _ChartCard(
-      title: 'Cycle stats',
+      title: AppLocalizations.of(context).cycleInsightsChartsCycleStats,
       icon: Icons.insights_rounded,
       accent: accent,
       coachSeed: cycleDatumSeed(

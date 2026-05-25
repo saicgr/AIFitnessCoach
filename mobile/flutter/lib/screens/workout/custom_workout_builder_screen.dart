@@ -10,6 +10,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/lottie_animations.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Custom Workout Builder Screen
 ///
 /// Addresses the complaint: "It's much better to just use the Daily Strength app
@@ -148,8 +149,8 @@ class _CustomWorkoutBuilderScreenState
   Future<void> _createWorkout() async {
     if (_selectedExercises.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one exercise'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).customWorkoutBuilderPleaseAddAtLeast),
           backgroundColor: AppColors.error,
         ),
       );
@@ -158,8 +159,8 @@ class _CustomWorkoutBuilderScreenState
 
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a workout name'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).customWorkoutBuilderPleaseEnterAWorkout),
           backgroundColor: AppColors.error,
         ),
       );
@@ -208,8 +209,8 @@ class _CustomWorkoutBuilderScreenState
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Custom workout created!'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).customWorkoutBuilderCustomWorkoutCreated),
               backgroundColor: AppColors.success,
             ),
           );
@@ -219,8 +220,8 @@ class _CustomWorkoutBuilderScreenState
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to create workout'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).customWorkoutBuilderFailedToCreateWorkout),
               backgroundColor: AppColors.error,
             ),
           );
@@ -290,7 +291,7 @@ class _CustomWorkoutBuilderScreenState
 
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Build Custom Workout',
+        title: AppLocalizations.of(context).customWorkoutBuilderBuildCustomWorkout,
         actions: [
           PillAppBarAction(
             icon: Icons.play_arrow_rounded,
@@ -333,8 +334,8 @@ class _CustomWorkoutBuilderScreenState
                       _searchExercises('');
                     },
                     icon: const Icon(Icons.add, size: 22),
-                    label: const Text(
-                      'Add Exercise',
+                    label: Text(
+                      AppLocalizations.of(context).workoutSummaryAddExercise,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -358,7 +359,7 @@ class _CustomWorkoutBuilderScreenState
           TextField(
             controller: _nameController,
             decoration: InputDecoration(
-              labelText: 'Workout Name',
+              labelText: AppLocalizations.of(context).customWorkoutBuilderWorkoutName,
               filled: true,
               fillColor: surface,
               border: OutlineInputBorder(
@@ -375,7 +376,7 @@ class _CustomWorkoutBuilderScreenState
           const SizedBox(height: 16),
 
           // Workout Type
-          Text('Workout Type',
+          Text(AppLocalizations.of(context).workoutSettingsWorkoutType,
               style: TextStyle(
                   color: textSecondary,
                   fontSize: 14,
@@ -393,7 +394,7 @@ class _CustomWorkoutBuilderScreenState
           const SizedBox(height: 16),
 
           // Difficulty
-          Text('Difficulty',
+          Text(AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
               style: TextStyle(
                   color: textSecondary,
                   fontSize: 14,
@@ -412,7 +413,7 @@ class _CustomWorkoutBuilderScreenState
 
           // Scheduled date — lets user pick when this custom workout should
           // appear on their schedule (defaults to today).
-          Text('Schedule For',
+          Text(AppLocalizations.of(context).customWorkoutBuilderScheduleFor,
               style: TextStyle(
                   color: textSecondary,
                   fontSize: 14,
@@ -501,7 +502,7 @@ class _CustomWorkoutBuilderScreenState
                       size: 48, color: textSecondary.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
                   Text(
-                    'No exercises added yet',
+                    AppLocalizations.of(context).customWorkoutBuilderNoExercisesAddedYet,
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 16,
@@ -509,7 +510,7 @@ class _CustomWorkoutBuilderScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the button below to add exercises',
+                    AppLocalizations.of(context).customWorkoutBuilderTapTheButtonBelow,
                     style: TextStyle(
                       color: textSecondary.withValues(alpha: 0.7),
                       fontSize: 14,
@@ -660,7 +661,7 @@ class _CustomWorkoutBuilderScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        exercise['name'] ?? 'Exercise',
+                        exercise['name'] ?? AppLocalizations.of(context).demoActiveWorkoutExercise,
                         style: TextStyle(
                           color: textPrimary,
                           fontWeight: FontWeight.w600,
@@ -696,7 +697,7 @@ class _CustomWorkoutBuilderScreenState
                 // Sets
                 Expanded(
                   child: _buildNumberControl(
-                    label: 'Sets',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralSets,
                     value: exercise['sets'] ?? 3,
                     onChanged: (v) => _updateExercise(index, 'sets', v),
                     min: 1,
@@ -707,7 +708,7 @@ class _CustomWorkoutBuilderScreenState
                 // Reps
                 Expanded(
                   child: _buildNumberControl(
-                    label: 'Reps',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralReps,
                     value: exercise['reps'] ?? 10,
                     onChanged: (v) => _updateExercise(index, 'reps', v),
                     min: 1,
@@ -718,7 +719,7 @@ class _CustomWorkoutBuilderScreenState
                 // Weight
                 Expanded(
                   child: _buildNumberControl(
-                    label: 'Weight (kg)',
+                    label: AppLocalizations.of(context).workoutHistoryImportWeightKg,
                     value: (exercise['weight_kg'] ?? 0).toInt(),
                     onChanged: (v) =>
                         _updateExercise(index, 'weight_kg', v.toDouble()),
@@ -825,7 +826,7 @@ class _CustomWorkoutBuilderScreenState
                 child: TextField(
                   autofocus: true,
                   decoration: InputDecoration(
-                    hintText: 'Search exercises...',
+                    hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
                     filled: true,
                     fillColor: surface,
                     border: OutlineInputBorder(

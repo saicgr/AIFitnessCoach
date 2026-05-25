@@ -17,6 +17,7 @@ import '../shared/exercise_instruction_copy.dart';
 import '../shared/plan_sheet.dart';
 import 'easy_active_workout_state_models.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Launch a full-screen video-only viewer for the current exercise.
 ///
 /// Resolution order (matches the rest of the app):
@@ -212,13 +213,13 @@ class _EasyVideoOnlyScreenState extends ConsumerState<_EasyVideoOnlyScreen> {
       return const CircularProgressIndicator(color: Colors.white70);
     }
     if (_error || _controller == null) {
-      return const Column(
+      return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.videocam_off_outlined, color: Colors.white54, size: 56),
           SizedBox(height: 12),
           Text(
-            'No demo video for this exercise yet.',
+            AppLocalizations.of(context).easySheetHelpersNoDemoVideoFor,
             style: TextStyle(color: Colors.white70),
           ),
         ],
@@ -260,7 +261,7 @@ class _EasyInstructionsContent extends StatelessWidget {
     if (primary.isNotEmpty) {
       aboutRows.add(_InfoRow(
           icon: Icons.accessibility_new_rounded,
-          label: 'Primary muscle',
+          label: AppLocalizations.of(context).easySheetHelpersPrimaryMuscle,
           value: primary));
     }
     final secondary = exercise.secondaryMuscles;
@@ -270,19 +271,19 @@ class _EasyInstructionsContent extends StatelessWidget {
     if (secondaryList.isNotEmpty) {
       aboutRows.add(_InfoRow(
           icon: Icons.format_list_bulleted_rounded,
-          label: 'Secondary',
+          label: AppLocalizations.of(context).easySheetHelpersSecondary,
           value: secondaryList.join(', ')));
     }
     if ((exercise.bodyPart ?? '').isNotEmpty) {
       aboutRows.add(_InfoRow(
           icon: Icons.category_outlined,
-          label: 'Body part',
+          label: AppLocalizations.of(context).easySheetHelpersBodyPart,
           value: exercise.bodyPart!));
     }
     if ((exercise.equipment ?? '').isNotEmpty) {
       aboutRows.add(_InfoRow(
           icon: Icons.fitness_center_rounded,
-          label: 'Equipment',
+          label: AppLocalizations.of(context).trainingSetupCardEquipment,
           value: exercise.equipment!));
     }
 
@@ -307,7 +308,7 @@ class _EasyInstructionsContent extends StatelessWidget {
           const SizedBox(height: 20),
 
           // ── Primary content: numbered How-to steps ─────────────────
-          _SectionLabel(label: 'How to perform', fg: fg),
+          _SectionLabel(label: AppLocalizations.of(context).easySheetHelpersHowToPerform, fg: fg),
           const SizedBox(height: 10),
           ...List.generate(setupSteps.length, (i) {
             return Padding(
@@ -350,7 +351,7 @@ class _EasyInstructionsContent extends StatelessWidget {
           const SizedBox(height: 12),
 
           // ── Secondary content: bullet-pointed form tips ───────────
-          _SectionLabel(label: 'Form tips', fg: fg),
+          _SectionLabel(label: AppLocalizations.of(context).easySheetHelpersFormTips, fg: fg),
           const SizedBox(height: 10),
           ...formTips.map((tip) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -387,7 +388,7 @@ class _EasyInstructionsContent extends StatelessWidget {
             children: [
               Icon(Icons.air_rounded, size: 16, color: accent),
               const SizedBox(width: 6),
-              _SectionLabel(label: 'Breathing', fg: fg),
+              _SectionLabel(label: AppLocalizations.of(context).workoutUiBuildersBreathing, fg: fg),
             ],
           ),
           const SizedBox(height: 10),
@@ -418,7 +419,7 @@ class _EasyInstructionsContent extends StatelessWidget {
 
           if (aboutRows.isNotEmpty) ...[
             const SizedBox(height: 16),
-            _SectionLabel(label: 'About this exercise', fg: fg),
+            _SectionLabel(label: AppLocalizations.of(context).easySheetHelpersAboutThisExercise, fg: fg),
             const SizedBox(height: 10),
             ...aboutRows.map((r) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),

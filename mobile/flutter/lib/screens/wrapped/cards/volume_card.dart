@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card 2: Volume card - total volume lifted with fun equivalence
 class WrappedVolumeCard extends StatelessWidget {
   final WrappedData data;
@@ -89,8 +90,8 @@ class WrappedVolumeCard extends StatelessWidget {
                         color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
                       ),
                     ),
-                    child: const Text(
-                      'TOTAL VOLUME LIFTED',
+                    child: Text(
+                      AppLocalizations.of(context).volumeCardTotalVolumeLifted,
                       style: TextStyle(
                         color: Color(0xFF60A5FA),
                         fontSize: 14,

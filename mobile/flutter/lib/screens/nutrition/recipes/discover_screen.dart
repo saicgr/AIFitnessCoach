@@ -19,6 +19,7 @@ import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'recipe_detail_screen.dart';
 import 'widgets/recipe_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class DiscoverScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -119,7 +120,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Discover',
+                        AppLocalizations.of(context).navDiscover,
                         style: TextStyle(
                           color: text,
                           fontSize: 22,
@@ -128,7 +129,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Curated recipes to try or improvize',
+                        AppLocalizations.of(context).discoverCuratedRecipesToTry,
                         style: TextStyle(
                           color: muted,
                           fontSize: 11,
@@ -506,7 +507,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              "Couldn't load Discover.",
+              AppLocalizations.of(context).discoverCouldnTLoadDiscover,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -516,7 +517,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Check your connection and try again.',
+              AppLocalizations.of(context).savedHubCheckYourConnectionAnd,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: muted),
             ),
@@ -524,7 +525,7 @@ class _ErrorView extends StatelessWidget {
             TextButton(
               onPressed: onRetry,
               style: TextButton.styleFrom(foregroundColor: accent),
-              child: const Text('Try again'),
+              child: Text(AppLocalizations.of(context).workoutReviewTryAgain),
             ),
           ],
         ),

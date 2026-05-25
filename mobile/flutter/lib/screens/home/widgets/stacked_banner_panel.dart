@@ -33,6 +33,7 @@ import 'compact_banner_card.dart';
 import 'stacked_banner_controller.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A phone notification-panel style stacked banner system.
 ///
 /// Collects ALL active banners (not just the highest priority), renders them
@@ -239,7 +240,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         type: BannerType.renewal,
         id: 'renewal',
         icon: Icons.credit_card_rounded,
-        title: 'Subscription Renewing',
+        title: AppLocalizations.of(context).stackedBannerPanelSubscriptionRenewing,
         subtitle: '$tierLabel renews in $days days for ${renewal.formattedAmount}',
         accentColor: urgencyColor,
         actionLabel: 'Manage',
@@ -451,7 +452,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
             id: 'wrapped_${info.period}',
             emoji: '✨',
             title: '$month Wrapped',
-            subtitle: 'Tap to revisit your gym personality',
+            subtitle: AppLocalizations.of(context).stackedBannerPanelTapToRevisitYour,
             accentColor: const Color(0xFF7B2FF7),
             actionLabel: 'View',
             onTap: () {
@@ -532,7 +533,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               type: BannerType.contextual,
               id: 'contextual_weekly_$weekKey',
               icon: Icons.flag_outlined,
-              title: 'Keep it up!',
+              title: AppLocalizations.of(context).stackedBannerPanelKeepItUp,
               subtitle: "You're $remaining $workoutWord away from your weekly goal",
               accentColor: AppColors.cyan,
               actionLabel: 'View',
@@ -565,7 +566,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                 type: BannerType.contextual,
                 id: 'contextual_pr_$todayKey',
                 icon: Icons.emoji_events_outlined,
-                title: 'New PR!',
+                title: AppLocalizations.of(context).stackedBannerPanelNewPr,
                 subtitle: '${pr.exerciseName}: $weightLbs lbs',
                 accentColor: AppColors.success,
                 actionLabel: 'View',
@@ -592,8 +593,8 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           type: BannerType.contextual,
           id: 'contextual_discord_community',
           icon: Icons.forum_outlined,
-          title: 'Join the Community',
-          subtitle: 'Get help, share wins, and request features on Discord',
+          title: AppLocalizations.of(context).stackedBannerPanelJoinTheCommunity,
+          subtitle: AppLocalizations.of(context).stackedBannerPanelGetHelpShareWins,
           accentColor: const Color(0xFF5865F2),
           actionLabel: 'Join',
           onTap: () async {
@@ -621,7 +622,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           type: BannerType.contextual,
           id: 'contextual_instagram_follow',
           icon: Icons.camera_alt_outlined,
-          title: 'Follow us on Instagram',
+          title: AppLocalizations.of(context).stackedBannerPanelFollowUsOnInstagram,
           subtitle: 'Workout tips, meal ideas, and community highlights @${Branding.marketingDomain}',
           accentColor: const Color(0xFFE4405F),
           actionLabel: 'Follow',
@@ -678,7 +679,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               const Text('🎁', style: TextStyle(fontSize: 48)),
               const SizedBox(height: 12),
               Text(
-                'You have unopened crates!',
+                AppLocalizations.of(context).stackedBannerPanelYouHaveUnopenedCrates,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -687,7 +688,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               ),
               const SizedBox(height: 8),
               Text(
-                'Open them before dismissing?',
+                AppLocalizations.of(context).stackedBannerPanelOpenThemBeforeDismissing,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -708,8 +709,8 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Open All',
+                  child: Text(
+                    AppLocalizations.of(context).stackedBannerPanelOpenAll,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -719,7 +720,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, 'dismiss'),
                 child: Text(
-                  'Dismiss Anyway',
+                  AppLocalizations.of(context).stackedBannerPanelDismissAnyway,
                   style: TextStyle(
                     color: isDark ? AppColors.textSecondary : Colors.black54,
                   ),
@@ -773,8 +774,8 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
 
     if (unclaimed.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No crates available right now'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).stackedBannerPanelNoCratesAvailableRight),
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 2),
         ),
@@ -792,13 +793,13 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
-            children: const [
+            children: [
               SizedBox(
                 width: 20, height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               ),
               SizedBox(width: 12),
-              Text('Opening crate...'),
+              Text(AppLocalizations.of(context).stackedBannerPanelOpeningCrate),
             ],
           ),
           backgroundColor: const Color(0xFFFFB300),
@@ -892,7 +893,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           if (_isHomeRouteActive()) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(result.message ?? 'Failed to claim crate'),
+                content: Text(result.message ?? AppLocalizations.of(context).stackedBannerPanelFailedToClaimCrate),
                 backgroundColor: Colors.red,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -1178,7 +1179,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                     child: Padding(
                       padding: const EdgeInsets.only(left: 4),
                       child: Text(
-                        'Dismiss All',
+                        AppLocalizations.of(context).stackedBannerPanelDismissAll,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,

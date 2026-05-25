@@ -18,6 +18,7 @@ import 'info_badge.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card widget displaying exercise info in a list format
 class ExerciseCard extends ConsumerWidget {
   final LibraryExercise exercise;
@@ -412,7 +413,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isQueued ? 'Already in Queue' : 'Add to Queue',
+                        isQueued ? AppLocalizations.of(context).exerciseCardAlreadyInQueue : AppLocalizations.of(context).exerciseQueueAddToQueue,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: textPrimary,
@@ -421,7 +422,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                       const SizedBox(height: 2),
                       Text(
                         isQueued
-                            ? 'Will be included in next workout'
+                            ? AppLocalizations.of(context).exerciseCardWillBeIncludedIn
                             : 'AI will include in your next generated workout',
                         style: TextStyle(
                           fontSize: 12,
@@ -472,8 +473,8 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to add exercise'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).exerciseCardFailedToAddExercise),
               backgroundColor: AppColors.error,
             ),
           );
@@ -537,7 +538,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Add to Workout',
+                        AppLocalizations.of(context).exerciseCardAddToWorkout,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: textPrimary,
@@ -581,7 +582,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
-                    'OR ADD TO WORKOUT',
+                    AppLocalizations.of(context).exerciseCardOrAddToWorkout,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -609,7 +610,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Text(
-                    'Failed to load workouts',
+                    AppLocalizations.of(context).exerciseCardFailedToLoadWorkouts,
                     style: TextStyle(color: textMuted),
                   ),
                 ),
@@ -636,12 +637,12 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No upcoming workouts',
+                            AppLocalizations.of(context).exerciseCardNoUpcomingWorkouts,
                             style: TextStyle(color: textMuted),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Generate a workout plan first',
+                            AppLocalizations.of(context).exerciseCardGenerateAWorkoutPlan,
                             style: TextStyle(
                               fontSize: 12,
                               color: textMuted.withOpacity(0.7),
@@ -698,7 +699,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              workout.name ?? 'Workout',
+                                              workout.name ?? AppLocalizations.of(context).navWorkout,
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 color: textPrimary,

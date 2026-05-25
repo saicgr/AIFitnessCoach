@@ -17,6 +17,7 @@ import '../../widgets/glass_sheet.dart';
 import 'widgets/trophy_filter_sheet.dart';
 
 
+import '../../l10n/generated/app_localizations.dart';
 part 'trophy_room_screen_part_trophy_status_filter.dart';
 part 'trophy_room_screen_part_trophy_card.dart';
 
@@ -338,7 +339,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
         controller: _searchController,
         style: TextStyle(color: textColor, fontSize: 15),
         decoration: InputDecoration(
-          hintText: 'Search trophies...',
+          hintText: AppLocalizations.of(context).trophyRoomSearchTrophies,
           hintStyle: TextStyle(color: textMuted),
           prefixIcon: Icon(Icons.search, color: textMuted, size: 22),
           suffixIcon: Row(
@@ -474,7 +475,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
           _buildStatItem(
             icon: Icons.emoji_events,
             value: '${summary.earnedTrophies}',
-            label: 'Earned',
+            label: AppLocalizations.of(context).trophyRoomEarned,
             color: AppColors.green,
             textMuted: textMuted,
           ),
@@ -482,7 +483,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
           _buildStatItem(
             icon: Icons.lock_open,
             value: '${summary.lockedTrophies}',
-            label: 'Locked',
+            label: AppLocalizations.of(context).trophyRoomLocked,
             color: textMuted,
             textMuted: textMuted,
           ),
@@ -490,7 +491,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
           _buildStatItem(
             icon: Icons.help_outline,
             value: '${summary.secretDiscovered}/${summary.totalSecret}',
-            label: 'Mystery',
+            label: AppLocalizations.of(context).trophyRoomMystery,
             color: AppColors.purple,
             textMuted: textMuted,
           ),
@@ -498,7 +499,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
           _buildStatItem(
             icon: Icons.stars,
             value: '${summary.totalPoints}',
-            label: 'Points',
+            label: AppLocalizations.of(context).trophyRoomPoints,
             color: accentColor,
             textMuted: textMuted,
           ),
@@ -635,7 +636,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Mystery Trophies',
+                          AppLocalizations.of(context).trophyRoomMysteryTrophies,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

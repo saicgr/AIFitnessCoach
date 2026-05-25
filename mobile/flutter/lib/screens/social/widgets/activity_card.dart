@@ -17,6 +17,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:fitwiz/core/constants/branding.dart';
 
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'activity_card_part_reaction_type.dart';
 part 'activity_card_part_challenge_leaderboard.dart';
 
@@ -152,7 +153,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Pinned Post',
+                    AppLocalizations.of(context).activityCardPinnedPost,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -336,7 +337,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                       widget.onShare?.call();
                     },
                     borderRadius: BorderRadius.circular(8),
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -348,7 +349,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                           ),
                           SizedBox(width: 4),
                           Text(
-                            'Share',
+                            AppLocalizations.of(context).commonShare,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -390,7 +391,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               if (widget.activityType == 'manual_post' && widget.onEdit != null)
                 ListTile(
                   leading: const Icon(Icons.edit_rounded),
-                  title: const Text('Edit Post'),
+                  title: Text(AppLocalizations.of(context).createPostEditPost),
                   onTap: () {
                     Navigator.pop(context);
                     HapticFeedback.lightImpact();
@@ -402,7 +403,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               if (widget.onDelete != null)
                 ListTile(
                   leading: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
-                  title: const Text('Delete Post', style: TextStyle(color: AppColors.red)),
+                  title: Text(AppLocalizations.of(context).activityCardDeletePost, style: TextStyle(color: AppColors.red)),
                   onTap: () {
                     Navigator.pop(context);
                     _showDeleteConfirmDialog(context);
@@ -415,7 +416,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
             // Share option
             ListTile(
               leading: const Icon(Icons.share_rounded),
-              title: const Text('Share'),
+              title: Text(AppLocalizations.of(context).commonShare),
               onTap: () {
                 Navigator.pop(context);
                 HapticFeedback.lightImpact();
@@ -426,14 +427,14 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
             // Copy link option
             ListTile(
               leading: const Icon(Icons.link_rounded),
-              title: const Text('Copy Link'),
+              title: Text(AppLocalizations.of(context).activityCardCopyLink),
               onTap: () {
                 Navigator.pop(context);
                 HapticFeedback.lightImpact();
                 Clipboard.setData(const ClipboardData(text: 'https://${Branding.marketingDomain}'));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Link copied to clipboard'),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context).workoutActionsLinkCopiedToClipboard),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -448,7 +449,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                   color: AppColors.orange,
                 ),
                 title: Text(
-                  widget.isPinned ? 'Unpin Post' : 'Pin to Top',
+                  widget.isPinned ? AppLocalizations.of(context).activityCardUnpinPost : AppLocalizations.of(context).activityCardPinToTop,
                   style: const TextStyle(color: AppColors.orange),
                 ),
                 onTap: () {
@@ -462,7 +463,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
             if (!_isOwnPost)
               ListTile(
                 leading: Icon(Icons.flag_rounded, color: AppColors.textMuted),
-                title: Text('Report', style: TextStyle(color: AppColors.textMuted)),
+                title: Text(AppLocalizations.of(context).logMealSheetReport, style: TextStyle(color: AppColors.textMuted)),
                 onTap: () {
                   Navigator.pop(context);
                   HapticFeedback.lightImpact();
@@ -489,14 +490,14 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: elevated,
-        title: const Text('Delete Post'),
-        content: const Text(
-          'Are you sure you want to delete this post? This action cannot be undone.',
+        title: Text(AppLocalizations.of(context).activityCardDeletePost),
+        content: Text(
+          AppLocalizations.of(context).activityCardAreYouSureYou,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () {
@@ -504,7 +505,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               widget.onDelete?.call();
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.red),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -532,14 +533,14 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
 
           return AlertDialog(
             backgroundColor: elevated,
-            title: const Text('Report Post'),
+            title: Text(AppLocalizations.of(context).activityCardReportPost),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Why are you reporting this post?',
+                  Text(
+                    AppLocalizations.of(context).activityCardWhyAreYouReporting,
                     style: TextStyle(fontSize: 14),
                   ),
                   const SizedBox(height: 16),
@@ -579,7 +580,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                     maxLines: 3,
                     maxLength: 500,
                     decoration: InputDecoration(
-                      hintText: 'Additional details (optional)',
+                      hintText: AppLocalizations.of(context).reportMessageAdditionalDetailsOptional,
                       hintStyle: TextStyle(
                         color: AppColors.textMuted.withValues(alpha: 0.5),
                       ),
@@ -599,7 +600,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context).buttonCancel),
               ),
               TextButton(
                 onPressed: selectedReason == null
@@ -612,7 +613,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                           descriptionController.text.trim(),
                         );
                       },
-                child: const Text('Submit'),
+                child: Text(AppLocalizations.of(context).activityCardSubmit),
               ),
             ],
           );
@@ -641,9 +642,9 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-                'Report submitted. Thank you for helping keep our community safe.'),
+                AppLocalizations.of(context).activityCardReportSubmittedThankYou),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -652,8 +653,8 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
       debugPrint('Error submitting report: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to submit report. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).activityCardFailedToSubmitReport),
             behavior: SnackBarBehavior.floating,
           ),
         );

@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows a bottom sheet with workout actions
 Future<void> showWorkoutActionsSheet(
   BuildContext context,
@@ -84,7 +85,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Workout Options',
+                          AppLocalizations.of(context).workoutActionsWorkoutOptions,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -93,7 +94,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          widget.workout.name ?? 'Workout',
+                          widget.workout.name ?? AppLocalizations.of(context).navWorkout,
                           style: TextStyle(
                             fontSize: 14,
                             color: accentColor,
@@ -130,14 +131,14 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                 children: [
                   _ActionTile(
                     icon: Icons.calendar_month,
-                    title: 'Reschedule',
-                    subtitle: 'Change workout date',
+                    title: AppLocalizations.of(context).workoutActionsReschedule,
+                    subtitle: AppLocalizations.of(context).workoutActionsChangeWorkoutDate,
                     isLoading: _loadingAction == 'reschedule',
                     onTap: () => _handleReschedule(context),
                   ),
                   _ActionTile(
                     icon: Icons.refresh,
-                    title: 'Regenerate',
+                    title: AppLocalizations.of(context).workoutActionsRegenerate,
                     subtitle: _loadingAction == 'regenerate' && _regenerateMessage.isNotEmpty
                         ? '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)'
                         : 'Create a new workout for this day',
@@ -146,22 +147,22 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                   ),
                   _ActionTile(
                     icon: Icons.history,
-                    title: 'Version History',
-                    subtitle: 'View and restore previous versions',
+                    title: AppLocalizations.of(context).workoutActionsVersionHistory,
+                    subtitle: AppLocalizations.of(context).workoutActionsViewAndRestorePrevious,
                     isLoading: _loadingAction == 'versions',
                     onTap: () => _handleVersionHistory(context),
                   ),
                   _ActionTile(
                     icon: Icons.directions_run,
-                    title: 'Generate Warmup',
-                    subtitle: 'Create warmup exercises',
+                    title: AppLocalizations.of(context).workoutActionsGenerateWarmup,
+                    subtitle: AppLocalizations.of(context).workoutActionsCreateWarmupExercises,
                     isLoading: _loadingAction == 'warmup',
                     onTap: () => _handleGenerateWarmup(context),
                   ),
                   _ActionTile(
                     icon: Icons.self_improvement,
-                    title: 'Generate Stretches',
-                    subtitle: 'Create cool-down stretches',
+                    title: AppLocalizations.of(context).workoutActionsGenerateStretches,
+                    subtitle: AppLocalizations.of(context).workoutActionsCreateCoolDownStretches,
                     isLoading: _loadingAction == 'stretches',
                     onTap: () => _handleGenerateStretches(context),
                   ),
@@ -172,7 +173,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                   if (widget.workout.isCompleted == true)
                     _ActionTile(
                       icon: Icons.ios_share_rounded,
-                      title: 'Share Workout',
+                      title: AppLocalizations.of(context).workoutSummaryShareWorkout,
                       subtitle: 'Get a ${Branding.marketingDomain} link for friends',
                       isLoading: _loadingAction == 'share',
                       onTap: () => _handleShare(context),
@@ -180,19 +181,19 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                   else
                     _ActionTile(
                       icon: Icons.ios_share_rounded,
-                      title: 'Share Workout',
-                      subtitle: 'Finish this workout to share it',
+                      title: AppLocalizations.of(context).workoutSummaryShareWorkout,
+                      subtitle: AppLocalizations.of(context).workoutActionsFinishThisWorkoutTo,
                       isLoading: false,
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Complete the workout first to generate a share link')),
+                          SnackBar(content: Text(AppLocalizations.of(context).workoutActionsCompleteTheWorkoutFirst)),
                         );
                       },
                     ),
                   _ActionTile(
                     icon: Icons.delete_outline,
-                    title: 'Delete Workout',
-                    subtitle: 'Remove this workout',
+                    title: AppLocalizations.of(context).workoutActionsDeleteWorkout,
+                    subtitle: AppLocalizations.of(context).workoutActionsRemoveThisWorkout,
                     isDestructive: true,
                     isLoading: _loadingAction == 'delete',
                     onTap: () => _handleDelete(context),
@@ -248,15 +249,15 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         if (success) {
           widget.onRefresh?.call();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Workout rescheduled'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).workoutActionsWorkoutRescheduled),
               backgroundColor: AppColors.success,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to reschedule workout'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).workoutActionsFailedToRescheduleWorkout),
               backgroundColor: AppColors.error,
             ),
           );
@@ -270,7 +271,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     final id = widget.workout.id;
     if (id == null || id.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This workout cannot be shared yet')),
+        SnackBar(content: Text(AppLocalizations.of(context).workoutActionsThisWorkoutCannotBe)),
       );
       return;
     }
@@ -284,7 +285,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       if (!mounted) return;
       if (url == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not create share link')),
+          SnackBar(content: Text(AppLocalizations.of(context).workoutActionsCouldNotCreateShare)),
         );
         return;
       }
@@ -294,7 +295,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       // SnackBar behind the dismissed sheet and makes the action look silent.
       await Clipboard.setData(ClipboardData(text: url));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Link copied to clipboard')),
+        SnackBar(content: Text(AppLocalizations.of(context).workoutActionsLinkCopiedToClipboard)),
       );
       Navigator.of(context).pop();
       await Share.share(
@@ -316,8 +317,8 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   Future<void> _handleRegenerate(BuildContext context) async {
     final confirm = await AppDialog.confirm(
       context,
-      title: 'Regenerate Workout?',
-      message: 'This will create a new workout plan for this day. The current workout will be saved in version history.',
+      title: AppLocalizations.of(context).workoutActionsRegenerateWorkout,
+      message: AppLocalizations.of(context).workoutActionsThisWillCreateA,
       confirmText: 'Regenerate',
       icon: Icons.refresh_rounded,
     );
@@ -379,15 +380,15 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         if (generatedWorkout != null) {
           widget.onRefresh?.call();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Workout regenerated'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).workoutActionsWorkoutRegenerated),
               backgroundColor: AppColors.success,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to regenerate workout'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).workoutActionsFailedToRegenerateWorkout),
               backgroundColor: AppColors.error,
             ),
           );
@@ -449,15 +450,15 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         context: context,
         builder: (context) => GlassSheet(
           child: _WarmupStretchesSheet(
-            title: 'Warmup Exercises',
+            title: AppLocalizations.of(context).workoutActionsWarmupExercises,
             exercises: warmup,
           ),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to generate warmup'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).workoutActionsFailedToGenerateWarmup),
           backgroundColor: AppColors.error,
         ),
       );
@@ -487,15 +488,15 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         context: context,
         builder: (context) => GlassSheet(
           child: _WarmupStretchesSheet(
-            title: 'Cool-Down Stretches',
+            title: AppLocalizations.of(context).workoutActionsCoolDownStretches,
             exercises: stretches,
           ),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to generate stretches'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).workoutActionsFailedToGenerateStretches),
           backgroundColor: AppColors.error,
         ),
       );
@@ -505,8 +506,8 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   Future<void> _handleDelete(BuildContext context) async {
     final confirm = await AppDialog.destructive(
       context,
-      title: 'Delete Workout?',
-      message: 'This action cannot be undone.',
+      title: AppLocalizations.of(context).workoutActionsDeleteWorkout2,
+      message: AppLocalizations.of(context).workoutActionsThisActionCannotBe,
       icon: Icons.delete_rounded,
     );
 
@@ -529,8 +530,8 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         if (success) {
           widget.onRefresh?.call();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Workout deleted'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).workoutActionsWorkoutDeleted),
               backgroundColor: AppColors.success,
             ),
           );
@@ -655,7 +656,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Version History',
+                    AppLocalizations.of(context).workoutActionsVersionHistory,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -674,7 +675,7 @@ class _VersionHistorySheet extends ConsumerWidget {
           // Versions list
           Flexible(
             child: versions.isEmpty
-                ? const Padding(
+                ? Padding(
                     padding: EdgeInsets.all(40),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -682,7 +683,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                         Icon(Icons.history, size: 48, color: AppColors.textMuted),
                         SizedBox(height: 16),
                         Text(
-                          'No version history',
+                          AppLocalizations.of(context).workoutActionsNoVersionHistory,
                           style: TextStyle(color: AppColors.textMuted),
                         ),
                       ],
@@ -735,8 +736,8 @@ class _VersionHistorySheet extends ConsumerWidget {
                                   color: AppColors.success.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
-                                  'CURRENT',
+                                child: Text(
+                                  AppLocalizations.of(context).workoutActionsCurrent,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -748,7 +749,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                                 onPressed: () async {
                                   final confirm = await AppDialog.confirm(
                                     context,
-                                    title: 'Revert to this version?',
+                                    title: AppLocalizations.of(context).workoutActionsRevertToThisVersion,
                                     message: 'Restore "$name"?',
                                     confirmText: 'Revert',
                                     icon: Icons.restore_rounded,
@@ -763,7 +764,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                                     }
                                   }
                                 },
-                                child: const Text('Revert'),
+                                child: Text(AppLocalizations.of(context).workoutDetailRevert),
                               ),
                       );
                     },

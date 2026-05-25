@@ -5,6 +5,7 @@ import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
 import '../data/services/haptic_service.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Fires when `process_daily_login` returned `streak_saved_by_shield: true`
 /// — i.e., the user missed a day but a Streak Shield was auto-consumed to
 /// keep their streak alive (migration 1938). This dialog surfaces that win
@@ -154,7 +155,7 @@ class _StreakSavedDialogState extends ConsumerState<StreakSavedDialog>
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Streak Saved!',
+                  AppLocalizations.of(context).streakSavedStreakSaved,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
@@ -218,8 +219,8 @@ class _StreakSavedDialogState extends ConsumerState<StreakSavedDialog>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Keep it going',
+                    child: Text(
+                      AppLocalizations.of(context).streakSavedKeepItGoing,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

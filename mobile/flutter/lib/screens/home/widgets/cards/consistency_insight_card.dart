@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../data/providers/consistency_provider.dart';
 import '../../../../data/services/api_client.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Consistency Insight Card for the home screen
 /// Shows current streak prominently with fire animation
 class ConsistencyInsightCard extends ConsumerStatefulWidget {
@@ -207,7 +208,7 @@ class _ConsistencyInsightCardState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Start Fresh Today!',
+            AppLocalizations.of(context).consistencyStartFreshToday,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -216,7 +217,7 @@ class _ConsistencyInsightCardState
           ),
           const SizedBox(height: 2),
           Text(
-            'Tap to begin a new streak',
+            AppLocalizations.of(context).consistencyInsightCardTapToBeginA,
             style: TextStyle(
               fontSize: 13,
               color: colorScheme.onSecondaryContainer.withValues(alpha: 0.8),
@@ -245,7 +246,7 @@ class _ConsistencyInsightCardState
             ),
             const SizedBox(width: 6),
             Text(
-              currentStreak == 1 ? 'day streak' : 'day streak',
+              currentStreak == 1 ? AppLocalizations.of(context).newTilesPartDayStreak : AppLocalizations.of(context).newTilesPartDayStreak,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -370,7 +371,7 @@ class _ConsistencyInsightCardState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Streak',
+                    AppLocalizations.of(context).xpProgressCardStreak,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -379,7 +380,7 @@ class _ConsistencyInsightCardState
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Tap to refresh',
+                    AppLocalizations.of(context).consistencyInsightCardTapToRefresh,
                     style: TextStyle(
                       fontSize: 13,
                       color: colorScheme.onSurfaceVariant,

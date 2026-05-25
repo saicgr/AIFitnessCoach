@@ -8,6 +8,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../settings/sections/nutrition_fasting_section.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Displays nutrition and fasting profile information from onboarding
 class NutritionFastingCard extends ConsumerStatefulWidget {
   const NutritionFastingCard({super.key});
@@ -84,7 +85,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             child: Row(
               children: [
                 Text(
-                  'Nutrition & Fasting',
+                  AppLocalizations.of(context).nutritionFastingCardNutritionFasting,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -102,7 +103,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
                     color: AppColors.green,
                     size: 20,
                   ),
-                  tooltip: 'Edit nutrition settings',
+                  tooltip: AppLocalizations.of(context).nutritionFastingCardEditNutritionSettings,
                 ),
               ],
             ),
@@ -112,7 +113,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           _buildInfoRow(
             icon: Icons.local_fire_department_outlined,
             iconColor: AppColors.orange,
-            label: 'Daily Target',
+            label: AppLocalizations.of(context).nutritionFastingCardDailyTarget,
             value: '$currentCalories cal',
             isDark: isDark,
             textPrimary: textPrimary,
@@ -123,7 +124,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           _buildInfoRow(
             icon: Icons.restaurant_outlined,
             iconColor: AppColors.green,
-            label: 'Diet Type',
+            label: AppLocalizations.of(context).nutritionFastingCardDietType,
             value: _getDietTypeDisplay(prefs?.dietType),
             isDark: isDark,
             textPrimary: textPrimary,
@@ -134,8 +135,8 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           _buildInfoRow(
             icon: Icons.flag_outlined,
             iconColor: AppColors.cyan,
-            label: 'Goal',
-            value: prefs?.primaryGoalEnum.displayName ?? 'Maintain Weight',
+            label: AppLocalizations.of(context).challengeCreateFieldGoal,
+            value: prefs?.primaryGoalEnum.displayName ?? AppLocalizations.of(context).nutritionFastingCardMaintainWeight,
             isDark: isDark,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -145,7 +146,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             _buildInfoRow(
               icon: Icons.my_location_outlined,
               iconColor: AppColors.green,
-              label: 'Goal Weight',
+              label: AppLocalizations.of(context).nutritionFastingCardGoalWeight,
               value: '${prefs!.goalWeightKg!.toStringAsFixed(1)} kg',
               isDark: isDark,
               textPrimary: textPrimary,
@@ -157,7 +158,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             _buildInfoRow(
               icon: Icons.calendar_today_outlined,
               iconColor: AppColors.purple,
-              label: 'Target Date',
+              label: AppLocalizations.of(context).nutritionFastingCardTargetDate,
               value: _formatGoalDate(prefs!.goalDate!, prefs.weeksToGoal),
               isDark: isDark,
               textPrimary: textPrimary,
@@ -171,7 +172,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             _buildInfoRow(
               icon: Icons.trending_down_outlined,
               iconColor: AppColors.orange,
-              label: 'Weekly Rate',
+              label: AppLocalizations.of(context).nutritionFastingCardWeeklyRate,
               value: _formatWeeklyRate(prefs.rateOfChange!),
               isDark: isDark,
               textPrimary: textPrimary,
@@ -196,7 +197,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             _buildInfoRow(
               icon: Icons.warning_amber_outlined,
               iconColor: AppColors.orange,
-              label: 'Allergens',
+              label: AppLocalizations.of(context).nutritionSettingsScreenAllergens,
               value: _formatAllergenList(prefs!.allergies),
               isDark: isDark,
               textPrimary: textPrimary,
@@ -210,7 +211,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             _buildInfoRow(
               icon: Icons.no_meals_outlined,
               iconColor: AppColors.purple,
-              label: 'Restrictions',
+              label: AppLocalizations.of(context).nutritionFastingCardRestrictions,
               value: _formatRestrictionList(prefs!.dietaryRestrictions),
               isDark: isDark,
               textPrimary: textPrimary,
@@ -224,7 +225,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             _buildInfoRow(
               icon: Icons.schedule,
               iconColor: AppColors.purple,
-              label: 'Fasting Protocol',
+              label: AppLocalizations.of(context).nutritionFastingFastingProtocol,
               value: _getFastingProtocolDisplay(fastingState.fastingProtocol),
               isDark: isDark,
               textPrimary: textPrimary,
@@ -289,7 +290,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           Icon(Icons.pie_chart_outline, color: AppColors.info, size: 20),
           const SizedBox(width: 12),
           Text(
-            'Macros',
+            AppLocalizations.of(context).nutritionFastingCardMacros,
             style: TextStyle(
               fontSize: 14,
               color: textMuted,

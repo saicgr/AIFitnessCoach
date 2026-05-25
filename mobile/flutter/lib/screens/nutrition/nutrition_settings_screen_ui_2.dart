@@ -60,7 +60,7 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Review & Adjust Targets',
+                        AppLocalizations.of(context).nutritionSettingsScreenReviewAdjustTargets,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -87,7 +87,7 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      'Due',
+                      AppLocalizations.of(context).nutritionSettingsScreenDue,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -107,7 +107,7 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
                 },
                 icon: Icon(Icons.play_arrow_rounded, color: blue),
                 label: Text(
-                  'Run Weekly Check-In',
+                  AppLocalizations.of(context).nutritionSettingsScreenRunWeeklyCheckIn,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: blue,

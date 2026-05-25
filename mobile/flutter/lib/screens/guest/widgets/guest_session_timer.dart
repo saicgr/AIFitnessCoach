@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/guest_mode_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Displays the remaining session time for guest mode
 /// Enhanced with Demo Day banner and countdown timer
 /// Makes free trial experience more prominent
@@ -102,7 +103,7 @@ class GuestSessionTimer extends ConsumerWidget {
                       Row(
                         children: [
                           Text(
-                            'FREE DEMO DAY',
+                            AppLocalizations.of(context).guestSessionTimerFreeDemoDay,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -118,7 +119,7 @@ class GuestSessionTimer extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'TRY FREE',
+                              AppLocalizations.of(context).guestSessionTimerTryFree,
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
@@ -197,7 +198,7 @@ class GuestSessionTimer extends ConsumerWidget {
                       child: _buildQuickActionButton(
                         context,
                         icon: Icons.visibility_outlined,
-                        label: 'Preview Plan',
+                        label: AppLocalizations.of(context).guestSessionTimerPreviewPlan,
                         color: AppColors.cyan,
                         onTap: () {
                           HapticService.light();
@@ -211,7 +212,7 @@ class GuestSessionTimer extends ConsumerWidget {
                       child: _buildQuickActionButton(
                         context,
                         icon: Icons.play_circle_outline,
-                        label: 'Try Workout',
+                        label: AppLocalizations.of(context).guestSessionTimerTryWorkout,
                         color: Colors.green,
                         onTap: () {
                           HapticService.light();

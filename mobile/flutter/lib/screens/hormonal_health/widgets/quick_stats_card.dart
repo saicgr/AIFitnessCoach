@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/hormonal_health.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card showing quick stats about hormonal health settings
 class QuickStatsCard extends StatelessWidget {
   final HormonalProfile profile;
@@ -19,8 +20,8 @@ class QuickStatsCard extends StatelessWidget {
     if (profile.menstrualTrackingEnabled) {
       stats.add(_StatItem(
         icon: Icons.favorite,
-        label: 'Cycle Tracking',
-        value: 'Active',
+        label: AppLocalizations.of(context).quickStatsCardCycleTracking,
+        value: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
         color: Colors.pink,
       ));
     }
@@ -28,8 +29,8 @@ class QuickStatsCard extends StatelessWidget {
     if (profile.testosteroneOptimizationEnabled) {
       stats.add(_StatItem(
         icon: Icons.trending_up,
-        label: 'T-Optimization',
-        value: 'Active',
+        label: AppLocalizations.of(context).quickStatsCardTOptimization,
+        value: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
         color: Colors.blue,
       ));
     }
@@ -37,8 +38,8 @@ class QuickStatsCard extends StatelessWidget {
     if (profile.cycleSyncWorkouts) {
       stats.add(_StatItem(
         icon: Icons.fitness_center,
-        label: 'Cycle-Synced Workouts',
-        value: 'On',
+        label: AppLocalizations.of(context).quickStatsCardCycleSyncedWorkouts,
+        value: AppLocalizations.of(context).quickStatsCardOn,
         color: Colors.green,
       ));
     }
@@ -46,8 +47,8 @@ class QuickStatsCard extends StatelessWidget {
     if (profile.cycleSyncNutrition) {
       stats.add(_StatItem(
         icon: Icons.restaurant,
-        label: 'Cycle-Synced Nutrition',
-        value: 'On',
+        label: AppLocalizations.of(context).quickStatsCardCycleSyncedNutrition,
+        value: AppLocalizations.of(context).quickStatsCardOn,
         color: Colors.orange,
       ));
     }
@@ -55,8 +56,8 @@ class QuickStatsCard extends StatelessWidget {
     if (profile.hasPcos) {
       stats.add(_StatItem(
         icon: Icons.health_and_safety,
-        label: 'PCOS Support',
-        value: 'Enabled',
+        label: AppLocalizations.of(context).quickStatsCardPcosSupport,
+        value: AppLocalizations.of(context).quickStatsCardEnabled,
         color: Colors.purple,
       ));
     }
@@ -74,7 +75,7 @@ class QuickStatsCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Configure your hormonal health preferences to get personalized insights.',
+                  AppLocalizations.of(context).quickStatsCardConfigureYourHormonalHealth,
                   style: theme.textTheme.bodyMedium,
                 ),
               ),
@@ -91,7 +92,7 @@ class QuickStatsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Active Features',
+              AppLocalizations.of(context).quickStatsCardActiveFeatures,
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

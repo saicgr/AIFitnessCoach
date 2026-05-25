@@ -40,6 +40,7 @@ import '../../home/widgets/cards/last_night_sleep_card.dart';
 import '../../home/widgets/cards/todays_health_card.dart';
 import '../widgets/weight_tracking_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // Cache lives in `youOverviewCache` (lib/data/services/you_overview_prewarmer.dart).
 // It's shared with the prewarmer service so post-sign-in / post-onboarding
 // pre-warming and the live tab read/write the same singleton.
@@ -283,8 +284,8 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
     // empty-state copy already tells the user there's nothing to show.
     if (silent && errorCount == 6 && _overviewCache.hasData) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Couldn't refresh. Showing cached data."),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).overviewCouldnTRefreshShowing),
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -445,7 +446,7 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
           const SizedBox(height: 24),
           Text(
             serious
-                ? 'Stats & Rewards tab has all the extras.'
+                ? AppLocalizations.of(context).overviewStatsRewardsTabHas
                 : 'Everything else — full trophy room, achievements, skills, '
                     'rewards, inventory — lives in Stats & Rewards.',
             style: TextStyle(
@@ -552,7 +553,7 @@ class _WeeklyRecapTeaser extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Last week',
+                    AppLocalizations.of(context).overviewLastWeek,
                     style: TextStyle(
                       color: fg.withValues(alpha: 0.55),
                       fontSize: 11,
@@ -598,7 +599,7 @@ class _StreaksRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'ACTIVE STREAKS',
+          AppLocalizations.of(context).overviewActiveStreaks,
           style: TextStyle(
             color: fg.withValues(alpha: 0.5),
             fontSize: 11,
@@ -705,7 +706,7 @@ class _RecentTrophyCard extends StatelessWidget {
 
     return _HeadlineTile(
       leadingEmoji: icon,
-      title: 'RECENT TROPHY',
+      title: AppLocalizations.of(context).overviewRecentTrophy,
       headline: headline,
       sub: sub,
       fg: fg,
@@ -759,7 +760,7 @@ class _ActiveSkillCard extends StatelessWidget {
 
     return _HeadlineTile(
       leadingIcon: Icons.timeline_rounded,
-      title: 'ACTIVE SKILL',
+      title: AppLocalizations.of(context).overviewActiveSkill,
       headline: headline,
       sub: sub,
       fg: fg,
@@ -788,8 +789,8 @@ class _RewardsReadyCard extends ConsumerWidget {
     final ready = ref.watch(unclaimedCratesCountProvider);
     return _HeadlineTile(
       leadingIcon: Icons.card_giftcard_rounded,
-      title: 'REWARDS',
-      headline: ready > 0 ? '$ready ready' : 'View perks',
+      title: AppLocalizations.of(context).streakMilestoneRewards,
+      headline: ready > 0 ? '$ready ready' : AppLocalizations.of(context).overviewViewPerks,
       sub: ready > 0 ? 'Tap to claim' : 'Redeem benefits',
       fg: fg,
       accent: accent,
@@ -847,7 +848,7 @@ class _LeaderboardCard extends StatelessWidget {
 
     return _HeadlineTile(
       leadingIcon: Icons.leaderboard_rounded,
-      title: 'SOCIAL',
+      title: AppLocalizations.of(context).statsRewardsSocial,
       headline: headline,
       sub: sub,
       fg: fg,
@@ -1021,7 +1022,7 @@ class _CycleHubRow extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Cycle',
+                      AppLocalizations.of(context).overviewCycle,
                       style: TextStyle(
                         color: fg,
                         fontSize: 15,

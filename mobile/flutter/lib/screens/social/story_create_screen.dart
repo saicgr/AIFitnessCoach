@@ -10,6 +10,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/social_provider.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Story creation flow (F11)
 /// - Camera/gallery picker
 /// - Preview with optional caption text field overlay
@@ -156,7 +157,7 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'New Story'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).storyCreateNewStory),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -168,14 +169,14 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Share a moment',
+              AppLocalizations.of(context).storyCreateShareAMoment,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Your story will be visible for 24 hours',
+              AppLocalizations.of(context).storyCreateYourStoryWillBe,
               style: TextStyle(fontSize: 14, color: textMuted),
             ),
             const SizedBox(height: 40),
@@ -184,14 +185,14 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
               children: [
                 _buildPickerButton(
                   icon: Icons.camera_alt_rounded,
-                  label: 'Camera',
+                  label: AppLocalizations.of(context).storyCreateCamera,
                   onTap: () => _pickImage(ImageSource.camera),
                   colors: colors,
                 ),
                 const SizedBox(width: 24),
                 _buildPickerButton(
                   icon: Icons.photo_library_rounded,
-                  label: 'Gallery',
+                  label: AppLocalizations.of(context).storyCreateGallery,
                   onTap: () => _pickImage(ImageSource.gallery),
                   colors: colors,
                 ),
@@ -304,7 +305,7 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
                     maxLines: 2,
                     maxLength: 500,
                     decoration: InputDecoration(
-                      hintText: 'Add a caption...',
+                      hintText: AppLocalizations.of(context).storyCreateAddACaption,
                       hintStyle: const TextStyle(color: Colors.white54),
                       counterStyle: const TextStyle(color: Colors.white38),
                       filled: true,
@@ -344,7 +345,7 @@ class _StoryCreateScreenState extends ConsumerState<StoryCreateScreen> {
                             )
                           : const Icon(Icons.send_rounded),
                       label: Text(
-                        _isUploading ? 'Uploading...' : 'Share Story',
+                        _isUploading ? AppLocalizations.of(context).storyCreateUploading : AppLocalizations.of(context).storyCreateShareStory,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

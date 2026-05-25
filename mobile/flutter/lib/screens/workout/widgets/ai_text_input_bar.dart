@@ -19,6 +19,7 @@ import '../../../data/models/parsed_exercise.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// AI Text Input Bar for adding exercises via natural language
 ///
 /// Supports DUAL modes:
@@ -167,8 +168,8 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tap ✦ to add exercises with AI'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).aiTextInputTapToAddExercises),
             duration: Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
           ),
@@ -181,7 +182,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
       child: Padding(
         padding: const EdgeInsets.only(left: 4),
         child: Semantics(
-          label: 'Open AI exercise input',
+          label: AppLocalizations.of(context).aiTextInputOpenAiExerciseInput,
           button: true,
           child: GestureDetector(
             onTap: _expand,
@@ -229,7 +230,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
             ),
             const SizedBox(width: 10),
             Text(
-              'AI Exercise Input',
+              AppLocalizations.of(context).aiTextInputAiExerciseInput,
               style: TextStyle(
                 color: isDark ? AppColors.textPrimary : Colors.black87,
                 fontSize: 18,
@@ -245,7 +246,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
             children: [
               // Set logging section
               Text(
-                '📝 Log sets for current exercise:',
+                AppLocalizations.of(context).aiTextInputLogSetsForCurrent,
                 style: TextStyle(
                   color: isDark ? AppColors.textPrimary : Colors.black87,
                   fontSize: 14,
@@ -261,7 +262,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
 
               // Add exercises section
               Text(
-                '➕ Add new exercises:',
+                AppLocalizations.of(context).aiTextInputAddNewExercises,
                 style: TextStyle(
                   color: isDark ? AppColors.textPrimary : Colors.black87,
                   fontSize: 14,
@@ -281,7 +282,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Photo of workout log, whiteboard, or barbell',
+                      AppLocalizations.of(context).aiTextInputPhotoOfWorkoutLog,
                       style: TextStyle(
                         color: isDark ? AppColors.textMuted : Colors.grey.shade600,
                         fontSize: 13,
@@ -297,7 +298,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Speak naturally: "did 135 for 8"',
+                      AppLocalizations.of(context).aiTextInputSpeakNaturallyDid135,
                       style: TextStyle(
                         color: isDark ? AppColors.textMuted : Colors.grey.shade600,
                         fontSize: 13,
@@ -313,7 +314,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Got it',
+              AppLocalizations.of(context).weightIncrementsGotIt,
               style: TextStyle(
                 color: isDark ? AppColors.orange : AppColors.orange,
                 fontWeight: FontWeight.w600,
@@ -656,7 +657,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Add exercises with AI...',
+                  AppLocalizations.of(context).aiTextInputAddExercisesWithAi,
                   style: TextStyle(
                     color: textMuted,
                     fontSize: 14,
@@ -698,7 +699,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
           ),
           const SizedBox(width: 8),
           Text(
-            'Log sets / Add exercises',
+            AppLocalizations.of(context).aiTextInputLogSetsAddExercises,
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : Colors.black87,
               fontSize: 14,
@@ -745,7 +746,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
                 fontSize: 14,
               ),
               decoration: InputDecoration(
-                hintText: 'Log sets: 135*8, 145*6, +10...\nAdd exercise: 3x10 deadlift at 135',
+                hintText: AppLocalizations.of(context).aiTextInputLogSets1358,
                 hintStyle: TextStyle(
                   color: textMuted,
                   fontSize: 14,

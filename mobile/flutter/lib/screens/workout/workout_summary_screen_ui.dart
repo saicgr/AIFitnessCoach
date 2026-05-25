@@ -313,7 +313,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
             ),
           ] else
             Text(
-              'First time performing this workout type!',
+              AppLocalizations.of(context).workoutSummaryScreenFirstTimePerformingThis,
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
@@ -360,7 +360,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    'ALL-TIME',
+                    AppLocalizations.of(context).workoutSummaryScreenAllTime,
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -469,7 +469,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                 Icon(Icons.thumb_up_outlined, size: 14, color: AppColors.success),
                 const SizedBox(width: 6),
                 Text(
-                  'Highlights',
+                  AppLocalizations.of(context).workoutSummaryScreenHighlights,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -484,7 +484,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('  \u2022  ', style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
+                  Text(AppLocalizations.of(context).xpGoalsU2022, style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
                   Expanded(
                     child: Text(
                       h,
@@ -508,7 +508,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                 Icon(Icons.flag_outlined, size: 14, color: AppColors.warning),
                 const SizedBox(width: 6),
                 Text(
-                  'Areas to Watch',
+                  AppLocalizations.of(context).workoutSummaryScreenAreasToWatch,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -523,7 +523,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('  \u2022  ', style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
+                  Text(AppLocalizations.of(context).xpGoalsU2022, style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
                   Expanded(
                     child: Text(
                       a,

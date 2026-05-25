@@ -13,6 +13,7 @@ import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
 import 'synced_workout_detail_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full-screen list of every synced workout, with aggregate stats header,
 /// per-kind donut, 90-day activity heatmap, PR tiles, filter chips, and
 /// date-grouped list tiles.
@@ -69,7 +70,7 @@ class _SyncedWorkoutsHistoryScreenState
 
     return Scaffold(
       backgroundColor: background,
-      appBar: const PillAppBar(title: 'Synced Workouts'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).syncedWorkoutsHistorySyncedWorkouts),
       body: all.isEmpty
           ? _emptyState(textPrimary, textMuted)
           : ListView(
@@ -105,7 +106,7 @@ class _SyncedWorkoutsHistoryScreenState
             Icon(Icons.sync_rounded, size: 44, color: muted),
             const SizedBox(height: 12),
             Text(
-              'No synced workouts yet',
+              AppLocalizations.of(context).syncedWorkoutsHistoryNoSyncedWorkoutsYet,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
@@ -192,7 +193,7 @@ class _SyncedWorkoutsHistoryScreenState
         final miles = bestM * 0.000621371;
         return _PersonalRecord(
           kind: kind,
-          label: kind == SyncedKind.walking ? 'Longest walk' : 'Longest hike',
+          label: kind == SyncedKind.walking ? AppLocalizations.of(context).syncedWorkoutsHistoryLongestWalk : AppLocalizations.of(context).syncedWorkoutsHistoryLongestHike,
           value: '${miles.toStringAsFixed(miles >= 10 ? 1 : 2)} mi',
           workout: best,
         );
@@ -213,7 +214,7 @@ class _SyncedWorkoutsHistoryScreenState
         final s = (secPerMi % 60).round();
         return _PersonalRecord(
           kind: kind,
-          label: 'Fastest mile',
+          label: AppLocalizations.of(context).syncedWorkoutsHistoryFastestMile,
           value: '$m:${s.toString().padLeft(2, '0')}',
           workout: best,
         );
@@ -242,14 +243,14 @@ class _SyncedWorkoutsHistoryScreenState
           final miles = bestM * 0.000621371;
           return _PersonalRecord(
             kind: kind,
-            label: 'Longest ride',
+            label: AppLocalizations.of(context).syncedWorkoutsHistoryLongestRide,
             value: '${miles.toStringAsFixed(miles >= 10 ? 1 : 2)} mi',
             workout: best,
           );
         }
         return _PersonalRecord(
           kind: kind,
-          label: 'Biggest climb',
+          label: AppLocalizations.of(context).syncedWorkoutsHistoryBiggestClimb,
           value: '${bestElev.round()} m',
           workout: best,
         );
@@ -271,7 +272,7 @@ class _SyncedWorkoutsHistoryScreenState
         if (bestZ4plus <= 0) return null;
         return _PersonalRecord(
           kind: kind,
-          label: 'Hardest session',
+          label: AppLocalizations.of(context).syncedWorkoutsHistoryHardestSession,
           value: '${bestZ4plus.round()}% Z4+',
           workout: best,
         );
@@ -293,7 +294,7 @@ class _SyncedWorkoutsHistoryScreenState
             : '${m}m';
         return _PersonalRecord(
           kind: kind,
-          label: 'Longest session',
+          label: AppLocalizations.of(context).syncedWorkoutsHistoryLongestSession,
           value: label,
           workout: best,
         );
@@ -349,7 +350,7 @@ class _AggregateStatsHeader extends StatelessWidget {
                   child: _CountUpStat(
                     target: totalSessions.toDouble(),
                     formatter: (v) => v.toInt().toString(),
-                    label: 'Sessions',
+                    label: AppLocalizations.of(context).syncedWorkoutsHistorySessions,
                     accent: accent,
                     textMuted: textMuted,
                   ),
@@ -360,7 +361,7 @@ class _AggregateStatsHeader extends StatelessWidget {
                     formatter: (v) => v >= 100
                         ? v.round().toString()
                         : v.toStringAsFixed(v >= 10 ? 1 : 2),
-                    label: 'Miles',
+                    label: AppLocalizations.of(context).syncedWorkoutsHistoryMiles,
                     accent: accent,
                     textMuted: textMuted,
                   ),
@@ -374,7 +375,7 @@ class _AggregateStatsHeader extends StatelessWidget {
                   child: _CountUpStat(
                     target: totalMinutes.toDouble(),
                     formatter: (v) => _formatMinutes(v.toInt()),
-                    label: 'Active',
+                    label: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                     accent: accent,
                     textMuted: textMuted,
                   ),
@@ -385,7 +386,7 @@ class _AggregateStatsHeader extends StatelessWidget {
                     formatter: (v) => v >= 1000
                         ? '${(v / 1000).toStringAsFixed(1)}k'
                         : v.round().toString(),
-                    label: 'Calories',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                     accent: accent,
                     textMuted: textMuted,
                   ),
@@ -541,7 +542,7 @@ class _PerKindDonut extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Breakdown',
+                    AppLocalizations.of(context).syncedWorkoutsHistoryBreakdown,
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -686,7 +687,7 @@ class _HeatmapCalendarCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Last 90 days',
+                  AppLocalizations.of(context).syncedWorkoutsHistoryLast90Days,
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -695,7 +696,7 @@ class _HeatmapCalendarCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'Less',
+                      AppLocalizations.of(context).workoutCompleteLess,
                       style: TextStyle(fontSize: 10, color: textMuted),
                     ),
                     const SizedBox(width: 6),
@@ -712,7 +713,7 @@ class _HeatmapCalendarCard extends StatelessWidget {
                       ),
                     const SizedBox(width: 6),
                     Text(
-                      'More',
+                      AppLocalizations.of(context).homeMore,
                       style: TextStyle(fontSize: 10, color: textMuted),
                     ),
                   ],
@@ -777,7 +778,7 @@ class _PersonalRecordsRow extends StatelessWidget {
                     color: const Color(0xFFEAB308), size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  'Your records',
+                  AppLocalizations.of(context).syncedWorkoutsHistoryYourRecords,
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -897,7 +898,7 @@ class _FilterChipsRow extends StatelessWidget {
           children: [
             _chip(
               context,
-              label: 'All',
+              label: AppLocalizations.of(context).syncedWorkoutsHistoryAll,
               count: allWorkouts.length,
               active: selected == null,
               color: accent,

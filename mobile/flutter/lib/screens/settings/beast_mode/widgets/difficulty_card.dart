@@ -9,6 +9,7 @@ import 'shared/beast_card.dart';
 import 'shared/tappable_cell.dart';
 import 'shared/slider_dialog.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class DifficultyCard extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -30,10 +31,10 @@ class DifficultyCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Difficulty Multipliers',
+                    Text(AppLocalizations.of(context).difficultyCardDifficultyMultipliers,
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('Tap any cell to edit scaling factors',
+                    Text(AppLocalizations.of(context).difficultyCardTapAnyCellTo,
                         style: TextStyle(fontSize: 11, color: theme.textMuted)),
                   ],
                 ),
@@ -44,7 +45,7 @@ class DifficultyCard extends ConsumerWidget {
                   notifier.resetAllDifficultyMultipliers();
                   AppSnackBar.info(context, 'Difficulty multipliers reset');
                 },
-                child: Text('Reset All',
+                child: Text(AppLocalizations.of(context).moodCardResetAll,
                     style: TextStyle(fontSize: 12, color: AppColors.orange, fontWeight: FontWeight.w600)),
               ),
             ],
@@ -53,9 +54,9 @@ class DifficultyCard extends ConsumerWidget {
           // Header
           Row(
             children: [
-              Expanded(flex: 12, child: Text('Tier', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textMuted))),
-              Expanded(flex: 10, child: Text('Volume', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textMuted))),
-              Expanded(flex: 10, child: Text('Rest', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textMuted))),
+              Expanded(flex: 12, child: Text(AppLocalizations.of(context).difficultyCardTier, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textMuted))),
+              Expanded(flex: 10, child: Text(AppLocalizations.of(context).workoutSummaryAdvancedVolume, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textMuted))),
+              Expanded(flex: 10, child: Text(AppLocalizations.of(context).workoutSummaryAdvancedRest, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textMuted))),
               Expanded(flex: 10, child: Text('RPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textMuted))),
             ],
           ),

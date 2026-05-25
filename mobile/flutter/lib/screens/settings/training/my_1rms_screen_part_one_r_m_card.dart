@@ -187,7 +187,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                           Icons.add_link,
                           color: widget.textMuted,
                         ),
-                        tooltip: 'Link exercises',
+                        tooltip: AppLocalizations.of(context).my1rmsScreenLinkExercises,
                       ),
                       // Delete button
                       IconButton(
@@ -196,7 +196,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                           Icons.delete_outline,
                           color: widget.textMuted,
                         ),
-                        tooltip: 'Delete 1RM',
+                        tooltip: AppLocalizations.of(context).my1rmsScreenDelete1rm,
                       ),
                     ],
                   ),
@@ -222,7 +222,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                 children: [
                   Divider(color: widget.cardBorder),
                   Text(
-                    'Linked Exercises',
+                    AppLocalizations.of(context).my1rmsScreenLinkedExercises,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -265,17 +265,17 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Link?'),
+        title: Text(AppLocalizations.of(context).my1rmsScreenRemoveLink),
         content: Text('Remove ${link.linkedExerciseName} from linked exercises?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
       ),
@@ -453,7 +453,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
             // Title
             Center(
               child: Text(
-                'Link Exercise',
+                AppLocalizations.of(context).my1rmsScreenLinkExercise,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -474,8 +474,8 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
             TextField(
               controller: _exerciseController,
               decoration: InputDecoration(
-                labelText: 'Exercise Name',
-                hintText: 'e.g., Incline Bench Press',
+                labelText: AppLocalizations.of(context).workoutHistoryImportExerciseName,
+                hintText: AppLocalizations.of(context).my1rmsScreenEGInclineBench,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: cardBorder),
@@ -497,7 +497,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
             // Suggestions
             if (suggestions.isNotEmpty) ...[
               Text(
-                'Suggestions',
+                AppLocalizations.of(context).unresolvedExercisesSuggestions,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -545,7 +545,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
 
             // Relationship type
             Text(
-              'Relationship Type',
+              AppLocalizations.of(context).my1rmsScreenRelationshipType,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -557,25 +557,25 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
               spacing: 8,
               children: [
                 _RelationshipChip(
-                  label: 'Variant',
+                  label: AppLocalizations.of(context).my1rmsScreenVariant,
                   value: 'variant',
                   selected: _relationshipType == 'variant',
                   onSelected: () => setState(() => _relationshipType = 'variant'),
                 ),
                 _RelationshipChip(
-                  label: 'Angle',
+                  label: AppLocalizations.of(context).my1rmsScreenAngle,
                   value: 'angle',
                   selected: _relationshipType == 'angle',
                   onSelected: () => setState(() => _relationshipType = 'angle'),
                 ),
                 _RelationshipChip(
-                  label: 'Equipment',
+                  label: AppLocalizations.of(context).trainingSetupCardEquipment,
                   value: 'equipment_swap',
                   selected: _relationshipType == 'equipment_swap',
                   onSelected: () => setState(() => _relationshipType = 'equipment_swap'),
                 ),
                 _RelationshipChip(
-                  label: 'Progression',
+                  label: AppLocalizations.of(context).setTrackingOverlayProgression,
                   value: 'progression',
                   selected: _relationshipType == 'progression',
                   onSelected: () => setState(() => _relationshipType = 'progression'),
@@ -607,8 +607,8 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Link Exercise',
+                    : Text(
+                        AppLocalizations.of(context).my1rmsScreenLinkExercise,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -749,7 +749,7 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
             const SizedBox(height: 24),
             Center(
               child: Text(
-                isEditing ? 'Edit 1RM' : 'Add 1RM',
+                isEditing ? AppLocalizations.of(context).my1rmsScreenEdit1rm : AppLocalizations.of(context).my1rmsScreenAdd1rm,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -764,8 +764,8 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
               controller: _exerciseController,
               enabled: !isEditing,
               decoration: InputDecoration(
-                labelText: 'Exercise Name',
-                hintText: 'e.g., Bench Press',
+                labelText: AppLocalizations.of(context).workoutHistoryImportExerciseName,
+                hintText: AppLocalizations.of(context).supersetAlgorithmCardEGBenchPress,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: cardBorder),
@@ -791,8 +791,8 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
               ],
               decoration: InputDecoration(
-                labelText: '1RM Weight (kg)',
-                hintText: 'e.g., 100',
+                labelText: AppLocalizations.of(context).my1rmsScreen1rmWeightKg,
+                hintText: AppLocalizations.of(context).my1rmsScreenEG100,
                 suffixText: 'kg',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -812,7 +812,7 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
 
             // Source selection
             Text(
-              'Source',
+              AppLocalizations.of(context).recipeFilterSortSource,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -824,13 +824,13 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
               spacing: 8,
               children: [
                 _SourceChip(
-                  label: 'Entered manually',
+                  label: AppLocalizations.of(context).my1rmsScreenEnteredManually,
                   icon: Icons.edit,
                   isSelected: _selectedSource == 'manual',
                   onTap: () => setState(() => _selectedSource = 'manual'),
                 ),
                 _SourceChip(
-                  label: 'Tested 1RM',
+                  label: AppLocalizations.of(context).my1rmsScreenTested1rm,
                   icon: Icons.verified,
                   isSelected: _selectedSource == 'tested',
                   onTap: () => setState(() => _selectedSource = 'tested'),
@@ -863,7 +863,7 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
                         ),
                       )
                     : Text(
-                        isEditing ? 'Update' : 'Save',
+                        isEditing ? AppLocalizations.of(context).quickLogMeasurementsUpdate : AppLocalizations.of(context).buttonSave,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

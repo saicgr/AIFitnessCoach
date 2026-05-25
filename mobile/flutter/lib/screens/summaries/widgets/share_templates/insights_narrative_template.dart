@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Instagram-Story template: AI narrative (period insights).
 /// Text-dominant layout — aiSummary as the hero quote, followed by the top
 /// highlights and a single "next step" tip.
@@ -103,7 +104,7 @@ class InsightsNarrativeTemplate extends StatelessWidget {
                 Expanded(
                   child: Text(
                     summary ??
-                        'Your consistency is compounding. Keep stacking the reps.',
+                        AppLocalizations.of(context).insightsNarrativeTemplateYourConsistencyIsCompoundin,
                     maxLines: 6,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

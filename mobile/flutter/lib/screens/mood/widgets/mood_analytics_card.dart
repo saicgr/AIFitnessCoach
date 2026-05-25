@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/mood.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card showing mood analytics and distribution
 class MoodAnalyticsCard extends StatelessWidget {
   final MoodAnalyticsResponse analytics;
@@ -36,19 +37,19 @@ class MoodAnalyticsCard extends StatelessWidget {
             children: [
               _buildStatItem(
                 value: summary.totalCheckins.toString(),
-                label: 'Check-ins',
+                label: AppLocalizations.of(context).moodWeeklyChartCheckIns,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
               ),
               _buildStatItem(
                 value: summary.workoutsGenerated.toString(),
-                label: 'Workouts',
+                label: AppLocalizations.of(context).workoutListTitle,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
               ),
               _buildStatItem(
                 value: '${summary.completionRate.toInt()}%',
-                label: 'Completed',
+                label: AppLocalizations.of(context).progressionStepCardCompleted,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
                 valueColor: _getCompletionColor(summary.completionRate),
@@ -76,7 +77,7 @@ class MoodAnalyticsCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Most Common Mood',
+                          AppLocalizations.of(context).moodAnalyticsCardMostCommonMood,
                           style: TextStyle(
                             fontSize: 12,
                             color: textSecondary,
@@ -100,7 +101,7 @@ class MoodAnalyticsCard extends StatelessWidget {
           ],
           // Mood distribution bars
           Text(
-            'Mood Distribution',
+            AppLocalizations.of(context).moodAnalyticsCardMoodDistribution,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,

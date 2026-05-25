@@ -7,6 +7,7 @@ import '../../data/models/today_workout.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../widgets/gradient_circular_progress_indicator.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full-screen loading screen shown after onboarding while workouts are being generated.
 /// Clean circular progress design inspired by Hevy.
 class WorkoutLoadingScreen extends ConsumerStatefulWidget {
@@ -158,7 +159,7 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
 
     final stepLabel = _currentStep < _steps.length
         ? _steps[_currentStep].label
-        : 'Workout ready!';
+        : AppLocalizations.of(context).workoutLoadingWorkoutReady;
     final percentage = (_progress * 100).toInt();
 
     return Scaffold(
@@ -268,7 +269,7 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
 
                 // Title
                 Text(
-                  _progress >= 1.0 ? 'Workout Ready!' : 'Building Your Plan',
+                  _progress >= 1.0 ? AppLocalizations.of(context).workoutLoadingWorkoutReady2 : AppLocalizations.of(context).workoutLoadingBuildingYourPlan,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -301,7 +302,7 @@ class _WorkoutLoadingScreenState extends ConsumerState<WorkoutLoadingScreen>
                   child: TextButton(
                     onPressed: _pollCount > 2 ? _navigateToHome : null,
                     child: Text(
-                      'Skip',
+                      AppLocalizations.of(context).onboardingSkip,
                       style: TextStyle(
                         color: textSecondary.withValues(alpha: 0.6),
                         fontSize: 14,

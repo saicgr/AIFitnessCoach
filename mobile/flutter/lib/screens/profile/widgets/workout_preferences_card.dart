@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/week_start_provider.dart';
 import '../../../data/models/user.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Displays workout preferences from onboarding data.
 class WorkoutPreferencesCard extends ConsumerWidget {
   final User? user;
@@ -62,7 +63,7 @@ class WorkoutPreferencesCard extends ConsumerWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Edit Program',
+                            AppLocalizations.of(context).workoutPreferencesCardEditProgram,
                             style: TextStyle(
                               color: accentColor,
                               fontSize: 13,
@@ -78,47 +79,47 @@ class WorkoutPreferencesCard extends ConsumerWidget {
             ),
           _PreferenceRow(
             icon: Icons.timeline,
-            label: 'Experience',
-            value: user?.trainingExperienceDisplay ?? 'Not set',
+            label: AppLocalizations.of(context).workoutPreferencesCardExperience,
+            value: user?.trainingExperienceDisplay ?? AppLocalizations.of(context).workoutPreferencesCardNotSet,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
           const SizedBox(height: 12),
           _PreferenceRow(
             icon: Icons.location_on_outlined,
-            label: 'Environment',
-            value: user?.workoutEnvironmentDisplay ?? 'Not set',
+            label: AppLocalizations.of(context).workoutPreferencesCardEnvironment,
+            value: user?.workoutEnvironmentDisplay ?? AppLocalizations.of(context).workoutPreferencesCardNotSet,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
           const SizedBox(height: 12),
           _PreferenceRow(
             icon: Icons.center_focus_strong,
-            label: 'Focus Areas',
-            value: user?.focusAreasDisplay ?? 'Full body',
+            label: AppLocalizations.of(context).workoutPreferencesCardFocusAreas,
+            value: user?.focusAreasDisplay ?? AppLocalizations.of(context).workoutPreferencesCardFullBody,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
           const SizedBox(height: 12),
           _PreferenceRow(
             icon: Icons.favorite_outline,
-            label: 'Motivation',
-            value: user?.motivationDisplay ?? 'Not set',
+            label: AppLocalizations.of(context).workoutPreferencesCardMotivation,
+            value: user?.motivationDisplay ?? AppLocalizations.of(context).workoutPreferencesCardNotSet,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
           const SizedBox(height: 12),
           _PreferenceRow(
             icon: Icons.calendar_today_outlined,
-            label: 'Workout Days',
-            value: user?.workoutDaysFormatted ?? 'Not set',
+            label: AppLocalizations.of(context).workoutSettingsWorkoutDays,
+            value: user?.workoutDaysFormatted ?? AppLocalizations.of(context).workoutPreferencesCardNotSet,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
           const SizedBox(height: 12),
           _PreferenceRow(
             icon: Icons.calendar_today_outlined,
-            label: 'Week Starts On',
+            label: AppLocalizations.of(context).workoutPreferencesCardWeekStartsOn,
             value: ref.watch(weekStartsSundayProvider) ? 'Sunday' : 'Monday',
             textPrimary: textPrimary,
             textSecondary: textSecondary,

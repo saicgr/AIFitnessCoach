@@ -7,6 +7,7 @@ import '../../../core/providers/video_cache_provider.dart';
 import '../../../data/services/video_cache_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Screen for managing downloaded exercise videos
 class DownloadedVideosScreen extends ConsumerWidget {
   const DownloadedVideosScreen({super.key});
@@ -21,7 +22,7 @@ class DownloadedVideosScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Downloaded Videos',
+        title: AppLocalizations.of(context).downloadedVideosDownloadedVideos,
         actions: [
           PillAppBarAction(
             icon: Icons.delete_sweep,
@@ -72,7 +73,7 @@ class DownloadedVideosScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              'Clear All Downloads?',
+              AppLocalizations.of(context).downloadedVideosClearAllDownloads,
               style: TextStyle(
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
               ),
@@ -80,7 +81,7 @@ class DownloadedVideosScreen extends ConsumerWidget {
           ],
         ),
         content: Text(
-          'This will delete all downloaded exercise videos from your device. You can re-download them anytime.',
+          AppLocalizations.of(context).downloadedVideosThisWillDeleteAll,
           style: TextStyle(
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),
@@ -89,7 +90,7 @@ class DownloadedVideosScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -100,14 +101,14 @@ class DownloadedVideosScreen extends ConsumerWidget {
               Navigator.pop(context);
               ref.read(videoCacheProvider.notifier).clearAllVideos();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('All downloads cleared'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).downloadedVideosAllDownloadsCleared),
                   backgroundColor: AppColors.success,
                 ),
               );
             },
             child: Text(
-              'Clear All',
+              AppLocalizations.of(context).foodSearchBarClearAll,
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -176,7 +177,7 @@ class _StorageInfoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Storage Used',
+                      AppLocalizations.of(context).downloadedVideosStorageUsed,
                       style: TextStyle(
                         fontSize: 14,
                         color: textMuted,
@@ -227,7 +228,7 @@ class _StorageInfoCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             usagePercent > 0.9
-                ? 'Storage almost full. Oldest videos will be auto-deleted.'
+                ? AppLocalizations.of(context).downloadedVideosStorageAlmostFullOldest
                 : 'Videos are cached for offline viewing.',
             style: TextStyle(
               fontSize: 12,
@@ -266,7 +267,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No Downloads Yet',
+              AppLocalizations.of(context).downloadedVideosNoDownloadsYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -275,7 +276,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Save exercise videos for offline viewing — great for the gym when WiFi is spotty.',
+              AppLocalizations.of(context).downloadedVideosSaveExerciseVideosFor,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted.withOpacity(0.8),
@@ -298,8 +299,8 @@ class _EmptyState extends StatelessWidget {
                   context.push('/library');
                 },
                 icon: const Icon(Icons.video_library_outlined, size: 20),
-                label: const Text(
-                  'Browse Exercise Library',
+                label: Text(
+                  AppLocalizations.of(context).downloadedVideosBrowseExerciseLibrary,
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -349,7 +350,7 @@ class _HowToCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'HOW TO DOWNLOAD',
+            AppLocalizations.of(context).downloadedVideosHowToDownload,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -492,7 +493,7 @@ class _CachedVideoTile extends StatelessWidget {
             color: AppColors.error.withOpacity(0.8),
           ),
           onPressed: onDelete,
-          tooltip: 'Delete',
+          tooltip: AppLocalizations.of(context).buttonDelete,
         ),
       ),
     );

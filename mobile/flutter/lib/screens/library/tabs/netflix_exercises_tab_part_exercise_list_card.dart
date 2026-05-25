@@ -110,8 +110,8 @@ class _ExerciseListCard extends StatelessWidget {
                             color: AppColors.cyan.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'AI',
+                          child: Text(
+                            AppLocalizations.of(context).exercisePickerSheetAi,
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
@@ -130,7 +130,7 @@ class _ExerciseListCard extends StatelessWidget {
                           exercise.bodyPart!,
                           style: TextStyle(fontSize: 12, color: textMuted),
                         ),
-                        Text(' • ', style: TextStyle(color: textMuted)),
+                        Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: textMuted)),
                       ],
                       Text(
                         exercise.equipment.isNotEmpty
@@ -424,7 +424,7 @@ class _GravlSplitCard extends StatelessWidget {
                         color: orange,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
@@ -434,7 +434,7 @@ class _GravlSplitCard extends StatelessWidget {
                           ),
                           SizedBox(width: 3),
                           Text(
-                            'AI',
+                            AppLocalizations.of(context).exercisePickerSheetAi,
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,

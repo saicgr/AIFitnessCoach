@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../data/models/trophy.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Trophy card with tier-based visual styling and animations
 class TrophyCard extends StatefulWidget {
   final TrophyProgress trophyProgress;
@@ -291,7 +292,7 @@ class _TrophyCardState extends State<TrophyCard>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Merch',
+                          AppLocalizations.of(context).trophyCardMerch,
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -414,7 +415,7 @@ class _TrophyCardState extends State<TrophyCard>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Progress',
+              AppLocalizations.of(context).navProgress,
               style: TextStyle(
                 fontSize: 11,
                 color: AppColors.textMuted,

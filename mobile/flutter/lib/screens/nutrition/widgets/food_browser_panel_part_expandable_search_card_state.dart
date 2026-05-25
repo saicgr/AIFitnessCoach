@@ -219,7 +219,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
                   '$_displayCalories',
                   style: TextStyle(color: teal, fontSize: 13, fontWeight: FontWeight.w600),
                 ),
-                Text(' kcal', style: TextStyle(color: textMuted, fontSize: 11)),
+                Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(color: textMuted, fontSize: 11)),
                 if (widget.apiClient != null) ...[
                   const SizedBox(width: 4),
                   _FlagIconButton(
@@ -304,7 +304,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
                     children: [
                       SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: teal)),
                       const SizedBox(width: 6),
-                      Text('Loading modifiers...', style: TextStyle(fontSize: 11, color: textMuted)),
+                      Text(AppLocalizations.of(context).foodBrowserPanelLoadingModifiers, style: TextStyle(fontSize: 11, color: textMuted)),
                     ],
                   ),
                 ),
@@ -327,7 +327,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Modifiers', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+        Text(AppLocalizations.of(context).foodBrowserPanelModifiers, style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
         const SizedBox(height: 4),
         ..._modifiers.map((mod) {
           final state = _modifierStates[mod.phrase];
@@ -391,7 +391,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
                 children: [
                   Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500))),
                   Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),
-                  Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+                  Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted)),
                 ],
               ),
             );
@@ -416,7 +416,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
                   const SizedBox(width: 6),
                   Expanded(child: Text(mod.displayLabel ?? mod.phrase, style: TextStyle(fontSize: 12, color: textPrimary))),
                   Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),
-                  Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+                  Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted)),
                 ],
               ),
             );
@@ -510,7 +510,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
           children: [
             Icon(Icons.add, size: 14, color: teal),
             const SizedBox(width: 2),
-            Text('Log', style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
+            Text(AppLocalizations.of(context).recipeDetailLog, style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -797,7 +797,7 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
             Row(
               children: [
                 Text('${result.calories}', style: TextStyle(color: teal, fontSize: 12, fontWeight: FontWeight.w600)),
-                Text(' kcal', style: TextStyle(color: textMuted, fontSize: 10)),
+                Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(color: textMuted, fontSize: 10)),
                 const Spacer(),
                 Icon(Icons.keyboard_arrow_down, size: 16, color: textMuted.withValues(alpha: 0.5)),
                 const SizedBox(width: 4),

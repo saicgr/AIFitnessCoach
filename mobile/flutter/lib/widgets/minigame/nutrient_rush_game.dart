@@ -9,6 +9,7 @@ import '../../data/repositories/auth_repository.dart';
 import 'nutrient_rush_model.dart';
 import '../glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 // =============================================================================
 // Nutrient Rush — an immersive, optional fitness-themed arcade mini-game.
 //
@@ -1053,7 +1054,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '🔥 STAGE CLEAR',
+                      AppLocalizations.of(context).nutrientRushGameStageClear,
                       style: TextStyle(
                         color: widget.accentColor,
                         fontSize: 11,
@@ -1170,8 +1171,8 @@ class _NutrientRushGameState extends State<NutrientRushGame>
                   ),
                 ],
               ),
-              child: const Text(
-                '🎉  NEW BEST!',
+              child: Text(
+                AppLocalizations.of(context).nutrientRushGameNewBest,
                 style: TextStyle(
                   color: Color(0xFFFFD54F),
                   fontSize: 22,
@@ -1276,9 +1277,9 @@ class _NutrientRushGameState extends State<NutrientRushGame>
                 ),
               ),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Catch the golden Zealova mark for a power-up!',
+                  AppLocalizations.of(context).nutrientRushGameCatchTheGoldenZealova,
                   style: TextStyle(
                     color: Color(0xFFFFD54F),
                     fontSize: 12,
@@ -1475,8 +1476,8 @@ class _NutrientRushGameState extends State<NutrientRushGame>
         border:
             Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.6)),
       ),
-      child: const Text(
-        '🎉 NEW PERSONAL BEST!',
+      child: Text(
+        AppLocalizations.of(context).nutrientRushGameNewPersonalBest,
         style: TextStyle(
           color: Color(0xFFFFC107),
           fontSize: 12,
@@ -2218,9 +2219,9 @@ class _HighScoresSheetState extends State<_HighScoresSheet> {
               children: [
                 const Text('🚀', style: TextStyle(fontSize: 22)),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Nutrient Rush — Friends',
+                    AppLocalizations.of(context).nutrientRushGameNutrientRushFriends,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 17,

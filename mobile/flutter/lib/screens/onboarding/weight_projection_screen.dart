@@ -14,6 +14,7 @@ import 'widgets/calorie_macro_estimator.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/quiz_weight_rate.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'weight_projection_screen_part_weight_data_point.dart';
 
 part 'weight_projection_screen_ui.dart';
@@ -84,7 +85,7 @@ class _WeightProjectionScreenState
           children: [
             Expanded(
               child: _buildStatCard(
-                label: 'Current',
+                label: AppLocalizations.of(context).workoutPlanDrawerCurrent,
                 value: '${displayCurrent.round()} $unit',
                 icon: Icons.monitor_weight_outlined,
                 color: textSecondary,
@@ -94,7 +95,7 @@ class _WeightProjectionScreenState
             const SizedBox(width: 8),
             Expanded(
               child: _buildStatCard(
-                label: 'Goal',
+                label: AppLocalizations.of(context).challengeCreateFieldGoal,
                 value: '${displayGoal.round()} $unit',
                 icon: Icons.flag_outlined,
                 color: AppColors.green,
@@ -108,7 +109,7 @@ class _WeightProjectionScreenState
           children: [
             Expanded(
               child: _buildStatCard(
-                label: isLosingWeight ? 'To lose' : 'To gain',
+                label: isLosingWeight ? AppLocalizations.of(context).weightProjectionToLose : AppLocalizations.of(context).weightProjectionToGain,
                 value: '${diff.round()} $unit',
                 icon: isLosingWeight ? Icons.trending_down : Icons.trending_up,
                 color: AppColors.orange,
@@ -118,7 +119,7 @@ class _WeightProjectionScreenState
             const SizedBox(width: 8),
             Expanded(
               child: _buildStatCard(
-                label: 'Per week',
+                label: AppLocalizations.of(context).weightProjectionPerWeek,
                 value: displayWeeklyRate != null
                     ? '${displayWeeklyRate.toStringAsFixed(1)} $unit'
                     : '$workoutDays days/wk',
@@ -149,7 +150,7 @@ class _WeightProjectionScreenState
               Expanded(
                 child: Text(
                   isLosingWeight
-                      ? 'Safe rate: 0.5–1 kg/week. Your plan follows evidence-based guidelines.'
+                      ? AppLocalizations.of(context).weightProjectionSafeRate05
                       : 'Lean gain: 0.25–0.5 kg/week. Slow and steady builds quality muscle.',
                   style: TextStyle(
                     fontSize: 11,
@@ -358,7 +359,7 @@ class _WeightProjectionScreenState
                 // Rate selection chips
                 Text(
                   isLosingWeight
-                      ? 'How fast do you want to lose it?'
+                      ? AppLocalizations.of(context).weightProjectionHowFastDoYou
                       : 'How fast do you want to gain?',
                   style: TextStyle(
                     fontSize: 14,
@@ -457,13 +458,13 @@ class _WeightProjectionScreenState
                         ),
                       ],
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.rocket_launch, color: Colors.white, size: 20),
                         SizedBox(width: 10),
                         Text(
-                          'Continue',
+                          AppLocalizations.of(context).onboardingContinueButton,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,

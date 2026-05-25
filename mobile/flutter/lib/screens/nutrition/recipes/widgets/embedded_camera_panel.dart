@@ -16,6 +16,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 enum _CameraState { initializing, ready, denied, error, unsupported }
 
 class EmbeddedCameraPanel extends StatefulWidget {
@@ -316,7 +317,7 @@ class _EmbeddedCameraPanelState extends State<EmbeddedCameraPanel>
           OutlinedButton.icon(
             onPressed: _pickFromGallery,
             icon: Icon(Icons.photo_library_outlined, color: widget.accent),
-            label: Text('From gallery', style: TextStyle(color: widget.accent)),
+            label: Text(AppLocalizations.of(context).mediaPickerHelperFromGallery, style: TextStyle(color: widget.accent)),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: widget.accent),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
@@ -330,7 +331,7 @@ class _EmbeddedCameraPanelState extends State<EmbeddedCameraPanel>
                 setState(() => _state = _CameraState.initializing);
                 _initCamera();
               },
-              child: Text('Try again', style: TextStyle(color: widget.accent)),
+              child: Text(AppLocalizations.of(context).workoutReviewTryAgain, style: TextStyle(color: widget.accent)),
             ),
           ],
         ],

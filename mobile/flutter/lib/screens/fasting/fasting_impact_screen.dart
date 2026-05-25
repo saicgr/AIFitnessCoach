@@ -14,6 +14,7 @@ import 'widgets/fasting_calendar_widget.dart';
 import 'widgets/fasting_impact_card.dart';
 import 'widgets/weight_fasting_chart.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen showing fasting impact analysis on goals
 class FastingImpactScreen extends ConsumerStatefulWidget {
   const FastingImpactScreen({super.key});
@@ -189,7 +190,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Fasting Impact',
+        title: AppLocalizations.of(context).fastingImpactFastingImpact,
         actions: [
           PillAppBarAction(
             icon: Icons.refresh,
@@ -303,7 +304,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
                 // Weight Trend Chart
                 Text(
-                  'Weight Trend',
+                  AppLocalizations.of(context).fastingImpactWeightTrend,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -312,7 +313,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Fasting days marked with purple dots',
+                  AppLocalizations.of(context).fastingImpactFastingDaysMarkedWith,
                   style: TextStyle(fontSize: 13, color: textMuted),
                 ),
                 const SizedBox(height: 12),
@@ -325,7 +326,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
                 // Impact Comparison Cards
                 Text(
-                  'Fasting vs Non-Fasting Days',
+                  AppLocalizations.of(context).fastingImpactFastingVsNonFasting,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -335,7 +336,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 const SizedBox(height: 16),
 
                 FastingImpactCard(
-                  title: 'Weight Impact',
+                  title: AppLocalizations.of(context).fastingImpactWeightImpact,
                   fastingValue:
                       '${data.comparison.weightLossFastingDays?.toStringAsFixed(2) ?? "N/A"} kg',
                   nonFastingValue:
@@ -350,7 +351,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 const SizedBox(height: 12),
 
                 FastingImpactCard(
-                  title: 'Goal Achievement',
+                  title: AppLocalizations.of(context).fastingImpactGoalAchievement,
                   fastingValue:
                       '${(data.comparison.goalCompletionRateFasting * 100).round()}%',
                   nonFastingValue:
@@ -366,7 +367,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
                 if (data.comparison.avgWorkoutPerformanceFasting != null)
                   FastingImpactCard(
-                    title: 'Workout Performance',
+                    title: AppLocalizations.of(context).fastingImpactWorkoutPerformance,
                     fastingValue:
                         '${((data.comparison.avgWorkoutPerformanceFasting ?? 0) * 100).round()}%',
                     nonFastingValue:
@@ -382,7 +383,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
                 // Calendar View
                 Text(
-                  'Activity Calendar',
+                  AppLocalizations.of(context).fastingImpactActivityCalendar,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -407,7 +408,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 // AI Insights Section
                 if (data.insights.isNotEmpty) ...[
                   Text(
-                    'AI Insights',
+                    AppLocalizations.of(context).fastingImpactAiInsights,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -561,7 +562,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Overall Impact Score',
+                      AppLocalizations.of(context).fastingImpactOverallImpactScore,
                       style: TextStyle(
                         fontSize: 14,
                         color: textMuted,
@@ -794,7 +795,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Limited Data Available',
+                  AppLocalizations.of(context).fastingImpactLimitedDataAvailable,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -805,7 +806,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Complete more fasts to get accurate impact analysis. We recommend at least 7 fasting days.',
+                  AppLocalizations.of(context).fastingImpactCompleteMoreFastsTo,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark
@@ -836,7 +837,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to Load Data',
+              AppLocalizations.of(context).strainDashboardFailedToLoadData,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -857,7 +858,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                       .refresh(_userId!)
                   : null,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: purple,
                 foregroundColor: Colors.white,
@@ -883,7 +884,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No Impact Data Yet',
+              AppLocalizations.of(context).fastingImpactNoImpactDataYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -892,7 +893,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Complete some fasts and log your weight to see how fasting impacts your goals.',
+              AppLocalizations.of(context).fastingImpactCompleteSomeFastsAnd,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -904,7 +905,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             ElevatedButton.icon(
               onPressed: () => context.pop(),
               icon: const Icon(Icons.timer),
-              label: const Text('Start a Fast'),
+              label: Text(AppLocalizations.of(context).startFastStartAFast),
               style: ElevatedButton.styleFrom(
                 backgroundColor: purple,
                 foregroundColor: Colors.white,

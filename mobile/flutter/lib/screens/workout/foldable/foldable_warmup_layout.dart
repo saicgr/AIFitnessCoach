@@ -17,6 +17,7 @@ import '../../../core/providers/window_mode_provider.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Foldable-optimized warmup screen that splits content across the hinge.
 class FoldableWarmupLayout extends StatefulWidget {
   /// Window mode state for hinge bounds calculation
@@ -299,8 +300,8 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
           ),
           TextButton(
             onPressed: widget.onSkipWarmup,
-            child: const Text(
-              'Skip Warmup',
+            child: Text(
+              AppLocalizations.of(context).warmupPhaseSkipWarmup,
               style: TextStyle(
                 color: AppColors.orange,
                 fontWeight: FontWeight.w600,
@@ -459,8 +460,8 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'WARM UP',
+                  Text(
+                    AppLocalizations.of(context).workoutDetailWarmUp,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -509,7 +510,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                   ),
                   label: Text(
                     isTimerRunning
-                        ? 'Pause'
+                        ? AppLocalizations.of(context).warmupPhasePause
                         : (hasTimeRemaining ? 'Resume' : 'Start Timer'),
                     style: const TextStyle(
                       fontSize: 15,
@@ -533,7 +534,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                   icon: Icon(
                       isLastExercise ? Icons.check : Icons.skip_next),
                   label: Text(
-                    isLastExercise ? 'Start Workout' : 'Next',
+                    isLastExercise ? AppLocalizations.of(context).warmupPhaseStartWorkout : AppLocalizations.of(context).commonNext,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -549,7 +550,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
           // Upcoming exercises
           if (_currentExerciseIndex < widget.exercises.length - 1) ...[
             Text(
-              'UP NEXT',
+              AppLocalizations.of(context).warmupPhaseUpNext,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

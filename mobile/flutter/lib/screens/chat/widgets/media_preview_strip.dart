@@ -15,6 +15,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import 'media_picker_helper.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Cache for generated video thumbnails to avoid regenerating.
 final Map<String, Uint8List> _videoThumbnailCache = {};
 
@@ -48,10 +49,10 @@ class _MediaPreviewStripState extends State<MediaPreviewStrip> {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Media removed'),
+        content: Text(AppLocalizations.of(context).mediaPreviewStripMediaRemoved),
         duration: const Duration(seconds: 3),
         action: SnackBarAction(
-          label: 'Undo',
+          label: AppLocalizations.of(context).workoutUiBuildersUndo,
           onPressed: () {
             widget.onInsertAt(index, removedMedia);
           },
@@ -106,8 +107,8 @@ class _MediaPreviewStripState extends State<MediaPreviewStrip> {
                       _handleRemoveWithUndo(index);
                     },
                     icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                    label: const Text(
-                      'Remove',
+                    label: Text(
+                      AppLocalizations.of(context).workoutPlanDrawerRemove,
                       style: TextStyle(color: AppColors.error),
                     ),
                     style: TextButton.styleFrom(

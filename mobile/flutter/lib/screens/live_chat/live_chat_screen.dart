@@ -15,6 +15,7 @@ import 'widgets/live_chat_message_bubble.dart';
 import 'widgets/queue_position_card.dart';
 import 'widgets/typing_indicator.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Live Chat Screen - wired to real backend API via LiveChatNotifier
 class LiveChatScreen extends ConsumerStatefulWidget {
   const LiveChatScreen({super.key});
@@ -87,14 +88,14 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: const Text('End Chat?'),
-        content: const Text(
-          'Are you sure you want to end this conversation? You can start a new chat later.',
+        title: Text(AppLocalizations.of(context).liveChatEndChat),
+        content: Text(
+          AppLocalizations.of(context).liveChatAreYouSureYou,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () {
@@ -102,8 +103,8 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
               HapticService.medium();
               ref.read(liveChatProvider.notifier).endChat();
             },
-            child: const Text(
-              'End Chat',
+            child: Text(
+              AppLocalizations.of(context).liveChatEndChat2,
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -123,7 +124,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.call_end, color: AppColors.error),
-                title: const Text('End Chat'),
+                title: Text(AppLocalizations.of(context).liveChatEndChat2),
                 onTap: () {
                   Navigator.pop(context);
                   _showEndChatDialog();
@@ -131,7 +132,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.info_outline, color: AppColors.cyan),
-                title: const Text('About Live Chat'),
+                title: Text(AppLocalizations.of(context).liveChatAboutLiveChat),
                 onTap: () {
                   Navigator.pop(context);
                   _showAboutDialog();
@@ -165,16 +166,16 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
               child: const Icon(Icons.support_agent, color: Colors.white, size: 24),
             ),
             const SizedBox(width: 12),
-            const Text('Live Chat'),
+            Text(AppLocalizations.of(context).liveChatLiveChat),
           ],
         ),
-        content: const Text(
-          'Connect with our support team for real-time assistance. Our agents are available during business hours to help with any questions or issues.',
+        content: Text(
+          AppLocalizations.of(context).liveChatConnectWithOurSupport,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Got it'),
+            child: Text(AppLocalizations.of(context).weightIncrementsGotIt),
           ),
         ],
       ),
@@ -233,7 +234,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                       Icon(Icons.error_outline, color: AppColors.error, size: 48),
                       const SizedBox(height: 16),
                       Text(
-                        'Failed to connect to support',
+                        AppLocalizations.of(context).liveChatFailedToConnectTo,
                         style: TextStyle(
                           fontSize: 16,
                           color: AppColors.textPrimary,
@@ -242,7 +243,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        sessionAsync.error?.toString() ?? 'Unknown error',
+                        sessionAsync.error?.toString() ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
@@ -261,7 +262,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                           backgroundColor: AppColors.cyan,
                           foregroundColor: Colors.white,
                         ),
-                        child: const Text('Try Again'),
+                        child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
                       ),
                     ],
                   ),

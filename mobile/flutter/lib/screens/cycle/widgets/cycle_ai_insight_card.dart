@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
 import '../cycle_chat.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class CycleAiInsightCard extends ConsumerWidget {
   /// Pink feature accent.
   final Color accent;
@@ -131,7 +132,7 @@ class _InsightBody extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Tell me more',
+                    AppLocalizations.of(context).cycleAiInsightTellMeMore,
                     style: TextStyle(
                       color: accent,
                       fontSize: 12,

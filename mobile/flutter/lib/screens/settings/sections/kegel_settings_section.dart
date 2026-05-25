@@ -5,6 +5,7 @@ import '../../../data/providers/kegel_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Settings section for kegel/pelvic floor exercise preferences
 class KegelSettingsSection extends ConsumerWidget {
   const KegelSettingsSection({super.key});
@@ -38,7 +39,7 @@ class KegelSettingsSection extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Pelvic Floor Training',
+                    AppLocalizations.of(context).kegelSettingsPelvicFloorTraining,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -49,7 +50,7 @@ class KegelSettingsSection extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Strengthen your pelvic floor with kegel exercises included in your workout routine.',
+                AppLocalizations.of(context).kegelSettingsStrengthenYourPelvicFloor,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -59,8 +60,8 @@ class KegelSettingsSection extends ConsumerWidget {
 
             // Main Toggle
             SwitchListTile(
-              title: const Text('Enable Kegel Exercises'),
-              subtitle: const Text('Include pelvic floor exercises in your training'),
+              title: Text(AppLocalizations.of(context).kegelSettingsEnableKegelExercises),
+              subtitle: Text(AppLocalizations.of(context).kegelSettingsIncludePelvicFloorExercises),
               value: prefs?.kegelsEnabled ?? false,
               onChanged: (value) async {
                 final notifier = ref.read(
@@ -78,14 +79,14 @@ class KegelSettingsSection extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                 child: Text(
-                  'Include In',
+                  AppLocalizations.of(context).kegelSettingsIncludeIn,
                   style: theme.textTheme.titleSmall,
                 ),
               ),
 
               CheckboxListTile(
-                title: const Text('Warmup'),
-                subtitle: const Text('Add kegels to your warmup routine'),
+                title: Text(AppLocalizations.of(context).workoutSummaryAdvancedWarmup),
+                subtitle: Text(AppLocalizations.of(context).kegelSettingsAddKegelsToYour),
                 value: prefs?.includeInWarmup ?? false,
                 onChanged: (value) async {
                   if (value == null) return;
@@ -98,8 +99,8 @@ class KegelSettingsSection extends ConsumerWidget {
               ),
 
               CheckboxListTile(
-                title: const Text('Cooldown'),
-                subtitle: const Text('Add kegels to your cooldown stretches'),
+                title: Text(AppLocalizations.of(context).kegelSettingsCooldown),
+                subtitle: Text(AppLocalizations.of(context).kegelSettingsAddKegelsToYour2),
                 value: prefs?.includeInCooldown ?? false,
                 onChanged: (value) async {
                   if (value == null) return;
@@ -112,8 +113,8 @@ class KegelSettingsSection extends ConsumerWidget {
               ),
 
               CheckboxListTile(
-                title: const Text('Standalone Sessions'),
-                subtitle: const Text('Dedicated pelvic floor workout sessions'),
+                title: Text(AppLocalizations.of(context).kegelSettingsStandaloneSessions),
+                subtitle: Text(AppLocalizations.of(context).kegelSettingsDedicatedPelvicFloorWorkout),
                 value: prefs?.includeAsStandalone ?? false,
                 onChanged: (value) async {
                   if (value == null) return;
@@ -131,7 +132,7 @@ class KegelSettingsSection extends ConsumerWidget {
 
               // Daily Goal
               ListTile(
-                title: const Text('Daily Sessions Goal'),
+                title: Text(AppLocalizations.of(context).kegelSettingsDailySessionsGoal),
                 subtitle: Text('${prefs?.targetSessionsPerDay ?? 3} sessions per day'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -174,16 +175,16 @@ class KegelSettingsSection extends ConsumerWidget {
 
               // Difficulty Level
               ListTile(
-                title: const Text('Exercise Level'),
-                subtitle: Text(prefs?.currentLevel.displayName ?? 'Beginner'),
+                title: Text(AppLocalizations.of(context).kegelSettingsExerciseLevel),
+                subtitle: Text(prefs?.currentLevel.displayName ?? AppLocalizations.of(context).xpGoalsScreenBeginner),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _showLevelPicker(context, ref, user.id, prefs),
               ),
 
               // Focus Area
               ListTile(
-                title: const Text('Focus Area'),
-                subtitle: Text(prefs?.focusArea.displayName ?? 'General'),
+                title: Text(AppLocalizations.of(context).kegelSettingsFocusArea),
+                subtitle: Text(prefs?.focusArea.displayName ?? AppLocalizations.of(context).kegelSettingsGeneral),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => _showFocusPicker(context, ref, user.id, prefs),
               ),
@@ -192,8 +193,8 @@ class KegelSettingsSection extends ConsumerWidget {
 
               // Reminders
               SwitchListTile(
-                title: const Text('Daily Reminders'),
-                subtitle: const Text('Get reminded to do your kegel exercises'),
+                title: Text(AppLocalizations.of(context).kegelSettingsDailyReminders),
+                subtitle: Text(AppLocalizations.of(context).kegelSettingsGetRemindedToDo),
                 value: prefs?.dailyReminderEnabled ?? false,
                 onChanged: (value) async {
                   final notifier = ref.read(
@@ -301,7 +302,7 @@ class KegelSettingsSection extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Select Exercise Level',
+                    AppLocalizations.of(context).kegelSettingsSelectExerciseLevel,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -358,7 +359,7 @@ class KegelSettingsSection extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Select Focus Area',
+                    AppLocalizations.of(context).kegelSettingsSelectFocusArea,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),

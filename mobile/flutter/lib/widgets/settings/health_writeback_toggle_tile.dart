@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../services/health_export_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// SLICE_HEALTH_EXPORT — single settings tile that toggles Apple Health /
 /// Health Connect write-back.
 ///
@@ -132,7 +133,7 @@ class _HealthWritebackToggleTileState extends State<HealthWritebackToggleTile> {
       child: SwitchListTile.adaptive(
         title: Text(_platformLabel),
         subtitle: _loading
-            ? const Text('Loading…')
+            ? Text(AppLocalizations.of(context).commonLoading)
             : Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall,

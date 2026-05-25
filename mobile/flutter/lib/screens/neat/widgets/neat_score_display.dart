@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Grade levels for NEAT score
 enum NeatGrade {
   poor(0, 49, 'Poor', Icons.sentiment_very_dissatisfied),
@@ -229,7 +230,7 @@ class _NeatScoreDisplayState extends State<NeatScoreDisplay>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'NEAT Score',
+                            AppLocalizations.of(context).neatScoreDisplayNeatScore,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -368,7 +369,7 @@ class _NeatScoreDisplayState extends State<NeatScoreDisplay>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Tap for breakdown',
+                              AppLocalizations.of(context).neatScoreDisplayTapForBreakdown,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: textMuted,
@@ -514,7 +515,7 @@ class _BreakdownSection extends StatelessWidget {
           Divider(color: textMuted.withOpacity(0.2)),
           const SizedBox(height: 12),
           Text(
-            'SCORE BREAKDOWN',
+            AppLocalizations.of(context).neatScoreDisplayScoreBreakdown,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Timer widget for timed exercises (planks, wall sits, holds, etc.)
 /// Supports pause/resume functionality to allow users to rest mid-exercise.
 class TimedExerciseTimer extends StatefulWidget {
@@ -196,13 +197,13 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                     color: AppColors.success.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.check_circle, size: 16, color: AppColors.success),
                       SizedBox(width: 4),
                       Text(
-                        'COMPLETE',
+                        AppLocalizations.of(context).timedExerciseTimerComplete,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -220,13 +221,13 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                     color: AppColors.orange.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.pause_circle, size: 16, color: AppColors.orange),
                       SizedBox(width: 4),
                       Text(
-                        'PAUSED',
+                        AppLocalizations.of(context).workoutTopOverlayPaused,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -308,7 +309,7 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
               if (!_isComplete && _remainingSeconds < widget.durationSeconds) ...[
                 _buildControlButton(
                   icon: Icons.refresh,
-                  label: 'Reset',
+                  label: AppLocalizations.of(context).trophyFilterReset,
                   onTap: _resetTimer,
                   color: AppColors.textSecondary,
                 ),
@@ -377,7 +378,7 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                 const SizedBox(width: 16),
                 _buildControlButton(
                   icon: Icons.skip_next,
-                  label: 'Skip',
+                  label: AppLocalizations.of(context).onboardingSkip,
                   onTap: _completeTimer,
                   color: AppColors.textSecondary,
                 ),
@@ -390,7 +391,7 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                'Tap pause to rest, then resume',
+                AppLocalizations.of(context).timedExerciseTimerTapPauseToRest,
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textMuted.withOpacity(0.7),
@@ -599,7 +600,7 @@ class _TimedSetRowState extends State<TimedSetRow> {
                     ),
                     if (_hasStarted && !widget.isCompleted)
                       Text(
-                        _isPaused ? 'PAUSED' : 'RUNNING',
+                        _isPaused ? AppLocalizations.of(context).workoutTopOverlayPaused : AppLocalizations.of(context).timedExerciseTimerRunning,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,

@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/week1_tips_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Banner that surfaces one progressive feature tip per day during the
 /// user's first week. Dismissed tips stay hidden for the rest of the day.
 class Week1TipBanner extends ConsumerStatefulWidget {
@@ -188,8 +189,8 @@ class _Week1TipBannerState extends ConsumerState<Week1TipBanner>
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Text(
-                      'Try It',
+                    child: Text(
+                      AppLocalizations.of(context).week1TipBannerTryIt,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

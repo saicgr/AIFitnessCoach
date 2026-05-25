@@ -22,6 +22,7 @@ import '../../data/providers/exercise_history_provider.dart';
 import '../../data/services/api_client.dart';
 
 
+import '../../l10n/generated/app_localizations.dart';
 part 'exercise_detail_screen_part_previous_set_data.dart';
 part 'exercise_detail_screen_part_cue_item.dart';
 
@@ -689,12 +690,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                   Icon(Icons.history_outlined, size: 48, color: textMuted),
                   const SizedBox(height: 12),
                   Text(
-                    'No history for this exercise yet',
+                    AppLocalizations.of(context).exerciseDetailNoHistoryForThis,
                     style: TextStyle(color: textMuted, fontSize: 14),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Your sessions will appear here',
+                    AppLocalizations.of(context).exerciseDetailYourSessionsWillAppear,
                     style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
                   ),
                 ],
@@ -820,7 +821,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _showVideo ? 'Image' : 'Video',
+                          _showVideo ? AppLocalizations.of(context).exerciseDetailImage : AppLocalizations.of(context).workoutShowcaseVideo,
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.white,
@@ -870,7 +871,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
               ),
               const SizedBox(width: 8),
               Text(
-                'Instructions',
+                AppLocalizations.of(context).workoutShowcaseInstructions,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -930,7 +931,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Rest Timer',
+                    AppLocalizations.of(context).exerciseDetailRestTimer,
                     style: TextStyle(
                       fontSize: 12,
                       color: _isResting ? accentColor : textMuted,
@@ -1036,15 +1037,15 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
             ),
             child: Row(
               children: [
-                SizedBox(width: 36, child: Text('Set', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3))),
+                SizedBox(width: 36, child: Text(AppLocalizations.of(context).workoutSummaryAdvancedSet, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3))),
                 const SizedBox(width: 12),
                 Expanded(
                   flex: 2,
-                  child: Text('Previous', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
+                  child: Text(AppLocalizations.of(context).summaryExerciseTablePrevious, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
                 ),
                 Expanded(
                   flex: 2,
-                  child: Text('Target', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
+                  child: Text(AppLocalizations.of(context).workoutSummaryAdvancedTarget, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
                 ),
               ],
             ),

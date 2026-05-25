@@ -8,6 +8,7 @@ import '../widgets/stat_badge.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_stats_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// My Stats tab showing exercise history and performance
 class MyStatsTab extends ConsumerWidget {
   const MyStatsTab({super.key});
@@ -31,13 +32,13 @@ class MyStatsTab extends ConsumerWidget {
             Icon(Icons.error_outline, size: 48, color: textMuted),
             const SizedBox(height: 16),
             Text(
-              'Failed to load stats',
+              AppLocalizations.of(context).myStatsFailedToLoadStats,
               style: TextStyle(color: textMuted),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => ref.invalidate(exerciseHistoryProvider),
-              child: Text('Retry', style: TextStyle(color: cyan)),
+              child: Text(AppLocalizations.of(context).buttonRetry, style: TextStyle(color: cyan)),
             ),
           ],
         ),
@@ -52,14 +53,14 @@ class MyStatsTab extends ConsumerWidget {
                     size: 64, color: textMuted.withOpacity(0.5)),
                 const SizedBox(height: 16),
                 Text(
-                  'No exercise history yet',
+                  AppLocalizations.of(context).myStatsNoExerciseHistoryYet,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: textMuted,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Complete workouts to see your stats',
+                  AppLocalizations.of(context).myStatsCompleteWorkoutsToSee,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: textMuted.withOpacity(0.7),
                       ),
@@ -86,7 +87,7 @@ class MyStatsTab extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Exercise Performance',
+                      AppLocalizations.of(context).myStatsExercisePerformance,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -250,7 +251,7 @@ class _ExerciseHistoryCard extends StatelessWidget {
                     StatBadge(
                       icon: Icons.monitor_weight_outlined,
                       value: item.maxWeight!.toStringAsFixed(1),
-                      label: 'kg max',
+                      label: AppLocalizations.of(context).myStatsKgMax,
                       color: cyan,
                     ),
                   if (item.maxWeight != null && item.maxWeight! > 0)
@@ -259,7 +260,7 @@ class _ExerciseHistoryCard extends StatelessWidget {
                     StatBadge(
                       icon: Icons.emoji_events_outlined,
                       value: item.estimated1rm!.toStringAsFixed(1),
-                      label: '1RM',
+                      label: AppLocalizations.of(context).myStats1rm,
                       color: success,
                     ),
                 ],

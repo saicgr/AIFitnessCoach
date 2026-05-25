@@ -22,7 +22,7 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
               Icon(Icons.add_circle_outline, size: 18, color: cyan),
               const SizedBox(width: 8),
               Text(
-                'My Custom Exercises',
+                AppLocalizations.of(context).netflixExercisesTabMyCustomExercises,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -57,7 +57,7 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
                       Icon(Icons.add, size: 16, color: cyan),
                       const SizedBox(width: 4),
                       Text(
-                        'Create',
+                        AppLocalizations.of(context).netflixExercisesTabCreate,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -95,12 +95,12 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
                   Icon(Icons.fitness_center_outlined, size: 32, color: textMuted),
                   const SizedBox(height: 8),
                   Text(
-                    'No custom exercises yet',
+                    AppLocalizations.of(context).netflixExercisesTabNoCustomExercisesYet,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Create your own exercises with photos and AI analysis',
+                    AppLocalizations.of(context).netflixExercisesTabCreateYourOwnExercises,
                     style: TextStyle(fontSize: 12, color: textMuted),
                     textAlign: TextAlign.center,
                   ),
@@ -152,7 +152,7 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
           child: Row(
             children: [
               Text(
-                'All Exercises',
+                AppLocalizations.of(context).netflixExercisesTabAllExercises,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -236,7 +236,7 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
               Icon(Icons.fitness_center, color: orange, size: 18),
               const SizedBox(width: 8),
               Text(
-                'Training Splits',
+                AppLocalizations.of(context).netflixExercisesTabTrainingSplits,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

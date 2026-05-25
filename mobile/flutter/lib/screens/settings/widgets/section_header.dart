@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A styled section header for the settings screen.
 ///
 /// Displays a muted, uppercase label to group related settings.
@@ -68,7 +69,7 @@ class SectionHeader extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        "What's this?",
+                        AppLocalizations.of(context).sectionHeaderWhatSThis,
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? AppColors.cyan : AppColorsLight.cyan,

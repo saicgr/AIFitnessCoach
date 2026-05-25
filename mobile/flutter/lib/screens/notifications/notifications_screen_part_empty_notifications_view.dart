@@ -33,7 +33,7 @@ class _EmptyNotificationsView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'No notifications yet',
+              AppLocalizations.of(context).notificationsScreenPartNoNotificationsYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -42,7 +42,7 @@ class _EmptyNotificationsView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your AI Coach will send you workout reminders, motivation, and progress updates here.',
+              AppLocalizations.of(context).notificationsScreenPartYourAiCoachWill,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -65,7 +65,7 @@ class _EmptyNotificationsView extends StatelessWidget {
                       Icon(Icons.lightbulb_outline, size: 18, color: AppColors.cyan),
                       const SizedBox(width: 8),
                       Text(
-                        'What to expect',
+                        AppLocalizations.of(context).notificationsScreenPartWhatToExpect,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.cyan,
@@ -649,7 +649,7 @@ class _UnifiedNotificationCard extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
-                                    child: const Text('Accept', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                    child: Text(AppLocalizations.of(context).timerRestMixinAccept, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                                   ),
                                 ),
                               ),
@@ -669,7 +669,7 @@ class _UnifiedNotificationCard extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
-                                    child: const Text('Ignore', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                    child: Text(AppLocalizations.of(context).notificationsScreenPartIgnore, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                                   ),
                                 ),
                               ),

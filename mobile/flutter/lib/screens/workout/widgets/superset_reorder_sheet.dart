@@ -7,6 +7,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Result from the superset edit sheet
 class SupersetEditResult {
   final List<WorkoutExercise> exercises;
@@ -111,8 +112,8 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
       // Can't remove - would break the superset
       HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('A superset needs at least 2 exercises'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).supersetReorderASupersetNeedsAt),
           duration: Duration(seconds: 2),
         ),
       );
@@ -253,7 +254,7 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Drag to reorder, swipe left to remove',
+                          AppLocalizations.of(context).supersetReorderDragToReorderSwipe,
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -326,7 +327,7 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Remove',
+                                    AppLocalizations.of(context).workoutPlanDrawerRemove,
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
@@ -381,7 +382,7 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
                           onPressed: _resetChanges,
                           icon: Icon(Icons.refresh, size: 18, color: textMuted),
                           label: Text(
-                            'Reset',
+                            AppLocalizations.of(context).trophyFilterReset,
                             style: TextStyle(color: textMuted),
                           ),
                         ),
@@ -409,7 +410,7 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                _hasChanges ? 'Apply Changes' : 'No Changes',
+                                _hasChanges ? AppLocalizations.of(context).weeklyCheckinApplyChanges : AppLocalizations.of(context).vacationModeNoChanges,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -563,7 +564,7 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
           ),
           const SizedBox(width: 8),
           Text(
-            'No rest between',
+            AppLocalizations.of(context).supersetReorderNoRestBetween,
             style: TextStyle(
               fontSize: 11,
               color: textMuted,

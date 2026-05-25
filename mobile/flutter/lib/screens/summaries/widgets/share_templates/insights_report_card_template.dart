@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Instagram-Story template: the hero "Report Card" slide.
 /// Big {PERIOD} / REPORT CARD title, grade badge (A+/A/B+/B/C/D) driven by
 /// completion rate, and a structured list of stat rows. Works for any
@@ -108,8 +109,8 @@ class InsightsReportCardTemplate extends StatelessWidget {
                     letterSpacing: 6,
                   ),
                 ),
-                const Text(
-                  'REPORT CARD',
+                Text(
+                  AppLocalizations.of(context).statsWeeklyReportReportCard,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -155,11 +156,11 @@ class InsightsReportCardTemplate extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 _ReportRow(
-                  label: 'COMPLETED',
+                  label: AppLocalizations.of(context).statsWeeklyReportCompleted,
                   value: '$workoutsCompleted / $workoutsScheduled',
                 ),
                 _ReportRow(
-                  label: 'COMPLETION',
+                  label: AppLocalizations.of(context).statsWeeklyReportCompletion,
                   value: '${_completionPercent.toStringAsFixed(0)}%',
                 ),
                 _ReportRow(
@@ -167,15 +168,15 @@ class InsightsReportCardTemplate extends StatelessWidget {
                   value: _fmtTime(totalTimeMinutes),
                 ),
                 _ReportRow(
-                  label: 'CALORIES',
+                  label: AppLocalizations.of(context).retro80sTemplateCalories,
                   value: _fmtCalories(totalCalories),
                 ),
                 _ReportRow(
-                  label: 'PRs',
+                  label: AppLocalizations.of(context).weeklyWrappedPrs,
                   value: '$totalPrs',
                 ),
                 _ReportRow(
-                  label: 'MAX STREAK',
+                  label: AppLocalizations.of(context).insightsReportCardMaxStreak,
                   value: '$maxStreak days',
                   isLast: true,
                 ),

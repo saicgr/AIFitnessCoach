@@ -19,6 +19,7 @@ import '../../library/providers/muscle_group_images_provider.dart';
 import 'exercise_options_info_sheet.dart';
 import 'exercise_info_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'expanded_exercise_card_ui_1.dart';
 part 'expanded_exercise_card_ui_2.dart';
 
@@ -469,7 +470,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Details',
+                    AppLocalizations.of(context).progressScreenExtDetails,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -508,7 +509,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Rest Timer:',
+                  AppLocalizations.of(context).expandedExerciseCardRestTimer,
                   style: TextStyle(
                     fontSize: 12,
                     color: textSecondary,
@@ -543,7 +544,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Collapse',
+                    AppLocalizations.of(context).expandedExerciseCardCollapse,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -730,7 +731,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Breathing Guide',
+                        AppLocalizations.of(context).expandedExerciseCardBreathingGuide,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),

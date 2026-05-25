@@ -17,6 +17,7 @@ import 'glass_sheet.dart';
 import 'main_shell.dart';
 import 'replace_or_add_workout_dialog.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Shows the mood picker bottom sheet.
 void showMoodPickerSheet(BuildContext context, WidgetRef ref) {
   HapticService.light();
@@ -147,7 +148,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'How are you feeling?',
+                        AppLocalizations.of(context).quickAdjustHowAreYouFeeling,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -205,7 +206,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
                 // -------------------- Actions --------------------
                 _buildGlassActionButton(
                   icon: Icons.check_circle_outline,
-                  label: 'Just Log Mood',
+                  label: AppLocalizations.of(context).moodPickerJustLogMood,
                   isLoading: _isLogging,
                   onTap: _selectedMood == null || _isLogging || _isGenerating
                       ? null
@@ -221,7 +222,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
                 const SizedBox(height: 10),
                 _buildGlassActionButton(
                   icon: Icons.fitness_center,
-                  label: 'Generate Workout',
+                  label: AppLocalizations.of(context).moodPickerGenerateWorkout,
                   isLoading: _isGenerating,
                   onTap: _selectedMood == null || _isLogging || _isGenerating
                       ? null
@@ -258,7 +259,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
                             size: 16, color: textMutedStrong),
                         const SizedBox(width: 6),
                         Text(
-                          'View History & Analysis',
+                          AppLocalizations.of(context).moodPickerViewHistoryAnalysis,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -331,7 +332,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Advanced Options',
+                    AppLocalizations.of(context).moodPickerAdvancedOptions,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -385,7 +386,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
                         icon: Icon(Icons.restart_alt,
                             size: 16, color: accentColor),
                         label: Text(
-                          'Reset to recommended',
+                          AppLocalizations.of(context).moodPickerResetToRecommended,
                           style:
                               TextStyle(color: accentColor, fontSize: 12),
                         ),
@@ -750,9 +751,9 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
         setState(() => _isLogging = false);
         HapticService.error();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-                "Couldn't save your mood. Please try again."),
+                AppLocalizations.of(context).moodPickerCouldnTSaveYour),
             behavior: SnackBarBehavior.floating,
           ),
         );

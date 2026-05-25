@@ -12,6 +12,7 @@ import '../../widgets/cosmetics/cosmetic_badge.dart';
 import '../../widgets/cosmetics/framed_avatar.dart';
 import '../../widgets/glass_back_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Cosmetics gallery — browse all badges / frames / etc., equip what's owned,
 /// see locked items with the level they unlock at.
 class CosmeticsGalleryScreen extends ConsumerStatefulWidget {
@@ -76,7 +77,7 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
                           Icon(Icons.auto_awesome, size: 28, color: accent),
                           const SizedBox(width: 12),
                           Text(
-                            'Cosmetics',
+                            AppLocalizations.of(context).inventoryCosmetics,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -168,7 +169,7 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your loadout',
+                  AppLocalizations.of(context).cosmeticsGalleryYourLoadout,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -181,7 +182,7 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
                   CosmeticBadgePill(cosmetic: equippedBadge, height: 24)
                 else
                   Text(
-                    'No badge equipped',
+                    AppLocalizations.of(context).cosmeticsGalleryNoBadgeEquipped,
                     style: TextStyle(color: textMuted, fontSize: 13),
                   ),
                 const SizedBox(height: 6),
@@ -317,7 +318,7 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
         children: [
           Icon(Icons.error_outline, size: 40, color: textMuted),
           const SizedBox(height: 8),
-          Text('Failed to load cosmetics', style: TextStyle(color: textColor)),
+          Text(AppLocalizations.of(context).cosmeticsGalleryFailedToLoadCosmetics, style: TextStyle(color: textColor)),
           const SizedBox(height: 4),
           Text('$error',
               style: TextStyle(fontSize: 12, color: textMuted), textAlign: TextAlign.center),
@@ -325,7 +326,7 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
           TextButton.icon(
             onPressed: () => ref.read(cosmeticsProvider.notifier).load(),
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text(AppLocalizations.of(context).buttonRetry),
             style: TextButton.styleFrom(foregroundColor: accent),
           ),
         ],
@@ -485,7 +486,7 @@ class _CosmeticRow extends StatelessWidget {
                       foregroundColor: accent,
                       minimumSize: const Size(80, 32),
                     ),
-                    child: const Text('Equipped'),
+                    child: Text(AppLocalizations.of(context).cosmeticsGalleryEquipped),
                   )
                 : ElevatedButton(
                     onPressed: onEquip,
@@ -494,7 +495,7 @@ class _CosmeticRow extends StatelessWidget {
                       foregroundColor: Colors.white,
                       minimumSize: const Size(80, 32),
                     ),
-                    child: const Text('Equip'),
+                    child: Text(AppLocalizations.of(context).cosmeticsGalleryEquip),
                   )
           else
             Icon(Icons.lock_outline, color: textMuted, size: 20),

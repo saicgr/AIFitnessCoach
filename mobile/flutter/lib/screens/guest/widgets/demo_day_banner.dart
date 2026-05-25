@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Demo Day Banner Widget
 ///
 /// Shows a prominent banner with countdown timer for Demo Day (24-hour full access).
@@ -171,7 +172,7 @@ class _DemoDayBannerState extends ConsumerState<DemoDayBanner>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'DEMO DAY',
+                              AppLocalizations.of(context).demoDayBannerDemoDay,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
@@ -205,7 +206,7 @@ class _DemoDayBannerState extends ConsumerState<DemoDayBanner>
                   const SizedBox(height: 12),
                   // Main message
                   Text(
-                    '24 Hours of Full Access',
+                    AppLocalizations.of(context).demoDayBanner24HoursOfFull,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -214,7 +215,7 @@ class _DemoDayBannerState extends ConsumerState<DemoDayBanner>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Explore all premium features - no commitment',
+                    AppLocalizations.of(context).demoDayBannerExploreAllPremiumFeatures,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.85),
                       fontSize: 14,
@@ -241,7 +242,7 @@ class _DemoDayBannerState extends ConsumerState<DemoDayBanner>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Time Remaining: ',
+                          AppLocalizations.of(context).demoDayBannerTimeRemaining,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.85),
                             fontSize: 14,

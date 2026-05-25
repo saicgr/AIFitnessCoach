@@ -10,6 +10,7 @@ import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../library/providers/library_providers.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Maximum exercises shown in guest mode
 const int guestExerciseLimit = 20;
 
@@ -113,7 +114,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                 Row(
                   children: [
                     Text(
-                      'Exercise Library',
+                      AppLocalizations.of(context).libraryQuickAccessExerciseLibrary,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -127,8 +128,8 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                         color: AppColors.orange.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        'PREVIEW',
+                      child: Text(
+                        AppLocalizations.of(context).heroWorkoutCardPreview,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
@@ -141,7 +142,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Browse sample exercises',
+                  AppLocalizations.of(context).guestLibraryBrowseSampleExercises,
                   style: TextStyle(
                     fontSize: 13,
                     color: textSecondary,
@@ -174,7 +175,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
           onChanged: (value) => setState(() => _searchQuery = value),
           style: TextStyle(color: textSecondary),
           decoration: InputDecoration(
-            hintText: 'Search exercises...',
+            hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
             hintStyle: TextStyle(color: textMuted),
             prefixIcon: Icon(Icons.search, color: textMuted),
             suffixIcon: _searchQuery.isNotEmpty
@@ -233,8 +234,8 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                   color: AppColors.cyan,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Sign Up',
+                child: Text(
+                  AppLocalizations.of(context).mainShellPartSignUp,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -448,7 +449,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Unlock 1700+ Exercises',
+            AppLocalizations.of(context).guestLibraryUnlock1700Exercises,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -457,7 +458,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Sign up free to access our complete exercise library with video demonstrations and instructions.',
+            AppLocalizations.of(context).guestLibrarySignUpFreeTo,
             style: TextStyle(
               fontSize: 14,
               color: textSecondary,
@@ -478,8 +479,8 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Sign Up Free',
+              child: Text(
+                AppLocalizations.of(context).guestUpgradeSignUpFree,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -504,7 +505,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No exercises found',
+            AppLocalizations.of(context).netflixExercisesTabNoExercisesFound,
             style: TextStyle(
               fontSize: 16,
               color: textSecondary,
@@ -516,8 +517,8 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
               _searchController.clear();
               setState(() => _searchQuery = '');
             },
-            child: const Text(
-              'Clear search',
+            child: Text(
+              AppLocalizations.of(context).netflixExercisesTabClearSearch,
               style: TextStyle(color: AppColors.cyan),
             ),
           ),
@@ -538,7 +539,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Failed to load exercises',
+            AppLocalizations.of(context).netflixExercisesFailedToLoadExercises,
             style: TextStyle(
               fontSize: 16,
               color: textSecondary,
@@ -547,7 +548,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () => ref.invalidate(categoryExercisesProvider),
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context).buttonRetry),
           ),
         ],
       ),
@@ -638,7 +639,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
 
                   // Instructions placeholder
                   Text(
-                    'Instructions',
+                    AppLocalizations.of(context).workoutShowcaseInstructions,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -688,7 +689,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                     })
                   else
                     Text(
-                      'Sign up to view detailed instructions for this exercise.',
+                      AppLocalizations.of(context).guestLibrarySignUpToView,
                       style: TextStyle(
                         fontSize: 14,
                         color: textSecondary,
@@ -715,7 +716,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Get Video Demonstrations',
+                          AppLocalizations.of(context).guestLibraryGetVideoDemonstrations,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -724,7 +725,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Sign up free to access HD video guides for all exercises.',
+                          AppLocalizations.of(context).guestLibrarySignUpFreeTo2,
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -746,7 +747,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            child: const Text('Sign Up Free'),
+                            child: Text(AppLocalizations.of(context).guestUpgradeSignUpFree),
                           ),
                         ),
                       ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Dropdown filter for selecting muscle group
 class MuscleGroupFilter extends StatelessWidget {
   final List<String> muscleGroups;
@@ -32,7 +33,7 @@ class MuscleGroupFilter extends StatelessWidget {
             // "All" option
             final isSelected = selectedMuscleGroup == null;
             return FilterChip(
-              label: const Text('All Muscles'),
+              label: Text(AppLocalizations.of(context).muscleGroupFilterAllMuscles),
               selected: isSelected,
               onSelected: (_) => onMuscleGroupSelected(null),
               selectedColor: colorScheme.primary,

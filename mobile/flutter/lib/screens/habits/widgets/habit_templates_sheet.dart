@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/habit.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet showing habit templates grouped by category
 class HabitTemplatesSheet extends StatelessWidget {
   final ScrollController? scrollController;
@@ -66,7 +67,7 @@ class HabitTemplatesSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Text(
-              'Choose a Template',
+              AppLocalizations.of(context).habitTemplatesChooseATemplate,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
           ),

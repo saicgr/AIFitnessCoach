@@ -18,6 +18,7 @@ import '../cycle_visuals.dart';
 import 'cycle_calendar.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the day-detail sheet. [phase] is the predicted phase for [day].
 Future<void> showCycleDayDetailSheet(
   BuildContext context, {
@@ -154,7 +155,7 @@ class _CycleDayDetailBody extends StatelessWidget {
                 child: Center(
                   child: Text(
                     isFuture
-                        ? 'This day is in the future.'
+                        ? AppLocalizations.of(context).cycleDayDetailThisDayIsIn
                         : 'Nothing logged for this day yet.',
                     style: TextStyle(
                       color: fg.withValues(alpha: 0.5),
@@ -212,7 +213,7 @@ class _CycleDayDetailBody extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-                    label: const Text('Ask coach'),
+                    label: Text(AppLocalizations.of(context).workoutShowcaseAskCoach),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -232,7 +233,7 @@ class _CycleDayDetailBody extends StatelessWidget {
                             );
                           },
                     icon: const Icon(Icons.edit_rounded, size: 16),
-                    label: const Text('Edit this day'),
+                    label: Text(AppLocalizations.of(context).cycleDayDetailEditThisDay),
                   ),
                 ),
               ],

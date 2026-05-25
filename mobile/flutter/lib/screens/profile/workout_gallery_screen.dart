@@ -17,6 +17,7 @@ import '../../data/services/workout_gallery_service.dart';
 import '../../data/services/share_service.dart';
 import 'package:dio/dio.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full Workout Gallery Screen
 ///
 /// Shows all workout gallery images in a scrollable grid with:
@@ -145,7 +146,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Workout Gallery',
+        title: AppLocalizations.of(context).workoutGalleryWorkoutGallery,
         actions: [
           PillAppBarAction(icon: Icons.refresh_rounded, onTap: _loadImages),
         ],
@@ -264,7 +265,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No images yet',
+            AppLocalizations.of(context).workoutGalleryNoImagesYet,
             style: TextStyle(
               color: AppColors.textMuted,
               fontSize: 18,
@@ -273,7 +274,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Complete a workout and share it\nto start your gallery',
+            AppLocalizations.of(context).workoutGalleryCompleteAWorkoutAnd,
             style: TextStyle(
               color: AppColors.textMuted.withValues(alpha: 0.7),
               fontSize: 14,
@@ -373,7 +374,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      image.workoutName ?? 'Workout',
+                      image.workoutName ?? AppLocalizations.of(context).navWorkout,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
@@ -546,7 +547,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
             children: [
               ListTile(
                 leading: Icon(Icons.share_rounded, color: AppColors.cyan),
-                title: const Text('Share Again'),
+                title: Text(AppLocalizations.of(context).workoutGalleryShareAgain),
                 onTap: () async {
                   Navigator.pop(context);
                   await _reshareImage(image);
@@ -565,7 +566,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
               ListTile(
                 leading: Icon(Icons.delete_outline_rounded, color: AppColors.error),
                 title: Text(
-                  'Delete',
+                  AppLocalizations.of(context).buttonDelete,
                   style: TextStyle(color: AppColors.error),
                 ),
                 onTap: () {
@@ -638,12 +639,12 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Image?'),
-        content: const Text('This will remove the image from your gallery.'),
+        title: Text(AppLocalizations.of(context).workoutGalleryDeleteImage),
+        content: Text(AppLocalizations.of(context).workoutGalleryThisWillRemoveThe),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () async {
@@ -664,7 +665,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
             style: TextButton.styleFrom(
               foregroundColor: AppColors.error,
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -742,7 +743,7 @@ class _FullImageScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: PillAppBar(
-        title: image.workoutName ?? 'Workout Recap',
+        title: image.workoutName ?? AppLocalizations.of(context).workoutGalleryWorkoutRecap,
       ),
       body: InteractiveViewer(
         child: Center(

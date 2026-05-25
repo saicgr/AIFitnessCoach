@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/goal_unit.dart';
 import '../../../data/services/personal_goals_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Individual suggestion card for the carousel
 class SuggestionCard extends StatelessWidget {
   final GoalSuggestionItem suggestion;
@@ -140,8 +141,8 @@ class SuggestionCard extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Accept',
+                child: Text(
+                  AppLocalizations.of(context).timerRestMixinAccept,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -275,7 +276,7 @@ class ExpandedSuggestionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Target',
+                      AppLocalizations.of(context).workoutSummaryAdvancedTarget,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,
@@ -316,7 +317,7 @@ class ExpandedSuggestionCard extends StatelessWidget {
           const SizedBox(height: 16),
           // Reasoning
           Text(
-            'Why this goal?',
+            AppLocalizations.of(context).suggestionCardWhyThisGoal,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -365,7 +366,7 @@ class ExpandedSuggestionCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Not Now',
+                    AppLocalizations.of(context).watchInstallBannerNotNow,
                     style: TextStyle(color: textSecondary),
                   ),
                 ),
@@ -384,8 +385,8 @@ class ExpandedSuggestionCard extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Accept Goal',
+                  child: Text(
+                    AppLocalizations.of(context).suggestionCardAcceptGoal,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

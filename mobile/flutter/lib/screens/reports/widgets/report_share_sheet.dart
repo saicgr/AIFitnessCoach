@@ -16,6 +16,7 @@ import '../share_templates/report_trading_card_template.dart';
 import '../share_templates/report_wrapped_template.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // Re-export the data types so callers only have to import this file.
 export '../share_templates/_report_common.dart'
     show ReportShareData, ReportHighlight, ReportType;
@@ -332,7 +333,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Show Watermark',
+                  AppLocalizations.of(context).wrappedShareShowWatermark,
                   style: TextStyle(
                     fontSize: 14,
                     color: _showWatermark ? null : Colors.grey,
@@ -442,7 +443,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
                       child: _ShareButton(
                         onPressed: _shareToInstagram,
                         icon: Icons.camera_alt_rounded,
-                        label: 'Instagram',
+                        label: AppLocalizations.of(context).wrappedShareInstagram,
                         isPrimary: true,
                         isLoading: _isSharing,
                       ),
@@ -452,7 +453,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
                       child: _ShareButton(
                         onPressed: _shareGeneric,
                         icon: Icons.share_rounded,
-                        label: 'Share',
+                        label: AppLocalizations.of(context).commonShare,
                         isPrimary: false,
                         isLoading: _isSharing,
                       ),
@@ -466,7 +467,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
                       child: _ShareButton(
                         onPressed: _saveToGallery,
                         icon: Icons.save_alt_rounded,
-                        label: 'Save',
+                        label: AppLocalizations.of(context).buttonSave,
                         isPrimary: false,
                         isLoading: _isSaving,
                       ),
@@ -477,7 +478,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
                         child: _ShareButton(
                           onPressed: _copyLink,
                           icon: Icons.link_rounded,
-                          label: 'Copy link',
+                          label: AppLocalizations.of(context).reportShareCopyLink,
                           isPrimary: false,
                           isLoading: false,
                         ),

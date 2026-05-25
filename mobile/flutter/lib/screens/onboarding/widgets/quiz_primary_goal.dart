@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Glassmorphic primary goal selection widget for quiz screens.
 class QuizPrimaryGoal extends StatelessWidget {
   final String question;
@@ -69,7 +70,7 @@ class QuizPrimaryGoal extends StatelessWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text('How AI Uses This', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: t.textPrimary)),
+                    child: Text(AppLocalizations.of(context).quizPrimaryGoalHowAiUsesThis, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: t.textPrimary)),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
@@ -78,13 +79,13 @@ class QuizPrimaryGoal extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              _buildInfoSection(context, icon: Icons.fitness_center, title: 'Rep Ranges', description: 'Sets the number of reps per exercise. Hypertrophy uses 8-12 reps, Strength uses 3-6, Endurance uses 12+.'),
+              _buildInfoSection(context, icon: Icons.fitness_center, title: AppLocalizations.of(context).quizPrimaryGoalRepRanges, description: AppLocalizations.of(context).quizPrimaryGoalSetsTheNumberOf),
               const SizedBox(height: 16),
-              _buildInfoSection(context, icon: Icons.speed, title: 'Workout Intensity', description: 'Adjusts rest periods, exercise difficulty, and overall workout volume based on your focus.'),
+              _buildInfoSection(context, icon: Icons.speed, title: AppLocalizations.of(context).quizPrimaryGoalWorkoutIntensity, description: AppLocalizations.of(context).quizPrimaryGoalAdjustsRestPeriodsExercise),
               const SizedBox(height: 16),
-              _buildInfoSection(context, icon: Icons.list_alt, title: 'Exercise Selection', description: 'AI picks exercises that best match your goal—compound lifts for strength, isolation moves for hypertrophy.'),
+              _buildInfoSection(context, icon: Icons.list_alt, title: AppLocalizations.of(context).workoutDetailAiExerciseSelection, description: AppLocalizations.of(context).quizPrimaryGoalAiPicksExercisesThat),
               const SizedBox(height: 16),
-              _buildInfoSection(context, icon: Icons.refresh, title: 'Can Change Anytime', description: 'You can update your training focus in Settings whenever your goals evolve.'),
+              _buildInfoSection(context, icon: Icons.refresh, title: AppLocalizations.of(context).quizPrimaryGoalCanChangeAnytime, description: AppLocalizations.of(context).quizPrimaryGoalYouCanUpdateYour),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -97,7 +98,7 @@ class QuizPrimaryGoal extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
-                  child: const Text('Got it', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  child: Text(AppLocalizations.of(context).weightIncrementsGotIt, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],

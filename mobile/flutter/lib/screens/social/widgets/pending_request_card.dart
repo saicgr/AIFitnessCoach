@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Pending Request Card - Compact card for displaying pending friend requests
 class PendingRequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
@@ -94,7 +95,7 @@ class PendingRequestCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onViewProfile,
                 icon: const Icon(Icons.person_outline_rounded, size: 16),
-                label: const Text('View Profile'),
+                label: Text(AppLocalizations.of(context).pendingRequestCardViewProfile),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.textSecondary,
                   side: BorderSide(color: AppColors.cardBorder.withValues(alpha: 0.5)),

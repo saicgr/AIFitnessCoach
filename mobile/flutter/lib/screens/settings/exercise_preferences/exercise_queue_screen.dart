@@ -9,6 +9,7 @@ import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Screen for managing the exercise queue.
 /// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class ExerciseQueueScreen extends ConsumerWidget {
@@ -102,7 +103,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Exercise Queue',
+        title: AppLocalizations.of(context).trainingPreferencesExerciseQueue,
         actions: [
           PillAppBarAction(icon: Icons.add, onTap: () => _showAddExercisePicker(context, ref)),
         ],
@@ -146,7 +147,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'No Exercises Queued',
+              AppLocalizations.of(context).exerciseQueueNoExercisesQueued,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -155,7 +156,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Queued exercises will be included in your next workout. Items expire after 7 days.',
+              AppLocalizations.of(context).exerciseQueueQueuedExercisesWillBe,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted.withValues(alpha: 0.7),
@@ -166,7 +167,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
             ElevatedButton.icon(
               onPressed: () => _showAddExercisePicker(context, ref),
               icon: const Icon(Icons.add),
-              label: const Text('Add to Queue'),
+              label: Text(AppLocalizations.of(context).exerciseQueueAddToQueue),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cyan,
                 foregroundColor: Colors.white,
@@ -214,7 +215,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'These exercises will be included in your next workout. Queue items expire after 7 days.',
+                  AppLocalizations.of(context).exerciseQueueTheseExercisesWillBe,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white : AppColorsLight.textPrimary,
@@ -278,7 +279,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: const Text('Remove from Queue?'),
+        title: Text(AppLocalizations.of(context).exerciseQueueRemoveFromQueue),
         content: Text(
           'Remove "$exerciseName" from your queue? It won\'t be included in your next workout.',
         ),
@@ -286,7 +287,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -295,7 +296,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
-              'Remove',
+              AppLocalizations.of(context).workoutPlanDrawerRemove,
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -374,7 +375,7 @@ class _QueuedExerciseTile extends StatelessWidget {
                   color: textMuted,
                 ),
               ),
-              Text(' • ', style: TextStyle(color: textMuted)),
+              Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: textMuted)),
             ],
             Text(
               isExpiringSoon

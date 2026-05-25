@@ -27,6 +27,7 @@ import '../../widgets/glass_sheet.dart';
 import '../settings/dialogs/export_dialog.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'measurements_screen_part_add_measurement_sheet.dart';
 
 part 'measurements_screen_ui.dart';
@@ -191,7 +192,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Measurements',
+                              AppLocalizations.of(context).quickLogMeasurementsMeasurements,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -261,7 +262,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                                 border: Border.all(color: cardBorder),
                               ),
                               child: Text(
-                                _isMetric ? 'Metric' : 'Imperial',
+                                _isMetric ? AppLocalizations.of(context).measurementsScreenPartMetric : AppLocalizations.of(context).measurementsScreenPartImperial,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: cyan,
@@ -511,7 +512,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
       ),
       floatingActionButton: GlassCircleFab(
         onPressed: () => _showAddMeasurementSheet(context),
-        tooltip: 'Add measurement',
+        tooltip: AppLocalizations.of(context).measurementsAddMeasurement,
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
     );
   }
@@ -592,14 +593,14 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Taking longer than expected...',
+                                AppLocalizations.of(context).measurementsTakingLongerThanExpected,
                                 style:
                                     TextStyle(color: textMuted, fontSize: 12),
                               ),
                               const SizedBox(height: 8),
                               TextButton(
                                 onPressed: _loadMeasurements,
-                                child: Text('Retry',
+                                child: Text(AppLocalizations.of(context).buttonRetry,
                                     style: TextStyle(color: cyan)),
                               ),
                             ],
@@ -615,13 +616,13 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                             Icon(Icons.cloud_off, size: 40, color: textMuted),
                             const SizedBox(height: 8),
                             Text(
-                              'Failed to load data',
+                              AppLocalizations.of(context).measurementsFailedToLoadData,
                               style: TextStyle(color: textMuted),
                             ),
                             const SizedBox(height: 8),
                             TextButton(
                               onPressed: _loadMeasurements,
-                              child: Text('Retry', style: TextStyle(color: cyan)),
+                              child: Text(AppLocalizations.of(context).buttonRetry, style: TextStyle(color: cyan)),
                             ),
                           ],
                         ),
@@ -640,7 +641,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                             const SizedBox(height: 8),
                             TextButton(
                               onPressed: () => _showAddMeasurementSheet(context),
-                              child: Text('Add Entry', style: TextStyle(color: cyan)),
+                              child: Text(AppLocalizations.of(context).metricsDashboardAddEntry, style: TextStyle(color: cyan)),
                             ),
                           ],
                         ),
@@ -809,19 +810,19 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
             ? AppColors.elevated
             : AppColorsLight.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Entry?'),
+        title: Text(AppLocalizations.of(context).workoutHistoryImportDeleteEntry),
         content: Text(
           'Delete this ${entry.type.displayName} entry from ${DateFormat('MMM d, y').format(entry.recordedAt)}?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),

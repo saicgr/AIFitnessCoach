@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Instagram-Story template: period-level PRs.
 /// Big {PERIOD} / PERSONAL RECORDS title, trophy badge with count, and a
 /// list of up to 4 recent PRs. Degrades gracefully to an encouragement
@@ -74,8 +75,8 @@ class InsightsPrsTemplate extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Text(
-                  'PERSONAL RECORDS',
+                Text(
+                  AppLocalizations.of(context).weeklyPrsTemplatePersonalRecords,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -169,7 +170,7 @@ class _TrophyBadge extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                count == 1 ? '1 PR' : '$count PRs',
+                count == 1 ? AppLocalizations.of(context).weeklyPrsTemplate1Pr : '$count PRs',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 11,
@@ -271,8 +272,8 @@ class _EmptyPrState extends StatelessWidget {
           Icon(Icons.fitness_center_rounded,
               color: const Color(0xFFFBBF24).withValues(alpha: 0.8), size: 28),
           const SizedBox(height: 8),
-          const Text(
-            'No PRs yet this period',
+          Text(
+            AppLocalizations.of(context).insightsPrsTemplateNoPrsYetThis,
             style: TextStyle(
               color: Colors.white,
               fontSize: 14,
@@ -281,7 +282,7 @@ class _EmptyPrState extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Showing up is the real win. Keep stacking reps.',
+            AppLocalizations.of(context).insightsPrsTemplateShowingUpIsThe,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.65),

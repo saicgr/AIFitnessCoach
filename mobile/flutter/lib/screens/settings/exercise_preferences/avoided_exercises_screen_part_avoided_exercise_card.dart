@@ -93,7 +93,7 @@ class _AvoidedExerciseCard extends ConsumerWidget {
               IconButton(
                 icon: Icon(Icons.edit_outlined, color: AppColors.cyan, size: 20),
                 onPressed: onEdit,
-                tooltip: 'Edit',
+                tooltip: AppLocalizations.of(context).commonEdit,
               ),
               // Remove button
               IconButton(
@@ -120,7 +120,7 @@ class _AvoidedExerciseCard extends ConsumerWidget {
                   Icon(Icons.swap_horiz, size: 16, color: AppColors.cyan),
                   const SizedBox(width: 6),
                   Text(
-                    'View Safe Alternatives',
+                    AppLocalizations.of(context).avoidedExercisesScreenViewSafeAlternatives,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -233,7 +233,7 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Safe Alternatives',
+                            AppLocalizations.of(context).avoidedExercisesScreenSafeAlternatives,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -298,7 +298,7 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                             children: [
                               Icon(Icons.error_outline, size: 48, color: AppColors.error),
                               const SizedBox(height: 16),
-                              Text('Error loading alternatives', style: TextStyle(color: textMuted)),
+                              Text(AppLocalizations.of(context).avoidedExercisesScreenErrorLoadingAlternatives, style: TextStyle(color: textMuted)),
                             ],
                           ),
                         ),
@@ -313,12 +313,12 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                                   Icon(Icons.search_off, size: 48, color: textMuted.withValues(alpha: 0.5)),
                                   const SizedBox(height: 16),
                                   Text(
-                                    'No specific alternatives found',
+                                    AppLocalizations.of(context).avoidedExercisesScreenNoSpecificAlternativesFound,
                                     style: TextStyle(color: textMuted),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Browse the exercise library for options',
+                                    AppLocalizations.of(context).avoidedExercisesScreenBrowseTheExerciseLibrary,
                                     style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
                                   ),
                                 ],
@@ -393,7 +393,7 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Text(
-                                          'Safe',
+                                          AppLocalizations.of(context).avoidedExercisesScreenSafe,
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,

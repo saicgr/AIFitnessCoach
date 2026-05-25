@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/exercise.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../shared/coach_sheet.dart'
     show showCoachSheet, kEasyCoachQuickReplies;
 
@@ -38,7 +39,7 @@ class EasyChatPill extends ConsumerWidget {
     final accent = AccentColorScope.of(context).getColor(isDark);
 
     return Semantics(
-      label: 'Ask your coach',
+      label: AppLocalizations.of(context).easyChatPillAskYourCoach,
       button: true,
       child: Material(
         color: Colors.transparent,
@@ -66,7 +67,7 @@ class EasyChatPill extends ConsumerWidget {
                 Icon(Icons.auto_awesome_outlined, color: accent, size: 16),
                 const SizedBox(width: 6),
                 Text(
-                  'Ask coach',
+                  AppLocalizations.of(context).workoutShowcaseAskCoach,
                   style: TextStyle(
                     color: accent,
                     fontSize: 13,

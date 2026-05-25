@@ -11,6 +11,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/recipe_share.dart';
 import '../../../data/repositories/recipe_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RecipeShareSheet extends ConsumerStatefulWidget {
   final String recipeId;
   final String userId;
@@ -60,7 +61,7 @@ class _RecipeShareSheetState extends ConsumerState<RecipeShareSheet> {
         children: [
           Icon(_link != null ? Icons.public : Icons.share_outlined, size: 48, color: accent),
           const SizedBox(height: 12),
-          Text(_link != null ? 'Recipe is public' : 'Share publicly',
+          Text(_link != null ? AppLocalizations.of(context).recipeShareRecipeIsPublic : AppLocalizations.of(context).recipeShareSharePublicly,
               style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
           Text(
@@ -86,7 +87,7 @@ class _RecipeShareSheetState extends ConsumerState<RecipeShareSheet> {
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: _link!.url));
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Copied to clipboard')));
+                        SnackBar(content: Text(AppLocalizations.of(context).recipeShareCopiedToClipboard)));
                   },
                 ),
                 IconButton(
@@ -96,12 +97,12 @@ class _RecipeShareSheetState extends ConsumerState<RecipeShareSheet> {
               ]),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: _loading ? null : _disable, child: const Text('Stop sharing')),
+            OutlinedButton(onPressed: _loading ? null : _disable, child: Text(AppLocalizations.of(context).recipeShareStopSharing)),
           ] else
             ElevatedButton.icon(
               onPressed: _loading ? null : _enable,
               icon: const Icon(Icons.link),
-              label: const Text('Generate share link'),
+              label: Text(AppLocalizations.of(context).recipeShareGenerateShareLink),
               style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
             ),
         ],

@@ -11,6 +11,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/recipe_version.dart';
 import '../../../data/repositories/recipe_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RecipeHistoryScreen extends ConsumerStatefulWidget {
   final String recipeId;
   final String userId;
@@ -45,12 +46,12 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
     final res = await showDialog<bool>(
       context: context,
       builder: (dCtx) => AlertDialog(
-        title: const Text('Revert to this version?'),
+        title: Text(AppLocalizations.of(context).workoutActionsRevertToThisVersion),
         content: const Text('A new history entry will be created representing the revert. '
             'Active schedules using this recipe will use the reverted version.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(dCtx, true), child: const Text('Revert')),
+          TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text(AppLocalizations.of(context).buttonCancel)),
+          ElevatedButton(onPressed: () => Navigator.pop(dCtx, true), child: Text(AppLocalizations.of(context).workoutDetailRevert)),
         ],
       ),
     );
@@ -98,7 +99,7 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: bg, elevation: 0,
-        title: Text('History', style: TextStyle(color: text)),
+        title: Text(AppLocalizations.of(context).workoutHistory, style: TextStyle(color: text)),
         iconTheme: IconThemeData(color: text),
       ),
       body: _loading
@@ -114,7 +115,7 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Text('No edits yet — versioning starts after your first change.',
+                    child: Text(AppLocalizations.of(context).recipeHistoryNoEditsYetVersioning,
                       style: TextStyle(color: muted), textAlign: TextAlign.center),
                   ),
                 )
@@ -130,13 +131,13 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
                           backgroundColor: accent.withValues(alpha: 0.18),
                           child: Text('v${v.versionNumber}', style: TextStyle(color: accent, fontSize: 11)),
                         ),
-                        title: Text(v.changeSummary ?? 'Updated', style: TextStyle(color: text)),
+                        title: Text(v.changeSummary ?? AppLocalizations.of(context).recipeHistoryUpdated, style: TextStyle(color: text)),
                         subtitle: Text(v.editedAt.toLocal().toString().substring(0, 16),
                             style: TextStyle(color: muted, fontSize: 11)),
                         trailing: PopupMenuButton<String>(
                           itemBuilder: (_) => [
-                            const PopupMenuItem(value: 'compare', child: Text('Compare')),
-                            if (!isCurrent) const PopupMenuItem(value: 'revert', child: Text('Revert')),
+                            PopupMenuItem(value: 'compare', child: Text(AppLocalizations.of(context).recipeHistoryCompare)),
+                            if (!isCurrent) PopupMenuItem(value: 'revert', child: Text(AppLocalizations.of(context).workoutDetailRevert)),
                           ],
                           onSelected: (action) {
                             if (action == 'revert') _revert(v);
@@ -144,7 +145,7 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
                               if (_compareA == null) {
                                 setState(() => _compareA = v);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Now pick a second version')));
+                                    SnackBar(content: Text(AppLocalizations.of(context).recipeHistoryNowPickASecond)));
                               } else {
                                 _showDiff(_compareA!, v);
                                 setState(() => _compareA = null);
@@ -190,7 +191,7 @@ class _DiffSheet extends StatelessWidget {
           style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
         const Divider(),
         if (diff.fieldDiffs.isEmpty && diff.ingredientDiffs.isEmpty)
-          Text('No differences', style: TextStyle(color: text)),
+          Text(AppLocalizations.of(context).recipeHistoryNoDifferences, style: TextStyle(color: text)),
         ...diff.fieldDiffs.map((f) => ListTile(
           dense: true,
           title: Text(f.field, style: TextStyle(color: text)),

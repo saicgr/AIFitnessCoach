@@ -5,6 +5,7 @@ import '../../../../core/providers/week_comparison_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/glass_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// A card showing what exercises changed this week compared to last week.
 /// Provides transparency into weekly exercise variation.
 class WeekChangesCard extends ConsumerWidget {
@@ -85,7 +86,7 @@ class WeekChangesCard extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isFirstWeek ? 'Your First Week' : "This Week's Changes",
+                              isFirstWeek ? AppLocalizations.of(context).weekChangesCardYourFirstWeek : AppLocalizations.of(context).weekChangesCardThisWeekSChanges,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -207,7 +208,7 @@ class WeekChangesCard extends ConsumerWidget {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Week Comparison',
+                          AppLocalizations.of(context).weekChangesCardWeekComparison,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -229,7 +230,7 @@ class WeekChangesCard extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: _StatBox(
-                                label: 'This Week',
+                                label: AppLocalizations.of(context).workoutCompleteThisWeek,
                                 value: '${comparison.totalCurrent}',
                                 icon: Icons.fitness_center,
                                 color: AppColors.cyan,
@@ -239,7 +240,7 @@ class WeekChangesCard extends ConsumerWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _StatBox(
-                                label: 'Last Week',
+                                label: AppLocalizations.of(context).weekChangesCardLastWeek,
                                 value: '${comparison.totalPrevious}',
                                 icon: Icons.history,
                                 color: AppColors.purple,
@@ -253,7 +254,7 @@ class WeekChangesCard extends ConsumerWidget {
                         if (comparison.newExercises.isNotEmpty) ...[
                           const SizedBox(height: 24),
                           _SectionHeader(
-                            title: 'New This Week',
+                            title: AppLocalizations.of(context).weekChangesCardNewThisWeek,
                             count: comparison.newExercises.length,
                             color: AppColors.cyan,
                             icon: Icons.add_circle_outline,
@@ -274,7 +275,7 @@ class WeekChangesCard extends ConsumerWidget {
                         if (comparison.removedExercises.isNotEmpty) ...[
                           const SizedBox(height: 24),
                           _SectionHeader(
-                            title: 'Rotated Out',
+                            title: AppLocalizations.of(context).weekChangesCardRotatedOut,
                             count: comparison.removedExercises.length,
                             color: AppColors.orange,
                             icon: Icons.remove_circle_outline,
@@ -295,7 +296,7 @@ class WeekChangesCard extends ConsumerWidget {
                         if (comparison.keptExercises.isNotEmpty) ...[
                           const SizedBox(height: 24),
                           _SectionHeader(
-                            title: 'Consistent',
+                            title: AppLocalizations.of(context).weekChangesCardConsistent,
                             count: comparison.keptExercises.length,
                             color: AppColors.success,
                             icon: Icons.check_circle_outline,

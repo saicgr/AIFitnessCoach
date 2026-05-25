@@ -9,6 +9,7 @@ import 'widgets/activity_card.dart';
 import 'widgets/comments_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen that shows all public posts with a specific hashtag.
 /// Supports pagination via infinite scroll.
 class HashtagFeedScreen extends ConsumerStatefulWidget {
@@ -187,7 +188,7 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
                       const SizedBox(height: 16),
                       OutlinedButton(
                         onPressed: _loadPosts,
-                        child: const Text('Retry'),
+                        child: Text(AppLocalizations.of(context).buttonRetry),
                       ),
                     ],
                   ),

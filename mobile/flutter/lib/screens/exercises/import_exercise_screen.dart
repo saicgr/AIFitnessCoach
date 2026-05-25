@@ -34,6 +34,7 @@ import '../../data/repositories/custom_exercise_repository.dart';
 import '../../data/services/api_client.dart';
 import 'import_exercise_preview_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Public entry. Pushes the importer as a full screen route. When the user
 /// successfully saves, the created/edited exercise flows back via Navigator
 /// pop value so callers (e.g. the swap sheet) can refresh state.
@@ -180,7 +181,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
         elevation: 0,
         iconTheme: IconThemeData(color: textPrimary),
         title: Text(
-          'Import exercise',
+          AppLocalizations.of(context).importExerciseImportExercise,
           style: TextStyle(
             color: textPrimary,
             fontWeight: FontWeight.w700,
@@ -294,7 +295,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
             accent: accent,
             isDark: isDark,
             icon: Icons.photo_camera_outlined,
-            title: 'Snap it, we\'ll extract it',
+            title: AppLocalizations.of(context).importExerciseSnapItWeLl,
             body:
                 'Take or pick a clear photo of a machine, setup, or posture. '
                 'Gemini Vision will infer the exercise name, muscles, '
@@ -309,7 +310,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
                 Expanded(
                   child: _PickerButton(
                     icon: Icons.camera_alt_outlined,
-                    label: 'Take photo',
+                    label: AppLocalizations.of(context).recipesTakePhoto,
                     accent: accent,
                     onTap: () => _pickImage(ImageSource.camera),
                   ),
@@ -318,7 +319,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
                 Expanded(
                   child: _PickerButton(
                     icon: Icons.photo_library_outlined,
-                    label: 'From gallery',
+                    label: AppLocalizations.of(context).mediaPickerHelperFromGallery,
                     accent: accent,
                     onTap: () => _pickImage(ImageSource.gallery),
                   ),
@@ -329,7 +330,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
           _HintField(
             controller: _photoHintCtrl,
             isDark: isDark,
-            hint: 'Exercise name hint (optional)',
+            hint: AppLocalizations.of(context).importExerciseExerciseNameHintOptional,
           ),
         ],
       ),
@@ -380,7 +381,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
             accent: accent,
             isDark: isDark,
             icon: Icons.videocam_outlined,
-            title: 'Record a 5-10s clip',
+            title: AppLocalizations.of(context).importExerciseRecordA510s,
             body:
                 'Short form-check style. We\'ll extract 3 keyframes, classify '
                 'the motion, and build the structured exercise. Analysis '
@@ -399,7 +400,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
                 Expanded(
                   child: _PickerButton(
                     icon: Icons.videocam_outlined,
-                    label: 'Record video',
+                    label: AppLocalizations.of(context).importExerciseRecordVideo,
                     accent: accent,
                     onTap: () => _pickVideo(ImageSource.camera),
                   ),
@@ -408,7 +409,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
                 Expanded(
                   child: _PickerButton(
                     icon: Icons.video_library_outlined,
-                    label: 'From library',
+                    label: AppLocalizations.of(context).importExerciseFromLibrary,
                     accent: accent,
                     onTap: () => _pickVideo(ImageSource.gallery),
                   ),
@@ -419,7 +420,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
           _HintField(
             controller: _videoHintCtrl,
             isDark: isDark,
-            hint: 'Exercise name hint (optional)',
+            hint: AppLocalizations.of(context).importExerciseExerciseNameHintOptional,
           ),
           if (_isSubmitting && _tab == _ImportTab.video) ...[
             const SizedBox(height: 20),
@@ -502,7 +503,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
             accent: accent,
             isDark: isDark,
             icon: Icons.edit_note_outlined,
-            title: 'Describe the exercise',
+            title: AppLocalizations.of(context).importExerciseDescribeTheExercise,
             body:
                 'Type a one-sentence description. Gemini will infer muscles, '
                 'equipment, difficulty, and step-by-step instructions.',
@@ -515,7 +516,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
             style: TextStyle(color: textPrimary, fontSize: 15, height: 1.4),
             decoration: InputDecoration(
               hintText:
-                  "e.g., 'Seated cable row with neutral grip, targeting mid back and rear delts'",
+                  AppLocalizations.of(context).importExerciseEGSeatedCable,
               hintStyle: TextStyle(color: textMuted, fontSize: 14),
               filled: true,
               fillColor: fill,
@@ -533,7 +534,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
           _HintField(
             controller: _describeHintCtrl,
             isDark: isDark,
-            hint: 'Exercise name hint (optional)',
+            hint: AppLocalizations.of(context).importExerciseExerciseNameHintOptional,
           ),
         ],
       ),
@@ -575,7 +576,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
                   )
                 : const Icon(Icons.auto_awesome, size: 20),
             label: Text(
-              _isSubmitting ? 'Working...' : 'Import with AI',
+              _isSubmitting ? AppLocalizations.of(context).importExerciseWorking : AppLocalizations.of(context).importExerciseImportWithAi,
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,

@@ -11,6 +11,7 @@ import 'founder_note_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/hold_to_confirm_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Commitment Pact Screen — Onboarding v5
 ///
 /// Post-paywall, pre-home. Shows the user's Week 1 schedule and asks them
@@ -107,7 +108,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               children: [
                 const SizedBox(height: 4),
                 Text(
-                  'Skip the commitment?',
+                  AppLocalizations.of(context).commitmentPactSkipTheCommitment,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 19,
@@ -143,8 +144,8 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     alignment: Alignment.center,
-                    child: const Text(
-                      "I'm in",
+                    child: Text(
+                      AppLocalizations.of(context).commitmentPactIMIn,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -158,7 +159,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                 TextButton(
                   onPressed: () => Navigator.of(sheetCtx).pop('skip'),
                   child: Text(
-                    'Skip anyway',
+                    AppLocalizations.of(context).commitmentPactSkipAnyway,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -303,7 +304,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 4, bottom: 8),
               child: Text(
-                'OTHER WORKOUT DAYS',
+                AppLocalizations.of(context).commitmentPactOtherWorkoutDays,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -546,7 +547,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
             children: [
               const SizedBox(height: 28),
               Text(
-                'One last thing.',
+                AppLocalizations.of(context).commitmentPactOneLastThing,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -582,7 +583,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               }),
               const SizedBox(height: 6),
               Text(
-                "We'll handle the plan — you handle showing up.",
+                AppLocalizations.of(context).commitmentPactWeLlHandleThe,
                 style: TextStyle(fontSize: 15, color: textSecondary),
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 300.ms),
@@ -628,8 +629,8 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                           ),
                         )
                       : HoldToConfirmButton(
-                          label: 'Hold to commit',
-                          accessibleLabel: "I'm in",
+                          label: AppLocalizations.of(context).commitmentPactHoldToCommit,
+                          accessibleLabel: AppLocalizations.of(context).commitmentPactIMIn,
                           enabled: !_submitting,
                           onConfirmed: _commit,
                         ))
@@ -642,7 +643,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               TextButton(
                 onPressed: _submitting ? null : _onMaybeLaterTapped,
                 child: Text(
-                  'Maybe later',
+                  AppLocalizations.of(context).notifsLaterButton,
                   style: TextStyle(
                     fontSize: 14,
                     color: textSecondary,

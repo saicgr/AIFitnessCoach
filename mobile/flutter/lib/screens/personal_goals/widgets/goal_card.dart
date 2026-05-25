@@ -8,6 +8,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'friend_avatars_row.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A card displaying a personal weekly goal with progress
 class GoalCard extends StatelessWidget {
   final Map<String, dynamic> goal;
@@ -79,7 +80,7 @@ class GoalCard extends StatelessWidget {
               children: [
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: Colors.red),
-                  title: Text('Delete Goal', style: TextStyle(color: textPrimary)),
+                  title: Text(AppLocalizations.of(context).goalCardDeleteGoal, style: TextStyle(color: textPrimary)),
                   subtitle: Text('Permanently remove "$exerciseName"', style: TextStyle(color: textMuted, fontSize: 12)),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -161,13 +162,13 @@ class GoalCard extends StatelessWidget {
                       color: AppColors.success.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.check_circle, size: 14, color: AppColors.success),
                         SizedBox(width: 4),
                         Text(
-                          'Done',
+                          AppLocalizations.of(context).commonDone,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -184,13 +185,13 @@ class GoalCard extends StatelessWidget {
                       color: AppColors.orange.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.emoji_events, size: 14, color: AppColors.orange),
                         SizedBox(width: 4),
                         Text(
-                          'NEW PR!',
+                          AppLocalizations.of(context).log1rmNewPr,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -214,7 +215,7 @@ class GoalCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        goalType == PersonalGoalType.singleMax ? 'Best Attempt' : 'Total',
+                        goalType == PersonalGoalType.singleMax ? AppLocalizations.of(context).goalCardBestAttempt : 'Total',
                         style: TextStyle(fontSize: 11, color: textMuted),
                       ),
                       const SizedBox(height: 2),
@@ -248,7 +249,7 @@ class GoalCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        'Personal Best',
+                        AppLocalizations.of(context).recordAttemptPersonalBest,
                         style: TextStyle(fontSize: 11, color: textMuted),
                       ),
                       const SizedBox(height: 2),
@@ -299,7 +300,7 @@ class GoalCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     daysRemaining == 1
-                        ? '1 day left'
+                        ? AppLocalizations.of(context).trialProgress1DayLeft
                         : '$daysRemaining days left',
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
@@ -314,7 +315,7 @@ class GoalCard extends StatelessWidget {
                       size: 18,
                       color: textMuted,
                     ),
-                    tooltip: 'Delete Goal',
+                    tooltip: AppLocalizations.of(context).goalCardDeleteGoal,
                     padding: const EdgeInsets.all(8),
                     constraints: const BoxConstraints(),
                   ),
@@ -327,7 +328,7 @@ class GoalCard extends StatelessWidget {
                       size: 20,
                       color: textSecondary,
                     ),
-                    tooltip: 'View Progress History',
+                    tooltip: AppLocalizations.of(context).goalCardViewProgressHistory,
                     padding: const EdgeInsets.all(8),
                     constraints: const BoxConstraints(),
                   ),

@@ -21,6 +21,7 @@ import 'widgets/add_schedule_item_sheet.dart';
 import 'widgets/schedule_item_card.dart';
 import 'widgets/timeline_view.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'schedule_screen_part_week_selector.dart';
 
 /// Helper: compute start of week for a given date, using weekStartDay (1=Mon, 7=Sun)
@@ -74,7 +75,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     return Scaffold(
       backgroundColor: colors.background,
       appBar: PillAppBar(
-        title: 'Schedule',
+        title: AppLocalizations.of(context).scheduleWorkoutSchedule,
         actions: [
           PillAppBarAction(
             icon: _viewModeIcon,
@@ -149,7 +150,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         ElevatedButton(
                           onPressed: () =>
                               ref.read(workoutsProvider.notifier).refresh(),
-                          child: const Text('Retry'),
+                          child: Text(AppLocalizations.of(context).buttonRetry),
                         ),
                       ],
                     ),
@@ -332,7 +333,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'Today',
+                    AppLocalizations.of(context).todayScoreCardToday,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -817,7 +818,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ),
           const SizedBox(width: 12),
           Text(
-            isPast ? 'Rest day' : 'No items scheduled',
+            isPast ? AppLocalizations.of(context).scheduleRestDay : AppLocalizations.of(context).scheduleNoItemsScheduled,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -986,7 +987,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Generate This Week',
+                                  AppLocalizations.of(context).scheduleGenerateThisWeek,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,

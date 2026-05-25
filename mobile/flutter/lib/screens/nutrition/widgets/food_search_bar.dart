@@ -5,6 +5,7 @@ import '../../../core/services/posthog_service.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/food_search_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Filter options for food search
 enum FoodSearchFilter {
   all('All'),
@@ -193,7 +194,7 @@ class _FoodSearchBarState extends ConsumerState<FoodSearchBar> {
                       fontSize: 16,
                     ),
                     decoration: InputDecoration(
-                      hintText: widget.hintText ?? 'Search foods...',
+                      hintText: widget.hintText ?? AppLocalizations.of(context).foodSearchBarSearchFoods,
                       hintStyle: TextStyle(
                         color: textMuted,
                         fontSize: 16,
@@ -426,7 +427,7 @@ class _FoodSearchBarCompactState extends ConsumerState<FoodSearchBarCompact> {
                 fontSize: 15,
               ),
               decoration: InputDecoration(
-                hintText: widget.hintText ?? 'Search foods...',
+                hintText: widget.hintText ?? AppLocalizations.of(context).foodSearchBarSearchFoods,
                 hintStyle: TextStyle(
                   color: textMuted,
                   fontSize: 15,
@@ -500,7 +501,7 @@ class RecentSearchesList extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recent Searches',
+                AppLocalizations.of(context).foodSearchBarRecentSearches,
                 style: TextStyle(
                   color: textMuted,
                   fontSize: 12,
@@ -512,7 +513,7 @@ class RecentSearchesList extends ConsumerWidget {
                 GestureDetector(
                   onTap: onClearAll,
                   child: Text(
-                    'Clear All',
+                    AppLocalizations.of(context).foodSearchBarClearAll,
                     style: TextStyle(
                       color: isDark ? AppColors.cyan : AppColorsLight.cyan,
                       fontSize: 12,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Coming Soon badge that appears on program cards
 /// Simple label in top-right corner without darkening the card
 class ComingSoonOverlay extends StatelessWidget {
@@ -17,7 +18,7 @@ class ComingSoonOverlay extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          'Coming Soon',
+          AppLocalizations.of(context).settingsComingSoon,
           style: TextStyle(
             color: Colors.white,
             fontSize: 11,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card 3: Favorites card - favorite exercise and muscle group
 class WrappedFavoritesCard extends StatelessWidget {
   final WrappedData data;
@@ -90,7 +91,7 @@ class WrappedFavoritesCard extends StatelessWidget {
 
                   // Header
                   Text(
-                    'YOUR GO-TO',
+                    AppLocalizations.of(context).favoritesCardYourGoTo,
                     style: TextStyle(
                       color: const Color(0xFF5EEAD4).withValues(alpha: 0.9),
                       fontSize: 16,
@@ -121,7 +122,7 @@ class WrappedFavoritesCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Your most performed exercise',
+                    AppLocalizations.of(context).favoritesCardYourMostPerformedExercise,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 15,
@@ -151,7 +152,7 @@ class WrappedFavoritesCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'FAVORITE MUSCLE GROUP',
+                    AppLocalizations.of(context).favoritesCardFavoriteMuscleGroup,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.4),
                       fontSize: 12,

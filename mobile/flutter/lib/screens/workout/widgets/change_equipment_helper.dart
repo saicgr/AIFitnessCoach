@@ -28,6 +28,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/gym_equipment_sheet.dart';
 import 'regenerate_with_new_equipment_dialog.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Opens the equipment editor modally over the active workout, persists the
 /// change to the active gym profile, then prompts regenerate-or-continue.
 Future<Workout?> showChangeEquipmentForActiveWorkout(
@@ -38,8 +39,8 @@ Future<Workout?> showChangeEquipmentForActiveWorkout(
   final activeProfile = ref.read(activeGymProfileProvider);
   if (activeProfile == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('No active gym profile — open Settings → Gyms first.'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).changeEquipmentHelperNoActiveGymProfile),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -63,7 +64,7 @@ Future<Workout?> showChangeEquipmentForActiveWorkout(
       child: GymEquipmentSheet(
         selectedEquipment: initialEquipment,
         equipmentDetails: initialDetails,
-        title: 'Equipment',
+        title: AppLocalizations.of(context).trainingSetupCardEquipment,
         gymProfileId: activeProfile.id,
         workoutEnvironment: activeProfile.workoutEnvironment,
         onSave: (names, details) {

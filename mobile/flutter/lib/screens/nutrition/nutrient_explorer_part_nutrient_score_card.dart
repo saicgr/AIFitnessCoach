@@ -74,7 +74,7 @@ class _NutrientScoreCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Score',
+                        AppLocalizations.of(context).nutrientExplorerPartScore,
                         style: TextStyle(
                           fontSize: 10,
                           color: textMuted,
@@ -91,7 +91,7 @@ class _NutrientScoreCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nutrient Score',
+                      AppLocalizations.of(context).nutrientExplorerPartNutrientScore,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -111,19 +111,19 @@ class _NutrientScoreCard extends StatelessWidget {
                     Row(
                       children: [
                         _StatChip(
-                          label: 'Optimal',
+                          label: AppLocalizations.of(context).strengthOverviewCardOptimal,
                           count: optimalCount,
                           color: const Color(0xFF4CAF50), // Green
                         ),
                         const SizedBox(width: 8),
                         _StatChip(
-                          label: 'Low',
+                          label: AppLocalizations.of(context).scoreExplainLow,
                           count: lowCount,
                           color: const Color(0xFFFFC107), // Amber
                         ),
                         const SizedBox(width: 8),
                         _StatChip(
-                          label: 'High',
+                          label: AppLocalizations.of(context).scoreExplainHigh,
                           count: overCount,
                           color: const Color(0xFFFF9800), // Orange
                         ),
@@ -629,7 +629,7 @@ class _EmptyNutrientState extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'No Nutrient Data',
+              AppLocalizations.of(context).nutrientExplorerPartNoNutrientData,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -638,7 +638,7 @@ class _EmptyNutrientState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Log some food to see your micronutrient intake',
+              AppLocalizations.of(context).nutrientExplorerPartLogSomeFoodTo,
               style: TextStyle(
                 fontSize: 14,
                 color: textSecondary,
@@ -649,7 +649,7 @@ class _EmptyNutrientState extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRefresh,
               icon: const Icon(Icons.refresh),
-              label: const Text('Refresh'),
+              label: Text(AppLocalizations.of(context).timelineRefresh),
               style: OutlinedButton.styleFrom(
                 foregroundColor: teal,
                 side: BorderSide(color: teal),
@@ -870,7 +870,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
             // Floor label
             if (floorValue != null)
               _TierLabel(
-                label: 'Floor',
+                label: AppLocalizations.of(context).nutrientExplorerPartFloor,
                 value: '${floorValue!.toStringAsFixed(0)}$unit',
                 color: AppColors.textSecondary,
               )
@@ -879,7 +879,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
 
             // Target label (center)
             _TierLabel(
-              label: 'Target',
+              label: AppLocalizations.of(context).workoutSummaryAdvancedTarget,
               value: '${targetValue.toStringAsFixed(0)}$unit',
               color: AppColors.textPrimary,
               isCenter: true,
@@ -888,7 +888,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
             // Ceiling label
             if (ceilingValue != null)
               _TierLabel(
-                label: 'Ceiling',
+                label: AppLocalizations.of(context).nutrientExplorerPartCeiling,
                 value: '${ceilingValue!.toStringAsFixed(0)}$unit',
                 color: AppColors.textMuted,
               )

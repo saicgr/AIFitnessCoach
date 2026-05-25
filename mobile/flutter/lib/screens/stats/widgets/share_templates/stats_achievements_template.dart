@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Stats Achievements Template - Shows achievements and milestones
 /// Celebratory design with achievement badges
 class StatsAchievementsTemplate extends StatelessWidget {
@@ -52,7 +53,7 @@ class StatsAchievementsTemplate extends StatelessWidget {
               children: [
                 // Header
                 Text(
-                  'ACHIEVEMENTS',
+                  AppLocalizations.of(context).statsAchievementsTemplateAchievements,
                   style: TextStyle(
                     color: AppColors.purple,
                     fontSize: 12,
@@ -102,7 +103,7 @@ class StatsAchievementsTemplate extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Achievements Unlocked',
+                  AppLocalizations.of(context).trophiesEarnedAchievementsUnlocked,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.7),
                     fontSize: 14,
@@ -137,7 +138,7 @@ class StatsAchievementsTemplate extends StatelessWidget {
                       _MiniStat(
                         icon: Icons.local_fire_department,
                         value: '$currentStreak',
-                        label: 'Day Streak',
+                        label: AppLocalizations.of(context).trophiesEarnedDayStreak,
                         color: AppColors.orange,
                       ),
                       Container(
@@ -148,7 +149,7 @@ class StatsAchievementsTemplate extends StatelessWidget {
                       _MiniStat(
                         icon: Icons.fitness_center,
                         value: '$totalWorkouts',
-                        label: 'Workouts',
+                        label: AppLocalizations.of(context).workoutListTitle,
                         color: AppColors.purple,
                       ),
                     ],

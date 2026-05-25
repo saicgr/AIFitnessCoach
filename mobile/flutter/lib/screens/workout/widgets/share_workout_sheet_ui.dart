@@ -20,7 +20,7 @@ extension _ShareWorkoutSheetStateUI on _ShareWorkoutSheetState {
           ),
           const SizedBox(width: 4),
           Text(
-            'Tap to preview',
+            AppLocalizations.of(context).shareWorkoutSheetTapToPreview,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 11,

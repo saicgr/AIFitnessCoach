@@ -12,6 +12,7 @@ import '../../workout/widgets/exercise_add_sheet.dart';
 import '../../workout/widgets/exercise_detail_sheet.dart';
 import 'components/components.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows workout review sheet after regeneration.
 ///
 /// The sheet operates on a *preview* workout held in a short-lived backend
@@ -312,7 +313,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
           // state already in memory.
           TextButton(
             onPressed: () => Navigator.pop(context, null),
-            child: const Text('Try again'),
+            child: Text(AppLocalizations.of(context).workoutReviewTryAgain),
           ),
         ],
       ),
@@ -354,7 +355,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Review Your Workout',
+                  AppLocalizations.of(context).workoutReviewReviewYourWorkout,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -392,7 +393,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
         children: [
           // Workout name
           Text(
-            _currentWorkout.name ?? 'Your Workout',
+            _currentWorkout.name ?? AppLocalizations.of(context).workoutReviewYourWorkout,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -507,7 +508,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
             Icon(Icons.fitness_center, size: 48, color: colors.textMuted),
             const SizedBox(height: 12),
             Text(
-              'No exercises yet',
+              AppLocalizations.of(context).workoutReviewNoExercisesYet,
               style: TextStyle(color: colors.textMuted),
             ),
           ],
@@ -549,7 +550,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
               )
             : Icon(Icons.add, color: colors.success),
         label: Text(
-          _isAdding ? 'Adding...' : 'Add Exercise',
+          _isAdding ? AppLocalizations.of(context).workoutReviewAdding : AppLocalizations.of(context).workoutSummaryAddExercise,
           style: TextStyle(color: colors.success),
         ),
         style: OutlinedButton.styleFrom(
@@ -602,7 +603,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
                   : Icon(Icons.arrow_back,
                       size: 18, color: colors.textPrimary),
               label: Text(
-                _isDiscarding ? 'Closing...' : 'Back',
+                _isDiscarding ? AppLocalizations.of(context).workoutReviewClosing : AppLocalizations.of(context).commonBack,
                 style: TextStyle(color: colors.textPrimary),
               ),
               style: OutlinedButton.styleFrom(
@@ -641,7 +642,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
                       ),
                     )
                   : const Icon(Icons.check, size: 18),
-              label: Text(_isApproving ? 'Saving...' : 'Approve Plan'),
+              label: Text(_isApproving ? AppLocalizations.of(context).workoutReviewSaving : AppLocalizations.of(context).workoutReviewApprovePlan),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.success,
                 foregroundColor: Colors.white,
@@ -790,7 +791,7 @@ class _ReviewExerciseCard extends StatelessWidget {
                     color: colors.cyan,
                     size: 24,
                   ),
-            tooltip: 'Swap exercise',
+            tooltip: AppLocalizations.of(context).workoutReviewSwapExercise,
           ),
         ],
       ),

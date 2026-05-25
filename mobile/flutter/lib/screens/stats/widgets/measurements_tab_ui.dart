@@ -130,7 +130,7 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
                   child: Text(
-                    'Choose metric',
+                    AppLocalizations.of(context).measurementsTabUiChooseMetric,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -168,7 +168,7 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                           trailing: hasData
                               ? null
                               : Text(
-                                  'no data',
+                                  AppLocalizations.of(context).measurementsTabUiNoData,
                                   style: TextStyle(
                                     fontSize: 11,
                                     color:

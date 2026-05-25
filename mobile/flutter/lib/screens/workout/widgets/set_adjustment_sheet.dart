@@ -11,6 +11,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'set_adjustment_sheet_part_set_adjustment_reason.dart';
 part 'set_adjustment_sheet_part_in_workout_set_editing_sheet_state.dart';
 part 'set_adjustment_sheet_part_quick_action_button.dart';
@@ -163,7 +164,7 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Why are you adjusting?',
+                    AppLocalizations.of(context).setAdjustmentWhyAreYouAdjusting,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -245,7 +246,7 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Additional notes (optional)',
+                      AppLocalizations.of(context).setAdjustmentSheetAdditionalNotesOptional,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -262,7 +263,7 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                         color: textPrimary,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'E.g., shoulder feels tight...',
+                        hintText: AppLocalizations.of(context).setAdjustmentEGShoulderFeels,
                         hintStyle: TextStyle(
                           color: textMuted,
                           fontSize: 14,
@@ -320,7 +321,7 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                         ),
                       ),
                       child: Text(
-                        'Cancel',
+                        AppLocalizations.of(context).buttonCancel,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -346,8 +347,8 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Confirm',
+                      child: Text(
+                        AppLocalizations.of(context).workoutUiBuildersConfirm,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,

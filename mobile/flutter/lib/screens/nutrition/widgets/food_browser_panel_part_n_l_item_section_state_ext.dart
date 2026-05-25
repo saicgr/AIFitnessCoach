@@ -30,7 +30,7 @@ extension __NLItemSectionStateExt on _NLItemSectionState {
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => _fetchAlternatives(widget.item.name),
-              child: Text('Retry', style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
+              child: Text(AppLocalizations.of(context).buttonRetry, style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -72,7 +72,7 @@ extension __NLItemSectionStateExt on _NLItemSectionState {
             Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 4),
               child: Text(
-                'Only match found',
+                AppLocalizations.of(context).foodBrowserPanelOnlyMatchFound,
                 style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.5), fontStyle: FontStyle.italic),
               ),
             ),
@@ -106,7 +106,7 @@ extension __NLItemSectionStateExt on _NLItemSectionState {
           if (backendModifiers.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: Text('Modifiers', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+              child: Text(AppLocalizations.of(context).foodBrowserPanelModifiers, style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             ),
             // Backend-provided modifiers (addons, removals, doneness, cooking, etc.)
             ...backendModifiers.map((mod) => _buildModifierControl(mod, textPrimary, textMuted, teal, glassSurface)),
@@ -119,7 +119,7 @@ extension __NLItemSectionStateExt on _NLItemSectionState {
               controller: _modSearchCtrl,
               style: TextStyle(fontSize: 12, color: textPrimary),
               decoration: InputDecoration(
-                hintText: 'Add modifier...',
+                hintText: AppLocalizations.of(context).foodBrowserPanelAddModifier,
                 hintStyle: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.4)),
                 prefixIcon: Icon(Icons.add_circle_outline, size: 16, color: textMuted),
                 isDense: true,
@@ -149,7 +149,7 @@ extension __NLItemSectionStateExt on _NLItemSectionState {
                       const SizedBox(width: 6),
                       Expanded(child: Text(mod.displayLabel ?? mod.phrase.split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w).join(' '), style: TextStyle(fontSize: 12, color: textPrimary))),
                       Text('${(mod.delta['calories']?.round() ?? 0) >= 0 ? "+" : ""}${mod.delta['calories']?.round() ?? 0}', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
-                      Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted.withValues(alpha: 0.6))),
+                      Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted.withValues(alpha: 0.6))),
                     ],
                   ),
                 ),
@@ -174,7 +174,7 @@ extension __NLItemSectionStateExt on _NLItemSectionState {
             children: [
               Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500))),
               Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),
-              Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+              Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted)),
             ],
           ),
           const SizedBox(height: 4),

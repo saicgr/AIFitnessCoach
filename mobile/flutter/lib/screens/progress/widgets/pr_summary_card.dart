@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../data/models/scores.dart';
 import '../../../data/providers/scores_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card showing personal records summary
 class PRSummaryCard extends ConsumerStatefulWidget {
   final String userId;
@@ -58,7 +59,7 @@ class _PRSummaryCardState extends ConsumerState<PRSummaryCard> {
                 const Icon(Icons.emoji_events, color: Color(0xFFFFD700)),
                 const SizedBox(width: 8),
                 Text(
-                  'Personal Records',
+                  AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -95,7 +96,7 @@ class _PRSummaryCardState extends ConsumerState<PRSummaryCard> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No Personal Records Yet',
+            AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -104,7 +105,7 @@ class _PRSummaryCardState extends ConsumerState<PRSummaryCard> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Log your workouts and we\'ll track\nyour best lifts automatically!',
+            AppLocalizations.of(context).prSummaryCardLogYourWorkoutsAnd,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -171,7 +172,7 @@ class _PRSummaryCardState extends ConsumerState<PRSummaryCard> {
             child: Row(
               children: [
                 Text(
-                  'Recent PRs',
+                  AppLocalizations.of(context).prSummaryCardRecentPrs,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

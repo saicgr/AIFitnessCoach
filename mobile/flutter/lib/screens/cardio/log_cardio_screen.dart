@@ -9,6 +9,7 @@ import '../../data/services/api_client.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class LogCardioScreen extends ConsumerStatefulWidget {
   final String? workoutId;
 
@@ -86,8 +87,8 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
-        title: 'Log Cardio',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).logCardioLogCardio,
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -97,7 +98,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Cardio Type Section
-              _SectionHeader(title: 'ACTIVITY TYPE', isDark: isDark)
+              _SectionHeader(title: AppLocalizations.of(context).logCardioActivityType, isDark: isDark)
                   .animate()
                   .fadeIn(),
               const SizedBox(height: 12),
@@ -110,7 +111,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
               const SizedBox(height: 24),
 
               // Location Section (Prominent)
-              _SectionHeader(title: 'LOCATION', isDark: isDark)
+              _SectionHeader(title: AppLocalizations.of(context).logCardioLocation, isDark: isDark)
                   .animate()
                   .fadeIn(delay: 100.ms),
               const SizedBox(height: 12),
@@ -131,7 +132,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
               const SizedBox(height: 24),
 
               // Duration Input (Required)
-              _SectionHeader(title: 'DURATION', isDark: isDark)
+              _SectionHeader(title: AppLocalizations.of(context).logCardioDuration, isDark: isDark)
                   .animate()
                   .fadeIn(delay: 200.ms),
               const SizedBox(height: 12),
@@ -144,7 +145,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
               const SizedBox(height: 24),
 
               // Optional Fields Section
-              _SectionHeader(title: 'OPTIONAL DETAILS', isDark: isDark)
+              _SectionHeader(title: AppLocalizations.of(context).logCardioOptionalDetails, isDark: isDark)
                   .animate()
                   .fadeIn(delay: 300.ms),
               const SizedBox(height: 12),
@@ -153,7 +154,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
               _InputField(
                 controller: _distanceController,
                 focusNode: _distanceFocus,
-                label: 'Distance',
+                label: AppLocalizations.of(context).workoutImportDistance,
                 suffix: 'km',
                 icon: Icons.straighten,
                 keyboardType:
@@ -169,7 +170,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
                     child: _InputField(
                       controller: _avgHeartRateController,
                       focusNode: _avgHrFocus,
-                      label: 'Avg HR',
+                      label: AppLocalizations.of(context).workoutDayDetailAvgHr,
                       suffix: 'bpm',
                       icon: Icons.favorite_outline,
                       keyboardType: TextInputType.number,
@@ -181,7 +182,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
                     child: _InputField(
                       controller: _maxHeartRateController,
                       focusNode: _maxHrFocus,
-                      label: 'Max HR',
+                      label: AppLocalizations.of(context).workoutDayDetailMaxHr,
                       suffix: 'bpm',
                       icon: Icons.favorite,
                       keyboardType: TextInputType.number,
@@ -196,7 +197,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
               _InputField(
                 controller: _caloriesController,
                 focusNode: _caloriesFocus,
-                label: 'Calories Burned',
+                label: AppLocalizations.of(context).metricsDashboardCaloriesBurned,
                 suffix: 'kcal',
                 icon: Icons.local_fire_department,
                 keyboardType: TextInputType.number,
@@ -206,7 +207,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
               // Weather Selector (only for outdoor)
               if (_selectedLocation.isOutdoor) ...[
                 const SizedBox(height: 24),
-                _SectionHeader(title: 'WEATHER CONDITIONS', isDark: isDark)
+                _SectionHeader(title: AppLocalizations.of(context).logCardioWeatherConditions, isDark: isDark)
                     .animate()
                     .fadeIn(delay: 500.ms),
                 const SizedBox(height: 12),
@@ -255,8 +256,8 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Save Cardio Session',
+                      : Text(
+                          AppLocalizations.of(context).logCardioSaveCardioSession,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -807,7 +808,7 @@ class _NotesInput extends StatelessWidget {
       maxLines: 3,
       style: TextStyle(color: textPrimary),
       decoration: InputDecoration(
-        hintText: 'How did the session feel? Any notes...',
+        hintText: AppLocalizations.of(context).logCardioHowDidTheSession,
         hintStyle: TextStyle(color: textMuted),
         filled: true,
         fillColor: elevated,

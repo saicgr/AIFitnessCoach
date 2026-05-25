@@ -13,6 +13,7 @@ import '../onboarding/widgets/onboarding_theme.dart';
 import 'widgets/pre_auth_referral_chip.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Glassmorphic email sign-in screen
 class EmailSignInScreen extends ConsumerStatefulWidget {
   const EmailSignInScreen({super.key});
@@ -371,8 +372,8 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
-            'If an account exists with this email, a password reset link has been sent.',
+          content: Text(
+            AppLocalizations.of(context).emailSignInIfAnAccountExists,
           ),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.success,
@@ -430,7 +431,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                       ),
                       const Spacer(),
                       Text(
-                        _isSignUp ? 'Create Account' : 'Sign In',
+                        _isSignUp ? AppLocalizations.of(context).emailSignInCreateAccount : AppLocalizations.of(context).emailSignInSignIn,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -515,7 +516,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                               decoration: InputDecoration(
-                                labelText: 'Email',
+                                labelText: AppLocalizations.of(context).authEmailHint,
                                 labelStyle: TextStyle(
                                   color: t.textPrimary,
                                   fontSize: 14,
@@ -526,7 +527,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
-                                hintText: 'you@example.com',
+                                hintText: AppLocalizations.of(context).emailSignInYouExampleCom,
                                 hintStyle: TextStyle(
                                   color: t.textMuted.withValues(alpha: 0.7),
                                   fontSize: 15,
@@ -577,7 +578,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                               decoration: InputDecoration(
-                                labelText: 'Password',
+                                labelText: AppLocalizations.of(context).authPasswordHint,
                                 labelStyle: TextStyle(
                                   color: t.textPrimary,
                                   fontSize: 14,
@@ -589,7 +590,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                   fontWeight: FontWeight.w700,
                                 ),
                                 hintText: _isSignUp
-                                    ? 'At least 8 characters'
+                                    ? AppLocalizations.of(context).emailSignInAtLeast8Characters
                                     : 'Enter your password',
                                 hintStyle: TextStyle(
                                   color: t.textMuted.withValues(alpha: 0.7),
@@ -652,7 +653,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                 child: GestureDetector(
                                   onTap: _forgotPassword,
                                   child: Text(
-                                    'Forgot Password?',
+                                    AppLocalizations.of(context).emailSignInForgotPassword,
                                     style: TextStyle(
                                       color: t.textSecondary,
                                       fontSize: 14,
@@ -737,7 +738,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                           ),
                                         )
                                       : Text(
-                                          _isSignUp ? 'Create Account' : 'Sign In',
+                                          _isSignUp ? AppLocalizations.of(context).emailSignInCreateAccount : AppLocalizations.of(context).emailSignInSignIn,
                                           style: const TextStyle(
                                             fontSize: 17,
                                             fontWeight: FontWeight.w800,
@@ -762,7 +763,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _isSignUp ? 'Already have an account?' : "Don't have an account?",
+                      _isSignUp ? AppLocalizations.of(context).emailSignInAlreadyHaveAnAccount : AppLocalizations.of(context).emailSignInDonTHaveAn,
                       style: TextStyle(color: t.textMuted, fontSize: 14),
                     ),
                     GestureDetector(
@@ -775,7 +776,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                         child: Text(
-                          _isSignUp ? 'Sign In' : 'Sign Up',
+                          _isSignUp ? AppLocalizations.of(context).emailSignInSignIn : AppLocalizations.of(context).mainShellPartSignUp,
                           style: TextStyle(
                             color: t.textPrimary.withValues(alpha: 0.9),
                             fontSize: 14,

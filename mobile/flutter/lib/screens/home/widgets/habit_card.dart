@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Data model for a single habit
 class HabitData {
   final String name;
@@ -89,7 +90,7 @@ class HabitCard extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    'Last 30 Days',
+                    AppLocalizations.of(context).habitCardLast30Days,
                     style: TextStyle(
                       fontSize: 10,
                       color: textMuted,

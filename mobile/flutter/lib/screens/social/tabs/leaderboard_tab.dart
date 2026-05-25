@@ -19,6 +19,7 @@ import '../widgets/leaderboard_rank_card.dart';
 import '../widgets/leaderboard_entry_card.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Leaderboard Tab - Global, country, and friends rankings
 class LeaderboardTab extends ConsumerStatefulWidget {
   const LeaderboardTab({super.key});
@@ -250,12 +251,12 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
         SegmentedTabBar(
           controller: _typeTabController,
           showIcons: false,
-          tabs: const [
-            SegmentedTabItem(label: '🏆 Masters'),
-            SegmentedTabItem(label: '🏋️ Volume'),
-            SegmentedTabItem(label: '🔥 Streaks'),
-            SegmentedTabItem(label: '⚡ Week'),
-            SegmentedTabItem(label: '🚀 Rush'),
+          tabs: [
+            SegmentedTabItem(label: AppLocalizations.of(context).leaderboardMasters),
+            SegmentedTabItem(label: AppLocalizations.of(context).leaderboardVolume),
+            SegmentedTabItem(label: AppLocalizations.of(context).leaderboardStreaks),
+            SegmentedTabItem(label: AppLocalizations.of(context).leaderboardWeek),
+            SegmentedTabItem(label: AppLocalizations.of(context).leaderboardRush),
           ],
         ),
 
@@ -359,7 +360,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     }
     return SocialEmptyState(
       icon: isRush ? Icons.sports_esports_outlined : Icons.emoji_events_outlined,
-      title: 'No Rankings Yet',
+      title: AppLocalizations.of(context).leaderboardNoRankingsYet,
       description: description,
       actionLabel: null,
       onAction: null,
@@ -467,10 +468,10 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
               // Async challenge (Beat Their Best)
               ListTile(
                 leading: Icon(Icons.flash_on, color: accentColor),
-                title: const Text('Beat Their Best'),
+                title: Text(AppLocalizations.of(context).leaderboardEntryCardBeatTheirBest),
                 subtitle: Text(
                   isFriend
-                      ? 'Challenge without notification (async)'
+                      ? AppLocalizations.of(context).leaderboardChallengeWithoutNotification
                       : 'Try to beat their record!',
                 ),
                 onTap: () async {

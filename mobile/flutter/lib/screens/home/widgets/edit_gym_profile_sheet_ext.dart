@@ -15,7 +15,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
         child: GymEquipmentSheet(
           selectedEquipment: _selectedEquipment,
           equipmentDetails: equipmentItems,
-          title: 'Equipment',
+          title: AppLocalizations.of(context).trainingSetupCardEquipment,
           onSave: (equipment, details) {
             setState(() {
               _selectedEquipment = equipment;
@@ -65,7 +65,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
   Future<void> _saveChanges() async {
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a name')),
+        SnackBar(content: Text(AppLocalizations.of(context).editGymProfilePleaseEnterAName)),
       );
       return;
     }
@@ -181,7 +181,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Choose Icon',
+              AppLocalizations.of(context).habitsScreenUiChooseIcon,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -246,7 +246,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
         backgroundColor: isDark ? AppColors.elevated : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Rename Gym',
+          AppLocalizations.of(context).editGymProfileRenameGym,
           style: TextStyle(color: textPrimary),
         ),
         content: TextField(
@@ -254,7 +254,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
           autofocus: true,
           style: TextStyle(color: textPrimary),
           decoration: InputDecoration(
-            hintText: 'Enter new name',
+            hintText: AppLocalizations.of(context).editGymProfileEnterNewName,
             hintStyle: TextStyle(color: textPrimary.withOpacity(0.5)),
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(color: selectedColorObj),
@@ -265,7 +265,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(color: textPrimary.withOpacity(0.7)),
             ),
           ),
@@ -278,7 +278,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
               }
             },
             child: Text(
-              'Rename',
+              AppLocalizations.of(context).editGymProfileRename,
               style: TextStyle(color: selectedColorObj),
             ),
           ),
@@ -421,7 +421,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Clear',
+                    AppLocalizations.of(context).vacationModeClear,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
@@ -429,7 +429,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
                     ),
                   ),
                   Text(
-                    'No pref',
+                    AppLocalizations.of(context).editGymProfileNoPref,
                     style: TextStyle(
                       fontSize: 10,
                       color: textSecondary.withOpacity(0.7),
@@ -700,7 +700,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
               _focusPickerOption(
                 ctx,
                 id: null,
-                label: 'Auto (AI decides)',
+                label: AppLocalizations.of(context).editGymProfileAutoAiDecides,
                 isDark: isDark,
                 dayIdx: dayIdx,
               ),
@@ -795,7 +795,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Workout Duration',
+                  AppLocalizations.of(context).editableFitnessCardWorkoutDuration,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,

@@ -11,6 +11,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 import '../../services/live_pr_detector.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Show the live PR snackbar.
 ///
 /// [useKg] toggles the display unit; the underlying [PrDetectionResult] values
@@ -97,8 +98,8 @@ void showLivePrSnackBar(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'New PR!',
+                Text(
+                  AppLocalizations.of(context).stackedBannerPanelNewPr,
                   style: TextStyle(
                     color: Color(0xFFFFD700),
                     fontWeight: FontWeight.w700,

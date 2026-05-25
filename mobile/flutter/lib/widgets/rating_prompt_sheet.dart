@@ -7,6 +7,7 @@ import '../core/constants/app_colors.dart';
 import '../data/services/rating_prompt_service.dart';
 import 'glass_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Two-step rating prompt — the Cal AI / Realtor.com / Lose It pattern.
 ///
 ///   Step 1 (this sheet):  "Enjoying Zealova?" 👍 / 👎
@@ -69,7 +70,7 @@ class _RatingPromptSheetBodyState extends State<_RatingPromptSheetBody> {
             ),
             const SizedBox(height: 14),
             Text(
-              'Enjoying Zealova so far?',
+              AppLocalizations.of(context).ratingPromptEnjoyingZealovaSoFar,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 22,
@@ -95,7 +96,7 @@ class _RatingPromptSheetBodyState extends State<_RatingPromptSheetBody> {
                 Expanded(
                   child: _ChoiceButton(
                     icon: Icons.thumb_down_off_alt_rounded,
-                    label: 'Not great',
+                    label: AppLocalizations.of(context).ratingPromptNotGreat,
                     onTap: _busy ? null : _handleNegative,
                     primary: false,
                     isDark: isDark,
@@ -105,7 +106,7 @@ class _RatingPromptSheetBodyState extends State<_RatingPromptSheetBody> {
                 Expanded(
                   child: _ChoiceButton(
                     icon: Icons.thumb_up_rounded,
-                    label: 'Loving it',
+                    label: AppLocalizations.of(context).ratingPromptLovingIt,
                     onTap: _busy ? null : _handlePositive,
                     primary: true,
                     isDark: isDark,
@@ -120,7 +121,7 @@ class _RatingPromptSheetBodyState extends State<_RatingPromptSheetBody> {
                 TextButton(
                   onPressed: _busy ? null : _handleRemindLater,
                   child: Text(
-                    'Remind me later',
+                    AppLocalizations.of(context).ratingPromptRemindMeLater,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -131,7 +132,7 @@ class _RatingPromptSheetBodyState extends State<_RatingPromptSheetBody> {
                 TextButton(
                   onPressed: _busy ? null : _handleDontAsk,
                   child: Text(
-                    "Don't ask again",
+                    AppLocalizations.of(context).ratingPromptDonTAskAgain,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,

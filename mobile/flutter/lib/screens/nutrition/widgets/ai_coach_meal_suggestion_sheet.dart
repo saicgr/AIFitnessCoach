@@ -18,6 +18,7 @@ import '../../../data/models/chat_message.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Callbacks the parent provides so the popup can trigger external actions
 /// (log a suggested meal, open the full chat) without reaching into
 /// unrelated providers.
@@ -180,7 +181,7 @@ class _AiCoachMealSuggestionSheetState
       // Meal picks (7)
       _CoachPill(
         id: 'what_now',
-        label: 'What can I eat now?',
+        label: AppLocalizations.of(context).aiCoachMealWhatCanIEat,
         icon: Icons.restaurant_menu,
         color: accent,
         category: _PillCategory.mealPicks,
@@ -189,7 +190,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'high_protein',
-        label: 'High-protein idea?',
+        label: AppLocalizations.of(context).aiCoachMealHighProteinIdea,
         icon: Icons.egg_outlined,
         color: _colorMealPicks,
         category: _PillCategory.mealPicks,
@@ -198,7 +199,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'quick_snack',
-        label: 'Quick snack ideas?',
+        label: AppLocalizations.of(context).aiCoachMealQuickSnackIdeas,
         icon: Icons.bolt_outlined,
         color: const Color(0xFF06B6D4),
         category: _PillCategory.mealPicks,
@@ -209,7 +210,7 @@ class _AiCoachMealSuggestionSheetState
       // the grid (when promoted) AND via the "More" sheet's tokenized search.
       _CoachPill(
         id: 'fast_food_pick',
-        label: 'Fast food pick?',
+        label: AppLocalizations.of(context).aiCoachMealFastFoodPick,
         icon: Icons.fastfood_outlined,
         color: const Color(0xFFF97316),
         category: _PillCategory.mealPicks,
@@ -221,7 +222,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'low_cal',
-        label: 'Low-cal swap?',
+        label: AppLocalizations.of(context).aiCoachMealLowCalSwap,
         icon: Icons.local_fire_department_outlined,
         color: const Color(0xFFEF4444),
         category: _PillCategory.mealPicks,
@@ -230,7 +231,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'no_cook',
-        label: 'No-cook option?',
+        label: AppLocalizations.of(context).aiCoachMealNoCookOption,
         icon: Icons.blender_outlined,
         color: _colorMealPicks,
         category: _PillCategory.mealPicks,
@@ -239,7 +240,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'vegetarian',
-        label: 'Vegetarian pick?',
+        label: AppLocalizations.of(context).aiCoachMealVegetarianPick,
         icon: Icons.eco_outlined,
         color: _colorMealPicks,
         category: _PillCategory.mealPicks,
@@ -248,7 +249,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'budget',
-        label: 'Budget-friendly meal?',
+        label: AppLocalizations.of(context).aiCoachMealBudgetFriendlyMeal,
         icon: Icons.savings_outlined,
         color: _colorMealPicks,
         category: _PillCategory.mealPicks,
@@ -257,7 +258,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'favorite',
-        label: 'Favorite I missed?',
+        label: AppLocalizations.of(context).aiCoachMealFavoriteIMissed,
         icon: Icons.favorite_border,
         color: const Color(0xFFA855F7),
         category: _PillCategory.mealPicks,
@@ -268,7 +269,7 @@ class _AiCoachMealSuggestionSheetState
       // Macro & goal (6)
       _CoachPill(
         id: 'macro_balance',
-        label: 'Balance my macros?',
+        label: AppLocalizations.of(context).aiCoachMealBalanceMyMacros,
         icon: Icons.pie_chart_outline,
         color: _colorMacro,
         category: _PillCategory.macroGoal,
@@ -277,7 +278,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'calorie_target',
-        label: 'Hit my calorie target?',
+        label: AppLocalizations.of(context).aiCoachMealHitMyCalorieTarget,
         icon: Icons.flag_outlined,
         color: _colorMacro,
         category: _PillCategory.macroGoal,
@@ -286,7 +287,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'fiber',
-        label: 'Need more fiber?',
+        label: AppLocalizations.of(context).aiCoachMealNeedMoreFiber,
         icon: Icons.grass_outlined,
         color: _colorMacro,
         category: _PillCategory.macroGoal,
@@ -295,7 +296,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'hydration',
-        label: 'Hydration check?',
+        label: AppLocalizations.of(context).aiCoachMealHydrationCheck,
         icon: Icons.water_drop_outlined,
         color: _colorMacro,
         category: _PillCategory.macroGoal,
@@ -304,7 +305,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'fasting_friendly',
-        label: 'Fasting-friendly pick?',
+        label: AppLocalizations.of(context).aiCoachMealFastingFriendlyPick,
         icon: Icons.timer_outlined,
         color: _colorMacro,
         category: _PillCategory.macroGoal,
@@ -313,7 +314,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'low_sugar',
-        label: 'Low-sugar option?',
+        label: AppLocalizations.of(context).aiCoachMealLowSugarOption,
         icon: Icons.no_food_outlined,
         color: _colorMacro,
         category: _PillCategory.macroGoal,
@@ -324,7 +325,7 @@ class _AiCoachMealSuggestionSheetState
       // Timing (4)
       _CoachPill(
         id: 'pre_workout',
-        label: 'Pre-workout fuel?',
+        label: AppLocalizations.of(context).aiCoachMealPreWorkoutFuel,
         icon: Icons.fitness_center,
         color: _colorTiming,
         category: _PillCategory.timing,
@@ -333,7 +334,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'post_workout',
-        label: 'Post-workout meal?',
+        label: AppLocalizations.of(context).aiCoachMealPostWorkoutMeal,
         icon: Icons.restore,
         color: _colorTiming,
         category: _PillCategory.timing,
@@ -343,7 +344,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'late_night',
-        label: 'Late-night snack?',
+        label: AppLocalizations.of(context).aiCoachMealLateNightSnack,
         icon: Icons.nightlight_outlined,
         color: _colorTiming,
         category: _PillCategory.timing,
@@ -352,7 +353,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'recovery_day',
-        label: 'Recovery-day eating?',
+        label: AppLocalizations.of(context).aiCoachMealRecoveryDayEating,
         icon: Icons.self_improvement_outlined,
         color: _colorTiming,
         category: _PillCategory.timing,
@@ -363,7 +364,7 @@ class _AiCoachMealSuggestionSheetState
       // Mood (6)
       _CoachPill(
         id: 'mood_stressed',
-        label: 'Stressed — what helps?',
+        label: AppLocalizations.of(context).aiCoachMealStressedWhatHelps,
         icon: Icons.psychology_outlined,
         color: _colorMood,
         category: _PillCategory.mood,
@@ -372,7 +373,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'mood_angry',
-        label: 'Angry — what to eat?',
+        label: AppLocalizations.of(context).aiCoachMealAngryWhatToEat,
         icon: Icons.local_fire_department,
         color: _colorMood,
         category: _PillCategory.mood,
@@ -381,7 +382,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'mood_tired',
-        label: 'Tired — energy food?',
+        label: AppLocalizations.of(context).aiCoachMealTiredEnergyFood,
         icon: Icons.battery_charging_full_outlined,
         color: _colorMood,
         category: _PillCategory.mood,
@@ -390,7 +391,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'mood_craving_sugar',
-        label: 'Craving sugar — smart swap?',
+        label: AppLocalizations.of(context).aiCoachMealCravingSugarSmartSwap,
         icon: Icons.icecream_outlined,
         color: _colorMood,
         category: _PillCategory.mood,
@@ -399,7 +400,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'mood_anxious',
-        label: 'Anxious — calming pick?',
+        label: AppLocalizations.of(context).aiCoachMealAnxiousCalmingPick,
         icon: Icons.spa_outlined,
         color: _colorMood,
         category: _PillCategory.mood,
@@ -408,7 +409,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'mood_bored',
-        label: 'Bored-eating — what instead?',
+        label: AppLocalizations.of(context).aiCoachMealBoredEatingWhatInstead,
         icon: Icons.mood_bad_outlined,
         color: _colorMood,
         category: _PillCategory.mood,
@@ -419,7 +420,7 @@ class _AiCoachMealSuggestionSheetState
       // Goal phase (3)
       _CoachPill(
         id: 'cutting',
-        label: 'Cutting-friendly meal?',
+        label: AppLocalizations.of(context).aiCoachMealCuttingFriendlyMeal,
         icon: Icons.trending_down,
         color: _colorGoal,
         category: _PillCategory.goalPhase,
@@ -428,7 +429,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'bulking',
-        label: 'Bulking calorie-dense pick?',
+        label: AppLocalizations.of(context).aiCoachMealBulkingCalorieDensePick,
         icon: Icons.trending_up,
         color: _colorGoal,
         category: _PillCategory.goalPhase,
@@ -437,7 +438,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'maintenance',
-        label: 'Maintenance steady pick?',
+        label: AppLocalizations.of(context).aiCoachMealMaintenanceSteadyPick,
         icon: Icons.balance,
         color: _colorGoal,
         category: _PillCategory.goalPhase,
@@ -448,7 +449,7 @@ class _AiCoachMealSuggestionSheetState
       // Health & symptoms (5)
       _CoachPill(
         id: 'bloated',
-        label: 'Bloated — what now?',
+        label: AppLocalizations.of(context).aiCoachMealBloatedWhatNow,
         icon: Icons.healing_outlined,
         color: _colorHealth,
         category: _PillCategory.healthSymptoms,
@@ -457,7 +458,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'poor_sleep',
-        label: 'Poor sleep last night?',
+        label: AppLocalizations.of(context).aiCoachMealPoorSleepLastNight,
         icon: Icons.bedtime_outlined,
         color: _colorHealth,
         category: _PillCategory.healthSymptoms,
@@ -466,7 +467,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'headache',
-        label: 'Headache — food fix?',
+        label: AppLocalizations.of(context).aiCoachMealHeadacheFoodFix,
         icon: Icons.sick_outlined,
         color: _colorHealth,
         category: _PillCategory.healthSymptoms,
@@ -475,7 +476,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'heartburn',
-        label: 'Heartburn-safe pick?',
+        label: AppLocalizations.of(context).aiCoachMealHeartburnSafePick,
         icon: Icons.air_outlined,
         color: _colorHealth,
         category: _PillCategory.healthSymptoms,
@@ -484,7 +485,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'upset_stomach',
-        label: 'Upset stomach — gentle meal?',
+        label: AppLocalizations.of(context).aiCoachMealUpsetStomachGentleMeal,
         icon: Icons.local_hospital_outlined,
         color: _colorHealth,
         category: _PillCategory.healthSymptoms,
@@ -495,7 +496,7 @@ class _AiCoachMealSuggestionSheetState
       // Cuisine (4)
       _CoachPill(
         id: 'mexican',
-        label: 'Mexican with good macros?',
+        label: AppLocalizations.of(context).aiCoachMealMexicanWithGoodMacros,
         icon: Icons.public_outlined,
         color: _colorCuisine,
         category: _PillCategory.cuisine,
@@ -504,7 +505,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'asian',
-        label: 'Asian-inspired pick?',
+        label: AppLocalizations.of(context).aiCoachMealAsianInspiredPick,
         icon: Icons.ramen_dining_outlined,
         color: _colorCuisine,
         category: _PillCategory.cuisine,
@@ -513,7 +514,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'mediterranean',
-        label: 'Mediterranean option?',
+        label: AppLocalizations.of(context).aiCoachMealMediterraneanOption,
         icon: Icons.lunch_dining_outlined,
         color: _colorCuisine,
         category: _PillCategory.cuisine,
@@ -522,7 +523,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CoachPill(
         id: 'comfort_smart',
-        label: 'Comfort food, smart version?',
+        label: AppLocalizations.of(context).aiCoachMealComfortFoodSmartVersion,
         icon: Icons.soup_kitchen_outlined,
         color: _colorCuisine,
         category: _PillCategory.cuisine,
@@ -591,7 +592,7 @@ class _AiCoachMealSuggestionSheetState
     return [
       _CuisineOption(
         id: 'healthy',
-        label: 'Anything healthy',
+        label: AppLocalizations.of(context).aiCoachMealAnythingHealthy,
         icon: Icons.spa_outlined,
         color: const Color(0xFF10B981),
         prompt:
@@ -599,7 +600,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CuisineOption(
         id: 'fast_food',
-        label: 'Fast food',
+        label: AppLocalizations.of(context).aiCoachMealFastFood,
         icon: Icons.fastfood_outlined,
         color: const Color(0xFFF97316),
         prompt:
@@ -609,7 +610,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CuisineOption(
         id: 'high_protein',
-        label: 'High-protein',
+        label: AppLocalizations.of(context).aiCoachMealHighProtein,
         icon: Icons.egg_outlined,
         color: const Color(0xFFA78BFA),
         prompt:
@@ -617,7 +618,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CuisineOption(
         id: 'no_cook',
-        label: 'No-cook / 5-min',
+        label: AppLocalizations.of(context).aiCoachMealNoCook5Min,
         icon: Icons.blender_outlined,
         color: const Color(0xFF06B6D4),
         prompt:
@@ -625,7 +626,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CuisineOption(
         id: 'indian',
-        label: 'Indian',
+        label: AppLocalizations.of(context).aiCoachMealIndian,
         icon: Icons.local_dining_outlined,
         color: const Color(0xFFF59E0B),
         prompt:
@@ -633,7 +634,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CuisineOption(
         id: 'mexican',
-        label: 'Mexican',
+        label: AppLocalizations.of(context).aiCoachMealMexican,
         icon: Icons.lunch_dining_outlined,
         color: const Color(0xFFEF4444),
         prompt:
@@ -641,7 +642,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CuisineOption(
         id: 'asian',
-        label: 'Asian',
+        label: AppLocalizations.of(context).aiCoachMealAsian,
         icon: Icons.ramen_dining_outlined,
         color: const Color(0xFFEC4899),
         prompt:
@@ -649,7 +650,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CuisineOption(
         id: 'mediterranean',
-        label: 'Mediterranean',
+        label: AppLocalizations.of(context).aiCoachMealMediterranean,
         icon: Icons.eco_outlined,
         color: const Color(0xFF14B8A6),
         prompt:
@@ -657,7 +658,7 @@ class _AiCoachMealSuggestionSheetState
       ),
       _CuisineOption(
         id: 'italian',
-        label: 'Italian / Comfort',
+        label: AppLocalizations.of(context).aiCoachMealItalianComfort,
         icon: Icons.soup_kitchen_outlined,
         color: const Color(0xFFFB7185),
         prompt:
@@ -756,7 +757,7 @@ class _AiCoachMealSuggestionSheetState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'AI Coach',
+                AppLocalizations.of(context).authIntroAiCoach,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -765,7 +766,7 @@ class _AiCoachMealSuggestionSheetState
               ),
               Text(
                 _state == _CoachPopupState.thinking
-                    ? 'Analyzing your day…'
+                    ? AppLocalizations.of(context).aiCoachMealAnalyzingYourDay
                     : _state == _CoachPopupState.typing
                         ? 'Coach is typing…'
                         : 'Pick a question or open full chat',
@@ -809,7 +810,7 @@ class _AiCoachMealSuggestionSheetState
           ),
           const SizedBox(height: 12),
           Text(
-            'Looking at today’s meals, workout, and favorites…',
+            AppLocalizations.of(context).aiCoachMealLookingAtTodayS,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -836,7 +837,7 @@ class _AiCoachMealSuggestionSheetState
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Working from partial data — answer may be generic.',
+              AppLocalizations.of(context).aiCoachMealWorkingFromPartialData,
               style: TextStyle(
                 fontSize: 11,
                 color: colors.textSecondary,
@@ -932,7 +933,7 @@ class _AiCoachMealSuggestionSheetState
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'What are you feeling?',
+                AppLocalizations.of(context).aiCoachMealWhatAreYouFeeling,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -1007,7 +1008,7 @@ class _AiCoachMealSuggestionSheetState
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  'More',
+                  AppLocalizations.of(context).homeMore,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -1182,7 +1183,7 @@ class _AiCoachMealSuggestionSheetState
                       const Icon(Icons.add, size: 16, color: Colors.white),
                       const SizedBox(width: 6),
                       Text(
-                        'Log this meal',
+                        AppLocalizations.of(context).aiCoachMealLogThisMeal,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -1203,7 +1204,7 @@ class _AiCoachMealSuggestionSheetState
   Widget _buildOpenChatButton(ThemeColors colors, Color accent) {
     return TextButton.icon(
       icon: const Icon(Icons.open_in_new, size: 16),
-      label: const Text('Open full chat'),
+      label: Text(AppLocalizations.of(context).aiCoachMealOpenFullChat),
       style: TextButton.styleFrom(
         foregroundColor: accent,
         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1244,7 +1245,7 @@ class _AiCoachMealSuggestionSheetState
           Icon(Icons.error_outline, color: Colors.red, size: 32),
           const SizedBox(height: 10),
           Text(
-            _errorMsg ?? 'Something went wrong.',
+            _errorMsg ?? AppLocalizations.of(context).equipmentSnapFlowSomethingWentWrong,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
@@ -1255,7 +1256,7 @@ class _AiCoachMealSuggestionSheetState
               _loadContext();
             },
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Retry'),
+            label: Text(AppLocalizations.of(context).buttonRetry),
           ),
         ],
       ),
@@ -1270,7 +1271,7 @@ class _AiCoachMealSuggestionSheetState
           const Icon(Icons.wifi_off, color: Colors.orange, size: 32),
           const SizedBox(height: 10),
           Text(
-            'Coach needs a connection.',
+            AppLocalizations.of(context).aiCoachMealCoachNeedsAConnection,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
@@ -1442,7 +1443,7 @@ class _MorePillsSheetState extends State<_MorePillsSheet> {
                       size: 18, color: widget.accent),
                   const SizedBox(width: 8),
                   Text(
-                    'Ask the coach',
+                    AppLocalizations.of(context).aiCoachMealAskTheCoach,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,

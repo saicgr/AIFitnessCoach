@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/scores.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card showing workout consistency score and stats.
 class ConsistencyScoreCard extends StatelessWidget {
   final int consistencyScore;
@@ -60,7 +61,7 @@ class ConsistencyScoreCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Consistency Score',
+                      AppLocalizations.of(context).consistencyScoreCardConsistencyScore,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -68,7 +69,7 @@ class ConsistencyScoreCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Workout completion rate',
+                      AppLocalizations.of(context).consistencyScoreCardWorkoutCompletionRate,
                       style: TextStyle(
                         fontSize: 11,
                         color: textMuted,
@@ -105,7 +106,7 @@ class ConsistencyScoreCard extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   icon: Icons.check_circle_outline,
-                  label: 'This Week',
+                  label: AppLocalizations.of(context).workoutCompleteThisWeek,
                   value: '$weeklyCompletedValue/$weeklyTotalValue',
                   isDark: isDark,
                 ),
@@ -118,7 +119,7 @@ class ConsistencyScoreCard extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   icon: Icons.local_fire_department,
-                  label: 'Streak',
+                  label: AppLocalizations.of(context).xpProgressCardStreak,
                   value: '$currentStreakValue days',
                   isDark: isDark,
                 ),
@@ -131,7 +132,7 @@ class ConsistencyScoreCard extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   icon: Icons.emoji_events,
-                  label: 'PRs (30d)',
+                  label: AppLocalizations.of(context).consistencyScoreCardPrs30d,
                   value: '$prCount',
                   isDark: isDark,
                 ),

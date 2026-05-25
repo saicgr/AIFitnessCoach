@@ -4,6 +4,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A single goal-framed fasting protocol option shown as a [FastingPlanCard].
 ///
 /// Each plan reuses an existing [FastingProtocol] but adds the marketing-style
@@ -256,7 +257,7 @@ class _FastingPlanCardState extends State<FastingPlanCard> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'Popular',
+                        AppLocalizations.of(context).quizFastingPopular,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
@@ -323,7 +324,7 @@ class _DifficultyDots extends StatelessWidget {
   Widget build(BuildContext context) {
     if (difficulty <= 0) {
       return Text(
-        'Flexible',
+        AppLocalizations.of(context).fastingPlanCardsFlexible,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w600,

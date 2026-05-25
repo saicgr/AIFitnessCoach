@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Demo Tasks Screen — Onboarding v5
 ///
 /// Two optional pre-signup demos. Users self-select through action: those
@@ -81,7 +82,7 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
             children: [
               const SizedBox(height: 28),
               Text(
-                'See it in action',
+                AppLocalizations.of(context).demoTasksSeeItInAction,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -91,7 +92,7 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
               ).animate().fadeIn().slideY(begin: -0.1),
               const SizedBox(height: 6),
               Text(
-                "Try one or both. Skip if you want.",
+                AppLocalizations.of(context).demoTasksTryOneOrBoth,
                 style: TextStyle(fontSize: 15, color: textSecondary),
               ).animate().fadeIn(delay: 200.ms),
 
@@ -135,7 +136,7 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
                       icon: Icons.fitness_center_rounded,
                       iconColor: const Color(0xFF00BCD4),
                       label: 'Workout',
-                      detail: 'See how training works',
+                      detail: AppLocalizations.of(context).demoTasksSeeHowTrainingWorks,
                       duration: '~45 sec',
                       done: _workoutDone,
                       onTap: () async {
@@ -150,7 +151,7 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
                       icon: Icons.restaurant_menu_rounded,
                       iconColor: const Color(0xFF2ECC71),
                       label: 'Nutrition',
-                      detail: 'Snap a menu, log a meal',
+                      detail: AppLocalizations.of(context).demoTasksSnapAMenuLog,
                       duration: '~30 sec',
                       done: _nutritionDone,
                       onTap: () async {
@@ -185,7 +186,7 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      completionCount > 0 ? 'Continue' : 'Build My Plan',
+                      completionCount > 0 ? AppLocalizations.of(context).onboardingContinueButton : AppLocalizations.of(context).authBuildMyPlan,
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,

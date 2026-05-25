@@ -32,6 +32,7 @@ import 'widgets/fasting_stage_timer.dart';
 import 'widgets/protocol_selector_sheet.dart';
 import 'widgets/fasting_settings_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Premium redesigned fasting screen.
 ///
 /// - Live ticking H:MM:SS timer with a segmented metabolic-stage ring.
@@ -336,7 +337,7 @@ class _FastingScreenRedesignedState
       child: Row(
         children: [
           Text(
-            'Fasting',
+            AppLocalizations.of(context).unifiedHomeWidgetsFasting,
             style: TextStyle(
               color: colors.textPrimary,
               fontWeight: FontWeight.bold,
@@ -387,13 +388,13 @@ class _FastingScreenRedesignedState
               context.push('/trends/custom',
                   extra: TrendMetric.fastingHours);
             },
-            tooltip: 'View trends',
+            tooltip: AppLocalizations.of(context).measurementDetailViewTrends,
           ),
           IconButton(
             icon: Icon(Icons.settings_outlined,
                 color: colors.textMuted, size: 24),
             onPressed: () => _showFastingSettings(context, fastingState),
-            tooltip: 'Settings',
+            tooltip: AppLocalizations.of(context).settingsTitle,
           ),
         ],
       ),
@@ -509,7 +510,7 @@ class _FastingScreenRedesignedState
           // Status label.
           Text(
             hasFast
-                ? (isPausedNow ? 'Fast Paused' : 'Fasting')
+                ? (isPausedNow ? AppLocalizations.of(context).fastingScreenRedesignedFastPaused : AppLocalizations.of(context).unifiedHomeWidgetsFasting)
                 : 'Not Fasting',
             style: TextStyle(
               fontSize: 15,
@@ -553,7 +554,7 @@ class _FastingScreenRedesignedState
                             size: 15, color: colors.warning),
                         const SizedBox(width: 5),
                         Text(
-                          'Paused',
+                          AppLocalizations.of(context).fastingScreenRedesignedPaused,
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w800,
@@ -710,14 +711,14 @@ class _FastingScreenRedesignedState
             ),
             const SizedBox(width: 8),
             Text(
-              isRest ? "Today's plan: " : "Today's plan: ",
+              isRest ? AppLocalizations.of(context).fastingScreenRedesignedTodaySPlan : AppLocalizations.of(context).fastingScreenRedesignedTodaySPlan,
               style: TextStyle(
                 fontSize: 13,
                 color: colors.textSecondary,
               ),
             ),
             Text(
-              isRest ? 'Rest day' : planned.displayName,
+              isRest ? AppLocalizations.of(context).scheduleRestDay : planned.displayName,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
@@ -770,7 +771,7 @@ class _FastingScreenRedesignedState
             ),
             const SizedBox(width: 8),
             Text(
-              paused ? 'Resume Fast' : 'Pause Fast',
+              paused ? AppLocalizations.of(context).fastingScreenRedesignedResumeFast : AppLocalizations.of(context).fastingScreenRedesignedPauseFast,
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -826,7 +827,7 @@ class _FastingScreenRedesignedState
                       size: 44, color: colors.textMuted),
                   const SizedBox(height: 12),
                   Text(
-                    'No fast yet',
+                    AppLocalizations.of(context).fastingScreenRedesignedNoFastYet,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -835,7 +836,7 @@ class _FastingScreenRedesignedState
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'You did not log a fast on this day.',
+                    AppLocalizations.of(context).fastingScreenRedesignedYouDidNotLog,
                     style: TextStyle(
                       fontSize: 13,
                       color: colors.textMuted,
@@ -867,7 +868,7 @@ class _FastingScreenRedesignedState
                     DateTime(now.year, now.month, now.day));
               },
               icon: const Icon(Icons.today_rounded, size: 18),
-              label: const Text('Back to today'),
+              label: Text(AppLocalizations.of(context).fastingScreenRedesignedBackToToday),
               style: TextButton.styleFrom(
                 foregroundColor: colors.accent,
               ),
@@ -1021,7 +1022,7 @@ class _FastingScreenRedesignedState
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    hasFast ? 'End Fast' : 'Start Fast',
+                    hasFast ? AppLocalizations.of(context).heroFastingCardEndFast : AppLocalizations.of(context).heroFastingCardStartFast,
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -1058,25 +1059,25 @@ class _FastingScreenRedesignedState
             _buildStatCard(
               icon: Icons.local_fire_department,
               value: '${fastingState.streak?.currentStreak ?? 0}',
-              label: 'Day Streak',
+              label: AppLocalizations.of(context).trophiesEarnedDayStreak,
               colors: colors,
             ),
             _buildStatCard(
               icon: Icons.check_circle_outline,
               value: '${stats.completedFasts}',
-              label: 'Total Fasts',
+              label: AppLocalizations.of(context).fastingTotalFasts,
               colors: colors,
             ),
             _buildStatCard(
               icon: Icons.schedule,
               value: '${(stats.avgDurationMinutes / 60).toStringAsFixed(1)}h',
-              label: 'Avg Duration',
+              label: AppLocalizations.of(context).fastingScreenRedesignedAvgDuration,
               colors: colors,
             ),
             _buildStatCard(
               icon: Icons.star_outline,
               value: '${(stats.longestFastMinutes / 60).toStringAsFixed(1)}h',
-              label: 'Longest Fast',
+              label: AppLocalizations.of(context).fastingScreenRedesignedLongestFast,
               colors: colors,
             ),
           ],
@@ -1159,7 +1160,7 @@ class _FastingScreenRedesignedState
                           size: 48, color: colors.textMuted),
                       const SizedBox(height: 12),
                       Text(
-                        'No fasting history yet',
+                        AppLocalizations.of(context).fastingScreenRedesignedNoFastingHistoryYet,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -1168,7 +1169,7 @@ class _FastingScreenRedesignedState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Complete a fast to see it here',
+                        AppLocalizations.of(context).fastingScreenRedesignedCompleteAFastTo,
                         style: TextStyle(
                           fontSize: 13,
                           color: colors.textMuted,
@@ -1288,7 +1289,7 @@ class _FastingScreenRedesignedState
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      'In progress',
+                      AppLocalizations.of(context).fastingScreenRedesignedInProgress,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -1395,7 +1396,7 @@ class _FastingScreenRedesignedState
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Fasting Tracker',
+                  AppLocalizations.of(context).fastingScreenRedesignedFastingTracker,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -1432,13 +1433,13 @@ class _FastingScreenRedesignedState
                       ),
                       elevation: 0,
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.rocket_launch, size: 20),
                         SizedBox(width: 10),
                         Text(
-                          'Sign Up to Unlock',
+                          AppLocalizations.of(context).progressSignUpToUnlock,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
@@ -1668,7 +1669,7 @@ class _FastingScreenRedesignedState
       SnackBar(
         content: Text(
           ok
-              ? 'Fast resumed — your timer is back.'
+              ? AppLocalizations.of(context).fastingScreenRedesignedFastResumedYourTimer
               : 'Could not undo — the undo window may have passed.',
         ),
         behavior: SnackBarBehavior.floating,

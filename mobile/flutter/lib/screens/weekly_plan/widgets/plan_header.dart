@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/weekly_plan.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Header widget showing weekly plan overview
 class PlanHeader extends StatelessWidget {
   final WeeklyPlan plan;
@@ -57,7 +58,7 @@ class PlanHeader extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'This Week',
+                    AppLocalizations.of(context).workoutCompleteThisWeek,
                     style: TextStyle(
                       color: colorScheme.onPrimary,
                       fontSize: 12,
@@ -76,21 +77,21 @@ class PlanHeader extends StatelessWidget {
               _buildStatItem(
                 context,
                 icon: Icons.fitness_center,
-                label: 'Training',
+                label: AppLocalizations.of(context).settingsTrainingSection,
                 value: '${plan.trainingDayCount} days',
                 color: Colors.green,
               ),
               _buildStatItem(
                 context,
                 icon: Icons.self_improvement,
-                label: 'Rest',
+                label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
                 value: '${plan.restDayCount} days',
                 color: Colors.grey,
               ),
               _buildStatItem(
                 context,
                 icon: Icons.local_fire_department,
-                label: 'Avg Calories',
+                label: AppLocalizations.of(context).weeklyCheckinSheetAvgCalories,
                 value: '${plan.avgDailyCalories}',
                 color: Colors.orange,
               ),

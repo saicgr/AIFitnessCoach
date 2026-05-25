@@ -15,7 +15,7 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
           ),
           const SizedBox(height: 16),
           Text(
-            'No settings found',
+            AppLocalizations.of(context).settingsScreenUiNoSettingsFound,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -24,7 +24,7 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
           ),
           const SizedBox(height: 8),
           Text(
-            'Try different keywords like "theme", "notifications", or "ai voice"',
+            AppLocalizations.of(context).settingsScreenUiTryDifferentKeywordsLike,
             style: TextStyle(
               fontSize: 14,
               color: textMuted.withValues(alpha: 0.7),

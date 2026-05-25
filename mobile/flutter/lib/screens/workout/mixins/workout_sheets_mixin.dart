@@ -33,6 +33,7 @@ import '../widgets/hydration_dialog.dart';
 import '../widgets/workout_ai_coach_sheet.dart';
 import '../../../widgets/weight_increments_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'workout_sheets_mixin_ui.dart';
 
 
@@ -222,7 +223,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Hide AI Coach?',
+              AppLocalizations.of(context).workoutSheetsMixinHideAiCoach,
               style: TextStyle(
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                 fontWeight: FontWeight.bold,
@@ -231,7 +232,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           ],
         ),
         content: Text(
-          'The AI Coach will be hidden for this workout session. You can still access it from Settings.',
+          AppLocalizations.of(context).workoutSheetsMixinTheAiCoachWill,
           style: TextStyle(
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),
@@ -240,7 +241,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -255,10 +256,10 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
               // Show confirmation snackbar
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('AI Coach hidden for this session'),
+                  content: Text(AppLocalizations.of(context).workoutSheetsMixinAiCoachHiddenFor),
                   behavior: SnackBarBehavior.floating,
                   action: SnackBarAction(
-                    label: 'Undo',
+                    label: AppLocalizations.of(context).workoutUiBuildersUndo,
                     onPressed: () {
                       setState(() {
                         hideAICoachForSession = false;
@@ -269,7 +270,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
               );
             },
             child: Text(
-              'Hide',
+              AppLocalizations.of(context).workoutSheetsMixinHide,
               style: TextStyle(
                 color: AppColors.orange,
                 fontWeight: FontWeight.bold,
@@ -767,8 +768,8 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
       context: context,
       builder: (context) => GlassSheet(
         child: buildInfoSheet(
-          title: 'Warm Up',
-          content: 'Warming up helps prevent injury and improves performance.\n\nRecommended: 1-2 lighter sets before working sets.',
+          title: AppLocalizations.of(context).workoutSheetsMixinWarmUp,
+          content: AppLocalizations.of(context).workoutSheetsMixinWarmingUpHelpsPrevent,
           icon: Icons.whatshot_outlined,
         ),
       ),
@@ -794,7 +795,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
                   Icon(Icons.track_changes, color: WorkoutDesign.accentBlue),
                   const SizedBox(width: 8),
                   Text(
-                    'Set Targets',
+                    AppLocalizations.of(context).workoutSheetsMixinSetTargets,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -806,7 +807,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
               const SizedBox(height: 16),
               if (setTargets.isEmpty)
                 Text(
-                  'AI targets will be generated based on your history.',
+                  AppLocalizations.of(context).workoutSheetsMixinAiTargetsWillBe,
                   style: TextStyle(
                     color: isDark ? Colors.grey : Colors.grey.shade600,
                   ),
@@ -968,7 +969,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
                   Icon(Icons.history, color: WorkoutDesign.accentBlue),
                   const SizedBox(width: 8),
                   Text(
-                    'Last Session',
+                    AppLocalizations.of(context).workoutSheetsMixinLastSession,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -980,7 +981,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
               const SizedBox(height: 16),
               if (prevSets.isEmpty)
                 Text(
-                  'No previous data for this exercise.',
+                  AppLocalizations.of(context).workoutSheetsMixinNoPreviousDataFor,
                   style: TextStyle(
                     color: isDark ? Colors.grey : Colors.grey.shade600,
                   ),

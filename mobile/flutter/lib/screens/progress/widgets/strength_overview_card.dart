@@ -12,6 +12,7 @@ import 'body_score_overlay.dart';
 import 'share_strength_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'strength_overview_card_ui.dart';
 
 
@@ -133,7 +134,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 Icon(Icons.fitness_center, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
-                  'Strength Score',
+                  AppLocalizations.of(context).strengthOverviewCardStrengthScore,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -145,7 +146,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                   onPressed: () => _showScoreInfoSheet(context),
                   icon: const Icon(Icons.info_outline),
                   iconSize: 20,
-                  tooltip: 'How scores work',
+                  tooltip: AppLocalizations.of(context).strengthOverviewCardHowScoresWork,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
@@ -162,7 +163,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                     },
                     icon: const Icon(Icons.refresh),
                     iconSize: 20,
-                    tooltip: 'Recalculate',
+                    tooltip: AppLocalizations.of(context).strengthOverviewCardRecalculate,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   ),
@@ -220,7 +221,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
           child: Row(
             children: [
               Text(
-                'Readiness',
+                AppLocalizations.of(context).strengthOverviewCardReadiness,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -325,7 +326,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No Strength Data Yet',
+            AppLocalizations.of(context).strengthOverviewCardNoStrengthDataYet,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -334,7 +335,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Complete workouts with resistance exercises\nto track your strength progress.',
+            AppLocalizations.of(context).strengthOverviewCardCompleteWorkoutsWithResista,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -574,7 +575,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
               children: [
 
                 Text(
-                  'How Strength Scores Work',
+                  AppLocalizations.of(context).strengthOverviewCardHowStrengthScoresWork,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -584,7 +585,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 const SizedBox(height: 12),
 
                 Text(
-                  'Your strength score (0-100) measures how much you can lift relative to your bodyweight, compared to established standards.',
+                  AppLocalizations.of(context).strengthOverviewCardYourStrengthScore0,
                   style: TextStyle(
                     fontSize: 14,
                     color: colorScheme.onSurfaceVariant,
@@ -594,7 +595,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 const SizedBox(height: 12),
 
                 Text(
-                  'Score is calculated from your best set (weight x reps) for each muscle group in the last 90 days. Higher bodyweight ratio = higher score.',
+                  AppLocalizations.of(context).strengthOverviewCardScoreIsCalculatedFrom,
                   style: TextStyle(
                     fontSize: 13,
                     color: colorScheme.onSurfaceVariant,
@@ -604,7 +605,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 const SizedBox(height: 16),
 
                 Text(
-                  'Levels',
+                  AppLocalizations.of(context).strengthOverviewCardLevels,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -622,7 +623,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 const SizedBox(height: 16),
 
                 Text(
-                  'Overall Score (Hero Ring)',
+                  AppLocalizations.of(context).strengthOverviewCardOverallScoreHeroRing,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -631,7 +632,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'The ring displays a weighted average of all your muscle group scores. 1RM is estimated using the Brzycki/Epley/Lombardi formula average from your best logged set in the last 90 days.',
+                  AppLocalizations.of(context).strengthOverviewCardTheRingDisplaysA,
                   style: TextStyle(
                     fontSize: 13,
                     color: colorScheme.onSurfaceVariant,
@@ -640,7 +641,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your overall fitness score is weighted:\nStrength 40% + Consistency 30% + Nutrition 20% + Readiness 10%',
+                  AppLocalizations.of(context).strengthOverviewCardYourOverallFitnessScore,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -652,7 +653,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 const SizedBox(height: 16),
 
                 Text(
-                  'Scores update automatically after each workout. Only tracked resistance exercises count \u2014 imported cardio workouts don\'t affect scores.',
+                  AppLocalizations.of(context).strengthOverviewCardScoresUpdateAutomaticallyAf,
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -664,7 +665,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
 
                 // Training Status section
                 Text(
-                  'Training Status',
+                  AppLocalizations.of(context).strengthOverviewCardTrainingStatus,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -714,7 +715,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
 
                 // Volume Guidelines section
                 Text(
-                  'Volume Guidelines (sets/week)',
+                  AppLocalizations.of(context).strengthOverviewCardVolumeGuidelinesSetsWeek,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -731,7 +732,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                       SizedBox(
                         width: 90,
                         child: Text(
-                          'Muscle',
+                          AppLocalizations.of(context).strengthOverviewCardMuscle,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -742,7 +743,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                       SizedBox(
                         width: 40,
                         child: Text(
-                          'Min',
+                          AppLocalizations.of(context).syncedWorkoutDetailMin,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -753,7 +754,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                       ),
                       Expanded(
                         child: Text(
-                          'Optimal',
+                          AppLocalizations.of(context).strengthOverviewCardOptimal,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -765,7 +766,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                       SizedBox(
                         width: 40,
                         child: Text(
-                          'Max',
+                          AppLocalizations.of(context).strengthOverviewCardMax,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -831,7 +832,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
 
                 const SizedBox(height: 12),
                 Text(
-                  'Values are for intermediate lifters and adjust automatically based on your training level. Status also factors in your readiness check-in.',
+                  AppLocalizations.of(context).strengthOverviewCardValuesAreForIntermediate,
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Inline theme selector with 3 buttons: System, Light, Dark
 /// Provides immediate feedback without requiring a bottom sheet
 class InlineThemeSelector extends StatelessWidget {
@@ -33,7 +34,7 @@ class InlineThemeSelector extends StatelessWidget {
         children: [
           ThemeButton(
             icon: Icons.smartphone_outlined,
-            label: 'Auto',
+            label: AppLocalizations.of(context).inlineThemeSelectorAuto,
             isSelected: currentMode == ThemeMode.system,
             selectedColor: selectedColor,
             textMuted: textMuted,
@@ -41,7 +42,7 @@ class InlineThemeSelector extends StatelessWidget {
           ),
           ThemeButton(
             icon: Icons.light_mode_outlined,
-            label: 'Light',
+            label: AppLocalizations.of(context).settingsThemeLight,
             isSelected: currentMode == ThemeMode.light,
             selectedColor: selectedColor,
             textMuted: textMuted,
@@ -49,7 +50,7 @@ class InlineThemeSelector extends StatelessWidget {
           ),
           ThemeButton(
             icon: Icons.dark_mode_outlined,
-            label: 'Dark',
+            label: AppLocalizations.of(context).settingsThemeDark,
             isSelected: currentMode == ThemeMode.dark,
             selectedColor: selectedColor,
             textMuted: textMuted,

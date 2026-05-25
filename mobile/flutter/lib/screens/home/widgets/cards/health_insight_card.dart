@@ -35,6 +35,7 @@ import '../../../../data/providers/health_insight_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../notifications/notifications_screen.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// The health-coaching insight card. Returns [SizedBox.shrink] whenever the
 /// resolved state says it should not show — safe to place unconditionally in
 /// a tile list, exactly like [DeloadRecommendationCard].
@@ -223,7 +224,7 @@ class _HealthInsightCardBody extends ConsumerWidget {
                 children: [
                   _DomainChip(
                     icon: Icons.bedtime_rounded,
-                    label: 'Sleep',
+                    label: AppLocalizations.of(context).sleepDetailSleep,
                     accent: accent,
                     isDark: isDark,
                   ),

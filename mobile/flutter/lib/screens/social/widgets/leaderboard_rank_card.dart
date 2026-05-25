@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/leaderboard_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// User's rank card - displayed at the top of leaderboard
 class LeaderboardRankCard extends StatelessWidget {
   final Map<String, dynamic> userRank;
@@ -49,7 +50,7 @@ class LeaderboardRankCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'YOUR RANK',
+                      AppLocalizations.of(context).leaderboardRankCardYourRank,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: AppColors.textMuted,
                             letterSpacing: 1.2,

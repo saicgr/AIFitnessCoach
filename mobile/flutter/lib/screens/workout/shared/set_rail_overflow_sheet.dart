@@ -17,6 +17,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'set_rail.dart';
 import 'set_rail_overflow_row.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Convenience launcher used by consumers. Returns the picked index when the
 /// user tapped a row, or null on dismiss.
 Future<int?> showSetRailOverflowSheet({
@@ -81,7 +82,7 @@ class SetRailOverflowSheet extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'All sets',
+                    AppLocalizations.of(context).setRailOverflowAllSets,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,

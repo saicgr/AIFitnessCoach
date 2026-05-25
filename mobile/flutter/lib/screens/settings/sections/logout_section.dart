@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The logout section containing the sign out button.
 class LogoutSection extends ConsumerWidget {
   const LogoutSection({super.key});
@@ -15,8 +16,8 @@ class LogoutSection extends ConsumerWidget {
       child: OutlinedButton.icon(
         onPressed: () => _showLogoutDialog(context, ref),
         icon: const Icon(Icons.logout, color: AppColors.error),
-        label: const Text(
-          'Sign Out',
+        label: Text(
+          AppLocalizations.of(context).logoutSignOut,
           style: TextStyle(color: AppColors.error),
         ),
         style: OutlinedButton.styleFrom(
@@ -35,13 +36,13 @@ class LogoutSection extends ConsumerWidget {
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Text(
-          'Sign Out?',
+          AppLocalizations.of(context).logoutSignOut2,
           style: TextStyle(
             color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
           ),
         ),
         content: Text(
-          'Are you sure you want to sign out? You can sign back in anytime.',
+          AppLocalizations.of(context).logoutAreYouSureYou,
           style: TextStyle(
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),
@@ -50,7 +51,7 @@ class LogoutSection extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -62,8 +63,8 @@ class LogoutSection extends ConsumerWidget {
               ref.read(authStateProvider.notifier).signOut();
               context.go('/intro');
             },
-            child: const Text(
-              'Sign Out',
+            child: Text(
+              AppLocalizations.of(context).logoutSignOut,
               style: TextStyle(color: AppColors.error),
             ),
           ),

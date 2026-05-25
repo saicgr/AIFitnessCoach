@@ -15,6 +15,7 @@ import '../widgets/challenge_card.dart';
 import '../widgets/create_challenge_sheet.dart';
 import '../widgets/empty_state.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Challenges Tab - Shows active and available fitness challenges
 class ChallengesTab extends ConsumerStatefulWidget {
   const ChallengesTab({super.key});
@@ -59,9 +60,9 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
         SegmentedTabBar(
           controller: _challengeTabController,
           showIcons: false,
-          tabs: const [
-            SegmentedTabItem(label: 'My Challenges', icon: Icons.emoji_events_rounded),
-            SegmentedTabItem(label: 'Discover', icon: Icons.explore_rounded),
+          tabs: [
+            SegmentedTabItem(label: AppLocalizations.of(context).challengesMyChallenges, icon: Icons.emoji_events_rounded),
+            SegmentedTabItem(label: AppLocalizations.of(context).navDiscover, icon: Icons.explore_rounded),
           ],
         ),
 
@@ -105,8 +106,8 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
         debugPrint('Error loading active challenges: $error');
         return SocialEmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Failed to Load Challenges',
-          description: 'Could not load your challenges.\nPlease try again.',
+          title: AppLocalizations.of(context).challengesFailedToLoadChallenges,
+          description: AppLocalizations.of(context).challengesCouldNotLoadYour,
           actionLabel: 'Retry',
           onAction: () {
             ref.invalidate(userActiveChallengesProvider(_userId!));
@@ -117,8 +118,8 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
         if (challenges.isEmpty) {
           return SocialEmptyState(
             icon: Icons.emoji_events_outlined,
-            title: 'No Active Challenges',
-            description: 'Join a challenge to compete with\nfriends and reach your fitness goals!',
+            title: AppLocalizations.of(context).challengesNoActiveChallenges,
+            description: AppLocalizations.of(context).challengesJoinAChallengeTo,
             actionLabel: 'Browse Challenges',
             onAction: () {
               _challengeTabController.animateTo(1);
@@ -140,7 +141,7 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: ChallengeCard(
-                title: challenge['title'] as String? ?? 'Challenge',
+                title: challenge['title'] as String? ?? AppLocalizations.of(context).challengesChallenge,
                 description: challenge['description'] as String? ?? '',
                 challengeType: challenge['challenge_type'] as String? ?? 'workout_count',
                 goalValue: (challenge['goal_value'] as num?)?.toDouble() ?? 0,
@@ -172,8 +173,8 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
         debugPrint('Error loading challenges: $error');
         return SocialEmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Failed to Load Challenges',
-          description: 'Could not load challenges.\nPlease try again.',
+          title: AppLocalizations.of(context).challengesFailedToLoadChallenges,
+          description: AppLocalizations.of(context).challengesCouldNotLoadChallenges,
           actionLabel: 'Retry',
           onAction: () {
             ref.invalidate(challengesListProvider(_userId!));
@@ -196,7 +197,7 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
 
             // Section: Popular Challenges
             Text(
-              'Popular Challenges',
+              AppLocalizations.of(context).challengesPopularChallenges,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -206,8 +207,8 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
             if (availableChallenges.isEmpty)
               SocialEmptyState(
                 icon: Icons.search_off_rounded,
-                title: 'No Challenges Found',
-                description: 'Be the first to create a challenge!',
+                title: AppLocalizations.of(context).challengesNoChallengesFound,
+                description: AppLocalizations.of(context).challengesBeTheFirstTo,
                 actionLabel: null,
                 onAction: null,
               )
@@ -221,7 +222,7 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: ChallengeCard(
-                    title: challenge['title'] as String? ?? 'Challenge',
+                    title: challenge['title'] as String? ?? AppLocalizations.of(context).challengesChallenge,
                     description: challenge['description'] as String? ?? '',
                     challengeType: challenge['challenge_type'] as String? ?? 'workout_count',
                     goalValue: (challenge['goal_value'] as num?)?.toDouble() ?? 0,
@@ -284,14 +285,14 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Create Challenge',
+                      AppLocalizations.of(context).createChallengeCreateChallenge,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Start your own challenge and invite friends',
+                      AppLocalizations.of(context).challengesStartYourOwnChallenge,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: textMuted,
                           ),

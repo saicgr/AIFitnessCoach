@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// One time-stamped GPS sample carrying instantaneous pace (sec/km).
 /// Defined as a top-level typedef so callers and tests can construct records
 /// without re-typing the field labels.
@@ -122,7 +123,7 @@ class PaceChart extends StatelessWidget {
     final pad = ((yMax - yMin).abs() * 0.15).clamp(5.0, 60.0);
 
     return _ChartCard(
-      title: 'Pace',
+      title: AppLocalizations.of(context).syncedWorkoutDetailPace,
       onExpand: onExpand,
       height: 180,
       child: LineChart(
@@ -239,7 +240,7 @@ class _ChartCard extends StatelessWidget {
               if (onExpand != null)
                 IconButton(
                   icon: const Icon(Icons.fullscreen, size: 20),
-                  tooltip: 'Expand',
+                  tooltip: AppLocalizations.of(context).paceChartExpand,
                   padding: EdgeInsets.zero,
                   constraints:
                       const BoxConstraints(minWidth: 32, minHeight: 32),

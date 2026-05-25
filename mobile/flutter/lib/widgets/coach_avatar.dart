@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../core/constants/app_colors.dart';
 import '../data/models/coach_persona.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Reusable circular coach avatar with image support.
 ///
 /// Displays the coach's image in a circular frame with an optional
@@ -293,7 +294,7 @@ class CoachAvatar extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          'Close',
+                          AppLocalizations.of(context).commonClose,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -509,7 +510,7 @@ void showCoachAvatarDialog(BuildContext context, CoachPersona coach) {
                         ),
                       ),
                       child: Text(
-                        'Close',
+                        AppLocalizations.of(context).commonClose,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,

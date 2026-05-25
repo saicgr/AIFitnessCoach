@@ -30,7 +30,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
       if (mounted) {
         setState(() => _isFavorite = previousState);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update favorite')),
+          SnackBar(content: Text(AppLocalizations.of(context).workoutDetailScreenFailedToUpdateFavorite)),
         );
       }
     }
@@ -513,7 +513,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Equipment updated',
+              Text(AppLocalizations.of(context).workoutDetailScreenEquipmentUpdated,
                   style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
@@ -530,20 +530,20 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
               ),
               const SizedBox(height: 18),
               _EquipmentChoiceButton(
-                label: 'Replace now',
-                subtitle: 'Swap those exercises in this session. Your completed sets stay logged.',
+                label: AppLocalizations.of(context).workoutDetailScreenReplaceNow,
+                subtitle: AppLocalizations.of(context).workoutDetailScreenSwapThoseExercisesIn,
                 onTap: () => Navigator.of(ctx).pop(_EquipmentApplyChoice.replaceNow),
               ),
               const SizedBox(height: 8),
               _EquipmentChoiceButton(
-                label: 'Save for next workout',
-                subtitle: 'Keep this session unchanged. New equipment applies to future workouts.',
+                label: AppLocalizations.of(context).workoutDetailScreenSaveForNextWorkout,
+                subtitle: AppLocalizations.of(context).workoutDetailScreenKeepThisSessionUnchanged,
                 onTap: () => Navigator.of(ctx).pop(_EquipmentApplyChoice.saveForNext),
               ),
               const SizedBox(height: 8),
               _EquipmentChoiceButton(
-                label: 'Cancel',
-                subtitle: 'Discard the equipment change entirely.',
+                label: AppLocalizations.of(context).buttonCancel,
+                subtitle: AppLocalizations.of(context).workoutDetailScreenDiscardTheEquipmentChange,
                 onTap: () => Navigator.of(ctx).pop(_EquipmentApplyChoice.cancel),
               ),
             ],
@@ -755,18 +755,18 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
         backgroundColor: surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Save to Profile?',
+          AppLocalizations.of(context).workoutDetailScreenSaveToProfile,
           style: TextStyle(color: textPrimary, fontSize: 18),
         ),
         content: Text(
-          'Would you like to save this equipment configuration to your profile for future workouts?',
+          AppLocalizations.of(context).workoutDetailScreenWouldYouLikeTo,
           style: TextStyle(color: textMuted, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'No Thanks',
+              AppLocalizations.of(context).workoutDetailScreenNoThanks,
               style: TextStyle(color: textMuted),
             ),
           ),
@@ -782,7 +782,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Yes, Save'),
+            child: Text(AppLocalizations.of(context).workoutDetailScreenYesSave),
           ),
         ],
       ),
@@ -820,8 +820,8 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
 
     final confirmed = await AppDialog.confirm(
       context,
-      title: 'Revert to Original?',
-      message: 'This will restore all exercises to their original state before equipment changes were applied.',
+      title: AppLocalizations.of(context).workoutDetailScreenRevertToOriginal,
+      message: AppLocalizations.of(context).workoutDetailScreenThisWillRestoreAll,
       confirmText: 'Revert',
       icon: Icons.restore_rounded,
     );
@@ -957,7 +957,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Cannot Merge Supersets',
+                AppLocalizations.of(context).workoutDetailScreenCannotMergeSupersets,
                 style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
@@ -970,7 +970,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text(AppLocalizations.of(context).healthSyncOk),
           ),
         ],
       ),
@@ -1030,7 +1030,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: textPrimary.withValues(alpha: 0.6))),
+            child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textPrimary.withValues(alpha: 0.6))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -1134,8 +1134,8 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(
-        const SnackBar(
-          content: Text('Superset created!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).workoutDetailScreenSupersetCreated),
           duration: Duration(seconds: 2),
         ),
       );
@@ -1147,10 +1147,10 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
     setState(() => _pendingSupersetIndex = index);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Tap another exercise to link as superset'),
+        content: Text(AppLocalizations.of(context).workoutDetailScreenTapAnotherExerciseTo),
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
-          label: 'Cancel',
+          label: AppLocalizations.of(context).buttonCancel,
           onPressed: () {
             setState(() => _pendingSupersetIndex = null);
           },

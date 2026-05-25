@@ -5,6 +5,7 @@ import '../../../../../data/providers/beast_mode_provider.dart';
 import '../../../../../widgets/glass_sheet.dart';
 import '../../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
+import '../../../../l10n/generated/app_localizations.dart';
 class TemplateEditorSheet extends StatefulWidget {
   final WorkoutTemplate? existing;
   final BeastModeConfigNotifier notifier;
@@ -80,7 +81,7 @@ class _TemplateEditorSheetState extends State<TemplateEditorSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.existing != null ? 'Edit Template' : 'New Template',
+            widget.existing != null ? AppLocalizations.of(context).templateEditorEditTemplate : AppLocalizations.of(context).templateEditorNewTemplate,
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textPrimary),
           ),
           const SizedBox(height: 16),
@@ -98,7 +99,7 @@ class _TemplateEditorSheetState extends State<TemplateEditorSheet> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Text('Supersets', style: TextStyle(fontSize: 13, color: textPrimary)),
+              Text(AppLocalizations.of(context).templateEditorSupersets, style: TextStyle(fontSize: 13, color: textPrimary)),
               const Spacer(),
               Switch(
                 value: _supersets,
@@ -119,7 +120,7 @@ class _TemplateEditorSheetState extends State<TemplateEditorSheet> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: Text(widget.existing != null ? 'Save Changes' : 'Add Template'),
+              child: Text(widget.existing != null ? AppLocalizations.of(context).vacationModeSaveChanges : AppLocalizations.of(context).templateEditorAddTemplate),
             ),
           ),
         ],

@@ -50,7 +50,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Weekly Goal',
+                        AppLocalizations.of(context).nutritionSettingsScreenWeeklyGoal,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -333,7 +333,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
               ),
               const SizedBox(width: 8),
               Text(
-                'Current Targets',
+                AppLocalizations.of(context).nutritionSettingsScreenCurrentTargets,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -359,7 +359,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Training Day',
+                        AppLocalizations.of(context).nutritionSettingsScreenTrainingDay,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -381,7 +381,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                 tint: accent,
                 onTap: _isLoading ? null : () => _recalculateTargets(userId),
                 showSpinner: _isLoading,
-                tooltip: 'Recalculate from profile',
+                tooltip: AppLocalizations.of(context).nutritionSettingsScreenRecalculateFromProfile,
               ),
               const SizedBox(width: 8),
               // Edit button
@@ -397,7 +397,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                   preferences,
                   userId,
                 ),
-                tooltip: 'Edit targets',
+                tooltip: AppLocalizations.of(context).nutritionSettingsScreenEditTargets,
               ),
             ],
           ),
@@ -511,7 +511,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
             child: Row(
               children: [
                 Text(
-                  'Your Preferences',
+                  AppLocalizations.of(context).nutritionSettingsScreenYourPreferences,
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textPrimary),
                 ),
                 const Spacer(),
@@ -528,7 +528,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                       children: [
                         Icon(Icons.edit_outlined, size: 16, color: textPrimary),
                         const SizedBox(width: 4),
-                        Text('Edit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
+                        Text(AppLocalizations.of(context).commonEdit, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
                       ],
                     ),
                   ),
@@ -610,7 +610,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Your Goals',
+                      AppLocalizations.of(context).nutritionSettingsScreenYourGoals,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -639,7 +639,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                             Icon(Icons.edit_outlined, size: 16, color: green),
                             const SizedBox(width: 4),
                             Text(
-                              'Edit',
+                              AppLocalizations.of(context).commonEdit,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -656,7 +656,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                 // Display goals
                 if (goals.isEmpty)
                   Text(
-                    'No goals set',
+                    AppLocalizations.of(context).nutritionSettingsScreenNoGoalsSet,
                     style: TextStyle(fontSize: 14, color: textMuted),
                   )
                 else
@@ -752,7 +752,7 @@ class _MacroRingsRow extends ConsumerWidget {
             color: accent,
             value: '$caloriesTarget',
             unit: 'kcal',
-            label: 'Calories',
+            label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
             footnote: baseCaloriesNote,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -765,7 +765,7 @@ class _MacroRingsRow extends ConsumerWidget {
             color: protein,
             value: '$proteinTarget',
             unit: 'g',
-            label: 'Protein',
+            label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
             textPrimary: textPrimary,
             textMuted: textMuted,
           ),
@@ -777,7 +777,7 @@ class _MacroRingsRow extends ConsumerWidget {
             color: carbs,
             value: '$carbsTarget',
             unit: 'g',
-            label: 'Carbs',
+            label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
             textPrimary: textPrimary,
             textMuted: textMuted,
           ),
@@ -789,7 +789,7 @@ class _MacroRingsRow extends ConsumerWidget {
             color: fat,
             value: '$fatTarget',
             unit: 'g',
-            label: 'Fat',
+            label: AppLocalizations.of(context).weeklyCheckinSheetFat,
             textPrimary: textPrimary,
             textMuted: textMuted,
           ),

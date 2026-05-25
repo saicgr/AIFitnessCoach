@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Inspired by GymBeat's pervasive lightbulb tooltips on every empty state.
 ///
 /// Drop [EmptyStateTipTour] anywhere a screen has a passive empty state and it
@@ -875,7 +876,7 @@ class _TipCard extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          isLast ? 'Got it' : 'Next',
+                          isLast ? AppLocalizations.of(context).weightIncrementsGotIt : AppLocalizations.of(context).commonNext,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,

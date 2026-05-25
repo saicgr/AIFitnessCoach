@@ -5,7 +5,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
 
   Widget _buildTitle(Color textPrimary) {
     return Text(
-      "Let's set your body goals",
+      AppLocalizations.of(context).quizBodyMetricsLetSSetYour,
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
@@ -18,7 +18,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
 
   Widget _buildSubtitle(Color textSecondary) {
     return Text(
-      "We'll use this to calculate your personalized targets",
+      AppLocalizations.of(context).quizBodyMetricsWeLlUseThis,
       style: TextStyle(
         fontSize: 14,
         color: textSecondary,
@@ -50,7 +50,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
             ),
             SizedBox(width: compact ? 8 : 12),
             Text(
-              'What should we call you?',
+              AppLocalizations.of(context).quizBodyMetricsWhatShouldWeCall,
               style: TextStyle(
                 fontSize: compact ? 14 : 16,
                 fontWeight: FontWeight.w600,
@@ -78,7 +78,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
               color: textPrimary,
             ),
             decoration: InputDecoration(
-              hintText: 'Your name',
+              hintText: AppLocalizations.of(context).quizBodyMetricsYourName,
               hintStyle: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                 fontWeight: FontWeight.normal,
@@ -227,7 +227,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Gender',
+                    AppLocalizations.of(context).quizBodyMetricsGender,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -268,7 +268,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                       cardBg: cardBg,
                       cardBorder: cardBorder,
                       id: 'other',
-                      label: 'Other',
+                      label: AppLocalizations.of(context).selectableChipOther,
                     ),
                   ),
                 ],
@@ -550,7 +550,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
             ),
             SizedBox(width: compact ? 8 : 12),
             Text(
-              'Weight Goal',
+              AppLocalizations.of(context).quizBodyMetricsWeightGoal,
               style: TextStyle(
                 fontSize: compact ? 14 : 16,
                 fontWeight: FontWeight.w600,
@@ -572,7 +572,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
               cardBorder: cardBorder,
               id: 'lose',
               emoji: '🔥',
-              label: 'Lose',
+              label: AppLocalizations.of(context).quizBodyMetricsLose,
             ),
             _buildDirectionChip(
               isDark: isDark,
@@ -580,7 +580,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
               cardBorder: cardBorder,
               id: 'gain',
               emoji: '💪',
-              label: 'Gain',
+              label: AppLocalizations.of(context).quizBodyMetricsGain,
             ),
             _buildDirectionChip(
               isDark: isDark,
@@ -588,7 +588,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
               cardBorder: cardBorder,
               id: 'maintain',
               emoji: '✨',
-              label: 'Maintain',
+              label: AppLocalizations.of(context).quizBodyMetricsMaintain,
             ),
           ],
         ),

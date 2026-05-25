@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/posthog_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// First Action Prompt — Onboarding v5 (Day 0 activation)
 ///
 /// Shown ONCE on first home-screen load after signup. Surfaces a single
@@ -118,7 +119,7 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
                   color: AppColors.onboardingAccent, size: 20),
               const SizedBox(width: 6),
               Text(
-                'Quick start',
+                AppLocalizations.of(context).quizPersonalizationGateQuickStart,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -136,7 +137,7 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Pick one — takes under a minute.',
+            AppLocalizations.of(context).firstActionPromptPickOneTakesUnder,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
@@ -158,7 +159,7 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
             icon: Icons.favorite_rounded,
             iconColor: const Color(0xFFE74C3C),
             label: 'Connect Apple Health',
-            detail: 'Pull in your activity, sleep, weight history.',
+            detail: AppLocalizations.of(context).firstActionPromptPullInYourActivity,
             onTap: () => _trigger('connect_health', '/health-connect-setup'),
             isDark: isDark,
           ),
@@ -167,7 +168,7 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
             icon: Icons.chat_bubble_rounded,
             iconColor: const Color(0xFF9B59B6),
             label: 'Say hi to your coach',
-            detail: 'They have a message waiting for you.',
+            detail: AppLocalizations.of(context).firstActionPromptTheyHaveAMessage,
             onTap: () => _trigger('coach_chat', '/chat'),
             isDark: isDark,
           ),

@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Dialog to challenge friends after completing a workout
 class ChallengeFriendsDialog extends ConsumerStatefulWidget {
   final String userId;
@@ -65,8 +66,8 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
   Future<void> _sendChallenges() async {
     if (_selectedFriendIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one friend'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).challengeFriendsPleaseSelectAtLeast),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -142,8 +143,8 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Challenge Friends',
+                        Text(
+                          AppLocalizations.of(context).challengeFriendsChallengeFriends,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -181,8 +182,8 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Stats to Beat:',
+                  Text(
+                    AppLocalizations.of(context).challengeFriendsStatsToBeat,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -217,7 +218,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                   });
                 },
                 decoration: InputDecoration(
-                  hintText: 'Search friends...',
+                  hintText: AppLocalizations.of(context).groupCreateSearchFriends,
                   prefixIcon: const Icon(Icons.search, size: 20),
                   filled: true,
                   fillColor: isDark ? AppColors.background : AppColorsLight.background,
@@ -237,7 +238,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
               child: _filteredFriends.isEmpty
                   ? Center(
                       child: Text(
-                        _searchQuery.isEmpty ? 'No friends to challenge' : 'No friends found',
+                        _searchQuery.isEmpty ? AppLocalizations.of(context).challengeFriendsNoFriendsToChallenge : 'No friends found',
                         style: const TextStyle(color: AppColors.textMuted),
                       ),
                     )
@@ -301,7 +302,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                 maxLines: 2,
                 maxLength: 200,
                 decoration: InputDecoration(
-                  hintText: 'Add trash talk message (optional) 💪',
+                  hintText: AppLocalizations.of(context).challengeFriendsAddTrashTalkMessage,
                   filled: true,
                   fillColor: isDark ? AppColors.background : AppColorsLight.background,
                   border: OutlineInputBorder(
@@ -327,7 +328,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(AppLocalizations.of(context).buttonCancel),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -354,7 +355,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                           : const Icon(Icons.send, size: 18),
                       label: Text(
                         _isSending
-                            ? 'Sending...'
+                            ? AppLocalizations.of(context).challengeFriendsSending
                             : 'Send Challenge (${_selectedFriendIds.length})',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),

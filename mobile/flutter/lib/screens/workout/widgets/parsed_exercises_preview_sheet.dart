@@ -13,6 +13,7 @@ import '../../../data/models/parsed_exercise.dart';
 import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Show the parsed exercises preview sheet
 Future<List<ParsedExercise>?> showParsedExercisesPreview(
   BuildContext context,
@@ -130,7 +131,7 @@ class _ParsedExercisesPreviewSheetState
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : Colors.grey.shade600,
               ),
@@ -150,7 +151,7 @@ class _ParsedExercisesPreviewSheetState
               );
               Navigator.pop(context, edited);
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context).buttonSave),
           ),
         ],
       ),
@@ -288,7 +289,7 @@ class _ParsedExercisesPreviewSheetState
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context).buttonCancel),
                   ),
                 ),
                 const SizedBox(width: 12),

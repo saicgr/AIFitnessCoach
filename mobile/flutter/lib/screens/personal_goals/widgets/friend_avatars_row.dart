@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/goal_social_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Row of overlapping friend avatars with count badge
 /// Shows up to 3 avatars + remaining count
 class FriendAvatarsRow extends StatelessWidget {
@@ -74,7 +75,7 @@ class FriendAvatarsRow extends StatelessWidget {
                 ),
               ),
               Text(
-                'on this goal',
+                AppLocalizations.of(context).friendAvatarsRowOnThisGoal,
                 style: TextStyle(
                   fontSize: 10,
                   color: textSecondary,

@@ -16,6 +16,7 @@ library;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class TodayCycleLengthSparkline extends StatelessWidget {
   /// Observed cycle lengths in days, oldest-first.
   final List<int> cycleLengths;
@@ -64,7 +65,7 @@ class TodayCycleLengthSparkline extends StatelessWidget {
                 Icon(Icons.show_chart_rounded, size: 16, color: accent),
                 const SizedBox(width: 8),
                 Text(
-                  'Last cycles',
+                  AppLocalizations.of(context).todayCycleLengthLastCycles,
                   style: TextStyle(
                     color: fg,
                     fontSize: 13,
@@ -178,7 +179,7 @@ class _GhostBar extends StatelessWidget {
           right: 0,
           bottom: 0,
           child: Text(
-            'Log 2 cycles to chart',
+            AppLocalizations.of(context).todayCycleLengthLog2CyclesTo,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: fg.withValues(alpha: 0.55),

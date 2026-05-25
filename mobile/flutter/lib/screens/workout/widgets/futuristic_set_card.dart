@@ -13,6 +13,7 @@ import '../../../data/models/smart_weight_suggestion.dart';
 import '../../../widgets/glow_button.dart';
 import '../../../widgets/number_stepper.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Futuristic set tracking card for active workout
 class FuturisticSetCard extends StatefulWidget {
   /// Exercise name
@@ -459,7 +460,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                 const SizedBox(width: 4),
                 Text(
                   _showPreviousDetails
-                      ? 'Hide previous'
+                      ? AppLocalizations.of(context).setRowPartHidePrevious
                       : 'Previous: ${widget.previousWeight?.toStringAsFixed(1) ?? '-'} ${widget.useKg ? 'kg' : 'lbs'} × ${widget.previousReps ?? '-'}',
                   style: TextStyle(
                     fontSize: 12,
@@ -566,7 +567,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'AI Suggested',
+                    AppLocalizations.of(context).futuristicSetCardAiSuggested,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -747,7 +748,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
             widget.onSkip?.call();
           },
           icon: const Icon(Icons.skip_next_rounded, size: 20),
-          label: const Text('Skip Exercise'),
+          label: Text(AppLocalizations.of(context).futuristicSetCardSkipExercise),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.glowOrange,
             side: BorderSide(color: AppColors.glowOrange.withOpacity(0.5)),

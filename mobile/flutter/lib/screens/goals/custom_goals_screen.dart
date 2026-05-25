@@ -14,6 +14,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Suggestions for custom goals
 const List<String> _goalSuggestions = [
   'Improve box jump height',
@@ -223,8 +224,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Goal Created!',
+                      Text(
+                        AppLocalizations.of(context).customGoalsGoalCreated,
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 18,
@@ -246,8 +247,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
-              'AI-Generated Keywords',
+            Text(
+              AppLocalizations.of(context).customGoalsAiGeneratedKeywords,
               style: TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 12,
@@ -281,7 +282,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'These keywords will help find relevant exercises for your goal.',
+              AppLocalizations.of(context).customGoalsTheseKeywordsWillHelp,
               style: TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 12,
@@ -301,7 +302,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Got it!'),
+                child: Text(AppLocalizations.of(context).xpGoalsGotIt),
               ),
             ),
           ],
@@ -314,7 +315,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   Future<void> _deleteGoal(CustomGoal goal) async {
     final confirmed = await AppDialog.destructive(
       context,
-      title: 'Delete Goal?',
+      title: AppLocalizations.of(context).personalGoalsDeleteGoal,
       message: 'Are you sure you want to delete "${goal.goalText}"?',
       icon: Icons.delete_rounded,
     );
@@ -368,8 +369,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const PillAppBar(
-        title: 'Custom Goals',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).customGoalsCustomGoals,
       ),
       body: Column(
         children: [
@@ -417,7 +418,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
             enabled: !_isCreating,
             style: const TextStyle(color: AppColors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'e.g., "Improve box jump height"',
+              hintText: AppLocalizations.of(context).customGoalsEGImproveBox,
               hintStyle: const TextStyle(color: AppColors.textMuted),
               filled: true,
               fillColor: AppColors.glassSurface,
@@ -529,8 +530,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
               color: AppColors.textMuted.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'No Custom Goals Yet',
+            Text(
+              AppLocalizations.of(context).customGoalsNoCustomGoalsYet,
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
@@ -538,8 +539,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Add specific skills or objectives you want to improve.\nAI will help find the right exercises.',
+            Text(
+              AppLocalizations.of(context).customGoalsAddSpecificSkillsOr,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -564,14 +565,14 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _error ?? 'Something went wrong',
+            _error ?? AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
             style: const TextStyle(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadGoals,
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context).buttonRetry),
           ),
         ],
       ),

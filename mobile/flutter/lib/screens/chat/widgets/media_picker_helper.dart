@@ -20,6 +20,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Supported media types for chat uploads
 enum ChatMediaType { image, video, document }
 
@@ -338,7 +339,7 @@ class MediaPickerHelper {
       _showPermissionDeniedDialog(context, 'Camera');
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Camera permission required')),
+        SnackBar(content: Text(AppLocalizations.of(context).mediaPickerHelperCameraPermissionRequired)),
       );
     }
     return false;
@@ -363,7 +364,7 @@ class MediaPickerHelper {
       _showPermissionDeniedDialog(context, 'Photo Library');
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Photo library permission required')),
+        SnackBar(content: Text(AppLocalizations.of(context).mediaPickerHelperPhotoLibraryPermissionRequi)),
       );
     }
     return false;
@@ -383,14 +384,14 @@ class MediaPickerHelper {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               openAppSettings();
             },
-            child: const Text('Open Settings'),
+            child: Text(AppLocalizations.of(context).mediaPickerHelperOpenSettings),
           ),
         ],
       ),
@@ -582,13 +583,13 @@ class MediaPickerHelper {
         return PopScope(
           canPop: false,
           child: AlertDialog(
-            content: const Column(
+            content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 16),
                     Text(
-                      'Compressing video...',
+                      AppLocalizations.of(context).mediaPickerHelperCompressingVideo,
                       style: TextStyle(fontSize: 14),
                     ),
                   ],
@@ -637,7 +638,7 @@ class MediaPickerHelper {
               children: [
                 // Title
                 Text(
-                  'Add Media',
+                  AppLocalizations.of(context).mediaPickerHelperAddMedia,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -646,7 +647,7 @@ class MediaPickerHelper {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Images: max 10 MB | Videos: max 60s (BETA)',
+                  AppLocalizations.of(context).mediaPickerHelperImagesMax10Mb,
                   style: TextStyle(
                     fontSize: 12,
                     color: colors.textMuted,
@@ -657,8 +658,8 @@ class MediaPickerHelper {
                 // Photo options
                 _PickerOption(
                   icon: Icons.photo_library_outlined,
-                  label: 'Choose Photo',
-                  subtitle: 'From gallery',
+                  label: AppLocalizations.of(context).mediaPickerHelperChoosePhoto,
+                  subtitle: AppLocalizations.of(context).mediaPickerHelperFromGallery,
                   color: AppColors.info,
                   onTap: () async {
                     pickingInProgress = true;
@@ -675,8 +676,8 @@ class MediaPickerHelper {
                 const SizedBox(height: 8),
                 _PickerOption(
                   icon: Icons.collections_outlined,
-                  label: 'Choose Multiple Photos',
-                  subtitle: 'Select up to 5 from gallery',
+                  label: AppLocalizations.of(context).mediaPickerHelperChooseMultiplePhotos,
+                  subtitle: AppLocalizations.of(context).mediaPickerHelperSelectUpTo5,
                   color: const Color(0xFF00BCD4),
                   onTap: () async {
                     pickingInProgress = true;
@@ -693,8 +694,8 @@ class MediaPickerHelper {
                 const SizedBox(height: 8),
                 _PickerOption(
                   icon: Icons.camera_alt_outlined,
-                  label: 'Take Photo',
-                  subtitle: 'Use camera',
+                  label: AppLocalizations.of(context).progressTakePhoto,
+                  subtitle: AppLocalizations.of(context).progressUseCamera,
                   color: AppColors.success,
                   onTap: () async {
                     pickingInProgress = true;
@@ -714,7 +715,7 @@ class MediaPickerHelper {
                 Row(
                   children: [
                     Text(
-                      'Video',
+                      AppLocalizations.of(context).workoutShowcaseVideo,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -743,8 +744,8 @@ class MediaPickerHelper {
                 const SizedBox(height: 8),
                 _PickerOption(
                   icon: Icons.video_library_outlined,
-                  label: 'Choose Video',
-                  subtitle: 'From gallery (max 60s)',
+                  label: AppLocalizations.of(context).mediaPickerHelperChooseVideo,
+                  subtitle: AppLocalizations.of(context).mediaPickerHelperFromGalleryMax60s,
                   color: AppColors.purple,
                   onTap: () async {
                     pickingInProgress = true;
@@ -761,8 +762,8 @@ class MediaPickerHelper {
                 const SizedBox(height: 8),
                 _PickerOption(
                   icon: Icons.videocam_outlined,
-                  label: 'Record Video',
-                  subtitle: 'Use camera (max 60s)',
+                  label: AppLocalizations.of(context).mediaPickerHelperRecordVideo,
+                  subtitle: AppLocalizations.of(context).mediaPickerHelperUseCameraMax60s,
                   color: AppColors.orange,
                   onTap: () async {
                     pickingInProgress = true;

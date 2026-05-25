@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../services/muscle_recovery_tracker.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Phase 4 — per-muscle recovery pills surfaced on Home.
 ///
 /// Wires the muscle_recovery_tracker.dart algorithm (which already runs
@@ -73,7 +74,7 @@ class _RecoveryPillsRowState extends ConsumerState<RecoveryPillsRow> {
               ),
               const SizedBox(width: 4),
               Text(
-                'Recovery',
+                AppLocalizations.of(context).recoveryLabel,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,

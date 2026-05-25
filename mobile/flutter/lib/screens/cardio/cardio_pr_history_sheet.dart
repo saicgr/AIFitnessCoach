@@ -9,6 +9,7 @@ import '../../data/models/cardio_pr.dart';
 import '../../data/repositories/cardio_pr_repository.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Bottom sheet showing all cardio PRs grouped by sport. Each row expands
 /// inline to a sparkline (line chart of last N attempts) when tapped.
 ///
@@ -69,12 +70,12 @@ class _CardioPrHistoryBody extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Cardio PRs',
+                    Text(AppLocalizations.of(context).cardioPrHistoryCardioPrs,
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: textPrimary)),
-                    Text('All-time bests by sport',
+                    Text(AppLocalizations.of(context).cardioPrHistoryAllTimeBestsBy,
                         style: TextStyle(fontSize: 14, color: textSecondary)),
                   ],
                 ),
@@ -140,13 +141,13 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.timer_outlined, size: 48, color: textSecondary),
           const SizedBox(height: 12),
-          Text('No cardio PRs yet',
+          Text(AppLocalizations.of(context).cardioPrHistoryNoCardioPrsYet,
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: textPrimary)),
           const SizedBox(height: 4),
-          Text('Log a cardio session to start tracking PRs.',
+          Text(AppLocalizations.of(context).cardioPrHistoryLogACardioSession,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: textSecondary)),
         ],
@@ -377,7 +378,7 @@ class _InlineSparkline extends ConsumerWidget {
               return Center(
                 child: Text(
                   source.isEmpty
-                      ? 'No history yet.'
+                      ? AppLocalizations.of(context).cardioPrHistoryNoHistoryYet
                       : 'Log another session to see your trend.',
                   style: const TextStyle(fontSize: 12),
                 ),
@@ -417,7 +418,7 @@ class _InlineSparkline extends ConsumerWidget {
           },
           loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
           error: (e, _) => Center(
-            child: Text('Could not load trend',
+            child: Text(AppLocalizations.of(context).cardioPrHistoryCouldNotLoadTrend,
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           ),
         ),
@@ -436,7 +437,7 @@ class _FirstTimeBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
-        'First time!',
+        AppLocalizations.of(context).cardioPrHistoryFirstTime,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,

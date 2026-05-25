@@ -44,7 +44,7 @@ class _AIHeaderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'AI Coach Settings',
+                  AppLocalizations.of(context).aiSettingsScreenAiCoachSettings,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -53,7 +53,7 @@ class _AIHeaderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Customize how your AI coach interacts with you',
+                  AppLocalizations.of(context).aiSettingsScreenCustomizeHowYourAi,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -245,14 +245,14 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
                                 borderSide:
                                     BorderSide(color: coachColor, width: 1.5),
                               ),
-                              hintText: coach?.name ?? 'Coach name',
+                              hintText: coach?.name ?? AppLocalizations.of(context).aiSettingsScreenCoachName,
                             ),
                           ),
                         ),
                         IconButton(
                           icon: Icon(Icons.check, color: coachColor, size: 22),
                           onPressed: _saveName,
-                          tooltip: 'Save',
+                          tooltip: AppLocalizations.of(context).buttonSave,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                         ),
@@ -260,7 +260,7 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
                           icon: Icon(Icons.close,
                               color: textSecondary, size: 22),
                           onPressed: _cancelEditing,
-                          tooltip: 'Cancel',
+                          tooltip: AppLocalizations.of(context).buttonCancel,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                         ),
@@ -319,7 +319,7 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
                             context.push('/coach-selection?fromSettings=true'),
                     child: Text(
                       _editingName
-                          ? 'Rename your coach — preset stays the same'
+                          ? AppLocalizations.of(context).aiSettingsScreenRenameYourCoachPreset
                           : 'Tap name to rename · tap row to change coach',
                       style: TextStyle(
                         fontSize: 12,
@@ -424,7 +424,7 @@ class _PersonalitySection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Coaching Style',
+            AppLocalizations.of(context).customCoachFormCoachingStyle,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -473,7 +473,7 @@ class _PersonalitySection extends StatelessWidget {
           const SizedBox(height: 16),
 
           Text(
-            'Communication Tone',
+            AppLocalizations.of(context).customCoachFormCommunicationTone,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -525,7 +525,7 @@ class _PersonalitySection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Encouragement Level',
+                AppLocalizations.of(context).customCoachFormEncouragementLevel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -558,7 +558,7 @@ class _PersonalitySection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Minimal', style: TextStyle(fontSize: 11, color: textSecondary)),
+              Text(AppLocalizations.of(context).notificationsMinimal, style: TextStyle(fontSize: 11, color: textSecondary)),
               Text('Maximum', style: TextStyle(fontSize: 11, color: textSecondary)),
             ],
           ),
@@ -600,7 +600,7 @@ class _ResponsePreferencesSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Response Length',
+            AppLocalizations.of(context).aiSettingsScreenResponseLength,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -655,15 +655,15 @@ class _ResponsePreferencesSection extends StatelessWidget {
           const SizedBox(height: 8),
 
           _ToggleItem(
-            title: 'Use Emojis',
-            subtitle: 'Add emojis to AI responses',
+            title: AppLocalizations.of(context).aiSettingsScreenUseEmojis,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenAddEmojisToAi,
             value: settings.useEmojis,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleEmojis(),
           ),
           const SizedBox(height: 12),
           _ToggleItem(
-            title: 'Include Tips',
-            subtitle: 'Add helpful tips in responses',
+            title: AppLocalizations.of(context).aiSettingsScreenIncludeTips,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenAddHelpfulTipsIn,
             value: settings.includeTips,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleIncludeTips(),
           ),
@@ -699,7 +699,7 @@ class _AgentsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Default Agent',
+            AppLocalizations.of(context).aiSettingsScreenDefaultAgent,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -708,7 +708,7 @@ class _AgentsSection extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'This agent responds when you don\'t @mention a specific one',
+            AppLocalizations.of(context).aiSettingsScreenThisAgentRespondsWhen,
             style: TextStyle(fontSize: 12, color: textSecondary),
           ),
           const SizedBox(height: 12),
@@ -756,7 +756,7 @@ class _AgentsSection extends StatelessWidget {
           const SizedBox(height: 16),
 
           Text(
-            'Available Agents',
+            AppLocalizations.of(context).aiSettingsScreenAvailableAgents,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -765,7 +765,7 @@ class _AgentsSection extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Enable or disable agents you can @mention',
+            AppLocalizations.of(context).aiSettingsScreenEnableOrDisableAgents,
             style: TextStyle(fontSize: 12, color: textSecondary),
           ),
           const SizedBox(height: 12),
@@ -881,36 +881,36 @@ class _FitnessCoachingSection extends StatelessWidget {
       child: Column(
         children: [
           _ToggleItem(
-            title: 'Form Reminders',
-            subtitle: 'Get reminders about proper exercise form',
+            title: AppLocalizations.of(context).aiSettingsScreenFormReminders,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenGetRemindersAboutProper,
             value: settings.formReminders,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleFormReminders(),
           ),
           const SizedBox(height: 12),
           _ToggleItem(
-            title: 'Rest Day Suggestions',
-            subtitle: 'Get suggestions for rest and recovery',
+            title: AppLocalizations.of(context).aiSettingsScreenRestDaySuggestions,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenGetSuggestionsForRest,
             value: settings.restDaySuggestions,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleRestDaySuggestions(),
           ),
           const SizedBox(height: 12),
           _ToggleItem(
-            title: 'Nutrition Mentions',
-            subtitle: 'Include nutrition advice in workout discussions',
+            title: AppLocalizations.of(context).aiSettingsScreenNutritionMentions,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenIncludeNutritionAdviceIn,
             value: settings.nutritionMentions,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleNutritionMentions(),
           ),
           const SizedBox(height: 12),
           _ToggleItem(
-            title: 'Injury Sensitivity',
-            subtitle: 'Consider your injuries when giving advice',
+            title: AppLocalizations.of(context).aiSettingsScreenInjurySensitivity,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenConsiderYourInjuriesWhen,
             value: settings.injurySensitivity,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleInjurySensitivity(),
           ),
           const SizedBox(height: 12),
           _ToggleItem(
-            title: 'AI Coach During Workouts',
-            subtitle: 'Show AI coach assistant while exercising',
+            title: AppLocalizations.of(context).aiSettingsScreenAiCoachDuringWorkouts,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenShowAiCoachAssistant,
             value: settings.showAICoachDuringWorkouts,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleShowAICoachDuringWorkouts(),
           ),
@@ -944,15 +944,15 @@ class _PrivacySection extends ConsumerWidget {
       child: Column(
         children: [
           _ToggleItem(
-            title: 'Save Chat History',
-            subtitle: 'Store conversations for context',
+            title: AppLocalizations.of(context).aiSettingsScreenSaveChatHistory,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenStoreConversationsForContex,
             value: settings.saveChatHistory,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleSaveChatHistory(),
           ),
           const SizedBox(height: 12),
           _ToggleItem(
-            title: 'Use Previous Conversations',
-            subtitle: 'AI learns from past interactions (RAG)',
+            title: AppLocalizations.of(context).aiSettingsScreenUsePreviousConversations,
+            subtitle: AppLocalizations.of(context).aiSettingsScreenAiLearnsFromPast,
             value: settings.useRAG,
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleUseRAG(),
           ),
@@ -966,7 +966,7 @@ class _PrivacySection extends ConsumerWidget {
             child: OutlinedButton.icon(
               onPressed: () => _showClearHistoryDialog(context, widgetRef),
               icon: const Icon(Icons.delete_outline, color: AppColors.error),
-              label: const Text('Clear Chat History', style: TextStyle(color: AppColors.error)),
+              label: Text(AppLocalizations.of(context).chatScreenExtClearChatHistory, style: TextStyle(color: AppColors.error)),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.error),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -975,7 +975,7 @@ class _PrivacySection extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'This will delete all your chat history',
+            AppLocalizations.of(context).aiSettingsScreenThisWillDeleteAll,
             style: TextStyle(fontSize: 11, color: textSecondary),
           ),
         ],
@@ -990,15 +990,15 @@ class _PrivacySection extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: const Text('Clear Chat History?'),
-        content: const Text(
-          'This will permanently delete all your conversations with the AI coach. This action cannot be undone.',
+        title: Text(AppLocalizations.of(context).chatClearChatHistory),
+        content: Text(
+          AppLocalizations.of(context).aiSettingsScreenThisWillPermanentlyDelete,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
               ),
@@ -1009,13 +1009,13 @@ class _PrivacySection extends ConsumerWidget {
               Navigator.pop(context);
               ref.read(chatMessagesProvider.notifier).clearHistory();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Chat history cleared'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).aiSettingsScreenChatHistoryCleared),
                   backgroundColor: AppColors.success,
                 ),
               );
             },
-            child: const Text('Clear', style: TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(context).vacationModeClear, style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),

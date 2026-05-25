@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class MicronutrientsSection extends StatefulWidget {
   final LogFoodResponse response;
   final bool isDark;
@@ -39,7 +40,7 @@ class _MicronutrientsSectionState extends State<MicronutrientsSection> {
                 children: [
                   Icon(Icons.science_outlined, size: 20, color: AppColors.purple),
                   const SizedBox(width: 10),
-                  Expanded(child: Text('Vitamins & Minerals', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary))),
+                  Expanded(child: Text(AppLocalizations.of(context).micronutrientsVitaminsMinerals, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary))),
                   Icon(_isExpanded ? Icons.expand_less : Icons.expand_more, color: textMuted),
                 ],
               ),
@@ -74,7 +75,7 @@ class _MicronutrientsSectionState extends State<MicronutrientsSection> {
     if (items.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(12),
-        child: Text('No micronutrient data available', style: TextStyle(fontSize: 13, color: textMuted, fontStyle: FontStyle.italic)),
+        child: Text(AppLocalizations.of(context).micronutrientsNoMicronutrientDataAvailabl, style: TextStyle(fontSize: 13, color: textMuted, fontStyle: FontStyle.italic)),
       );
     }
 

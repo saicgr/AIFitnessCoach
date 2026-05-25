@@ -4,6 +4,7 @@ import '../core/constants/app_colors.dart';
 import '../core/providers/usage_tracking_provider.dart';
 import 'upgrade_prompt_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Wraps a child widget and gates the [onAllowed] callback behind a usage check.
 ///
 /// If the user has remaining uses for [featureKey], [onAllowed] is invoked.
@@ -102,7 +103,7 @@ class PremiumLockCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Premium feature',
+                  AppLocalizations.of(context).premiumGatePremiumFeature,
                   style: textTheme.bodySmall?.copyWith(
                     color: isDark
                         ? AppColors.textSecondary
@@ -128,8 +129,8 @@ class PremiumLockCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text(
-              'Unlock',
+            child: Text(
+              AppLocalizations.of(context).premiumGateUnlock,
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),

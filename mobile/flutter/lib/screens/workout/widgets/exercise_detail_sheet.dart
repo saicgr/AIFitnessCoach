@@ -10,6 +10,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows a detailed exercise view with set tracking table
 /// Similar to the Hevy app design
 Future<void> showExerciseDetailSheet(
@@ -307,7 +308,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          '(each side)',
+                          AppLocalizations.of(context).exerciseDetailEachSide,
                           style: TextStyle(
                             fontSize: 14,
                             color: textSecondary,
@@ -496,7 +497,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Instructions',
+                AppLocalizations.of(context).workoutShowcaseInstructions,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.orange,
@@ -550,7 +551,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Rest Timer',
+                  AppLocalizations.of(context).exerciseDetailRestTimer,
                   style: TextStyle(
                     fontSize: 12,
                     color: _isResting ? AppColors.purple : textMuted,
@@ -648,7 +649,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
                 width: 80,
                 child: Center(
                   child: Text(
-                    'REP RANGE',
+                    AppLocalizations.of(context).exerciseDetailRepRange,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -802,7 +803,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
       builder: (context) => AlertDialog(
         backgroundColor: dialogBg,
         title: Text(
-          'Enter Weight (lbs)',
+          AppLocalizations.of(context).exerciseDetailEnterWeightLbs,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         content: TextField(
@@ -822,7 +823,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -834,7 +835,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
               backgroundColor: AppColors.cyan,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context).buttonSave),
           ),
         ],
       ),
@@ -846,7 +847,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'PREVIOUS PERFORMANCE',
+          AppLocalizations.of(context).exerciseDetailPreviousPerformance,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,

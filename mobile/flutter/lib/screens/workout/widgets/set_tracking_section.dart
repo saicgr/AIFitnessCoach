@@ -14,6 +14,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/models/smart_weight_suggestion.dart';
 import 'futuristic_set_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Data for a completed set
 class CompletedSetData {
   final int reps;
@@ -508,7 +509,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
               .scale(duration: 300.ms, curve: Curves.elasticOut),
           const SizedBox(height: 16),
           Text(
-            'Exercise Complete!',
+            AppLocalizations.of(context).setTrackingExerciseComplete,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -567,7 +568,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
           ),
           const SizedBox(width: 6),
           Text(
-            'NEXT:',
+            AppLocalizations.of(context).setTrackingNext,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,

@@ -698,7 +698,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
         Icon(Icons.timer_off_outlined, size: 48, color: colors.textSecondary.withOpacity(0.5)),
         const SizedBox(height: 12),
         Text(
-          'Offer Expired',
+          AppLocalizations.of(context).paywallPricingScreenOfferExpired,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -707,7 +707,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
         ),
         const SizedBox(height: 8),
         Text(
-          'This special discount is no longer available.',
+          AppLocalizations.of(context).paywallPricingScreenThisSpecialDiscountIs,
           style: TextStyle(
             fontSize: 14,
             color: colors.textSecondary,
@@ -718,7 +718,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
 
         // Regular yearly option
         Text(
-          'You can still get Premium Yearly for',
+          AppLocalizations.of(context).paywallPricingScreenYouCanStillGet,
           style: TextStyle(
             fontSize: 13,
             color: colors.textSecondary,
@@ -726,7 +726,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
         ),
         const SizedBox(height: 4),
         Text(
-          '\$59.99/year',
+          AppLocalizations.of(context).paywallPricingScreen5999Year,
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -749,8 +749,8 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Back to Plans',
+            child: Text(
+              AppLocalizations.of(context).paywallPricingScreenBackToPlans,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -783,10 +783,10 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
         ),
 
         // Fire emoji and title
-        const Text('\u{1F525}', style: TextStyle(fontSize: 40)),
+        Text(AppLocalizations.of(context).habitsCardU1f525, style: TextStyle(fontSize: 40)),
         const SizedBox(height: 8),
         Text(
-          'Wait! Special Offer',
+          AppLocalizations.of(context).paywallPricingScreenWaitSpecialOffer,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -795,7 +795,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
         ),
         const SizedBox(height: 6),
         Text(
-          'Exclusive yearly discount just for you!',
+          AppLocalizations.of(context).paywallPricingScreenExclusiveYearlyDiscountJust,
           style: TextStyle(
             fontSize: 13,
             color: colors.textSecondary,
@@ -812,7 +812,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
             Icon(Icons.timer_outlined, size: 16, color: Colors.orange),
             const SizedBox(width: 6),
             Text(
-              'Offer expires in ',
+              AppLocalizations.of(context).paywallPricingScreenOfferExpiresIn,
               style: TextStyle(
                 fontSize: 13,
                 color: colors.textSecondary,
@@ -850,7 +850,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
           child: Column(
             children: [
               Text(
-                'PREMIUM YEARLY',
+                AppLocalizations.of(context).paywallPricingScreenPremiumYearly,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -918,7 +918,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'SAVE \$12.50 (25% OFF)',
+                  AppLocalizations.of(context).paywallPricingScreenSave125025,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -928,7 +928,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
               ),
               const SizedBox(height: 8),
               Text(
-                'Just \$3.12/month',
+                AppLocalizations.of(context).paywallPricingScreenJust312Month,
                 style: TextStyle(
                   fontSize: 13,
                   color: colors.textSecondary,
@@ -936,7 +936,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
               ),
               const SizedBox(height: 4),
               Text(
-                "That's just \$0.10/day — less than a coffee",
+                AppLocalizations.of(context).paywallPricingScreenThatSJust0,
                 style: TextStyle(
                   fontSize: 12,
                   color: colors.textSecondary.withOpacity(0.8),
@@ -974,8 +974,8 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Get Yearly for \$37.49',
+            child: Text(
+              AppLocalizations.of(context).paywallPricingScreenGetYearlyFor37,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -990,7 +990,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
         GestureDetector(
           onTap: () => Navigator.pop(context, false),
           child: Text(
-            'No thanks, I\'ll pass',
+            AppLocalizations.of(context).paywallPricingScreenNoThanksILl,
             style: TextStyle(
               fontSize: 13,
               color: colors.textSecondary,

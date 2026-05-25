@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Input bar widget for live chat
 /// Includes text field, send button, and typing detection
 class LiveChatInputBar extends StatefulWidget {
@@ -107,7 +108,7 @@ class _LiveChatInputBarState extends State<LiveChatInputBar> {
                 ),
                 decoration: InputDecoration(
                   hintText: widget.enabled
-                      ? 'Type a message...'
+                      ? AppLocalizations.of(context).liveChatInputTypeAMessage
                       : 'Chat ended',
                   hintStyle: TextStyle(
                     color: AppColors.textMuted,
@@ -237,7 +238,7 @@ class AttachmentButton extends StatelessWidget {
         Icons.attach_file_rounded,
         color: AppColors.textSecondary,
       ),
-      tooltip: 'Attach file',
+      tooltip: AppLocalizations.of(context).liveChatInputAttachFile,
     );
   }
 }

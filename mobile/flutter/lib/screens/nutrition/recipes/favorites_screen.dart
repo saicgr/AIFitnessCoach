@@ -20,6 +20,7 @@ import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'recipe_detail_screen.dart';
 import 'widgets/recipe_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class FavoritesScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -81,7 +82,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Favorites',
+                    AppLocalizations.of(context).workoutsFavorites,
                     style: TextStyle(
                       color: text,
                       fontSize: 22,
@@ -215,7 +216,7 @@ class _EmptyFavoritesView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No favorites yet',
+              AppLocalizations.of(context).favoritesNoFavoritesYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -224,7 +225,7 @@ class _EmptyFavoritesView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Tap \u2665 on any recipe in Discover or your library to save it here.',
+              AppLocalizations.of(context).favoritesTapU2665OnAny,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: muted, height: 1.5),
             ),
@@ -274,7 +275,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Check your connection and try again.',
+              AppLocalizations.of(context).savedHubCheckYourConnectionAnd,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: muted),
             ),
@@ -282,7 +283,7 @@ class _ErrorView extends StatelessWidget {
             TextButton(
               onPressed: onRetry,
               style: TextButton.styleFrom(foregroundColor: accent),
-              child: const Text('Try again'),
+              child: Text(AppLocalizations.of(context).workoutReviewTryAgain),
             ),
           ],
         ),

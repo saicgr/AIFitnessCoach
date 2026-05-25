@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Stats PRs Template - Shows Personal Records summary
 /// Clean design highlighting recent PRs and achievements
 class StatsPRsTemplate extends StatelessWidget {
@@ -53,7 +54,7 @@ class StatsPRsTemplate extends StatelessWidget {
               children: [
                 // Header
                 Text(
-                  'PERSONAL RECORDS',
+                  AppLocalizations.of(context).weeklyPrsTemplatePersonalRecords,
                   style: TextStyle(
                     color: AppColors.info,
                     fontSize: 12,
@@ -288,14 +289,14 @@ class _EmptyPRsState extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'No PRs yet',
+            AppLocalizations.of(context).statsPrsTemplateNoPrsYet,
             style: TextStyle(
               color: Colors.white.withOpacity(0.5),
               fontSize: 16,
             ),
           ),
           Text(
-            'Keep pushing to set records!',
+            AppLocalizations.of(context).statsPrsTemplateKeepPushingToSet,
             style: TextStyle(
               color: Colors.white.withOpacity(0.3),
               fontSize: 12,

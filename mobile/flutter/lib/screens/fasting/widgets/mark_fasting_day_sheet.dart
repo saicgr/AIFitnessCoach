@@ -6,6 +6,7 @@ import '../../../data/repositories/fasting_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for marking a historical date as a fasting day
 class MarkFastingDaySheet extends ConsumerStatefulWidget {
   final String userId;
@@ -240,7 +241,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Mark Fasting Day',
+                    AppLocalizations.of(context).markFastingDayMarkFastingDay,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -251,7 +252,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Forgot to track a fast? Mark a past day as a fasting day.',
+                AppLocalizations.of(context).markFastingDayForgotToTrackA,
                 style: TextStyle(
                   fontSize: 14,
                   color: textMuted,
@@ -261,7 +262,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
 
               // Date Picker
               Text(
-                'Select Date',
+                AppLocalizations.of(context).markFastingDaySelectDate,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -308,7 +309,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
 
               // Protocol Selector
               Text(
-                'Fasting Protocol',
+                AppLocalizations.of(context).nutritionFastingFastingProtocol,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -361,7 +362,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
 
               // Custom Hours Slider (only show for custom protocol or to fine-tune)
               Text(
-                'Fasting Duration',
+                AppLocalizations.of(context).markFastingDayFastingDuration,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -381,7 +382,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Estimated Hours',
+                          AppLocalizations.of(context).markFastingDayEstimatedHours,
                           style: TextStyle(
                             fontSize: 14,
                             color: textPrimary,
@@ -421,7 +422,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('12h', style: TextStyle(color: textMuted, fontSize: 12)),
+                        Text(AppLocalizations.of(context).startFast12h, style: TextStyle(color: textMuted, fontSize: 12)),
                         Text('48h', style: TextStyle(color: textMuted, fontSize: 12)),
                       ],
                     ),
@@ -432,7 +433,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
 
               // Notes (optional)
               Text(
-                'Notes (optional)',
+                AppLocalizations.of(context).recordAttemptNotesOptional,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -444,7 +445,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                 controller: _notesController,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  hintText: 'How did the fast go?',
+                  hintText: AppLocalizations.of(context).markFastingDayHowDidTheFast,
                   hintStyle: TextStyle(color: textMuted),
                   filled: true,
                   fillColor: cardBorder.withValues(alpha: 0.3),
@@ -516,8 +517,8 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          'Mark as Fasting Day',
+                      : Text(
+                          AppLocalizations.of(context).markFastingDayMarkAsFastingDay,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -530,7 +531,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                   // Info text
                   Center(
                     child: Text(
-                      'You can mark days within the last 30 days',
+                      AppLocalizations.of(context).markFastingDayYouCanMarkDays,
                       style: TextStyle(
                         fontSize: 12,
                         color: textMuted,

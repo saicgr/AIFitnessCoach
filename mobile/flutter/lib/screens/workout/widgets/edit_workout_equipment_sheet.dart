@@ -4,6 +4,7 @@ import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'edit_weights_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Equipment categories and their items
 const Map<String, List<String>> equipmentCategories = {
   'Free Weights': [
@@ -247,7 +248,7 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Edit Equipment',
+                        AppLocalizations.of(context).editWorkoutEquipmentEditEquipment,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -280,7 +281,7 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
               controller: _searchController,
               onChanged: (value) => setState(() => _searchQuery = value),
               decoration: InputDecoration(
-                hintText: 'Search equipment...',
+                hintText: AppLocalizations.of(context).settingsCardPartSearchEquipment,
                 hintStyle: TextStyle(color: textMuted, fontSize: 14),
                 prefixIcon: Icon(Icons.search, color: textMuted, size: 20),
                 suffixIcon: _searchQuery.isNotEmpty
@@ -358,8 +359,8 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
                 // weight editor). The new label + the no-default
                 // confirmation dialog downstream make the consequence
                 // explicit.
-                child: const Text(
-                  'Update Workout Equipment',
+                child: Text(
+                  AppLocalizations.of(context).editWorkoutEquipmentUpdateWorkoutEquipment,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -419,7 +420,7 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
                   minimumSize: const Size(0, 28),
                 ),
                 child: Text(
-                  allSelected ? 'Deselect' : 'Select All',
+                  allSelected ? AppLocalizations.of(context).editWorkoutEquipmentDeselect : AppLocalizations.of(context).openAllCratesSelectAll,
                   style: TextStyle(
                     fontSize: 12,
                     color: accentColor,
@@ -524,7 +525,7 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Weights',
+                      AppLocalizations.of(context).editWorkoutEquipmentWeights,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.white70 : AppColorsLight.textSecondary,

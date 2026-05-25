@@ -21,6 +21,7 @@ import '../../../screens/custom_exercises/widgets/create_exercise_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'netflix_exercises_tab_part_exercise_list_card.dart';
 
 part 'netflix_exercises_tab_ui.dart';
@@ -215,11 +216,11 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           children: [
             Icon(Icons.error_outline, size: 48, color: textMuted),
             const SizedBox(height: 16),
-            Text('Failed to load exercises', style: TextStyle(color: textMuted)),
+            Text(AppLocalizations.of(context).netflixExercisesFailedToLoadExercises, style: TextStyle(color: textMuted)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => ref.invalidate(categoryExercisesProvider),
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -481,7 +482,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            'Exercises by muscle',
+            AppLocalizations.of(context).netflixExercisesExercisesByMuscle,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -540,7 +541,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            'Equipment',
+            AppLocalizations.of(context).trainingSetupCardEquipment,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -615,7 +616,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
               ),
               decoration: InputDecoration(
                 hintText: _useSmartSearch
-                    ? 'AI search (e.g. "something for chest")'
+                    ? AppLocalizations.of(context).netflixExercisesAiSearchEG
                     : 'Search exercises...',
                 hintStyle: TextStyle(
                   color: textMuted.withValues(alpha: 0.6),
@@ -729,7 +730,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Custom Exercises',
+              AppLocalizations.of(context).netflixExercisesCustomExercises,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -738,7 +739,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Add your own exercises with custom reps, sets, and instructions.',
+              AppLocalizations.of(context).netflixExercisesAddYourOwnExercises,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -758,7 +759,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Got it'),
+                child: Text(AppLocalizations.of(context).weightIncrementsGotIt),
               ),
             ),
           ],

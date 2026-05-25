@@ -36,7 +36,7 @@ extension _SettingsCardExt on SettingsCard {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Choose Timezone',
+                  AppLocalizations.of(context).settingsCardUiChooseTimezone,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -87,7 +87,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Progression Pace',
+                AppLocalizations.of(context).workoutSettingsProgressionPace,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -99,7 +99,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'How fast should we increase your weights?',
+                AppLocalizations.of(context).settingsCardUiHowFastShouldWe,
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -140,7 +140,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Workout Type',
+                AppLocalizations.of(context).workoutSettingsWorkoutType,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -152,7 +152,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'What type of workouts do you prefer?',
+                AppLocalizations.of(context).settingsCardUiWhatTypeOfWorkouts,
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -217,7 +217,7 @@ extension _SettingsCardExt on SettingsCard {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Training Split',
+                  AppLocalizations.of(context).workoutSettingsTrainingSplit,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -226,7 +226,7 @@ extension _SettingsCardExt on SettingsCard {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Choose how to structure your weekly workouts',
+                  AppLocalizations.of(context).settingsCardUiChooseHowToStructure,
                   style: TextStyle(fontSize: 14, color: textMuted),
                   textAlign: TextAlign.center,
                 ),
@@ -302,7 +302,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Exercise Consistency',
+                AppLocalizations.of(context).trainingPreferencesExerciseConsistency,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -314,7 +314,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'How should the AI select exercises for your workouts?',
+                AppLocalizations.of(context).settingsCardUiHowShouldTheAi,
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -354,9 +354,9 @@ extension _SettingsCardExt on SettingsCard {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Training Intensity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
+                Text(AppLocalizations.of(context).workoutSettingsTrainingIntensity, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
                 const SizedBox(height: 8),
-                Text('How hard should your workouts be?', style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+                Text(AppLocalizations.of(context).settingsCardUiHowHardShouldYour, style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
                 const SizedBox(height: 20),
                 Wrap(
                   spacing: 8,
@@ -399,7 +399,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Units',
+                AppLocalizations.of(context).settingsCardUiUnits,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -411,7 +411,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Weight, workout, and body measurement units',
+                AppLocalizations.of(context).settingsCardUiWeightWorkoutAndBody,
                 style: TextStyle(fontSize: 13, color: textMuted),
               ),
             ),
@@ -421,7 +421,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'BODY WEIGHT',
+                AppLocalizations.of(context).settingsCardUiBodyWeight,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -434,7 +434,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'For weighing yourself, BMI calculations',
+                AppLocalizations.of(context).settingsCardUiForWeighingYourselfBmi,
                 style: TextStyle(fontSize: 12, color: textMuted),
               ),
             ),
@@ -474,7 +474,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'WORKOUT WEIGHT',
+                AppLocalizations.of(context).settingsCardUiWorkoutWeight,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -487,7 +487,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'For logging lifts, sets, exercise weights',
+                AppLocalizations.of(context).settingsCardUiForLoggingLiftsSets,
                 style: TextStyle(fontSize: 12, color: textMuted),
               ),
             ),
@@ -527,7 +527,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'BODY MEASUREMENTS',
+                AppLocalizations.of(context).settingsCardUiBodyMeasurements,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -540,7 +540,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'For waist, chest, hips, arms, legs',
+                AppLocalizations.of(context).settingsCardUiForWaistChestHips,
                 style: TextStyle(fontSize: 12, color: textMuted),
               ),
             ),
@@ -597,12 +597,12 @@ extension _SettingsCardExt on SettingsCard {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text('Accent Color', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
+                child: Text(AppLocalizations.of(context).settingsCardUiAccentColor, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
               ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text('Choose an accent color for buttons and highlights', style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+                child: Text(AppLocalizations.of(context).settingsCardUiChooseAnAccentColor, style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
               ),
               const SizedBox(height: 24),
               Padding(

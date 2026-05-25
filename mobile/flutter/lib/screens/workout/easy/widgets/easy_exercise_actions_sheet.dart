@@ -26,6 +26,7 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../widgets/glass_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class EasyExerciseAction {
   final IconData icon;
   final String label;
@@ -73,30 +74,30 @@ class EasyExerciseActionsSheet extends StatelessWidget {
           actions: [
             EasyExerciseAction(
               icon: Icons.swap_horiz_rounded,
-              label: 'Swap exercise',
-              subtitle: 'Pick a different movement for this slot',
+              label: AppLocalizations.of(context).workoutReviewSwapExercise,
+              subtitle: AppLocalizations.of(context).easyExerciseActionsPickADifferentMovement,
               onTap: onSwap,
             ),
             EasyExerciseAction(
               icon: Icons.healing_outlined,
-              label: 'Report pain',
-              subtitle: 'Skip this exercise & avoid for a while',
+              label: AppLocalizations.of(context).exerciseOptionsReportPain,
+              subtitle: AppLocalizations.of(context).easyExerciseActionsSkipThisExerciseAvoid,
               onTap: onReportPain,
             ),
             EasyExerciseAction(
               icon: Icons.fitness_center_rounded,
-              label: 'Change equipment',
-              subtitle: "Don't have what's listed?",
+              label: AppLocalizations.of(context).exerciseOptionsChangeEquipment,
+              subtitle: AppLocalizations.of(context).easyExerciseActionsDonTHaveWhat,
               onTap: onChangeEquipment,
             ),
             EasyExerciseAction(
               icon: Icons.skip_next_rounded,
-              label: 'Skip to next exercise',
+              label: AppLocalizations.of(context).easyTopBarSkipToNextExercise,
               onTap: onSkipToNext,
             ),
             EasyExerciseAction(
               icon: Icons.play_circle_outline_rounded,
-              label: 'Show video',
+              label: AppLocalizations.of(context).easyExerciseActionsShowVideo,
               onTap: onShowVideo,
             ),
           ],

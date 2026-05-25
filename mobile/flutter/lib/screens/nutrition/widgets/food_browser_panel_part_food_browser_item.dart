@@ -91,7 +91,7 @@ class _FoodBrowserItem extends StatelessWidget {
             ),
           ),
           Text(
-            ' kcal',
+            AppLocalizations.of(context).unifiedHomeWidgetsKcal,
             style: TextStyle(color: textMuted, fontSize: 11),
           ),
           const SizedBox(width: 8),
@@ -245,7 +245,7 @@ class _FoodReviewCardState extends State<_FoodReviewCard> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Coach Tip',
+                  AppLocalizations.of(context).newTilesPartCoachTip,
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
                 ),
                 if (r.healthScore != null) ...[
@@ -403,7 +403,7 @@ class _FoodReviewCardState extends State<_FoodReviewCard> {
             ),
             const SizedBox(width: 8),
             Text(
-              'Coach Tip',
+              AppLocalizations.of(context).newTilesPartCoachTip,
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
             ),
             if (!loading && r?.healthScore != null) ...[

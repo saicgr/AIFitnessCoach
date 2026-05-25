@@ -55,6 +55,7 @@ import 'widgets/ai_coach_meal_suggestion_sheet.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 import '../../widgets/fullscreen_image_viewer.dart';
 import 'menu_analysis_sheet.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../chat/widgets/media_picker_helper.dart' show
   pickFoodScanArtifacts, pickFoodScanArtifactsBatch, FoodScanArtifacts;
 
@@ -410,7 +411,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'End Your Fast?',
+                AppLocalizations.of(context).logMealEndYourFast,
                 style: TextStyle(
                   color: textPrimary,
                   fontWeight: FontWeight.bold,
@@ -430,7 +431,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Logging this meal will end your fast. Continue?',
+              AppLocalizations.of(context).logMealLoggingThisMealWill,
               style: TextStyle(color: textMuted, fontSize: 14),
             ),
           ],
@@ -438,11 +439,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, null), // Cancel
-            child: Text('Cancel', style: TextStyle(color: textMuted)),
+            child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, false), // Log without ending fast
-            child: Text('Log Only', style: TextStyle(color: purple)),
+            child: Text(AppLocalizations.of(context).logMealLogOnly, style: TextStyle(color: purple)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true), // End fast and log
@@ -451,7 +452,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('End Fast & Log'),
+            child: Text(AppLocalizations.of(context).logMealEndFastLog),
           ),
         ],
       ),
@@ -501,7 +502,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'AI Estimated Nutrition',
+                    AppLocalizations.of(context).logMealAiEstimatedNutrition,
                     style: TextStyle(
                       color: textPrimary,
                       fontWeight: FontWeight.bold,
@@ -581,7 +582,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   // Rainbow nutrition grid (shows adjusted values)
                   RainbowNutritionCard(
                     icon: Icons.local_fire_department,
-                    label: 'Calories',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                     value: '$adjustedCalories',
                     unit: 'kcal',
                     color: caloriesColor,
@@ -593,7 +594,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       Expanded(
                         child: RainbowNutritionCard(
                           icon: Icons.fitness_center,
-                          label: 'Protein',
+                          label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                           value: adjustedProtein.toStringAsFixed(1),
                           unit: 'g',
                           color: proteinColor,
@@ -605,7 +606,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       Expanded(
                         child: RainbowNutritionCard(
                           icon: Icons.grain,
-                          label: 'Carbs',
+                          label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                           value: adjustedCarbs.toStringAsFixed(1),
                           unit: 'g',
                           color: carbsColor,
@@ -621,7 +622,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       Expanded(
                         child: RainbowNutritionCard(
                           icon: Icons.opacity,
-                          label: 'Fat',
+                          label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                           value: adjustedFat.toStringAsFixed(1),
                           unit: 'g',
                           color: fatColor,
@@ -633,7 +634,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       Expanded(
                         child: RainbowNutritionCard(
                           icon: Icons.eco,
-                          label: 'Fiber',
+                          label: AppLocalizations.of(context).recipeBuilderSheetFiber,
                           value: adjustedFiber.toStringAsFixed(1),
                           unit: 'g',
                           color: fiberColor,
@@ -657,7 +658,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
                   if (response.confidenceLevel == null)
                     Text(
-                      'These values are AI estimates based on your description.',
+                      AppLocalizations.of(context).logMealTheseValuesAreAi,
                       style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
                       textAlign: TextAlign.center,
                     ),
@@ -667,7 +668,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, null),
-                child: Text('Cancel', style: TextStyle(color: textMuted)),
+                child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted)),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, (confirmed: true, multiplier: portionMultiplier)),
@@ -676,12 +677,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.check, size: 18),
                     SizedBox(width: 8),
-                    Text('Log This'),
+                    Text(AppLocalizations.of(context).logMealLogThis),
                   ],
                 ),
               ),
@@ -742,7 +743,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
         contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-        title: Text('Found Product', style: TextStyle(color: textPrimary)),
+        title: Text(AppLocalizations.of(context).logMealFoundProduct, style: TextStyle(color: textPrimary)),
         content: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.7,
@@ -873,7 +874,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                             ),
                           ),
                           child: _ScorePill(
-                            label: 'Health',
+                            label: AppLocalizations.of(context).mealScoreWidgetsHealth,
                             score: healthScore,
                             isDark: isDark,
                             positiveIsHigh: true,
@@ -884,7 +885,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       ],
                       if (inflammationScore != null)
                         _ScorePill(
-                          label: 'Inflammation',
+                          label: AppLocalizations.of(context).menuFilterInflammation,
                           score: inflammationScore,
                           isDark: isDark,
                           positiveIsHigh: false,
@@ -936,34 +937,34 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                               color: textMuted)),
                       const SizedBox(height: 6),
                       NutritionInfoRow(
-                        label: 'Calories',
+                        label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                         value: '$totalCalories kcal',
                         isDark: isDark,
                       ),
                       NutritionInfoRow(
-                        label: 'Protein',
+                        label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                         value: '${totalProtein.toStringAsFixed(1)}g',
                         isDark: isDark,
                       ),
                       NutritionInfoRow(
-                        label: 'Carbs',
+                        label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                         value: '${totalCarbs.toStringAsFixed(1)}g',
                         isDark: isDark,
                       ),
                       NutritionInfoRow(
-                        label: 'Fat',
+                        label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                         value: '${totalFat.toStringAsFixed(1)}g',
                         isDark: isDark,
                       ),
                       if (product.fiberPer100g > 0)
                         NutritionInfoRow(
-                          label: 'Fiber',
+                          label: AppLocalizations.of(context).recipeBuilderSheetFiber,
                           value: '${totalFiber.toStringAsFixed(1)}g',
                           isDark: isDark,
                         ),
                       if (product.sugarPer100g > 0)
                         NutritionInfoRow(
-                          label: 'Sugar',
+                          label: AppLocalizations.of(context).logMealSugar,
                           value: '${totalSugar.toStringAsFixed(1)}g',
                           isDark: isDark,
                         ),
@@ -987,7 +988,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       Icon(Icons.warning_amber_rounded,
                           size: 16, color: Colors.orange),
                       const SizedBox(width: 6),
-                      Text('Allergens',
+                      Text(AppLocalizations.of(context).nutritionSettingsScreenAllergens,
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -1021,7 +1022,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   const SizedBox(height: 12),
                   Divider(color: textMuted.withValues(alpha: 0.2)),
                   const SizedBox(height: 8),
-                  Text('Ingredients',
+                  Text(AppLocalizations.of(context).recipeSuggestionCardIngredients,
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -1051,12 +1052,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, null),
-            child: Text('Cancel', style: TextStyle(color: textMuted)),
+            child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, servings),
             style: ElevatedButton.styleFrom(backgroundColor: accentColor),
-            child: const Text('Log This'),
+            child: Text(AppLocalizations.of(context).logMealLogThis),
           ),
         ],
       ),
@@ -1210,17 +1211,17 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Discard analysis?',
+          AppLocalizations.of(context).logMealDiscardAnalysis,
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textPrimary),
         ),
         content: Text(
-          "You haven't logged this meal yet. Your analysis results will be lost.",
+          AppLocalizations.of(context).logMealYouHavenTLogged,
           style: TextStyle(fontSize: 14, color: textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, true), // Discard
-            child: Text('Discard', style: TextStyle(color: textMuted)),
+            child: Text(AppLocalizations.of(context).syncDetailsDiscard, style: TextStyle(color: textMuted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, false), // Log This Meal
@@ -1229,7 +1230,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Log This Meal'),
+            child: Text(AppLocalizations.of(context).logMealSheetLogThisMeal),
           ),
         ],
       ),
@@ -1276,7 +1277,7 @@ class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSec
                 children: [
                   Icon(Icons.science_outlined, size: 16, color: AppColors.purple),
                   const SizedBox(width: 8),
-                  Expanded(child: Text('Vitamins & Minerals', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary))),
+                  Expanded(child: Text(AppLocalizations.of(context).micronutrientsVitaminsMinerals, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary))),
                   Icon(_isExpanded ? Icons.expand_less : Icons.expand_more, size: 18, color: textMuted),
                 ],
               ),
@@ -1301,28 +1302,28 @@ class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSec
     final rows = <Widget>[];
 
     if (p.vitaminA100g > 0) {
-      rows.add(NutritionInfoRow(label: 'Vitamin A', value: '${p.vitaminA100g.toStringAsFixed(1)} µg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminA, value: '${p.vitaminA100g.toStringAsFixed(1)} µg', isDark: widget.isDark));
     }
     if (p.vitaminC100g > 0) {
-      rows.add(NutritionInfoRow(label: 'Vitamin C', value: '${p.vitaminC100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminC, value: '${p.vitaminC100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
     }
     if (p.vitaminD100g > 0) {
-      rows.add(NutritionInfoRow(label: 'Vitamin D', value: '${p.vitaminD100g.toStringAsFixed(2)} µg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminD, value: '${p.vitaminD100g.toStringAsFixed(2)} µg', isDark: widget.isDark));
     }
     if (p.calcium100g > 0) {
-      rows.add(NutritionInfoRow(label: 'Calcium', value: '${p.calcium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealCalcium, value: '${p.calcium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
     }
     if (p.iron100g > 0) {
-      rows.add(NutritionInfoRow(label: 'Iron', value: '${p.iron100g.toStringAsFixed(2)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealIron, value: '${p.iron100g.toStringAsFixed(2)} mg', isDark: widget.isDark));
     }
     if (p.potassium100g > 0) {
-      rows.add(NutritionInfoRow(label: 'Potassium', value: '${p.potassium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: '${p.potassium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
     }
     if (p.magnesium100g > 0) {
-      rows.add(NutritionInfoRow(label: 'Magnesium', value: '${p.magnesium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: '${p.magnesium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
     }
     if (p.zinc100g > 0) {
-      rows.add(NutritionInfoRow(label: 'Zinc', value: '${p.zinc100g.toStringAsFixed(2)} mg', isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealZinc, value: '${p.zinc100g.toStringAsFixed(2)} mg', isDark: widget.isDark));
     }
 
     return rows;
@@ -1513,7 +1514,7 @@ class _ServingsStepperState extends State<_ServingsStepper> {
     return Row(
       children: [
         Text(
-          'Servings',
+          AppLocalizations.of(context).recipeBuilderServings,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,

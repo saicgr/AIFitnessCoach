@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A card widget displaying step goal progress with animated circular indicator.
 ///
 /// Features:
@@ -277,7 +278,7 @@ class _StepGoalCardState extends State<StepGoalCard>
                                     Icons.emoji_events,
                                     size: 32,
                                     color: AppColors.success,
-                                    semanticLabel: 'Goal reached',
+                                    semanticLabel: AppLocalizations.of(context).stepGoalCardGoalReached,
                                   ),
                                   const SizedBox(height: 4),
                                 ] else ...[
@@ -285,7 +286,7 @@ class _StepGoalCardState extends State<StepGoalCard>
                                     Icons.directions_walk,
                                     size: 28,
                                     color: progressColor,
-                                    semanticLabel: 'Steps',
+                                    semanticLabel: AppLocalizations.of(context).syncedWorkoutDetailSteps,
                                   ),
                                   const SizedBox(height: 4),
                                 ],
@@ -365,7 +366,7 @@ class _StepGoalCardState extends State<StepGoalCard>
                     // Status message
                     Text(
                       isGoalReached
-                          ? 'Goal reached! Great job!'
+                          ? AppLocalizations.of(context).stepGoalCardGoalReachedGreatJob
                           : '${_formatNumber(stepsRemaining)} steps to go',
                       style: TextStyle(
                         fontSize: 14,

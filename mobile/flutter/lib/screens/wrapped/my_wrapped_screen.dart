@@ -13,6 +13,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class MyWrappedScreen extends ConsumerStatefulWidget {
   const MyWrappedScreen({super.key});
 
@@ -102,7 +103,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
         child: Column(
           children: [
             PillAppBar(
-              title: 'My Wrapped',
+              title: AppLocalizations.of(context).myWrappedMyWrapped,
               onBack: () => context.pop(),
             ),
             Expanded(
@@ -131,7 +132,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
                 if (summaryAsync.hasError) {
                   return Center(
                     child: Text(
-                      'Failed to load wrapped data',
+                      AppLocalizations.of(context).myWrappedFailedToLoadWrapped,
                       style: TextStyle(color: textMuted),
                     ),
                   );
@@ -182,7 +183,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
         if (summary.available.length > 1) ...[
           const SizedBox(height: 24),
           Text(
-            'PAST WRAPS',
+            AppLocalizations.of(context).myWrappedPastWraps,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -286,9 +287,9 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
                         gradient: accentGradient,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'View Again',
+                          AppLocalizations.of(context).myWrappedViewAgain,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -322,7 +323,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
                             Icon(Icons.share_outlined, size: 15, color: accent),
                             const SizedBox(width: 6),
                             Text(
-                              'Share',
+                              AppLocalizations.of(context).commonShare,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -572,7 +573,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
               Row(
                 children: [
                   Text(
-                    'Personalities',
+                    AppLocalizations.of(context).myWrappedPersonalities,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -624,7 +625,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Earn a unique personality each month by completing at least 3 workouts.',
+            AppLocalizations.of(context).myWrappedEarnAUniquePersonality,
             style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
           ),
         ],
@@ -656,7 +657,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Your Monthly Wrapped',
+              AppLocalizations.of(context).myWrappedYourMonthlyWrapped,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
@@ -665,7 +666,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete at least 3 workouts this month\nto unlock your personalized recap',
+              AppLocalizations.of(context).myWrappedCompleteAtLeast3,
               style: TextStyle(fontSize: 14, color: textMuted, height: 1.4),
               textAlign: TextAlign.center,
             ),
@@ -687,7 +688,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
               Icon(Icons.psychology_outlined, size: 40, color: accent),
               const SizedBox(height: 12),
               Text(
-                'Fitness Personalities',
+                AppLocalizations.of(context).myWrappedFitnessPersonalities,
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary),
               ),
               const SizedBox(height: 12),

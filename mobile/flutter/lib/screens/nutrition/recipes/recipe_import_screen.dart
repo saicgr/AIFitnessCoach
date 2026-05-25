@@ -19,6 +19,7 @@ import '../../../widgets/segmented_tab_bar.dart';
 import 'recipe_create_screen.dart';
 import 'widgets/embedded_camera_panel.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RecipeImportScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -144,7 +145,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
                 GlassBackButton(onTap: () => Navigator.of(context).pop()),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text('Import recipe',
+                  child: Text(AppLocalizations.of(context).recipeImportImportRecipe,
                     style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
                 ),
               ],
@@ -156,10 +157,10 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
             showIcons: true,
             compact: true,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            tabs: const [
-              SegmentedTabItem(label: 'Photo', icon: Icons.camera_alt_rounded),
+            tabs: [
+              SegmentedTabItem(label: AppLocalizations.of(context).recipeImportPhoto, icon: Icons.camera_alt_rounded),
               SegmentedTabItem(label: 'URL', icon: Icons.link_rounded),
-              SegmentedTabItem(label: 'Text', icon: Icons.text_fields_rounded),
+              SegmentedTabItem(label: AppLocalizations.of(context).recipeImportText, icon: Icons.text_fields_rounded),
             ],
           ),
           Expanded(
@@ -198,7 +199,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
       const SizedBox(height: 16),
       ElevatedButton.icon(
         onPressed: _running ? null : () => _runImport('url', url: _urlCtrl.text.trim()),
-        icon: const Icon(Icons.download_rounded), label: const Text('Import from URL'),
+        icon: const Icon(Icons.download_rounded), label: Text(AppLocalizations.of(context).recipeImportImportFromUrl),
         style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
       ),
     ]),
@@ -212,7 +213,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
           controller: _textCtrl, style: TextStyle(color: text),
           maxLines: null, expands: true, textAlignVertical: TextAlignVertical.top,
           decoration: InputDecoration(
-            hintText: 'Paste a recipe (title, ingredients, steps)…',
+            hintText: AppLocalizations.of(context).recipeImportPasteARecipeTitle,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -220,7 +221,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
       const SizedBox(height: 12),
       ElevatedButton.icon(
         onPressed: _running ? null : () => _runImport('text', text: _textCtrl.text.trim()),
-        icon: const Icon(Icons.text_snippet_outlined), label: const Text('Parse text'),
+        icon: const Icon(Icons.text_snippet_outlined), label: Text(AppLocalizations.of(context).recipeImportParseText),
         style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
       ),
     ]),
@@ -249,7 +250,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Aim at a recipe card, cookbook page, or screenshot. Fill the frame, hold steady.',
+                    AppLocalizations.of(context).recipeImportAimAtARecipe,
                     style: TextStyle(color: text, fontSize: 12, height: 1.35),
                   ),
                 ),
@@ -288,8 +289,8 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
                         color: Colors.black.withValues(alpha: 0.45),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        'Align recipe inside frame',
+                      child: Text(
+                        AppLocalizations.of(context).recipeImportAlignRecipeInsideFrame,
                         style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -308,7 +309,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
               onPressed: _running ? null : _pickFromGallery,
               icon: Icon(Icons.photo_library_outlined, color: accent),
               label: Text(
-                'Choose from gallery instead',
+                AppLocalizations.of(context).recipeImportChooseFromGalleryInstead,
                 style: TextStyle(color: accent, fontWeight: FontWeight.w600),
               ),
               style: OutlinedButton.styleFrom(
@@ -323,7 +324,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
           ),
           const SizedBox(height: 6),
           Text(
-            'Tap the large white circle below to capture',
+            AppLocalizations.of(context).recipeImportTapTheLargeWhite,
             style: TextStyle(color: muted, fontSize: 11),
             textAlign: TextAlign.center,
           ),
@@ -422,7 +423,7 @@ class _ProgressFooter extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  hasError ? 'Failed' : last.step.toUpperCase(),
+                  hasError ? AppLocalizations.of(context).recipeImportFailed : last.step.toUpperCase(),
                   style: TextStyle(
                     color: hasError ? AppColors.error : accent,
                     fontWeight: FontWeight.w800, fontSize: 11, letterSpacing: 0.5,
@@ -438,7 +439,7 @@ class _ProgressFooter extends StatelessWidget {
             ElevatedButton(
               onPressed: onSave,
               style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
-              child: const Text('Review & save'),
+              child: Text(AppLocalizations.of(context).recipeImportReviewSave),
             ),
         ]),
       ),

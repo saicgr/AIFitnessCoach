@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../core/providers/heart_rate_provider.dart';
 
 
+import '../l10n/generated/app_localizations.dart';
 part 'heart_rate_chart_part_heart_rate_summary_card.dart';
 part 'heart_rate_chart_part_zone_legend_item.dart';
 
@@ -261,7 +262,7 @@ class HeartRateChart extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'No heart rate data',
+              AppLocalizations.of(context).heartRateChartNoHeartRateData,
               style: TextStyle(
                 color: Colors.grey,
                 fontWeight: FontWeight.w500,
@@ -269,7 +270,7 @@ class HeartRateChart extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Wear your watch during workouts to track heart rate',
+              AppLocalizations.of(context).heartRateChartWearYourWatchDuring,
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: 12,

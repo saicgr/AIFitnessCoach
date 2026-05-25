@@ -34,6 +34,7 @@ import 'widgets/readiness_checkin_card.dart';
 import 'widgets/strength_overview_card.dart';
 import 'widgets/pr_summary_card.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'progress_screen_part_analytics_nav_card.dart';
 
 part 'progress_screen_ui.dart';
@@ -119,18 +120,18 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
       stats['hero_value'] = overview.overallStrengthScore;
       stats['hero_unit'] = 'strength';
       highlights.add(ReportHighlight(
-        label: 'STRENGTH',
+        label: AppLocalizations.of(context).workoutsStrength,
         value: '${overview.overallStrengthScore}',
       ));
       if (overview.prCount30Days > 0) {
         highlights.add(ReportHighlight(
-          label: 'PRS (30D)',
+          label: AppLocalizations.of(context).progressPrs30d,
           value: '${overview.prCount30Days}',
         ));
       }
       if (overview.overallFitnessScore != null) {
         highlights.add(ReportHighlight(
-          label: 'FITNESS',
+          label: AppLocalizations.of(context).progressFitness,
           value: '${overview.overallFitnessScore}',
         ));
       }
@@ -138,7 +139,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
 
     final data = ReportShareData(
       reportType: ReportType.periodInsights,
-      title: 'Progress',
+      title: AppLocalizations.of(context).navProgress,
       periodLabel: periodLabel,
       primaryStats: stats,
       highlights: highlights,
@@ -190,7 +191,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Progress Tracking',
+                      AppLocalizations.of(context).progressProgressTracking,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -199,7 +200,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Track your fitness journey with progress photos, body measurements, and strength scores. See how far you\'ve come!',
+                      AppLocalizations.of(context).progressTrackYourFitnessJourney,
                       style: TextStyle(
                         fontSize: 15,
                         color: textSecondary,
@@ -226,13 +227,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
                           ),
                           elevation: 0,
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.rocket_launch, size: 20),
                             SizedBox(width: 10),
                             Text(
-                              'Sign Up to Unlock',
+                              AppLocalizations.of(context).progressSignUpToUnlock,
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
@@ -266,7 +267,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: PillAppBar(
-          title: 'Progress',
+          title: AppLocalizations.of(context).navProgress,
           showBack: false,
           actions: [
             PillAppBarAction(
@@ -294,10 +295,10 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
                       SegmentedTabBar(
                         controller: _tabController,
                         showIcons: true,
-                        tabs: const [
-                          SegmentedTabItem(label: 'Scores', icon: Icons.fitness_center),
-                          SegmentedTabItem(label: 'Photos', icon: Icons.photo_library),
-                          SegmentedTabItem(label: 'Measurements', icon: Icons.straighten),
+                        tabs: [
+                          SegmentedTabItem(label: AppLocalizations.of(context).progressScores, icon: Icons.fitness_center),
+                          SegmentedTabItem(label: AppLocalizations.of(context).progressPhotos, icon: Icons.photo_library),
+                          SegmentedTabItem(label: AppLocalizations.of(context).quickLogMeasurementsMeasurements, icon: Icons.straighten),
                         ],
                       ),
                       Expanded(
@@ -393,7 +394,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           FilterChip(
-            label: const Text('All'),
+            label: Text(AppLocalizations.of(context).syncedWorkoutsHistoryAll),
             selected: _selectedViewFilter == null,
             onSelected: (_) => setState(() => _selectedViewFilter = null),
           ),
@@ -430,14 +431,14 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
-                subtitle: const Text('Use camera'),
+                title: Text(AppLocalizations.of(context).progressTakePhoto),
+                subtitle: Text(AppLocalizations.of(context).progressUseCamera),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                subtitle: const Text('Select existing photo'),
+                title: Text(AppLocalizations.of(context).progressChooseFromGallery),
+                subtitle: Text(AppLocalizations.of(context).progressSelectExistingPhoto),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
             ],
@@ -471,8 +472,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
       debugPrint('❌ [Progress] Error picking/editing photo: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to process photo. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).progressFailedToProcessPhoto),
           ),
         );
       }
@@ -495,7 +496,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Select View Type',
+              AppLocalizations.of(context).progressSelectViewType,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -529,14 +530,14 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Take Photo'),
-              subtitle: const Text('Use camera'),
+              title: Text(AppLocalizations.of(context).progressTakePhoto),
+              subtitle: Text(AppLocalizations.of(context).progressUseCamera),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              subtitle: const Text('Select existing photo'),
+              title: Text(AppLocalizations.of(context).progressChooseFromGallery),
+              subtitle: Text(AppLocalizations.of(context).progressSelectExistingPhoto),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -573,8 +574,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
       debugPrint('❌ [Progress] Error picking/editing photo: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to process photo. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).progressFailedToProcessPhoto),
           ),
         );
       }
@@ -588,12 +589,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
         content: Row(
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 16),
-            Text('Uploading photo...'),
+            Text(AppLocalizations.of(context).quickActionsRowUploadingPhoto),
           ],
         ),
       ),
@@ -640,7 +641,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             size: 48,
           ),
         ),
-        title: const Text('Photo Saved!'),
+        title: Text(AppLocalizations.of(context).progressPhotoSaved),
         content: Text(
           'Your ${viewType.displayName} progress photo has been saved successfully.',
           textAlign: TextAlign.center,
@@ -648,7 +649,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Great!'),
+            child: Text(AppLocalizations.of(context).progressGreat),
           ),
         ],
         actionsAlignment: MainAxisAlignment.center,
@@ -672,12 +673,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             size: 48,
           ),
         ),
-        title: const Text('Upload Failed'),
+        title: Text(AppLocalizations.of(context).progressUploadFailed),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'We couldn\'t save your photo. Please try again.',
+            Text(
+              AppLocalizations.of(context).progressWeCouldnTSave,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -701,7 +702,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: Text(AppLocalizations.of(context).progressOk),
           ),
         ],
         actionsAlignment: MainAxisAlignment.center,
@@ -791,7 +792,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
                                   child: OutlinedButton.icon(
                                     onPressed: () => _deletePhoto(photo),
                                     icon: const Icon(Icons.delete_outline),
-                                    label: const Text('Delete'),
+                                    label: Text(AppLocalizations.of(context).buttonDelete),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: colorScheme.error,
                                     ),
@@ -817,19 +818,19 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Photo?'),
-        content: const Text('This action cannot be undone.'),
+        title: Text(AppLocalizations.of(context).progressDeletePhoto),
+        content: Text(AppLocalizations.of(context).workoutActionsThisActionCannotBe),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),

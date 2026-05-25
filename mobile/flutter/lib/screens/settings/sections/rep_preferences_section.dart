@@ -8,6 +8,7 @@ import '../widgets/section_header.dart';
 import '../widgets/setting_tile.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'rep_preferences_section_part_training_focus_option_tile.dart';
 
 
@@ -37,9 +38,9 @@ class RepPreferencesSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(
-          title: 'Rep & Progression Preferences',
-          helpTitle: 'Rep & Progression Preferences',
+        SectionHeader(
+          title: AppLocalizations.of(context).repPreferencesRepProgressionPreferences,
+          helpTitle: AppLocalizations.of(context).repPreferencesRepProgressionPreferences,
           helpItems: [
             {
               'icon': Icons.fitness_center,
@@ -126,8 +127,8 @@ class RepPreferencesSection extends ConsumerWidget {
   ) {
     return SettingTile(
       icon: Icons.format_list_numbered,
-      title: 'Sets Per Exercise',
-      subtitle: 'Configure your set volume',
+      title: AppLocalizations.of(context).repPreferencesSetsPerExercise,
+      subtitle: AppLocalizations.of(context).repPreferencesConfigureYourSetVolume,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -155,8 +156,8 @@ class RepPreferencesSection extends ConsumerWidget {
 
     return SettingTile(
       icon: Icons.vertical_align_top,
-      title: 'Enforce Rep Ceiling',
-      subtitle: 'Strictly enforce your maximum rep limit',
+      title: AppLocalizations.of(context).repPreferencesEnforceRepCeiling,
+      subtitle: AppLocalizations.of(context).repPreferencesStrictlyEnforceYourMaximum,
       trailing: Switch(
         value: prefs.enforceRepCeiling,
         onChanged: isLoading
@@ -217,7 +218,7 @@ class RepPreferencesSection extends ConsumerWidget {
   ) {
     return SettingTile(
       icon: Icons.fitness_center,
-      title: 'Training Focus',
+      title: AppLocalizations.of(context).trainingFocusTrainingFocus,
       subtitle: prefs.trainingFocus.description,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -251,8 +252,8 @@ class RepPreferencesSection extends ConsumerWidget {
   ) {
     return SettingTile(
       icon: Icons.repeat,
-      title: 'Rep Range',
-      subtitle: 'Your preferred reps per set',
+      title: AppLocalizations.of(context).repPreferencesRepRange,
+      subtitle: AppLocalizations.of(context).repPreferencesYourPreferredRepsPer,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -280,8 +281,8 @@ class RepPreferencesSection extends ConsumerWidget {
 
     return SettingTile(
       icon: Icons.block,
-      title: 'Avoid High-Rep Sets',
-      subtitle: 'Prevent boring 15+ rep sets',
+      title: AppLocalizations.of(context).repPreferencesAvoidHighRepSets,
+      subtitle: AppLocalizations.of(context).repPreferencesPreventBoring15Rep,
       trailing: Switch(
         value: prefs.avoidHighReps,
         onChanged: isLoading
@@ -307,7 +308,7 @@ class RepPreferencesSection extends ConsumerWidget {
   ) {
     return SettingTile(
       icon: Icons.trending_up,
-      title: 'Progression Style',
+      title: AppLocalizations.of(context).repPreferencesProgressionStyle,
       subtitle: prefs.progressionStyle.description,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -344,7 +345,7 @@ class RepPreferencesSection extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Training Focus',
+                  AppLocalizations.of(context).trainingFocusTrainingFocus,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -356,7 +357,7 @@ class RepPreferencesSection extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Choose your primary training goal',
+                  AppLocalizations.of(context).repPreferencesChooseYourPrimaryTraining,
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -428,7 +429,7 @@ class RepPreferencesSection extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Progression Style',
+                  AppLocalizations.of(context).repPreferencesProgressionStyle,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -440,7 +441,7 @@ class RepPreferencesSection extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'How should we progress your exercises?',
+                  AppLocalizations.of(context).repPreferencesHowShouldWeProgress,
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

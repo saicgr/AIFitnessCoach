@@ -45,6 +45,7 @@ import 'dart:convert';
 import 'widgets/menu_analysis/recommendation_explain_sheet.dart';
 import 'widgets/menu_analysis/menu_dish_adjust_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Streaming controller retained from v1 so existing callers don't break.
 class MenuAnalysisStreamingController extends ChangeNotifier {
   int _currentPage;
@@ -390,8 +391,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       if (!mounted) return;
       if (streamed == null || streamed.foodItems.isEmpty) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text("Couldn't recognize any food in that description."),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).menuAnalysisCouldnTRecognizeAny),
           ),
         );
         return;
@@ -791,7 +792,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             final showAutoHint = autoDetectedName.isNotEmpty &&
                 titleController.text.trim() == autoDetectedName;
             return AlertDialog(
-              title: const Text('Save this menu'),
+              title: Text(AppLocalizations.of(context).menuAnalysisSaveThisMenu),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -801,9 +802,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     autofocus: true,
                     maxLength: 60,
                     onChanged: (_) => setLocal(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'Name (optional)',
-                      hintText: 'e.g. Indian place near work',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).menuAnalysisNameOptional,
+                      hintText: AppLocalizations.of(context).menuAnalysisHistoryEGIndianPlace,
                     ),
                   ),
                   if (showAutoHint)
@@ -816,7 +817,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              'Auto-detected from the menu — edit if wrong',
+                              AppLocalizations.of(context).menuAnalysisAutoDetectedFromThe,
                               style: TextStyle(
                                   fontSize: 11,
                                   color: AppColors.textMuted),
@@ -831,9 +832,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     // geocoding, no format enforcement (C11).
                     maxLines: 2,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Address (optional)',
-                      hintText: 'e.g. 123 Main St, or just "downtown"',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).menuAnalysisHistoryAddressOptional,
+                      hintText: AppLocalizations.of(context).menuAnalysisHistoryEG123Main,
                     ),
                   ),
                 ],
@@ -841,10 +842,10 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Cancel')),
+                    child: Text(AppLocalizations.of(context).buttonCancel)),
                 FilledButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Save'),
+                  child: Text(AppLocalizations.of(context).buttonSave),
                 ),
               ],
             );
@@ -886,7 +887,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             final useExisting = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
-                title: const Text('Already saved'),
+                title: Text(AppLocalizations.of(context).menuAnalysisAlreadySaved),
                 content: Text(
                   'You already saved a menu for "$restaurantName"'
                   '${address.isNotEmpty ? ' at this address' : ''}. '
@@ -895,11 +896,11 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Save as new'),
+                    child: Text(AppLocalizations.of(context).menuAnalysisSaveAsNew),
                   ),
                   FilledButton(
                     onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('Update existing'),
+                    child: Text(AppLocalizations.of(context).menuAnalysisUpdateExisting),
                   ),
                 ],
               ),
@@ -919,8 +920,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 _savedMenuId = dup['id'].toString();
                 _savedTitle = title.isNotEmpty ? title : restaurantName;
               });
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Updated your saved menu'),
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(AppLocalizations.of(context).menuAnalysisUpdatedYourSavedMenu),
               ));
               return;
             }
@@ -956,8 +957,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   : null);
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Saved to your menu history'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(context).menuAnalysisSavedToYourMenu),
       ));
     } catch (e) {
       if (mounted) {
@@ -1007,7 +1008,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             final showAutoHint = nameWasAutoDetected &&
                 nameController.text.trim() == restaurantName;
             return AlertDialog(
-              title: const Text('Edit saved menu'),
+              title: Text(AppLocalizations.of(context).menuAnalysisEditSavedMenu),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1017,9 +1018,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     autofocus: true,
                     maxLength: 60,
                     onChanged: (_) => setLocal(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      hintText: 'e.g. Indian place near work',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).menuAnalysisName,
+                      hintText: AppLocalizations.of(context).menuAnalysisHistoryEGIndianPlace,
                     ),
                   ),
                   if (showAutoHint)
@@ -1032,7 +1033,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              'Auto-detected from the menu — edit if wrong',
+                              AppLocalizations.of(context).menuAnalysisAutoDetectedFromThe,
                               style: TextStyle(
                                   fontSize: 11,
                                   color: AppColors.textMuted),
@@ -1051,7 +1052,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                         child: ActionChip(
                           avatar: const Icon(Icons.storefront_outlined, size: 16),
                           label: Text(
-                            'Use restaurant name',
+                            AppLocalizations.of(context).menuAnalysisUseRestaurantName,
                             style: const TextStyle(fontSize: 12),
                           ),
                           onPressed: () => setLocal(() {
@@ -1064,9 +1065,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     controller: addressController,
                     maxLines: 2,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Address (optional)',
-                      hintText: 'e.g. 123 Main St, or just "downtown"',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).menuAnalysisHistoryAddressOptional,
+                      hintText: AppLocalizations.of(context).menuAnalysisHistoryEG123Main,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1079,7 +1080,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     child: TextButton.icon(
                       icon: const Icon(Icons.document_scanner_outlined,
                           size: 18),
-                      label: const Text('Re-scan menu'),
+                      label: Text(AppLocalizations.of(context).menuAnalysisReScanMenu),
                       onPressed: () => Navigator.pop(ctx, 'rescan'),
                     ),
                   ),
@@ -1090,17 +1091,17 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, 'remove'),
                   child: Text(
-                    'Remove from saved',
+                    AppLocalizations.of(context).menuAnalysisRemoveFromSaved,
                     style: TextStyle(color: AppColors.error),
                   ),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, 'cancel'),
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context).buttonCancel),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(ctx, 'save'),
-                  child: const Text('Save'),
+                  child: Text(AppLocalizations.of(context).buttonSave),
                 ),
               ],
             );
@@ -1136,7 +1137,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Remove from saved?'),
+          title: Text(AppLocalizations.of(context).menuAnalysisRemoveFromSaved2),
           content: const Text(
             'This menu will be deleted from your saved menus. '
             'This cannot be undone.',
@@ -1144,12 +1145,12 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context).buttonCancel),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: AppColors.error),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Remove'),
+              child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
             ),
           ],
         ),
@@ -1163,8 +1164,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           _savedMenuId = null;
           _savedTitle = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Removed from saved menus'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).menuAnalysisRemovedFromSavedMenus),
         ));
       } catch (e) {
         if (mounted) {
@@ -1192,8 +1193,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       });
       if (!mounted) return;
       setState(() => _savedTitle = newTitle.isEmpty ? null : newTitle);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Menu updated'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(context).menuAnalysisMenuUpdated),
       ));
     } catch (e) {
       if (mounted) {
@@ -1232,7 +1233,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     final proceed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Re-scan this menu?'),
+        title: Text(AppLocalizations.of(context).menuAnalysisReScanThisMenu),
         content: const Text(
           "We'll open the camera to photograph the menu again. The new "
           'results replace this saved menu in place — no duplicate is '
@@ -1241,11 +1242,11 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Re-scan'),
+            child: Text(AppLocalizations.of(context).menuAnalysisReScan),
           ),
         ],
       ),
@@ -1294,8 +1295,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   void _showOfflineMessage() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("You're offline — this needs a connection"),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).menuAnalysisYouReOfflineThis),
       ),
     );
   }
@@ -1395,7 +1396,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           IconButton(
             // A1 — saved state: filled accent bookmark + "edit" affordance;
             // unsaved state: outline add-bookmark + "save" affordance.
-            tooltip: _savedMenuId != null ? 'Saved · edit' : 'Save menu',
+            tooltip: _savedMenuId != null ? AppLocalizations.of(context).menuAnalysisSavedEdit : AppLocalizations.of(context).menuAnalysisSaveMenu,
             icon: _bookmarking
                 ? const SizedBox(
                     width: 18,
@@ -1414,7 +1415,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 : _bookmarkAnalysis,
           ),
           IconButton(
-            tooltip: 'Saved menus',
+            tooltip: AppLocalizations.of(context).myFoodsSavedMenus,
             icon: Icon(Icons.history_rounded, color: colors.textSecondary),
             onPressed: () => context.push('/menu-history'),
           ),
@@ -1559,13 +1560,13 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 MacroBudgetRing(
-                  label: 'Cal',
+                  label: AppLocalizations.of(context).workoutShowcaseCal,
                   consumed: consumedCal.toDouble(),
                   target: state.currentCalorieTarget.toDouble(),
                   color: isDark ? AppColors.coral : AppColorsLight.coral,
                 ),
                 MacroBudgetRing(
-                  label: 'Protein',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   consumed: consumedP,
                   target: state.currentProteinTarget.toDouble(),
                   color: isDark
@@ -1574,7 +1575,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   unit: 'g',
                 ),
                 MacroBudgetRing(
-                  label: 'Carbs',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   consumed: consumedC,
                   target: state.currentCarbsTarget.toDouble(),
                   color: isDark
@@ -1583,7 +1584,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   unit: 'g',
                 ),
                 MacroBudgetRing(
-                  label: 'Fat',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   consumed: consumedF,
                   target: state.currentFatTarget.toDouble(),
                   color:
@@ -1673,7 +1674,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   decoration: InputDecoration(
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    hintText: 'Search dishes',
+                    hintText: AppLocalizations.of(context).menuAnalysisSearchDishes,
                     hintStyle: TextStyle(fontSize: 13, color: colors.textMuted),
                     prefixIcon: Icon(Icons.search, size: 18, color: colors.textMuted),
                     prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -1773,7 +1774,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                       size: 16, color: colors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
-                    'Sort:',
+                    AppLocalizations.of(context).nutritionShowcaseSort,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -1875,7 +1876,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                       highlighted ? _themeOrange(context) : colors.textSecondary),
               const SizedBox(width: 6),
               Text(
-                highlighted ? 'More (+$extraCount)' : 'More…',
+                highlighted ? 'More (+$extraCount)' : AppLocalizations.of(context).unresolvedExercisesBulkMore,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1923,7 +1924,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     color: hasSort ? _themeOrange(context) : colors.textSecondary),
                 const SizedBox(width: 6),
                 Text(
-                  hasSort ? 'Sort: ${primary!.field.label}' : 'Sort',
+                  hasSort ? 'Sort: ${primary!.field.label}' : AppLocalizations.of(context).menuAnalysisSort2,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -2048,7 +2049,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               visualDensity: VisualDensity.compact,
             ),
           ActionChip(
-            label: const Text('Clear all', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+            label: Text(AppLocalizations.of(context).settingsCardPartClearAll, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
             onPressed: () => setState(() => _filter = MenuFilterState.empty),
             visualDensity: VisualDensity.compact,
           ),
@@ -2062,7 +2063,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     return KeyedSubtree(
       key: _recommendedKey,
       child: _collapsibleSection(
-        title: 'Recommended for you',
+        title: AppLocalizations.of(context).quizNutritionGateRecommendedForYou,
         icon: Icons.auto_awesome,
         titleColor: _themeOrange(context),
         subtitleCount: rec.picks.length,
@@ -2188,7 +2189,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 size: 32, color: colors.textMuted),
             const SizedBox(height: 8),
             Text(
-              'No dishes match your filters',
+              AppLocalizations.of(context).menuAnalysisNoDishesMatchYour,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.textPrimary,
@@ -2213,7 +2214,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               onPressed: () =>
                   setState(() => _filter = MenuFilterState.empty),
               icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: const Text('Clear filters'),
+              label: Text(AppLocalizations.of(context).programsClearFilters),
               style: TextButton.styleFrom(
                 foregroundColor: _themeOrange(context),
               ),
@@ -2223,7 +2224,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       );
     }
     return _collapsibleSection(
-      title: 'Results',
+      title: AppLocalizations.of(context).menuAnalysisResults,
       icon: null,
       subtitleCount: items.length,
       expanded: true,
@@ -2368,7 +2369,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.add),
-                label: Text(_addingFood ? 'Adding…' : 'Add food'),
+                label: Text(_addingFood ? AppLocalizations.of(context).menuAnalysisAdding : AppLocalizations.of(context).menuAnalysisAddFood),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
@@ -2383,7 +2384,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               child: FilledButton.icon(
                 icon: Icon(_logged ? Icons.check : Icons.add_circle_outline),
                 label: Text(_logged
-                    ? 'Logged'
+                    ? AppLocalizations.of(context).menuAnalysisLogged
                     : hasSelection
                         ? 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'
                         : 'Select dishes to log'),

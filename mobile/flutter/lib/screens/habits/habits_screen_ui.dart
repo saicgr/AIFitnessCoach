@@ -60,7 +60,7 @@ extension _HabitsScreenExt on HabitsScreen {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            'Create Custom Habit',
+                            AppLocalizations.of(context).habitsScreenUiCreateCustomHabit,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -82,7 +82,7 @@ extension _HabitsScreenExt on HabitsScreen {
                         style: TextStyle(color: textPrimary),
                         onChanged: (_) => setSheetState(() {}),
                         decoration: InputDecoration(
-                          labelText: 'Habit Name',
+                          labelText: AppLocalizations.of(context).habitsScreenUiHabitName,
                           labelStyle: TextStyle(color: textSecondary),
                           hintText: 'e.g., Morning Meditation',
                           hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.5)),
@@ -102,7 +102,7 @@ extension _HabitsScreenExt on HabitsScreen {
 
                       // Color selection
                       Text(
-                        'Choose Color',
+                        AppLocalizations.of(context).habitsScreenUiChooseColor,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -145,7 +145,7 @@ extension _HabitsScreenExt on HabitsScreen {
 
                       // Icon selection
                       Text(
-                        'Choose Icon',
+                        AppLocalizations.of(context).habitsScreenUiChooseIcon,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -214,7 +214,7 @@ extension _HabitsScreenExt on HabitsScreen {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                nameController.text.isEmpty ? 'Preview' : nameController.text,
+                                nameController.text.isEmpty ? AppLocalizations.of(context).layoutEditorScreenPreview : nameController.text,
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -245,8 +245,8 @@ extension _HabitsScreenExt on HabitsScreen {
                           onPressed: () async {
                             if (nameController.text.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please enter a habit name'),
+                                SnackBar(
+                                  content: Text(AppLocalizations.of(context).habitsScreenUiPleaseEnterAHabit),
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
@@ -302,8 +302,8 @@ extension _HabitsScreenExt on HabitsScreen {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
-                            'Create Habit',
+                          child: Text(
+                            AppLocalizations.of(context).habitsScreenUiCreateHabit,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

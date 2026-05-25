@@ -9,6 +9,7 @@ import '../../../data/repositories/hydration_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../widgets/liquid_body_hydration.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'hydration_tab_part_stat_item.dart';
 
 
@@ -151,7 +152,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
 
             // Recent entries
             if (state.todaySummary?.entries.isNotEmpty == true) ...[
-              _SectionHeader(title: 'TODAY\'S LOG', isDark: widget.isDark),
+              _SectionHeader(title: AppLocalizations.of(context).hydrationTodaySLog, isDark: widget.isDark),
               const SizedBox(height: 12),
               ...state.todaySummary!.entries.asMap().entries.map((e) {
                 return _LogEntry(
@@ -194,7 +195,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         IconButton(
           icon: Icon(Icons.settings_outlined, color: textMuted),
           onPressed: () => _showGoalSettings(),
-          tooltip: 'Hydration Settings',
+          tooltip: AppLocalizations.of(context).hydrationHydrationSettings,
         ),
 
         // Unit selector
@@ -280,7 +281,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _StatItem(
-            label: 'Current',
+            label: AppLocalizations.of(context).workoutPlanDrawerCurrent,
             value: _selectedUnit.format(currentMl),
             unit: _selectedUnit.label,
             color: electricBlue,
@@ -293,7 +294,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             color: electricBlue.withValues(alpha: 0.3),
           ),
           _StatItem(
-            label: 'Goal',
+            label: AppLocalizations.of(context).challengeCreateFieldGoal,
             value: _selectedUnit.format(goalMl),
             unit: _selectedUnit.label,
             color: textSecondary,
@@ -306,7 +307,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             color: electricBlue.withValues(alpha: 0.3),
           ),
           _StatItem(
-            label: 'Remaining',
+            label: AppLocalizations.of(context).hydrationRemaining,
             value: _selectedUnit.format(remaining),
             unit: _selectedUnit.label,
             color: remaining > 0 ? AppColors.orange : AppColors.success,
@@ -377,7 +378,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
                 Icon(Icons.water_drop, color: electricBlue, size: 28),
                 const SizedBox(width: 12),
                 Text(
-                  'Custom Amount',
+                  AppLocalizations.of(context).hydrationCustomAmount,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -388,7 +389,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter any amount in milliliters',
+              AppLocalizations.of(context).hydrationEnterAnyAmountIn,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -404,7 +405,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
                 fontSize: 18,
               ),
               decoration: InputDecoration(
-                labelText: 'Amount',
+                labelText: AppLocalizations.of(context).recipeBuilderSheetAmount,
                 labelStyle: TextStyle(color: textMuted),
                 suffixText: 'ml',
                 suffixStyle: TextStyle(
@@ -474,8 +475,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Add Water',
+                child: Text(
+                  AppLocalizations.of(context).hydrationAddWater,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -547,7 +548,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
               keyboardType: TextInputType.number,
               style: TextStyle(color: textPrimary),
               decoration: InputDecoration(
-                labelText: 'Amount (ml)',
+                labelText: AppLocalizations.of(context).hydrationAmountMl,
                 labelStyle: TextStyle(color: textMuted),
                 suffixText: 'ml',
                 suffixStyle: TextStyle(color: textMuted),
@@ -564,7 +565,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
               controller: notesController,
               style: TextStyle(color: textPrimary),
               decoration: InputDecoration(
-                labelText: 'Notes (optional)',
+                labelText: AppLocalizations.of(context).recordAttemptNotesOptional,
                 labelStyle: TextStyle(color: textMuted),
                 filled: true,
                 fillColor: elevated,
@@ -591,7 +592,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
                   backgroundColor: electricBlue,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Add'),
+                child: Text(AppLocalizations.of(context).tilePickerAdd),
               ),
             ),
           ],
@@ -665,7 +666,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Daily Goal',
+                AppLocalizations.of(context).hydrationDailyGoal,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -678,7 +679,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
               keyboardType: TextInputType.number,
               style: TextStyle(color: textPrimary),
               decoration: InputDecoration(
-                labelText: 'Goal (ml)',
+                labelText: AppLocalizations.of(context).hydrationGoalMl,
                 labelStyle: TextStyle(color: textMuted),
                 suffixText: 'ml',
                 suffixStyle: TextStyle(color: textMuted),
@@ -692,7 +693,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Recommended: 2000-3000ml per day',
+              AppLocalizations.of(context).hydrationRecommended20003000mlPer,
               style: TextStyle(color: textMuted, fontSize: 12),
             ),
             const SizedBox(height: 24),
@@ -712,7 +713,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
                   backgroundColor: electricBlue,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Update Goal'),
+                child: Text(AppLocalizations.of(context).hydrationUpdateGoal),
               ),
             ),
           ],

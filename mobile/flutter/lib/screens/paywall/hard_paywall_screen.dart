@@ -10,6 +10,7 @@ import '../../core/constants/api_constants.dart';
 import 'paywall_experiments.dart';
 import 'widgets/credibility_strip.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Hard paywall — shown when trial/subscription expires.
 /// Non-dismissible. User must subscribe or sign out.
 class HardPaywallScreen extends ConsumerStatefulWidget {
@@ -123,7 +124,7 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
 
                 // Title
                 Text(
-                  isWinBack ? 'Welcome back!' : 'Your trial has ended',
+                  isWinBack ? AppLocalizations.of(context).hardPaywallWelcomeBack : AppLocalizations.of(context).hardPaywallYourTrialHasEnded,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -134,7 +135,7 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                 const SizedBox(height: 8),
                 Text(
                   isWinBack
-                      ? 'Your progress is still here. Subscribe to pick up where you left off.'
+                      ? AppLocalizations.of(context).hardPaywallYourProgressIsStill
                       : 'Subscribe to keep your AI workouts, coaching, and all premium features.',
                   style: TextStyle(
                     fontSize: 15,
@@ -169,7 +170,7 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                     child: Column(
                       children: [
                         Text(
-                          "Don't lose your progress",
+                          AppLocalizations.of(context).hardPaywallDonTLoseYour,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -182,19 +183,19 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                           children: [
                             _StatItem(
                               value: '$workouts',
-                              label: 'Workouts',
+                              label: AppLocalizations.of(context).workoutListTitle,
                               icon: Icons.fitness_center,
                               colors: colors,
                             ),
                             _StatItem(
                               value: _formatVolume(volume),
-                              label: 'lbs lifted',
+                              label: AppLocalizations.of(context).hardPaywallLbsLifted,
                               icon: Icons.trending_up,
                               colors: colors,
                             ),
                             _StatItem(
                               value: '$bestStreak',
-                              label: 'Best streak',
+                              label: AppLocalizations.of(context).hardPaywallBestStreak,
                               icon: Icons.local_fire_department,
                               colors: colors,
                             ),
@@ -207,7 +208,7 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                             Icon(Icons.psychology_outlined, size: 16, color: colors.accent),
                             const SizedBox(width: 6),
                             Text(
-                              'Your AI coach remembers everything',
+                              AppLocalizations.of(context).hardPaywallYourAiCoachRemembers,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: colors.accent,
@@ -247,7 +248,7 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          'Cancel anytime in Settings',
+                          AppLocalizations.of(context).hardPaywallCancelAnytimeInSettings,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
@@ -275,8 +276,8 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Subscribe Now',
+                    child: Text(
+                      AppLocalizations.of(context).hardPaywallSubscribeNow,
                       style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -306,8 +307,8 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Get 25% Off — \$37.49/year',
+                      child: Text(
+                        AppLocalizations.of(context).hardPaywallGet25Off37,
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w600),
                       ),
@@ -323,12 +324,12 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                     final success = await ref.read(subscriptionProvider.notifier).restorePurchases();
                     if (success && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Purchases restored!')),
+                        SnackBar(content: Text(AppLocalizations.of(context).paywallPricingPurchasesRestored)),
                       );
                     }
                   },
                   child: Text(
-                    'Restore Purchases',
+                    AppLocalizations.of(context).subscriptionManagementRestorePurchases,
                     style: TextStyle(
                       fontSize: 14,
                       color: colors.accent,
@@ -345,7 +346,7 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                     if (context.mounted) context.go('/');
                   },
                   child: Text(
-                    'Sign Out',
+                    AppLocalizations.of(context).logoutSignOut,
                     style: TextStyle(
                       fontSize: 14,
                       color: colors.textMuted,

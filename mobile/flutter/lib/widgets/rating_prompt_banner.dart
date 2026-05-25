@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../data/services/rating_prompt_service.dart';
 import 'rating_prompt_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Self-contained home-screen banner that surfaces the rating prompt
 /// after the auto-trigger window has passed (or for users who said
 /// "Maybe later"). Watches [RatingPromptService.shouldShowBanner] and
@@ -106,7 +107,7 @@ class _RatingPromptBannerState extends ConsumerState<RatingPromptBanner> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Got 30 seconds?',
+                    AppLocalizations.of(context).ratingPromptBannerGot30Seconds,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -116,7 +117,7 @@ class _RatingPromptBannerState extends ConsumerState<RatingPromptBanner> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Help us out — rate Zealova on the App Store.',
+                    AppLocalizations.of(context).ratingPromptBannerHelpUsOutRate,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,

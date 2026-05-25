@@ -25,6 +25,7 @@ import 'widgets/protocol_selector_sheet.dart';
 import 'widgets/time_schedule_row.dart';
 import 'widgets/fasting_settings_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Fasting tracker screen with timer and zone visualization
 class FastingScreen extends ConsumerStatefulWidget {
   const FastingScreen({super.key});
@@ -119,7 +120,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Fasting Tracker',
+                    AppLocalizations.of(context).fastingScreenRedesignedFastingTracker,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -128,7 +129,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Track your intermittent fasting with smart zone notifications, progress insights, and detailed history.',
+                    AppLocalizations.of(context).fastingTrackYourIntermittentFastin,
                     style: TextStyle(
                       fontSize: 15,
                       color: textSecondary,
@@ -155,13 +156,13 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                         ),
                         elevation: 0,
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.rocket_launch, size: 20),
                           SizedBox(width: 10),
                           Text(
-                            'Sign Up to Unlock',
+                            AppLocalizations.of(context).progressSignUpToUnlock,
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -217,7 +218,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                 pinned: true,
                 floating: true,
                 title: Text(
-                  'Fasting',
+                  AppLocalizations.of(context).unifiedHomeWidgetsFasting,
                   style: TextStyle(
                     color: textPrimary,
                     fontWeight: FontWeight.bold,
@@ -260,7 +261,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                       size: 24,
                     ),
                     onPressed: () => _showFastingSettings(context, fastingState),
-                    tooltip: 'Fasting Settings',
+                    tooltip: AppLocalizations.of(context).fastingSettingsFastingSettings,
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -270,8 +271,8 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                   controller: _tabController,
                   showIcons: false,
                   tabs: [
-                    SegmentedTabItem(label: 'Timer', icon: Icons.timer_outlined),
-                    SegmentedTabItem(label: 'History', icon: Icons.history),
+                    SegmentedTabItem(label: AppLocalizations.of(context).fastingTimer, icon: Icons.timer_outlined),
+                    SegmentedTabItem(label: AppLocalizations.of(context).workoutHistory, icon: Icons.history),
                   ],
                 ),
               ),
@@ -401,7 +402,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                             const Icon(Icons.play_arrow_rounded, size: 24),
                             const SizedBox(width: 8),
                             Text(
-                              'Start Fast',
+                              AppLocalizations.of(context).heroFastingCardStartFast,
                               style: const TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
@@ -465,7 +466,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'No fasting history yet',
+              AppLocalizations.of(context).fastingScreenRedesignedNoFastingHistoryYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -474,7 +475,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete your first fast to see it here',
+              AppLocalizations.of(context).fastingCompleteYourFirstFast,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -626,7 +627,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
       builder: (context) => AlertDialog(
         backgroundColor: elevated,
         title: Text(
-          'End Fast?',
+          AppLocalizations.of(context).fastingEndFast,
           style: TextStyle(color: textPrimary),
         ),
         content: Column(
@@ -654,7 +655,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Continue Fasting',
+              AppLocalizations.of(context).fastingContinueFasting,
               style: TextStyle(
                 color: isDark ? AppColors.accent : AppColorsLight.accent,
               ),
@@ -685,7 +686,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('Failed to end fast. Please try again.'),
+                      content: Text(AppLocalizations.of(context).fastingFailedToEndFast),
                       backgroundColor: AppColors.error,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -693,8 +694,8 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                 }
               }
             },
-            child: const Text(
-              'End Fast',
+            child: Text(
+              AppLocalizations.of(context).heroFastingCardEndFast,
               style: TextStyle(color: AppColors.coral),
             ),
           ),

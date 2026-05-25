@@ -28,6 +28,7 @@ import '../../../data/services/sound_service.dart';
 import '../widgets/setting_tile.dart';
 import '../widgets/section_header.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 const List<String> countdownSoundTypes = [
   'beep',
   'chime',
@@ -75,9 +76,9 @@ class SoundSettingsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(
-          title: 'Sound Effects',
-          subtitle: 'Customize workout sounds',
+        SectionHeader(
+          title: AppLocalizations.of(context).soundSettingsSoundEffects,
+          subtitle: AppLocalizations.of(context).soundSettingsCustomizeWorkoutSounds,
         ),
         Material(
           color: elevated,
@@ -88,8 +89,8 @@ class SoundSettingsSection extends ConsumerWidget {
               _SoundCategoryRow(
                 icon: Icons.timer_outlined,
                 iconColor: AppColors.cyan,
-                title: 'Countdown Sounds',
-                subtitle: 'Play sounds during countdown (3, 2, 1)',
+                title: AppLocalizations.of(context).soundSettingsCountdownSounds,
+                subtitle: AppLocalizations.of(context).soundSettingsPlaySoundsDuringCountdown,
                 enabled: prefs.countdownSoundEnabled,
                 onEnabledChanged: notifier.setCountdownEnabled,
                 currentSound: prefs.countdownSoundType,
@@ -104,8 +105,8 @@ class SoundSettingsSection extends ConsumerWidget {
               _SoundCategoryRow(
                 icon: Icons.hourglass_empty,
                 iconColor: AppColors.warning,
-                title: 'Rest Timer End',
-                subtitle: 'Play sound when rest period ends',
+                title: AppLocalizations.of(context).soundSettingsRestTimerEnd,
+                subtitle: AppLocalizations.of(context).soundSettingsPlaySoundWhenRest,
                 enabled: prefs.restTimerSoundEnabled,
                 onEnabledChanged: notifier.setRestTimerEnabled,
                 currentSound: prefs.restTimerSoundType,
@@ -120,8 +121,8 @@ class SoundSettingsSection extends ConsumerWidget {
               _SoundCategoryRow(
                 icon: Icons.fitness_center,
                 iconColor: AppColors.textPrimary,
-                title: 'Exercise Completion',
-                subtitle: 'Play sound when all sets of exercise done',
+                title: AppLocalizations.of(context).soundSettingsExerciseCompletion,
+                subtitle: AppLocalizations.of(context).soundSettingsPlaySoundWhenAll,
                 enabled: prefs.exerciseCompletionSoundEnabled,
                 onEnabledChanged: notifier.setExerciseCompletionEnabled,
                 currentSound: prefs.exerciseCompletionSoundType,
@@ -136,8 +137,8 @@ class SoundSettingsSection extends ConsumerWidget {
               _SoundCategoryRow(
                 icon: Icons.celebration_outlined,
                 iconColor: AppColors.success,
-                title: 'Workout Completion',
-                subtitle: 'Play sound when entire workout ends',
+                title: AppLocalizations.of(context).soundSettingsWorkoutCompletion,
+                subtitle: AppLocalizations.of(context).soundSettingsPlaySoundWhenEntire,
                 enabled: prefs.workoutCompletionSoundEnabled,
                 onEnabledChanged: notifier.setWorkoutCompletionEnabled,
                 currentSound: prefs.workoutCompletionSoundType,
@@ -152,7 +153,7 @@ class SoundSettingsSection extends ConsumerWidget {
               SettingTile(
                 icon: Icons.volume_up,
                 iconColor: AppColors.textSecondary,
-                title: 'Sound Volume',
+                title: AppLocalizations.of(context).soundSettingsSoundVolume,
                 subtitle: '${(prefs.soundEffectsVolume * 100).round()}%',
               ),
               Padding(
@@ -251,7 +252,7 @@ class _SoundCategoryRow extends StatelessWidget {
                       size: 16, color: textMuted),
                   const SizedBox(width: 8),
                   Text(
-                    'Sound',
+                    AppLocalizations.of(context).soundSettingsSound,
                     style: TextStyle(fontSize: 13, color: textMuted),
                   ),
                   const Spacer(),
@@ -405,7 +406,7 @@ class _SoundPickerSheetState extends State<_SoundPickerSheet> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Tap to select. Long-press to preview.',
+                      AppLocalizations.of(context).soundSettingsTapToSelectLong,
                       style: TextStyle(color: muted, fontSize: 12),
                     ),
                   ),

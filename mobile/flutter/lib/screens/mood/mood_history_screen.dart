@@ -15,6 +15,7 @@ import 'widgets/mood_history_item_card.dart';
 import 'widgets/mood_streak_card.dart';
 import 'widgets/mood_weekly_chart.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen showing mood check-in history and analytics
 class MoodHistoryScreen extends ConsumerStatefulWidget {
   const MoodHistoryScreen({super.key});
@@ -76,7 +77,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
     return Scaffold(
       backgroundColor: background,
       appBar: PillAppBar(
-        title: 'Mood History & Analysis',
+        title: AppLocalizations.of(context).moodHistoryMoodHistoryAnalysis,
         actions: [
           PillAppBarAction(
             customIcon: LineIcon(
@@ -120,7 +121,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Your Mood Insights',
+                              AppLocalizations.of(context).moodHistoryYourMoodInsights,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -171,7 +172,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Check-in History',
+                            AppLocalizations.of(context).moodHistoryCheckInHistory,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -317,7 +318,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No mood check-ins yet',
+              AppLocalizations.of(context).moodHistoryNoMoodCheckIns,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -326,7 +327,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Start tracking your mood to get personalized workout suggestions and see your patterns over time.',
+              AppLocalizations.of(context).moodHistoryStartTrackingYourMood,
               textAlign: TextAlign.center,
               style: TextStyle(color: textSecondary),
             ),
@@ -357,7 +358,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                 Icon(Icons.lightbulb_outline, color: accent, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Insights & Suggestions',
+                  AppLocalizations.of(context).moodHistoryInsightsSuggestions,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: accent,

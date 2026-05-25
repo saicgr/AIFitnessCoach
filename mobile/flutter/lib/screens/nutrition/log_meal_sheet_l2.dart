@@ -203,7 +203,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
             Icon(Icons.replay_rounded, size: 15, color: accent),
             const SizedBox(width: 6),
             Text(
-              'Frequent meals',
+              AppLocalizations.of(context).logMealSheetFrequentMeals,
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -539,8 +539,8 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
     if (!hasWord) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Didn't catch any food there — try again."),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).logMealSheetDidnTCatchAny),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -625,7 +625,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _voiceCapturing ? 'Listening…' : 'Tap to speak',
+                      _voiceCapturing ? AppLocalizations.of(context).logMealSheetListening : AppLocalizations.of(context).logMealSheetTapToSpeak,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -635,7 +635,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                     const SizedBox(height: 4),
                     Text(
                       _voiceCapturing
-                          ? 'Tap again when you finish'
+                          ? AppLocalizations.of(context).logMealSheetTapAgainWhenYou
                           : 'e.g. "log 3 eggs and oatmeal"',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -670,7 +670,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Microphone unavailable',
+                            AppLocalizations.of(context).logMealSheetMicrophoneUnavailable,
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
@@ -681,7 +681,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Enable microphone access in Settings, or type the meal in Search instead.',
+                      AppLocalizations.of(context).logMealSheetEnableMicrophoneAccessIn,
                       style: TextStyle(
                           fontSize: 12, height: 1.35, color: textMuted),
                     ),
@@ -697,7 +697,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                               size: 15, color: accent),
                           const SizedBox(width: 6),
                           Text(
-                            'Type it instead',
+                            AppLocalizations.of(context).logMealSheetTypeItInstead,
                             style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
@@ -725,7 +725,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                       Icon(Icons.hearing_rounded, size: 14, color: textMuted),
                       const SizedBox(width: 6),
                       Text(
-                        'Heard — edit if needed, then confirm',
+                        AppLocalizations.of(context).logMealSheetHeardEditIfNeeded,
                         style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
@@ -759,7 +759,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                         border: InputBorder.none,
                         isDense: true,
                         hintText: _voiceCapturing
-                            ? 'Listening…'
+                            ? AppLocalizations.of(context).logMealSheetListening
                             : 'Your words appear here — fix any mis-hearings.',
                         hintStyle: TextStyle(
                             color: textMuted.withValues(alpha: 0.7),
@@ -818,7 +818,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                                           Colors.white)))
                               : const Icon(Icons.check_rounded, size: 18),
                           label: Text(
-                            busy ? 'Analyzing…' : 'Confirm & analyze',
+                            busy ? AppLocalizations.of(context).logMealSheetAnalyzing : AppLocalizations.of(context).logMealSheetConfirmAnalyze,
                             style: const TextStyle(
                                 fontSize: 14.5, fontWeight: FontWeight.w700),
                           ),
@@ -846,7 +846,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Hands-free logging — speak naturally, review the text, then confirm. Works great while cooking.',
+              AppLocalizations.of(context).logMealSheetHandsFreeLoggingSpeak,
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 11, height: 1.4, color: textMuted),

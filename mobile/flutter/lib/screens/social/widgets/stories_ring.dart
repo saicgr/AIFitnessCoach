@@ -12,6 +12,7 @@ import '../tabs/feed_tab.dart' show storiesAutoScrollProvider;
 import '../story_create_screen.dart';
 import '../story_viewer_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Stories ring widget (F11) - Shows friends' stories in a horizontal scrollable row
 /// Displays above the segmented tab bar on the Social screen.
 /// First item is "Your Story" with + icon overlay.
@@ -229,7 +230,7 @@ class _StoriesRingState extends ConsumerState<StoriesRing> {
             SizedBox(
               width: 52,
               child: Text(
-                'Your Story',
+                AppLocalizations.of(context).storiesRingYourStory,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Friend Card - Displays a user profile card
 class FriendCard extends StatelessWidget {
   final String name;
@@ -95,8 +96,8 @@ class FriendCard extends StatelessWidget {
                                   color: AppColors.cyan.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Text(
-                                  'FRIEND',
+                                child: Text(
+                                  AppLocalizations.of(context).friendCardFriend,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -196,7 +197,7 @@ class FriendCard extends StatelessWidget {
                       isFollowing ? Icons.person_remove : Icons.person_add,
                       size: 18,
                     ),
-                    label: Text(isFollowing ? 'Unfollow' : 'Follow'),
+                    label: Text(isFollowing ? AppLocalizations.of(context).friendCardUnfollow : AppLocalizations.of(context).friendProfileFollow),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: isFollowing ? AppColors.textMuted : AppColors.cyan,
                       side: BorderSide(

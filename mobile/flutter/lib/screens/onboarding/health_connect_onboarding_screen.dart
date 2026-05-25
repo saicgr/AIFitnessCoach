@@ -12,6 +12,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/services/health_service.dart';
 import '../ai_settings/ai_settings_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Health Connect / Apple Health onboarding step.
 ///
 /// Shown once, post-paywall, in the `context.go` chain:
@@ -86,9 +87,9 @@ class _HealthConnectOnboardingScreenState
         // Health Connect app not installed — don't trap the user; they
         // can connect later from Settings → Health Sync.
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-                "Health Connect isn't installed — connect it later in Settings."),
+                AppLocalizations.of(context).healthConnectOnboardingHealthConnectIsnT),
           ),
         );
       }
@@ -156,7 +157,7 @@ class _HealthConnectOnboardingScreenState
                             .fadeIn(duration: 400.ms),
                         const SizedBox(height: 32),
                         Text(
-                          'Unlock your AI health coach',
+                          AppLocalizations.of(context).healthConnectOnboardingUnlockYourAiHealth,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 28,
@@ -180,7 +181,7 @@ class _HealthConnectOnboardingScreenState
                         const SizedBox(height: 32),
                         _BenefitRow(
                           icon: Icons.bedtime_rounded,
-                          title: 'Sleep coaching',
+                          title: AppLocalizations.of(context).healthConnectOnboardingSleepCoaching,
                           subtitle:
                               'A morning briefing and specific tips on the nights you sleep poorly.',
                           accent: accent,
@@ -193,7 +194,7 @@ class _HealthConnectOnboardingScreenState
                         const SizedBox(height: 16),
                         _BenefitRow(
                           icon: Icons.fitness_center_rounded,
-                          title: 'Recovery-aware workouts',
+                          title: AppLocalizations.of(context).healthConnectOnboardingRecoveryAwareWorkouts,
                           subtitle:
                               'Your training auto-adjusts when recovery is low — lighter days exactly when you need them.',
                           accent: accent,
@@ -206,7 +207,7 @@ class _HealthConnectOnboardingScreenState
                         const SizedBox(height: 16),
                         _BenefitRow(
                           icon: Icons.auto_awesome_rounded,
-                          title: 'A coach that sees everything',
+                          title: AppLocalizations.of(context).healthConnectOnboardingACoachThatSees,
                           subtitle:
                               'Your AI coach factors in sleep, steps, heart rate and recovery — and spots patterns across them.',
                           accent: accent,
@@ -281,7 +282,7 @@ class _HealthConnectOnboardingScreenState
                 TextButton(
                   onPressed: _isConnecting ? null : _skip,
                   child: Text(
-                    'Maybe later',
+                    AppLocalizations.of(context).notifsLaterButton,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,

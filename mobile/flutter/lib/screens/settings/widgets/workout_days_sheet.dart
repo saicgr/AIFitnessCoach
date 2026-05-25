@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for selecting workout days.
 ///
 /// Allows users to select which days of the week they want to work out.
@@ -157,7 +158,7 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
 
             // Title
             Text(
-              'Workout Days',
+              AppLocalizations.of(context).workoutSettingsWorkoutDays,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -168,7 +169,7 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
 
             // Subtitle
             Text(
-              'Select which days you want to work out',
+              AppLocalizations.of(context).workoutDaysSelectorSelectWhichDaysYou,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -303,7 +304,7 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Changing workout days will update your schedule. Future workouts will be regenerated.',
+                      AppLocalizations.of(context).workoutDaysChangingWorkoutDaysWill,
                       style: TextStyle(
                         fontSize: 12,
                         color: textPrimary,
@@ -340,8 +341,8 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Text(
-                        'Save',
+                    : Text(
+                        AppLocalizations.of(context).buttonSave,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

@@ -8,6 +8,7 @@ import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/sync_repository.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Catalog of supported providers. `requiresCredentials=true` means the
 /// provider doesn't expose a public OAuth flow and the user must type an
 /// email/password into a native sheet (Garmin, Peloton); everything else
@@ -102,7 +103,7 @@ class ConnectedAppsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Connected Apps'),
+        title: Text(AppLocalizations.of(context).connectedAppsConnectedApps),
         centerTitle: false,
       ),
       body: RefreshIndicator(
@@ -197,8 +198,8 @@ class _PrivacyFooter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Privacy',
+        children: [
+          Text(AppLocalizations.of(context).settingsPrivacySection,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           SizedBox(height: 6),
           Text(
@@ -310,7 +311,7 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
             FilledButton.icon(
               onPressed: _connect,
               icon: const Icon(Icons.link, size: 18),
-              label: Text(widget.entry.isDeviceOnly ? 'Enable' : 'Connect'),
+              label: Text(widget.entry.isDeviceOnly ? AppLocalizations.of(context).healthSyncEnable : AppLocalizations.of(context).unifiedHomeWidgetsConnect),
               style: FilledButton.styleFrom(backgroundColor: widget.accent),
             ),
           ],
@@ -323,14 +324,14 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
             TextButton.icon(
               onPressed: () => _confirmDisconnect(account!),
               icon: const Icon(Icons.link_off, size: 18),
-              label: const Text('Disconnect'),
+              label: Text(AppLocalizations.of(context).googleCalendarConnectDisconnect),
               style: TextButton.styleFrom(foregroundColor: Colors.red),
             ),
             const SizedBox(width: 6),
             OutlinedButton.icon(
               onPressed: () => _manualSync(account!),
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Sync now'),
+              label: Text(AppLocalizations.of(context).connectedAppsSyncNow),
             ),
           ],
         );
@@ -343,14 +344,14 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
               TextButton.icon(
                 onPressed: () => _confirmDisconnect(account),
                 icon: const Icon(Icons.link_off, size: 18),
-                label: const Text('Disconnect'),
+                label: Text(AppLocalizations.of(context).googleCalendarConnectDisconnect),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
               ),
             const SizedBox(width: 6),
             FilledButton.icon(
               onPressed: _connect,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Reconnect'),
+              label: Text(AppLocalizations.of(context).connectedAppsReconnect),
               style: FilledButton.styleFrom(backgroundColor: widget.accent),
             ),
           ],
@@ -427,25 +428,25 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context).authEmailHint),
             ),
             TextField(
               controller: passCtl,
               obscureText: true,
               autocorrect: false,
               textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context).authPasswordHint),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Connect'),
+            child: Text(AppLocalizations.of(context).unifiedHomeWidgetsConnect),
           ),
         ],
       ),
@@ -482,12 +483,12 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Disconnect'),
+            child: Text(AppLocalizations.of(context).googleCalendarConnectDisconnect),
           ),
         ],
       ),
@@ -635,7 +636,7 @@ class _AccountDetail extends StatelessWidget {
           Expanded(
             child: Text(
               last == null
-                  ? 'No sync yet — will run within 15 minutes.'
+                  ? AppLocalizations.of(context).connectedAppsNoSyncYetWill
                   : 'Last synced ${_relativeTime(last)}',
               style: const TextStyle(fontSize: 12),
             ),
@@ -683,17 +684,17 @@ class _AccountToggles extends StatelessWidget {
     return Column(
       children: [
         _toggleRow(
-          label: 'Auto-import every 15 min',
+          label: AppLocalizations.of(context).connectedAppsAutoImportEvery15,
           value: account.autoImport,
           onChanged: (v) => onChanged(autoImport: v),
         ),
         _toggleRow(
-          label: 'Include cardio sessions',
+          label: AppLocalizations.of(context).connectedAppsIncludeCardioSessions,
           value: account.importCardio,
           onChanged: (v) => onChanged(importCardio: v),
         ),
         _toggleRow(
-          label: 'Include strength workouts',
+          label: AppLocalizations.of(context).connectedAppsIncludeStrengthWorkouts,
           value: account.importStrength,
           onChanged: (v) => onChanged(importStrength: v),
         ),
@@ -736,7 +737,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            OutlinedButton(onPressed: onRetry, child: Text(AppLocalizations.of(context).buttonRetry)),
           ],
         ),
       ),

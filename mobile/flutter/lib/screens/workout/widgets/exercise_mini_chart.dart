@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A compact sparkline chart showing exercise weight progression
 /// over the last few sessions. Designed to be embedded inline
 /// within exercise cards or list tiles (~70px tall).
@@ -99,7 +100,7 @@ class ExerciseMiniChart extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'Not enough history',
+            AppLocalizations.of(context).exerciseMiniChartNotEnoughHistory,
             style: theme.textTheme.bodySmall?.copyWith(
               color: mutedColor,
               fontSize: 12,

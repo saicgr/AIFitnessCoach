@@ -159,7 +159,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
             ),
             const SizedBox(width: 12),
             Text(
-              'Customize Your Dashboard',
+              AppLocalizations.of(context).homeScreenUiCustomizeYourDashboard,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -214,8 +214,8 @@ extension __HomeScreenStateExt on _HomeScreenState {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Got it!',
+              child: Text(
+                AppLocalizations.of(context).xpGoalsGotIt,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -275,7 +275,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
                     Icon(Icons.add_circle_outline, color: AppColors.cyan),
                     const SizedBox(width: 8),
                     Text(
-                      'Add Tile',
+                      AppLocalizations.of(context).tilePickerAddTile,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -450,7 +450,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
                   Icon(Icons.explore, color: AppColors.purple),
                   const SizedBox(width: 8),
                   Text(
-                    'Discover Layouts',
+                    AppLocalizations.of(context).homeScreenUiDiscoverLayouts,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -463,7 +463,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Choose a preset layout tailored to your focus. You can customize it further after applying.',
+                AppLocalizations.of(context).homeScreenUiChooseAPresetLayout,
                 style: TextStyle(
                   fontSize: 14,
                   color: textSecondary,
@@ -510,7 +510,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Reset to Default',
+                                AppLocalizations.of(context).quickActionsResetToDefault,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,

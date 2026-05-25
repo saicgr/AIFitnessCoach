@@ -85,7 +85,7 @@ class _FrequentFoodChip extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  ' cal',
+                  AppLocalizations.of(context).foodHistoryScreenCal,
                   style: TextStyle(color: textMuted, fontSize: 11),
                 ),
                 const Spacer(),
@@ -261,7 +261,7 @@ class _FoodLogTile extends StatelessWidget {
                 ),
               ),
               Text(
-                ' cal',
+                AppLocalizations.of(context).foodHistoryScreenCal,
                 style: TextStyle(
                   color: textMuted,
                   fontSize: 12,
@@ -510,7 +510,7 @@ class _ErrorState extends StatelessWidget {
             onPressed: onRetry,
             icon: Icon(Icons.refresh, color: teal),
             label: Text(
-              'Retry',
+              AppLocalizations.of(context).buttonRetry,
               style: TextStyle(color: teal, fontWeight: FontWeight.w600),
             ),
           ),
@@ -583,7 +583,7 @@ class _EditFoodLogSheetState extends ConsumerState<_EditFoodLogSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Edit Portion',
+                          AppLocalizations.of(context).foodHistoryScreenEditPortion,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -684,10 +684,10 @@ class _EditFoodLogSheetState extends ConsumerState<_EditFoodLogSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const FittedBox(
+                      : FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            'Save Changes',
+                            AppLocalizations.of(context).vacationModeSaveChanges,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -762,7 +762,7 @@ class _InflammationRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Inflammation Score',
+                  AppLocalizations.of(context).loggedMealsInflammationScore,
                   style: TextStyle(
                     color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -819,7 +819,7 @@ class _AiCoachTipRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'AI Coach tip',
+                  AppLocalizations.of(context).foodHistoryScreenAiCoachTip,
                   style: TextStyle(
                     color: accent,
                     fontWeight: FontWeight.w700,

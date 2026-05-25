@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class TodayFertilityWindowStrip extends StatelessWidget {
   /// The active cycle prediction. May be null — the card still renders with
   /// a "log a period" hint.
@@ -94,7 +95,7 @@ class TodayFertilityWindowStrip extends StatelessWidget {
                   size: 16, color: CyclePhaseColors.ovulation),
               const SizedBox(width: 8),
               Text(
-                'Fertility window',
+                AppLocalizations.of(context).todayFertilityWindowFertilityWindow,
                 style: TextStyle(
                   color: fg,
                   fontSize: 13,
@@ -104,7 +105,7 @@ class TodayFertilityWindowStrip extends StatelessWidget {
               const Spacer(),
               if (lowConfidence)
                 Text(
-                  'Low confidence · estimate',
+                  AppLocalizations.of(context).todayFertilityWindowLowConfidenceEstimate,
                   style: TextStyle(
                     color: fg.withValues(alpha: 0.55),
                     fontSize: 10,

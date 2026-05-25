@@ -17,6 +17,7 @@ import '../../widgets/nav_bar_hider_mixin.dart';
 import 'friend_profile_screen.dart';
 import 'group_settings_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class ConversationScreen extends ConsumerStatefulWidget {
   final String conversationId;
   final String otherUserId;
@@ -194,7 +195,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         // Restore the text so user can retry
         _messageController.text = text;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send message')),
+          SnackBar(content: Text(AppLocalizations.of(context).conversationFailedToSendMessage)),
         );
       }
     } finally {
@@ -246,7 +247,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         children: [
           Expanded(
             child: userId == null
-                ? const Center(child: Text('Not logged in'))
+                ? Center(child: Text(AppLocalizations.of(context).socialScreenPartNotLoggedIn))
                 : _buildMessagesList(userId, isDark, colors),
           ),
           _buildTypingIndicator(),
@@ -309,7 +310,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               Icon(Icons.cloud_off_rounded, size: 48,
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted),
               const SizedBox(height: 16),
-              Text('Failed to load messages',
+              Text(AppLocalizations.of(context).conversationFailedToLoadMessages,
                   style: TextStyle(
                     color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                   )),
@@ -320,7 +321,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     (userId: userId, conversationId: widget.conversationId, otherUserId: widget.otherUserId),
                   ),
                 ),
-                child: const Text('Retry'),
+                child: Text(AppLocalizations.of(context).buttonRetry),
               ),
             ],
           ),
@@ -342,7 +343,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     color: isDark ? AppColors.textMuted : AppColorsLight.textMuted),
                 const SizedBox(height: 16),
                 Text(
-                  'No messages yet',
+                  AppLocalizations.of(context).conversationNoMessagesYet,
                   style: TextStyle(
                     fontSize: 16,
                     color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -350,7 +351,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Send the first message!',
+                  AppLocalizations.of(context).conversationSendTheFirstMessage,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -398,7 +399,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Some messages were encrypted on another device and cannot be read here.',
+                        AppLocalizations.of(context).conversationSomeMessagesWereEncrypted,
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark ? Colors.orange.shade300 : Colors.orange.shade700,
@@ -530,7 +531,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
       child: Padding(
         padding: const EdgeInsets.only(top: 2, right: 4),
         child: Text(
-          'Read',
+          AppLocalizations.of(context).conversationRead,
           style: TextStyle(
             fontSize: 11,
             color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -633,7 +634,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      'Encrypted',
+                      AppLocalizations.of(context).conversationEncrypted,
                       style: TextStyle(
                         fontSize: 9,
                         color: isMe
@@ -684,7 +685,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
                     color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Type a message...',
+                    hintText: AppLocalizations.of(context).liveChatInputTypeAMessage,
                     hintStyle: TextStyle(color: textSecondary, fontSize: 15),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),

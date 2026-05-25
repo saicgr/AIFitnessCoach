@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Mixin providing exercise management functionality for workout screens.
 /// This includes reordering, skipping, swapping, and superset management.
 mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
@@ -105,8 +106,8 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
             // Start this exercise
             ExerciseOptionTile(
               icon: Icons.play_circle_outline,
-              title: 'Start This Exercise',
-              subtitle: 'Make this the active exercise',
+              title: AppLocalizations.of(context).exerciseManagementMixinStartThisExercise,
+              subtitle: AppLocalizations.of(context).exerciseManagementMixinMakeThisTheActive,
               color: AppColors.cyan,
               onTap: () {
                 Navigator.pop(context);
@@ -120,8 +121,8 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
             // Replace exercise
             ExerciseOptionTile(
               icon: Icons.swap_horiz,
-              title: 'Replace Exercise',
-              subtitle: 'AI-powered alternatives',
+              title: AppLocalizations.of(context).exerciseManagementMixinReplaceExercise,
+              subtitle: AppLocalizations.of(context).exerciseManagementMixinAiPoweredAlternatives,
               color: AppColors.purple,
               onTap: () async {
                 Navigator.pop(context);
@@ -142,8 +143,8 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
             // Skip exercise
             ExerciseOptionTile(
               icon: Icons.skip_next,
-              title: 'Skip Exercise',
-              subtitle: 'Remove from this workout',
+              title: AppLocalizations.of(context).futuristicSetCardSkipExercise,
+              subtitle: AppLocalizations.of(context).exerciseManagementMixinRemoveFromThisWorkout,
               color: AppColors.orange,
               onTap: () {
                 Navigator.pop(context);
@@ -158,8 +159,8 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
             if (exercise.isInSuperset) ...[
               ExerciseOptionTile(
                 icon: Icons.link_off,
-                title: 'Remove from Superset',
-                subtitle: 'Break the superset pair',
+                title: AppLocalizations.of(context).exerciseManagementMixinRemoveFromSuperset,
+                subtitle: AppLocalizations.of(context).exerciseManagementMixinBreakTheSupersetPair,
                 color: AppColors.error,
                 onTap: () async {
                   Navigator.pop(context);
@@ -171,7 +172,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
               if (index < exercises.length - 1 && !exercises[index + 1].isInSuperset)
                 ExerciseOptionTile(
                   icon: Icons.link,
-                  title: 'Pair with Next Exercise',
+                  title: AppLocalizations.of(context).exerciseManagementMixinPairWithNextExercise,
                   subtitle: 'Create superset with ${exercises[index + 1].name}',
                   color: AppColors.purple,
                   onTap: () async {
@@ -183,8 +184,8 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
               const SizedBox(height: 12),
               ExerciseOptionTile(
                 icon: Icons.add_link,
-                title: 'Create Superset',
-                subtitle: 'Choose exercise to pair with',
+                title: AppLocalizations.of(context).workoutSheetsMixinCreateSuperset,
+                subtitle: AppLocalizations.of(context).exerciseManagementMixinChooseExerciseToPair,
                 color: AppColors.purple,
                 onTap: () async {
                   Navigator.pop(context);
@@ -255,7 +256,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
 
     if (availableCount == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No available exercises to pair with')),
+        SnackBar(content: Text(AppLocalizations.of(context).exerciseManagementMixinNoAvailableExercisesTo)),
       );
       return;
     }

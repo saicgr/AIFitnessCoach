@@ -9,6 +9,7 @@ import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Onboarding conversion v6 — acknowledgment interstitial.
 ///
 /// Shown right after the quiz, before /onboarding-blocker. No input: it
@@ -170,7 +171,7 @@ class _OnboardingReflectScreenState
                       ),
                   const SizedBox(height: 18),
                   Text(
-                    "Here's what we heard.",
+                    AppLocalizations.of(context).onboardingReflectHereSWhatWe,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -256,7 +257,7 @@ class _ReflectContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Continue',
+      label: AppLocalizations.of(context).onboardingContinueButton,
       child: GestureDetector(
         onTap: onTap,
         child: Container(
@@ -275,12 +276,12 @@ class _ReflectContinueButton extends StatelessWidget {
               ),
             ],
           ),
-          child: const Center(
+          child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Continue',
+                  AppLocalizations.of(context).onboardingContinueButton,
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,

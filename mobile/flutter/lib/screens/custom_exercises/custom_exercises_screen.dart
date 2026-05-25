@@ -13,6 +13,7 @@ import 'widgets/custom_exercise_card.dart';
 import 'widgets/create_exercise_sheet.dart';
 import 'widgets/empty_custom_exercises.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen for viewing and managing custom exercises
 class CustomExercisesScreen extends ConsumerStatefulWidget {
   const CustomExercisesScreen({super.key});
@@ -110,8 +111,8 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
               onPressed: () => _showCreateSheet(context),
               backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
               icon: const Icon(Icons.add, color: Colors.black),
-              label: const Text(
-                'Create',
+              label: Text(
+                AppLocalizations.of(context).netflixExercisesTabCreate,
                 style: TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.w600,
@@ -142,7 +143,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'My Exercises',
+                  AppLocalizations.of(context).workoutSettingsMyExercises,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -191,7 +192,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
             color: isDark ? Colors.white : Colors.black,
           ),
           decoration: InputDecoration(
-            hintText: 'Search exercises...',
+            hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
             hintStyle: TextStyle(color: textMuted),
             prefixIcon: Icon(Icons.search, color: textMuted),
             suffixIcon: _searchQuery.isNotEmpty
@@ -215,10 +216,10 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
     return SegmentedTabBar(
       controller: _tabController,
       showIcons: false,
-      tabs: const [
-        SegmentedTabItem(label: 'All'),
-        SegmentedTabItem(label: 'Simple'),
-        SegmentedTabItem(label: 'Combos'),
+      tabs: [
+        SegmentedTabItem(label: AppLocalizations.of(context).syncedWorkoutsHistoryAll),
+        SegmentedTabItem(label: AppLocalizations.of(context).customExercisesSimple),
+        SegmentedTabItem(label: AppLocalizations.of(context).customExercisesCombos),
       ],
     );
   }
@@ -257,7 +258,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              _searchQuery.isNotEmpty ? 'No exercises match your search' : 'No exercises in this category',
+              _searchQuery.isNotEmpty ? AppLocalizations.of(context).customExercisesNoExercisesMatchYour : 'No exercises in this category',
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -313,12 +314,12 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Exercise'),
+        title: Text(AppLocalizations.of(context).myExercisesDeleteExercise),
         content: Text('Are you sure you want to delete "${exercise.name}"? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () {
@@ -326,7 +327,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
               ref.read(customExercisesProvider.notifier).deleteExercise(exercise.id);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -383,8 +384,8 @@ class _ExerciseDetailsDialog extends StatelessWidget {
               _buildDetail('Instructions', exercise.instructions!),
             if (exercise.isComposite && exercise.componentExercises != null) ...[
               const SizedBox(height: 16),
-              const Text(
-                'Components',
+              Text(
+                AppLocalizations.of(context).pillarDetailComponents,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -436,7 +437,7 @@ class _ExerciseDetailsDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
+          child: Text(AppLocalizations.of(context).commonClose),
         ),
       ],
     );

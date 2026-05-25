@@ -27,6 +27,7 @@ import '../widgets/parsed_exercises_preview_sheet.dart';
 import '../widgets/superset_pair_sheet.dart';
 import '../widgets/workout_plan_drawer.dart' as plan_drawer;
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'exercise_navigation_mixin_ui.dart';
 
 
@@ -232,7 +233,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700, size: 24),
               const SizedBox(width: 8),
-              const Expanded(child: Text('Incomplete Exercises', style: TextStyle(fontSize: 18))),
+              Expanded(child: Text(AppLocalizations.of(context).exerciseNavigationMixinIncompleteExercises, style: TextStyle(fontSize: 18))),
             ],
           ),
           content: SizedBox(
@@ -242,7 +243,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Some exercises have missing logs:',
+                  AppLocalizations.of(context).exerciseNavigationMixinSomeExercisesHaveMissing,
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
@@ -323,7 +324,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Do not show again',
+                        AppLocalizations.of(context).exerciseNavigationMixinDoNotShowAgain,
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -338,12 +339,12 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context).buttonCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: FilledButton.styleFrom(backgroundColor: accentColor),
-              child: const Text('Continue anyway'),
+              child: Text(AppLocalizations.of(context).exerciseNavigationMixinContinueAnyway),
             ),
           ],
         ),
@@ -458,12 +459,12 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove Exercise'),
+        title: Text(AppLocalizations.of(context).workoutDetailScreenRemoveExercise),
         content: Text('Remove "${exercise.name}" from this workout?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           FilledButton(
             onPressed: () {
@@ -490,7 +491,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red,
             ),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
       ),
@@ -544,8 +545,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       },
       onAddNotes: () {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Use the notes section below the sets'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).exerciseNavigationMixinUseTheNotesSection),
             duration: Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -1076,7 +1077,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     return showDialog<bool?>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Apply to all linked exercises?'),
+        title: Text(AppLocalizations.of(context).exerciseNavigationMixinApplyToAllLinked),
         content: Text(
           'Set this count ($newCount sets) on every exercise in the superset group? '
           '"No" keeps the count only on this exercise — the round-robin handles '
@@ -1085,15 +1086,15 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('No, just this one'),
+            child: Text(AppLocalizations.of(context).exerciseNavigationMixinNoJustThisOne),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Yes, apply to all'),
+            child: Text(AppLocalizations.of(context).exerciseNavigationMixinYesApplyToAll),
           ),
         ],
       ),

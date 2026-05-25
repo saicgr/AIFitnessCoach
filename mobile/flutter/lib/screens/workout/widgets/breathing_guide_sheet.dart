@@ -14,6 +14,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Breathing pattern types
 enum BreathingPattern {
   push, // Press/push exercises - exhale on effort (pushing up)
@@ -174,7 +175,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
               ),
               const SizedBox(width: 12),
               Text(
-                'Breathing Guide',
+                AppLocalizations.of(context).expandedExerciseCardBreathingGuide,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -234,7 +235,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _isInhaling ? 'INHALE' : 'EXHALE',
+                          _isInhaling ? AppLocalizations.of(context).breathingGuideInhale : AppLocalizations.of(context).breathingGuideExhale,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

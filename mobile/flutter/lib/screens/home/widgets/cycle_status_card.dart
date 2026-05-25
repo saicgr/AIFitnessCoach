@@ -20,6 +20,7 @@ import '../../cycle/cycle_screen.dart' show kCycleAccent;
 import '../../cycle/cycle_visuals.dart';
 import '../../cycle/widgets/log_period_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class CycleStatusCard extends ConsumerWidget {
   const CycleStatusCard({super.key});
 
@@ -121,7 +122,7 @@ class _CycleCardBody extends ConsumerWidget {
                     Row(
                       children: [
                         Text(
-                          'Cycle',
+                          AppLocalizations.of(context).overviewCycle,
                           style: TextStyle(
                             color: fg.withValues(alpha: 0.5),
                             fontSize: 11,
@@ -144,7 +145,7 @@ class _CycleCardBody extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      phase?.displayName ?? 'Cycle tracking',
+                      phase?.displayName ?? AppLocalizations.of(context).cycleStatusCardCycleTracking,
                       style: TextStyle(
                         color: phaseColor,
                         fontSize: 16,
@@ -173,7 +174,7 @@ class _CycleCardBody extends ConsumerWidget {
               Expanded(
                 child: _MiniLogButton(
                   icon: Icons.water_drop_rounded,
-                  label: 'Log period',
+                  label: AppLocalizations.of(context).logPeriodLogPeriod,
                   color: CyclePhaseColors.menstrual,
                   onTap: () => showLogPeriodSheet(context),
                 ),
@@ -182,7 +183,7 @@ class _CycleCardBody extends ConsumerWidget {
               Expanded(
                 child: _MiniLogButton(
                   icon: Icons.auto_awesome_rounded,
-                  label: 'View cycle',
+                  label: AppLocalizations.of(context).cycleStatusCardViewCycle,
                   color: accent,
                   onTap: () {
                     HapticService.light();

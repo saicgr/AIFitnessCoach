@@ -3,6 +3,7 @@ import 'sheet_theme_colors.dart';
 import 'selectable_chip.dart';
 import 'section_title.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Default list of workout type options.
 ///
 /// Workout Type = TRAINING STYLE only (how you train). Body regions —
@@ -74,12 +75,12 @@ class WorkoutTypeSelector extends StatelessWidget {
         children: [
           SectionTitle(
             icon: Icons.category,
-            title: 'Training Style',
+            title: AppLocalizations.of(context).workoutTypeSelectorTrainingStyle,
             iconColor: colors.cyan,
           ),
           const SizedBox(height: 4),
           Text(
-            'How you want to train. Pick body regions in Target Areas below.',
+            AppLocalizations.of(context).workoutTypeSelectorHowYouWantTo,
             style: TextStyle(color: colors.textMuted, fontSize: 12),
           ),
           const SizedBox(height: 12),
@@ -146,7 +147,7 @@ class WorkoutTypeSelector extends StatelessWidget {
             TextField(
               controller: customInputController,
               decoration: InputDecoration(
-                hintText: 'Enter custom workout type (e.g., "Mobility")',
+                hintText: AppLocalizations.of(context).workoutTypeSelectorEnterCustomWorkoutType,
                 hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: colors.glassSurface,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Nutrition info row for barcode product details
 class NutritionInfoRow extends StatelessWidget {
   final String label;
@@ -56,7 +57,7 @@ class NutriscoreBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Nutri-Score ',
+            Text(AppLocalizations.of(context).logMealHelpersNutriScore,
                 style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
             Text(g,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
@@ -365,7 +366,7 @@ class _NovaDetailSectionState extends State<NovaDetailSection> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Processing Breakdown',
+                        AppLocalizations.of(context).logMealHelpersProcessingBreakdown,
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
                       ),
                     ),
@@ -856,7 +857,7 @@ class EcoscoreBadge extends StatelessWidget {
           children: [
             Icon(Icons.eco, size: 12, color: color),
             const SizedBox(width: 4),
-            Text('Eco-Score ',
+            Text(AppLocalizations.of(context).logMealHelpersEcoScore,
                 style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
             Text(g,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),

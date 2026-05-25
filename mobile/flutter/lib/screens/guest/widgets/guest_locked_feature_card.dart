@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A card showing a locked feature in guest mode
 /// Displays with a lock icon and prompts user to sign up
 class GuestLockedFeatureCard extends StatelessWidget {
@@ -113,7 +114,7 @@ class GuestLockedFeatureCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Unlock free',
+                    AppLocalizations.of(context).guestLockedFeatureUnlockFree,
                     style: TextStyle(
                       fontSize: 11,
                       color: AppColors.cyan,

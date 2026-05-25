@@ -6,6 +6,7 @@ import '../../../core/utils/weight_utils.dart';
 import '../../../data/providers/gym_profile_provider.dart'
     show activeProfileEnvironmentProvider;
 import '../../../models/equipment_item.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../home/widgets/gym_equipment_sheet.dart'
     show stackMachineEquipment;
 
@@ -382,7 +383,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
           backgroundColor: isDark ? AppColors.elevated : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
-            'Set Quantity',
+            AppLocalizations.of(context).editWeightsSetQuantity,
             style: TextStyle(color: textPrimary),
           ),
           content: Column(
@@ -405,9 +406,9 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
-                  labelText: 'Quantity',
+                  labelText: AppLocalizations.of(context).loggedMealsQuantity,
                   labelStyle: TextStyle(color: textPrimary.withValues(alpha: 0.7)),
-                  hintText: 'Enter 0 to remove',
+                  hintText: AppLocalizations.of(context).editWeightsEnter0ToRemove,
                   hintStyle: TextStyle(color: textPrimary.withValues(alpha: 0.5)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -420,7 +421,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Cancel',
+                AppLocalizations.of(context).buttonCancel,
                 style: TextStyle(color: textPrimary.withValues(alpha: 0.7)),
               ),
             ),
@@ -433,7 +434,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                 backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                 foregroundColor: isDark ? Colors.black : Colors.white,
               ),
-              child: const Text('Set'),
+              child: Text(AppLocalizations.of(context).workoutSummaryAdvancedSet),
             ),
           ],
         );
@@ -511,10 +512,10 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Cleared all weights'),
+        content: Text(AppLocalizations.of(context).editWeightsClearedAllWeights),
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
-          label: 'Undo',
+          label: AppLocalizations.of(context).workoutUiBuildersUndo,
           onPressed: () {
             setState(() => _weightInventory = snapshot);
           },
@@ -617,7 +618,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Edit Weights',
+                        AppLocalizations.of(context).gymEquipmentEditWeights,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -711,7 +712,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                       minimumSize: const Size(0, 32),
                     ),
                     child: Text(
-                      'Clear All',
+                      AppLocalizations.of(context).foodSearchBarClearAll,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.red[400],
@@ -816,14 +817,14 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                 ),
                 const Spacer(),
                 PopupMenuButton<_Preset>(
-                  tooltip: 'Apply a preset',
+                  tooltip: AppLocalizations.of(context).editWeightsApplyAPreset,
                   onSelected: _applyPreset,
                   itemBuilder: (context) => _presetMenuItems(),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Preset',
+                        AppLocalizations.of(context).editWeightsPreset,
                         style: TextStyle(fontSize: 12, color: accentColor),
                       ),
                       Icon(
@@ -894,7 +895,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                     ],
                     style: TextStyle(color: textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Custom weight...',
+                      hintText: AppLocalizations.of(context).editWeightsCustomWeight,
                       hintStyle: TextStyle(color: textMuted, fontSize: 14),
                       filled: true,
                       fillColor: bgColor,
@@ -957,7 +958,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                     if (_weightInventory.isEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
-                        'Any weight allowed in workouts',
+                        AppLocalizations.of(context).editWeightsAnyWeightAllowedIn,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w400,
@@ -1020,32 +1021,32 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
 
   List<PopupMenuEntry<_Preset>> _presetMenuItems() {
     final items = <PopupMenuEntry<_Preset>>[
-      const PopupMenuItem(
+      PopupMenuItem(
         value: _Preset.commercialFull,
-        child: Text('Commercial-gym standard set'),
+        child: Text(AppLocalizations.of(context).editWeightsCommercialGymStandardSet),
       ),
-      const PopupMenuItem(
+      PopupMenuItem(
         value: _Preset.homeAdjustable,
-        child: Text('Home adjustable set'),
+        child: Text(AppLocalizations.of(context).editWeightsHomeAdjustableSet),
       ),
     ];
     // Mode-specific extras.
     if (_slug == 'kettlebells' || _slug == 'kettlebell') {
-      items.add(const PopupMenuItem(
+      items.add(PopupMenuItem(
         value: _Preset.competitionKettlebell,
-        child: Text('Competition set (8–32 kg)'),
+        child: Text(AppLocalizations.of(context).editWeightsCompetitionSet832),
       ));
     }
     if (_mode == _InventoryMode.count) {
-      items.add(const PopupMenuItem(
+      items.add(PopupMenuItem(
         value: _Preset.microloading,
-        child: Text('Microloading add-on'),
+        child: Text(AppLocalizations.of(context).editWeightsMicroloadingAddOn),
       ));
     }
     items.add(const PopupMenuDivider());
-    items.add(const PopupMenuItem(
+    items.add(PopupMenuItem(
       value: _Preset.clearAll,
-      child: Text('Clear all', style: TextStyle(color: Colors.redAccent)),
+      child: Text(AppLocalizations.of(context).settingsCardPartClearAll, style: TextStyle(color: Colors.redAccent)),
     ));
     return items;
   }
@@ -1069,7 +1070,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Stack range',
+              AppLocalizations.of(context).editWeightsStackRange,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -1082,7 +1083,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
               children: [
                 Expanded(
                   child: _StackNumberField(
-                    label: 'Min',
+                    label: AppLocalizations.of(context).syncedWorkoutDetailMin,
                     value: _stackMin,
                     unit: _weightUnit,
                     isDark: isDark,
@@ -1095,7 +1096,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _StackNumberField(
-                    label: 'Max',
+                    label: AppLocalizations.of(context).strengthOverviewCardMax,
                     value: _stackMax,
                     unit: _weightUnit,
                     isDark: isDark,
@@ -1108,7 +1109,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _StackNumberField(
-                    label: 'Step',
+                    label: AppLocalizations.of(context).editWeightsStep,
                     value: _stackIncrement,
                     unit: _weightUnit,
                     isDark: isDark,
@@ -1126,7 +1127,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
               child: OutlinedButton.icon(
                 onPressed: _applyStackConfig,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Generate stack weights'),
+                label: Text(AppLocalizations.of(context).editWeightsGenerateStackWeights),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: accentColor,
                   side: BorderSide(color: accentColor.withValues(alpha: 0.6)),
@@ -1160,7 +1161,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
               ),
               child: Text(
                 sorted.isEmpty
-                    ? 'No weights yet — pick min/max/step and tap Generate.'
+                    ? AppLocalizations.of(context).editWeightsNoWeightsYetPick
                     : '$preview  $_weightUnit',
                 style: TextStyle(
                   fontSize: 13,

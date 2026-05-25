@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/branded_program.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet that shows when user taps a "Coming Soon" program
 /// Uses glassmorphism styling with accent colors
 class ComingSoonBottomSheet extends StatelessWidget {
@@ -122,7 +123,7 @@ class ComingSoonBottomSheet extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Coming Soon',
+                    AppLocalizations.of(context).settingsComingSoon,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -135,7 +136,7 @@ class ComingSoonBottomSheet extends StatelessWidget {
 
               // What to expect
               Text(
-                'What you can expect:',
+                AppLocalizations.of(context).comingSoonBottomWhatYouCanExpect,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -203,9 +204,9 @@ class ComingSoonBottomSheet extends StatelessWidget {
                             width: 1,
                           ),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            'Got it!',
+                            AppLocalizations.of(context).xpGoalsGotIt,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

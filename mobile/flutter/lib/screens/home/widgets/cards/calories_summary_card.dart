@@ -10,6 +10,7 @@ import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import 'weight_trend_card.dart' show cycleAwareWeightProvider;
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Compact "Today's Calories" tile — calories consumed vs target with a
 /// progress bar. Tapping it opens the nutrition dashboard.
 ///
@@ -83,7 +84,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Calories',
+                  AppLocalizations.of(context).workoutSummaryGeneralCalories,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

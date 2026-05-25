@@ -13,6 +13,7 @@ import '../../widgets/glass_sheet.dart';
 import 'program_library_screen.dart';
 import 'template_list_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Route metadata for the program builder. Kept here so the library screen and
 /// the router can reference the path/argument shape without a circular import.
 class ProgramBuilderRoute {
@@ -85,7 +86,7 @@ class _ProgramTemplateBuilderScreenState
         elevation: 0,
         iconTheme: IconThemeData(color: textPrimary),
         title: Text(
-          _stage == _BuilderStage.edit ? 'Edit Program' : 'New Program',
+          _stage == _BuilderStage.edit ? AppLocalizations.of(context).workoutPreferencesCardEditProgram : AppLocalizations.of(context).programTemplateBuilderNewProgram,
           style: TextStyle(
             color: textPrimary,
             fontWeight: FontWeight.w800,
@@ -95,7 +96,7 @@ class _ProgramTemplateBuilderScreenState
         actions: [
           if (_stage == _BuilderStage.edit)
             IconButton(
-              tooltip: 'My templates',
+              tooltip: AppLocalizations.of(context).programTemplateBuilderMyTemplates,
               icon: Icon(Icons.folder_open_rounded, color: textPrimary),
               onPressed: () => context.push(TemplateListRoute.path),
             ),
@@ -128,9 +129,9 @@ class _ProgramTemplateBuilderScreenState
         const SizedBox(height: 20),
         _EntryCard(
           icon: Icons.collections_bookmark_rounded,
-          title: 'Import from library',
+          title: AppLocalizations.of(context).programTemplateBuilderImportFromLibrary,
           subtitle:
-              'Start from a structured program and make it your own.',
+              AppLocalizations.of(context).programTemplateBuilderStartFromAStructured,
           accent: accent,
           isDark: isDark,
           onTap: () {
@@ -141,9 +142,9 @@ class _ProgramTemplateBuilderScreenState
         const SizedBox(height: 12),
         _EntryCard(
           icon: Icons.content_paste_rounded,
-          title: 'Paste my program',
+          title: AppLocalizations.of(context).programTemplateBuilderPasteMyProgram,
           subtitle:
-              'Drop in a split you already wrote and we will parse it.',
+              AppLocalizations.of(context).programTemplateBuilderDropInASplit,
           accent: accent,
           isDark: isDark,
           onTap: () {
@@ -154,8 +155,8 @@ class _ProgramTemplateBuilderScreenState
         const SizedBox(height: 12),
         _EntryCard(
           icon: Icons.edit_calendar_rounded,
-          title: 'Build from scratch',
-          subtitle: 'Lay out each training day exercise by exercise.',
+          title: AppLocalizations.of(context).programTemplateBuilderBuildFromScratch,
+          subtitle: AppLocalizations.of(context).programTemplateBuilderLayOutEachTraining,
           accent: accent,
           isDark: isDark,
           onTap: () {
@@ -274,7 +275,7 @@ class _ProgramTemplateBuilderScreenState
                   onPressed: _parsing
                       ? null
                       : () => setState(() => _stage = _BuilderStage.entry),
-                  child: const Text('Back'),
+                  child: Text(AppLocalizations.of(context).commonBack),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -293,7 +294,7 @@ class _ProgramTemplateBuilderScreenState
                           )
                         : const Icon(Icons.auto_awesome_rounded, size: 18),
                     label: Text(
-                      _parsing ? 'Parsing...' : 'Parse program',
+                      _parsing ? AppLocalizations.of(context).programTemplateBuilderParsing : AppLocalizations.of(context).programTemplateBuilderParseProgram,
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -445,7 +446,7 @@ class _ProgramTemplateBuilderScreenState
                       )
                     : const Icon(Icons.save_rounded, size: 18),
                 label: Text(
-                  _saving ? 'Saving...' : 'Save template',
+                  _saving ? AppLocalizations.of(context).workoutReviewSaving : AppLocalizations.of(context).programTemplateBuilderSaveTemplate,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
@@ -654,14 +655,14 @@ class _ProgramTemplateBuilderScreenState
     final draft = _draft!;
     if (!draft.hasTrainingDays) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('A program needs at least one training day.')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).programTemplateBuilderAProgramNeedsAt)),
       );
       return;
     }
     if (draft.name.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Give your program a name.')),
+        SnackBar(content: Text(AppLocalizations.of(context).programTemplateBuilderGiveYourProgramA)),
       );
       return;
     }
@@ -688,8 +689,8 @@ class _ProgramTemplateBuilderScreenState
       if (!mounted) return;
       setState(() => _saving = false);
       messenger.showSnackBar(
-        const SnackBar(
-            content: Text('Could not save the template. Please try again.')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).programTemplateBuilderCouldNotSaveThe)),
       );
     }
   }
@@ -852,7 +853,7 @@ class _DayEditorCard extends StatelessWidget {
               // Copy this day's exercises into another day.
               if (canCopyToOtherDay)
                 IconButton(
-                  tooltip: 'Copy day to another day',
+                  tooltip: AppLocalizations.of(context).programTemplateBuilderCopyDayToAnother,
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   constraints:
@@ -868,7 +869,7 @@ class _DayEditorCard extends StatelessWidget {
                 ),
                 onPressed: onToggleRest,
                 child: Text(
-                  day.isRest ? 'Make training day' : 'Make rest day',
+                  day.isRest ? AppLocalizations.of(context).programTemplateBuilderMakeTrainingDay : AppLocalizations.of(context).programTemplateBuilderMakeRestDay,
                   style: TextStyle(fontSize: 11.5, color: accent),
                 ),
               ),
@@ -930,8 +931,8 @@ class _DayEditorCard extends StatelessWidget {
               ),
               onPressed: onAddExercise,
               icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text(
-                'Add exercise',
+              label: Text(
+                AppLocalizations.of(context).programTemplateBuilderAddExercise,
                 style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
               ),
             ),
@@ -1112,7 +1113,7 @@ class _CopyDayTargetSheet extends StatelessWidget {
                     ),
                     subtitle: Text(
                       exCount == 0
-                          ? 'Empty'
+                          ? AppLocalizations.of(context).programTemplateBuilderEmpty
                           : '$exCount exercise${exCount == 1 ? '' : 's'}',
                       style:
                           TextStyle(fontSize: 12, color: textSecondary),

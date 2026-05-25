@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/flexibility_assessment.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card showing overall flexibility score and summary
 class FlexibilityScoreCard extends StatelessWidget {
   final FlexibilitySummary summary;
@@ -67,7 +68,7 @@ class FlexibilityScoreCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Overall Flexibility',
+                        AppLocalizations.of(context).flexibilityScoreCardOverallFlexibility,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -100,7 +101,7 @@ class FlexibilityScoreCard extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 12),
               Text(
-                'By Area',
+                AppLocalizations.of(context).flexibilityScoreCardByArea,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -133,7 +134,7 @@ class FlexibilityScoreCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Focus Areas',
+                    AppLocalizations.of(context).workoutPreferencesCardFocusAreas,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

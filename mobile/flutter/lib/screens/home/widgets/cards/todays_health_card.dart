@@ -7,6 +7,7 @@ import '../../../../data/providers/neat_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Composite "Today's Health" card matching the level of polish competitors
 /// (GymBeat, FitOn) ship: a hero steps progress block with the gap-to-goal
 /// readout, then a 3-up row of metric tiles for active calories, average
@@ -93,7 +94,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Connect Health',
+                        AppLocalizations.of(context).todaysHealthCardConnectHealth,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -102,7 +103,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Sync steps, heart rate, and sleep',
+                        AppLocalizations.of(context).todaysHealthCardSyncStepsHeartRate,
                         style: TextStyle(fontSize: 12, color: textMuted),
                       ),
                     ],
@@ -113,7 +114,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                     HapticService.light();
                     ref.read(healthSyncProvider.notifier).connect();
                   },
-                  child: const Text('Connect'),
+                  child: Text(AppLocalizations.of(context).unifiedHomeWidgetsConnect),
                 ),
               ],
             ),
@@ -164,7 +165,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    "Today's Health",
+                    AppLocalizations.of(context).todaysHealthCardTodaySHealth,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -284,7 +285,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                             iconColor: AppColors.orange,
                             value: activeCal != null ? '$activeCal' : '—',
                             unit: 'cal',
-                            label: 'Active Energy',
+                            label: AppLocalizations.of(context).todaysHealthCardActiveEnergy,
                             isDark: isDark,
                           ),
                         ),
@@ -295,7 +296,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                             iconColor: AppColors.error,
                             value: avgHr != null ? '$avgHr' : '—',
                             unit: 'bpm',
-                            label: 'Avg HR',
+                            label: AppLocalizations.of(context).workoutDayDetailAvgHr,
                             isDark: isDark,
                           ),
                         ),
@@ -310,7 +311,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                             iconColor: AppColors.purple,
                             value: hasHrRange ? '$minHr–$maxHr' : '—',
                             unit: 'bpm',
-                            label: 'HR Range',
+                            label: AppLocalizations.of(context).todaysHealthCardHrRange,
                             isDark: isDark,
                           ),
                         ),
@@ -321,7 +322,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                             iconColor: AppColors.teal,
                             value: restingHr != null ? '$restingHr' : '—',
                             unit: 'bpm',
-                            label: 'Resting HR',
+                            label: AppLocalizations.of(context).todaysHealthCardRestingHr,
                             isDark: isDark,
                           ),
                         ),

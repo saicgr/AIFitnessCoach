@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Trial Progress Widget — Onboarding v5
 ///
 /// Persistent home-screen module shown only during the 7-day trial.
@@ -113,7 +114,7 @@ class _TrialProgressWidgetState extends ConsumerState<TrialProgressWidget> {
               if (daysRemaining > 0)
                 Text(
                   daysRemaining == 1
-                      ? '1 day left'
+                      ? AppLocalizations.of(context).trialProgress1DayLeft
                       : '$daysRemaining days left',
                   style: TextStyle(
                     fontSize: 12,
@@ -143,7 +144,7 @@ class _TrialProgressWidgetState extends ConsumerState<TrialProgressWidget> {
                     size: 16, color: AppColors.onboardingAccent),
                 const SizedBox(width: 6),
                 Text(
-                  'Goal: ',
+                  AppLocalizations.of(context).trialProgressGoal,
                   style: TextStyle(
                     fontSize: 13,
                     color: textSecondary,

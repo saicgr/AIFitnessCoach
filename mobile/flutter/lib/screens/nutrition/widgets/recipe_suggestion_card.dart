@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/recipe_suggestion.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card widget for displaying a recipe suggestion
 class RecipeSuggestionCard extends StatelessWidget {
   final RecipeSuggestion recipe;
@@ -197,7 +198,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                       icon: Icon(
                         recipe.userSaved ? Icons.bookmark : Icons.bookmark_border,
                       ),
-                      label: Text(recipe.userSaved ? 'Saved' : 'Save'),
+                      label: Text(recipe.userSaved ? AppLocalizations.of(context).savedHubSaved : AppLocalizations.of(context).buttonSave),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: recipe.userSaved ? accent : textSecondary,
                         side: BorderSide(
@@ -212,7 +213,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                       onPressed: onCook,
                       icon: const Icon(Icons.restaurant),
                       label: Text(
-                        recipe.timesCooked > 0 ? 'Cook Again' : 'I Made This',
+                        recipe.timesCooked > 0 ? AppLocalizations.of(context).recipeSuggestionCardCookAgain : AppLocalizations.of(context).recipeSuggestionCardIMadeThis,
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accent,
@@ -334,7 +335,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Match Analysis',
+                          AppLocalizations.of(context).recipeSuggestionCardMatchAnalysis,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: textPrimary,
@@ -352,7 +353,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                   const SizedBox(height: 20),
                   // Ingredients
                   Text(
-                    'Ingredients',
+                    AppLocalizations.of(context).recipeSuggestionCardIngredients,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -390,7 +391,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                   const SizedBox(height: 20),
                   // Instructions
                   Text(
-                    'Instructions',
+                    AppLocalizations.of(context).workoutShowcaseInstructions,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -433,7 +434,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                   const SizedBox(height: 20),
                   // Rate this recipe
                   Text(
-                    'Rate This Recipe',
+                    AppLocalizations.of(context).recipeSuggestionCardRateThisRecipe,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -473,7 +474,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                           icon: Icon(
                             recipe.userSaved ? Icons.bookmark : Icons.bookmark_border,
                           ),
-                          label: Text(recipe.userSaved ? 'Saved' : 'Save Recipe'),
+                          label: Text(recipe.userSaved ? AppLocalizations.of(context).savedHubSaved : AppLocalizations.of(context).recipeSuggestionCardSaveRecipe),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
@@ -487,7 +488,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                             Navigator.pop(context);
                           },
                           icon: const Icon(Icons.restaurant),
-                          label: const Text('I Made This'),
+                          label: Text(AppLocalizations.of(context).recipeSuggestionCardIMadeThis),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: accent,
                             foregroundColor: Colors.white,

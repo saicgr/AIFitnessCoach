@@ -13,6 +13,7 @@ import '../../../data/services/pr_detection_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../achievements/achievements_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows a bottom sheet with PR details
 Future<void> showPRDetailsSheet({
   required BuildContext context,
@@ -151,7 +152,7 @@ class PRDetailsSheet extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'View All Achievements',
+                    AppLocalizations.of(context).prDetailsViewAllAchievements,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -277,7 +278,7 @@ class _PRDetailCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'NEW RECORD',
+                      AppLocalizations.of(context).prDetailsNewRecord,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -304,7 +305,7 @@ class _PRDetailCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'PREVIOUS',
+                      AppLocalizations.of(context).prDetailsPrevious,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -349,7 +350,7 @@ class _PRDetailCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'FIRST RECORD',
+                    AppLocalizations.of(context).prDetailsFirstRecord,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,

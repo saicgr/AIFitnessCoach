@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact Body Age badge. Delta negative (younger) is green, positive
 /// (older) is amber — NASM body-age convention.
 class BodyAgeBadge extends StatelessWidget {
@@ -57,7 +58,7 @@ class BodyAgeBadge extends StatelessWidget {
               ),
               Text(
                 delta == 0
-                    ? 'Matches your age'
+                    ? AppLocalizations.of(context).bodyAgeBadgeMatchesYourAge
                     : '$sign$delta yr vs actual',
                 style: TextStyle(fontSize: 10, color: color),
               ),

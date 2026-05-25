@@ -12,6 +12,7 @@ import '../../../data/models/recipe.dart';
 import '../../../data/models/scheduled_recipe.dart';
 import '../../../data/repositories/recipe_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RecipeScheduleScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
   final String userId;
@@ -51,12 +52,12 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: bg, elevation: 0,
-        title: Text('Schedule', style: TextStyle(color: text)),
+        title: Text(AppLocalizations.of(context).scheduleWorkoutSchedule, style: TextStyle(color: text)),
         iconTheme: IconThemeData(color: text),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
-            child: Text(_saving ? 'Saving…' : 'Save',
+            child: Text(_saving ? AppLocalizations.of(context).sleepDetailSaving : AppLocalizations.of(context).buttonSave,
                 style: TextStyle(color: accent, fontWeight: FontWeight.w700)),
           ),
         ],
@@ -81,9 +82,9 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
 
           // Mode toggle
           SegmentedButton<ScheduleMode>(
-            segments: const [
-              ButtonSegment(value: ScheduleMode.recurring, label: Text('Recurring')),
-              ButtonSegment(value: ScheduleMode.batch, label: Text('Batch (cook once)')),
+            segments: [
+              ButtonSegment(value: ScheduleMode.recurring, label: Text(AppLocalizations.of(context).recipeScheduleRecurring)),
+              ButtonSegment(value: ScheduleMode.batch, label: Text(AppLocalizations.of(context).recipeScheduleBatchCookOnce)),
             ],
             selected: {_mode},
             onSelectionChanged: (s) => setState(() => _mode = s.first),
@@ -144,7 +145,7 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
               IconButton(icon: const Icon(Icons.add), onPressed: () => setState(() => _servings += 0.25)),
             ]),
             SwitchListTile(
-              title: Text('Silent auto-log (advanced)', style: TextStyle(color: text)),
+              title: Text(AppLocalizations.of(context).recipeScheduleSilentAutoLogAdvanced, style: TextStyle(color: text)),
               subtitle: Text('Default is notify + 1-tap confirm', style: TextStyle(color: muted, fontSize: 11)),
               value: _silentLog,
               onChanged: (v) => setState(() => _silentLog = v),
@@ -162,17 +163,17 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
             const SizedBox(height: 12),
             _label('Storage', text),
             SegmentedButton<StorageKind>(
-              segments: const [
-                ButtonSegment(value: StorageKind.fridge, label: Text('Fridge (3d)')),
-                ButtonSegment(value: StorageKind.freezer, label: Text('Freezer (30d)')),
-                ButtonSegment(value: StorageKind.counter, label: Text('Counter (1d)')),
+              segments: [
+                ButtonSegment(value: StorageKind.fridge, label: Text(AppLocalizations.of(context).recipeScheduleFridge3d)),
+                ButtonSegment(value: StorageKind.freezer, label: Text(AppLocalizations.of(context).recipeScheduleFreezer30d)),
+                ButtonSegment(value: StorageKind.counter, label: Text(AppLocalizations.of(context).recipeScheduleCounter1d)),
               ],
               selected: {_storage},
               onSelectionChanged: (s) => setState(() => _storage = s.first),
             ),
             const SizedBox(height: 16),
             _label('Schedule meals', text),
-            Text('Add a slot for each portion you plan to eat',
+            Text(AppLocalizations.of(context).recipeScheduleAddASlotFor,
                 style: TextStyle(color: muted, fontSize: 11)),
             const SizedBox(height: 8),
             ..._batchSlots.asMap().entries.map((e) => Padding(
@@ -196,7 +197,7 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
                           )));
                     },
               icon: const Icon(Icons.add),
-              label: const Text('Add slot'),
+              label: Text(AppLocalizations.of(context).recipeScheduleAddSlot),
             ),
             const SizedBox(height: 8),
             Text(

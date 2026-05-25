@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 part 'exercise_science_research_screen_part_research_paper.dart';
 

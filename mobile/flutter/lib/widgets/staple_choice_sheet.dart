@@ -8,6 +8,7 @@ import '../data/services/haptic_service.dart';
 import 'glass_sheet.dart';
 
 
+import '../l10n/generated/app_localizations.dart';
 part 'staple_choice_sheet_part_staple_choice_result.dart';
 part 'staple_choice_sheet_part_day_target_mode.dart';
 
@@ -40,15 +41,15 @@ Future<StapleChoiceResult?> showStapleChoiceSheet(
               return AlertDialog(
                 backgroundColor:
                     isDark ? AppColors.elevated : AppColorsLight.elevated,
-                title: const Text('Discard selection?'),
-                content: const Text(
-                  'Your exercise won\'t be saved as a staple.',
+                title: Text(AppLocalizations.of(context).stapleChoiceDiscardSelection),
+                content: Text(
+                  AppLocalizations.of(context).stapleChoiceYourExerciseWonT,
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(dialogContext, false),
                     child: Text(
-                      'Go Back',
+                      AppLocalizations.of(context).workoutCompleteScreenGoBack,
                       style: TextStyle(
                         color: isDark
                             ? AppColors.textMuted
@@ -59,7 +60,7 @@ Future<StapleChoiceResult?> showStapleChoiceSheet(
                   TextButton(
                     onPressed: () => Navigator.pop(dialogContext, true),
                     child: Text(
-                      'Discard',
+                      AppLocalizations.of(context).syncDetailsDiscard,
                       style: TextStyle(color: AppColors.error),
                     ),
                   ),
@@ -432,7 +433,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
             // Gym profile picker (only show if 2+ profiles)
             if (profiles.length >= 2) ...[
               Text(
-                'Which gym profile?',
+                AppLocalizations.of(context).stapleChoiceWhichGymProfile,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
@@ -447,7 +448,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   runSpacing: 8,
                   children: [
                     _buildProfileChip(
-                      label: 'All Profiles',
+                      label: AppLocalizations.of(context).stapleExercisesScreenAllProfiles,
                       isSelected: _selectedProfileId == null,
                       color: textMuted,
                       textPrimary: textPrimary,
@@ -495,7 +496,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
 
             // When to apply
             Text(
-              'When to apply',
+              AppLocalizations.of(context).stapleChoiceWhenToApply,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
@@ -517,7 +518,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   children: [
                     _buildToggleOption(
                       icon: Icons.bolt,
-                      label: "Today's workout",
+                      label: AppLocalizations.of(context).homeTodaysWorkout,
                       isSelected: _addToday,
                       color: AppColors.cyan,
                       textPrimary: textPrimary,
@@ -527,7 +528,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                     const SizedBox(width: 4),
                     _buildToggleOption(
                       icon: Icons.skip_next,
-                      label: 'Next workout',
+                      label: AppLocalizations.of(context).stapleChoiceNextWorkout,
                       isSelected: !_addToday,
                       color: AppColors.cyan,
                       textPrimary: textPrimary,
@@ -542,7 +543,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
 
             // Add as section
             Text(
-              'Add as',
+              AppLocalizations.of(context).stapleChoiceAddAs,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
@@ -617,8 +618,8 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Save',
+                  child: Text(
+                    AppLocalizations.of(context).buttonSave,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -660,7 +661,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Customize (optional)',
+                      AppLocalizations.of(context).stapleChoiceCustomizeOptional,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -679,7 +680,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 const SizedBox(height: 12),
                 if (_isStrength) ...[
                   _buildCardioField(
-                    label: 'Weight',
+                    label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                     controller: _weightController,
                     suffix: 'lbs',
                     textPrimary: textPrimary,
@@ -688,7 +689,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   const SizedBox(height: 8),
                 ],
                 _buildCardioField(
-                  label: 'Sets',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralSets,
                   controller: _setsController,
                   suffix: '',
                   textPrimary: textPrimary,
@@ -697,7 +698,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 const SizedBox(height: 8),
                 if (_isStrength)
                   _buildCardioField(
-                    label: 'Reps',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralReps,
                     controller: _repsController,
                     suffix: '',
                     textPrimary: textPrimary,
@@ -705,7 +706,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   ),
                 const SizedBox(height: 8),
                 _buildCardioField(
-                  label: 'Rest',
+                  label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
                   controller: _restController,
                   suffix: 'sec',
                   textPrimary: textPrimary,
@@ -717,7 +718,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 // All optional; empty values are dropped in _buildCardioParams.
                 const SizedBox(height: 12),
                 Text(
-                  'More (optional)',
+                  AppLocalizations.of(context).stapleChoiceMoreOptional,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -727,7 +728,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 ),
                 const SizedBox(height: 8),
                 _buildCardioField(
-                  label: 'Duration',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                   controller: _durationController,
                   suffix: 'min',
                   textPrimary: textPrimary,
@@ -735,7 +736,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 ),
                 const SizedBox(height: 8),
                 _buildCardioField(
-                  label: 'Distance',
+                  label: AppLocalizations.of(context).workoutImportDistance,
                   controller: _distanceController,
                   suffix: 'mi',
                   textPrimary: textPrimary,
@@ -743,7 +744,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 ),
                 const SizedBox(height: 8),
                 _buildCardioField(
-                  label: 'Incline',
+                  label: AppLocalizations.of(context).warmupPhaseIncline,
                   controller: _inclineController,
                   suffix: '%',
                   textPrimary: textPrimary,
@@ -751,7 +752,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 ),
                 const SizedBox(height: 8),
                 _buildCardioField(
-                  label: 'Speed',
+                  label: AppLocalizations.of(context).warmupPhaseSpeed,
                   controller: _speedController,
                   suffix: 'mph',
                   textPrimary: textPrimary,
@@ -794,7 +795,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Target Days',
+            AppLocalizations.of(context).stapleExercisesTargetDays,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
@@ -817,21 +818,21 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
             child: Row(
               children: [
                 _buildDayModeOption(
-                  label: 'Workout Days',
+                  label: AppLocalizations.of(context).workoutSettingsWorkoutDays,
                   mode: _DayTargetMode.workoutDays,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
                 const SizedBox(width: 4),
                 _buildDayModeOption(
-                  label: 'Every Day',
+                  label: AppLocalizations.of(context).stapleChoiceEveryDay,
                   mode: _DayTargetMode.everyDay,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
                 const SizedBox(width: 4),
                 _buildDayModeOption(
-                  label: 'Custom',
+                  label: AppLocalizations.of(context).workoutsCustom,
                   mode: _DayTargetMode.custom,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
@@ -909,7 +910,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
             if (workoutDays.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
-                'Dots = your workout days',
+                AppLocalizations.of(context).stapleChoiceDotsYourWorkoutDays,
                 style: TextStyle(
                   fontSize: 11,
                   color: textMuted.withValues(alpha: 0.6),
@@ -993,7 +994,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Swap with exercise',
+                          AppLocalizations.of(context).stapleChoiceSwapWithExercise,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -1002,7 +1003,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          "Replace an exercise in today's workout",
+                          AppLocalizations.of(context).stapleChoiceReplaceAnExerciseIn,
                           style: TextStyle(
                             fontSize: 12,
                             color: textMuted,
@@ -1067,7 +1068,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Advanced (optional)',
+                            AppLocalizations.of(context).stapleChoiceAdvancedOptional,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -1103,7 +1104,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                     // Incline — shown for exercises that support it and aren't already showing it in cardio
                     if (_supportsIncline && !_isCardio) ...[
                       _buildCardioField(
-                        label: 'Incline',
+                        label: AppLocalizations.of(context).warmupPhaseIncline,
                         controller: _inclineController,
                         suffix: '%',
                         textPrimary: textPrimary,
@@ -1115,7 +1116,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                     // Hold duration — shown for timed exercises if cardio section isn't already handling it
                     if (_isTimed && !_isCardio) ...[
                       _buildCardioField(
-                        label: 'Hold duration',
+                        label: AppLocalizations.of(context).stapleChoiceHoldDuration,
                         controller: _durationController,
                         suffix: 'sec',
                         textPrimary: textPrimary,
@@ -1126,7 +1127,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
 
                     // RPE — universal 1-10 scale
                     _buildCardioField(
-                      label: 'RPE (effort)',
+                      label: AppLocalizations.of(context).stapleChoiceRpeEffort,
                       controller: _rpeController,
                       suffix: '/10',
                       textPrimary: textPrimary,
@@ -1137,7 +1138,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                     // Tempo — only meaningful for strength work
                     if (_isStrength) ...[
                       _buildCardioField(
-                        label: 'Tempo',
+                        label: AppLocalizations.of(context).stapleChoiceTempo,
                         controller: _tempoController,
                         suffix: 'e.g. 3-0-1-0',
                         textPrimary: textPrimary,
@@ -1161,7 +1162,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                     // Band color chips
                     if (_usesBand) ...[
                       Text(
-                        'Band',
+                        AppLocalizations.of(context).stapleChoiceBand,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -1212,7 +1213,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
 
                     // Free-form notes
                     Text(
-                      'Notes',
+                      AppLocalizations.of(context).syncedWorkoutDetailNotes,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -1226,7 +1227,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                       maxLength: 300,
                       style: TextStyle(fontSize: 14, color: textPrimary),
                       decoration: InputDecoration(
-                        hintText: 'e.g. Focus on squeeze at top, slow eccentric',
+                        hintText: AppLocalizations.of(context).stapleChoiceEGFocusOn,
                         hintStyle: TextStyle(
                           fontSize: 13,
                           color: textMuted.withValues(alpha: 0.6),

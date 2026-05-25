@@ -76,7 +76,7 @@ class _ChallengeLeaderboardState extends State<_ChallengeLeaderboard> {
                 Icon(Icons.leaderboard_rounded, size: 16, color: AppColors.orange),
                 const SizedBox(width: 6),
                 Text(
-                  'Leaderboard',
+                  AppLocalizations.of(context).statsRewardsLeaderboard,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,

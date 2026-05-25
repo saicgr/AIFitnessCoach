@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/ai_split_preset.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact training split card (110px height vs old 160px).
 ///
 /// Color-coded by category:
@@ -73,7 +74,7 @@ class CompactSplitCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      'AI',
+                      AppLocalizations.of(context).exercisePickerSheetAi,
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,

@@ -53,7 +53,7 @@ class _WeeklyOverviewCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Weekly Overview',
+                AppLocalizations.of(context).nutritionTabPartWeeklyOverview,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -64,7 +64,7 @@ class _WeeklyOverviewCard extends StatelessWidget {
               Row(
                 children: [
                   _StatBadge(
-                    label: 'Days Logged',
+                    label: AppLocalizations.of(context).weeklyCheckinSheetDaysLogged,
                     value: '${data.daysLogged}/7',
                     icon: Icons.calendar_today,
                     color: const Color(0xFF4CAF50),
@@ -72,7 +72,7 @@ class _WeeklyOverviewCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   _StatBadge(
-                    label: 'Avg Calories',
+                    label: AppLocalizations.of(context).weeklyCheckinSheetAvgCalories,
                     value: '${data.avgCalories}',
                     icon: Icons.local_fire_department,
                     color: const Color(0xFFFF9800),
@@ -80,7 +80,7 @@ class _WeeklyOverviewCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   _StatBadge(
-                    label: 'Avg Protein',
+                    label: AppLocalizations.of(context).weeklyCheckinSheetAvgProtein,
                     value: '${data.avgProtein}g',
                     icon: Icons.fitness_center,
                     color: const Color(0xFF009688),
@@ -89,7 +89,7 @@ class _WeeklyOverviewCard extends StatelessWidget {
                   if (data.weightChange != null) ...[
                     const SizedBox(width: 8),
                     _StatBadge(
-                      label: 'Weight',
+                      label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                       value:
                           '${data.weightChange! > 0 ? '+' : ''}${data.weightChange!.toStringAsFixed(1)} kg',
                       icon: data.weightChange! > 0
@@ -218,7 +218,7 @@ class _CalorieTrendCard extends StatelessWidget {
         error: (_, __) => SizedBox(
           height: 80,
           child: Center(
-            child: Text('Could not load calorie data',
+            child: Text(AppLocalizations.of(context).nutritionTabPartCouldNotLoadCalorie,
                 style: TextStyle(color: textMuted)),
           ),
         ),
@@ -227,7 +227,7 @@ class _CalorieTrendCard extends StatelessWidget {
             return SizedBox(
               height: 80,
               child: Center(
-                child: Text('No nutrition data this week',
+                child: Text(AppLocalizations.of(context).nutritionTabPartNoNutritionDataThis,
                     style: TextStyle(color: textMuted)),
               ),
             );
@@ -238,7 +238,7 @@ class _CalorieTrendCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'Calorie Trend',
+                    AppLocalizations.of(context).nutritionTabPartCalorieTrend,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -484,7 +484,7 @@ class _MacroBreakdownCard extends StatelessWidget {
         error: (_, __) => SizedBox(
           height: 60,
           child: Center(
-            child: Text('Could not load macros',
+            child: Text(AppLocalizations.of(context).nutritionTabPartCouldNotLoadMacros,
                 style: TextStyle(color: textMuted)),
           ),
         ),
@@ -493,7 +493,7 @@ class _MacroBreakdownCard extends StatelessWidget {
             return SizedBox(
               height: 60,
               child: Center(
-                child: Text('No macro data this week',
+                child: Text(AppLocalizations.of(context).nutritionTabPartNoMacroDataThis,
                     style: TextStyle(color: textMuted)),
               ),
             );
@@ -517,7 +517,7 @@ class _MacroBreakdownCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Macro Breakdown',
+                AppLocalizations.of(context).nutritionTabPartMacroBreakdown,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -526,7 +526,7 @@ class _MacroBreakdownCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Weekly average distribution',
+                AppLocalizations.of(context).nutritionTabPartWeeklyAverageDistribution,
                 style: TextStyle(fontSize: 12, color: textMuted),
               ),
               const SizedBox(height: 16),
@@ -559,7 +559,7 @@ class _MacroBreakdownCard extends StatelessWidget {
               const SizedBox(height: 16),
               // Macro detail rows
               _MacroRow(
-                label: 'Protein',
+                label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                 grams: macros.protein,
                 pct: proteinPct,
                 color: proteinColor,
@@ -567,7 +567,7 @@ class _MacroBreakdownCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _MacroRow(
-                label: 'Carbs',
+                label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                 grams: macros.carbs,
                 pct: carbsPct,
                 color: carbsColor,
@@ -575,7 +575,7 @@ class _MacroBreakdownCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _MacroRow(
-                label: 'Fat',
+                label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                 grams: macros.fat,
                 pct: fatPct,
                 color: fatColor,
@@ -696,7 +696,7 @@ class _TDEECard extends StatelessWidget {
         error: (_, __) => SizedBox(
           height: 60,
           child: Center(
-            child: Text('Could not load TDEE data',
+            child: Text(AppLocalizations.of(context).nutritionTabPartCouldNotLoadTdee,
                 style: TextStyle(color: textMuted)),
           ),
         ),
@@ -705,7 +705,7 @@ class _TDEECard extends StatelessWidget {
             return SizedBox(
               height: 60,
               child: Center(
-                child: Text('Not enough data for TDEE estimate',
+                child: Text(AppLocalizations.of(context).nutritionTabPartNotEnoughDataFor,
                     style: TextStyle(color: textMuted, fontSize: 13)),
               ),
             );
@@ -725,7 +725,7 @@ class _TDEECard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'TDEE & Energy Balance',
+                    AppLocalizations.of(context).nutritionTabPartTdeeEnergyBalance,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

@@ -18,6 +18,7 @@ import 'widgets/score_ring.dart';
 import 'widgets/share_body_analyzer_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class BodyAnalyzerScreen extends ConsumerStatefulWidget {
   const BodyAnalyzerScreen({super.key});
 
@@ -248,7 +249,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
       backgroundColor: bg,
       appBar: AppBar(
         leading: IconButton(
-          tooltip: 'Back',
+          tooltip: AppLocalizations.of(context).commonBack,
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
@@ -258,11 +259,11 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
             }
           },
         ),
-        title: const Text('Body Analyzer'),
+        title: Text(AppLocalizations.of(context).progressScreenUiBodyAnalyzer),
         actions: [
           if (_latest != null)
             IconButton(
-              tooltip: 'Share',
+              tooltip: AppLocalizations.of(context).commonShare,
               onPressed: () => _share(_latest!),
               icon: const Icon(Icons.ios_share),
             ),
@@ -286,7 +287,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                         if (_history.length > 1) ...[
                           const SizedBox(height: 24),
                           Text(
-                            'History',
+                            AppLocalizations.of(context).workoutHistory,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -351,7 +352,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(color: textMuted)),
               const SizedBox(height: 16),
-              TextButton(onPressed: _load, child: const Text('Retry')),
+              TextButton(onPressed: _load, child: Text(AppLocalizations.of(context).buttonRetry)),
             ],
           ),
         ),
@@ -364,7 +365,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
             const Icon(Icons.assessment_outlined, size: 64, color: Color(0xFFB24BF3)),
             const SizedBox(height: 12),
             Text(
-              'Get your Body Analyzer feedback',
+              AppLocalizations.of(context).bodyAnalyzerGetYourBodyAnalyzer,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -387,7 +388,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
             ElevatedButton.icon(
               onPressed: _runNewAnalysis,
               icon: const Icon(Icons.camera_alt_outlined),
-              label: const Text('Start analysis'),
+              label: Text(AppLocalizations.of(context).bodyAnalyzerStartAnalysis),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFB24BF3),
                 foregroundColor: Colors.white,
@@ -450,7 +451,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
           children: [
             Expanded(
               child: ScoreRing(
-                label: 'Body Fat',
+                label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
                 value:
                     '${(snap.bodyFatPercent ?? 0).toStringAsFixed(0)}%',
                 fill: ((snap.bodyFatPercent ?? 0) / 40).clamp(0.0, 1.0),
@@ -461,7 +462,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: ScoreRing(
-                label: 'Muscle Mass',
+                label: AppLocalizations.of(context).shareBodyAnalyzerMuscleMass,
                 value:
                     '${(snap.muscleMassPercent ?? 0).toStringAsFixed(0)}%',
                 fill: ((snap.muscleMassPercent ?? 0) / 60).clamp(0.0, 1.0),
@@ -472,7 +473,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: ScoreRing(
-                label: 'Symmetry',
+                label: AppLocalizations.of(context).shareBodyAnalyzerSymmetry,
                 value: '${((snap.symmetryScore ?? 0) / 10).round()}/10',
                 fill: ((snap.symmetryScore ?? 0) / 100).clamp(0.0, 1.0),
                 color: const Color(0xFFB24BF3),
@@ -512,7 +513,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Personalized tips',
+                  AppLocalizations.of(context).bodyAnalyzerPersonalizedTips,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -578,7 +579,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
               OutlinedButton.icon(
                 onPressed: _runNewAnalysis,
                 icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                label: const Text('New analysis'),
+                label: Text(AppLocalizations.of(context).bodyAnalyzerNewAnalysis),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFB24BF3),
                   side: const BorderSide(color: Color(0xFFB24BF3), width: 1.4),
@@ -606,7 +607,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                         )
                       : const Icon(Icons.auto_awesome, size: 18),
                   label: Text(_creatingProposal
-                      ? 'Creating proposal…'
+                      ? AppLocalizations.of(context).bodyAnalyzerCreatingProposal
                       : 'Retune my program'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFB24BF3),

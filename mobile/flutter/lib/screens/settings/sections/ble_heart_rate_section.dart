@@ -9,6 +9,7 @@ import '../../../data/services/ble_heart_rate_service.dart';
 import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Settings section for connecting a BLE heart rate monitor.
 ///
 /// Follows the same card pattern as [HealthSyncSection].
@@ -20,7 +21,7 @@ class BleHeartRateSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'HEART RATE MONITOR'),
+        SectionHeader(title: AppLocalizations.of(context).bleHeartRateHeartRateMonitor),
         const SizedBox(height: 12),
         const _BleHrSettingsCard(),
       ],
@@ -74,7 +75,7 @@ class _BleHrSettingsCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Heart Rate Monitor',
+                        AppLocalizations.of(context).bleHeartRateHeartRateMonitor2,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -118,7 +119,7 @@ class _BleHrSettingsCard extends ConsumerWidget {
                       if (connState == BleHrConnectionState.connected) ...[
                         Expanded(
                           child: _ActionButton(
-                            label: 'Disconnect',
+                            label: AppLocalizations.of(context).googleCalendarConnectDisconnect,
                             icon: Icons.link_off,
                             onTap: () => BleHeartRateService.instance.disconnect(),
                             isDark: isDark,
@@ -127,7 +128,7 @@ class _BleHrSettingsCard extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: _ActionButton(
-                            label: 'Forget Device',
+                            label: AppLocalizations.of(context).bleHeartRateForgetDevice,
                             icon: Icons.delete_outline,
                             onTap: () => BleHeartRateService.instance.forgetDevice(),
                             isDark: isDark,
@@ -162,7 +163,7 @@ class _BleHrSettingsCard extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Auto-connect on workout start',
+                          AppLocalizations.of(context).bleHeartRateAutoConnectOnWorkout,
                           style: TextStyle(fontSize: 13, color: textMuted),
                         ),
                       ),
@@ -463,7 +464,7 @@ class _ScanDevicesSheetState extends ConsumerState<_ScanDevicesSheet> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Scan for HR Monitors',
+                      AppLocalizations.of(context).bleHeartRateScanForHrMonitors,
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
                     ),
                   ),
@@ -480,7 +481,7 @@ class _ScanDevicesSheetState extends ConsumerState<_ScanDevicesSheet> {
                     IconButton(
                       icon: Icon(Icons.refresh, color: AppColors.cyan),
                       onPressed: _startScan,
-                      tooltip: 'Rescan',
+                      tooltip: AppLocalizations.of(context).bleHeartRateRescan,
                     ),
                 ],
               ),
@@ -496,16 +497,16 @@ class _ScanDevicesSheetState extends ConsumerState<_ScanDevicesSheet> {
                           if (_scanning) ...[
                             CircularProgressIndicator(color: AppColors.cyan),
                             const SizedBox(height: 16),
-                            Text('Searching for devices...', style: TextStyle(color: textMuted)),
+                            Text(AppLocalizations.of(context).bleHeartRateSearchingForDevices, style: TextStyle(color: textMuted)),
                           ] else ...[
                             Icon(Icons.bluetooth_disabled, size: 48, color: textMuted),
                             const SizedBox(height: 12),
-                            Text('No devices found', style: TextStyle(color: textMuted, fontSize: 15)),
+                            Text(AppLocalizations.of(context).bleHeartRateNoDevicesFound, style: TextStyle(color: textMuted, fontSize: 15)),
                             const SizedBox(height: 8),
                             TextButton.icon(
                               onPressed: _startScan,
                               icon: Icon(Icons.refresh, size: 18),
-                              label: const Text('Try Again'),
+                              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
                             ),
                           ],
                         ],
@@ -617,7 +618,7 @@ class _DeviceTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text('Connect', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              child: Text(AppLocalizations.of(context).unifiedHomeWidgetsConnect, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
             ),
         ],
       ),

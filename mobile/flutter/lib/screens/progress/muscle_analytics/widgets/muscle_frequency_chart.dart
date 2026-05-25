@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../data/models/muscle_analytics.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Horizontal bar chart showing training frequency per muscle group
 class MuscleFrequencyChart extends StatelessWidget {
   final MuscleTrainingFrequency frequency;
@@ -16,10 +17,10 @@ class MuscleFrequencyChart extends StatelessWidget {
     final sortedFrequencies = frequency.sortedByFrequency;
 
     if (sortedFrequencies.isEmpty) {
-      return const Card(
+      return Card(
         child: Padding(
           padding: EdgeInsets.all(24),
-          child: Center(child: Text('No frequency data available')),
+          child: Center(child: Text(AppLocalizations.of(context).muscleFrequencyChartNoFrequencyDataAvailable)),
         ),
       );
     }
@@ -36,10 +37,10 @@ class MuscleFrequencyChart extends StatelessWidget {
               alignment: WrapAlignment.center,
               spacing: 10,
               runSpacing: 6,
-              children: const [
-                _LegendItem(color: Colors.green, label: 'Optimal (1-3x/wk)'),
-                _LegendItem(color: Colors.orange, label: 'Low (<1x/wk)'),
-                _LegendItem(color: Colors.red, label: 'High (>4x/wk)'),
+              children: [
+                _LegendItem(color: Colors.green, label: AppLocalizations.of(context).muscleFrequencyChartOptimal13xWk),
+                _LegendItem(color: Colors.orange, label: AppLocalizations.of(context).muscleFrequencyChartLow1xWk),
+                _LegendItem(color: Colors.red, label: AppLocalizations.of(context).muscleFrequencyChartHigh4xWk),
               ],
             ),
             const SizedBox(height: 16),

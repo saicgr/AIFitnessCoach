@@ -13,6 +13,7 @@ import '../../nutrition/log_meal_sheet.dart';
 import 'components/quick_actions_row.dart';
 import 'habit_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Provider to fetch custom habits for home section
 final customHabitsHomeProvider = FutureProvider.autoDispose<List<HabitWithStatus>>((ref) async {
   final authState = ref.watch(authStateProvider);
@@ -107,7 +108,7 @@ class HabitsSection extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Your Habits',
+                  AppLocalizations.of(context).habitsYourHabits,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -328,7 +329,7 @@ class _AddHabitCard extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Add Habit',
+              AppLocalizations.of(context).habitsTileCardAddHabit,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,

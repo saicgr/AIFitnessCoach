@@ -14,6 +14,7 @@ import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'avoided_exercises_screen_part_avoided_exercise_card.dart';
 
 
@@ -54,11 +55,11 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     final userId = authState.user?.id;
 
     if (userId == null) {
-      final notLoggedIn = Center(child: Text('Please log in', style: TextStyle(color: textMuted)));
+      final notLoggedIn = Center(child: Text(AppLocalizations.of(context).avoidedMusclesPleaseLogIn, style: TextStyle(color: textMuted)));
       if (widget.embedded) return notLoggedIn;
       return Scaffold(
         backgroundColor: backgroundColor,
-        appBar: const PillAppBar(title: 'Exercises to Avoid'),
+        appBar: PillAppBar(title: AppLocalizations.of(context).trainingPreferencesExercisesToAvoid),
         body: notLoggedIn,
       );
     }
@@ -83,7 +84,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Exercises you add here will be excluded from AI-generated workout plans.',
+                    AppLocalizations.of(context).avoidedExercisesExercisesYouAddHere,
                     style: TextStyle(
                       fontSize: 13,
                       color: textColor,
@@ -113,11 +114,11 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                 children: [
                   Icon(Icons.error_outline, size: 48, color: AppColors.error),
                   const SizedBox(height: 16),
-                  Text('Error loading exercises', style: TextStyle(color: textMuted)),
+                  Text(AppLocalizations.of(context).avoidedExercisesErrorLoadingExercises, style: TextStyle(color: textMuted)),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: () => ref.invalidate(avoidedExercisesProvider(userId)),
-                    child: const Text('Retry'),
+                    child: Text(AppLocalizations.of(context).buttonRetry),
                   ),
                 ],
               ),
@@ -135,7 +136,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No exercises to avoid',
+                        AppLocalizations.of(context).avoidedExercisesNoExercisesToAvoid,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -144,7 +145,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tap + to add exercises you want to skip',
+                        AppLocalizations.of(context).avoidedExercisesTapToAddExercises,
                         style: TextStyle(color: textMuted),
                       ),
                     ],
@@ -194,7 +195,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Exercises to Avoid',
+        title: AppLocalizations.of(context).trainingPreferencesExercisesToAvoid,
         actions: [
           PillAppBarAction(icon: Icons.add, onTap: () => _showAddExerciseSheet(context, userId)),
         ],
@@ -300,7 +301,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Reason and temporary settings will apply to every exercise. You can edit individual entries afterwards.',
+                    AppLocalizations.of(context).avoidedExercisesReasonAndTemporarySettings,
                     style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
                   ),
                   const SizedBox(height: 20),
@@ -308,7 +309,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                     autofocus: true,
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
-                      labelText: 'Reason (optional)',
+                      labelText: AppLocalizations.of(context).avoidedExercisesReasonOptional,
                       labelStyle: TextStyle(color: textMuted),
                       hintText: 'e.g., Knee injury',
                       hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
@@ -335,7 +336,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Temporary',
+                                AppLocalizations.of(context).avoidedExercisesTemporary,
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -343,7 +344,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                                 ),
                               ),
                               Text(
-                                'Set an end date for these restrictions',
+                                AppLocalizations.of(context).avoidedExercisesSetAnEndDate,
                                 style: TextStyle(fontSize: 12, color: textMuted),
                               ),
                             ],
@@ -487,7 +488,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                     autofocus: true,
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
-                      labelText: 'Reason (optional)',
+                      labelText: AppLocalizations.of(context).avoidedExercisesReasonOptional,
                       labelStyle: TextStyle(color: textMuted),
                       hintText: 'e.g., Knee injury',
                       hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
@@ -515,7 +516,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Temporary',
+                                AppLocalizations.of(context).avoidedExercisesTemporary,
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -523,7 +524,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                                 ),
                               ),
                               Text(
-                                'Set an end date for this restriction',
+                                AppLocalizations.of(context).avoidedExercisesSetAnEndDate2,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: textMuted,
@@ -609,8 +610,8 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Add to Avoid List',
+                      child: Text(
+                        AppLocalizations.of(context).avoidedExercisesAddToAvoidList,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -627,7 +628,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                       },
                       icon: Icon(Icons.swap_horiz, size: 18, color: textMuted),
                       label: Text(
-                        'Change Exercise',
+                        AppLocalizations.of(context).avoidedExercisesChangeExercise,
                         style: TextStyle(fontSize: 14, color: textMuted),
                       ),
                     ),
@@ -732,7 +733,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                     initialValue: reason,
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
-                      labelText: 'Reason (optional)',
+                      labelText: AppLocalizations.of(context).avoidedExercisesReasonOptional,
                       labelStyle: TextStyle(color: textMuted),
                       hintText: 'e.g., Knee injury',
                       hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
@@ -760,7 +761,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Temporary',
+                                AppLocalizations.of(context).avoidedExercisesTemporary,
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -768,7 +769,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                                 ),
                               ),
                               Text(
-                                'Set an end date for this restriction',
+                                AppLocalizations.of(context).avoidedExercisesSetAnEndDate2,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: textMuted,
@@ -854,8 +855,8 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Save Changes',
+                      child: Text(
+                        AppLocalizations.of(context).vacationModeSaveChanges,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -912,16 +913,16 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Exercise'),
+        title: Text(AppLocalizations.of(context).workoutDetailScreenRemoveExercise),
         content: Text('Remove "${exercise.exerciseName}" from avoid list?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Remove', style: TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove, style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),

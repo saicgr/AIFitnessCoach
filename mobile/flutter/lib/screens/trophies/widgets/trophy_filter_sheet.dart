@@ -7,6 +7,7 @@ import '../../../data/models/trophy_filter_state.dart';
 import '../../../data/providers/trophy_filter_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Trophy filter bottom sheet with tier, muscle group, category, and sort options
 class TrophyFilterSheet extends ConsumerWidget {
   const TrophyFilterSheet({super.key});
@@ -72,7 +73,7 @@ class TrophyFilterSheet extends ConsumerWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Filter Trophies',
+                            AppLocalizations.of(context).trophyFilterFilterTrophies,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -86,7 +87,7 @@ class TrophyFilterSheet extends ConsumerWidget {
                               HapticService.light();
                               notifier.resetFilters();
                             },
-                            child: const Text('Reset'),
+                            child: Text(AppLocalizations.of(context).trophyFilterReset),
                           ),
                       ],
                     ),

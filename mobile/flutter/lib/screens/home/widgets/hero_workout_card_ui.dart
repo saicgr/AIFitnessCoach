@@ -76,7 +76,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
                   if (!synced) ...[
                     _buildOverlayButton(
                       icon: Icons.replay,
-                      label: 'Repeat',
+                      label: AppLocalizations.of(context).heroWorkoutCardRepeat,
                       onTap: _repeatWorkout,
                       isDark: isDark,
                     ),
@@ -84,7 +84,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
                       const SizedBox(width: 12),
                       _buildOverlayButton(
                         icon: Icons.undo,
-                        label: 'Undo',
+                        label: AppLocalizations.of(context).workoutUiBuildersUndo,
                         onTap: _markAsUndone,
                         isDark: isDark,
                       ),
@@ -93,7 +93,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
                   ],
                   _buildOverlayButton(
                     icon: Icons.bar_chart,
-                    label: 'Summary',
+                    label: AppLocalizations.of(context).workoutCompleteSummary,
                     onTap: _viewSummary,
                     isDark: isDark,
                   ),
@@ -101,7 +101,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
                     const SizedBox(width: 12),
                     _buildOverlayButton(
                       icon: Icons.ios_share_rounded,
-                      label: 'Share',
+                      label: AppLocalizations.of(context).commonShare,
                       onTap: _shareCompletedWorkout,
                       isDark: isDark,
                     ),

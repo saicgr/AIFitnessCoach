@@ -7,6 +7,7 @@ import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 final volumeHistoryProvider = StateNotifierProvider<VolumeHistoryNotifier, VolumeHistoryState>((ref) => VolumeHistoryNotifier(ref));
 
 class VolumeHistoryState {
@@ -159,7 +160,7 @@ class _VolumeHistoryScreenState extends ConsumerState<VolumeHistoryScreen> {
     final st = ref.watch(volumeHistoryProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: const PillAppBar(title: 'Volume History'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).volumeHistoryVolumeHistory),
       body: _buildContent(d, tp, tm, el, st),
     );
   }
@@ -174,8 +175,8 @@ class _VolumeHistoryScreenState extends ConsumerState<VolumeHistoryScreen> {
         itemBuilder: (_, __) => const SkeletonBox(height: 118, radius: 16),
       );
     }
-    if (st.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text('Failed to load', style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: const Text('Retry'))]));
-    if (st.history.isEmpty) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.history, color: tm, size: 48), const SizedBox(height: 16), Text('No history yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 8), Text('Complete workouts to see volume trends', style: TextStyle(color: tm))]));
+    if (st.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text(AppLocalizations.of(context).volumeHistoryFailedToLoad, style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: Text(AppLocalizations.of(context).buttonRetry))]));
+    if (st.history.isEmpty) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.history, color: tm, size: 48), const SizedBox(height: 16), Text(AppLocalizations.of(context).volumeHistoryNoHistoryYet, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 8), Text(AppLocalizations.of(context).volumeHistoryCompleteWorkoutsToSee, style: TextStyle(color: tm))]));
     return RefreshIndicator(onRefresh: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: st.history.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _buildWeekCard(st.history[i], d, tp, tm, el)));
   }
 
@@ -183,6 +184,6 @@ class _VolumeHistoryScreenState extends ConsumerState<VolumeHistoryScreen> {
     final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     final dateStr = '${months[week.weekStart.month - 1]} ${week.weekStart.day}';
     final color = week.wasDeload ? AppColors.cyan : week.totalSets > 60 ? AppColors.orange : AppColors.success;
-    return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: el, borderRadius: BorderRadius.circular(16), border: week.wasDeload ? Border.all(color: AppColors.cyan.withOpacity(0.3)) : null), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Row(children: [Icon(Icons.calendar_today, color: tm, size: 16), const SizedBox(width: 8), Text('Week of $dateStr', style: TextStyle(fontSize: 14, color: tm))]), if (week.wasDeload) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: AppColors.cyan.withOpacity(0.15), borderRadius: BorderRadius.circular(8)), child: Text('Deload', style: TextStyle(fontSize: 12, color: AppColors.cyan, fontWeight: FontWeight.w600)))]), const SizedBox(height: 12), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Total Volume', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: tp)), Text('${week.totalSets} sets', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color))]), if (week.muscleVolumes.isNotEmpty) ...[const SizedBox(height: 12), Wrap(spacing: 8, runSpacing: 8, children: week.muscleVolumes.entries.map((e) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: (d ? AppColors.background : AppColorsLight.background), borderRadius: BorderRadius.circular(8)), child: Text('${e.key}: ${e.value}', style: TextStyle(fontSize: 12, color: tm)))).toList())]]));
+    return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: el, borderRadius: BorderRadius.circular(16), border: week.wasDeload ? Border.all(color: AppColors.cyan.withOpacity(0.3)) : null), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Row(children: [Icon(Icons.calendar_today, color: tm, size: 16), const SizedBox(width: 8), Text('Week of $dateStr', style: TextStyle(fontSize: 14, color: tm))]), if (week.wasDeload) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: AppColors.cyan.withOpacity(0.15), borderRadius: BorderRadius.circular(8)), child: Text('Deload', style: TextStyle(fontSize: 12, color: AppColors.cyan, fontWeight: FontWeight.w600)))]), const SizedBox(height: 12), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(AppLocalizations.of(context).volumeHistoryTotalVolume, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: tp)), Text('${week.totalSets} sets', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color))]), if (week.muscleVolumes.isNotEmpty) ...[const SizedBox(height: 12), Wrap(spacing: 8, runSpacing: 8, children: week.muscleVolumes.entries.map((e) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: (d ? AppColors.background : AppColorsLight.background), borderRadius: BorderRadius.circular(8)), child: Text('${e.key}: ${e.value}', style: TextStyle(fontSize: 12, color: tm)))).toList())]]));
   }
 }

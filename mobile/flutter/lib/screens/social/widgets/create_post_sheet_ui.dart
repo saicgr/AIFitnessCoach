@@ -12,7 +12,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Caption',
+          AppLocalizations.of(context).createPostSheetCaption,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -26,7 +26,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
           maxLength: 500,
           textCapitalization: TextCapitalization.sentences,
           decoration: InputDecoration(
-            hintText: 'Share your fitness journey...',
+            hintText: AppLocalizations.of(context).createPostSheetShareYourFitnessJourney,
             hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
             filled: true,
             fillColor: isDark
@@ -69,7 +69,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Trending',
+                AppLocalizations.of(context).createPostSheetTrending,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -134,7 +134,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Media (Optional)',
+          AppLocalizations.of(context).createPostSheetMediaOptional,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -199,10 +199,10 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.videocam_rounded, color: Colors.white, size: 14),
                       SizedBox(width: 4),
-                      Text('Video', style: TextStyle(color: Colors.white, fontSize: 11)),
+                      Text(AppLocalizations.of(context).workoutShowcaseVideo, style: TextStyle(color: Colors.white, fontSize: 11)),
                     ],
                   ),
                 ),
@@ -242,7 +242,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
                           Icon(Icons.add_photo_alternate_rounded, color: textMuted, size: 24),
                           const SizedBox(height: 4),
                           Text(
-                            'Add more',
+                            AppLocalizations.of(context).createPostSheetAddMore,
                             style: TextStyle(color: textMuted, fontSize: 11),
                           ),
                         ],
@@ -318,7 +318,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
                         Icon(Icons.camera_alt_rounded, color: textMuted, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Camera',
+                          AppLocalizations.of(context).storyCreateCamera,
                           style: TextStyle(color: textColor, fontSize: 13),
                         ),
                       ],
@@ -348,7 +348,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
                         Icon(Icons.photo_library_rounded, color: textMuted, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Gallery',
+                          AppLocalizations.of(context).storyCreateGallery,
                           style: TextStyle(color: textColor, fontSize: 13),
                         ),
                       ],
@@ -378,7 +378,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
                         Icon(Icons.videocam_rounded, color: textMuted, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Video',
+                          AppLocalizations.of(context).workoutShowcaseVideo,
                           style: TextStyle(color: textColor, fontSize: 13),
                         ),
                       ],

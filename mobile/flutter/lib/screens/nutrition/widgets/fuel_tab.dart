@@ -6,6 +6,7 @@ import '../nutrient_explorer.dart';
 import '../tabs/hydration_tab.dart';
 import 'fasting_panel.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Merged Nutrients + Water tab — a single Fuel tab with a pill segmented
 /// control at the top to switch between the two views.
 ///
@@ -84,7 +85,7 @@ class _FuelTabState extends State<FuelTab> with AutomaticKeepAliveClientMixin {
             child: Row(
               children: [
                 _buildPill(
-                  label: 'Nutrients',
+                  label: AppLocalizations.of(context).fuelNutrients,
                   icon: Icons.science_outlined,
                   selected: _section == _FuelSection.nutrients,
                   onTap: () {
@@ -96,7 +97,7 @@ class _FuelTabState extends State<FuelTab> with AutomaticKeepAliveClientMixin {
                 ),
                 const SizedBox(width: 4),
                 _buildPill(
-                  label: 'Water',
+                  label: AppLocalizations.of(context).unifiedHomeWidgetsWater,
                   icon: Icons.water_drop_outlined,
                   selected: _section == _FuelSection.water,
                   onTap: () {
@@ -108,7 +109,7 @@ class _FuelTabState extends State<FuelTab> with AutomaticKeepAliveClientMixin {
                 ),
                 const SizedBox(width: 4),
                 _buildPill(
-                  label: 'Fasting',
+                  label: AppLocalizations.of(context).unifiedHomeWidgetsFasting,
                   icon: Icons.timer_outlined,
                   selected: _section == _FuelSection.fasting,
                   onTap: () {

@@ -8,6 +8,7 @@ import '../../../../../widgets/app_snackbar.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class ScoringCard extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -33,10 +34,10 @@ class ScoringCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Exercise Scoring Breakdown',
+                    Text(AppLocalizations.of(context).scoringCardExerciseScoringBreakdown,
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('6-factor weighted selection algorithm',
+                    Text(AppLocalizations.of(context).scoringCard6FactorWeightedSelection,
                         style: TextStyle(fontSize: 11, color: theme.textMuted)),
                   ],
                 ),
@@ -47,7 +48,7 @@ class ScoringCard extends ConsumerWidget {
                   notifier.resetScoringWeights();
                   AppSnackBar.info(context, 'Scoring weights reset');
                 },
-                child: Text('Reset',
+                child: Text(AppLocalizations.of(context).trophyFilterReset,
                     style: TextStyle(fontSize: 12, color: AppColors.orange, fontWeight: FontWeight.w600)),
               ),
             ],
@@ -95,7 +96,7 @@ class ScoringCard extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.error),
                 const SizedBox(width: 4),
-                Text(totalPct > 100 ? 'Over 100%' : 'Under 90%',
+                Text(totalPct > 100 ? AppLocalizations.of(context).scoringCardOver100 : AppLocalizations.of(context).scoringCardUnder90,
                     style: TextStyle(fontSize: 11, color: AppColors.error)),
               ],
               const Spacer(),
@@ -112,7 +113,7 @@ class ScoringCard extends ConsumerWidget {
                       color: AppColors.orange.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text('Normalize',
+                    child: Text(AppLocalizations.of(context).scoringCardNormalize,
                         style: TextStyle(fontSize: 11, color: AppColors.orange, fontWeight: FontWeight.w600)),
                   ),
                 ),

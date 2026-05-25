@@ -11,6 +11,7 @@ import '../../../data/services/health_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'calories_burned_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'nutrition_goals_card_part_calculation_info_sheet.dart';
 
 /// Public launcher for the calculation breakdown sheet. Wraps the existing
@@ -172,7 +173,7 @@ class NutritionGoalsCard extends ConsumerWidget {
               Icon(Icons.track_changes, color: teal, size: 16),
               const SizedBox(width: 5),
               Text(
-                'Daily Goals',
+                AppLocalizations.of(context).nutritionGoalsCardDailyGoals,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -248,7 +249,7 @@ class NutritionGoalsCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: _MacroProgressRing(
-                  label: 'Calories',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                   current: consumedCalories.toDouble(),
                   target: effectiveCalories.toDouble(),
                   color: teal,
@@ -259,7 +260,7 @@ class NutritionGoalsCard extends ConsumerWidget {
               ),
               Expanded(
                 child: _MacroProgressRing(
-                  label: 'Protein',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   current: consumedProtein,
                   target: effectiveProtein,
                   color: purple,
@@ -269,7 +270,7 @@ class NutritionGoalsCard extends ConsumerWidget {
               ),
               Expanded(
                 child: _MacroProgressRing(
-                  label: 'Carbs',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   current: consumedCarbs,
                   target: effectiveCarbs,
                   color: cyan,
@@ -279,7 +280,7 @@ class NutritionGoalsCard extends ConsumerWidget {
               ),
               Expanded(
                 child: _MacroProgressRing(
-                  label: 'Fat',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   current: consumedFat,
                   target: effectiveFat,
                   color: orange,

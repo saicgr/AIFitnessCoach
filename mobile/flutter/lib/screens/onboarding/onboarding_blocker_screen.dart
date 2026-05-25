@@ -9,6 +9,7 @@ import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Onboarding conversion v6 — "What's held you back" + acknowledgment.
 ///
 /// Two-stage screen. Stage 1 asks the obstacle question (engagement-only,
@@ -183,7 +184,7 @@ class _OnboardingBlockerScreenState
       children: [
         const SizedBox(height: 28),
         Text(
-          "What's held you back before?",
+          AppLocalizations.of(context).onboardingBlockerWhatSHeldYou,
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.bold,
@@ -193,7 +194,7 @@ class _OnboardingBlockerScreenState
         ).animate().fadeIn().slideY(begin: -0.1),
         const SizedBox(height: 6),
         Text(
-          "No judgment. Knowing the wall is how we plan around it.",
+          AppLocalizations.of(context).onboardingBlockerNoJudgmentKnowingThe,
           style: TextStyle(
             fontSize: 14,
             height: 1.4,
@@ -221,7 +222,7 @@ class _OnboardingBlockerScreenState
         ),
         const SizedBox(height: 8),
         _PrimaryButton(
-          label: 'Continue',
+          label: AppLocalizations.of(context).onboardingContinueButton,
           enabled: _selected != null,
           onTap: _toAcknowledgment,
         ).animate().fadeIn(delay: 640.ms).slideY(begin: 0.1),
@@ -251,7 +252,7 @@ class _OnboardingBlockerScreenState
         ).animate().scale(duration: 360.ms, curve: Curves.easeOutBack),
         const SizedBox(height: 18),
         Text(
-          'That makes sense.',
+          AppLocalizations.of(context).onboardingBlockerThatMakesSense,
           style: TextStyle(
             fontSize: 25,
             fontWeight: FontWeight.bold,
@@ -287,7 +288,7 @@ class _OnboardingBlockerScreenState
         ),
         const SizedBox(height: 8),
         _PrimaryButton(
-          label: "Let's do it",
+          label: AppLocalizations.of(context).onboardingBlockerLetSDoIt,
           enabled: true,
           onTap: _finish,
         ).animate().fadeIn(delay: 360.ms).slideY(begin: 0.1),

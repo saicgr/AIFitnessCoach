@@ -360,8 +360,8 @@ extension _ActivityCardStateUI on _ActivityCardState {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'earned an achievement',
+              Text(
+                AppLocalizations.of(context).activityCardUiEarnedAnAchievement,
                 style: TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 4),
@@ -503,8 +503,8 @@ extension _ActivityCardStateUI on _ActivityCardState {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'VICTORY!',
+                  Text(
+                    AppLocalizations.of(context).challengeCompleteVictory,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -557,7 +557,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
               if (yourDuration != null && theirDuration != null) ...[
                 _buildVictoryComparison(
                   emoji: '⏱️',
-                  label: 'Time',
+                  label: AppLocalizations.of(context).workoutShowcaseTime,
                   yourValue: '$yourDuration min',
                   theirValue: '$theirDuration min',
                   improvement: timeDifference != null && timeDifference > 0
@@ -571,7 +571,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
               if (yourVolume != null && theirVolume != null)
                 _buildVictoryComparison(
                   emoji: '💪',
-                  label: 'Volume',
+                  label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
                   yourValue: '${yourVolume.toStringAsFixed(0)} lbs',
                   theirValue: '${theirVolume.toStringAsFixed(0)} lbs',
                   improvement: volumeDifference != null && volumeDifference > 0
@@ -624,7 +624,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'You',
+                        AppLocalizations.of(context).navYou,
                         style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textMuted,
@@ -645,7 +645,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        'Them',
+                        AppLocalizations.of(context).discoverThem,
                         style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textMuted,
@@ -728,8 +728,8 @@ extension _ActivityCardStateUI on _ActivityCardState {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'CHALLENGE ATTEMPTED',
+                  Text(
+                    AppLocalizations.of(context).challengeCompleteChallengeAttempted,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -785,7 +785,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Keep training! Every attempt makes you stronger',
+                      AppLocalizations.of(context).activityCardUiKeepTrainingEveryAttempt,
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textMuted,
@@ -833,7 +833,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
               Row(
                 children: [
                   Text(
-                    'You: ',
+                    AppLocalizations.of(context).challengeHistoryYou,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textMuted,
@@ -850,7 +850,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
                   const Text('|', style: TextStyle(color: AppColors.textMuted)),
                   const SizedBox(width: 12),
                   Text(
-                    'Target: ',
+                    AppLocalizations.of(context).challengeHistoryTarget,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textMuted,

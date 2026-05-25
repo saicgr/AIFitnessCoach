@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise_progression.dart';
 import '../../../data/providers/exercise_progression_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A card that displays exercise progression suggestions after workout completion.
 ///
 /// Shows when the user has completed exercises with "too easy" feedback,
@@ -204,7 +205,7 @@ class _ProgressionSuggestionCardState
                     children: [
                       Text(
                         _isAnimatingUnlock
-                            ? 'Exercise Unlocked!'
+                            ? AppLocalizations.of(context).progressionSuggestionCardExerciseUnlocked
                             : 'Ready to Level Up!',
                         style: TextStyle(
                           fontSize: 16,
@@ -260,7 +261,7 @@ class _ProgressionSuggestionCardState
                       child: _ExerciseBox(
                         exerciseName: suggestion.currentExercise,
                         difficultyLevel: suggestion.currentDifficulty,
-                        label: 'Current',
+                        label: AppLocalizations.of(context).workoutPlanDrawerCurrent,
                         isCurrent: true,
                       ),
                     ),
@@ -308,7 +309,7 @@ class _ProgressionSuggestionCardState
                       child: _ExerciseBox(
                         exerciseName: suggestion.suggestedExercise,
                         difficultyLevel: suggestion.suggestedDifficulty,
-                        label: 'Next Level',
+                        label: AppLocalizations.of(context).xpProgressCardNextLevel,
                         isCurrent: false,
                         isUnlocking: _isAnimatingUnlock &&
                             _unlockedExercise == suggestion.suggestedExercise,
@@ -341,7 +342,7 @@ class _ProgressionSuggestionCardState
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Why this progression?',
+                            AppLocalizations.of(context).progressionSuggestionCardWhyThisProgression,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -410,8 +411,8 @@ class _ProgressionSuggestionCardState
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Keep Current',
+                        child: Text(
+                          AppLocalizations.of(context).weeklyCheckinKeepCurrent,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -453,8 +454,8 @@ class _ProgressionSuggestionCardState
                             ] else ...[
                               const Icon(Icons.upgrade, size: 20),
                               const SizedBox(width: 8),
-                              const Text(
-                                'Try Next Level',
+                              Text(
+                                AppLocalizations.of(context).progressionSuggestionCardTryNextLevel,
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -732,7 +733,7 @@ class NoProgressionSuggestionsCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Keep Going!',
+            AppLocalizations.of(context).progressionSuggestionCardKeepGoing,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -741,7 +742,7 @@ class NoProgressionSuggestionsCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Complete a few more "easy" sessions to unlock progressions',
+            AppLocalizations.of(context).progressionSuggestionCardCompleteAFewMore,
             style: TextStyle(
               fontSize: 13,
               color: textMuted,

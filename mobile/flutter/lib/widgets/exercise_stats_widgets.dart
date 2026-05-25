@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../data/models/exercise_history.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Time range selection chips
 class ExerciseTimeRangeSelector extends StatelessWidget {
   final ExerciseHistoryTimeRange selected;
@@ -86,7 +87,7 @@ class ExerciseSummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Summary',
+                  AppLocalizations.of(context).workoutCompleteSummary,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -100,19 +101,19 @@ class ExerciseSummaryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: ExerciseStatItem(
-                    label: 'Sessions',
+                    label: AppLocalizations.of(context).syncedWorkoutsHistorySessions,
                     value: '${summary.totalSessions}',
                   ),
                 ),
                 Expanded(
                   child: ExerciseStatItem(
-                    label: 'Total Volume',
+                    label: AppLocalizations.of(context).volumeHistoryTotalVolume,
                     value: summary.formattedTotalVolume,
                   ),
                 ),
                 Expanded(
                   child: ExerciseStatItem(
-                    label: 'Weight Change',
+                    label: AppLocalizations.of(context).weeklyCheckinSheetWeightChange,
                     value: summary.formattedWeightIncrease,
                     isPositive: (summary.weightIncreaseKg ?? 0) > 0,
                   ),
@@ -263,7 +264,7 @@ class ExerciseProgressionChart extends StatelessWidget {
         height: 200,
         child: Center(
           child: Text(
-            'Not enough data to show chart',
+            AppLocalizations.of(context).exerciseStatsWidgetsNotEnoughDataTo,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -385,7 +386,7 @@ class ExercisePersonalRecordsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Personal Records',
+          AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -499,7 +500,7 @@ class ExerciseSessionCard extends StatelessWidget {
                               const Icon(Icons.star, size: 12, color: Colors.amber),
                               const SizedBox(width: 3),
                               Text(
-                                session.prBadge ?? 'PR',
+                                session.prBadge ?? AppLocalizations.of(context).aiCoachReportPr,
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   color: Colors.amber.shade700,
                                   fontWeight: FontWeight.bold,
@@ -517,14 +518,14 @@ class ExerciseSessionCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                ExerciseSessionStat(label: 'Sets × Reps', value: session.setsRepsDisplay),
+                ExerciseSessionStat(label: AppLocalizations.of(context).exerciseStatsWidgetsSetsReps, value: session.setsRepsDisplay),
                 const SizedBox(width: 24),
-                ExerciseSessionStat(label: 'Weight', value: session.formattedWeight),
+                ExerciseSessionStat(label: AppLocalizations.of(context).workoutSummaryAdvancedWeight, value: session.formattedWeight),
                 const SizedBox(width: 24),
-                ExerciseSessionStat(label: 'Volume', value: session.formattedVolume),
+                ExerciseSessionStat(label: AppLocalizations.of(context).workoutSummaryAdvancedVolume, value: session.formattedVolume),
                 if (session.estimated1rmKg != null) ...[
                   const SizedBox(width: 24),
-                  ExerciseSessionStat(label: 'Est. 1RM', value: session.formatted1rm),
+                  ExerciseSessionStat(label: AppLocalizations.of(context).exerciseStatsWidgetsEst1rm, value: session.formatted1rm),
                 ],
               ],
             ),

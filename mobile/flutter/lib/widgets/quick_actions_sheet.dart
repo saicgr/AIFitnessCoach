@@ -17,6 +17,7 @@ import 'main_shell.dart';
 import 'glass_sheet.dart';
 import 'quick_action_tile.dart';
 
+import '../l10n/generated/app_localizations.dart';
 part 'quick_actions_sheet_part_hero_action_card.dart';
 
 
@@ -99,8 +100,8 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please log in to track hydration'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).quickActionsRowPleaseLogInTo),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -124,7 +125,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 children: [
                   const Icon(Icons.check_circle, color: Colors.white, size: 20),
                   const SizedBox(width: 8),
-                  const Text('+500ml water logged'),
+                  Text(AppLocalizations.of(context).quickActions500mlWaterLogged),
                 ],
               ),
               backgroundColor: const Color(0xFF2D2D2D),
@@ -135,8 +136,8 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to log water. Please try again.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).quickActionsRowFailedToLogWater),
               behavior: SnackBarBehavior.floating,
               margin: EdgeInsets.only(bottom: 80, left: 16, right: 16),
             ),
@@ -147,8 +148,8 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to log water. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).quickActionsRowFailedToLogWater),
             behavior: SnackBarBehavior.floating,
             margin: EdgeInsets.only(bottom: 80, left: 16, right: 16),
           ),
@@ -303,7 +304,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           controller: _searchController,
                           style: TextStyle(fontSize: 14, color: textColor),
                           decoration: InputDecoration(
-                            hintText: 'Search actions...',
+                            hintText: AppLocalizations.of(context).quickActionsSearchActions,
                             hintStyle: TextStyle(fontSize: 14, color: textMuted),
                             prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
                             suffixIcon: _searchQuery.isNotEmpty
@@ -391,7 +392,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Show two rows',
+                                AppLocalizations.of(context).quickActionsShowTwoRows,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -399,7 +400,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                                 ),
                               ),
                               Text(
-                                'Display extra shortcuts on home',
+                                AppLocalizations.of(context).quickActionsDisplayExtraShortcutsOn,
                                 style: TextStyle(fontSize: 11, color: textMuted),
                               ),
                             ],
@@ -449,7 +450,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Center(
                             child: Text(
-                              'No actions found',
+                              AppLocalizations.of(context).quickActionsNoActionsFound,
                               style: TextStyle(fontSize: 14, color: textMuted),
                             ),
                           ),
@@ -579,7 +580,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Customize Quick Actions',
+                      AppLocalizations.of(context).quickActionsCustomizeQuickActions,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -590,7 +591,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                   TextButton(
                     onPressed: () => setState(() => _isEditMode = false),
                     child: Text(
-                      'Done',
+                      AppLocalizations.of(context).commonDone,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -696,7 +697,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                               ),
                               if (isVisibleInBar)
                                 Text(
-                                  isRow1 ? 'Row 1' : 'Row 2',
+                                  isRow1 ? AppLocalizations.of(context).quickActionsRow1 : AppLocalizations.of(context).quickActionsRow2,
                                   style: TextStyle(fontSize: 11, color: textMuted),
                                 ),
                             ],
@@ -739,7 +740,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                   ref.read(quickActionOrderProvider.notifier).resetToDefault();
                 },
                 child: Text(
-                  'Reset to Default',
+                  AppLocalizations.of(context).quickActionsResetToDefault,
                   style: TextStyle(
                     fontSize: 14,
                     color: textMuted,

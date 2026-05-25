@@ -11,6 +11,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class AchievementsScreen extends ConsumerStatefulWidget {
   const AchievementsScreen({super.key});
 
@@ -56,17 +57,17 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Achievements',
+        title: AppLocalizations.of(context).youAchievements,
       ),
       body: Column(
         children: [
           SegmentedTabBar(
             controller: _tabController,
             showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Summary'),
-              SegmentedTabItem(label: 'Badges'),
-              SegmentedTabItem(label: 'PRs'),
+            tabs: [
+              SegmentedTabItem(label: AppLocalizations.of(context).workoutCompleteSummary),
+              SegmentedTabItem(label: AppLocalizations.of(context).badgeHubBadges),
+              SegmentedTabItem(label: AppLocalizations.of(context).weeklyWrappedPrs),
             ],
           ),
           Expanded(
@@ -141,8 +142,8 @@ class _SummaryTab extends StatelessWidget {
     if (summary == null) {
       return _EmptyState(
         icon: Icons.emoji_events,
-        title: 'No achievements yet',
-        subtitle: 'Complete workouts to earn achievements!',
+        title: AppLocalizations.of(context).overviewNoAchievementsYet,
+        subtitle: AppLocalizations.of(context).achievementsCompleteWorkoutsToEarn,
         isDark: isDark,
       );
     }
@@ -163,7 +164,7 @@ class _SummaryTab extends StatelessWidget {
 
           // Streaks
           if (summary!.currentStreaks.isNotEmpty) ...[
-            _SectionHeader(title: 'CURRENT STREAKS', isDark: isDark),
+            _SectionHeader(title: AppLocalizations.of(context).achievementsCurrentStreaks, isDark: isDark),
             const SizedBox(height: 12),
             ...summary!.currentStreaks.map((streak) {
               return Padding(
@@ -176,7 +177,7 @@ class _SummaryTab extends StatelessWidget {
 
           // Recent achievements
           if (summary!.recentAchievements.isNotEmpty) ...[
-            _SectionHeader(title: 'RECENT ACHIEVEMENTS', isDark: isDark),
+            _SectionHeader(title: AppLocalizations.of(context).achievementsRecentAchievements, isDark: isDark),
             const SizedBox(height: 12),
             ...summary!.recentAchievements.asMap().entries.map((entry) {
               return _AchievementCard(achievement: entry.value, isDark: isDark)
@@ -188,7 +189,7 @@ class _SummaryTab extends StatelessWidget {
           // Categories
           if (summary!.achievementsByCategory.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _SectionHeader(title: 'BY CATEGORY', isDark: isDark),
+            _SectionHeader(title: AppLocalizations.of(context).achievementsByCategory, isDark: isDark),
             const SizedBox(height: 12),
             _CategoriesGrid(
                 categories: summary!.achievementsByCategory, isDark: isDark),
@@ -216,8 +217,8 @@ class _BadgesTab extends StatelessWidget {
     if (achievements.isEmpty) {
       return _EmptyState(
         icon: Icons.military_tech,
-        title: 'No badges earned',
-        subtitle: 'Keep working out to unlock badges!',
+        title: AppLocalizations.of(context).achievementsNoBadgesEarned,
+        subtitle: AppLocalizations.of(context).achievementsKeepWorkingOutTo,
         isDark: isDark,
       );
     }
@@ -257,8 +258,8 @@ class _PersonalRecordsTab extends StatelessWidget {
     if (records.isEmpty) {
       return _EmptyState(
         icon: Icons.trending_up,
-        title: 'No personal records',
-        subtitle: 'Lift heavier to set new PRs!',
+        title: AppLocalizations.of(context).achievementsNoPersonalRecords,
+        subtitle: AppLocalizations.of(context).achievementsLiftHeavierToSet,
         isDark: isDark,
       );
     }
@@ -338,7 +339,7 @@ class _PointsCard extends StatelessWidget {
             ),
           ),
           Text(
-            'Total Points',
+            AppLocalizations.of(context).achievementsTotalPoints,
             style: TextStyle(
               fontSize: 16,
               color: textSecondary,

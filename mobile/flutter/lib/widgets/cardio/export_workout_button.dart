@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/cardio_export_repository.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Tap-to-share button that downloads the cardio session as GPX / TCX /
 /// FIT and opens the native share sheet. Each format is a separate menu
 /// item so the user can pick the one their downstream app expects:
@@ -67,7 +68,7 @@ class _ExportWorkoutButtonState extends ConsumerState<ExportWorkoutButton> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
     return PopupMenuButton<String>(
-      tooltip: 'Export workout',
+      tooltip: AppLocalizations.of(context).exportWorkoutButtonExportWorkout,
       enabled: !_busy,
       icon: _busy
           ? SizedBox(
@@ -77,14 +78,14 @@ class _ExportWorkoutButtonState extends ConsumerState<ExportWorkoutButton> {
             )
           : Icon(widget.icon, color: accent),
       onSelected: _share,
-      itemBuilder: (_) => const [
+      itemBuilder: (_) => [
         PopupMenuItem(
           value: 'gpx',
           child: ListTile(
             dense: true,
             leading: Icon(Icons.route),
-            title: Text('Export as GPX'),
-            subtitle: Text('Strava / Garmin Connect / Komoot'),
+            title: Text(AppLocalizations.of(context).exportWorkoutButtonExportAsGpx),
+            subtitle: Text(AppLocalizations.of(context).exportWorkoutButtonStravaGarminConnectKomo),
           ),
         ),
         PopupMenuItem(
@@ -92,8 +93,8 @@ class _ExportWorkoutButtonState extends ConsumerState<ExportWorkoutButton> {
           child: ListTile(
             dense: true,
             leading: Icon(Icons.timer),
-            title: Text('Export as TCX'),
-            subtitle: Text('MyFitnessPal / Sportstracks'),
+            title: Text(AppLocalizations.of(context).exportWorkoutButtonExportAsTcx),
+            subtitle: Text(AppLocalizations.of(context).exportWorkoutButtonMyfitnesspalSportstracks),
           ),
         ),
         PopupMenuItem(
@@ -101,8 +102,8 @@ class _ExportWorkoutButtonState extends ConsumerState<ExportWorkoutButton> {
           child: ListTile(
             dense: true,
             leading: Icon(Icons.fitness_center),
-            title: Text('Export as FIT'),
-            subtitle: Text('Garmin / Wahoo native'),
+            title: Text(AppLocalizations.of(context).exportWorkoutButtonExportAsFit),
+            subtitle: Text(AppLocalizations.of(context).exportWorkoutButtonGarminWahooNative),
           ),
         ),
       ],

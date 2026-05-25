@@ -13,6 +13,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Reverse-direction export screen.
 ///
 /// Sends the current user's strength + cardio history (and optionally
@@ -186,7 +187,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
     // but catching it client-side avoids an unnecessary round-trip.
     if (!_isCardioOnlyFormat && !_includeStrength && !_includeCardio && !_includeTemplates) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Pick at least one dataset to export.')),
+        SnackBar(content: Text(AppLocalizations.of(context).exportDataPickAtLeastOne)),
       );
       return;
     }
@@ -335,7 +336,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Export My Data'),
+        title: Text(AppLocalizations.of(context).exportDataExportMyData),
         centerTitle: true,
       ),
       body: ListView(
@@ -367,7 +368,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.download),
-              label: Text(_isGenerating ? 'Generating…' : 'Generate Export'),
+              label: Text(_isGenerating ? AppLocalizations.of(context).exportDataGenerating : AppLocalizations.of(context).exportDataGenerateExport),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.cyan,
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -481,7 +482,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
               _preset('Last year', _DatePreset.lastYear, border),
               _preset('All time', _DatePreset.allTime, border),
               ActionChip(
-                label: const Text('Custom…'),
+                label: Text(AppLocalizations.of(context).exportDataCustom),
                 avatar: const Icon(Icons.edit_calendar, size: 16),
                 onPressed: _pickCustomRange,
                 backgroundColor: _selectedRange == _DatePreset.custom
@@ -525,10 +526,10 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 ? null
                 : (v) => setState(() => _includeStrength = v),
             activeColor: AppColors.cyan,
-            title: Text('Strength history', style: TextStyle(color: primary)),
+            title: Text(AppLocalizations.of(context).exportDataStrengthHistory, style: TextStyle(color: primary)),
             subtitle: Text(
               cardioOnly
-                  ? 'Disabled — this format is cardio-only.'
+                  ? AppLocalizations.of(context).exportDataDisabledThisFormatIs
                   : 'Every set: weight, reps, RPE, notes.',
               style: TextStyle(color: secondary, fontSize: 12),
             ),
@@ -540,10 +541,10 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 ? null
                 : (v) => setState(() => _includeCardio = v),
             activeColor: AppColors.cyan,
-            title: Text('Cardio sessions', style: TextStyle(color: primary)),
+            title: Text(AppLocalizations.of(context).exportDataCardioSessions, style: TextStyle(color: primary)),
             subtitle: Text(
               cardioOnly
-                  ? 'Always included for cardio-only formats.'
+                  ? AppLocalizations.of(context).exportDataAlwaysIncludedForCardio
                   : 'Runs, rides, rows, swims — with GPS where available.',
               style: TextStyle(color: secondary, fontSize: 12),
             ),
@@ -555,10 +556,10 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 ? null
                 : (v) => setState(() => _includeTemplates = v),
             activeColor: AppColors.cyan,
-            title: Text('Program templates', style: TextStyle(color: primary)),
+            title: Text(AppLocalizations.of(context).exportDataProgramTemplates, style: TextStyle(color: primary)),
             subtitle: Text(
               cardioOnly
-                  ? 'Not applicable for cardio-only formats.'
+                  ? AppLocalizations.of(context).exportDataNotApplicableForCardio
                   : 'Jeff Nippard / Wendler / imported programs.',
               style: TextStyle(color: secondary, fontSize: 12),
             ),
@@ -586,7 +587,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your data is yours — take it anywhere.',
+                  AppLocalizations.of(context).exportDataYourDataIsYours,
                   style: TextStyle(
                     color: secondary,
                     fontSize: 13,

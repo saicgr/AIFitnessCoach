@@ -13,6 +13,7 @@ import '../../widgets/glass_sheet.dart';
 import 'injuries_list_screen.dart';
 import 'widgets/rehab_exercise_card.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'injury_detail_screen_part_check_in_sheet.dart';
 
 
@@ -143,8 +144,8 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
               );
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Check-in logged successfully'),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context).injuryDetailCheckInLoggedSuccessfully),
                     backgroundColor: AppColors.success,
                   ),
                 );
@@ -175,13 +176,13 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Mark as Healed?',
+          AppLocalizations.of(context).injuryDetailMarkAsHealed,
           style: TextStyle(
             color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
           ),
         ),
         content: Text(
-          'Are you sure this injury has fully healed? This will move it to your injury history.',
+          AppLocalizations.of(context).injuryDetailAreYouSureThis,
           style: TextStyle(
             color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           ),
@@ -190,7 +191,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -206,8 +207,8 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                 ref.read(injuriesListProvider.notifier).loadInjuries();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Congratulations on your recovery!'),
+                    SnackBar(
+                      content: Text(AppLocalizations.of(context).injuryDetailCongratulationsOnYourRecove),
                       backgroundColor: AppColors.success,
                     ),
                   );
@@ -228,7 +229,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
               backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Yes, Healed'),
+            child: Text(AppLocalizations.of(context).injuryDetailYesHealed),
           ),
         ],
       ),
@@ -248,7 +249,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Injury Details',
+        title: AppLocalizations.of(context).injuryDetailInjuryDetails,
         actions: [
           if (_injury != null && _injury!.status.toLowerCase() != 'healed')
             PillAppBarAction(icon: Icons.edit_note, onTap: _showCheckInSheet),
@@ -292,7 +293,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
           Icon(Icons.error_outline, size: 64, color: AppColors.error.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(
-            'Something went wrong',
+            AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -301,14 +302,14 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            _error ?? 'Unknown error',
+            _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
             style: TextStyle(color: textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _loadInjuryDetails,
-            child: const Text('Try Again'),
+            child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
           ),
         ],
       ),
@@ -323,7 +324,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
           Icon(Icons.search_off, size: 64, color: textMuted),
           const SizedBox(height: 16),
           Text(
-            'Injury not found',
+            AppLocalizations.of(context).injuryDetailInjuryNotFound,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -332,13 +333,13 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'This injury may have been deleted',
+            AppLocalizations.of(context).injuryDetailThisInjuryMayHave,
             style: TextStyle(color: textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => context.pop(),
-            child: const Text('Go Back'),
+            child: Text(AppLocalizations.of(context).workoutCompleteScreenGoBack),
           ),
         ],
       ),
@@ -405,7 +406,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
               child: ElevatedButton.icon(
                 onPressed: _showMarkHealedDialog,
                 icon: const Icon(Icons.check_circle),
-                label: const Text('Mark as Healed'),
+                label: Text(AppLocalizations.of(context).injuryDetailMarkAsHealed2),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.success,
                   foregroundColor: Colors.white,
@@ -574,7 +575,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recovery Progress',
+                AppLocalizations.of(context).injuryDetailRecoveryProgress,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -639,7 +640,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Pain Level History',
+            AppLocalizations.of(context).injuryDetailPainLevelHistory,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -717,7 +718,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
               Icon(Icons.warning_amber, color: AppColors.warning, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Affected Exercises',
+                AppLocalizations.of(context).injuryDetailAffectedExercises,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -767,7 +768,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Rehab Exercises',
+              AppLocalizations.of(context).injuryDetailRehabExercises,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -814,7 +815,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
               Icon(Icons.notes, color: textMuted, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Notes',
+                AppLocalizations.of(context).syncedWorkoutDetailNotes,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact workout row - minimal workout display with quick start
 /// Used below nutrition/fasting hero cards when workout isn't primary focus
 class CompactWorkoutRow extends ConsumerWidget {
@@ -107,7 +108,7 @@ class CompactWorkoutRow extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                ' • ',
+                                AppLocalizations.of(context).programLibrary,
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: textSecondary,
@@ -116,7 +117,7 @@ class CompactWorkoutRow extends ConsumerWidget {
                             ],
                             Expanded(
                               child: Text(
-                                workout.name ?? 'Workout',
+                                workout.name ?? AppLocalizations.of(context).navWorkout,
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,

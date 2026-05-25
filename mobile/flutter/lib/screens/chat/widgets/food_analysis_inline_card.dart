@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Inline card shown inside a chat bubble for food analysis results.
 /// Each item has a checkbox, macro chips, and portion multiplier buttons.
 class FoodAnalysisInlineCard extends StatefulWidget {
@@ -114,7 +115,7 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Food Analysis',
+                  AppLocalizations.of(context).foodAnalysisInlineFoodAnalysis,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -142,7 +143,7 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      '\u00b7',
+                      AppLocalizations.of(context).foodAnalysisResultU00b7,
                       style: TextStyle(fontSize: 12, color: colors.textMuted),
                     ),
                     const SizedBox(width: 6),
@@ -168,7 +169,7 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                     ),
                     label: Text(
                       _logged
-                          ? 'Logged'
+                          ? AppLocalizations.of(context).menuAnalysisLogged
                           : 'Log This Meal',
                     ),
                     style: ElevatedButton.styleFrom(

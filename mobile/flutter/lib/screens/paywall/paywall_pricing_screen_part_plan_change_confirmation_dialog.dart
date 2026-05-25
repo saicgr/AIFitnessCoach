@@ -58,7 +58,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
 
             // Title
             Text(
-              isUpgrade ? 'Confirm Upgrade' : 'Confirm Plan Change',
+              isUpgrade ? AppLocalizations.of(context).paywallPricingScreenConfirmUpgrade : AppLocalizations.of(context).paywallPricingScreenConfirmPlanChange,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -68,7 +68,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               isUpgrade
-                  ? 'You will be upgraded immediately'
+                  ? AppLocalizations.of(context).paywallPricingScreenYouWillBeUpgraded
                   : 'Changes will take effect at the end of your current billing period',
               style: TextStyle(
                 fontSize: 14,
@@ -91,7 +91,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
                 children: [
                   // Current plan row
                   _PlanComparisonRow(
-                    label: 'Current Plan',
+                    label: AppLocalizations.of(context).paywallPricingScreenCurrentPlan,
                     planName: currentPlanName,
                     price: currentPlanPrice,
                     isHighlighted: false,
@@ -107,7 +107,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
                   const SizedBox(height: 12),
                   // New plan row
                   _PlanComparisonRow(
-                    label: 'New Plan',
+                    label: AppLocalizations.of(context).paywallPricingScreenNewPlan,
                     planName: newPlanName,
                     price: newPlanPrice,
                     isHighlighted: true,
@@ -147,7 +147,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    ' price difference',
+                    AppLocalizations.of(context).paywallPricingScreenPriceDifference,
                     style: TextStyle(
                       fontSize: 14,
                       color: colors.textSecondary,
@@ -197,8 +197,8 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
+                      child: Text(
+                        AppLocalizations.of(context).buttonCancel,
                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -219,8 +219,8 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Confirm Change',
+                      child: Text(
+                        AppLocalizations.of(context).paywallPricingScreenConfirmChange,
                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                     ),

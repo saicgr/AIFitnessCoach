@@ -7,6 +7,7 @@ import 'package:fitwiz/data/models/chat_message.dart';
 import 'package:fitwiz/data/repositories/chat_repository.dart';
 import 'package:fitwiz/widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Overlay that lets the user search through chat messages.
 class ChatSearchOverlay extends ConsumerStatefulWidget {
   final List<ChatMessage> messages;
@@ -91,8 +92,8 @@ class _ChatSearchOverlayState extends ConsumerState<ChatSearchOverlay> {
 
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: const PillAppBar(
-        title: 'Search Chat',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).chatSearchOverlaySearchChat,
       ),
       body: Column(
         children: [
@@ -104,7 +105,7 @@ class _ChatSearchOverlayState extends ConsumerState<ChatSearchOverlay> {
               onChanged: _onSearchChanged,
               style: TextStyle(color: colors.textPrimary),
               decoration: InputDecoration(
-                hintText: 'Search messages...',
+                hintText: AppLocalizations.of(context).chatSearchOverlaySearchMessages,
                 hintStyle: TextStyle(color: colors.textMuted),
                 prefixIcon: Icon(Icons.search, color: colors.textSecondary),
                 filled: true,
@@ -128,14 +129,14 @@ class _ChatSearchOverlayState extends ConsumerState<ChatSearchOverlay> {
             child: _query.isEmpty
                 ? Center(
                     child: Text(
-                      'Type to search',
+                      AppLocalizations.of(context).chatSearchOverlayTypeToSearch,
                       style: TextStyle(color: colors.textMuted),
                     ),
                   )
                 : allResults.isEmpty && !_isSearchingServer
                     ? Center(
                         child: Text(
-                          'No results found',
+                          AppLocalizations.of(context).exerciseSearchResultsNoResultsFound,
                           style: TextStyle(color: colors.textMuted),
                         ),
                       )
@@ -214,7 +215,7 @@ class _SearchResultCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    message.isUser ? 'You' : (message.agentConfig.displayName),
+                    message.isUser ? AppLocalizations.of(context).navYou : (message.agentConfig.displayName),
                     style: TextStyle(
                       color: colors.textMuted,
                       fontSize: 12,

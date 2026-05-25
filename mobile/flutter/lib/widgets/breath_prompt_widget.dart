@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Lightweight breath-pacing widget used as the mood workout "pre-start"
 /// screen for Anxious / Stressed / Angry sessions.
 ///
@@ -147,7 +148,7 @@ class _BreathPromptWidgetState extends State<BreathPromptWidget>
                 child: TextButton(
                   onPressed: _finish,
                   child: Text(
-                    'Skip',
+                    AppLocalizations.of(context).onboardingSkip,
                     style: TextStyle(color: textMuted, fontSize: 14),
                   ),
                 ),

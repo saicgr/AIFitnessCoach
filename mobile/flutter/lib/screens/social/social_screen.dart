@@ -18,6 +18,7 @@ import '../../widgets/nav_bar_hider_mixin.dart';
 import '../../core/services/posthog_service.dart';
 import 'friend_search_screen.dart';
 import 'conversation_screen.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 part 'social_screen_part_messages_screen.dart';
 

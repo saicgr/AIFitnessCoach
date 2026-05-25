@@ -8,6 +8,7 @@ import '../data/providers/level_up_events_provider.dart';
 import '../data/services/haptic_service.dart';
 import 'glass_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Persistent "You leveled up while away!" banner. Shown anywhere you want
 /// users to never miss a level-up reward — home screen, inventory, XP goals.
 ///
@@ -105,7 +106,7 @@ class _LevelUpCatchUpBannerState extends ConsumerState<LevelUpCatchUpBanner> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Tap to see your rewards',
+                      AppLocalizations.of(context).levelUpCatchTapToSeeYour,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.white.withValues(alpha: 0.9),
@@ -121,7 +122,7 @@ class _LevelUpCatchUpBannerState extends ConsumerState<LevelUpCatchUpBanner> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'REVEAL',
+                  AppLocalizations.of(context).levelUpCatchReveal,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -184,7 +185,7 @@ class _LevelUpCatchUpSheet extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Your rewards are already in your Inventory',
+                        AppLocalizations.of(context).levelUpCatchYourRewardsAreAlready,
                         style: TextStyle(fontSize: 12, color: textMuted),
                       ),
                     ],
@@ -222,8 +223,8 @@ class _LevelUpCatchUpSheet extends ConsumerWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text(
-                  'Awesome — got it',
+                child: Text(
+                  AppLocalizations.of(context).levelUpCatchAwesomeGotIt,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
@@ -316,7 +317,7 @@ class _EventCard extends StatelessWidget {
                     ),
                     if (hasMerch)
                       Text(
-                        'Includes a FREE physical reward — claim in Merch Rewards',
+                        AppLocalizations.of(context).levelUpCatchIncludesAFreePhysical,
                         style: TextStyle(fontSize: 11, color: accent, fontWeight: FontWeight.w600),
                       ),
                   ],

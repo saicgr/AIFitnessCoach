@@ -8,6 +8,7 @@ import '../../core/services/posthog_service.dart';
 import '../onboarding/onboarding_experiments.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'plan_preview_screen_ui.dart';
 
 
@@ -210,7 +211,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your 4-Week Plan',
+                  AppLocalizations.of(context).planPreviewYour4WeekPlan,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -231,7 +232,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                           Icon(Icons.visibility, color: Colors.green, size: 12),
                           const SizedBox(width: 4),
                           Text(
-                            'FREE PREVIEW',
+                            AppLocalizations.of(context).planPreviewFreePreview,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -387,7 +388,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                 ),
               ),
               Text(
-                'Rest & Recovery',
+                AppLocalizations.of(context).planPreviewRestRecovery,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey,

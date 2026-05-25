@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Training style selection widget (Screen 8: Phase 2 personalization).
 ///
 /// Allows user to select:
@@ -169,7 +170,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
             children: [
               if (widget.showHeader) ...[
                 Text(
-                  'Training Style',
+                  AppLocalizations.of(context).workoutTypeSelectorTrainingStyle,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -178,7 +179,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ).animate().fadeIn(delay: 100.ms),
                 const SizedBox(height: 6),
                 Text(
-                  'Choose how you want to structure your workouts',
+                  AppLocalizations.of(context).quizTrainingStyleChooseHowYouWant,
                   style: TextStyle(
                     fontSize: 15,
                     color: t.textSecondary,
@@ -194,7 +195,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   children: [
                 if (widget.showSplitSection) ...[
                 Text(
-                  'Training Split',
+                  AppLocalizations.of(context).workoutSettingsTrainingSplit,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -206,8 +207,8 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 _buildSplitOption(
                   t: t,
                   id: 'ai_decide',
-                  title: 'Let AI Decide',
-                  description: 'Automatically optimized for your schedule (Recommended)',
+                  title: AppLocalizations.of(context).quizTrainingStyleLetAiDecide,
+                  description: AppLocalizations.of(context).quizTrainingStyleAutomaticallyOptimizedForYo,
                   recommended: true,
                   delay: 300.ms,
                 ),
@@ -215,24 +216,24 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 _buildSplitOption(
                   t: t,
                   id: 'push_pull_legs',
-                  title: 'Push / Pull / Legs (PPL)',
-                  description: 'Best for 5-6 days/week',
+                  title: AppLocalizations.of(context).quizTrainingStylePushPullLegsPpl,
+                  description: AppLocalizations.of(context).quizTrainingStyleBestFor56,
                   delay: 350.ms,
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
                   t: t,
                   id: 'full_body',
-                  title: 'Full Body',
-                  description: 'Train all muscles each workout (2-4 days)',
+                  title: AppLocalizations.of(context).quizTrainingStyleFullBody,
+                  description: AppLocalizations.of(context).quizTrainingStyleTrainAllMusclesEach,
                   delay: 400.ms,
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
                   t: t,
                   id: 'upper_lower',
-                  title: 'Upper / Lower',
-                  description: 'Split between upper and lower body (4 days)',
+                  title: AppLocalizations.of(context).quizTrainingStyleUpperLower,
+                  description: AppLocalizations.of(context).quizTrainingStyleSplitBetweenUpperAnd,
                   delay: 450.ms,
                 ),
                 const SizedBox(height: 12),
@@ -240,7 +241,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   t: t,
                   id: 'phul',
                   title: 'PHUL',
-                  description: 'Power + Hypertrophy, Upper + Lower (4 days)',
+                  description: AppLocalizations.of(context).quizTrainingStylePowerHypertrophyUpperL,
                   delay: 500.ms,
                 ),
                 const SizedBox(height: 12),
@@ -248,7 +249,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   t: t,
                   id: 'phat',
                   title: 'PHAT',
-                  description: 'Power Hypertrophy Adaptive Training (5 days)',
+                  description: AppLocalizations.of(context).quizTrainingStylePowerHypertrophyAdaptiveTra,
                   delay: 550.ms,
                 ),
                 const SizedBox(height: 12),
@@ -256,23 +257,23 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   t: t,
                   id: 'pplul',
                   title: 'PPLUL',
-                  description: 'Push/Pull/Legs/Upper/Lower (5 days)',
+                  description: AppLocalizations.of(context).quizTrainingStylePushPullLegsUpper,
                   delay: 600.ms,
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
                   t: t,
                   id: 'body_part',
-                  title: 'Body Part Split',
-                  description: 'One muscle group per day (5+ days)',
+                  title: AppLocalizations.of(context).quizTrainingStyleBodyPartSplit,
+                  description: AppLocalizations.of(context).quizTrainingStyleOneMuscleGroupPer,
                   delay: 650.ms,
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
                   t: t,
                   id: 'arnold_split',
-                  title: 'Arnold Split',
-                  description: 'Chest/Back, Shoulders/Arms, Legs (6 days)',
+                  title: AppLocalizations.of(context).quizTrainingStyleArnoldSplit,
+                  description: AppLocalizations.of(context).quizTrainingStyleChestBackShouldersArms,
                   delay: 700.ms,
                 ),
 
@@ -306,7 +307,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'Schedule conflict',
+                                    AppLocalizations.of(context).quizTrainingStyleScheduleConflict,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
@@ -391,7 +392,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
 
                 // Section B: Workout Type
                 Text(
-                  'Workout Type',
+                  AppLocalizations.of(context).workoutSettingsWorkoutType,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -414,7 +415,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 if (widget.onWorkoutVarietyChanged != null) ...[
                   const SizedBox(height: 28),
                   Text(
-                    'Exercise Variety',
+                    AppLocalizations.of(context).quizTrainingStyleExerciseVariety,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -423,7 +424,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Do you prefer the same exercises each week or variety?',
+                    AppLocalizations.of(context).quizTrainingStyleDoYouPreferThe,
                     style: TextStyle(
                       fontSize: 13,
                       color: t.textSecondary,

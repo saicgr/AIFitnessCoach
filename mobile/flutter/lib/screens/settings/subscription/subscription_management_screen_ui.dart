@@ -89,7 +89,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'LIFETIME',
+                                  AppLocalizations.of(context).subscriptionManagementScreenLifetime,
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -126,7 +126,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                         children: [
                           Text(
                             isLifetime
-                                ? 'Access never expires'
+                                ? AppLocalizations.of(context).subscriptionManagementScreenAccessNeverExpires
                                 : 'Active subscription',
                             style: TextStyle(
                               fontSize: 14,
@@ -257,7 +257,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
-                  ended ? 'Trial ended' : 'left in trial',
+                  ended ? AppLocalizations.of(context).subscriptionManagementScreenTrialEnded : AppLocalizations.of(context).subscriptionManagementScreenLeftInTrial,
                   style: TextStyle(
                     fontSize: 12,
                     color: textSecondary,
@@ -387,7 +387,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'MANAGE SUBSCRIPTION',
+          AppLocalizations.of(context).subscriptionManagementScreenManageSubscription,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -407,8 +407,8 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
               if (_isPaused)
                 _buildActionTile(
                   icon: Icons.play_circle_outline,
-                  title: 'Resume Subscription',
-                  subtitle: 'Start billing again',
+                  title: AppLocalizations.of(context).subscriptionManagementScreenResumeSubscription,
+                  subtitle: AppLocalizations.of(context).subscriptionManagementScreenStartBillingAgain,
                   color: AppColors.green,
                   onTap: _handleResume,
                   textPrimary: textPrimary,
@@ -419,8 +419,8 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
               else
                 _buildActionTile(
                   icon: Icons.pause_circle_outline,
-                  title: 'Pause Subscription',
-                  subtitle: 'Take a break for up to 3 months',
+                  title: AppLocalizations.of(context).subscriptionManagementScreenPauseSubscription,
+                  subtitle: AppLocalizations.of(context).subscriptionManagementScreenTakeABreakFor,
                   color: Colors.amber.shade700,
                   onTap: _showPauseSheet,
                   textPrimary: textPrimary,
@@ -430,8 +430,8 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                 ),
               _buildActionTile(
                 icon: Icons.cancel_outlined,
-                title: 'Cancel Subscription',
-                subtitle: 'Cancel auto-renewal',
+                title: AppLocalizations.of(context).subscriptionManagementScreenCancelSubscription,
+                subtitle: AppLocalizations.of(context).subscriptionManagementScreenCancelAutoRenewal,
                 color: Colors.red.shade400,
                 onTap: _showCancelConfirmation,
                 textPrimary: textPrimary,

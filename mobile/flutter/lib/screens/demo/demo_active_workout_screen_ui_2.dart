@@ -42,7 +42,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
               const SizedBox(height: 24),
 
               Text(
-                'Workout Complete!',
+                AppLocalizations.of(context).workoutCompleteWorkoutComplete,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -138,7 +138,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'AI Coach Review',
+                          AppLocalizations.of(context).workoutSummaryGeneralAiCoachReview,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -158,7 +158,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Sign up to get personalized AI coaching, detailed progress tracking, and workouts tailored to your goals.',
+                      AppLocalizations.of(context).demoActiveWorkoutSignUpToGet,
                       style: TextStyle(
                         fontSize: 14,
                         color: textSecondary,
@@ -191,7 +191,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                     Icon(Icons.rocket_launch, color: AppColors.cyan, size: 32),
                     const SizedBox(height: 12),
                     Text(
-                      'Ready for the full experience?',
+                      AppLocalizations.of(context).demoActiveWorkoutReadyForTheFull,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -201,7 +201,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Get AI-generated workout plans, track your progress, and achieve your fitness goals faster.',
+                      AppLocalizations.of(context).demoActiveWorkoutGetAiGeneratedWorkout,
                       style: TextStyle(
                         fontSize: 14,
                         color: textSecondary,
@@ -227,8 +227,8 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
-                    'Get Personalized Workouts',
+                  child: Text(
+                    AppLocalizations.of(context).guestSampleWorkoutGetPersonalizedWorkouts,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -242,7 +242,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
               TextButton(
                 onPressed: () => context.pop(),
                 child: Text(
-                  'Back to Preview',
+                  AppLocalizations.of(context).demoActiveWorkoutBackToPreview,
                   style: TextStyle(
                     fontSize: 14,
                     color: textSecondary,

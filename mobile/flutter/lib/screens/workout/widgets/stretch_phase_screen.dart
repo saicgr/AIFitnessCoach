@@ -11,6 +11,7 @@ import '../../../core/constants/app_colors.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Stretch phase screen displayed after the main workout
 class StretchPhaseScreen extends StatefulWidget {
   /// Total workout time in seconds
@@ -238,8 +239,8 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
         // Skip stretches button
         TextButton(
           onPressed: widget.onSkipAll,
-          child: const Text(
-            'Skip All',
+          child: Text(
+            AppLocalizations.of(context).stretchPhaseSkipAll,
             style: TextStyle(
               color: AppColors.green,
               fontWeight: FontWeight.w600,
@@ -269,8 +270,8 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'COOL DOWN',
+            Text(
+              AppLocalizations.of(context).stretchPhaseCoolDown,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -317,7 +318,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Great job! Time to stretch and recover.',
+              AppLocalizations.of(context).stretchPhaseGreatJobTimeTo,
               style: TextStyle(
                 fontSize: 14,
                 color: textPrimary,
@@ -424,7 +425,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'UP NEXT',
+          AppLocalizations.of(context).warmupPhaseUpNext,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -504,7 +505,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
             ),
             label: Text(
               isTimerRunning
-                  ? 'Pause'
+                  ? AppLocalizations.of(context).warmupPhasePause
                   : (hasTimeRemaining ? 'Resume' : 'Start Timer'),
               style: const TextStyle(
                 fontSize: 16,
@@ -531,7 +532,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
             ),
             icon: Icon(isLastExercise ? Icons.check : Icons.skip_next),
             label: Text(
-              isLastExercise ? 'Finish' : 'Next',
+              isLastExercise ? AppLocalizations.of(context).stretchPhaseFinish : AppLocalizations.of(context).commonNext,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

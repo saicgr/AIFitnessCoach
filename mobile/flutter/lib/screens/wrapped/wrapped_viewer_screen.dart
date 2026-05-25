@@ -18,6 +18,7 @@ import '../../shareables/shareable_sheet.dart';
 import '../../shareables/shareable_catalog.dart';
 import '../../shareables/adapters/wrapped_adapter.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full-screen story viewer for Fitness Wrapped.
 /// Swipe through 8 cards with auto-advance, progress bar, and share.
 class WrappedViewerScreen extends ConsumerStatefulWidget {
@@ -150,7 +151,7 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
                 const Icon(Icons.error_outline, color: Colors.white54, size: 48),
                 const SizedBox(height: 16),
                 Text(
-                  'Failed to load your Wrapped',
+                  AppLocalizations.of(context).wrappedViewerFailedToLoadYour,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 18,
@@ -177,7 +178,7 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
                     side: BorderSide(
                         color: Colors.white.withValues(alpha: 0.3)),
                   ),
-                  child: const Text('Retry'),
+                  child: Text(AppLocalizations.of(context).buttonRetry),
                 ),
               ],
             ),
@@ -301,7 +302,7 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Share',
+                      AppLocalizations.of(context).commonShare,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 15,

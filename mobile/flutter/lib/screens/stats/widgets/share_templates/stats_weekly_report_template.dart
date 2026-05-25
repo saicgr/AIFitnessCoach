@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Stats Weekly Report Template - Receipt/report card style
 /// Dark navy gradient with structured typographic layout and grade badge
 class StatsWeeklyReportTemplate extends StatelessWidget {
@@ -86,8 +87,8 @@ class StatsWeeklyReportTemplate extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Double-line header
-                const Text(
-                  'WEEKLY',
+                Text(
+                  AppLocalizations.of(context).statsWeeklyReportWeekly,
                   style: TextStyle(
                     color: Color(0xFF94A3B8),
                     fontSize: 12,
@@ -95,8 +96,8 @@ class StatsWeeklyReportTemplate extends StatelessWidget {
                     letterSpacing: 6,
                   ),
                 ),
-                const Text(
-                  'REPORT CARD',
+                Text(
+                  AppLocalizations.of(context).statsWeeklyReportReportCard,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -150,15 +151,15 @@ class StatsWeeklyReportTemplate extends StatelessWidget {
 
                 // Stat rows
                 _ReportRow(
-                  label: 'COMPLETED',
+                  label: AppLocalizations.of(context).statsWeeklyReportCompleted,
                   value: '$weeklyCompleted / $weeklyGoal',
                 ),
                 _ReportRow(
-                  label: 'COMPLETION',
+                  label: AppLocalizations.of(context).statsWeeklyReportCompletion,
                   value: '${_completionPercent.toStringAsFixed(0)}%',
                 ),
                 _ReportRow(
-                  label: 'STREAK',
+                  label: AppLocalizations.of(context).weeklyRecapTemplateStreak,
                   value: '$currentStreak days',
                 ),
                 _ReportRow(

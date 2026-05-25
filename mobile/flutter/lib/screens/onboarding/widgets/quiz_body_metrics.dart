@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import 'scroll_hint_arrow.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'quiz_body_metrics_ui.dart';
 
 part 'quiz_body_metrics_ext.dart';
@@ -814,7 +815,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(color: textSecondary),
             ),
           ),
@@ -837,7 +838,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Done'),
+            child: Text(AppLocalizations.of(context).commonDone),
           ),
         ],
       ),

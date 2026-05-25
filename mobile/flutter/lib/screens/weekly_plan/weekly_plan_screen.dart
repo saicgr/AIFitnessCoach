@@ -12,6 +12,7 @@ import '../../core/services/posthog_service.dart';
 import '../../shareables/widgets/share_plan_period_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Weekly plan screen showing the holistic plan calendar view
 class WeeklyPlanScreen extends ConsumerStatefulWidget {
   const WeeklyPlanScreen({super.key});
@@ -59,7 +60,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
 
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Weekly Plan',
+        title: AppLocalizations.of(context).weeklyPlanWeeklyPlan,
         actions: [
           PillAppBarAction(
             icon: Icons.ios_share_rounded,
@@ -74,7 +75,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
           ? FloatingActionButton.extended(
               onPressed: _showGeneratePlanSheet,
               icon: const Icon(Icons.auto_awesome),
-              label: const Text('Generate Plan'),
+              label: Text(AppLocalizations.of(context).weeklyPlanGeneratePlan),
             )
           : null,
     );
@@ -103,7 +104,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Error loading plan',
+                AppLocalizations.of(context).weeklyPlanErrorLoadingPlan,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
@@ -118,7 +119,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
                   ref.read(weeklyPlanProvider.notifier).loadCurrentPlan();
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(AppLocalizations.of(context).buttonRetry),
               ),
             ],
           ),
@@ -154,14 +155,14 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No Weekly Plan Yet',
+              AppLocalizations.of(context).weeklyPlanNoWeeklyPlanYet,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Create a holistic plan that coordinates your workouts, nutrition, and fasting schedule for the week.',
+              AppLocalizations.of(context).weeklyPlanCreateAHolisticPlan,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colorScheme.onSurfaceVariant,
@@ -172,7 +173,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
             FilledButton.icon(
               onPressed: _showGeneratePlanSheet,
               icon: const Icon(Icons.auto_awesome),
-              label: const Text('Generate My Plan'),
+              label: Text(AppLocalizations.of(context).weeklyPlanGenerateMyPlan),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,

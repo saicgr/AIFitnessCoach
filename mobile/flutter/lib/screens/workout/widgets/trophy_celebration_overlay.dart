@@ -11,6 +11,7 @@ import '../../../core/animations/celebration_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Show full-screen trophy celebration overlay
 Future<void> showTrophyCelebration({
   required BuildContext context,
@@ -160,7 +161,7 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      'Tap anywhere to continue',
+                      AppLocalizations.of(context).trophyCelebrationOverlayTapAnywhereToContinue,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.white.withValues(alpha: 0.5),
@@ -183,8 +184,8 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
                       shaderCallback: (bounds) => LinearGradient(
                         colors: [AppColors.orange, AppColors.purple],
                       ).createShader(bounds),
-                      child: const Text(
-                        'TROPHIES EARNED!',
+                      child: Text(
+                        AppLocalizations.of(context).trophyCelebrationOverlayTrophiesEarned,
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -334,7 +335,7 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
             _buildTrophyRow(
               icon: Icons.flag,
               iconColor: AppColors.orange,
-              label: 'Milestone Reached!',
+              label: AppLocalizations.of(context).trophyCelebrationOverlayMilestoneReached,
               subtitle: '${widget.workoutMilestone} Workouts Completed',
               delay: 600,
             ),
@@ -345,7 +346,7 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
               icon: Icons.local_fire_department,
               iconColor: const Color(0xFFFF6B35),
               label: '${widget.currentStreak} Day Streak!',
-              subtitle: 'Keep the momentum going',
+              subtitle: AppLocalizations.of(context).trophyCelebrationOverlayKeepTheMomentumGoing,
               delay: 750,
             ),
         ],

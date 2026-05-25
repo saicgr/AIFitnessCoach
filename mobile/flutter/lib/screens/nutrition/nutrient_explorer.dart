@@ -7,6 +7,7 @@ import '../../data/models/micronutrients.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'nutrient_explorer_part_nutrient_score_card.dart';
 part 'nutrient_explorer_part_tier_label.dart';
 
@@ -105,7 +106,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
             // Nutrient Sections
             if (_selectedCategory == 'all' || _selectedCategory == 'vitamins')
               _NutrientSection(
-                title: 'VITAMINS',
+                title: AppLocalizations.of(context).nutrientExplorerVitamins,
                 icon: Icons.wb_sunny_outlined,
                 nutrients: summary.vitamins,
                 categoryColor: const Color(0xFFFF9F43), // Warm orange
@@ -115,7 +116,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
 
             if (_selectedCategory == 'all' || _selectedCategory == 'minerals')
               _NutrientSection(
-                title: 'MINERALS',
+                title: AppLocalizations.of(context).nutrientExplorerMinerals,
                 icon: Icons.diamond_outlined,
                 nutrients: summary.minerals,
                 categoryColor: const Color(0xFF00D9C0), // Teal
@@ -125,7 +126,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
 
             if (_selectedCategory == 'all' || _selectedCategory == 'fats')
               _NutrientSection(
-                title: 'FATTY ACIDS',
+                title: AppLocalizations.of(context).nutrientExplorerFattyAcids,
                 icon: Icons.water_drop_outlined,
                 nutrients: summary.fattyAcids,
                 categoryColor: const Color(0xFF4D96FF), // Blue
@@ -231,7 +232,7 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'PRIORITISED FOR YOUR CYCLE PHASE',
+                        AppLocalizations.of(context).nutrientExplorerPrioritisedForYourCycle,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -241,7 +242,7 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Nutrients that matter most where you are in your cycle',
+                        AppLocalizations.of(context).nutrientExplorerNutrientsThatMatterMost,
                         style: TextStyle(fontSize: 11, color: textMuted),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -350,7 +351,7 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
       debugPrint('Error toggling pin: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update pinned nutrients')),
+          SnackBar(content: Text(AppLocalizations.of(context).nutrientExplorerFailedToUpdatePinned)),
         );
       }
     } finally {
@@ -437,7 +438,7 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
                         _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                         color: _isPinned ? teal : textMuted,
                       ),
-                tooltip: _isPinned ? 'Unpin nutrient' : 'Pin to dashboard',
+                tooltip: _isPinned ? AppLocalizations.of(context).nutrientExplorerUnpinNutrient : AppLocalizations.of(context).nutrientExplorerPinToDashboard,
               ),
               const SizedBox(width: 8),
               // Status badge
@@ -485,7 +486,7 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
                           ),
                         ),
                         Text(
-                          'Current',
+                          AppLocalizations.of(context).workoutPlanDrawerCurrent,
                           style: TextStyle(
                             fontSize: 12,
                             color: textMuted,
@@ -547,7 +548,7 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
           if (widget.nutrient.topContributors != null &&
               widget.nutrient.topContributors!.isNotEmpty) ...[
             Text(
-              'TOP CONTRIBUTORS',
+              AppLocalizations.of(context).nutrientExplorerTopContributors,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -572,7 +573,7 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        contributor['food_name'] ?? 'Unknown',
+                        contributor['food_name'] ?? AppLocalizations.of(context).nutrientExplorerUnknown,
                         style: TextStyle(
                           fontSize: 14,
                           color: textPrimary,

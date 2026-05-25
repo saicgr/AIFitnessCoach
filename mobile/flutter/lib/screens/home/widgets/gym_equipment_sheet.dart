@@ -7,6 +7,7 @@ import '../../../widgets/sheet_header.dart';
 import '../../workout/widgets/edit_weights_sheet.dart';
 import 'import_equipment_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Equipment categories and their items - matching gym equipment structure
 const Map<String, List<String>> gymEquipmentCategories = {
   'Free Weights': [
@@ -339,7 +340,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.title ?? 'Equipment',
+                        widget.title ?? AppLocalizations.of(context).trainingSetupCardEquipment,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -361,7 +362,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                             GestureDetector(
                               onTap: _resetAll,
                               child: Text(
-                                'Reset All',
+                                AppLocalizations.of(context).moodCardResetAll,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.red.shade400,
@@ -428,7 +429,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
               controller: _searchController,
               onChanged: (value) => setState(() => _searchQuery = value),
               decoration: InputDecoration(
-                hintText: 'Filter equipment by name',
+                hintText: AppLocalizations.of(context).gymEquipmentFilterEquipmentByName,
                 hintStyle: TextStyle(color: textMuted, fontSize: 14),
                 prefixIcon: Icon(Icons.filter_list, color: textMuted, size: 20),
                 suffixIcon: _searchQuery.isNotEmpty
@@ -520,7 +521,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                   }
                 },
                 child: Text(
-                  selectedInCategory > 0 ? 'Deselect All' : 'Select All',
+                  selectedInCategory > 0 ? AppLocalizations.of(context).measurementsScreenPartDeselectAll : AppLocalizations.of(context).openAllCratesSelectAll,
                   style: TextStyle(
                     fontSize: 13,
                     color: accentColor,
@@ -626,7 +627,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                     GestureDetector(
                       onTap: () => _showEditWeights(name),
                       child: Text(
-                        'Edit Weights',
+                        AppLocalizations.of(context).gymEquipmentEditWeights,
                         style: TextStyle(
                           fontSize: 13,
                           color: accentColor,
@@ -756,7 +757,7 @@ class _ImportFromAIButton extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Import from PDF, photos, or URL',
+                    AppLocalizations.of(context).gymEquipmentImportFromPdfPhotos,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -766,7 +767,7 @@ class _ImportFromAIButton extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Let AI populate your equipment list automatically',
+                    AppLocalizations.of(context).gymEquipmentLetAiPopulateYour,
                     style: TextStyle(
                       fontSize: 11,
                       color: (isDark

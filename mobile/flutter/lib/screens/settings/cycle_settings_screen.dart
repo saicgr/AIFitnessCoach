@@ -13,6 +13,7 @@ import '../../data/repositories/hormonal_health_repository.dart';
 import '../../data/services/notification_service.dart';
 import '../onboarding/cycle_onboarding_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Cycle settings — the in-app home for everything cycle-related that is a
 /// preference rather than logged data.
 ///
@@ -117,7 +118,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
             false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cycle')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).overviewCycle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -131,7 +132,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                 onChanged: _trackingSaving ? null : _setTracking,
                 activeThumbColor: accent,
                 secondary: Icon(Icons.bloodtype_outlined, color: accent),
-                title: Text('Cycle tracking',
+                title: Text(AppLocalizations.of(context).cycleStatusCardCycleTracking,
                     style: TextStyle(
                         color: textPrimary, fontWeight: FontWeight.w600)),
                 subtitle: Text(
@@ -159,11 +160,11 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(Icons.favorite_rounded, color: accent),
-                title: Text('Open Cycle',
+                title: Text(AppLocalizations.of(context).cycleSettingsOpenCycle,
                     style: TextStyle(
                         color: textPrimary, fontWeight: FontWeight.w600)),
                 subtitle: Text(
-                  'Calendar, predictions, logging, and insights',
+                  AppLocalizations.of(context).cycleSettingsCalendarPredictionsLogging,
                   style: TextStyle(color: textMuted, fontSize: 12),
                 ),
                 trailing: Icon(Icons.chevron_right, color: textMuted),
@@ -182,8 +183,8 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                   _ToggleRow(
                     icon: Icons.notifications_active_outlined,
                     accent: accent,
-                    title: 'Cycle reminders',
-                    subtitle: 'Master switch for all cycle notifications',
+                    title: AppLocalizations.of(context).cycleSettingsCycleReminders,
+                    subtitle: AppLocalizations.of(context).cycleSettingsMasterSwitchForAll,
                     value: prefs.cycleRemindersMaster,
                     onChanged: notifier.setCycleRemindersMaster,
                     isDark: isDark,
@@ -202,7 +203,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     _ToggleRow(
                       icon: Icons.event_outlined,
                       accent: accent,
-                      title: 'Period approaching',
+                      title: AppLocalizations.of(context).cycleSettingsPeriodApproaching,
                       subtitle:
                           'A heads-up ${prefs.cyclePeriodApproachingLeadDays} '
                           'day(s) before your predicted period',
@@ -221,8 +222,8 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     _ToggleRow(
                       icon: Icons.water_drop_outlined,
                       accent: accent,
-                      title: 'Period start day',
-                      subtitle: 'On your predicted period start date',
+                      title: AppLocalizations.of(context).cycleSettingsPeriodStartDay,
+                      subtitle: AppLocalizations.of(context).cycleSettingsOnYourPredictedPeriod,
                       value: prefs.cyclePeriodStart,
                       onChanged: notifier.setCyclePeriodStart,
                       isDark: isDark,
@@ -231,7 +232,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     _ToggleRow(
                       icon: Icons.run_circle_outlined,
                       accent: accent,
-                      title: 'Period running late',
+                      title: AppLocalizations.of(context).cycleSettingsPeriodRunningLate,
                       subtitle:
                           'An alert if no period is logged past the window',
                       value: prefs.cycleLatePeriodAlert,
@@ -245,7 +246,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     _ToggleRow(
                       icon: Icons.spa_outlined,
                       accent: accent,
-                      title: 'Fertile window',
+                      title: AppLocalizations.of(context).cycleSettingsFertileWindow,
                       subtitle: isTtc
                           ? 'When your estimated fertile window opens'
                           : 'Available in Trying to Conceive mode',
@@ -258,7 +259,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     _ToggleRow(
                       icon: Icons.auto_awesome_outlined,
                       accent: accent,
-                      title: 'Peak fertility',
+                      title: AppLocalizations.of(context).cycleSettingsPeakFertility,
                       subtitle: isTtc
                           ? 'On your estimated peak fertility days'
                           : 'Available in Trying to Conceive mode',
@@ -273,8 +274,8 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     _TimeRow(
                       icon: Icons.schedule_outlined,
                       accent: accent,
-                      title: 'Reminder time',
-                      subtitle: 'When the reminders above are delivered',
+                      title: AppLocalizations.of(context).notificationsReminderTime,
+                      subtitle: AppLocalizations.of(context).cycleSettingsWhenTheRemindersAbove,
                       time: prefs.cycleReminderTimeOfDay,
                       onChanged: notifier.setCycleReminderTimeOfDay,
                       isDark: isDark,
@@ -284,8 +285,8 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     _ToggleRow(
                       icon: Icons.thermostat_outlined,
                       accent: accent,
-                      title: 'Daily temperature reminder',
-                      subtitle: 'A morning nudge to log your BBT',
+                      title: AppLocalizations.of(context).cycleSettingsDailyTemperatureReminder,
+                      subtitle: AppLocalizations.of(context).cycleSettingsAMorningNudgeTo,
                       value: prefs.cycleBbtReminder,
                       onChanged: notifier.setCycleBbtReminder,
                       isDark: isDark,
@@ -294,8 +295,8 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                       _TimeRow(
                         icon: Icons.wb_sunny_outlined,
                         accent: accent,
-                        title: 'Temperature reminder time',
-                        subtitle: 'Best taken before getting up',
+                        title: AppLocalizations.of(context).cycleSettingsTemperatureReminderTime,
+                        subtitle: AppLocalizations.of(context).cycleSettingsBestTakenBeforeGetting,
                         time: prefs.cycleBbtReminderTime,
                         onChanged: notifier.setCycleBbtReminderTime,
                         isDark: isDark,
@@ -305,8 +306,8 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     _ToggleRow(
                       icon: Icons.edit_note_outlined,
                       accent: accent,
-                      title: 'Symptom check-in',
-                      subtitle: 'An evening nudge to log how you feel',
+                      title: AppLocalizations.of(context).cycleSettingsSymptomCheckIn,
+                      subtitle: AppLocalizations.of(context).cycleSettingsAnEveningNudgeTo,
                       value: prefs.cycleSymptomCheckin,
                       onChanged: notifier.setCycleSymptomCheckin,
                       isDark: isDark,
@@ -315,7 +316,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                       _TimeRow(
                         icon: Icons.nightlight_outlined,
                         accent: accent,
-                        title: 'Check-in time',
+                        title: AppLocalizations.of(context).cycleSettingsCheckInTime,
                         subtitle: null,
                         time: prefs.cycleSymptomCheckinTime,
                         onChanged: notifier.setCycleSymptomCheckinTime,
@@ -345,7 +346,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                 value: _photoReminderEnabled,
                 onChanged: _photoSaving ? null : _togglePhotoReminders,
                 activeThumbColor: accent,
-                title: Text('Cycle-aware photo reminders',
+                title: Text(AppLocalizations.of(context).cycleSettingsCycleAwarePhotoReminders,
                     style: TextStyle(
                         color: textPrimary, fontWeight: FontWeight.w600)),
                 subtitle: Text(
@@ -584,7 +585,7 @@ class _LeadDaysRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 4, 0, 10),
       child: Row(
         children: [
-          Text('Days before',
+          Text(AppLocalizations.of(context).cycleSettingsDaysBefore,
               style: TextStyle(fontSize: 12.5, color: textMuted)),
           Expanded(
             child: SliderTheme(

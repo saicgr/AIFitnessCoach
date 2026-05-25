@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/goal_unit.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Dialog for recording a single_max attempt or adding volume
 class RecordAttemptDialog extends StatefulWidget {
   final String exerciseName;
@@ -44,7 +45,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
 
     if (value == null || value <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid number')),
+        SnackBar(content: Text(AppLocalizations.of(context).recordAttemptPleaseEnterAValid)),
       );
       return;
     }
@@ -113,7 +114,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                     children: [
                       Text(
                         widget.isMaxAttempt
-                            ? 'Record Attempt'
+                            ? AppLocalizations.of(context).recordAttemptRecordAttempt
                             : 'Add ${_capitalize(widget.unit.fullLabel)}',
                         style: TextStyle(
                           fontSize: 18,
@@ -149,7 +150,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                   Column(
                     children: [
                       Text(
-                        widget.isMaxAttempt ? 'Current Best' : 'Total So Far',
+                        widget.isMaxAttempt ? AppLocalizations.of(context).recordAttemptCurrentBest : AppLocalizations.of(context).recordAttemptTotalSoFar,
                         style: TextStyle(fontSize: 11, color: textMuted),
                       ),
                       const SizedBox(height: 4),
@@ -172,7 +173,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                     Column(
                       children: [
                         Text(
-                          'Personal Best',
+                          AppLocalizations.of(context).recordAttemptPersonalBest,
                           style: TextStyle(fontSize: 11, color: textMuted),
                         ),
                         const SizedBox(height: 4),
@@ -241,7 +242,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
             // Notes (optional)
             if (widget.isMaxAttempt) ...[
               Text(
-                'Notes (optional)',
+                AppLocalizations.of(context).recordAttemptNotesOptional,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -254,7 +255,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                 style: TextStyle(color: textPrimary),
                 maxLines: 2,
                 decoration: InputDecoration(
-                  hintText: 'How did it feel?',
+                  hintText: AppLocalizations.of(context).syncedWorkoutDetailHowDidItFeel,
                   hintStyle: TextStyle(color: textMuted),
                   filled: true,
                   fillColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -282,7 +283,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                   child: TextButton(
                     onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
                     child: Text(
-                      'Cancel',
+                      AppLocalizations.of(context).buttonCancel,
                       style: TextStyle(color: textSecondary),
                     ),
                   ),

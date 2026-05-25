@@ -66,7 +66,7 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
           const SizedBox(height: 8),
           // Title
           Text(
-            'Set Progression',
+            AppLocalizations.of(context).progressionSelectorSetProgression,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -75,7 +75,7 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Choose how weight changes across sets',
+            AppLocalizations.of(context).progressionSelectorChooseHowWeightChanges,
             style: TextStyle(fontSize: 14, color: textSecondary),
           ),
           const SizedBox(height: 20),
@@ -89,7 +89,7 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
-              'ADVANCED',
+              AppLocalizations.of(context).progressionSelectorAdvanced,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -294,7 +294,7 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
                       const SizedBox(height: 12),
                       // When to use
                       Text(
-                        'When to use',
+                        AppLocalizations.of(context).progressionSelectorWhenToUse,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -319,7 +319,7 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
                             color: textPrimary.withValues(alpha: 0.5)),
                           const SizedBox(width: 4),
                           Text(
-                            'Auto-adjusts',
+                            AppLocalizations.of(context).progressionSelectorAutoAdjusts,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,

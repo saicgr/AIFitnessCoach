@@ -213,7 +213,7 @@ class _InputBarState extends State<_InputBar> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
               Text(
-                'Add Video',
+                AppLocalizations.of(context).chatScreenPartAddVideo,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -223,8 +223,8 @@ class _InputBarState extends State<_InputBar> {
               const SizedBox(height: 16),
               _VideoPickerOption(
                 icon: Icons.videocam_outlined,
-                label: 'Record Video',
-                subtitle: 'Use camera (max 60s)',
+                label: AppLocalizations.of(context).mediaPickerHelperRecordVideo,
+                subtitle: AppLocalizations.of(context).mediaPickerHelperUseCameraMax60s,
                 color: const Color(0xFFF97316),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -249,8 +249,8 @@ class _InputBarState extends State<_InputBar> {
               const SizedBox(height: 8),
               _VideoPickerOption(
                 icon: Icons.video_library_outlined,
-                label: 'Choose Video',
-                subtitle: 'From gallery (max 60s)',
+                label: AppLocalizations.of(context).mediaPickerHelperChooseVideo,
+                subtitle: AppLocalizations.of(context).mediaPickerHelperFromGalleryMax60s,
                 color: const Color(0xFFA855F7),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -429,7 +429,7 @@ class _InputBarState extends State<_InputBar> {
                         minLines: 1,
                         decoration: InputDecoration(
                           hintText: _selectedMedia.isNotEmpty
-                              ? 'Add a message...'
+                              ? AppLocalizations.of(context).inlineWorkoutChatAddAMessage
                               : (widget.isLoading ? 'Type next message...' : 'Ask AI coach...'),
                           hintMaxLines: 1,
                           hintStyle: TextStyle(
@@ -604,7 +604,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
           child: const Icon(Icons.support_agent, color: Colors.white, size: 24),
         ),
         const SizedBox(width: 12),
-        const Flexible(child: Text('Talk to Human Support')),
+        Flexible(child: Text(AppLocalizations.of(context).chatScreenPartTalkToHumanSupport)),
       ],
     );
   }
@@ -693,7 +693,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
               ),
             );
           },
-          loading: () => const Padding(
+          loading: () => Padding(
             padding: EdgeInsets.all(12),
             child: Row(
               children: [
@@ -707,7 +707,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                 ),
                 SizedBox(width: 8),
                 Text(
-                  'Checking availability...',
+                  AppLocalizations.of(context).chatScreenPartCheckingAvailability,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
@@ -722,7 +722,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
               color: AppColors.textMuted.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(
                   Icons.info_outline,
@@ -731,7 +731,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                 ),
                 SizedBox(width: 8),
                 Text(
-                  'Wait time unavailable',
+                  AppLocalizations.of(context).chatScreenPartWaitTimeUnavailable,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
@@ -751,13 +751,13 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'You will be connected with a real support agent who can help with your questions.',
+          Text(
+            AppLocalizations.of(context).chatScreenPartYouWillBeConnected,
             style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Select a category:',
+          Text(
+            AppLocalizations.of(context).chatScreenPartSelectACategory,
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 14,
@@ -825,7 +825,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
     return [
       TextButton(
         onPressed: _isLoading ? null : () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(AppLocalizations.of(context).buttonCancel),
       ),
       ElevatedButton(
         onPressed: _isLoading ? null : _handleConnect,
@@ -845,7 +845,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                   color: Colors.white,
                 ),
               )
-            : const Text('Connect'),
+            : Text(AppLocalizations.of(context).unifiedHomeWidgetsConnect),
       ),
     ];
   }

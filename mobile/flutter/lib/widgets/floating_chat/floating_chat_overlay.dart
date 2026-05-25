@@ -18,6 +18,7 @@ import '../main_shell.dart';
 import 'floating_chat_provider.dart';
 import '../glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Hero tag for chat window animation
 const String chatHeroTag = 'chat-window-hero';
 
@@ -258,7 +259,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                               ),
                             ),
                             Text(
-                              _isLoading ? 'Typing...' : 'Online',
+                              _isLoading ? AppLocalizations.of(context).globalChatBubbleTyping : AppLocalizations.of(context).globalChatBubbleOnline,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _isLoading
@@ -335,10 +336,10 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                           color: isDark ? AppColors.error : AppColorsLight.error,
                           size: 40),
                       const SizedBox(height: 12),
-                      Text('Error loading messages', style: TextStyle(color: textMuted)),
+                      Text(AppLocalizations.of(context).globalChatBubbleErrorLoadingMessages, style: TextStyle(color: textMuted)),
                       TextButton(
                         onPressed: () => ref.read(chatMessagesProvider.notifier).loadHistory(),
-                        child: const Text('Retry'),
+                        child: Text(AppLocalizations.of(context).buttonRetry),
                       ),
                     ],
                   ),
@@ -389,7 +390,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                       onTap: () {
                         HapticService.light();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Media attachments available in full chat')),
+                          SnackBar(content: Text(AppLocalizations.of(context).floatingChatOverlayMediaAttachmentsAvailableIn)),
                         );
                         context.push('/chat');
                       },
@@ -435,7 +436,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                         minLines: 1,
                         style: TextStyle(fontSize: 15, color: textPrimary),
                         decoration: InputDecoration(
-                          hintText: _isLoading ? 'Type your next message...' : 'Ask your AI coach...',
+                          hintText: _isLoading ? AppLocalizations.of(context).floatingChatOverlayTypeYourNextMessage : AppLocalizations.of(context).globalChatBubbleAskYourAiCoach,
                           hintStyle: TextStyle(color: textMuted, fontSize: 15),
                           filled: false,
                           border: InputBorder.none,
@@ -514,7 +515,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
           ),
           const SizedBox(height: 16),
           Text(
-            'How can I help you today?',
+            AppLocalizations.of(context).globalChatBubbleHowCanIHelp,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -523,7 +524,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Ask me anything about fitness',
+            AppLocalizations.of(context).globalChatBubbleAskMeAnythingAbout,
             style: TextStyle(fontSize: 14, color: textSecondary),
           ),
           const SizedBox(height: 24),

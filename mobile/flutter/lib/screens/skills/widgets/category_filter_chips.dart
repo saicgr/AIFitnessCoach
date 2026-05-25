@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Horizontal scrolling category filter chips
 class CategoryFilterChips extends StatelessWidget {
   final List<String> categories;
@@ -28,7 +29,7 @@ class CategoryFilterChips extends StatelessWidget {
         children: [
           // "All" chip
           _FilterChip(
-            label: 'All',
+            label: AppLocalizations.of(context).syncedWorkoutsHistoryAll,
             isSelected: selectedCategory == null,
             onTap: () => onCategorySelected(null),
             selectedColor: cyan,

@@ -17,6 +17,7 @@ import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/exercise.dart';
 import '../../shared/tier_comparison_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Fixed 48 pt top bar for the Easy-tier active workout screen.
 class EasyTopBar extends ConsumerWidget {
   final int workoutSeconds;
@@ -92,7 +93,7 @@ class EasyTopBar extends ConsumerWidget {
                     await HapticService.instance.tap();
                     onMinimize!.call();
                   },
-                  tooltip: 'Minimize workout',
+                  tooltip: AppLocalizations.of(context).easyTopBarMinimizeWorkout,
                 ),
               ),
             // Overflow menu — holds the quiet but essential Skip /
@@ -107,7 +108,7 @@ class EasyTopBar extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   icon: Icon(Icons.more_vert_rounded,
                       size: 20, color: textColor),
-                  tooltip: 'More',
+                  tooltip: AppLocalizations.of(context).homeMore,
                   onSelected: (v) async {
                     await HapticService.instance.tap();
                     if (v == 'skip' && onSkipToNext != null) {
@@ -120,12 +121,12 @@ class EasyTopBar extends ConsumerWidget {
                   },
                   itemBuilder: (ctx) => [
                     if (onSkipToNext != null)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'skip',
                         child: Row(children: [
                           Icon(Icons.skip_next_rounded, size: 18),
                           SizedBox(width: 10),
-                          Text('Skip to next exercise'),
+                          Text(AppLocalizations.of(context).easyTopBarSkipToNextExercise),
                         ]),
                       ),
                     if (onCompleteNow != null)
@@ -135,7 +136,7 @@ class EasyTopBar extends ConsumerWidget {
                           Icon(Icons.check_circle_rounded,
                               size: 18, color: accent),
                           const SizedBox(width: 10),
-                          const Text('Complete workout'),
+                          Text(AppLocalizations.of(context).workoutTopBarCompleteWorkout),
                         ]),
                       ),
                     if (onQuit != null)
@@ -145,7 +146,7 @@ class EasyTopBar extends ConsumerWidget {
                           Icon(Icons.close_rounded,
                               size: 18, color: Colors.redAccent),
                           const SizedBox(width: 10),
-                          const Text('Quit workout',
+                          Text(AppLocalizations.of(context).easyTopBarQuitWorkout,
                               style: TextStyle(color: Colors.redAccent)),
                         ]),
                       ),
@@ -305,7 +306,7 @@ class _FavoriteButton extends ConsumerWidget {
                 exerciseId: exercise.id ?? exercise.libraryId,
               );
         },
-        tooltip: isFav ? 'Remove from favorites' : 'Add to favorites',
+        tooltip: isFav ? AppLocalizations.of(context).easyTopBarRemoveFromFavorites : AppLocalizations.of(context).easyTopBarAddToFavorites,
       ),
     );
   }

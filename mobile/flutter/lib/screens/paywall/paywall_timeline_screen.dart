@@ -8,6 +8,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Paywall Screen 2: Trial Timeline
 /// Shows users what to expect during their free trial
 class PaywallTimelineScreen extends ConsumerWidget {
@@ -48,7 +49,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
             children: [
               // Title
               Text(
-                'How your free trial works',
+                AppLocalizations.of(context).paywallTimelineHowYourFreeTrial,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
@@ -130,7 +131,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Cancel anytime during or after your trial. No charge until the trial ends, and you can manage your subscription from Google Play.',
+                        AppLocalizations.of(context).paywallTimelineCancelAnytimeDuringOr,
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.textSecondary,
@@ -173,7 +174,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'How your free',
+                    AppLocalizations.of(context).paywallTimelineHowYourFree,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w600,
@@ -181,7 +182,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    'trial works',
+                    AppLocalizations.of(context).paywallTimelineTrialWorks,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -197,8 +198,8 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 _TimelineItem(
                   icon: Icons.card_giftcard,
                   iconColor: colors.accent,
-                  title: 'Today',
-                  subtitle: 'Unlimited workouts, food scanning, injury tracking, skill progressions & more',
+                  title: AppLocalizations.of(context).todayScoreCardToday,
+                  subtitle: AppLocalizations.of(context).paywallTimelineUnlimitedWorkoutsFoodScann,
                   isFirst: true,
                   isLast: false,
                   colors: colors,
@@ -206,8 +207,8 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 _TimelineItem(
                   icon: Icons.notifications_outlined,
                   iconColor: colors.accent,
-                  title: 'In 5 days',
-                  subtitle: 'We\'ll remind you before your trial ends - no surprises',
+                  title: AppLocalizations.of(context).paywallTimelineIn5Days,
+                  subtitle: AppLocalizations.of(context).paywallTimelineWeLlRemindYou,
                   isFirst: false,
                   isLast: false,
                   colors: colors,
@@ -215,7 +216,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 _TimelineItem(
                   icon: Icons.credit_card_outlined,
                   iconColor: colors.textSecondary,
-                  title: 'In 7 days',
+                  title: AppLocalizations.of(context).paywallTimelineIn7Days,
                   subtitle: 'You\'ll be charged on ${dateFormat.format(chargeDate)}. Cancel anytime before - no questions asked.',
                   isFirst: false,
                   isLast: true,
@@ -241,8 +242,8 @@ class PaywallTimelineScreen extends ConsumerWidget {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Continue',
+                child: Text(
+                  AppLocalizations.of(context).onboardingContinueButton,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,

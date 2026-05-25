@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/flexibility_assessment.dart';
 import '../../../data/providers/flexibility_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for recording a new flexibility assessment
 class RecordAssessmentSheet extends ConsumerStatefulWidget {
   final FlexibilityTest test;
@@ -89,7 +90,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Record Assessment',
+                          AppLocalizations.of(context).recordAssessmentRecordAssessment,
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -126,7 +127,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
                       // Instructions Preview
                       if (widget.test.instructions.isNotEmpty) ...[
                         Text(
-                          'Quick Instructions',
+                          AppLocalizations.of(context).recordAssessmentQuickInstructions,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -183,7 +184,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
 
                       // Measurement Input
                       Text(
-                        'Your Measurement',
+                        AppLocalizations.of(context).recordAssessmentYourMeasurement,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -199,7 +200,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
                           FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d*')),
                         ],
                         decoration: InputDecoration(
-                          hintText: 'Enter measurement',
+                          hintText: AppLocalizations.of(context).recordAssessmentEnterMeasurement,
                           suffixText: widget.test.unit,
                           border: const OutlineInputBorder(),
                           helperText: _getHelperText(),
@@ -220,7 +221,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
 
                       // Notes Input
                       Text(
-                        'Notes (Optional)',
+                        AppLocalizations.of(context).recordAssessmentNotesOptional,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -229,8 +230,8 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
                       TextFormField(
                         controller: _notesController,
                         maxLines: 3,
-                        decoration: const InputDecoration(
-                          hintText: 'Any notes about this assessment...',
+                        decoration: InputDecoration(
+                          hintText: AppLocalizations.of(context).recordAssessmentAnyNotesAboutThis,
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -247,7 +248,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Tips',
+                              AppLocalizations.of(context).recordAssessmentTips,
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -261,7 +262,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '\u2022 ',
+                                AppLocalizations.of(context).xpGoalsU2022,
                                 style: TextStyle(color: Colors.amber.shade700),
                               ),
                               Expanded(
@@ -297,7 +298,7 @@ class _RecordAssessmentSheetState extends ConsumerState<RecordAssessmentSheet> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Record Assessment'),
+                      : Text(AppLocalizations.of(context).recordAssessmentRecordAssessment),
                 ),
               ),
             ),

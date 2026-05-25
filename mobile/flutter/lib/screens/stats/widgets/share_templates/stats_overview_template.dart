@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Stats Overview Template - Shows activity summary with key stats
 /// Dark gradient background with heatmap-style visualization
 class StatsOverviewTemplate extends StatelessWidget {
@@ -65,7 +66,7 @@ class StatsOverviewTemplate extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'MY STATS',
+                            AppLocalizations.of(context).statsOverviewTemplateMyStats,
                             style: TextStyle(
                               color: AppColors.orange,
                               fontSize: 12,
@@ -127,8 +128,8 @@ class StatsOverviewTemplate extends StatelessWidget {
                           height: 1,
                         ),
                       ),
-                      const Text(
-                        'WORKOUTS',
+                      Text(
+                        AppLocalizations.of(context).weeklyRecapTemplateWorkouts,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -149,19 +150,19 @@ class StatsOverviewTemplate extends StatelessWidget {
                     _StatItem(
                       icon: Icons.calendar_today,
                       value: '$weeklyCompleted/$weeklyGoal',
-                      label: 'This Week',
+                      label: AppLocalizations.of(context).workoutCompleteThisWeek,
                       color: AppColors.purple,
                     ),
                     _StatItem(
                       icon: Icons.timer_outlined,
                       value: totalTimeFormatted,
-                      label: 'Total Time',
+                      label: AppLocalizations.of(context).statsOverviewTemplateTotalTime,
                       color: AppColors.success,
                     ),
                     _StatItem(
                       icon: Icons.trending_up,
                       value: '$currentStreak',
-                      label: 'Streak',
+                      label: AppLocalizations.of(context).xpProgressCardStreak,
                       color: AppColors.orange,
                     ),
                   ],

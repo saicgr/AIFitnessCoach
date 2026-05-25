@@ -5,6 +5,7 @@ import '../../../../core/providers/week_start_provider.dart';
 import '../../../../data/models/weekly_plan.dart';
 import '../../../../data/providers/weekly_plan_provider.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Home screen card showing today's plan and weekly overview
 class WeeklyPlanCard extends ConsumerStatefulWidget {
   const WeeklyPlanCard({super.key});
@@ -79,14 +80,14 @@ class _WeeklyPlanCardState extends ConsumerState<WeeklyPlanCard> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Create Your Weekly Plan',
+                AppLocalizations.of(context).weeklyPlanCardCreateYourWeeklyPlan,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Get a holistic plan that coordinates workouts, nutrition, and fasting',
+                AppLocalizations.of(context).weeklyPlanCardGetAHolisticPlan,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
@@ -140,7 +141,7 @@ class _WeeklyPlanCardState extends ConsumerState<WeeklyPlanCard> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Weekly Plan',
+                    AppLocalizations.of(context).weeklyPlanWeeklyPlan,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -180,7 +181,7 @@ class _WeeklyPlanCardState extends ConsumerState<WeeklyPlanCard> {
                 Row(
                   children: [
                     Text(
-                      "Today's Plan",
+                      AppLocalizations.of(context).weeklyPlanCardTodaySPlan,
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),

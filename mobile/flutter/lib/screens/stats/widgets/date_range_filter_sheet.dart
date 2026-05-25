@@ -8,6 +8,7 @@ import '../../../data/providers/consistency_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for selecting date range for stats filtering
 class DateRangeFilterSheet extends ConsumerStatefulWidget {
   const DateRangeFilterSheet({super.key});
@@ -62,7 +63,7 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
             Padding(
               padding: const EdgeInsets.all(20),
               child: Text(
-                'Select Date Range',
+                AppLocalizations.of(context).dateRangeFilterSelectDateRange,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -92,7 +93,7 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
                         },
                       )),
                   _PresetChip(
-                    label: 'Custom',
+                    label: AppLocalizations.of(context).workoutsCustom,
                     isSelected: _isCustomSelected,
                     accentColor: accent,
                     onTap: () => _showCustomDatePicker(context),
@@ -157,8 +158,8 @@ class _DateRangeFilterSheetState extends ConsumerState<DateRangeFilterSheet> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Apply',
+                  child: Text(
+                    AppLocalizations.of(context).setAdjustmentSheetApply,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

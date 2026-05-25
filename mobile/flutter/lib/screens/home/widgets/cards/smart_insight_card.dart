@@ -25,6 +25,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/providers/smart_insight_provider.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// The smart-insight card. Returns [SizedBox.shrink] whenever the resolved
 /// state says it should not show — safe to place unconditionally in a tile
 /// list, exactly like [DeloadRecommendationCard].
@@ -92,7 +93,7 @@ class _SmartInsightCardBody extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Smart insight',
+                  AppLocalizations.of(context).smartInsightCardSmartInsight,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,

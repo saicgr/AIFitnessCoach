@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/body_analyzer.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// List of posture issues detected by Gemini + CTA to queue correctives.
 class PostureFindingsCard extends StatelessWidget {
   final List<PostureFinding> findings;
@@ -46,7 +47,7 @@ class PostureFindingsCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Posture findings',
+                AppLocalizations.of(context).postureFindingsCardPostureFindings,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -104,7 +105,7 @@ class PostureFindingsCard extends StatelessWidget {
                       )
                     : const Icon(Icons.auto_fix_high_rounded, size: 18),
                 label: Text(
-                  isApplying ? 'Queuing…' : 'Add corrective exercises',
+                  isApplying ? AppLocalizations.of(context).postureFindingsCardQueuing : AppLocalizations.of(context).postureFindingsCardAddCorrectiveExercises,
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF5A623),

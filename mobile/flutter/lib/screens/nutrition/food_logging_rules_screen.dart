@@ -23,6 +23,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/services/haptic_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class FoodLoggingRulesScreen extends ConsumerStatefulWidget {
   const FoodLoggingRulesScreen({super.key});
 
@@ -187,7 +188,7 @@ class _FoodLoggingRulesScreenState
       appBar: AppBar(
         backgroundColor: colors.background,
         elevation: 0,
-        title: Text('Always-Rules',
+        title: Text(AppLocalizations.of(context).nutritionSettingsAlwaysRules,
             style: TextStyle(color: colors.textPrimary)),
         iconTheme: IconThemeData(color: colors.textPrimary),
       ),
@@ -201,7 +202,7 @@ class _FoodLoggingRulesScreenState
                       'You can have at most $_maxRules rules. Delete one to add another.')
                   : () => _openEditor(colors),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Add rule'),
+              label: Text(AppLocalizations.of(context).foodLoggingRulesAddRule),
             ),
       body: _buildBody(colors),
     );
@@ -225,7 +226,7 @@ class _FoodLoggingRulesScreenState
                   textAlign: TextAlign.center,
                   style: TextStyle(color: colors.textMuted)),
               const SizedBox(height: 16),
-              TextButton(onPressed: _load, child: const Text('Retry')),
+              TextButton(onPressed: _load, child: Text(AppLocalizations.of(context).buttonRetry)),
             ],
           ),
         ),
@@ -294,7 +295,7 @@ class _FoodLoggingRulesScreenState
                   color: Color(0xFFF59E0B), size: 20),
               const SizedBox(width: 8),
               Text(
-                'Conflicting rules',
+                AppLocalizations.of(context).foodLoggingRulesConflictingRules,
                 style: TextStyle(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -336,7 +337,7 @@ class _FoodLoggingRulesScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'No rules yet',
+            AppLocalizations.of(context).foodLoggingRulesNoRulesYet,
             style: TextStyle(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -441,18 +442,18 @@ class _FoodLoggingRulesScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.elevated,
-        title: Text('Delete rule?',
+        title: Text(AppLocalizations.of(context).foodLoggingRulesDeleteRule,
             style: TextStyle(color: colors.textPrimary)),
         content: Text('"$text"',
             style: TextStyle(color: colors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete',
+            child: Text(AppLocalizations.of(context).buttonDelete,
                 style: TextStyle(color: Color(0xFFEF4444))),
           ),
         ],
@@ -486,7 +487,7 @@ class _FoodLoggingRulesScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isEdit ? 'Edit rule' : 'New always-rule',
+                isEdit ? AppLocalizations.of(context).foodLoggingRulesEditRule : AppLocalizations.of(context).foodLoggingRulesNewAlwaysRule,
                 style: TextStyle(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -502,7 +503,7 @@ class _FoodLoggingRulesScreenState
                 style: TextStyle(color: colors.textPrimary),
                 decoration: InputDecoration(
                   hintText:
-                      'e.g. "No bun" or "we cook low-oil South Indian"',
+                      AppLocalizations.of(context).foodLoggingRulesEGNoBun,
                   hintStyle: TextStyle(color: colors.textMuted),
                   filled: true,
                   fillColor: colors.surface,
@@ -534,7 +535,7 @@ class _FoodLoggingRulesScreenState
                       _addRule(v);
                     }
                   },
-                  child: Text(isEdit ? 'Save' : 'Add rule'),
+                  child: Text(isEdit ? AppLocalizations.of(context).buttonSave : AppLocalizations.of(context).foodLoggingRulesAddRule),
                 ),
               ),
             ],

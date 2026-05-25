@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/body_analyzer.dart';
 import '../../../data/repositories/body_analyzer_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet that shows a retune proposal's muscle-volume deltas,
 /// calorie/macro shifts, and posture correctives. User can expand the
 /// "Preview next week" block, then Accept or Decline.
@@ -52,7 +53,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
       Navigator.of(context).pop(res);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Program retuned. Next plan will reflect changes.'),
+          content: Text(AppLocalizations.of(context).retuneProposalProgramRetunedNextPlan),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -124,7 +125,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
                   const Icon(Icons.auto_awesome, color: Color(0xFFB24BF3)),
                   const SizedBox(width: 8),
                   Text(
-                    'Retune proposal',
+                    AppLocalizations.of(context).retuneProposalRetuneProposal,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -204,7 +205,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: _dismissing ? null : _dismiss,
-                      child: Text(_dismissing ? 'Dismissing…' : 'Dismiss'),
+                      child: Text(_dismissing ? AppLocalizations.of(context).retuneProposalDismissing : AppLocalizations.of(context).upgradePromptDismiss),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -223,7 +224,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
                               ),
                             )
                           : const Icon(Icons.check_rounded, size: 18),
-                      label: Text(_applying ? 'Applying…' : 'Apply changes'),
+                      label: Text(_applying ? AppLocalizations.of(context).retuneProposalApplying : AppLocalizations.of(context).retuneProposalApplyChanges),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFB24BF3),
                         foregroundColor: Colors.white,
@@ -325,7 +326,7 @@ class _PreviewExpandableState extends State<_PreviewExpandable> {
             child: Row(
               children: [
                 Text(
-                  'Preview next week',
+                  AppLocalizations.of(context).retuneProposalPreviewNextWeek,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -353,7 +354,7 @@ class _PreviewExpandableState extends State<_PreviewExpandable> {
               ),
             )
           else if (widget.preview == null)
-            Text('Preview unavailable.',
+            Text(AppLocalizations.of(context).retuneProposalPreviewUnavailable,
                 style: TextStyle(color: textMuted, fontSize: 12))
           else ...[
             for (final diff in widget.preview!.fieldDiffs)
@@ -366,7 +367,7 @@ class _PreviewExpandableState extends State<_PreviewExpandable> {
               ),
             if (widget.preview!.muscleFocusDiffs.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text('Muscle focus shifts:',
+              Text(AppLocalizations.of(context).retuneProposalMuscleFocusShifts,
                   style: TextStyle(color: textMuted, fontSize: 11)),
               for (final m in widget.preview!.muscleFocusDiffs)
                 _previewRow(

@@ -7,6 +7,7 @@ import '../core/theme/accent_color_provider.dart';
 import '../data/models/level_reward.dart';
 import '../data/services/haptic_service.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Fitness Crate opening dialog with exciting animation
 class FitnessCrateDialog extends ConsumerStatefulWidget {
   final CrateTier tier;
@@ -443,8 +444,8 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
                       color: Colors.white,
                     ),
                   )
-                : const Text(
-                    'OPEN CRATE',
+                : Text(
+                    AppLocalizations.of(context).levelUpDialogOpenCrate,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -473,8 +474,8 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
               shaderCallback: (bounds) => LinearGradient(
                 colors: [crateColor, Colors.amber, crateColor],
               ).createShader(bounds),
-              child: const Text(
-                'REWARDS!',
+              child: Text(
+                AppLocalizations.of(context).fitnessCrateRewards,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
@@ -508,8 +509,8 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'COLLECT',
+                child: Text(
+                  AppLocalizations.of(context).fitnessCrateCollect,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

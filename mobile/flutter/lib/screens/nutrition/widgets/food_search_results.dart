@@ -6,6 +6,7 @@ import '../../../data/services/food_search_service.dart' as search;
 import '../../../widgets/empty_state.dart';
 import 'food_search_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A results list widget for food search
 class FoodSearchResults extends ConsumerWidget {
   final String userId;
@@ -161,7 +162,7 @@ class _InitialState extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'Type to search your saved foods, recent meals, or the database.',
+            AppLocalizations.of(context).foodSearchResultsTypeToSearchYour,
             style: TextStyle(
               color: textMuted,
               fontSize: 14,
@@ -336,7 +337,7 @@ class _ResultsList extends StatelessWidget {
     // Saved Foods section
     if (saved.isNotEmpty && showCategories) {
       items.add(_SectionHeader(
-        title: 'Saved Foods',
+        title: AppLocalizations.of(context).foodSearchResultsSavedFoods,
         icon: Icons.bookmark_rounded,
         count: saved.length,
         isDark: isDark,
@@ -351,7 +352,7 @@ class _ResultsList extends StatelessWidget {
     // Recent section
     if (recent.isNotEmpty && showCategories) {
       items.add(_SectionHeader(
-        title: 'Recent',
+        title: AppLocalizations.of(context).nutritionShowcaseRecent,
         icon: Icons.history_rounded,
         count: recent.length,
         isDark: isDark,
@@ -366,7 +367,7 @@ class _ResultsList extends StatelessWidget {
     // Database section
     if (database.isNotEmpty && showCategories) {
       items.add(_SectionHeader(
-        title: 'Database',
+        title: AppLocalizations.of(context).foodSearchResultsDatabase,
         icon: Icons.storage_rounded,
         count: database.length,
         isDark: isDark,
@@ -381,7 +382,7 @@ class _ResultsList extends StatelessWidget {
     // Food Database section
     if (foodDatabase.isNotEmpty && showCategories) {
       items.add(_SectionHeader(
-        title: 'Food Database',
+        title: AppLocalizations.of(context).foodSearchResultsFoodDatabase,
         icon: Icons.restaurant_menu_rounded,
         count: foodDatabase.length,
         isDark: isDark,
@@ -436,7 +437,7 @@ class _CacheIndicator extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            'Instant results',
+            AppLocalizations.of(context).foodSearchResultsInstantResults,
             style: TextStyle(
               color: textMuted,
               fontSize: 12,
@@ -743,7 +744,7 @@ class _NoResultsState extends StatelessWidget {
         children: [
           EmptyState(
             icon: Icons.search_off_rounded,
-            title: 'No foods found',
+            title: AppLocalizations.of(context).foodSearchResultsNoFoodsFound,
             subtitle: 'No saved foods match "$query".',
             iconColor: AppColors.textMuted,
             useLottie: false,
@@ -755,8 +756,8 @@ class _NoResultsState extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: onAnalyzeWithAI,
                 icon: const Icon(Icons.auto_awesome, size: 18),
-                label: const Text(
-                  'Analyze with AI',
+                label: Text(
+                  AppLocalizations.of(context).foodSearchResultsAnalyzeWithAi,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -799,9 +800,9 @@ class _ErrorState extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: EmptyState(
         icon: Icons.error_outline_rounded,
-        title: 'Something went wrong',
+        title: AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
         subtitle: message,
-        actionLabel: 'Retry',
+        actionLabel: AppLocalizations.of(context).buttonRetry,
         onAction: onRetry,
         iconColor: AppColors.error,
         useLottie: false,

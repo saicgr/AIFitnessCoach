@@ -6,6 +6,7 @@ import '../../../../../data/services/haptic_service.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class RestTimerCard extends ConsumerStatefulWidget {
   final BeastThemeData theme;
 
@@ -67,9 +68,9 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Custom Rest Timer', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: t.textPrimary)),
+          Text(AppLocalizations.of(context).restTimerCardCustomRestTimer, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: t.textPrimary)),
           const SizedBox(height: 4),
-          Text('Control rest periods between sets', style: TextStyle(fontSize: 11, color: t.textMuted)),
+          Text(AppLocalizations.of(context).restTimerCardControlRestPeriodsBetween, style: TextStyle(fontSize: 11, color: t.textMuted)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -97,13 +98,13 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
           if (mode == 'fixed') ..._buildFixedControls(config, notifier, t),
           if (mode == 'auto_scaled') ..._buildAutoScaledControls(config, notifier, t),
           if (mode == 'rpe_based')
-            Text('Rest = BaseRest * (RPE / 7)', style: TextStyle(fontSize: 12, color: t.textPrimary, fontFamily: 'monospace')),
+            Text(AppLocalizations.of(context).restTimerCardRestBaserestRpe7, style: TextStyle(fontSize: 12, color: t.textPrimary, fontFamily: 'monospace')),
           if (mode == 'custom') ...[
             TextField(
               controller: _formulaController,
               style: TextStyle(fontSize: 12, color: t.textPrimary, fontFamily: 'monospace'),
               decoration: InputDecoration(
-                labelText: 'Formula',
+                labelText: AppLocalizations.of(context).restTimerCardFormula,
                 labelStyle: TextStyle(color: t.textMuted, fontSize: 11),
                 hintText: 'base * (rpe / 7) * multiplier',
                 hintStyle: TextStyle(color: t.textMuted.withValues(alpha: 0.5), fontSize: 11),
@@ -114,7 +115,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
               onChanged: (v) => notifier.updateRestTimerCustomFormula(v),
             ),
             const SizedBox(height: 4),
-            Text('Variables: base, rpe, multiplier, tier', style: TextStyle(fontSize: 10, color: t.textMuted)),
+            Text(AppLocalizations.of(context).restTimerCardVariablesBaseRpeMultipli, style: TextStyle(fontSize: 10, color: t.textMuted)),
           ],
           const SizedBox(height: 12),
           _buildPreview(config, t),
@@ -151,7 +152,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
     return [
       Row(
         children: [
-          SizedBox(width: 80, child: Text('Base Rest', style: TextStyle(fontSize: 12, color: t.textPrimary))),
+          SizedBox(width: 80, child: Text(AppLocalizations.of(context).restTimerCardBaseRest, style: TextStyle(fontSize: 12, color: t.textPrimary))),
           Expanded(
             child: SliderTheme(
               data: _orangeSliderTheme(context),
@@ -167,7 +168,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
       ),
       Row(
         children: [
-          SizedBox(width: 80, child: Text('Multiplier', style: TextStyle(fontSize: 12, color: t.textPrimary))),
+          SizedBox(width: 80, child: Text(AppLocalizations.of(context).restTimerCardMultiplier, style: TextStyle(fontSize: 12, color: t.textPrimary))),
           Expanded(
             child: SliderTheme(
               data: _orangeSliderTheme(context),
@@ -202,7 +203,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Live Preview', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t.textMuted)),
+          Text(AppLocalizations.of(context).restTimerCardLivePreview, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t.textMuted)),
           const SizedBox(height: 6),
           ...scenarios.map((s) => Padding(
                 padding: const EdgeInsets.only(bottom: 2),

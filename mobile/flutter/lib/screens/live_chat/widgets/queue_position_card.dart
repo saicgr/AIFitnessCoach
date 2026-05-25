@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Queue position card displayed while waiting for an agent
 class QueuePositionCard extends StatelessWidget {
   final int position;
@@ -50,7 +51,7 @@ class QueuePositionCard extends StatelessWidget {
 
           // Queue position
           Text(
-            'You are',
+            AppLocalizations.of(context).queuePositionCardYouAre,
             style: TextStyle(
               fontSize: 16,
               color: AppColors.textSecondary,
@@ -76,7 +77,7 @@ class QueuePositionCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'in queue',
+                AppLocalizations.of(context).queuePositionCardInQueue,
                 style: TextStyle(
                   fontSize: 18,
                   color: AppColors.textSecondary,
@@ -119,7 +120,7 @@ class QueuePositionCard extends StatelessWidget {
 
           // Info text
           Text(
-            'Please wait while we connect you\nwith a support agent',
+            AppLocalizations.of(context).queuePositionCardPleaseWaitWhileWe,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -146,7 +147,7 @@ class QueuePositionCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context).buttonCancel),
             ),
           ),
         ],

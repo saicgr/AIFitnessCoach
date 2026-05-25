@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers/weekly_plan_provider.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Detailed view of a single day's plan
 class DailyPlanDetailSheet extends ConsumerWidget {
   final DailyPlanEntry entry;
@@ -187,7 +188,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
               const Icon(Icons.fitness_center, color: Colors.green),
               const SizedBox(width: 8),
               Text(
-                'Workout',
+                AppLocalizations.of(context).navWorkout,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -204,13 +205,13 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.check, size: 14, color: Colors.white),
                       SizedBox(width: 4),
                       Text(
-                        'Completed',
+                        AppLocalizations.of(context).progressionStepCardCompleted,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -224,7 +225,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            entry.workoutFocus ?? 'Scheduled Workout',
+            entry.workoutFocus ?? AppLocalizations.of(context).dailyPlanDetailScheduledWorkout,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -274,7 +275,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                   // Navigate to workout or start workout
                 },
                 icon: const Icon(Icons.play_arrow),
-                label: const Text('Start Workout'),
+                label: Text(AppLocalizations.of(context).warmupPhaseStartWorkout),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.green,
                   side: const BorderSide(color: Colors.green),
@@ -301,7 +302,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
               Icon(Icons.restaurant, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Nutrition Targets',
+                AppLocalizations.of(context).dailyPlanDetailNutritionTargets,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -315,7 +316,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                 child: _buildMacroCard(
                   context,
                   icon: Icons.local_fire_department,
-                  label: 'Calories',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                   value: '${entry.calorieTarget}',
                   color: Colors.orange,
                 ),
@@ -325,7 +326,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                 child: _buildMacroCard(
                   context,
                   icon: Icons.egg_alt,
-                  label: 'Protein',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   value: '${entry.proteinTargetG.toInt()}g',
                   color: Colors.red,
                 ),
@@ -339,7 +340,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                 child: _buildMacroCard(
                   context,
                   icon: Icons.bakery_dining,
-                  label: 'Carbs',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   value: '${entry.carbsTargetG.toInt()}g',
                   color: Colors.amber,
                 ),
@@ -349,7 +350,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                 child: _buildMacroCard(
                   context,
                   icon: Icons.water_drop,
-                  label: 'Fat',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   value: '${entry.fatTargetG.toInt()}g',
                   color: Colors.purple,
                 ),
@@ -425,7 +426,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
               const Icon(Icons.timer, color: Colors.orange),
               const SizedBox(width: 8),
               Text(
-                'Fasting Window',
+                AppLocalizations.of(context).dailyPlanDetailFastingWindow,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.orange,
@@ -459,7 +460,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
             children: [
               _buildTimeBlock(
                 context,
-                label: 'Eating Starts',
+                label: AppLocalizations.of(context).dailyPlanDetailEatingStarts,
                 time: entry.eatingWindowStart ?? '--:--',
                 icon: Icons.restaurant,
               ),
@@ -472,7 +473,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
               ),
               _buildTimeBlock(
                 context,
-                label: 'Eating Ends',
+                label: AppLocalizations.of(context).dailyPlanDetailEatingEnds,
                 time: entry.eatingWindowEnd ?? '--:--',
                 icon: Icons.no_food,
               ),
@@ -538,7 +539,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
               Icon(Icons.menu_book, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Meal Suggestions',
+                AppLocalizations.of(context).dailyPlanDetailMealSuggestions,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -552,12 +553,12 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                       .regenerateMealSuggestions(entry);
                   if (suggestions != null && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Meals regenerated!')),
+                      SnackBar(content: Text(AppLocalizations.of(context).dailyPlanDetailMealsRegenerated)),
                     );
                   }
                 },
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Refresh'),
+                label: Text(AppLocalizations.of(context).timelineRefresh),
               ),
             ],
           ),
@@ -685,7 +686,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
               const Icon(Icons.info, color: Colors.blue),
               const SizedBox(width: 8),
               Text(
-                'Notes & Warnings',
+                AppLocalizations.of(context).dailyPlanDetailNotesWarnings,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

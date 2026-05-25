@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Wrapped — Spotify Wrapped-inspired diagonal color blocks + 3 hero
 /// numbered stats. Type-forward, highly shareable format.
 class WrappedTemplate extends StatelessWidget {
@@ -47,7 +48,7 @@ class WrappedTemplate extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'WRAPPED',
+                AppLocalizations.of(context).wrappedTemplateWrapped,
                 style: const TextStyle(
                   fontSize: 42,
                   fontWeight: FontWeight.w900,
@@ -66,7 +67,7 @@ class WrappedTemplate extends StatelessWidget {
               const SizedBox(height: 18),
               _WrappedBlock(
                 index: '02',
-                label: 'VOLUME',
+                label: AppLocalizations.of(context).wrappedTemplateVolume,
                 value: totalVolumeKg == null
                     ? '—'
                     : formatShareWeightCompact(totalVolumeKg, useKg: useKg),

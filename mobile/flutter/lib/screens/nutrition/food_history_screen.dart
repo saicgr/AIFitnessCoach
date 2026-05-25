@@ -18,6 +18,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import 'widgets/portion_amount_input.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'food_history_screen_part_date_range.dart';
 part 'food_history_screen_part_frequent_food_chip.dart';
 
@@ -336,8 +337,8 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to re-log food'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).foodHistoryFailedToReLog),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -358,7 +359,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
           content: Text('Deleted $foodName'),
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
-            label: 'Undo',
+            label: AppLocalizations.of(context).workoutUiBuildersUndo,
             onPressed: () => _relogFoodLog(log),
           ),
         ),
@@ -366,8 +367,8 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to delete food log'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).foodHistoryFailedToDeleteFood),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -409,8 +410,8 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
           } catch (e) {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to update food log'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context).foodHistoryFailedToUpdateFood),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -502,7 +503,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: const PillAppBar(title: 'Food History'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).foodHistoryFoodHistory),
       body: Column(
         children: [
           // Search bar
@@ -510,7 +511,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
             padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
             child: FoodSearchBar(
               userId: widget.userId,
-              hintText: 'Search meals, foods, "high protein"...',
+              hintText: AppLocalizations.of(context).foodHistorySearchMealsFoodsHigh,
               onSearch: (query) {
                 setState(() {
                   _activeSearchQuery = query.trim().isEmpty ? null : query;

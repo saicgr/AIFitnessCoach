@@ -14,13 +14,14 @@ import '../../data/models/nutrition_preferences.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class NutritionPreferencesScreen extends ConsumerWidget {
   const NutritionPreferencesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: const PillAppBar(title: 'Nutrition Preferences'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).nutritionPreferencesNutritionPreferences),
       body: ListView(
         children: [
           _tile(context, 'Diet & allergens', Icons.restaurant_menu,
@@ -86,7 +87,7 @@ class _DietAndAllergensScreenState extends ConsumerState<DietAndAllergensScreen>
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return Scaffold(
-      appBar: const PillAppBar(title: 'Diet & Allergens'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).nutritionPreferencesDietAllergens),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -120,8 +121,8 @@ class _DietAndAllergensScreenState extends ConsumerState<DietAndAllergensScreen>
           ]),
           const SizedBox(height: 16),
           _FreeTextList(
-            title: 'Other allergens',
-            subtitle: 'Outside the FDA Big 9 (e.g. mango, nightshade, corn)',
+            title: AppLocalizations.of(context).nutritionPreferencesOtherAllergens,
+            subtitle: AppLocalizations.of(context).nutritionPreferencesOutsideTheFdaBig,
             values: prefs.customAllergens,
             onChanged: (v) => _savePrefs(prefs.copyWith(customAllergens: v)),
           ),
@@ -170,13 +171,13 @@ class FoodsToAvoidScreen extends ConsumerWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return Scaffold(
-      appBar: const PillAppBar(title: 'Foods to avoid'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).nutritionPreferencesFoodsToAvoid),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _FreeTextList(
-            title: 'Dislikes',
-            subtitle: 'Dishes or ingredients you prefer we hide from recommendations',
+            title: AppLocalizations.of(context).nutritionPreferencesDislikes,
+            subtitle: AppLocalizations.of(context).nutritionPreferencesDishesOrIngredientsYou,
             values: prefs.dislikedFoods,
             onChanged: (v) {
               final next = prefs.copyWith(dislikedFoods: v);
@@ -223,7 +224,7 @@ class _FoodBudgetScreenState extends ConsumerState<FoodBudgetScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const PillAppBar(title: 'Food budget'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).nutritionPreferencesFoodBudget),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -236,8 +237,8 @@ class _FoodBudgetScreenState extends ConsumerState<FoodBudgetScreen> {
           TextField(
             controller: _mealController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Meal budget (USD)',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).nutritionPreferencesMealBudgetUsd,
               prefixText: '\$',
               border: OutlineInputBorder(),
             ),
@@ -247,8 +248,8 @@ class _FoodBudgetScreenState extends ConsumerState<FoodBudgetScreen> {
           TextField(
             controller: _dailyController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Daily food budget (USD, optional)',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).nutritionPreferencesDailyFoodBudgetUsd,
               prefixText: '\$',
               border: OutlineInputBorder(),
             ),
@@ -285,7 +286,7 @@ class InflammationToleranceScreen extends ConsumerWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return Scaffold(
-      appBar: const PillAppBar(title: 'Inflammation tolerance'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).nutritionPreferencesInflammationTolerance),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -308,8 +309,8 @@ class InflammationToleranceScreen extends ConsumerWidget {
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text('Lenient', style: TextStyle(fontSize: 11)),
+            children: [
+              Text(AppLocalizations.of(context).nutritionPreferencesLenient, style: TextStyle(fontSize: 11)),
               Text('Strict', style: TextStyle(fontSize: 11)),
             ],
           ),
@@ -394,7 +395,7 @@ class _FreeTextListState extends State<_FreeTextList> {
               onSubmitted: (_) => _add(),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Add…',
+                hintText: AppLocalizations.of(context).nutritionPreferencesAdd,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: _add,

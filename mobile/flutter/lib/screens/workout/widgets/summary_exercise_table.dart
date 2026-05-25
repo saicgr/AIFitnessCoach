@@ -12,6 +12,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATA MODELS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -358,7 +359,7 @@ class _ExerciseHeader extends StatelessWidget {
                     children: [
                       if (exercise.isSkipped)
                         _BadgeChip(
-                          label: 'Skipped',
+                          label: AppLocalizations.of(context).summaryExerciseTableSkipped,
                           color: isDark ? AppColors.error : AppColorsLight.error,
                           isDark: isDark,
                         ),
@@ -432,7 +433,7 @@ class _SummaryTableHeader extends StatelessWidget {
           SizedBox(
             width: 32,
             child: Text(
-              'Set',
+              AppLocalizations.of(context).workoutSummaryAdvancedSet,
               style: WorkoutDesign.tableHeaderStyle
                   .copyWith(color: headerColor),
             ),
@@ -441,7 +442,7 @@ class _SummaryTableHeader extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Text(
-              'Previous',
+              AppLocalizations.of(context).summaryExerciseTablePrevious,
               style: WorkoutDesign.tableHeaderStyle
                   .copyWith(color: headerColor),
             ),
@@ -450,7 +451,7 @@ class _SummaryTableHeader extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Text(
-              'TARGET',
+              AppLocalizations.of(context).summaryExerciseTableTarget,
               style: WorkoutDesign.tableHeaderStyle.copyWith(
                 color: WorkoutDesign.accentBlue,
                 fontWeight: FontWeight.w600,
@@ -472,7 +473,7 @@ class _SummaryTableHeader extends StatelessWidget {
           SizedBox(
             width: 48,
             child: Text(
-              'Reps',
+              AppLocalizations.of(context).workoutSummaryGeneralReps,
               style: WorkoutDesign.tableHeaderStyle
                   .copyWith(color: headerColor),
               textAlign: TextAlign.center,
@@ -608,7 +609,7 @@ void _showSetNotesSheet({
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    'No notes or photos saved on this set.',
+                    AppLocalizations.of(context).summaryExerciseTableNoNotesOrPhotos,
                     style: TextStyle(color: muted, fontSize: 14),
                   ),
                 )
@@ -616,7 +617,7 @@ void _showSetNotesSheet({
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    'No notes saved on this set.',
+                    AppLocalizations.of(context).summaryExerciseTableNoNotesSavedOn,
                     style: TextStyle(color: muted, fontSize: 14),
                   ),
                 )

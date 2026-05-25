@@ -85,6 +85,7 @@ import '../../core/services/posthog_service.dart';
 import '../../core/services/fitness_snapshot_service.dart';
 import '../../core/perf/perf_trace.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 part 'home_screen_part_dummy_animation_controller.dart';
 

@@ -14,6 +14,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Main flexibility assessment screen showing all tests and user progress
 class FlexibilityAssessmentScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -58,7 +59,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
 
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Flexibility Assessment',
+        title: AppLocalizations.of(context).flexibilityAssessmentFlexibilityAssessment,
         actions: [
           PillAppBarAction(icon: Icons.history, onTap: () => _openHistory(context)),
           PillAppBarAction(icon: Icons.refresh, onTap: () {
@@ -72,9 +73,9 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
             controller: _tabController,
             showIcons: false,
             tabs: [
-              SegmentedTabItem(label: 'Overview'),
-              SegmentedTabItem(label: 'All Tests'),
-              SegmentedTabItem(label: 'My Plans'),
+              SegmentedTabItem(label: AppLocalizations.of(context).youHubOverview),
+              SegmentedTabItem(label: AppLocalizations.of(context).flexibilityAssessmentAllTests),
+              SegmentedTabItem(label: AppLocalizations.of(context).flexibilityAssessmentMyPlans),
             ],
           ),
           Expanded(
@@ -125,7 +126,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              'Failed to load data',
+              AppLocalizations.of(context).measurementsFailedToLoadData,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
@@ -136,7 +137,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
                 ref.read(flexibilityProvider.notifier).refresh(userId: widget.userId);
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -159,14 +160,14 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
           // Priority Improvements Section
           if (state.testsNeedingImprovement.isNotEmpty) ...[
             Text(
-              'Priority Improvements',
+              AppLocalizations.of(context).flexibilityAssessmentPriorityImprovements,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Focus on these areas to improve your overall flexibility',
+              AppLocalizations.of(context).flexibilityAssessmentFocusOnTheseAreas,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
@@ -187,14 +188,14 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
           // Not Yet Assessed Section
           if (state.unassessedTests.isNotEmpty) ...[
             Text(
-              'Not Yet Assessed',
+              AppLocalizations.of(context).flexibilityTestDetailNotYetAssessed,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete these tests to get a full flexibility profile',
+              AppLocalizations.of(context).flexibilityAssessmentCompleteTheseTestsTo,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
@@ -219,7 +220,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
           if (state.assessedTests.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
-              'Recent Assessments',
+              AppLocalizations.of(context).flexibilityTestDetailRecentAssessments,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -242,8 +243,8 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
 
   Widget _buildAllTestsTab(FlexibilityState state, ThemeData theme) {
     if (state.tests.isEmpty) {
-      return const Center(
-        child: Text('No flexibility tests available'),
+      return Center(
+        child: Text(AppLocalizations.of(context).flexibilityAssessmentNoFlexibilityTestsAvailable),
       );
     }
 
@@ -305,12 +306,12 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
               ),
               const SizedBox(height: 16),
               Text(
-                'No Stretch Plans Yet',
+                AppLocalizations.of(context).flexibilityAssessmentNoStretchPlansYet,
                 style: theme.textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
-                'Complete some flexibility assessments to get personalized stretch recommendations',
+                AppLocalizations.of(context).flexibilityAssessmentCompleteSomeFlexibilityAsse,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -320,7 +321,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
               ElevatedButton.icon(
                 onPressed: () => _tabController.animateTo(1),
                 icon: const Icon(Icons.assessment),
-                label: const Text('Take an Assessment'),
+                label: Text(AppLocalizations.of(context).flexibilityAssessmentTakeAnAssessment),
               ),
             ],
           ),
@@ -366,7 +367,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Recommended Stretches',
+                  AppLocalizations.of(context).flexibilityAssessmentRecommendedStretches,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

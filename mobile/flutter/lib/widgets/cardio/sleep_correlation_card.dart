@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/sleep_correlation_repository.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Thin wrapper that fetches `/cardio-correlation/sleep-pace` and renders
 /// the AI insight card. Silently absent when:
 ///   • the backend returns 204 (n < 20 paired sessions)
@@ -40,7 +41,7 @@ class SleepCorrelationCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Sleep × pace',
+                      AppLocalizations.of(context).sleepCorrelationCardSleepPace,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),

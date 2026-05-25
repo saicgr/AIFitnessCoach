@@ -4,6 +4,7 @@ import '../data/services/connectivity_service.dart';
 import '../data/services/sync_engine.dart';
 import '../screens/settings/sync_details_screen.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Tracks the dead-letter count at the moment the user dismissed the red
 /// sync-failure banner. The banner re-appears if the count climbs above
 /// this value — so new failures always notify, but acknowledged ones stay
@@ -127,7 +128,7 @@ class OfflineBanner extends ConsumerWidget {
                             // the tap so the parent GestureDetector doesn't also
                             // navigate to Sync Details.
                             Semantics(
-                              label: 'Dismiss sync failure banner',
+                              label: AppLocalizations.of(context).offlineBannerDismissSyncFailureBanner,
                               button: true,
                               child: InkResponse(
                                 radius: 18,

@@ -55,7 +55,7 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  "Let's Go",
+                  AppLocalizations.of(context).workoutDetailScreenLetSGo,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -315,7 +315,7 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              'CHALLENGE',
+                              AppLocalizations.of(context).workoutDetailScreenChallenge,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -394,7 +394,7 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'This is an optional advanced exercise. Try it when you feel ready!',
+                    AppLocalizations.of(context).workoutDetailScreenThisIsAnOptional,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,

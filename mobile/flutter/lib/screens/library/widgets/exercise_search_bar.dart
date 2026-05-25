@@ -6,6 +6,7 @@ import '../../../data/services/context_logging_service.dart';
 import '../models/filter_option.dart';
 import '../providers/library_providers.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Search bar widget for filtering exercises by name OR equipment.
 ///
 /// GymBeat-parity: typing an equipment keyword (e.g. "treadmill", "barbell")
@@ -117,7 +118,7 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
             if (equipmentMatch != null) _applyEquipment(equipmentMatch);
           },
           decoration: InputDecoration(
-            hintText: 'Search exercises or equipment...',
+            hintText: AppLocalizations.of(context).exerciseSearchBarSearchExercisesOrEquipment,
             prefixIcon: Icon(Icons.search, color: textMuted),
             filled: true,
             fillColor: elevated,
@@ -223,7 +224,7 @@ class _ProgramSearchBarState extends ConsumerState<ProgramSearchBar> {
     return TextField(
       onChanged: _onSearchChanged,
       decoration: InputDecoration(
-        hintText: 'Search programs...',
+        hintText: AppLocalizations.of(context).programsSearchPrograms,
         prefixIcon: Icon(Icons.search, color: textMuted),
         filled: true,
         fillColor: elevated,

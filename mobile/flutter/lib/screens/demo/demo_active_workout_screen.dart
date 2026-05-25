@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'demo_active_workout_screen_part_demo_workout_phase.dart';
 
 part 'demo_active_workout_screen_ui_1.dart';
@@ -436,14 +437,14 @@ class _DemoActiveWorkoutScreenState
             Theme.of(context).brightness == Brightness.dark
                 ? AppColors.elevated
                 : Colors.white,
-        title: const Text('Exit Workout?'),
-        content: const Text(
-          'Your progress in this demo workout won\'t be saved. Are you sure you want to exit?',
+        title: Text(AppLocalizations.of(context).demoActiveWorkoutExitWorkout),
+        content: Text(
+          AppLocalizations.of(context).demoActiveWorkoutYourProgressInThis,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () {
@@ -451,7 +452,7 @@ class _DemoActiveWorkoutScreenState
               context.pop();
             },
             child: Text(
-              'Exit',
+              AppLocalizations.of(context).demoActiveWorkoutExit,
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -521,7 +522,7 @@ class _DemoActiveWorkoutScreenState
 
                     // Exercise name
                     Text(
-                      _currentExercise['name'] ?? 'Exercise',
+                      _currentExercise['name'] ?? AppLocalizations.of(context).demoActiveWorkoutExercise,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -674,7 +675,7 @@ class _DemoActiveWorkoutScreenState
           Icon(Icons.fitness_center, size: 60, color: AppColors.cyan),
           const SizedBox(height: 12),
           Text(
-            'Exercise Demo',
+            AppLocalizations.of(context).demoActiveWorkoutExerciseDemo,
             style: TextStyle(
               fontSize: 16,
               color: isDark
@@ -791,11 +792,11 @@ class _DemoActiveWorkoutScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Up Next',
+                  AppLocalizations.of(context).upNextCardUpNext,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
                 Text(
-                  nextExercise['name'] ?? 'Exercise',
+                  nextExercise['name'] ?? AppLocalizations.of(context).demoActiveWorkoutExercise,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

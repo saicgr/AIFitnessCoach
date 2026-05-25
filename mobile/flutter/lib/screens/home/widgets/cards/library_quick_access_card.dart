@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// A prominent card for quick access to the exercise library
 class LibraryQuickAccessCard extends StatelessWidget {
   /// Whether the current theme is dark
@@ -67,14 +68,14 @@ class LibraryQuickAccessCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Exercise Library',
+                      AppLocalizations.of(context).libraryQuickAccessExerciseLibrary,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Browse exercises, programs & workout history',
+                      AppLocalizations.of(context).libraryQuickAccessBrowseExercisesProgramsW,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],

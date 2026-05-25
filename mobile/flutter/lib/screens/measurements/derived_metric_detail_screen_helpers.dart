@@ -84,13 +84,13 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final weight = summary.latestByType[MeasurementType.weight];
         if (weight != null) {
           inputs.add((
-            label: 'Weight',
+            label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
             value: '${_formatValue(weight.getValueInUnit(true))} kg'
           ));
         }
         if (heightCm != null) {
           inputs.add(
-              (label: 'Height', value: '${_formatValue(heightCm)} cm'));
+              (label: AppLocalizations.of(context).quizBodyMetricsHeight, value: '${_formatValue(heightCm)} cm'));
         }
         break;
 
@@ -99,13 +99,13 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final hips = summary.latestByType[MeasurementType.hips];
         if (waist != null) {
           inputs.add((
-            label: 'Waist',
+            label: AppLocalizations.of(context).quickLogMeasurementsWaist,
             value: '${_formatValue(waist.getValueInUnit(true))} cm'
           ));
         }
         if (hips != null) {
           inputs.add((
-            label: 'Hips',
+            label: AppLocalizations.of(context).quickLogMeasurementsHips,
             value: '${_formatValue(hips.getValueInUnit(true))} cm'
           ));
         }
@@ -115,13 +115,13 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final waist = summary.latestByType[MeasurementType.waist];
         if (waist != null) {
           inputs.add((
-            label: 'Waist',
+            label: AppLocalizations.of(context).quickLogMeasurementsWaist,
             value: '${_formatValue(waist.getValueInUnit(true))} cm'
           ));
         }
         if (heightCm != null) {
           inputs.add(
-              (label: 'Height', value: '${_formatValue(heightCm)} cm'));
+              (label: AppLocalizations.of(context).quizBodyMetricsHeight, value: '${_formatValue(heightCm)} cm'));
         }
         break;
 
@@ -130,19 +130,19 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final bodyFat = summary.latestByType[MeasurementType.bodyFat];
         if (weight != null) {
           inputs.add((
-            label: 'Weight',
+            label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
             value: '${_formatValue(weight.getValueInUnit(true))} kg'
           ));
         }
         if (bodyFat != null) {
           inputs.add((
-            label: 'Body Fat',
+            label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
             value: '${_formatValue(bodyFat.value)}%'
           ));
         }
         if (heightCm != null) {
           inputs.add(
-              (label: 'Height', value: '${_formatValue(heightCm)} cm'));
+              (label: AppLocalizations.of(context).quizBodyMetricsHeight, value: '${_formatValue(heightCm)} cm'));
         }
         break;
 
@@ -151,13 +151,13 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final bodyFat = summary.latestByType[MeasurementType.bodyFat];
         if (weight != null) {
           inputs.add((
-            label: 'Weight',
+            label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
             value: '${_formatValue(weight.getValueInUnit(true))} kg'
           ));
         }
         if (bodyFat != null) {
           inputs.add((
-            label: 'Body Fat',
+            label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
             value: '${_formatValue(bodyFat.value)}%'
           ));
         }
@@ -168,13 +168,13 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final waist = summary.latestByType[MeasurementType.waist];
         if (shoulders != null) {
           inputs.add((
-            label: 'Shoulders',
+            label: AppLocalizations.of(context).derivedMetricDetailShoulders,
             value: '${_formatValue(shoulders.getValueInUnit(true))} cm'
           ));
         }
         if (waist != null) {
           inputs.add((
-            label: 'Waist',
+            label: AppLocalizations.of(context).quickLogMeasurementsWaist,
             value: '${_formatValue(waist.getValueInUnit(true))} cm'
           ));
         }
@@ -185,13 +185,13 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final waist = summary.latestByType[MeasurementType.waist];
         if (chest != null) {
           inputs.add((
-            label: 'Chest',
+            label: AppLocalizations.of(context).quickLogMeasurementsChest,
             value: '${_formatValue(chest.getValueInUnit(true))} cm'
           ));
         }
         if (waist != null) {
           inputs.add((
-            label: 'Waist',
+            label: AppLocalizations.of(context).quickLogMeasurementsWaist,
             value: '${_formatValue(waist.getValueInUnit(true))} cm'
           ));
         }
@@ -202,13 +202,13 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final right = summary.latestByType[MeasurementType.bicepsRight];
         if (left != null) {
           inputs.add((
-            label: 'Biceps (L)',
+            label: AppLocalizations.of(context).derivedMetricDetailBicepsL,
             value: '${_formatValue(left.getValueInUnit(true))} cm'
           ));
         }
         if (right != null) {
           inputs.add((
-            label: 'Biceps (R)',
+            label: AppLocalizations.of(context).derivedMetricDetailBicepsR,
             value: '${_formatValue(right.getValueInUnit(true))} cm'
           ));
         }
@@ -219,13 +219,13 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
         final right = summary.latestByType[MeasurementType.thighRight];
         if (left != null) {
           inputs.add((
-            label: 'Thigh (L)',
+            label: AppLocalizations.of(context).derivedMetricDetailThighL,
             value: '${_formatValue(left.getValueInUnit(true))} cm'
           ));
         }
         if (right != null) {
           inputs.add((
-            label: 'Thigh (R)',
+            label: AppLocalizations.of(context).derivedMetricDetailThighR,
             value: '${_formatValue(right.getValueInUnit(true))} cm'
           ));
         }

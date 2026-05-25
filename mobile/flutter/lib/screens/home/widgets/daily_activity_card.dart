@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/health_service.dart';
 import '../../../widgets/health_connect_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class DailyActivityCard extends ConsumerStatefulWidget {
   const DailyActivityCard({super.key});
 
@@ -82,7 +83,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Today\'s Activity',
+                        AppLocalizations.of(context).dailyActivityCardTodaySActivity,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -90,7 +91,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                         ),
                       ),
                       Text(
-                        Platform.isAndroid ? 'From Health Connect' : 'From Apple Health',
+                        Platform.isAndroid ? AppLocalizations.of(context).profileFromHealthConnect : AppLocalizations.of(context).profileFromAppleHealth,
                         style: TextStyle(
                           fontSize: 11,
                           color: textMuted,
@@ -128,7 +129,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                   child: _ActivityStatItem(
                     icon: Icons.directions_walk,
                     value: _formatNumber(activity?.steps ?? 0),
-                    label: 'Steps',
+                    label: AppLocalizations.of(context).syncedWorkoutDetailSteps,
                     color: AppColors.cyan,
                     textPrimary: textPrimary,
                     textMuted: textMuted,
@@ -147,7 +148,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                   child: _ActivityStatItem(
                     icon: Icons.local_fire_department,
                     value: _formatNumber(activity?.caloriesBurned.toInt() ?? 0),
-                    label: 'Active Cal',
+                    label: AppLocalizations.of(context).dailyActivityCardActiveCal,
                     color: AppColors.orange,
                     textPrimary: textPrimary,
                     textMuted: textMuted,
@@ -171,7 +172,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                     child: _ActivityStatItem(
                       icon: Icons.favorite,
                       value: '${activity!.restingHeartRate}',
-                      label: 'Resting HR',
+                      label: AppLocalizations.of(context).todaysHealthCardRestingHr,
                       color: AppColors.error,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
@@ -271,7 +272,7 @@ class _StepsProgressBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Daily Goal',
+              AppLocalizations.of(context).hydrationDailyGoal,
               style: TextStyle(fontSize: 11, color: textMuted),
             ),
             Text(
@@ -359,7 +360,7 @@ class _NotConnectedCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Track Your Activity',
+                      AppLocalizations.of(context).dailyActivityCardTrackYourActivity,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,

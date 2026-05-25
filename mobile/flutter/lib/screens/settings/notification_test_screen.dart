@@ -6,6 +6,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen for testing all notification types via Firebase
 class NotificationTestScreen extends ConsumerStatefulWidget {
   const NotificationTestScreen({super.key});
@@ -79,8 +80,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
-        title: 'Notification Testing',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).notificationTestNotificationTesting,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -137,7 +138,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'These notifications are sent via Firebase Cloud Messaging through your backend.',
+                    AppLocalizations.of(context).notificationTestTheseNotificationsAreSent,
                     style: TextStyle(fontSize: 13, color: textSecondary),
                   ),
                 ),
@@ -158,8 +159,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
               children: [
                 _buildNotificationButton(
                   icon: Icons.alarm,
-                  title: 'Workout Reminder',
-                  subtitle: '"Time to train! 💪"',
+                  title: AppLocalizations.of(context).notificationTestWorkoutReminder,
+                  subtitle: AppLocalizations.of(context).notificationTestTimeToTrain,
                   color: AppColors.cyan,
                   onTap: () => _sendNotification('Workout Reminder', 'workout-reminder'),
                   isLoading: _sendingType == 'Workout Reminder',
@@ -169,8 +170,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.sentiment_dissatisfied,
-                  title: 'Guilt (1 day missed)',
-                  subtitle: '"Your muscles miss you! 💪"',
+                  title: AppLocalizations.of(context).notificationTestGuilt1DayMissed,
+                  subtitle: AppLocalizations.of(context).notificationTestYourMusclesMissYou,
                   color: AppColors.orange,
                   onTap: () => _sendNotification('Guilt (1 day)', 'guilt', queryParams: {'days_missed': 1}),
                   isLoading: _sendingType == 'Guilt (1 day)',
@@ -180,8 +181,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.sentiment_very_dissatisfied,
-                  title: 'Guilt (2 days missed)',
-                  subtitle: '"Your AI Coach is getting lonely... 🥺"',
+                  title: AppLocalizations.of(context).notificationTestGuilt2DaysMissed,
+                  subtitle: AppLocalizations.of(context).notificationTestYourAiCoachIs,
                   color: AppColors.orange,
                   onTap: () => _sendNotification('Guilt (2 days)', 'guilt', queryParams: {'days_missed': 2}),
                   isLoading: _sendingType == 'Guilt (2 days)',
@@ -191,8 +192,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.warning_amber,
-                  title: 'Guilt (3+ days missed)',
-                  subtitle: '"It\'s been X days! 😱"',
+                  title: AppLocalizations.of(context).notificationTestGuilt3DaysMissed,
+                  subtitle: AppLocalizations.of(context).notificationTestItSBeenX,
                   color: AppColors.error,
                   onTap: () => _sendNotification('Guilt (3+ days)', 'guilt', queryParams: {'days_missed': 5}),
                   isLoading: _sendingType == 'Guilt (3+ days)',
@@ -217,8 +218,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
               children: [
                 _buildNotificationButton(
                   icon: Icons.free_breakfast,
-                  title: 'Breakfast Reminder',
-                  subtitle: '"Time to log your breakfast! 📸"',
+                  title: AppLocalizations.of(context).notificationTestBreakfastReminder,
+                  subtitle: AppLocalizations.of(context).notificationTestTimeToLogYour,
                   color: AppColors.green,
                   onTap: () => _sendNotification('Breakfast Reminder', 'nutrition-reminder', queryParams: {'meal_type': 'breakfast'}),
                   isLoading: _sendingType == 'Breakfast Reminder',
@@ -228,8 +229,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.lunch_dining,
-                  title: 'Lunch Reminder',
-                  subtitle: '"Time to log your lunch! 📸"',
+                  title: AppLocalizations.of(context).notificationTestLunchReminder,
+                  subtitle: AppLocalizations.of(context).notificationTestTimeToLogYour2,
                   color: AppColors.green,
                   onTap: () => _sendNotification('Lunch Reminder', 'nutrition-reminder', queryParams: {'meal_type': 'lunch'}),
                   isLoading: _sendingType == 'Lunch Reminder',
@@ -239,8 +240,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.dinner_dining,
-                  title: 'Dinner Reminder',
-                  subtitle: '"Time to log your dinner! 📸"',
+                  title: AppLocalizations.of(context).notificationTestDinnerReminder,
+                  subtitle: AppLocalizations.of(context).notificationTestTimeToLogYour3,
                   color: AppColors.green,
                   onTap: () => _sendNotification('Dinner Reminder', 'nutrition-reminder', queryParams: {'meal_type': 'dinner'}),
                   isLoading: _sendingType == 'Dinner Reminder',
@@ -265,8 +266,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
               children: [
                 _buildNotificationButton(
                   icon: Icons.water_drop_outlined,
-                  title: 'Low Progress (40%)',
-                  subtitle: '"Stay hydrated! 💧 You\'re at 40%"',
+                  title: AppLocalizations.of(context).notificationTestLowProgress40,
+                  subtitle: AppLocalizations.of(context).notificationTestStayHydratedYouRe,
                   color: AppColors.electricBlue,
                   onTap: () => _sendNotification('Hydration Low', 'hydration-reminder', queryParams: {'current_ml': 800, 'goal_ml': 2000}),
                   isLoading: _sendingType == 'Hydration Low',
@@ -276,8 +277,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.water_drop,
-                  title: 'Good Progress (70%)',
-                  subtitle: '"Keep it up! 💧 Almost there!"',
+                  title: AppLocalizations.of(context).notificationTestGoodProgress70,
+                  subtitle: AppLocalizations.of(context).notificationTestKeepItUpAlmost,
                   color: AppColors.electricBlue,
                   onTap: () => _sendNotification('Hydration Good', 'hydration-reminder', queryParams: {'current_ml': 1400, 'goal_ml': 2000}),
                   isLoading: _sendingType == 'Hydration Good',
@@ -302,8 +303,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
               children: [
                 _buildNotificationButton(
                   icon: Icons.auto_awesome,
-                  title: 'AI Coach Message',
-                  subtitle: '"Hey! Your AI Coach here 💪"',
+                  title: AppLocalizations.of(context).notificationTestAiCoachMessage,
+                  subtitle: AppLocalizations.of(context).notificationTestHeyYourAiCoach,
                   color: AppColors.purple,
                   onTap: () => _sendAiCoachNotification(),
                   isLoading: _sendingType == 'AI Coach Message',
@@ -313,8 +314,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.science_outlined,
-                  title: 'Basic Test',
-                  subtitle: '"Your AI Coach is ready! 💪"',
+                  title: AppLocalizations.of(context).notificationTestBasicTest,
+                  subtitle: AppLocalizations.of(context).notificationTestYourAiCoachIs2,
                   color: AppColors.purple,
                   onTap: () => _sendTestNotification(),
                   isLoading: _sendingType == 'Basic Test',
@@ -343,7 +344,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'These are LOCAL notifications (not Firebase). Use these to test if scheduled notifications work on your device.',
+                    AppLocalizations.of(context).notificationTestTheseAreLocalNotifications,
                     style: TextStyle(fontSize: 12, color: textSecondary),
                   ),
                 ),
@@ -360,8 +361,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
               children: [
                 _buildNotificationButton(
                   icon: Icons.bolt,
-                  title: 'Immediate Local Notification',
-                  subtitle: 'Shows a notification RIGHT NOW',
+                  title: AppLocalizations.of(context).notificationTestImmediateLocalNotification,
+                  subtitle: AppLocalizations.of(context).notificationTestShowsANotificationRight,
                   color: AppColors.orange,
                   onTap: () => _testImmediateLocalNotification(),
                   isLoading: _sendingType == 'Immediate Local',
@@ -371,8 +372,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.timer,
-                  title: 'Schedule in 10 seconds',
-                  subtitle: 'Tests scheduled notification delivery',
+                  title: AppLocalizations.of(context).notificationTestScheduleIn10Seconds,
+                  subtitle: AppLocalizations.of(context).notificationTestTestsScheduledNotificationD,
                   color: AppColors.orange,
                   onTap: () => _testScheduledLocalNotification(10),
                   isLoading: _sendingType == 'Scheduled 10s',
@@ -382,8 +383,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.schedule,
-                  title: 'Schedule in 60 seconds',
-                  subtitle: 'Tests scheduled notification delivery',
+                  title: AppLocalizations.of(context).notificationTestScheduleIn60Seconds,
+                  subtitle: AppLocalizations.of(context).notificationTestTestsScheduledNotificationD,
                   color: AppColors.orange,
                   onTap: () => _testScheduledLocalNotification(60),
                   isLoading: _sendingType == 'Scheduled 60s',
@@ -408,8 +409,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
               children: [
                 _buildNotificationButton(
                   icon: Icons.list,
-                  title: 'View Pending Notifications',
-                  subtitle: 'Shows all scheduled notifications',
+                  title: AppLocalizations.of(context).notificationTestViewPendingNotifications,
+                  subtitle: AppLocalizations.of(context).notificationTestShowsAllScheduledNotificati,
                   color: AppColors.error,
                   onTap: () => _loadPendingNotifications(),
                   isLoading: _sendingType == 'Loading Pending',
@@ -419,8 +420,8 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 _buildNotificationButton(
                   icon: Icons.access_time,
-                  title: 'View Timezone Info',
-                  subtitle: 'Shows current timezone settings',
+                  title: AppLocalizations.of(context).notificationTestViewTimezoneInfo,
+                  subtitle: AppLocalizations.of(context).notificationTestShowsCurrentTimezoneSetting,
                   color: AppColors.error,
                   onTap: () => _loadTimezoneInfo(),
                   isLoading: _sendingType == 'Loading TZ',
@@ -463,7 +464,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   const SizedBox(height: 8),
                   if (_pendingNotifications!.isEmpty)
                     Text(
-                      'No pending notifications scheduled',
+                      AppLocalizations.of(context).notificationTestNoPendingNotificationsSched,
                       style: TextStyle(color: textMuted, fontSize: 13),
                     )
                   else
@@ -493,7 +494,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  notif.title ?? 'No title',
+                                  notif.title ?? AppLocalizations.of(context).notificationTestNoTitle,
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
@@ -537,7 +538,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Timezone Info',
+                        AppLocalizations.of(context).notificationTestTimezoneInfo,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: textPrimary,

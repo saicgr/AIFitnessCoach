@@ -290,7 +290,7 @@ extension _PhotosTabStateUI on _PhotosTabState {
             ),
             const SizedBox(height: 16),
             Text(
-              'No Progress Photos Yet',
+              AppLocalizations.of(context).progressScreenUiNoProgressPhotosYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -299,7 +299,7 @@ extension _PhotosTabStateUI on _PhotosTabState {
             ),
             const SizedBox(height: 8),
             Text(
-              'Take photos from different angles to track your visual progress over time.',
+              AppLocalizations.of(context).progressScreenUiTakePhotosFromDifferent,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -310,7 +310,7 @@ extension _PhotosTabStateUI on _PhotosTabState {
             FilledButton.icon(
               onPressed: _showAddPhotoSheet,
               icon: const Icon(Icons.camera_alt),
-              label: const Text('Take First Photo'),
+              label: Text(AppLocalizations.of(context).progressScreenUiTakeFirstPhoto),
               style: FilledButton.styleFrom(
                 backgroundColor: accentColor,
                 foregroundColor: accentContrast,

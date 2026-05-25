@@ -11,6 +11,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Health sync preferences model.
 class HealthSyncPreferences {
   final bool syncSteps;
@@ -155,7 +156,7 @@ class HealthSyncSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'HEALTH SYNC'),
+        SectionHeader(title: AppLocalizations.of(context).healthSyncHealthSync),
         const SizedBox(height: 12),
         const _HealthConnectSettingsCard(),
         // Samsung Health help for Android users
@@ -188,7 +189,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'Using Samsung Health?',
+            AppLocalizations.of(context).healthSyncUsingSamsungHealth,
             style: TextStyle(
               fontSize: 12,
               color: textMuted,
@@ -198,7 +199,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
           GestureDetector(
             onTap: () => _showSamsungHealthSetup(context, isDark),
             child: Text(
-              'Setup guide',
+              AppLocalizations.of(context).healthSyncSetupGuide,
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.cyan,
@@ -250,7 +251,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Connect Samsung Health',
+                          AppLocalizations.of(context).healthSyncConnectSamsungHealth,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -272,32 +273,32 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                   _buildSetupStep(
                     isDark: isDark,
                     number: '1',
-                    title: 'Open Samsung Health',
-                    subtitle: 'Go to Settings (gear icon)',
+                    title: AppLocalizations.of(context).healthSyncOpenSamsungHealth,
+                    subtitle: AppLocalizations.of(context).healthSyncGoToSettingsGear,
                   ),
                   _buildSetupStep(
                     isDark: isDark,
                     number: '2',
-                    title: 'Find Health Connect',
-                    subtitle: 'Scroll down and tap "Health Connect"',
+                    title: AppLocalizations.of(context).healthSyncFindHealthConnect,
+                    subtitle: AppLocalizations.of(context).healthSyncScrollDownAndTap,
                   ),
                   _buildSetupStep(
                     isDark: isDark,
                     number: '3',
-                    title: 'Enable Sync',
-                    subtitle: 'Turn on "Sync with Health Connect"',
+                    title: AppLocalizations.of(context).healthSyncEnableSync,
+                    subtitle: AppLocalizations.of(context).healthSyncTurnOnSyncWith,
                   ),
                   _buildSetupStep(
                     isDark: isDark,
                     number: '4',
-                    title: 'Select Data Types',
-                    subtitle: 'Enable all data you want to sync (steps, heart rate, sleep, etc.)',
+                    title: AppLocalizations.of(context).healthSyncSelectDataTypes,
+                    subtitle: AppLocalizations.of(context).healthSyncEnableAllDataYou,
                   ),
                   _buildSetupStep(
                     isDark: isDark,
                     number: '5',
                     title: 'Connect ${Branding.appName}',
-                    subtitle: 'Return here and toggle Health Connect on',
+                    subtitle: AppLocalizations.of(context).healthSyncReturnHereAndToggle,
                     isLast: true,
                   ),
                   const SizedBox(height: 24),
@@ -338,7 +339,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                             }
                           },
                           icon: const Icon(Icons.open_in_new, size: 18),
-                          label: const Text('Open Samsung Health'),
+                          label: Text(AppLocalizations.of(context).healthSyncOpenSamsungHealth),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF1428A0),
                             side: const BorderSide(color: Color(0xFF1428A0)),
@@ -357,7 +358,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                         backgroundColor: AppColors.cyan,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Got it'),
+                      child: Text(AppLocalizations.of(context).weightIncrementsGotIt),
                     ),
                   ),
                 ],
@@ -512,7 +513,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                         Row(
                           children: [
                             Text(
-                              syncState.isConnected ? 'Connected' : 'Not connected',
+                              syncState.isConnected ? AppLocalizations.of(context).healthSyncConnected : AppLocalizations.of(context).healthSyncNotConnected,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: syncState.isConnected ? AppColors.success : textMuted,
@@ -616,7 +617,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           Divider(color: cardBorder),
           const SizedBox(height: 8),
           Text(
-            'Data to sync',
+            AppLocalizations.of(context).healthSyncDataToSync,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -628,7 +629,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           // Activity data toggles
           _buildSyncToggle(
             icon: Icons.directions_walk,
-            label: 'Steps & Distance',
+            label: AppLocalizations.of(context).healthSyncStepsDistance,
             isEnabled: syncPrefs.syncSteps,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncSteps(v),
             textSecondary: textSecondary,
@@ -636,7 +637,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           ),
           _buildSyncToggle(
             icon: Icons.local_fire_department,
-            label: 'Calories Burned',
+            label: AppLocalizations.of(context).metricsDashboardCaloriesBurned,
             isEnabled: syncPrefs.syncCalories,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncCalories(v),
             textSecondary: textSecondary,
@@ -644,7 +645,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           ),
           _buildSyncToggle(
             icon: Icons.monitor_weight_outlined,
-            label: 'Weight',
+            label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
             isEnabled: syncPrefs.syncWeight,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncWeight(v),
             textSecondary: textSecondary,
@@ -652,7 +653,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           ),
           _buildSyncToggle(
             icon: Icons.percent,
-            label: 'Body Fat',
+            label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
             isEnabled: syncPrefs.syncBodyFat,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncBodyFat(v),
             textSecondary: textSecondary,
@@ -660,7 +661,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           ),
           _buildSyncToggle(
             icon: Icons.favorite_outline,
-            label: 'Heart Rate',
+            label: AppLocalizations.of(context).workoutSummaryGeneralHeartRate,
             isEnabled: syncPrefs.syncHeartRate,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncHeartRate(v),
             textSecondary: textSecondary,
@@ -668,7 +669,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           ),
           _buildSyncToggle(
             icon: Icons.bedtime_outlined,
-            label: 'Sleep',
+            label: AppLocalizations.of(context).sleepDetailSleep,
             isEnabled: syncPrefs.syncSleep,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncSleep(v),
             textSecondary: textSecondary,
@@ -679,7 +680,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           Divider(color: cardBorder),
           const SizedBox(height: 8),
           Text(
-            'Write to health app',
+            AppLocalizations.of(context).healthSyncWriteToHealthApp,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -690,7 +691,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
 
           _buildSyncToggle(
             icon: Icons.fitness_center,
-            label: 'Workouts',
+            label: AppLocalizations.of(context).workoutListTitle,
             isEnabled: syncPrefs.syncWorkoutsToHealth,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncWorkoutsToHealth(v),
             textSecondary: textSecondary,
@@ -698,7 +699,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           ),
           _buildSyncToggle(
             icon: Icons.restaurant,
-            label: 'Meals & Nutrition',
+            label: AppLocalizations.of(context).healthSyncMealsNutrition,
             isEnabled: syncPrefs.syncMealsToHealth,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncMealsToHealth(v),
             textSecondary: textSecondary,
@@ -706,7 +707,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           ),
           _buildSyncToggle(
             icon: Icons.water_drop_outlined,
-            label: 'Hydration',
+            label: AppLocalizations.of(context).workoutSummaryAdvancedHydration,
             isEnabled: syncPrefs.syncHydrationToHealth,
             onChanged: (v) => ref.read(healthSyncPreferencesProvider.notifier).setSyncHydrationToHealth(v),
             textSecondary: textSecondary,
@@ -721,7 +722,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
             child: OutlinedButton.icon(
               onPressed: () => _syncNow(),
               icon: const Icon(Icons.sync, size: 18),
-              label: const Text('Sync Now'),
+              label: Text(AppLocalizations.of(context).syncStatusSyncNow),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.cyan,
                 side: BorderSide(color: AppColors.cyan.withOpacity(0.5)),
@@ -801,7 +802,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
               Expanded(
                 child: Text(
                   consent
-                      ? 'AI health coaching is on'
+                      ? AppLocalizations.of(context).healthSyncAiHealthCoachingIs
                       : 'Turn on AI health coaching',
                   style: TextStyle(
                     fontSize: 14,
@@ -848,7 +849,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
         backgroundColor:
             isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Text(
-          'Enable AI health coaching?',
+          AppLocalizations.of(context).healthSyncEnableAiHealthCoaching,
           style: TextStyle(
             color:
                 isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -870,14 +871,14 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Not now',
+            child: Text(AppLocalizations.of(context).proposedChangeCardNotNow,
                 style: TextStyle(color: AppColors.textMuted)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style:
                 FilledButton.styleFrom(backgroundColor: AppColors.success),
-            child: const Text('Enable'),
+            child: Text(AppLocalizations.of(context).healthSyncEnable),
           ),
         ],
       ),
@@ -912,13 +913,13 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
         SnackBar(
           content: Text(
             Platform.isAndroid
-                ? 'Health Connect is not available. Please install it from the Play Store.'
+                ? AppLocalizations.of(context).healthSyncHealthConnectIsNot
                 : 'Apple Health is not available on this device.',
           ),
           backgroundColor: AppColors.error,
           action: Platform.isAndroid
               ? SnackBarAction(
-                  label: 'Install',
+                  label: AppLocalizations.of(context).healthSyncInstall,
                   textColor: Colors.white,
                   onPressed: () {
                     launchUrl(
@@ -958,7 +959,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           backgroundColor: AppColors.orange,
           duration: const Duration(seconds: 6),
           action: SnackBarAction(
-            label: 'Open',
+            label: AppLocalizations.of(context).recipesOpen,
             textColor: Colors.white,
             onPressed: () => _openHealthConnect(),
           ),
@@ -975,7 +976,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
         return AlertDialog(
           backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
           title: Text(
-            'Grant Permissions',
+            AppLocalizations.of(context).healthSyncGrantPermissions,
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),
@@ -994,7 +995,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('OK', style: TextStyle(color: AppColors.cyan)),
+              child: Text(AppLocalizations.of(context).healthSyncOk, style: TextStyle(color: AppColors.cyan)),
             ),
           ],
         );

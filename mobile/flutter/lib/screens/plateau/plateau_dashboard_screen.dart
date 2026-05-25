@@ -9,6 +9,7 @@ import '../../data/services/api_client.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Provider for plateau dashboard data
 final plateauDashboardProvider =
     StateNotifierProvider<PlateauDashboardNotifier, PlateauDashboardState>(
@@ -113,8 +114,8 @@ class _PlateauDashboardScreenState
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: const PillAppBar(
-        title: 'Plateau Detection',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).plateauDashboardPlateauDetection,
       ),
       body: state.isLoading && state.data == null
           ? _buildSkeleton(colorScheme)
@@ -269,7 +270,7 @@ class _PlateauDashboardScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Overall Status',
+                      AppLocalizations.of(context).strainDashboardOverallStatus,
                       style: TextStyle(
                         fontSize: 14,
                         color: colorScheme.onSurfaceVariant,
@@ -523,7 +524,7 @@ class _PlateauDashboardScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Weight Progress',
+                      AppLocalizations.of(context).plateauDashboardWeightProgress,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -552,7 +553,7 @@ class _PlateauDashboardScreenState
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Current Weight',
+                  AppLocalizations.of(context).plateauDashboardCurrentWeight,
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 13,
@@ -574,7 +575,7 @@ class _PlateauDashboardScreenState
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Suggested Action',
+                  AppLocalizations.of(context).plateauDashboardSuggestedAction,
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 13,
@@ -643,7 +644,7 @@ class _PlateauDashboardScreenState
       child: FilledButton.icon(
         onPressed: () => context.push('/chat'),
         icon: const Icon(Icons.smart_toy_outlined),
-        label: const Text('Get AI Coach Advice'),
+        label: Text(AppLocalizations.of(context).plateauDashboardGetAiCoachAdvice),
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -703,7 +704,7 @@ class _PlateauDashboardScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to Load Data',
+              AppLocalizations.of(context).strainDashboardFailedToLoadData,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -723,7 +724,7 @@ class _PlateauDashboardScreenState
               onPressed: () =>
                   ref.read(plateauDashboardProvider.notifier).loadData(),
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -745,7 +746,7 @@ class _PlateauDashboardScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'No Plateau Data Yet',
+              AppLocalizations.of(context).plateauDashboardNoPlateauDataYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -754,7 +755,7 @@ class _PlateauDashboardScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete more workouts and log your weight to see plateau detection insights.',
+              AppLocalizations.of(context).plateauDashboardCompleteMoreWorkoutsAnd,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,

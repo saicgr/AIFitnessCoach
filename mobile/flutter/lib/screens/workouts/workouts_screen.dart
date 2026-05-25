@@ -29,6 +29,7 @@ import '../home/widgets/week_calendar_strip.dart';
 import '../home/widgets/gym_profile_switcher.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
 class WorkoutsScreen extends ConsumerStatefulWidget {
@@ -273,19 +274,19 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   accentColor: accentColor,
                   activeIndex: _activeOption,
                   onSelected: _onOptionSelected,
-                  items: const [
+                  items: [
                     WorkoutsOptionItem(
-                        label: 'Plan', icon: Icons.calendar_today_rounded),
+                        label: AppLocalizations.of(context).workoutsPlan, icon: Icons.calendar_today_rounded),
                     WorkoutsOptionItem(
-                        label: 'Gym', icon: Icons.storefront_outlined),
+                        label: AppLocalizations.of(context).workoutsGym, icon: Icons.storefront_outlined),
                     WorkoutsOptionItem(
-                        label: 'Library',
+                        label: AppLocalizations.of(context).workoutsLibrary,
                         icon: Icons.menu_book_outlined),
                     // B.3.1 — "Programs" replaces "History" here. History
                     // moved into the quick-actions row; Programs opens the
                     // multi-week program library beside the exercise Library.
                     WorkoutsOptionItem(
-                        label: 'Programs', icon: Icons.list_alt_rounded),
+                        label: AppLocalizations.of(context).workoutsPrograms, icon: Icons.list_alt_rounded),
                   ],
                 ),
               ),
@@ -333,7 +334,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                 // floating launcher bar.
                 Expanded(
                   child: Text(
-                    'Workouts',
+                    AppLocalizations.of(context).workoutListTitle,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -514,7 +515,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             child: _buildQuickActionButton(
               context,
               icon: Icons.add_circle_outline,
-              label: 'Custom',
+              label: AppLocalizations.of(context).workoutsCustom,
               color: accentColor,
               isDark: isDark,
               onTap: () {
@@ -528,7 +529,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             child: _buildQuickActionButton(
               context,
               icon: Icons.calendar_month_rounded,
-              label: 'Upcoming',
+              label: AppLocalizations.of(context).workoutsUpcoming,
               color: accentColor,
               isDark: isDark,
               onTap: () {
@@ -542,7 +543,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             child: _buildQuickActionButton(
               context,
               icon: Icons.favorite,
-              label: 'Favorites',
+              label: AppLocalizations.of(context).workoutsFavorites,
               color: AppColors.error,
               isDark: isDark,
               onTap: () {
@@ -560,7 +561,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             child: _buildQuickActionButton(
               context,
               icon: Icons.history_rounded,
-              label: 'History',
+              label: AppLocalizations.of(context).workoutHistory,
               color: accentColor,
               isDark: isDark,
               onTap: () {
@@ -664,7 +665,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Your next workout is created automatically after each session',
+              AppLocalizations.of(context).workoutsYourNextWorkoutIs,
               style: TextStyle(
                 fontSize: 12,
                 color: textSecondary.withValues(alpha: 0.6),
@@ -764,12 +765,12 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                 Icon(Icons.history, size: 32, color: textSecondary),
                 const SizedBox(height: 8),
                 Text(
-                  'No completed workouts yet',
+                  AppLocalizations.of(context).workoutsNoCompletedWorkoutsYet,
                   style: TextStyle(color: textSecondary),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Complete your first workout to see it here',
+                  AppLocalizations.of(context).workoutsCompleteYourFirstWorkout,
                   style: TextStyle(
                     color: textSecondary.withValues(alpha: 0.7),
                     fontSize: 12,
@@ -891,7 +892,7 @@ class _PreviousSessionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    workout.name ?? 'Workout',
+                    workout.name ?? AppLocalizations.of(context).navWorkout,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -910,7 +911,7 @@ class _PreviousSessionCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          workout.type?.toUpperCase() ?? 'STRENGTH',
+                          workout.type?.toUpperCase() ?? AppLocalizations.of(context).workoutsStrength,
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
@@ -1315,7 +1316,7 @@ class _WorkoutsOverflowMenu extends ConsumerWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return PopupMenuButton<int>(
-      tooltip: 'More options',
+      tooltip: AppLocalizations.of(context).workoutsMoreOptions,
       padding: EdgeInsets.zero,
       position: PopupMenuPosition.under,
       onSelected: (value) {
@@ -1339,7 +1340,7 @@ class _WorkoutsOverflowMenu extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  isCollapsed ? 'Expand week view' : 'Collapse week view',
+                  isCollapsed ? AppLocalizations.of(context).workoutsExpandWeekView : AppLocalizations.of(context).workoutsCollapseWeekView,
                   style: TextStyle(color: textPrimary),
                 ),
               ),
@@ -1387,7 +1388,7 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Import workouts',
+                AppLocalizations.of(context).workoutsImportWorkouts,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -1406,8 +1407,8 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
               const SizedBox(height: 18),
               _ImportSourceTile(
                 icon: Icons.upload_file_rounded,
-                title: 'CSV or JSON file',
-                subtitle: 'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, custom CSV',
+                title: AppLocalizations.of(context).workoutsCsvOrJsonFile,
+                subtitle: AppLocalizations.of(context).workoutsHevyStrongLiftinFitbod,
                 accent: AppColors.purple,
                 onTap: () {
                   Navigator.of(context).pop();
@@ -1417,8 +1418,8 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
               const SizedBox(height: 10),
               _ImportSourceTile(
                 icon: Icons.edit_note_rounded,
-                title: 'Type a few PRs manually',
-                subtitle: 'Bench, squat, deadlift — best when you only know your top sets',
+                title: AppLocalizations.of(context).workoutsTypeAFewPrs,
+                subtitle: AppLocalizations.of(context).workoutsBenchSquatDeadliftBest,
                 accent: AppColors.cyan,
                 onTap: () {
                   Navigator.of(context).pop();
@@ -1428,8 +1429,8 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
               const SizedBox(height: 10),
               _ImportSourceTile(
                 icon: Icons.sync_rounded,
-                title: 'Health Connect / Apple Health',
-                subtitle: 'Sync sessions from your watch (already syncing in the background)',
+                title: AppLocalizations.of(context).workoutsHealthConnectAppleHealth,
+                subtitle: AppLocalizations.of(context).workoutsSyncSessionsFromYour,
                 accent: AppColors.success,
                 onTap: () {
                   Navigator.of(context).pop();
@@ -1438,7 +1439,7 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                'You can edit, undo, or remap any import afterward — nothing is destructive.',
+                AppLocalizations.of(context).workoutsYouCanEditUndo,
                 style: TextStyle(
                   fontSize: 11,
                   color: textMuted,

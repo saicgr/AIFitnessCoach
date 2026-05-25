@@ -61,7 +61,7 @@ extension _InventoryScreenStateUI on _InventoryScreenState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Trust Level',
+                    AppLocalizations.of(context).inventoryScreenUiTrustLevel,
                     style: TextStyle(
                       color: textMuted,
                       fontSize: 13,
@@ -136,7 +136,7 @@ extension _InventoryScreenStateUI on _InventoryScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Daily Crates',
+          AppLocalizations.of(context).inventoryScreenUiDailyCrates,
           style: TextStyle(
             color: textColor,
             fontSize: 18,
@@ -145,7 +145,7 @@ extension _InventoryScreenStateUI on _InventoryScreenState {
         ),
         const SizedBox(height: 4),
         Text(
-          claimed ? 'Come back tomorrow for more!' : 'Pick 1 of 3 crates daily',
+          claimed ? AppLocalizations.of(context).inventoryScreenUiComeBackTomorrowFor : AppLocalizations.of(context).inventoryScreenUiPick1Of3,
           style: TextStyle(
             color: textMuted,
             fontSize: 14,

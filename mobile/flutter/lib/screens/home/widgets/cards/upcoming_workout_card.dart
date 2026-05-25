@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/workout.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// A compact card for displaying upcoming workouts in a list
 class UpcomingWorkoutCard extends StatelessWidget {
   /// The workout to display
@@ -99,7 +100,7 @@ class UpcomingWorkoutCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        workout.name ?? 'Workout',
+                        workout.name ?? AppLocalizations.of(context).navWorkout,
                         style: Theme.of(context).textTheme.titleSmall,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

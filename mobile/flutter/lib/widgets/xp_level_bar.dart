@@ -8,6 +8,7 @@ import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Animated XP level bar showing:
 /// Lvl X ----[animated fill bar]---- Lvl X+1
 ///              123/250 XP
@@ -256,7 +257,7 @@ class _XPLevelBarState extends ConsumerState<XPLevelBar>
         ),
         const SizedBox(height: 4),
         Text(
-          isCurrentLevel ? 'Lvl' : 'Next',
+          isCurrentLevel ? AppLocalizations.of(context).xpLevelBarLvl : AppLocalizations.of(context).commonNext,
           style: TextStyle(
             fontSize: labelSize,
             color: isCurrentLevel

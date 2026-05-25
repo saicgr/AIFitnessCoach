@@ -47,6 +47,7 @@ import 'widgets/post_meal_review_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/repositories/hydration_repository.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class NutritionScreen extends ConsumerStatefulWidget {
   /// Optional meal type to auto-open the log meal sheet (from deep link).
   final String? initialMeal;
@@ -255,7 +256,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             'from your weekly rate.',
           ),
           action: SnackBarAction(
-            label: 'Review',
+            label: AppLocalizations.of(context).nutritionReview,
             textColor: Colors.white,
             onPressed: () {
               if (!mounted) return;
@@ -864,11 +865,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           child: GlassNutritionTabBar(
             controller: _tabController,
             accentColor: accentColor,
-            items: const [
-              NutritionTabItem(label: 'Daily', icon: Icons.restaurant_menu_rounded),
-              NutritionTabItem(label: 'Recipes', icon: Icons.menu_book_rounded),
-              NutritionTabItem(label: 'Patterns', icon: Icons.insights_outlined),
-              NutritionTabItem(label: 'Fuel', icon: Icons.bolt_outlined),
+            items: [
+              NutritionTabItem(label: AppLocalizations.of(context).nutritionDailyTab, icon: Icons.restaurant_menu_rounded),
+              NutritionTabItem(label: AppLocalizations.of(context).nutritionRecipesTab, icon: Icons.menu_book_rounded),
+              NutritionTabItem(label: AppLocalizations.of(context).nutritionPatternsTab, icon: Icons.insights_outlined),
+              NutritionTabItem(label: AppLocalizations.of(context).nutritionFuel, icon: Icons.bolt_outlined),
             ],
           ),
         ),
@@ -895,7 +896,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           Expanded(
             child: Semantics(
               button: !_isToday,
-              label: _isToday ? _dateLabel : 'Jump to today',
+              label: _isToday ? _dateLabel : AppLocalizations.of(context).nutritionJumpToToday,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _isToday
@@ -961,7 +962,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 );
                 if (shareable == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Log some meals first to share')),
+                    SnackBar(content: Text(AppLocalizations.of(context).nutritionLogSomeMealsFirst)),
                   );
                   return;
                 }
@@ -1063,9 +1064,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     messenger.clearSnackBars();
     messenger.showSnackBar(
       SnackBar(
-        content: const Text('Meal deleted'),
+        content: Text(AppLocalizations.of(context).nutritionMealDeleted),
         action: SnackBarAction(
-          label: 'Undo',
+          label: AppLocalizations.of(context).workoutUiBuildersUndo,
           onPressed: () {
             undone = true;
             notifier.restoreLog(removed);
@@ -1315,7 +1316,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // success / error toast comes from the global listener.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("Cooking up your recipe in the background…"),
+        content: Text(AppLocalizations.of(context).nutritionCookingUpYourRecipe),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
       ),
@@ -1336,7 +1337,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final shareable = NutritionAdapter.fromFoodLog(meal, accent: accent);
     if (shareable == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Log some food first to share')),
+        SnackBar(content: Text(AppLocalizations.of(context).nutritionLogSomeFoodFirst)),
       );
       return;
     }
@@ -1358,7 +1359,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         .toList();
     if (meals.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Log some food first to share')),
+        SnackBar(content: Text(AppLocalizations.of(context).nutritionLogSomeFoodFirst)),
       );
       return;
     }
@@ -1374,7 +1375,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final shareable = NutritionAdapter.fromMeal(meals, accent: accent);
     if (shareable == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Log some food first to share')),
+        SnackBar(content: Text(AppLocalizations.of(context).nutritionLogSomeFoodFirst)),
       );
       return;
     }
@@ -1479,8 +1480,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Scheduling…'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).nutritionScheduling),
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 3),
         ),
@@ -1713,14 +1714,14 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       await repository.saveFood(userId: _userId!, request: request);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved to My Foods'), behavior: SnackBarBehavior.floating, duration: Duration(seconds: 2)),
+          SnackBar(content: Text(AppLocalizations.of(context).nutritionSavedToMyFoods), behavior: SnackBarBehavior.floating, duration: Duration(seconds: 2)),
         );
       }
     } catch (e) {
       debugPrint('Error saving food: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().contains('duplicate') ? 'Already in My Foods' : 'Failed to save food'), behavior: SnackBarBehavior.floating),
+          SnackBar(content: Text(e.toString().contains('duplicate') ? AppLocalizations.of(context).nutritionAlreadyInMyFoods : AppLocalizations.of(context).nutritionFailedToSaveFood), behavior: SnackBarBehavior.floating),
         );
       }
     }

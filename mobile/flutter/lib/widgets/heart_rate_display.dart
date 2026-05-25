@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers/heart_rate_provider.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Compact heart rate display for workout screens.
 /// Shows live BPM from watch with color-coded heart rate zone indicator.
 /// Tap the zone badge to learn what the zone means (beginner-friendly).
@@ -199,7 +200,7 @@ class _TappableZoneBadge extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Got it',
+              AppLocalizations.of(context).weightIncrementsGotIt,
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w600,
@@ -374,7 +375,7 @@ class HeartRateDisplayLarge extends ConsumerWidget {
                   )
                 else
                   Text(
-                    bpm == null ? 'Waiting for watch...' : 'Calculating zone...',
+                    bpm == null ? AppLocalizations.of(context).heartRateDisplayWaitingForWatch : AppLocalizations.of(context).heartRateDisplayCalculatingZone,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey,

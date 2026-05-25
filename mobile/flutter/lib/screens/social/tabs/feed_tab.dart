@@ -21,6 +21,7 @@ import '../widgets/comments_sheet.dart';
 import '../widgets/activity_share_sheet.dart';
 import '../widgets/stories_ring.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Feed filter: show only my posts
 final feedMyPostsOnlyProvider = StateProvider<bool>((ref) => false);
 
@@ -103,8 +104,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     if (userId == null) {
       return SocialEmptyState(
         icon: Icons.error_outline_rounded,
-        title: 'Not Logged In',
-        description: 'Please log in to see your activity feed',
+        title: AppLocalizations.of(context).messagesNotLoggedIn,
+        description: AppLocalizations.of(context).feedPleaseLogInTo,
         actionLabel: null,
         onAction: null,
       );
@@ -135,8 +136,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
             debugPrint('Error loading feed: $error');
             return SocialEmptyState(
               icon: Icons.cloud_off_rounded,
-              title: 'Failed to Load Feed',
-              description: 'Could not load your activity feed.\nPlease try again later.',
+              title: AppLocalizations.of(context).feedFailedToLoadFeed,
+              description: AppLocalizations.of(context).feedCouldNotLoadYour,
               actionLabel: 'Retry',
               onAction: () {
                 ref.invalidate(activityFeedProvider(userId));
@@ -177,8 +178,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                           height: MediaQuery.of(context).size.height * 0.6,
                           child: SocialEmptyState(
                             icon: Icons.people_outline_rounded,
-                            title: 'No Activity Yet',
-                            description: 'Complete workouts to see them shared here!\nFollow friends to see their workouts too.',
+                            title: AppLocalizations.of(context).feedNoActivityYet,
+                            description: AppLocalizations.of(context).feedCompleteWorkoutsToSee,
                             actionLabel: 'Create Post',
                             onAction: () => _showCreatePostSheet(userId),
                           ),
@@ -220,7 +221,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
-                                    'No posts yet',
+                                    AppLocalizations.of(context).feedNoPostsYet,
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -229,7 +230,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Create your first post!',
+                                    AppLocalizations.of(context).feedCreateYourFirstPost,
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: AppColors.textMuted.withValues(alpha: 0.7),

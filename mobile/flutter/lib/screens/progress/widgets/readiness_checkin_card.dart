@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../data/models/scores.dart';
 import '../../../data/providers/scores_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card for daily readiness check-in using Hooper Index
 class ReadinessCheckinCard extends ConsumerStatefulWidget {
   final String userId;
@@ -135,7 +136,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Today\'s Readiness',
+                AppLocalizations.of(context).readinessCheckinCardTodaySReadiness,
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.onSurfaceVariant,
@@ -198,7 +199,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'How are you feeling today?',
+                AppLocalizations.of(context).strengthOverviewCardHowAreYouFeeling,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -207,7 +208,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Quick check-in helps optimize your workout',
+                AppLocalizations.of(context).readinessCheckinCardQuickCheckInHelps,
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.onSurfaceVariant,
@@ -236,7 +237,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
 
           // Sleep Quality
           _buildSlider(
-            label: 'Sleep Quality',
+            label: AppLocalizations.of(context).wellnessCheckinCardSleepQuality,
             icon: Icons.bedtime_outlined,
             value: _sleepQuality,
             lowLabel: 'Great',
@@ -246,7 +247,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
 
           // Fatigue Level
           _buildSlider(
-            label: 'Energy/Fatigue',
+            label: AppLocalizations.of(context).readinessCheckinCardEnergyFatigue,
             icon: Icons.battery_charging_full,
             value: _fatigueLevel,
             lowLabel: 'Fresh',
@@ -256,7 +257,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
 
           // Stress Level
           _buildSlider(
-            label: 'Stress Level',
+            label: AppLocalizations.of(context).wellnessCheckinCardStressLevel,
             icon: Icons.psychology_outlined,
             value: _stressLevel,
             lowLabel: 'Relaxed',
@@ -266,7 +267,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
 
           // Muscle Soreness
           _buildSlider(
-            label: 'Muscle Soreness',
+            label: AppLocalizations.of(context).wellnessCheckinCardMuscleSoreness,
             icon: Icons.fitness_center,
             value: _muscleSoreness,
             lowLabel: 'None',
@@ -291,7 +292,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
                       ),
                     )
                   : const Icon(Icons.check),
-              label: Text(isSubmitting ? 'Submitting...' : 'Submit Check-in'),
+              label: Text(isSubmitting ? AppLocalizations.of(context).readinessCheckinCardSubmitting : AppLocalizations.of(context).readinessCheckinCardSubmitCheckIn),
             ),
           ),
         ],
@@ -442,7 +443,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Got it!'),
+            child: Text(AppLocalizations.of(context).xpGoalsGotIt),
           ),
         ],
         actionsAlignment: MainAxisAlignment.center,

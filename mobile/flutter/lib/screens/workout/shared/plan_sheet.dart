@@ -17,6 +17,7 @@ import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../models/workout_state.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 Future<void> showPlanSheet({
   required BuildContext context,
   required List<WorkoutExercise> exercises,
@@ -72,7 +73,7 @@ class _PlanSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
             child: Row(children: [
-              Text("Today's plan",
+              Text(AppLocalizations.of(context).planTodaySPlan,
                   style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.w700, color: fg)),
               const Spacer(),

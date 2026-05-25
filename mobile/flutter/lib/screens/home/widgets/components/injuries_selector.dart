@@ -3,6 +3,7 @@ import 'sheet_theme_colors.dart';
 import 'selectable_chip.dart';
 import 'section_title.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Default list of injury options
 const List<String> defaultInjuries = [
   'Shoulder',
@@ -88,7 +89,7 @@ class InjuriesSelector extends StatelessWidget {
             children: [
               SectionTitle(
                 icon: Icons.healing,
-                title: 'Injuries to Consider',
+                title: AppLocalizations.of(context).injuriesSelectorInjuriesToConsider,
                 iconColor: colors.error,
               ),
               const Spacer(),
@@ -102,7 +103,7 @@ class InjuriesSelector extends StatelessWidget {
           if (showSubtitle) ...[
             const SizedBox(height: 8),
             Text(
-              'AI will avoid exercises that may aggravate these areas',
+              AppLocalizations.of(context).injuriesSelectorAiWillAvoidExercises,
               style: TextStyle(fontSize: 12, color: colors.textMuted),
             ),
           ],
@@ -137,7 +138,7 @@ class InjuriesSelector extends StatelessWidget {
             TextField(
               controller: customInputController,
               decoration: InputDecoration(
-                hintText: 'Enter custom injury (e.g., "Tennis elbow")',
+                hintText: AppLocalizations.of(context).injuriesSelectorEnterCustomInjuryE,
                 hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: colors.glassSurface,

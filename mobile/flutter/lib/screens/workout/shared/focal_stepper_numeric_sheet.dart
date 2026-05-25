@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows a modal keyboard sheet for precise editing of the focal-stepper
 /// value. Resolves to the clamped new value, or `null` when the user
 /// dismisses the sheet without saving.
@@ -181,8 +182,8 @@ class _NumericEditSheetState extends State<_NumericEditSheet> {
                   ),
                 ),
                 onPressed: _submit,
-                child: const Text(
-                  'Save',
+                child: Text(
+                  AppLocalizations.of(context).buttonSave,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),

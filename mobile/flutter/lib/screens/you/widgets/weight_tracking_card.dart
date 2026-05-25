@@ -11,6 +11,7 @@ import '../../../data/models/user.dart' as app_user;
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Time-range buckets shown above the weight chart. Seven options covering
 /// 1D / 3D / 7D / 1M / 3M / 6M / 1Y — local to this card; not promoted to a
 /// global provider because the range is a private viewing concern.
@@ -231,7 +232,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
         ),
         const SizedBox(width: 10),
         Text(
-          'Weight Tracking',
+          AppLocalizations.of(context).weightTrackingCardWeightTracking,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
@@ -724,7 +725,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
             icon: Icons.south_rounded,
             color: AppColors.success,
             value: '${_displayValue(low, unitIsKg)} $unitLabel',
-            label: 'Lowest',
+            label: AppLocalizations.of(context).weightTrackingCardLowest,
             isDark: isDark,
           ),
         ),
@@ -734,7 +735,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
             icon: Icons.north_rounded,
             color: AppColors.error,
             value: '${_displayValue(high, unitIsKg)} $unitLabel',
-            label: 'Highest',
+            label: AppLocalizations.of(context).weightTrackingCardHighest,
             isDark: isDark,
           ),
         ),
@@ -865,7 +866,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
                 size: 16, color: AppColors.success),
             const SizedBox(width: 6),
             Text(
-              'Recent Entries',
+              AppLocalizations.of(context).weightTrackingCardRecentEntries,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -882,7 +883,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
               child: Row(
                 children: [
                   Text(
-                    'See All',
+                    AppLocalizations.of(context).weightTrackingCardSeeAll,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

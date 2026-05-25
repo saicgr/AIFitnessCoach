@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Locked state widget shown when global leaderboard is not unlocked
 class LeaderboardLockedState extends StatelessWidget {
   final Map<String, dynamic>? unlockStatus;
@@ -47,7 +48,7 @@ class LeaderboardLockedState extends StatelessWidget {
 
             // Title
             Text(
-              'Global Leaderboard Locked',
+              AppLocalizations.of(context).leaderboardLockedStateGlobalLeaderboardLocked,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -58,7 +59,7 @@ class LeaderboardLockedState extends StatelessWidget {
 
             // Message
             Text(
-              unlockStatus?['unlock_message'] ?? 'Complete more workouts to unlock!',
+              unlockStatus?['unlock_message'] ?? AppLocalizations.of(context).leaderboardLockedStateCompleteMoreWorkoutsTo,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppColors.textMuted,
                   ),
@@ -74,7 +75,7 @@ class LeaderboardLockedState extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Progress',
+                      AppLocalizations.of(context).navProgress,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     Text(
@@ -105,7 +106,7 @@ class LeaderboardLockedState extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onViewFriendsLeaderboard,
               icon: const Icon(Icons.people),
-              label: const Text('View Friends Leaderboard'),
+              label: Text(AppLocalizations.of(context).leaderboardLockedStateViewFriendsLeaderboard),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.cyan,
                 side: const BorderSide(color: AppColors.cyan),

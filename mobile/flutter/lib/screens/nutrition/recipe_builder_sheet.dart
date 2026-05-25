@@ -7,6 +7,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/nutrition/cooking_converter_sheet.dart';
 import '../../widgets/nutrition/batch_portioning_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'recipe_builder_sheet_part_ingredient_entry.dart';
 
 
@@ -282,7 +283,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
               children: [
                 Text(
                   widget.existingRecipe != null
-                      ? 'Edit Recipe'
+                      ? AppLocalizations.of(context).recipeBuilderEditRecipe
                       : 'Create Recipe',
                   style: TextStyle(
                     fontSize: 24,
@@ -293,7 +294,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                 const Spacer(),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Cancel', style: TextStyle(color: textMuted)),
+                  child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted)),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
@@ -314,7 +315,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Save'),
+                      : Text(AppLocalizations.of(context).buttonSave),
                 ),
               ],
             ),
@@ -429,7 +430,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                           textAlign: TextAlign.center,
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
-                            labelText: 'Servings',
+                            labelText: AppLocalizations.of(context).recipeBuilderServings,
                             labelStyle: TextStyle(color: textMuted),
                             filled: true,
                             fillColor: elevated,
@@ -453,7 +454,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
                           decoration: InputDecoration(
-                            labelText: 'Prep Time',
+                            labelText: AppLocalizations.of(context).recipeBuilderPrepTime,
                             labelStyle: TextStyle(color: textMuted),
                             suffixText: 'min',
                             suffixStyle: TextStyle(color: textMuted),
@@ -473,7 +474,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
                           decoration: InputDecoration(
-                            labelText: 'Cook Time',
+                            labelText: AppLocalizations.of(context).recipeBuilderCookTime,
                             labelStyle: TextStyle(color: textMuted),
                             suffixText: 'min',
                             suffixStyle: TextStyle(color: textMuted),
@@ -494,7 +495,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                   Row(
                     children: [
                       Text(
-                        'INGREDIENTS',
+                        AppLocalizations.of(context).recipeBuilderIngredients,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -535,7 +536,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'No ingredients yet',
+                                  AppLocalizations.of(context).recipeBuilderNoIngredientsYet,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: textMuted,
@@ -583,7 +584,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                                         Icon(Icons.add, color: teal, size: 20),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'Add Ingredient',
+                                          AppLocalizations.of(context).recipeBuilderSheetAddIngredient,
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
@@ -614,7 +615,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                                       Icon(Icons.scale, color: Colors.orange, size: 20),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'Converter',
+                                        AppLocalizations.of(context).recipeBuilderConverter,
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
@@ -636,7 +637,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                   // Nutrition Summary
                   if (_ingredients.isNotEmpty) ...[
                     Text(
-                      'NUTRITION PER SERVING',
+                      AppLocalizations.of(context).recipeBuilderNutritionPerServing,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -677,7 +678,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                             const Icon(Icons.pie_chart, color: Colors.purple, size: 20),
                             const SizedBox(width: 8),
                             Text(
-                              'Calculate Portion to Log',
+                              AppLocalizations.of(context).recipeBuilderCalculatePortionToLog,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -697,7 +698,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                     maxLines: 2,
                     style: TextStyle(color: textPrimary),
                     decoration: InputDecoration(
-                      labelText: 'Description (Optional)',
+                      labelText: AppLocalizations.of(context).recipeBuilderDescriptionOptional,
                       labelStyle: TextStyle(color: textMuted),
                       hintText: 'A brief description of the recipe',
                       hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
@@ -717,7 +718,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                     maxLines: 4,
                     style: TextStyle(color: textPrimary),
                     decoration: InputDecoration(
-                      labelText: 'Instructions (Optional)',
+                      labelText: AppLocalizations.of(context).recipeBuilderInstructionsOptional,
                       labelStyle: TextStyle(color: textMuted),
                       hintText: '1. First step...\n2. Second step...',
                       hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
@@ -759,7 +760,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Share Recipe',
+                                AppLocalizations.of(context).recipeBuilderShareRecipe,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,

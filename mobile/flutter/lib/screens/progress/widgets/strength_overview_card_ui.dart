@@ -53,7 +53,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'How are you feeling today?',
+              AppLocalizations.of(context).strengthOverviewCardHowAreYouFeeling,
               style: TextStyle(
                 fontSize: 13,
                 color: colorScheme.onSurfaceVariant,
@@ -67,7 +67,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              'Check in',
+              AppLocalizations.of(context).strengthOverviewCardCheckIn,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -216,7 +216,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
               ),
               const SizedBox(width: 4),
               Text(
-                'Strength Score',
+                AppLocalizations.of(context).strengthOverviewCardStrengthScore,
                 style: TextStyle(
                   fontSize: 10,
                   color: colorScheme.onSurfaceVariant,
@@ -242,7 +242,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
               ),
               const SizedBox(width: 4),
               Text(
-                'Training Status',
+                AppLocalizations.of(context).strengthOverviewCardTrainingStatus,
                 style: TextStyle(
                   fontSize: 10,
                   color: colorScheme.onSurfaceVariant,
@@ -318,7 +318,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              'Drag \u2630 to reorder \u00B7 Tap pin to keep on top',
+              AppLocalizations.of(context).strengthOverviewCardDragU2630ToReorder,
               style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant),
             ),
           ),

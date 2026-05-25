@@ -47,6 +47,7 @@ import '../../data/providers/today_workout_provider.dart';
 import 'widgets/workout_detail_helpers.dart';
 import 'widgets/workout_detail_ai_insights.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'workout_detail_screen_ui.dart';
 
 part 'workout_detail_screen_ui_1.dart';
@@ -196,7 +197,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                     const Icon(Icons.error_outline, color: AppColors.error, size: 48),
                     const SizedBox(height: 16),
                     Text(
-                      'Failed to load workout',
+                      AppLocalizations.of(context).workoutDetailFailedToLoadWorkout,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     if (_error != null) ...[
@@ -215,7 +216,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                     FilledButton.icon(
                       onPressed: _loadWorkout,
                       icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text('Try Again'),
+                      label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
                     ),
                   ],
                 ),
@@ -354,7 +355,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                                 ),
                               ),
                               Text(
-                                'Retry',
+                                AppLocalizations.of(context).buttonRetry,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -389,7 +390,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                       children: [
                         // Workout Type Badge - now with semantic color
                         _buildLabeledBadge(
-                          label: 'Type',
+                          label: AppLocalizations.of(context).workoutDetailType,
                           value: (workout.type ?? 'strength').capitalize(),
                           color: AppColors.getWorkoutTypeColor(workout.type ?? 'strength'),
                           backgroundColor: AppColors.getWorkoutTypeColor(workout.type ?? 'strength').withValues(alpha: 0.15),
@@ -400,7 +401,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                           const AnimatedHellBadge()
                         else
                           _buildLabeledBadge(
-                            label: 'Difficulty',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
                             value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
                             color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
                             backgroundColor: DifficultyUtils.getColor(workout.difficulty ?? 'medium').withValues(alpha: 0.15),
@@ -409,7 +410,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         if (_trainingSplit != null && _getTrainingProgramName(_trainingSplit!) != null) ...[
                           const SizedBox(width: 8),
                           _buildLabeledBadge(
-                            label: 'Program',
+                            label: AppLocalizations.of(context).workoutDetailProgram,
                             value: _getTrainingProgramName(_trainingSplit!)!,
                             color: accentColor,
                             backgroundColor: accentColor.withValues(alpha: 0.15),
@@ -472,7 +473,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               child: Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: _buildCollapsibleSectionHeader(
-                  title: 'EQUIPMENT',
+                  title: AppLocalizations.of(context).workoutDetailEquipment,
                   icon: Icons.fitness_center,
                   color: Colors.blueGrey,
                   isExpanded: _isEquipmentExpanded,
@@ -489,7 +490,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                           child: Padding(
                             padding: const EdgeInsets.only(right: 12),
                             child: Text(
-                              'Revert',
+                              AppLocalizations.of(context).workoutDetailRevert,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -502,7 +503,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                       GestureDetector(
                         onTap: () => _showEditEquipmentSheet(workout),
                         child: Text(
-                          'Edit',
+                          AppLocalizations.of(context).commonEdit,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -617,7 +618,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                     : TextButton.icon(
                         onPressed: _addSaunaToWorkout,
                         icon: const Icon(Icons.hot_tub_rounded, size: 18),
-                        label: const Text('Add Sauna Time'),
+                        label: Text(AppLocalizations.of(context).workoutDetailAddSaunaTime),
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFFE65100),
                         ),
@@ -632,7 +633,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
             child: Padding(
               padding: const EdgeInsets.only(top: 16),
               child: _buildCollapsibleSectionHeader(
-                title: 'WARM UP',
+                title: AppLocalizations.of(context).workoutDetailWarmUp,
                 icon: Icons.whatshot,
                 color: AppColors.orange,
                 isExpanded: _isWarmupExpanded,
@@ -674,7 +675,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
             child: Padding(
               padding: const EdgeInsets.only(top: 16),
               child: _buildCollapsibleSectionHeader(
-                title: 'EXERCISES',
+                title: AppLocalizations.of(context).workoutSummaryGeneralExercises,
                 icon: Icons.fitness_center,
                 color: accentColor,
                 isExpanded: true,
@@ -856,7 +857,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               child: Padding(
                 padding: const EdgeInsets.only(top: 16),
                 child: _buildCollapsibleSectionHeader(
-                  title: 'WANT A CHALLENGE?',
+                  title: AppLocalizations.of(context).workoutDetailWantAChallenge,
                   icon: Icons.local_fire_department,
                   color: Colors.orange,
                   isExpanded: _isChallengeExpanded,
@@ -882,7 +883,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
             child: Padding(
               padding: const EdgeInsets.only(top: 16),
               child: _buildCollapsibleSectionHeader(
-                title: 'COOL DOWN STRETCHES',
+                title: AppLocalizations.of(context).workoutDetailCoolDownStretches,
                 icon: Icons.self_improvement,
                 color: AppColors.purple,
                 isExpanded: _isStretchesExpanded,
@@ -921,7 +922,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
             child: Padding(
               padding: const EdgeInsets.only(top: 16),
               child: _buildCollapsibleSectionHeader(
-                title: 'MORE INFO',
+                title: AppLocalizations.of(context).workoutDetailMoreInfo,
                 icon: Icons.lightbulb_outline,
                 color: accentColor,
                 isExpanded: _isMoreInfoExpanded,
@@ -1032,7 +1033,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                     children: [
                       Flexible(
                         child: Text(
-                          workout.name ?? 'Workout',
+                          workout.name ?? AppLocalizations.of(context).navWorkout,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

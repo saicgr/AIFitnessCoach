@@ -7,6 +7,7 @@ import '../../../data/services/last_used_service.dart';
 import '../../../widgets/common/last_used_badge.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 String _rpeKeyFor(String exerciseName) {
   // Slug the exercise name for a stable, file-system-safe SharedPreferences
   // key. Two exercises with the same name (rare) collapse to one bucket —
@@ -161,7 +162,7 @@ class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'How hard was that set?',
+                        AppLocalizations.of(context).setRowPartHowHardWasThat,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -189,7 +190,7 @@ class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
                 Expanded(
                   child: _EffortTile(
                     label: 'Easy',
-                    subLabel: '3+ left',
+                    subLabel: AppLocalizations.of(context).intensityPrompt3Left,
                     emoji: '😌',
                     selected: _selectedRpe != null &&
                         _selectedRpe! <= 7,
@@ -201,8 +202,8 @@ class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _EffortTile(
-                    label: 'Moderate',
-                    subLabel: '2 left',
+                    label: AppLocalizations.of(context).scoreExplainModerate,
+                    subLabel: AppLocalizations.of(context).intensityPrompt2Left,
                     emoji: '👍',
                     selected: _selectedRpe == 8,
                     isLastUsed: _lastUsedRpe == 8,
@@ -213,8 +214,8 @@ class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _EffortTile(
-                    label: 'Hard',
-                    subLabel: '1 left',
+                    label: AppLocalizations.of(context).workoutCompleteScreenHard,
+                    subLabel: AppLocalizations.of(context).intensityPrompt1Left,
                     emoji: '🔥',
                     selected: _selectedRpe == 9,
                     isLastUsed: _lastUsedRpe == 9,
@@ -225,7 +226,7 @@ class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _EffortTile(
-                    label: 'Max',
+                    label: AppLocalizations.of(context).strengthOverviewCardMax,
                     subLabel: 'failure',
                     emoji: '🥵',
                     selected: _selectedRpe == 10,
@@ -326,7 +327,7 @@ class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
                 ),
                 child: Text(
                   _selectedRpe == null
-                      ? 'Pick an effort to continue'
+                      ? AppLocalizations.of(context).intensityPromptPickAnEffortTo
                       : 'Log set',
                   style: TextStyle(
                     fontSize: 15,

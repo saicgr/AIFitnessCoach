@@ -707,8 +707,8 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
           // Add YOUR WEEK section header before first week-related tile
           if (weekTileTypes.contains(tile.type) && !hasAddedWeekHeader) {
             slivers.add(
-              const SliverToBoxAdapter(
-                child: SectionHeader(title: 'YOUR WEEK'),
+              SliverToBoxAdapter(
+                child: SectionHeader(title: AppLocalizations.of(context).homeScreenUiYourWeek),
               ),
             );
             hasAddedWeekHeader = true;
@@ -736,7 +736,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
               slivers.add(
                 SliverToBoxAdapter(
                   child: SectionHeader(
-                    title: 'UPCOMING',
+                    title: AppLocalizations.of(context).homeScreenUiUpcoming,
                     subtitle: '${upcomingWorkouts.length} workouts',
                     actionText: 'View All',
                     onAction: () {

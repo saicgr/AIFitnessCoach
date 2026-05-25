@@ -11,6 +11,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'comparison_view.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full-screen gallery of saved before/after comparisons
 class ComparisonGalleryScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -38,7 +39,7 @@ class _ComparisonGalleryScreenState
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: PillAppBar(
-        title: 'Saved Comparisons',
+        title: AppLocalizations.of(context).comparisonGallerySavedComparisons,
         actions: [
           PillAppBarAction(
             icon: _sortNewestFirst ? Icons.arrow_downward : Icons.arrow_upward,
@@ -80,7 +81,7 @@ class _ComparisonGalleryScreenState
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No Comparisons Yet',
+                    AppLocalizations.of(context).comparisonGalleryNoComparisonsYet,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -89,7 +90,7 @@ class _ComparisonGalleryScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Create a before & after comparison from the Photos tab to see your progress over time.',
+                    AppLocalizations.of(context).comparisonGalleryCreateABeforeAfter,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -381,8 +382,8 @@ class _ComparisonGalleryScreenState
                 // Action buttons
                 _buildActionTile(
                   icon: Icons.edit_outlined,
-                  label: 'Re-edit',
-                  subtitle: 'Open in comparison editor',
+                  label: AppLocalizations.of(context).comparisonGalleryReEdit,
+                  subtitle: AppLocalizations.of(context).comparisonGalleryOpenInComparisonEditor,
                   colorScheme: colorScheme,
                   onTap: () {
                     Navigator.pop(ctx);
@@ -399,8 +400,8 @@ class _ComparisonGalleryScreenState
                 ),
                 _buildActionTile(
                   icon: Icons.share_outlined,
-                  label: 'Share',
-                  subtitle: 'Export and share this comparison',
+                  label: AppLocalizations.of(context).commonShare,
+                  subtitle: AppLocalizations.of(context).comparisonGalleryExportAndShareThis,
                   colorScheme: colorScheme,
                   onTap: () {
                     Navigator.pop(ctx);
@@ -409,8 +410,8 @@ class _ComparisonGalleryScreenState
                 ),
                 _buildActionTile(
                   icon: Icons.delete_outline,
-                  label: 'Delete',
-                  subtitle: 'Remove this comparison',
+                  label: AppLocalizations.of(context).buttonDelete,
+                  subtitle: AppLocalizations.of(context).comparisonGalleryRemoveThisComparison,
                   colorScheme: colorScheme,
                   isDestructive: true,
                   onTap: () {
@@ -478,10 +479,10 @@ class _ComparisonGalleryScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-                'Open the comparison in editor first to export and share.'),
+            content: Text(
+                AppLocalizations.of(context).comparisonGalleryOpenTheComparisonIn),
             action: SnackBarAction(
-              label: 'Open',
+              label: AppLocalizations.of(context).recipesOpen,
               onPressed: () {
                 Navigator.push(
                   context,
@@ -511,14 +512,14 @@ class _ComparisonGalleryScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        title: const Text('Delete Comparison?'),
-        content: const Text(
-          'This will permanently remove the comparison. The original photos will not be deleted.',
+        title: Text(AppLocalizations.of(context).comparisonGalleryDeleteComparison),
+        content: Text(
+          AppLocalizations.of(context).comparisonGalleryThisWillPermanentlyRemove,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () async {
@@ -531,7 +532,7 @@ class _ComparisonGalleryScreenState
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(success
-                        ? 'Comparison deleted'
+                        ? AppLocalizations.of(context).comparisonGalleryComparisonDeleted
                         : 'Failed to delete comparison'),
                     backgroundColor:
                         success ? colorScheme.primary : colorScheme.error,
@@ -540,7 +541,7 @@ class _ComparisonGalleryScreenState
               }
             },
             child: Text(
-              'Delete',
+              AppLocalizations.of(context).buttonDelete,
               style: TextStyle(color: colorScheme.error),
             ),
           ),

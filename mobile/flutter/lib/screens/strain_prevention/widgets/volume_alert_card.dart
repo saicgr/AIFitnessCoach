@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/strain_prevention.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Alert card for volume increase warnings with acknowledge button
 class VolumeAlertCard extends StatelessWidget {
   final VolumeAlert alert;
@@ -207,7 +208,7 @@ class VolumeAlertCard extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onAcknowledge,
                   icon: const Icon(Icons.check, size: 18),
-                  label: const Text('Acknowledge'),
+                  label: Text(AppLocalizations.of(context).volumeAlertCardAcknowledge),
                   style: FilledButton.styleFrom(
                     backgroundColor: alertColor,
                     foregroundColor: Colors.white,
@@ -346,7 +347,7 @@ class VolumeAlertBanner extends StatelessWidget {
                 children: [
                   Text(
                     alerts.length == 1
-                        ? 'Volume Alert'
+                        ? AppLocalizations.of(context).volumeAlertCardVolumeAlert
                         : '${alerts.length} Volume Alerts',
                     style: const TextStyle(
                       fontSize: 16,

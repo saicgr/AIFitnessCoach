@@ -6,6 +6,7 @@ import '../../../../core/theme/accent_color_provider.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class CustomColorLabCard extends ConsumerWidget {
   final BeastThemeData theme;
   const CustomColorLabCard({super.key, required this.theme});
@@ -17,9 +18,9 @@ class CustomColorLabCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Custom Color Lab', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
+          Text(AppLocalizations.of(context).customColorLabCustomColorLab, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
           const SizedBox(height: 4),
-          Text('Fine-tune accent color with HSV picker', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+          Text(AppLocalizations.of(context).customColorLabFineTuneAccentColor, style: TextStyle(fontSize: 11, color: theme.textMuted)),
           const SizedBox(height: 16),
           _HSVColorPicker(
             currentAccent: ref.watch(accentColorProvider),

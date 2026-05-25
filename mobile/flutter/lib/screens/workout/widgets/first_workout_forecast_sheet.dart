@@ -9,6 +9,7 @@ import '../../../utils/forecast_math.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Workstream 1 (Day 0-7 retention magic moment).
 ///
 /// Fires ONLY after the user's first-ever completed workout. Personalized
@@ -149,7 +150,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                             style: TextStyle(fontSize: 13, color: textMuted, letterSpacing: 0.5),
                           ),
                           Text(
-                            'Day 1 complete',
+                            AppLocalizations.of(context).firstWorkoutForecastDay1Complete,
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
@@ -186,7 +187,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
 
                 // ── 30-day forecast section ──
                 Text(
-                  'In 30 days at this pace',
+                  AppLocalizations.of(context).firstWorkoutForecastIn30DaysAt,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -199,7 +200,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                   icon: '🏋️',
                   color: accent,
                   primary: '${ForecastMath.formatCompact(projected30dVolumeLbs)} lbs',
-                  label: 'Total volume lifted',
+                  label: AppLocalizations.of(context).firstWorkoutForecastTotalVolumeLifted,
                   subtitle: volumeComparison.isNotEmpty ? 'That\'s $volumeComparison' : null,
                   textColor: textColor,
                   textMuted: textMuted,
@@ -211,7 +212,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                   icon: '🔥',
                   color: Colors.deepOrange,
                   primary: '${ForecastMath.formatCompact(projected30dCalories)} cal',
-                  label: 'Calories burned',
+                  label: AppLocalizations.of(context).pillarDetailCaloriesBurned,
                   subtitle: caloriesComparison.isNotEmpty ? 'That\'s $caloriesComparison' : null,
                   textColor: textColor,
                   textMuted: textMuted,
@@ -223,7 +224,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                   icon: '💪',
                   color: Colors.purple,
                   primary: '+$projectedStrengthPercent%',
-                  label: 'Projected strength gain on main lifts',
+                  label: AppLocalizations.of(context).firstWorkoutForecastProjectedStrengthGainOn,
                   subtitle: 'Estimate based on $effectiveSessions sessions/week',
                   textColor: textColor,
                   textMuted: textMuted,
@@ -235,7 +236,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                   icon: '⏱️',
                   color: Colors.teal,
                   primary: '${ForecastMath.formatCompact(projected30dMinutes)} min',
-                  label: 'Total time trained',
+                  label: AppLocalizations.of(context).firstWorkoutForecastTotalTimeTrained,
                   subtitle: 'Across ~${(effectiveSessions * ForecastMath.weeksInMonth).round()} sessions',
                   textColor: textColor,
                   textMuted: textMuted,
@@ -258,7 +259,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                           context.push('/schedule');
                         },
                         icon: const Icon(Icons.calendar_today, size: 16),
-                        label: const Text('Show me Day 7'),
+                        label: Text(AppLocalizations.of(context).firstWorkoutForecastShowMeDay7),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: textColor,
                           side: BorderSide(color: border),
@@ -274,7 +275,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                           Navigator.of(context).pop();
                         },
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text("Let's go"),
+                        label: Text(AppLocalizations.of(context).firstWorkoutForecastLetSGo),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accent,
                           foregroundColor: Colors.white,

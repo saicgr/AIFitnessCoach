@@ -13,6 +13,7 @@ import '../../../data/models/recipe.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/recipe_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class CommunityRecipeSearchScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -66,7 +67,7 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
       backgroundColor: bg,
       appBar: AppBar(
         backgroundColor: bg, elevation: 0,
-        title: Text('Community recipes', style: TextStyle(color: text)),
+        title: Text(AppLocalizations.of(context).communityRecipeSearchCommunityRecipes, style: TextStyle(color: text)),
         iconTheme: IconThemeData(color: text),
       ),
       body: Column(
@@ -78,7 +79,7 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
               onChanged: _onChanged,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: 'Search public recipes…',
+                hintText: AppLocalizations.of(context).communityRecipeSearchSearchPublicRecipes,
                 hintStyle: TextStyle(color: muted),
                 prefixIcon: Icon(Icons.public_rounded, color: accent),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
@@ -91,7 +92,7 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
                     child: Padding(
                       padding: const EdgeInsets.all(32),
                       child: Text(
-                        'Search public recipes shared by other users.',
+                        AppLocalizations.of(context).communityRecipeSearchSearchPublicRecipesShared,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: muted),
                       ),
@@ -123,7 +124,7 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
                               child: Padding(
                                 padding: const EdgeInsets.all(32),
                                 child: Text(
-                                  'Nothing found in community recipes.',
+                                  AppLocalizations.of(context).communityRecipeSearchNothingFoundInCommunity,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(color: muted),
                                 ),
@@ -195,7 +196,7 @@ class _CommunityRow extends ConsumerWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Save to my recipes',
+            tooltip: AppLocalizations.of(context).publicRecipeSaveToMyRecipes,
             icon: Icon(Icons.bookmark_add_outlined, color: accent),
             onPressed: () async {
               final repo = ref.read(recipeRepositoryProvider);
@@ -203,7 +204,7 @@ class _CommunityRow extends ConsumerWidget {
                 // Note: community search returns recipe IDs; resolving via slug requires the share row.
                 // For now we surface a SnackBar — the per-public-recipe screen handles the actual clone.
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Open the recipe to save it to your library')),
+                  SnackBar(content: Text(AppLocalizations.of(context).communityRecipeSearchOpenTheRecipeTo)),
                 );
                 await repo.search(userId, query: summary.name, scope: 'community'); // touch to keep import
               } catch (e) {

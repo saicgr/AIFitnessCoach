@@ -22,6 +22,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Open the streak explainer.
 Future<void> showStreakExplainerSheet(BuildContext context) {
   return showGlassSheet<void>(
@@ -71,7 +72,7 @@ class _StreakExplainerBody extends ConsumerWidget {
               const Text('🔥', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
               Text(
-                'YOUR STREAK',
+                AppLocalizations.of(context).streakExplainerYourStreak,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -115,7 +116,7 @@ class _StreakExplainerBody extends ConsumerWidget {
 
           // Rule
           Text(
-            'How the streak works',
+            AppLocalizations.of(context).streakExplainerHowTheStreakWorks,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -158,7 +159,7 @@ class _StreakExplainerBody extends ConsumerWidget {
                           Row(
                             children: [
                               Text(
-                                'Streak freezes',
+                                AppLocalizations.of(context).streakExplainerStreakFreezes,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
@@ -223,8 +224,8 @@ class _StreakExplainerBody extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      child: const Text(
-                        'Use freeze',
+                      child: Text(
+                        AppLocalizations.of(context).streakExplainerUseFreeze,
                         style: TextStyle(
                             fontSize: 13, fontWeight: FontWeight.w800),
                       ),
@@ -250,8 +251,8 @@ class _StreakExplainerBody extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                child: const Text(
-                  'Got it',
+                child: Text(
+                  AppLocalizations.of(context).weightIncrementsGotIt,
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ),

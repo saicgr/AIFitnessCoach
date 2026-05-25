@@ -5,6 +5,7 @@ import '../../../data/models/mood.dart';
 import '../../../data/repositories/mood_history_repository.dart';
 import '../../../data/services/api_client.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Provider for calendar mood data (parameterized by month/year)
 final moodCalendarProvider = FutureProvider.autoDispose
     .family<MoodCalendarResponse?, ({int month, int year})>((ref, params) async {
@@ -244,20 +245,20 @@ class _MoodCalendarHeatmapState extends ConsumerState<MoodCalendarHeatmap> {
       children: [
         _SummaryItem(
           value: '${summary.daysWithCheckins}',
-          label: 'Days Tracked',
+          label: AppLocalizations.of(context).moodCalendarHeatmapDaysTracked,
           color: textPrimary,
           textSecondary: textSecondary,
         ),
         _SummaryItem(
           value: '${summary.totalCheckins}',
-          label: 'Total Check-ins',
+          label: AppLocalizations.of(context).moodCalendarHeatmapTotalCheckIns,
           color: textPrimary,
           textSecondary: textSecondary,
         ),
         if (summary.mostCommonMood != null)
           _SummaryItem(
             value: Mood.fromString(summary.mostCommonMood!).emoji,
-            label: 'Most Common',
+            label: AppLocalizations.of(context).moodCalendarHeatmapMostCommon,
             color: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -269,13 +270,13 @@ class _MoodCalendarHeatmapState extends ConsumerState<MoodCalendarHeatmap> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _LegendItem(color: Mood.great.color, label: 'Great'),
+        _LegendItem(color: Mood.great.color, label: AppLocalizations.of(context).moodCalendarHeatmapGreat),
         const SizedBox(width: 12),
-        _LegendItem(color: Mood.good.color, label: 'Good'),
+        _LegendItem(color: Mood.good.color, label: AppLocalizations.of(context).scoreExplainGood),
         const SizedBox(width: 12),
-        _LegendItem(color: Mood.tired.color, label: 'Tired'),
+        _LegendItem(color: Mood.tired.color, label: AppLocalizations.of(context).moodCalendarHeatmapTired),
         const SizedBox(width: 12),
-        _LegendItem(color: Mood.stressed.color, label: 'Stressed'),
+        _LegendItem(color: Mood.stressed.color, label: AppLocalizations.of(context).moodCalendarHeatmapStressed),
       ],
     );
   }
@@ -303,7 +304,7 @@ class _MoodCalendarHeatmapState extends ConsumerState<MoodCalendarHeatmap> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Failed to load calendar',
+              AppLocalizations.of(context).moodCalendarHeatmapFailedToLoadCalendar,
               style: TextStyle(color: textSecondary),
             ),
           ],

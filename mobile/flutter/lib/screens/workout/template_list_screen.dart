@@ -12,6 +12,7 @@ import '../../data/services/haptic_service.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/program_library_card.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Route metadata for the saved-templates list.
 class TemplateListRoute {
   TemplateListRoute._();
@@ -62,7 +63,7 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
         elevation: 0,
         iconTheme: IconThemeData(color: textPrimary),
         title: Text(
-          'My Programs',
+          AppLocalizations.of(context).templateListMyPrograms,
           style: TextStyle(
             color: textPrimary,
             fontWeight: FontWeight.w800,
@@ -77,7 +78,7 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
           context.push(ProgramBuilderRoute.path);
         },
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New program'),
+        label: Text(AppLocalizations.of(context).templateListNewProgram),
       ),
       body: FutureBuilder<List<ProgramTemplate>>(
         future: _future,
@@ -120,14 +121,14 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
             Icon(Icons.cloud_off_rounded, size: 44, color: textSecondary),
             const SizedBox(height: 12),
             Text(
-              'We could not load your programs.',
+              AppLocalizations.of(context).templateListWeCouldNotLoad,
               style: TextStyle(color: textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: _reload,
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -148,7 +149,7 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
                 size: 48, color: textSecondary),
             const SizedBox(height: 12),
             Text(
-              'No saved programs yet.',
+              AppLocalizations.of(context).templateListNoSavedProgramsYet,
               style: TextStyle(
                 color: textSecondary,
                 fontSize: 15,
@@ -167,7 +168,7 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
             FilledButton.icon(
               onPressed: () => context.push(ProgramBuilderRoute.path),
               icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Create a program'),
+              label: Text(AppLocalizations.of(context).templateListCreateAProgram),
             ),
           ],
         ),
@@ -187,7 +188,7 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete program?'),
+        title: Text(AppLocalizations.of(context).templateListDeleteProgram),
         content: Text(
           'Remove "${template.name}"? Workouts already on your calendar '
           'stay — only this template is deleted.',
@@ -195,13 +196,13 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           FilledButton(
             style:
                 FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -219,7 +220,7 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        const SnackBar(content: Text('Could not delete. Please try again.')),
+        SnackBar(content: Text(AppLocalizations.of(context).templateListCouldNotDeletePlease)),
       );
     }
   }
@@ -279,15 +280,15 @@ class _TemplateRow extends StatelessWidget {
                 ),
                 onPressed: onSchedule,
                 icon: const Icon(Icons.event_available_rounded, size: 18),
-                label: const Text(
-                  'Schedule this',
+                label: Text(
+                  AppLocalizations.of(context).templateListScheduleThis,
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
             const SizedBox(width: 8),
             IconButton(
-              tooltip: 'Edit',
+              tooltip: AppLocalizations.of(context).commonEdit,
               onPressed: onEdit,
               icon: Icon(Icons.edit_rounded,
                   color: isDark
@@ -295,7 +296,7 @@ class _TemplateRow extends StatelessWidget {
                       : AppColorsLight.textSecondary),
             ),
             IconButton(
-              tooltip: 'Delete',
+              tooltip: AppLocalizations.of(context).buttonDelete,
               onPressed: onDelete,
               icon: const Icon(Icons.delete_outline_rounded,
                   color: AppColors.error),
@@ -448,7 +449,7 @@ class _ScheduleSheetState extends ConsumerState<_ScheduleSheet> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Tap a day to set a different time.',
+                      AppLocalizations.of(context).templateListTapADayTo,
                       style:
                           TextStyle(fontSize: 11.5, color: textSecondary),
                     ),
@@ -476,7 +477,7 @@ class _ScheduleSheetState extends ConsumerState<_ScheduleSheet> {
                       onChanged: (v) =>
                           setState(() => _applyStaples = v),
                       title: Text(
-                        'Apply my staples',
+                        AppLocalizations.of(context).templateListApplyMyStaples,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -484,7 +485,7 @@ class _ScheduleSheetState extends ConsumerState<_ScheduleSheet> {
                         ),
                       ),
                       subtitle: Text(
-                        'Add your warm-up and stretch staples to each session.',
+                        AppLocalizations.of(context).templateListAddYourWarmUp,
                         style: TextStyle(
                             fontSize: 11.5, color: textSecondary),
                       ),
@@ -515,7 +516,7 @@ class _ScheduleSheetState extends ConsumerState<_ScheduleSheet> {
                               size: 18),
                       label: Text(
                         _scheduling
-                            ? 'Scheduling...'
+                            ? AppLocalizations.of(context).templateListScheduling
                             : 'Add to my calendar',
                         style:
                             const TextStyle(fontWeight: FontWeight.w700),
@@ -620,8 +621,8 @@ class _ScheduleSheetState extends ConsumerState<_ScheduleSheet> {
       if (!mounted) return;
       setState(() => _scheduling = false);
       messenger.showSnackBar(
-        const SnackBar(
-            content: Text('Could not schedule. Please try again.')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).templateListCouldNotSchedulePlease)),
       );
     }
   }
@@ -716,15 +717,15 @@ class _AlignmentToggle extends StatelessWidget {
         _option(
           context,
           id: 'start_today',
-          title: 'Start day 1 on my start date',
-          subtitle: 'Day 1 of the program runs on the date you picked.',
+          title: AppLocalizations.of(context).templateListStartDay1On,
+          subtitle: AppLocalizations.of(context).templateListDay1OfThe,
         ),
         const SizedBox(height: 8),
         _option(
           context,
           id: 'calendar_weekday',
-          title: 'Align to calendar weekdays',
-          subtitle: 'A Monday in the program lands on the next Monday.',
+          title: AppLocalizations.of(context).templateListAlignToCalendarWeekdays,
+          subtitle: AppLocalizations.of(context).templateListAMondayInThe,
         ),
       ],
     );

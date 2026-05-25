@@ -11,6 +11,7 @@ import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
 import 'minigame/nutrient_rush_game.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Full-screen celebration ceremony matching the Garmin/Amazfit reference
 /// (sunburst backdrop + metallic badge + gradient caption + swipeable
 /// page-indicator for multi-trophy stacks).
@@ -197,7 +198,7 @@ class _TrophyCeremonyScreenState
               child: IconButton(
                 icon: const Icon(Icons.close_rounded,
                     color: Colors.white, size: 28),
-                tooltip: 'Close',
+                tooltip: AppLocalizations.of(context).commonClose,
                 onPressed: () {
                   HapticFeedback.selectionClick();
                   Navigator.of(context).pop();
@@ -227,8 +228,8 @@ class _TrophyCeremonyScreenState
                 child: TextButton.icon(
                   onPressed: _playBonusGame,
                   icon: const Text('🚀', style: TextStyle(fontSize: 14)),
-                  label: const Text(
-                    'PLAY BONUS ROUND',
+                  label: Text(
+                    AppLocalizations.of(context).trophyCeremonyOverlayPlayBonusRound,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -336,7 +337,7 @@ class _TrophySlide extends StatelessWidget {
             ).createShader(rect),
             child: Text(
               trophy.description.isEmpty
-                  ? 'Congrats on earning this trophy!'
+                  ? AppLocalizations.of(context).trophyCeremonyOverlayCongratsOnEarningThis
                   : trophy.description,
               textAlign: TextAlign.center,
               style: const TextStyle(

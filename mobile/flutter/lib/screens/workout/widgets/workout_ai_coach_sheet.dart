@@ -22,6 +22,7 @@ import '../../../screens/chat/widgets/media_preview_strip.dart';
 import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Show AI coach sheet during workout
 Future<void> showWorkoutAICoachSheet({
   required BuildContext context,
@@ -103,25 +104,25 @@ class _WorkoutAICoachSheetState extends ConsumerState<WorkoutAICoachSheet> {
 
   List<QuickPrompt> get _quickPrompts => [
     QuickPrompt(
-      label: 'Form',
+      label: AppLocalizations.of(context).workoutAiCoachForm,
       prompt: 'What are the key form tips for ${widget.currentExercise.name}?',
       icon: Icons.sports_gymnastics,
       color: AppColors.cyan,
     ),
     QuickPrompt(
-      label: 'Swaps',
+      label: AppLocalizations.of(context).workoutAiCoachSwaps,
       prompt: 'What are some alternative exercises I can do instead of ${widget.currentExercise.name}?',
       icon: Icons.swap_horiz,
       color: AppColors.purple,
     ),
     QuickPrompt(
-      label: 'Rest',
+      label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
       prompt: 'How long should I rest between sets of ${widget.currentExercise.name}?',
       icon: Icons.timer_outlined,
       color: AppColors.orange,
     ),
     QuickPrompt(
-      label: 'Sets',
+      label: AppLocalizations.of(context).workoutSummaryGeneralSets,
       prompt: 'How many sets should I do of ${widget.currentExercise.name} for best results?',
       icon: Icons.format_list_numbered,
       color: AppColors.electricBlue,
@@ -299,7 +300,7 @@ User question: $message
               ),
               error: (e, _) => Center(
                 child: Text(
-                  'Failed to load chat history',
+                  AppLocalizations.of(context).workoutAiCoachFailedToLoadChat,
                   style: TextStyle(
                     color: isDark ? AppColors.textMuted : Colors.black54,
                   ),
@@ -345,7 +346,7 @@ User question: $message
                   ),
                 ),
                 Text(
-                  'AI Coach',
+                  AppLocalizations.of(context).authIntroAiCoach,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? AppColors.textMuted : Colors.black54,
@@ -362,7 +363,7 @@ User question: $message
               Navigator.pop(context);
               context.push('/coach-selection?fromSettings=true');
             },
-            tooltip: 'Change coach',
+            tooltip: AppLocalizations.of(context).workoutAiCoachChangeCoach,
             icon: Icon(
               Icons.swap_horiz,
               color: isDark ? AppColors.textMuted : Colors.black54,
@@ -477,7 +478,7 @@ User question: $message
             ),
             const SizedBox(height: 16),
             Text(
-              'Ask me anything about your workout!',
+              AppLocalizations.of(context).workoutAiCoachAskMeAnythingAbout,
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? AppColors.textMuted : Colors.black54,
@@ -762,7 +763,7 @@ User question: $message
                     ),
                     decoration: InputDecoration(
                       hintText: _selectedMedia.isNotEmpty
-                          ? 'Add a message (optional)...'
+                          ? AppLocalizations.of(context).workoutAiCoachAddAMessageOptional
                           : 'Ask about your workout...',
                       hintStyle: TextStyle(
                         color: isDark ? AppColors.textMuted : Colors.black38,

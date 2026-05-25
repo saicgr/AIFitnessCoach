@@ -111,7 +111,7 @@ class _FastingHeroCard extends ConsumerWidget {
                     Row(
                       children: [
                         Text(
-                          'Fasting',
+                          AppLocalizations.of(context).unifiedHomeWidgetsFasting,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -128,7 +128,7 @@ class _FastingHeroCard extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Active',
+                            AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -216,7 +216,7 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
               children: [
                 const Icon(Icons.check_circle, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
-                const Text('Fast ended successfully'),
+                Text(AppLocalizations.of(context).quickActionsSheetFastEndedSuccessfully),
               ],
             ),
             backgroundColor: const Color(0xFF2D2D2D),
@@ -264,7 +264,7 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
                 ),
               )
             : Text(
-                'End',
+                AppLocalizations.of(context).quickActionsSheetEnd,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -348,7 +348,7 @@ class _PhotoHeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Track Your Progress',
+                      AppLocalizations.of(context).quickActionsSheetTrackYourProgress,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -357,7 +357,7 @@ class _PhotoHeroCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Take a progress photo to see your transformation',
+                      AppLocalizations.of(context).quickActionsSheetTakeAProgressPhoto,
                       style: TextStyle(
                         fontSize: 13,
                         color: textMuted,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card 5: Personal Records card - trophy icon, PR count, best PR highlight
 class WrappedRecordsCard extends StatelessWidget {
   final WrappedData data;
@@ -69,8 +70,8 @@ class WrappedRecordsCard extends StatelessWidget {
                   const Spacer(flex: 2),
 
                   // Header
-                  const Text(
-                    'PERSONAL RECORDS',
+                  Text(
+                    AppLocalizations.of(context).weeklyPrsTemplatePersonalRecords,
                     style: TextStyle(
                       color: Color(0xFFFFD700),
                       fontSize: 16,
@@ -152,7 +153,7 @@ class WrappedRecordsCard extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            'BEST PR',
+                            AppLocalizations.of(context).recordsCardBestPr,
                             style: TextStyle(
                               color: const Color(0xFFFFD700)
                                   .withValues(alpha: 0.7),

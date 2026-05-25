@@ -7,6 +7,7 @@ import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Screen showing equipment details for a specific workout environment.
 class EnvironmentDetailScreen extends ConsumerStatefulWidget {
   final WorkoutEnvironment environment;
@@ -65,7 +66,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
                   Icon(Icons.check_circle, color: AppColors.cyan, size: 18),
                   const SizedBox(width: 8),
                   Text(
-                    'This is your active environment',
+                    AppLocalizations.of(context).environmentDetailThisIsYourActive,
                     style: TextStyle(
                       fontSize: 13,
                       color: AppColors.cyan,
@@ -112,7 +113,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
                     child: OutlinedButton.icon(
                       onPressed: () => _showAddEquipmentSheet(),
                       icon: const Icon(Icons.add),
-                      label: const Text('Add Equipment'),
+                      label: Text(AppLocalizations.of(context).environmentDetailAddEquipment),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.cyan,
                         side: BorderSide(color: AppColors.cyan),
@@ -136,8 +137,8 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Use This',
+                        child: Text(
+                          AppLocalizations.of(context).nextSetPreviewUseThis,
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -163,7 +164,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
           ),
           const SizedBox(height: 16),
           Text(
-            'No equipment added',
+            AppLocalizations.of(context).environmentDetailNoEquipmentAdded,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -172,7 +173,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap "Add Equipment" to get started',
+            AppLocalizations.of(context).environmentDetailTapAddEquipmentTo,
             style: TextStyle(
               fontSize: 14,
               color: textMuted,
@@ -188,22 +189,22 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Unsaved Changes'),
-          content: const Text('You have unsaved changes. Do you want to save them before leaving?'),
+          title: Text(AppLocalizations.of(context).environmentDetailUnsavedChanges),
+          content: Text(AppLocalizations.of(context).environmentDetailYouHaveUnsavedChanges),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 Navigator.pop(context);
               },
-              child: const Text('Discard'),
+              child: Text(AppLocalizations.of(context).syncDetailsDiscard),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
                 _saveChanges();
               },
-              child: const Text('Save'),
+              child: Text(AppLocalizations.of(context).buttonSave),
             ),
           ],
         ),
@@ -221,7 +222,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
     setState(() => _hasChanges = false);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Equipment saved')),
+      SnackBar(content: Text(AppLocalizations.of(context).environmentDetailEquipmentSaved)),
     );
   }
 
@@ -247,7 +248,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
       SnackBar(
         content: Text('${item.displayName} removed'),
         action: SnackBarAction(
-          label: 'Undo',
+          label: AppLocalizations.of(context).workoutUiBuildersUndo,
           onPressed: () {
             setState(() {
               _equipmentItems.insert(index, item);
@@ -500,7 +501,7 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Add Equipment',
+                      AppLocalizations.of(context).environmentDetailAddEquipment,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -514,7 +515,7 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
                       _showCustomForm ? Icons.list : Icons.add,
                       size: 18,
                     ),
-                    label: Text(_showCustomForm ? 'Browse' : 'Custom'),
+                    label: Text(_showCustomForm ? AppLocalizations.of(context).environmentDetailBrowse : AppLocalizations.of(context).workoutsCustom),
                   ),
                 ],
               ),
@@ -530,8 +531,8 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
                     TextField(
                       controller: _customNameController,
                       decoration: InputDecoration(
-                        labelText: 'Equipment Name',
-                        hintText: 'e.g., TRX Bands',
+                        labelText: AppLocalizations.of(context).environmentDetailEquipmentName,
+                        hintText: AppLocalizations.of(context).environmentDetailEGTrxBands,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -561,7 +562,7 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('Add Custom Equipment'),
+                        child: Text(AppLocalizations.of(context).equipmentSearchAddCustomEquipment),
                       ),
                     ),
                   ],
@@ -575,7 +576,7 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
                   controller: _searchController,
                   onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
-                    hintText: 'Search equipment...',
+                    hintText: AppLocalizations.of(context).settingsCardPartSearchEquipment,
                     prefixIcon: Icon(Icons.search, color: textMuted),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -698,9 +699,9 @@ class _EditEquipmentSheetState extends State<_EditEquipmentSheet> {
               controller: _quantityController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Quantity',
-                hintText: 'e.g., 2',
-                helperText: 'How many do you have?',
+                labelText: AppLocalizations.of(context).loggedMealsQuantity,
+                hintText: AppLocalizations.of(context).environmentDetailEG2,
+                helperText: AppLocalizations.of(context).environmentDetailHowManyDoYou,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -710,9 +711,9 @@ class _EditEquipmentSheetState extends State<_EditEquipmentSheet> {
             TextField(
               controller: _weightsController,
               decoration: InputDecoration(
-                labelText: 'Available Weights',
-                hintText: 'e.g., 15, 25, 40',
-                helperText: 'Separate multiple weights with commas',
+                labelText: AppLocalizations.of(context).environmentDetailAvailableWeights,
+                hintText: AppLocalizations.of(context).environmentDetailEG1525,
+                helperText: AppLocalizations.of(context).environmentDetailSeparateMultipleWeightsWith,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 suffixIcon: DropdownButton<String>(
                   value: _weightUnit,
@@ -733,8 +734,8 @@ class _EditEquipmentSheetState extends State<_EditEquipmentSheet> {
               controller: _notesController,
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: 'Notes (optional)',
-                hintText: 'e.g., Adjustable 5-50lbs',
+                labelText: AppLocalizations.of(context).recordAttemptNotesOptional,
+                hintText: AppLocalizations.of(context).environmentDetailEGAdjustable5,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -753,8 +754,8 @@ class _EditEquipmentSheetState extends State<_EditEquipmentSheet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Save Changes',
+                child: Text(
+                  AppLocalizations.of(context).vacationModeSaveChanges,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),

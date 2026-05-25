@@ -13,6 +13,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../shared/exercise_instruction_copy.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact inline exercise info card with collapsible Setup and Tips sections.
 ///
 /// Designed to be embedded in a ScrollView or pane (e.g. foldable right pane).
@@ -52,7 +53,7 @@ class _InlineExerciseInfoState extends ConsumerState<InlineExerciseInfo> {
 
         // Setup instructions section
         _buildCollapsibleSection(
-          title: 'Setup',
+          title: AppLocalizations.of(context).inlineExerciseInfoSetup,
           icon: Icons.settings_outlined,
           isExpanded: _setupExpanded,
           onToggle: () => setState(() => _setupExpanded = !_setupExpanded),
@@ -66,7 +67,7 @@ class _InlineExerciseInfoState extends ConsumerState<InlineExerciseInfo> {
 
         // Form tips section
         _buildCollapsibleSection(
-          title: 'Form Tips',
+          title: AppLocalizations.of(context).inlineExerciseInfoFormTips,
           icon: Icons.lightbulb_outline,
           isExpanded: _tipsExpanded,
           onToggle: () => setState(() => _tipsExpanded = !_tipsExpanded),

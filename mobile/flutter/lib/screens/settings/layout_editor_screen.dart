@@ -11,6 +11,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/preview_tile_mock.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../home/widgets/swipeable_hero_section.dart'
     show HomeFocus, homeFocusProvider;
 
@@ -69,7 +70,7 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'My Space',
+        title: AppLocalizations.of(context).programMenuButtonMySpace,
         actions: [
           PillAppBarAction(icon: Icons.refresh_rounded, onTap: _showResetDialog),
         ],
@@ -82,9 +83,9 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
             showIcons: false,
             compact: true,
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            tabs: const [
-              SegmentedTabItem(label: 'Toggles'),
-              SegmentedTabItem(label: 'Discover'),
+            tabs: [
+              SegmentedTabItem(label: AppLocalizations.of(context).layoutEditorToggles),
+              SegmentedTabItem(label: AppLocalizations.of(context).navDiscover),
             ],
           ),
           // Content
@@ -98,14 +99,14 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
                     Icon(Icons.error_outline, color: AppColors.error, size: 48),
                     const SizedBox(height: 16),
                     Text(
-                      'Failed to load layout',
+                      AppLocalizations.of(context).layoutEditorFailedToLoadLayout,
                       style: TextStyle(color: textColor, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () =>
                           ref.read(localLayoutProvider.notifier).refresh(),
-                      child: const Text('Retry'),
+                      child: Text(AppLocalizations.of(context).buttonRetry),
                     ),
                   ],
                 ),
@@ -114,7 +115,7 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
                 if (layout == null) {
                   return Center(
                     child: Text(
-                      'No layout found',
+                      AppLocalizations.of(context).layoutEditorNoLayoutFound,
                       style: TextStyle(color: textMuted),
                     ),
                   );
@@ -168,7 +169,7 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: Text('Reset Layout', style: TextStyle(color: textColor)),
+        title: Text(AppLocalizations.of(context).layoutEditorResetLayout, style: TextStyle(color: textColor)),
         content: Text(
           'Reset to the app\'s original layout? This will undo all your customizations.',
           style: TextStyle(
@@ -177,7 +178,7 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
+            child: Text(AppLocalizations.of(context).buttonCancel,
                 style: TextStyle(
                     color: isDark
                         ? AppColors.textMuted
@@ -189,13 +190,13 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
               ref.read(localLayoutProvider.notifier).resetToAppDefault();
               HapticService.success();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Layout reset to original'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).layoutEditorLayoutResetToOriginal),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
             },
-            child: Text('Reset',
+            child: Text(AppLocalizations.of(context).trophyFilterReset,
                 style: TextStyle(
                     color: isDark
                         ? AppColors.cyan
@@ -212,8 +213,8 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
     setState(() => _hasUserDefault = true);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Saved as your default layout'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).layoutEditorSavedAsYourDefault),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -225,8 +226,8 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
     HapticService.success();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Applied your default layout'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).layoutEditorScreenAppliedYourDefaultLayout),
           behavior: SnackBarBehavior.floating,
         ),
       );

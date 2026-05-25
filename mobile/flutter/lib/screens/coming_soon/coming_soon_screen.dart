@@ -6,6 +6,7 @@ import '../../core/constants/app_links.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class ComingSoonScreen extends ConsumerStatefulWidget {
   const ComingSoonScreen({super.key});
 
@@ -23,7 +24,7 @@ class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Coming Soon',
+        title: AppLocalizations.of(context).settingsComingSoon,
         actions: [
           if (AppLinks.hasFeatureRequestLink)
             PillAppBarAction(
@@ -90,7 +91,7 @@ class _RoadmapTabState extends State<_RoadmapTab> {
                   onChanged: (v) => setState(() => _searchQuery = v),
                   style: TextStyle(fontSize: 14, color: textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Search features...',
+                    hintText: AppLocalizations.of(context).comingSoonSearchFeatures,
                     hintStyle: TextStyle(color: textMuted, fontSize: 14),
                     border: InputBorder.none,
                     isDense: true,
@@ -111,7 +112,7 @@ class _RoadmapTabState extends State<_RoadmapTab> {
         Padding(
           padding: const EdgeInsets.only(bottom: 24),
           child: Text(
-            'Features we\'re working on next',
+            AppLocalizations.of(context).comingSoonFeaturesWeReWorking,
             style: TextStyle(
               fontSize: 14,
               color: textMuted,

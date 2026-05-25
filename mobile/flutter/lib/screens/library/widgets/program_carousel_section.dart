@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/branded_program.dart';
 import 'program_carousel_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A horizontal carousel section for displaying programs
 /// Netflix-style layout with section header and horizontal scroll
 class ProgramCarouselSection extends StatelessWidget {
@@ -56,7 +57,7 @@ class ProgramCarouselSection extends StatelessWidget {
                 GestureDetector(
                   onTap: onSeeAll,
                   child: Text(
-                    'See All',
+                    AppLocalizations.of(context).weightTrackingCardSeeAll,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,

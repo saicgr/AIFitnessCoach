@@ -11,6 +11,7 @@ import '../../data/services/notification_service.dart';
 import '../../widgets/cycle_disclaimer.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Optional cycle-tracking setup step (Phase E — onboarding).
 ///
 /// Shown after the gender question for users who can have a menstrual cycle:
@@ -176,7 +177,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Track your cycle',
+                    AppLocalizations.of(context).cycleSetupHomeTrackYourCycle,
                     style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
@@ -234,7 +235,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
 
             // ── Cycle length ──────────────────────────────────────
             _SliderRow(
-              label: 'Typical cycle length',
+              label: AppLocalizations.of(context).cycleOnboardingTypicalCycleLength,
               valueLabel: '$_cycleLength days',
               value: _cycleLength.toDouble(),
               min: 21,
@@ -251,7 +252,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
 
             // ── Period length ─────────────────────────────────────
             _SliderRow(
-              label: 'Typical period length',
+              label: AppLocalizations.of(context).cycleOnboardingTypicalPeriodLength,
               valueLabel: '$_periodLength days',
               value: _periodLength.toDouble(),
               min: 2,
@@ -274,7 +275,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
               runSpacing: 8,
               children: [
                 _ModeChip(
-                  label: 'General tracking',
+                  label: AppLocalizations.of(context).cycleOnboardingGeneralTracking,
                   selected: _mode == CycleTrackingMode.tracking,
                   accent: accent,
                   isDark: isDark,
@@ -284,7 +285,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
                           () => _mode = CycleTrackingMode.tracking),
                 ),
                 _ModeChip(
-                  label: 'Trying to conceive',
+                  label: AppLocalizations.of(context).cycleOnboardingTryingToConceive,
                   selected: _mode == CycleTrackingMode.ttc,
                   accent: accent,
                   isDark: isDark,
@@ -331,8 +332,8 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Start tracking',
+                    : Text(
+                        AppLocalizations.of(context).cycleScreenUiStartTracking,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -346,7 +347,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
                 onPressed:
                     _saving ? null : () => Navigator.of(context).pop(false),
                 child: Text(
-                  'Maybe later',
+                  AppLocalizations.of(context).notifsLaterButton,
                   style: TextStyle(color: textMuted),
                 ),
               ),

@@ -7,6 +7,7 @@ import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for creating a group conversation (F12)
 /// - Group name text field (required, max 100 chars)
 /// - Multi-select friend picker (searchable list with checkboxes)
@@ -110,7 +111,7 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
             child: Row(
               children: [
                 Text(
-                  'New Group',
+                  AppLocalizations.of(context).socialScreenPartNewGroup,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -131,7 +132,7 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
               maxLength: 100,
               decoration: InputDecoration(
                 labelText: 'Group Name *',
-                hintText: 'e.g., Gym Squad',
+                hintText: AppLocalizations.of(context).groupCreateEGGymSquad,
                 prefixIcon: const Icon(Icons.group_rounded),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -157,7 +158,7 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
                 const Spacer(),
                 if (_selectedMemberIds.length < 2)
                   Text(
-                    'Min 2 required',
+                    AppLocalizations.of(context).groupCreateMin2Required,
                     style: TextStyle(fontSize: 11, color: textMuted),
                   ),
               ],
@@ -170,7 +171,7 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search friends...',
+                hintText: AppLocalizations.of(context).groupCreateSearchFriends,
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -216,8 +217,8 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
                             color: colors.accentContrast,
                           ),
                         )
-                      : const Text(
-                          'Create Group',
+                      : Text(
+                          AppLocalizations.of(context).groupCreateCreateGroup,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -248,11 +249,11 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
             children: [
               Icon(Icons.cloud_off_rounded, size: 40, color: textMuted),
               const SizedBox(height: 12),
-              Text('Failed to load friends', style: TextStyle(color: textMuted)),
+              Text(AppLocalizations.of(context).socialScreenPartFailedToLoadFriends, style: TextStyle(color: textMuted)),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => ref.invalidate(friendsListProvider(_userId!)),
-                child: const Text('Retry'),
+                child: Text(AppLocalizations.of(context).buttonRetry),
               ),
             ],
           ),
@@ -271,7 +272,7 @@ class _GroupCreateSheetState extends ConsumerState<GroupCreateSheet> {
           return Center(
             child: Text(
               searchQuery.isEmpty
-                  ? 'No friends to add'
+                  ? AppLocalizations.of(context).socialScreenPartNoFriendsToAdd
                   : 'No friends matching "$searchQuery"',
               style: TextStyle(color: textMuted),
             ),

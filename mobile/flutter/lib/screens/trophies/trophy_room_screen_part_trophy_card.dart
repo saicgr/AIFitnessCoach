@@ -423,7 +423,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Progress hidden until discovered',
+                                AppLocalizations.of(context).trophyRoomScreenProgressHiddenUntilDiscover,
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,

@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
+import '../../../l10n/generated/app_localizations.dart';
 class InflammationTagsSection extends StatelessWidget {
   final int? inflammationScore;
   final bool? isUltraProcessed;
@@ -66,7 +67,7 @@ class InflammationTagsSection extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            'Inflammation Score',
+                            AppLocalizations.of(context).loggedMealsInflammationScore,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -123,7 +124,7 @@ class InflammationTagsSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Contains ultra-processed items',
+                    AppLocalizations.of(context).loggedMealsContainsUltraProcessedItems,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.red,
@@ -185,7 +186,7 @@ class InflammationTagsSection extends StatelessWidget {
                 Icon(Icons.local_fire_department, color: Colors.orange),
                 const SizedBox(width: 8),
                 Text(
-                  'Inflammation Score',
+                  AppLocalizations.of(context).loggedMealsInflammationScore,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -288,7 +289,7 @@ class InflammationTagsSection extends StatelessWidget {
 
             const SizedBox(height: 18),
             Text(
-              'How the score is built',
+              AppLocalizations.of(context).inflammationTagsHowTheScoreIs,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -298,7 +299,7 @@ class InflammationTagsSection extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'NOVA processing level, omega-6:omega-3 fat ratio, refined-sugar load, fiber & polyphenol density, glycemic load, and seed-oil content. Calibrated to peer-reviewed Dietary Inflammatory Index (DII) buckets.',
+              AppLocalizations.of(context).inflammationTagsNovaProcessingLevelOmega,
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? Colors.white70 : Colors.black87,
@@ -312,7 +313,7 @@ class InflammationTagsSection extends StatelessWidget {
             _buildInfoRow('8-10', 'Inflammatory', Colors.red),
             const SizedBox(height: 12),
             Text(
-              'Lower scores reduce systemic inflammation, gut irritation, and post-meal energy crashes.',
+              AppLocalizations.of(context).inflammationTagsLowerScoresReduceSystemic,
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? Colors.white54 : Colors.black54,
@@ -415,7 +416,7 @@ class InflammationTagsSection extends StatelessWidget {
                 Icon(Icons.warning_amber_rounded, color: Colors.red),
                 const SizedBox(width: 8),
                 Text(
-                  'Ultra-Processed Foods',
+                  AppLocalizations.of(context).loggedMealsUltraProcessedFoods,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -426,7 +427,7 @@ class InflammationTagsSection extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Ultra-processed foods (NOVA Group 4) contain industrial additives like emulsifiers, hydrogenated oils, artificial sweeteners, and protein isolates — substances not found in home cooking.',
+              AppLocalizations.of(context).loggedMealsUltraProcessedFoodsNova,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? Colors.white70 : Colors.black87,
@@ -435,7 +436,7 @@ class InflammationTagsSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Research links regular consumption to increased inflammation, obesity, heart disease, and digestive issues.',
+              AppLocalizations.of(context).loggedMealsResearchLinksRegularConsump,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? Colors.white70 : Colors.black87,
@@ -444,7 +445,7 @@ class InflammationTagsSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Examples: soft drinks, instant noodles, packaged snacks, chicken nuggets, most breakfast cereals.',
+              AppLocalizations.of(context).loggedMealsExamplesSoftDrinksInstant,
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? Colors.white54 : Colors.black54,

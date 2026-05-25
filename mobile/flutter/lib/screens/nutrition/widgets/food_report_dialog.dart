@@ -7,6 +7,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../data/services/food_search_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the food report bottom sheet for correcting nutrition data.
 ///
 /// Pass either [food] (a FoodSearchResult) or raw values ([foodName], etc.)
@@ -97,7 +98,7 @@ void _showReportConfirmation(BuildContext context, String? reportId) {
             ),
             const SizedBox(height: 16),
             Text(
-              'Report submitted',
+              AppLocalizations.of(context).foodReportReportSubmitted,
               style: TextStyle(
                 color: textPrimary,
                 fontSize: 18,
@@ -117,7 +118,7 @@ void _showReportConfirmation(BuildContext context, String? reportId) {
             ],
             const SizedBox(height: 12),
             Text(
-              "We'll review and update within 48h.\nThanks for helping improve our data!",
+              AppLocalizations.of(context).foodReportWeLlReviewAnd,
               textAlign: TextAlign.center,
               style: TextStyle(color: textMuted, fontSize: 14, height: 1.4),
             ),
@@ -134,8 +135,8 @@ void _showReportConfirmation(BuildContext context, String? reportId) {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Close',
+                child: Text(
+                  AppLocalizations.of(context).commonClose,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -347,7 +348,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Report Issue',
+                        AppLocalizations.of(context).foodReportReportIssue,
                         style: TextStyle(
                           color: textPrimary,
                           fontSize: 18,
@@ -372,7 +373,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
             Row(
               children: [
                 _ReportTypeChip(
-                  label: 'Wrong nutrition',
+                  label: AppLocalizations.of(context).foodReportWrongNutrition,
                   isSelected: _reportType == 'wrong_nutrition',
                   onTap: () => setState(() => _reportType = 'wrong_nutrition'),
                   activeColor: wrongNutritionColor,
@@ -381,7 +382,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                 ),
                 const SizedBox(width: 8),
                 _ReportTypeChip(
-                  label: 'Wrong food',
+                  label: AppLocalizations.of(context).foodReportWrongFood,
                   isSelected: _reportType == 'wrong_food',
                   onTap: () => setState(() => _reportType = 'wrong_food'),
                   activeColor: wrongFoodColor,
@@ -395,7 +396,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
             // Corrected values (only for wrong nutrition)
             if (_reportType == 'wrong_nutrition') ...[
               Text(
-                'Corrected Values',
+                AppLocalizations.of(context).foodReportCorrectedValues,
                 style: TextStyle(
                   color: textPrimary,
                   fontSize: 14,
@@ -409,7 +410,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                 children: [
                   Expanded(
                     child: _NutrientField(
-                      label: 'Calories',
+                      label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                       controller: _caloriesController,
                       suffix: 'kcal',
                       isDark: isDark,
@@ -423,7 +424,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _NutrientField(
-                      label: 'Protein',
+                      label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                       controller: _proteinController,
                       suffix: 'g',
                       isDark: isDark,
@@ -440,7 +441,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                 children: [
                   Expanded(
                     child: _NutrientField(
-                      label: 'Carbs',
+                      label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                       controller: _carbsController,
                       suffix: 'g',
                       isDark: isDark,
@@ -453,7 +454,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _NutrientField(
-                      label: 'Fat',
+                      label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                       controller: _fatController,
                       suffix: 'g',
                       isDark: isDark,
@@ -471,7 +472,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
             // Notes field
             Text(
               _reportType == 'wrong_food'
-                  ? 'What food did you actually mean?'
+                  ? AppLocalizations.of(context).foodReportWhatFoodDidYou
                   : 'Additional Notes (optional)',
               style: TextStyle(
                 color: textPrimary,
@@ -486,7 +487,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
               style: TextStyle(color: textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: _reportType == 'wrong_food'
-                    ? 'e.g. I searched for mexican coke, not a burrito bowl'
+                    ? AppLocalizations.of(context).foodReportEGISearched
                     : 'e.g. Serving size seems off...',
                 hintStyle: TextStyle(color: textMuted, fontSize: 14),
                 filled: true,
@@ -547,8 +548,8 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Submit Report',
+                      : Text(
+                          AppLocalizations.of(context).reportStrainSubmitReport,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

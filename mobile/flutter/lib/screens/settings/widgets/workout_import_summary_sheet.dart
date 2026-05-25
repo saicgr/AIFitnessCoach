@@ -15,6 +15,7 @@ import '../../../data/models/workout_import_job.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Caller-side summary action — what the user decided once the summary sheet
 /// closed. Consumers typically use [fixUnresolved] to launch the bulk-remap
 /// sheet, and [activateTemplate] to kick off program activation.
@@ -90,7 +91,7 @@ class _SummaryBodyState extends State<_SummaryBody> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      failed ? 'Import failed' : 'Import complete',
+                      failed ? AppLocalizations.of(context).workoutImportSummaryImportFailed : AppLocalizations.of(context).workoutImportSummaryImportComplete,
                       style: theme.textTheme.titleLarge,
                     ),
                     if (job.sourceApp != null && job.sourceApp!.isNotEmpty)
@@ -159,7 +160,7 @@ class _SummaryBodyState extends State<_SummaryBody> {
                   WorkoutImportSummaryResult(activateTemplate: _activate),
                 );
               },
-              child: const Text('Done'),
+              child: Text(AppLocalizations.of(context).commonDone),
             ),
           ),
         ],
@@ -188,14 +189,14 @@ class _SuccessSummary extends StatelessWidget {
           _SummaryTile(
             icon: Icons.fitness_center_rounded,
             value: '${job.insertedStrengthRows}',
-            label: 'Strength sets added',
+            label: AppLocalizations.of(context).workoutImportSummaryStrengthSetsAdded,
             accent: accent,
           ),
           const SizedBox(width: 10),
           _SummaryTile(
             icon: Icons.directions_run_rounded,
             value: '${job.insertedCardioRows}',
-            label: 'Cardio sessions added',
+            label: AppLocalizations.of(context).workoutImportSummaryCardioSessionsAdded,
             accent: accent,
           ),
         ]),
@@ -205,20 +206,20 @@ class _SuccessSummary extends StatelessWidget {
             icon: Icons.repeat_rounded,
             value:
                 '${job.duplicateStrengthRows + job.duplicateCardioRows}',
-            label: 'Duplicates skipped',
+            label: AppLocalizations.of(context).workoutImportSummaryDuplicatesSkipped,
             accent: accent,
           ),
           const SizedBox(width: 10),
           _SummaryTile(
             icon: Icons.event_note_rounded,
             value: job.templateId != null ? 'Yes' : 'No',
-            label: 'Program template',
+            label: AppLocalizations.of(context).workoutImportSummaryProgramTemplate,
             accent: accent,
           ),
         ]),
         const SizedBox(height: 12),
         Text(
-          'Weight suggestions across the app will start reflecting this history within a minute.',
+          AppLocalizations.of(context).workoutImportSummaryWeightSuggestionsAcrossThe,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -293,12 +294,12 @@ class _FailureBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "We couldn't finish your import.",
+            AppLocalizations.of(context).workoutImportSummaryWeCouldnTFinish,
             style: theme.textTheme.titleSmall,
           ),
           const SizedBox(height: 6),
           Text(
-            job.errorMessage ?? 'Unknown error — please try again or contact support.',
+            job.errorMessage ?? AppLocalizations.of(context).workoutImportSummaryUnknownErrorPleaseTry,
             style: theme.textTheme.bodySmall,
           ),
         ],
@@ -339,13 +340,13 @@ class _UnresolvedSection extends StatelessWidget {
               TextButton.icon(
                 onPressed: onFix,
                 icon: const Icon(Icons.edit_rounded, size: 18),
-                label: const Text('Fix these'),
+                label: Text(AppLocalizations.of(context).workoutImportSummaryFixThese),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'These rows were imported but aren\'t matched to a library exercise yet. Mapping them improves weight suggestions + charts.',
+            AppLocalizations.of(context).workoutImportSummaryTheseRowsWereImported,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -412,14 +413,14 @@ class _TemplateSection extends StatelessWidget {
               Icon(Icons.event_note_rounded, color: accent),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('Creator program detected',
+                child: Text(AppLocalizations.of(context).workoutImportSummaryCreatorProgramDetected,
                     style: theme.textTheme.titleSmall),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'We parsed a multi-week program template. Activating it will schedule its workouts starting next Monday.',
+            AppLocalizations.of(context).workoutImportSummaryWeParsedAMulti,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -432,7 +433,7 @@ class _TemplateSection extends StatelessWidget {
               HapticService.light();
               onChanged(v);
             },
-            title: const Text('Activate program'),
+            title: Text(AppLocalizations.of(context).workoutImportSummaryActivateProgram),
             activeThumbColor: accent,
           ),
         ],
@@ -451,7 +452,7 @@ class _WarningsBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Warnings', style: theme.textTheme.titleSmall),
+        Text(AppLocalizations.of(context).workoutImportSummaryWarnings, style: theme.textTheme.titleSmall),
         const SizedBox(height: 6),
         for (final w in warnings)
           Padding(

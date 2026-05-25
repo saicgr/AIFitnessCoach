@@ -10,6 +10,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/services/notification_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Pre-permission screen explaining *why* we use notifications, shown once
 /// after paywall / onboarding and before landing on /home. The OS prompt only
 /// fires if the user opts in on this screen — matching the iOS-standard
@@ -113,7 +114,7 @@ class _NotificationPrimeScreenState
                             .fadeIn(duration: 400.ms),
                         const SizedBox(height: 32),
                         Text(
-                          'Stay on track with gentle reminders',
+                          AppLocalizations.of(context).notificationPrimeStayOnTrackWith,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 28,
@@ -136,7 +137,7 @@ class _NotificationPrimeScreenState
                         const SizedBox(height: 32),
                         _BenefitRow(
                           icon: Icons.fitness_center_rounded,
-                          title: 'Workout reminders',
+                          title: AppLocalizations.of(context).notificationPrimeWorkoutReminders,
                           subtitle:
                               'A quick nudge on your training days so you never miss a session.',
                           accent: accent,
@@ -149,7 +150,7 @@ class _NotificationPrimeScreenState
                         const SizedBox(height: 16),
                         _BenefitRow(
                           icon: Icons.local_fire_department_rounded,
-                          title: 'Streak saves',
+                          title: AppLocalizations.of(context).notificationPrimeStreakSaves,
                           subtitle:
                               'We\u2019ll warn you before your streak breaks — never lose progress.',
                           accent: accent,
@@ -162,7 +163,7 @@ class _NotificationPrimeScreenState
                         const SizedBox(height: 16),
                         _BenefitRow(
                           icon: Icons.emoji_events_rounded,
-                          title: 'PR celebrations',
+                          title: AppLocalizations.of(context).notificationPrimePrCelebrations,
                           subtitle:
                               'Get celebrated the moment you hit a new personal record.',
                           accent: accent,
@@ -198,8 +199,8 @@ class _NotificationPrimeScreenState
                               valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
-                        : const Text(
-                            'Enable notifications',
+                        : Text(
+                            AppLocalizations.of(context).notificationPrimeEnableNotifications,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -211,7 +212,7 @@ class _NotificationPrimeScreenState
                 TextButton(
                   onPressed: _isRequesting ? null : _skip,
                   child: Text(
-                    'Not now',
+                    AppLocalizations.of(context).proposedChangeCardNotNow,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -221,7 +222,7 @@ class _NotificationPrimeScreenState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'You can change this anytime in Settings.',
+                  AppLocalizations.of(context).notificationPrimeYouCanChangeThis,
                   style: TextStyle(
                     fontSize: 12,
                     color: textSecondary.withOpacity(0.7),

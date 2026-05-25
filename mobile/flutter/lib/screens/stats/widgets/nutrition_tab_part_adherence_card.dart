@@ -57,7 +57,7 @@ class _AdherenceCard extends StatelessWidget {
         error: (_, __) => SizedBox(
           height: 60,
           child: Center(
-            child: Text('Could not load adherence data',
+            child: Text(AppLocalizations.of(context).nutritionTabPartCouldNotLoadAdherence,
                 style: TextStyle(color: textMuted)),
           ),
         ),
@@ -66,7 +66,7 @@ class _AdherenceCard extends StatelessWidget {
             return SizedBox(
               height: 60,
               child: Center(
-                child: Text('Not enough data for adherence analysis',
+                child: Text(AppLocalizations.of(context).nutritionTabPartNotEnoughDataFor,
                     style: TextStyle(color: textMuted, fontSize: 13)),
               ),
             );
@@ -84,7 +84,7 @@ class _AdherenceCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'Adherence & Consistency',
+                    AppLocalizations.of(context).nutritionTabPartAdherenceConsistency,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -147,19 +147,19 @@ class _AdherenceCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _MiniStatRow(
-                          label: 'Consistency',
+                          label: AppLocalizations.of(context).scoreBreakdownConsistency,
                           value: '${data.consistencyScore.round()}%',
                           isDark: isDark,
                         ),
                         const SizedBox(height: 4),
                         _MiniStatRow(
-                          label: 'Logging',
+                          label: AppLocalizations.of(context).nutritionTabPartLogging,
                           value: '${data.loggingScore.round()}%',
                           isDark: isDark,
                         ),
                         const SizedBox(height: 4),
                         _MiniStatRow(
-                          label: 'Weeks analyzed',
+                          label: AppLocalizations.of(context).nutritionTabPartWeeksAnalyzed,
                           value: '${data.weeksAnalyzed}',
                           isDark: isDark,
                         ),

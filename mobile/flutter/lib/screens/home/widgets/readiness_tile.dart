@@ -6,6 +6,7 @@ import '../../../data/models/scores.dart';
 import '../../../data/repositories/readiness_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Recovery Readiness tile for the Home composable.
 ///
 /// Layout:
@@ -89,7 +90,7 @@ class _CheckedInTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Recovery Readiness',
+                        AppLocalizations.of(context).readinessTileRecoveryReadiness,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -171,14 +172,14 @@ class _CalibrationTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Recovery Readiness',
+                        AppLocalizations.of(context).readinessTileRecoveryReadiness,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Building baseline — check in daily for 14 days',
+                        AppLocalizations.of(context).readinessTileBuildingBaselineCheckIn,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color
                               ?.withOpacity(0.75),

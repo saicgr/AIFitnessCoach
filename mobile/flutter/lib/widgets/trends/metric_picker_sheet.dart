@@ -6,6 +6,7 @@ import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// =========================================================================
 /// Metric picker — sectioned, searchable, collapsible (Wave 1 redesign)
 /// =========================================================================
@@ -196,7 +197,7 @@ class _MetricPickerSheetState extends State<_MetricPickerSheet> {
         return Column(
           children: [
             const SizedBox(height: 12),
-            Text('Choose a metric',
+            Text(AppLocalizations.of(context).metricPickerChooseAMetric,
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -338,7 +339,7 @@ class _MetricPickerSheetState extends State<_MetricPickerSheet> {
               Icon(Icons.history_rounded,
                   size: 14, color: colors.textMuted),
               const SizedBox(width: 6),
-              Text('RECENTLY USED',
+              Text(AppLocalizations.of(context).metricPickerRecentlyUsed,
                   style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

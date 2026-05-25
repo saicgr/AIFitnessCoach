@@ -31,6 +31,7 @@ import 'recipe_share_sheet.dart';
 import 'widgets/coach_review_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RecipeDetailScreen extends ConsumerStatefulWidget {
   final String recipeId;
   final String userId;
@@ -256,7 +257,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
               ),
               const SizedBox(height: 24),
               Text(
-                'Ingredients',
+                AppLocalizations.of(context).recipeSuggestionCardIngredients,
                 style: TextStyle(
                   color: text,
                   fontSize: 16,
@@ -266,7 +267,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
               const SizedBox(height: 8),
               if (r.ingredients.isEmpty)
                 Text(
-                  'No ingredients',
+                  AppLocalizations.of(context).recipeDetailNoIngredients,
                   style: TextStyle(color: muted, fontSize: 13),
                 )
               else
@@ -276,7 +277,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
               if ((r.instructions ?? '').isNotEmpty) ...[
                 const SizedBox(height: 24),
                 Text(
-                  'Instructions',
+                  AppLocalizations.of(context).workoutShowcaseInstructions,
                   style: TextStyle(
                     color: text,
                     fontSize: 16,
@@ -478,7 +479,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        '\ud83c\udf1f Curated recipe',
+        AppLocalizations.of(context).recipeDetailUd83cUdf1fCuratedRecipe,
         style: TextStyle(
           color: AppColors.yellow,
           fontSize: 11,
@@ -586,19 +587,19 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       children: [
         if (canImprovize)
           _ActionChip(
-            label: _improvizing ? 'Improvizing…' : 'Improvize',
+            label: _improvizing ? AppLocalizations.of(context).recipeDetailImprovizing : AppLocalizations.of(context).recipeDetailImprovize,
             icon: Icons.auto_awesome,
             color: improvizeColor,
             onTap: _improvizing ? null : () => _improvize(r),
           ),
         _ActionChip(
-          label: 'Log',
+          label: AppLocalizations.of(context).recipeDetailLog,
           icon: Icons.add_circle_outline,
           color: accent,
           onTap: () => _logRecipe(r),
         ),
         _ActionChip(
-          label: 'Schedule',
+          label: AppLocalizations.of(context).scheduleWorkoutSchedule,
           icon: Icons.alarm_add_outlined,
           color: accent,
           onTap: () {
@@ -614,7 +615,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           },
         ),
         _ActionChip(
-          label: 'Add to plan',
+          label: AppLocalizations.of(context).recipeDetailAddToPlan,
           icon: Icons.calendar_today,
           color: accent,
           onTap: () {
@@ -631,7 +632,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           },
         ),
         _ActionChip(
-          label: 'Coach review',
+          label: AppLocalizations.of(context).recipeDetailCoachReview,
           icon: Icons.psychology_outlined,
           color: accent,
           onTap: () {
@@ -649,7 +650,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           },
         ),
         _ActionChip(
-          label: 'Share',
+          label: AppLocalizations.of(context).commonShare,
           icon: Icons.share_rounded,
           color: accent,
           onTap: () {
@@ -666,7 +667,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           },
         ),
         _ActionChip(
-          label: 'History',
+          label: AppLocalizations.of(context).workoutHistory,
           icon: Icons.history,
           color: accent,
           onTap: () {
@@ -682,20 +683,20 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           },
         ),
         _ActionChip(
-          label: isFav ? 'Favorited' : 'Favorite',
+          label: isFav ? AppLocalizations.of(context).recipeDetailFavorited : AppLocalizations.of(context).recipeDetailFavorite,
           icon: isFav ? Icons.favorite : Icons.favorite_border,
           color: isFav ? AppColors.error : accent,
           onTap: () => _toggleFavorite(r.id),
         ),
         _ActionChip(
-          label: 'Grocery list',
+          label: AppLocalizations.of(context).recipeDetailGroceryList,
           icon: Icons.shopping_cart_outlined,
           color: accent,
           onTap: () => _buildGroceryList(r),
         ),
         if (canDelete)
           _ActionChip(
-            label: 'Delete',
+            label: AppLocalizations.of(context).buttonDelete,
             icon: Icons.delete_outline,
             color: AppColors.error,
             onTap: () => _confirmDelete(r),
@@ -765,7 +766,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 1),
-          content: Text(wasFav ? 'Removed from favorites' : 'Added to favorites'),
+          content: Text(wasFav ? AppLocalizations.of(context).recipeDetailRemovedFromFavorites : AppLocalizations.of(context).recipeDetailAddedToFavorites),
         ),
       );
     } catch (e) {
@@ -789,7 +790,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           duration: const Duration(seconds: 2),
           content: Text('Grocery list created (${groceryList.items.length} items)'),
           action: SnackBarAction(
-            label: 'View',
+            label: AppLocalizations.of(context).setTrackingOverlayView,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -825,9 +826,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       final prefill = _recipeToCreate(forked);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           duration: Duration(seconds: 2),
-          content: Text('Improvized! Edit and save your version.'),
+          content: Text(AppLocalizations.of(context).recipeDetailImprovizedEditAndSave),
         ),
       );
 
@@ -904,7 +905,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logged 1 serving as lunch')),
+          SnackBar(content: Text(AppLocalizations.of(context).recipeDetailLogged1ServingAs)),
         );
       }
     } catch (e) {
@@ -920,16 +921,16 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete recipe?'),
+        title: Text(AppLocalizations.of(context).recipesDeleteRecipe),
         content: Text('"${r.name}" will be permanently removed.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -942,7 +943,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe deleted')),
+        SnackBar(content: Text(AppLocalizations.of(context).recipesRecipeDeleted)),
       );
       Navigator.of(context).pop();
     } catch (e) {
@@ -1119,7 +1120,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 8),
             Text('Error: $error', style: TextStyle(color: muted)),
             const SizedBox(height: 12),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(onPressed: onRetry, child: Text(AppLocalizations.of(context).buttonRetry)),
           ],
         ),
       ),

@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/body_analyzer.dart';
 import '../../../data/repositories/body_analyzer_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Home-screen tile that plays a 15–20 s personalised audio brief.
 ///
 /// Off by default — the card only renders when the user has opted in via
@@ -107,7 +108,7 @@ class _AudioCoachCardState extends ConsumerState<AudioCoachCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Today\'s coach brief',
+                  AppLocalizations.of(context).audioCoachCardTodaySCoachBrief,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -130,7 +131,7 @@ class _AudioCoachCardState extends ConsumerState<AudioCoachCard> {
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      'Audio synthesis disabled — showing text only.',
+                      AppLocalizations.of(context).audioCoachCardAudioSynthesisDisabledSho,
                       style: TextStyle(fontSize: 10, color: textMuted),
                     ),
                   ),

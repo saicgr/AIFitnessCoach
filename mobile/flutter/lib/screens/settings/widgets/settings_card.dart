@@ -36,6 +36,7 @@ import '../offline/downloaded_videos_screen.dart';
 import 'setting_tile.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'settings_card_part_accent_color_grid.dart';
 part 'settings_card_part_workout_days_selector_sheet_state.dart';
 
@@ -111,9 +112,9 @@ class SettingsCard extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Weekly Variety', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
+                Text(AppLocalizations.of(context).workoutSettingsWeeklyVariety, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColorsLight.textPrimary)),
                 const SizedBox(height: 8),
-                Text('How much exercise variety each week?', style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+                Text(AppLocalizations.of(context).trainingSetupCardHowMuchExerciseVariety, style: TextStyle(fontSize: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
                 const SizedBox(height: 20),
                 Wrap(
                   spacing: 8,
@@ -211,7 +212,7 @@ class SettingsCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Failed to update'), backgroundColor: AppColors.error),
+          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),
         );
       }
     }
@@ -232,7 +233,7 @@ class SettingsCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Failed to update'), backgroundColor: AppColors.error),
+          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),
         );
       }
     }
@@ -253,7 +254,7 @@ class SettingsCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Failed to update'), backgroundColor: AppColors.error),
+          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),
         );
       }
     }
@@ -828,7 +829,7 @@ class SettingsCard extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  startsSunday ? 'Sunday' : 'Monday',
+                  startsSunday ? AppLocalizations.of(context).settingsCardSunday : AppLocalizations.of(context).settingsCardPartMonday,
                   style: TextStyle(
                     fontSize: 14,
                     color: textMuted,

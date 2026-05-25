@@ -93,14 +93,14 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Trends', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
+          Text(AppLocalizations.of(context).progressChartsTrends, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: Column(
                   children: [
-                    Text('Weekly', style: TextStyle(fontSize: 12, color: textMuted)),
+                    Text(AppLocalizations.of(context).xpProgressCardWeekly, style: TextStyle(fontSize: 12, color: textMuted)),
                     const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -119,7 +119,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
               Expanded(
                 child: Column(
                   children: [
-                    Text('Monthly', style: TextStyle(fontSize: 12, color: textMuted)),
+                    Text(AppLocalizations.of(context).xpGoalsMonthly, style: TextStyle(fontSize: 12, color: textMuted)),
                     const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -258,7 +258,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text('RELATED METRICS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 1.5)),
+            child: Text(AppLocalizations.of(context).measurementDetailScreenRelatedMetrics, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 1.5)),
           ),
           Wrap(
             spacing: 8,
@@ -343,7 +343,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
                   Icon(Icons.history, size: 40, color: textMuted),
                   const SizedBox(height: 8),
                   Text(
-                    'No history yet',
+                    AppLocalizations.of(context).volumeHistoryNoHistoryYet,
                     style: TextStyle(color: textMuted),
                   ),
                 ],

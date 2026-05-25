@@ -12,6 +12,7 @@ import 'widgets/guest_sign_up_banner.dart';
 import 'widgets/guest_session_timer.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'guest_home_screen_part_demo_chat_item.dart';
 
 part 'guest_home_screen_ui.dart';
@@ -93,7 +94,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               ),
               const SizedBox(width: 12),
               Text(
-                'Session Ending Soon',
+                AppLocalizations.of(context).guestHomeSessionEndingSoon,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -116,7 +117,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Sign up free to continue using all features without limits!',
+                AppLocalizations.of(context).guestHomeSignUpFreeTo,
                 style: TextStyle(
                   fontSize: 14,
                   color: textSecondary,
@@ -129,7 +130,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Continue Preview',
+                AppLocalizations.of(context).guestHomeContinuePreview,
                 style: TextStyle(color: textSecondary),
               ),
             ),
@@ -146,8 +147,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Sign Up Free',
+              child: Text(
+                AppLocalizations.of(context).guestUpgradeSignUpFree,
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
@@ -188,7 +189,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Enjoying the Preview?',
+                AppLocalizations.of(context).guestHomeEnjoyingThePreview,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -202,7 +203,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Your 10-minute preview session has ended.',
+                AppLocalizations.of(context).guestHomeYour10MinutePreview,
                 style: TextStyle(
                   fontSize: 15,
                   color: textSecondary,
@@ -212,7 +213,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Sign up free to unlock all features and start your fitness journey!',
+                AppLocalizations.of(context).guestHomeSignUpFreeTo2,
                 style: TextStyle(
                   fontSize: 14,
                   color: textSecondary,
@@ -240,8 +241,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Sign Up Free',
+                child: Text(
+                  AppLocalizations.of(context).guestUpgradeSignUpFree,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -334,7 +335,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 child: Row(
                   children: [
                     Text(
-                      'TRY IT NOW',
+                      AppLocalizations.of(context).guestHomeTryItNow,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -349,8 +350,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                         color: AppColors.success.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        'INTERACTIVE',
+                      child: Text(
+                        AppLocalizations.of(context).guestHomeInteractive,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
@@ -480,11 +481,11 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'AI Coach Demo',
+                              AppLocalizations.of(context).guestHomeAiCoachDemo,
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary),
                             ),
                             Text(
-                              'See how your personal AI coach works',
+                              AppLocalizations.of(context).guestHomeSeeHowYourPersonal,
                               style: TextStyle(fontSize: 13, color: textSecondary),
                             ),
                           ],
@@ -504,7 +505,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       Text(
-                        'TAP A QUESTION TO SEE AI RESPONSE',
+                        AppLocalizations.of(context).guestHomeTapAQuestionTo,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -537,13 +538,13 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                             const Icon(Icons.chat_bubble_outline, color: AppColors.cyan, size: 32),
                             const SizedBox(height: 8),
                             Text(
-                              'Get Unlimited AI Coaching',
+                              AppLocalizations.of(context).guestHomeGetUnlimitedAiCoaching,
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Sign up free to ask any fitness question and get personalized advice 24/7',
+                              AppLocalizations.of(context).guestHomeSignUpFreeTo3,
                               style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4),
                               textAlign: TextAlign.center,
                             ),
@@ -561,7 +562,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                                   padding: const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
-                                child: const Text('Sign Up Free', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                                child: Text(AppLocalizations.of(context).guestUpgradeSignUpFree, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                               ),
                             ),
                           ],
@@ -603,7 +604,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
           Row(
             children: [
               Text(
-                'WHAT YOU\'LL GET',
+                AppLocalizations.of(context).guestHomeWhatYouLlGet,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -618,8 +619,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   color: AppColors.success.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  'ALL FREE',
+                child: Text(
+                  AppLocalizations.of(context).guestHomeAllFree,
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
@@ -726,7 +727,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 Row(
                   children: [
                     Text(
-                      'Welcome, Guest',
+                      AppLocalizations.of(context).guestHomeWelcomeGuest,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -740,8 +741,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                         color: AppColors.orange.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        'PREVIEW',
+                      child: Text(
+                        AppLocalizations.of(context).heroWorkoutCardPreview,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
@@ -837,7 +838,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Exercise Library',
+                        AppLocalizations.of(context).libraryQuickAccessExerciseLibrary,
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
@@ -848,7 +849,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                       Row(
                         children: [
                           Text(
-                            'Preview 20 exercises',
+                            AppLocalizations.of(context).guestHomePreview20Exercises,
                             style: TextStyle(
                               fontSize: 13,
                               color: textSecondary,
@@ -864,8 +865,8 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                               color: AppColors.cyan.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              '1700+ with signup',
+                            child: Text(
+                              AppLocalizations.of(context).guestHome1700WithSignup,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,

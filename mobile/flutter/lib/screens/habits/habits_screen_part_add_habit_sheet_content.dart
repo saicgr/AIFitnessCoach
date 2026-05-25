@@ -93,7 +93,7 @@ class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
           child: Row(
             children: [
               Text(
-                'Add Habit',
+                AppLocalizations.of(context).habitsTileCardAddHabit,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -117,7 +117,7 @@ class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
             style: TextStyle(color: widget.textPrimary, fontSize: 14),
             onChanged: (v) => setState(() => _searchQuery = v.trim()),
             decoration: InputDecoration(
-              hintText: 'Search habits...',
+              hintText: AppLocalizations.of(context).habitsScreenPartSearchHabits,
               hintStyle: TextStyle(color: widget.textSecondary.withValues(alpha: 0.5), fontSize: 14),
               prefixIcon: Icon(Icons.search, color: widget.textSecondary, size: 20),
               suffixIcon: _searchQuery.isNotEmpty
@@ -234,7 +234,7 @@ class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Create Custom Habit',
+                                  AppLocalizations.of(context).habitsScreenUiCreateCustomHabit,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -243,7 +243,7 @@ class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Define your own habit with custom name & icon',
+                                  AppLocalizations.of(context).habitsScreenPartDefineYourOwnHabit,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: widget.textSecondary,
@@ -261,7 +261,7 @@ class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
                 const SizedBox(height: 24),
 
                 Text(
-                  'OR CHOOSE A TEMPLATE',
+                  AppLocalizations.of(context).habitsScreenPartOrChooseATemplate,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -282,7 +282,7 @@ class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
                         Icon(Icons.search_off, color: widget.textSecondary.withValues(alpha: 0.4), size: 40),
                         const SizedBox(height: 12),
                         Text(
-                          'No habits found',
+                          AppLocalizations.of(context).habitsScreenPartNoHabitsFound,
                           style: TextStyle(color: widget.textSecondary, fontSize: 14),
                         ),
                       ],

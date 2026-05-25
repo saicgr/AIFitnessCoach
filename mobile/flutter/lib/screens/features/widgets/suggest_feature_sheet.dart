@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/feature_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for users to suggest new features
 class SuggestFeatureSheet extends ConsumerStatefulWidget {
   const SuggestFeatureSheet({super.key});
@@ -93,8 +94,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                   children: [
                     const Icon(Icons.lightbulb_outline, size: 28),
                     const SizedBox(width: 12),
-                    const Text(
-                      'Suggest a Feature',
+                    Text(
+                      AppLocalizations.of(context).suggestFeatureSuggestAFeature,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -159,8 +160,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                 TextFormField(
                   controller: _titleController,
                   decoration: InputDecoration(
-                    labelText: 'Feature Title',
-                    hintText: 'e.g., Social workout sharing',
+                    labelText: AppLocalizations.of(context).suggestFeatureFeatureTitle,
+                    hintText: AppLocalizations.of(context).suggestFeatureEGSocialWorkout,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -184,8 +185,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                 TextFormField(
                   controller: _descriptionController,
                   decoration: InputDecoration(
-                    labelText: 'Description',
-                    hintText: 'Describe your feature idea in detail...',
+                    labelText: AppLocalizations.of(context).suggestFeatureDescription,
+                    hintText: AppLocalizations.of(context).suggestFeatureDescribeYourFeatureIdea,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -207,8 +208,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                 const SizedBox(height: 16),
 
                 // Category selector
-                const Text(
-                  'Category',
+                Text(
+                  AppLocalizations.of(context).suggestFeatureCategory,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
@@ -259,8 +260,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            'Submit Suggestion',
+                        : Text(
+                            AppLocalizations.of(context).suggestFeatureSubmitSuggestion,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -286,8 +287,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
     if (remainingData['remaining'] == 0) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You have reached the maximum of 2 feature suggestions'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).suggestFeatureYouHaveReachedThe),
           backgroundColor: Colors.orange,
         ),
       );
@@ -310,8 +311,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
       Navigator.pop(context);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Feature suggestion submitted successfully!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).suggestFeatureFeatureSuggestionSubmittedS),
           backgroundColor: Colors.green,
         ),
       );

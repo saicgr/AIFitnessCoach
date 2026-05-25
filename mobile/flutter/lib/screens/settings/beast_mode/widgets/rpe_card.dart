@@ -6,6 +6,7 @@ import '../../../../../data/services/haptic_service.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class RpeCard extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -27,9 +28,9 @@ class RpeCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('RPE Auto-Regulation', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
+                    Text(AppLocalizations.of(context).rpeCardRpeAutoRegulation, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('Automatically adjust based on RPE feedback', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                    Text(AppLocalizations.of(context).rpeCardAutomaticallyAdjustBasedOn, style: TextStyle(fontSize: 11, color: theme.textMuted)),
                   ],
                 ),
               ),
@@ -47,7 +48,7 @@ class RpeCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                SizedBox(width: 80, child: Text('Sensitivity', style: TextStyle(fontSize: 12, color: theme.textPrimary))),
+                SizedBox(width: 80, child: Text(AppLocalizations.of(context).rpeCardSensitivity, style: TextStyle(fontSize: 12, color: theme.textPrimary))),
                 Expanded(
                   child: SliderTheme(
                     data: SliderTheme.of(context).copyWith(
@@ -69,7 +70,7 @@ class RpeCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text('RPE Prompt Frequency', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: theme.textPrimary)),
+            Text(AppLocalizations.of(context).rpeCardRpePromptFrequency, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: theme.textPrimary)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,

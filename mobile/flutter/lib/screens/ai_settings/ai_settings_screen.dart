@@ -18,6 +18,7 @@ import '../../data/services/notification_service.dart';
 import '../../data/services/tts_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'ai_settings_screen_part_a_i_header_card.dart';
 
 /// Single user-defined AI focus point with a 1–5 priority weight.
@@ -860,7 +861,7 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'AI Settings'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).aiSettingsAiSettings),
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -872,31 +873,31 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
 
               // Always-visible essentials.
               _CollapsibleSection(
-                title: 'YOUR COACH',
+                title: AppLocalizations.of(context).coachHeroCardYourCoach,
                 expanded: _expanded['coach']!,
                 onChanged: (v) => _setExpanded('coach', v),
                 child: _CoachPersonaSection(settings: settings, ref: ref),
               ),
               _CollapsibleSection(
-                title: 'PERSONALITY & TONE',
+                title: AppLocalizations.of(context).aiSettingsPersonalityTone,
                 expanded: _expanded['personality']!,
                 onChanged: (v) => _setExpanded('personality', v),
                 child: _PersonalitySection(settings: settings, ref: ref),
               ),
               _CollapsibleSection(
-                title: 'WHAT TO FOCUS ON',
+                title: AppLocalizations.of(context).aiSettingsWhatToFocusOn,
                 expanded: _expanded['focus']!,
                 onChanged: (v) => _setExpanded('focus', v),
                 child: _FocusAreasSection(settings: settings, ref: ref),
               ),
               _CollapsibleSection(
-                title: 'TRAINING SPLIT',
+                title: AppLocalizations.of(context).aiSettingsTrainingSplit,
                 expanded: _expanded['split']!,
                 onChanged: (v) => _setExpanded('split', v),
                 child: _TrainingSplitSection(settings: settings, ref: ref),
               ),
               _CollapsibleSection(
-                title: 'RESPONSE PREFERENCES',
+                title: AppLocalizations.of(context).aiSettingsResponsePreferences,
                 expanded: _expanded['response']!,
                 onChanged: (v) => _setExpanded('response', v),
                 child: _ResponsePreferencesSection(settings: settings, ref: ref),
@@ -914,19 +915,19 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
 
               if (_advancedEnabled) ...[
                 _CollapsibleSection(
-                  title: 'AI AGENTS',
+                  title: AppLocalizations.of(context).aiSettingsAiAgents,
                   expanded: _expanded['agents']!,
                   onChanged: (v) => _setExpanded('agents', v),
                   child: _AgentsSection(settings: settings, ref: ref),
                 ),
                 _CollapsibleSection(
-                  title: 'FITNESS COACHING',
+                  title: AppLocalizations.of(context).aiSettingsFitnessCoaching,
                   expanded: _expanded['coaching']!,
                   onChanged: (v) => _setExpanded('coaching', v),
                   child: _FitnessCoachingSection(settings: settings, ref: ref),
                 ),
                 _CollapsibleSection(
-                  title: 'PRIVACY & DATA',
+                  title: AppLocalizations.of(context).aiSettingsPrivacyData,
                   expanded: _expanded['privacy']!,
                   onChanged: (v) => _setExpanded('privacy', v),
                   child: _PrivacySection(settings: settings, ref: ref),
@@ -1022,7 +1023,7 @@ class _AdvancedToggleRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Advanced settings',
+                  AppLocalizations.of(context).aiSettingsAdvancedSettings,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1030,7 +1031,7 @@ class _AdvancedToggleRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Show AI agents, fitness coaching toggles, and privacy controls',
+                  AppLocalizations.of(context).aiSettingsShowAiAgentsFitness,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ],
@@ -1142,7 +1143,7 @@ class _FocusAreasSectionState extends State<_FocusAreasSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tell the AI what matters most this block. Up to 5 things, each weighted 1–5.',
+            AppLocalizations.of(context).aiSettingsTellTheAiWhat,
             style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4),
           ),
           const SizedBox(height: 14),
@@ -1198,7 +1199,7 @@ class _FocusAreasSectionState extends State<_FocusAreasSection> {
           if (available.isNotEmpty && _draft.length < 5) ...[
             const SizedBox(height: 14),
             Text(
-              'Suggestions',
+              AppLocalizations.of(context).unresolvedExercisesSuggestions,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -1321,7 +1322,7 @@ class _FocusRowState extends State<_FocusRow> {
       onEditingComplete: _emit,
       style: TextStyle(fontSize: 14, color: textPrimary),
       decoration: InputDecoration(
-        hintText: 'Focus on…',
+        hintText: AppLocalizations.of(context).aiSettingsFocusOn,
         hintStyle: TextStyle(color: textSecondary, fontSize: 14),
         counterText: '',
         isDense: true,
@@ -1345,7 +1346,7 @@ class _FocusRowState extends State<_FocusRow> {
       icon: Icon(Icons.close_rounded, size: 18, color: textSecondary),
       onPressed: widget.onRemove,
       visualDensity: VisualDensity.compact,
-      tooltip: 'Remove',
+      tooltip: AppLocalizations.of(context).workoutPlanDrawerRemove,
     );
 
     // Wrap on small screens so the dial flows below the input instead
@@ -1499,7 +1500,7 @@ class _TrainingSplitSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Pick the weekly structure the AI should plan around. Changes apply to your next generation — your current week is left alone.',
+            AppLocalizations.of(context).aiSettingsPickTheWeeklyStructure,
             style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4),
           ),
           const SizedBox(height: 14),

@@ -6,6 +6,7 @@ import '../../../../widgets/glass_sheet.dart';
 import 'diet_heuristics.dart';
 import 'menu_filter_state.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Goal-oriented filter sheet for Menu Analysis.
 ///
 /// Design principles:
@@ -138,15 +139,15 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
   Widget _header() {
     return Row(
       children: [
-        const Text(
-          'Filters',
+        Text(
+          AppLocalizations.of(context).recipesFilters,
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const Spacer(),
         if (_state.hasAnyFilter)
           TextButton(
             onPressed: () => setState(() => _state = MenuFilterState.empty),
-            child: const Text('Reset'),
+            child: Text(AppLocalizations.of(context).trophyFilterReset),
           ),
       ],
     );
@@ -164,7 +165,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
         ),
         child: Text(
           matches == 0
-              ? 'No dishes match'
+              ? AppLocalizations.of(context).menuFilterNoDishesMatch
               : matches == total
                   ? 'Show all $total dishes'
                   : 'Show $matches of $total dishes',
@@ -178,8 +179,8 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _quickPresetsSection() {
     return _section(
-      title: 'What are you in the mood for?',
-      caption: 'Tap any that apply — we\'ll only show matching dishes.',
+      title: AppLocalizations.of(context).menuFilterWhatAreYouIn,
+      caption: AppLocalizations.of(context).menuFilterTapAnyThatApply,
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
@@ -201,8 +202,8 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _dietSection() {
     return _section(
-      title: 'Diet',
-      caption: 'We\'ll hide dishes that don\'t fit your diet.',
+      title: AppLocalizations.of(context).menuFilterDiet,
+      caption: AppLocalizations.of(context).menuFilterWeLlHideDishes,
       child: Wrap(
         spacing: 8,
         runSpacing: 6,
@@ -222,24 +223,24 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _healthSection() {
     return _section(
-      title: 'Coach\'s verdict',
-      caption: 'How the AI rated each dish for your goals.',
+      title: AppLocalizations.of(context).menuFilterCoachSVerdict,
+      caption: AppLocalizations.of(context).menuFilterHowTheAiRated,
       child: Wrap(
         spacing: 8,
         runSpacing: 6,
         children: [
           _Pill(
-            label: '✅ Good',
+            label: AppLocalizations.of(context).menuFilterGood,
             selected: _state.healthRatings.contains('green'),
             onTap: () => _toggleHealth('green'),
           ),
           _Pill(
-            label: '👌 Okay',
+            label: AppLocalizations.of(context).menuFilterOkay,
             selected: _state.healthRatings.contains('yellow'),
             onTap: () => _toggleHealth('yellow'),
           ),
           _Pill(
-            label: '⚠️ Skip',
+            label: AppLocalizations.of(context).menuFilterSkip,
             selected: _state.healthRatings.contains('red'),
             onTap: () => _toggleHealth('red'),
           ),
@@ -252,10 +253,10 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _priceSection() {
     return _section(
-      title: 'Per-dish budget',
-      caption: 'Applies only to dishes with a listed price.',
+      title: AppLocalizations.of(context).menuFilterPerDishBudget,
+      caption: AppLocalizations.of(context).menuFilterAppliesOnlyToDishes,
       child: _rangeSlider(
-        label: 'Max price',
+        label: AppLocalizations.of(context).menuFilterMaxPrice,
         value: _state.maxPriceUsd,
         min: 0,
         max: 80,
@@ -272,19 +273,19 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _avoidSection() {
     return _section(
-      title: 'Avoid',
+      title: AppLocalizations.of(context).menuFilterAvoid,
       child: Column(
         children: [
           _SwitchRow(
-            title: 'Hide dishes with my allergens',
-            subtitle: 'Uses your saved allergen profile',
+            title: AppLocalizations.of(context).menuFilterHideDishesWithMy,
+            subtitle: AppLocalizations.of(context).menuFilterUsesYourSavedAllergen,
             value: _state.hideAllergenDishes,
             onChanged: (v) =>
                 setState(() => _state = _state.copyWith(hideAllergenDishes: v)),
           ),
           _SwitchRow(
-            title: 'Hide ultra-processed dishes',
-            subtitle: 'Skips NOVA-4 foods (industrial emulsifiers, HFCS, etc.)',
+            title: AppLocalizations.of(context).menuFilterHideUltraProcessedDishes,
+            subtitle: AppLocalizations.of(context).menuFilterSkipsNova4Foods,
             value: _state.hideUltraProcessed,
             onChanged: (v) =>
                 setState(() => _state = _state.copyWith(hideUltraProcessed: v)),
@@ -307,7 +308,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
             Icon(Icons.tune, size: 16, color: AppColors.textSecondary),
             const SizedBox(width: 6),
             Text(
-              _advancedOpen ? 'Hide advanced filters' : 'Advanced filters',
+              _advancedOpen ? AppLocalizations.of(context).menuFilterHideAdvancedFilters : AppLocalizations.of(context).menuFilterAdvancedFilters,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -330,8 +331,8 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _bloodSugarSection() {
     return _section(
-      title: 'Blood sugar',
-      caption: 'Glycemic load per serving — lower = steadier energy.',
+      title: AppLocalizations.of(context).menuFilterBloodSugar,
+      caption: AppLocalizations.of(context).menuFilterGlycemicLoadPerServing,
       child: Wrap(
         spacing: 8,
         runSpacing: 6,
@@ -365,8 +366,8 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _fodmapSection() {
     return _section(
-      title: 'FODMAP (IBS)',
-      caption: 'Onion, garlic, wheat, lactose can trigger IBS symptoms.',
+      title: AppLocalizations.of(context).menuFilterFodmapIbs,
+      caption: AppLocalizations.of(context).menuFilterOnionGarlicWheatLactose,
       child: Wrap(
         spacing: 8,
         runSpacing: 6,
@@ -397,8 +398,8 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _inflammationSection() {
     return _section(
-      title: 'Inflammation',
-      caption: 'Based on ingredient profile (omega-3, fiber, added sugar, etc.).',
+      title: AppLocalizations.of(context).menuFilterInflammation,
+      caption: AppLocalizations.of(context).menuFilterBasedOnIngredientProfile,
       child: Wrap(
         spacing: 8,
         runSpacing: 6,
@@ -427,12 +428,12 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _macrosSection() {
     return _section(
-      title: 'Fine-tune macros',
-      caption: 'For specific targets. Most people won\'t need this.',
+      title: AppLocalizations.of(context).menuFilterFineTuneMacros,
+      caption: AppLocalizations.of(context).menuFilterForSpecificTargetsMost,
       child: Column(
         children: [
           _rangeSlider(
-            label: 'Protein at least',
+            label: AppLocalizations.of(context).menuFilterProteinAtLeast,
             value: _state.minProteinG,
             min: 0,
             max: 80,
@@ -443,7 +444,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
                 )),
           ),
           _rangeSlider(
-            label: 'Carbs at most',
+            label: AppLocalizations.of(context).menuFilterCarbsAtMost,
             value: _state.maxCarbsG,
             min: 0,
             max: 150,
@@ -454,7 +455,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
                 )),
           ),
           _rangeSlider(
-            label: 'Fat at most',
+            label: AppLocalizations.of(context).menuFilterFatAtMost,
             value: _state.maxFatG,
             min: 0,
             max: 80,
@@ -465,7 +466,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
                 )),
           ),
           _rangeSlider(
-            label: 'Calories at most',
+            label: AppLocalizations.of(context).menuFilterCaloriesAtMost,
             value: _state.maxCalories,
             min: 0,
             max: 1200,
@@ -484,8 +485,8 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
 
   Widget _sectionsSection(List<String> sections) {
     return _section(
-      title: 'Menu sections',
-      caption: 'Show only certain parts of the menu.',
+      title: AppLocalizations.of(context).menuFilterMenuSections,
+      caption: AppLocalizations.of(context).menuFilterShowOnlyCertainParts,
       child: Wrap(
         spacing: 8,
         runSpacing: 6,

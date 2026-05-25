@@ -15,6 +15,7 @@ import '../../../data/models/parsed_exercise.dart';
 import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Result from the AI input preview sheet
 class AIInputPreviewResult {
   final List<SetToLog> setsToLog;
@@ -162,7 +163,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: isDark ? AppColors.elevated : Colors.white,
           title: Text(
-            'Edit Set',
+            AppLocalizations.of(context).aiInputPreviewEditSet,
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : Colors.black87,
             ),
@@ -173,7 +174,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
               // Bodyweight toggle
               SwitchListTile(
                 title: Text(
-                  'Bodyweight',
+                  AppLocalizations.of(context).exerciseDetailsSheetBodyweight,
                   style: TextStyle(
                     color: isDark ? AppColors.textPrimary : Colors.black87,
                   ),
@@ -204,7 +205,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Cancel',
+                AppLocalizations.of(context).buttonCancel,
                 style: TextStyle(
                   color: isDark ? AppColors.textMuted : Colors.grey.shade600,
                 ),
@@ -228,7 +229,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
                 );
                 Navigator.pop(context, edited);
               },
-              child: const Text('Save'),
+              child: Text(AppLocalizations.of(context).buttonSave),
             ),
           ],
         ),
@@ -276,7 +277,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : Colors.grey.shade600,
               ),
@@ -304,7 +305,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
               );
               Navigator.pop(context, edited);
             },
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context).buttonSave),
           ),
         ],
       ),
@@ -410,7 +411,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        widget.response.warnings.join('\n'),
+                        widget.response.warnings.join(AppLocalizations.of(context).pinnedMessageBarN),
                         style: TextStyle(
                           fontSize: 13,
                           color: textMuted,
@@ -531,7 +532,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context).buttonCancel),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -614,7 +615,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
         GestureDetector(
           onTap: onToggleAll,
           child: Text(
-            selectedCount == totalCount ? 'Deselect all' : 'Select all',
+            selectedCount == totalCount ? AppLocalizations.of(context).aiInputPreviewDeselectAll : AppLocalizations.of(context).aiInputPreviewSelectAll,
             style: TextStyle(
               color: accentColor,
               fontSize: 12,
@@ -762,7 +763,7 @@ class _SetPreviewTile extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            ' × ',
+                            AppLocalizations.of(context).aiInputPreview,
                             style: TextStyle(
                               color: textMuted,
                               fontSize: 15,
@@ -789,7 +790,7 @@ class _SetPreviewTile extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                'WARMUP',
+                                AppLocalizations.of(context).aiInputPreviewWarmup,
                                 style: TextStyle(
                                   color: Colors.orange.shade700,
                                   fontSize: 10,

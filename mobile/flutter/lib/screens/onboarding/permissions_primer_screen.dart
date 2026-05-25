@@ -12,6 +12,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/notification_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Unified pre-permission rationale screen for the four most-used
 /// runtime permissions: camera, photos, microphone, and notifications.
 /// Replaces the previous two-screen flow (NotificationPrimeScreen +
@@ -168,7 +169,7 @@ class _PermissionsPrimerScreenState
                             .fadeIn(duration: 400.ms),
                         const SizedBox(height: 32),
                         Text(
-                          'A few quick permissions',
+                          AppLocalizations.of(context).permissionsPrimerAFewQuickPermissions,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 28,
@@ -180,7 +181,7 @@ class _PermissionsPrimerScreenState
                         ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
                         const SizedBox(height: 12),
                         Text(
-                          'Granting these now means features just work — no surprise prompts mid-workout.',
+                          AppLocalizations.of(context).permissionsPrimerGrantingTheseNowMeans,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 15,
@@ -191,7 +192,7 @@ class _PermissionsPrimerScreenState
                         const SizedBox(height: 32),
                         _BenefitRow(
                           icon: Icons.camera_alt_rounded,
-                          title: 'Camera',
+                          title: AppLocalizations.of(context).storyCreateCamera,
                           subtitle:
                               'Snap a meal to log it instantly, scan barcodes, or capture progress photos.',
                           accent: accent,
@@ -204,7 +205,7 @@ class _PermissionsPrimerScreenState
                         const SizedBox(height: 16),
                         _BenefitRow(
                           icon: Icons.photo_library_rounded,
-                          title: 'Photos',
+                          title: AppLocalizations.of(context).progressPhotos,
                           subtitle:
                               'Pick existing meal photos and progress shots from your library.',
                           accent: accent,
@@ -217,7 +218,7 @@ class _PermissionsPrimerScreenState
                         const SizedBox(height: 16),
                         _BenefitRow(
                           icon: Icons.mic_rounded,
-                          title: 'Microphone',
+                          title: AppLocalizations.of(context).workoutPermissionsPrimeMicrophone,
                           subtitle:
                               'Talk to your AI coach hands-free and dictate quick food + workout notes.',
                           accent: accent,
@@ -230,7 +231,7 @@ class _PermissionsPrimerScreenState
                         const SizedBox(height: 16),
                         _BenefitRow(
                           icon: Icons.notifications_active_rounded,
-                          title: 'Notifications',
+                          title: AppLocalizations.of(context).permissionsPrimerNotifications,
                           subtitle:
                               'Workout reminders, weekly check-ins, and a heads-up before your trial ends.',
                           accent: accent,
@@ -266,8 +267,8 @@ class _PermissionsPrimerScreenState
                               valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
-                        : const Text(
-                            'Grant permissions',
+                        : Text(
+                            AppLocalizations.of(context).permissionsPrimerGrantPermissions,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -279,7 +280,7 @@ class _PermissionsPrimerScreenState
                 TextButton(
                   onPressed: _isRequesting ? null : _skip,
                   child: Text(
-                    'Not now',
+                    AppLocalizations.of(context).proposedChangeCardNotNow,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -290,7 +291,7 @@ class _PermissionsPrimerScreenState
                 const SizedBox(height: 8),
                 Text(
                   Platform.isIOS
-                      ? 'Each app feature will explain itself before asking the OS.'
+                      ? AppLocalizations.of(context).permissionsPrimerEachAppFeatureWill
                       : 'You can change these anytime in Settings.',
                   style: TextStyle(
                     fontSize: 12,

@@ -38,7 +38,7 @@ extension __ComparisonViewStateExt on _ComparisonViewState {
               if (_selectedPhotos.isNotEmpty)
                 TextButton.icon(
                   icon: const Icon(Icons.clear_all, size: 18),
-                  label: const Text('Clear'),
+                  label: Text(AppLocalizations.of(context).vacationModeClear),
                   onPressed: () => setState(() => _selectedPhotos.clear()),
                   style: TextButton.styleFrom(
                     foregroundColor: colorScheme.error,
@@ -84,7 +84,7 @@ extension __ComparisonViewStateExt on _ComparisonViewState {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
-                  label: const Text('All'),
+                  label: Text(AppLocalizations.of(context).syncedWorkoutsHistoryAll),
                   selected: _filterViewType == null,
                   onSelected: (_) => setState(() => _filterViewType = null),
                 ),

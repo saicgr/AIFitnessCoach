@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Muscle focus points allocation widget for quiz screens.
 /// Users can allocate up to 5 focus points to prioritize specific muscle groups.
 class QuizMuscleFocus extends StatelessWidget {
@@ -66,7 +67,7 @@ class QuizMuscleFocus extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               children: [
                 _MuscleGroupSection(
-                  title: 'Upper Body',
+                  title: AppLocalizations.of(context).quizMuscleFocusUpperBody,
                   muscles: _upperMuscles,
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
@@ -74,7 +75,7 @@ class QuizMuscleFocus extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 _MuscleGroupSection(
-                  title: 'Core',
+                  title: AppLocalizations.of(context).quizMuscleFocusCore,
                   muscles: _coreMuscles,
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
@@ -82,7 +83,7 @@ class QuizMuscleFocus extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 _MuscleGroupSection(
-                  title: 'Lower Body',
+                  title: AppLocalizations.of(context).quizMuscleFocusLowerBody,
                   muscles: _lowerMuscles,
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
@@ -153,7 +154,7 @@ class _FocusPointsIndicator extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Focus Points',
+                    AppLocalizations.of(context).trainingFocusFocusPoints,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

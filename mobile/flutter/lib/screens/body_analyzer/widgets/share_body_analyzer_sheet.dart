@@ -11,6 +11,7 @@ import 'body_analyzer_hero.dart';
 import 'score_ring.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Exports a shareable snapshot of the Body Analyzer result.
 ///
 /// Uses the same `RepaintBoundary` → `toImage()` pattern as
@@ -53,7 +54,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
                       children: [
                         Expanded(
                           child: ScoreRing(
-                            label: 'Body Fat',
+                            label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
                             value: '${(snapshot.bodyFatPercent ?? 0).toStringAsFixed(0)}%',
                             fill: ((snapshot.bodyFatPercent ?? 0) / 40).clamp(0.0, 1.0),
                             color: const Color(0xFF3498DB),
@@ -63,7 +64,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: ScoreRing(
-                            label: 'Muscle Mass',
+                            label: AppLocalizations.of(context).shareBodyAnalyzerMuscleMass,
                             value: '${(snapshot.muscleMassPercent ?? 0).toStringAsFixed(0)}%',
                             fill: ((snapshot.muscleMassPercent ?? 0) / 60).clamp(0.0, 1.0),
                             color: const Color(0xFFF5A623),
@@ -73,7 +74,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: ScoreRing(
-                            label: 'Symmetry',
+                            label: AppLocalizations.of(context).shareBodyAnalyzerSymmetry,
                             value: '${((snapshot.symmetryScore ?? 0) / 10).round()}/10',
                             fill: ((snapshot.symmetryScore ?? 0) / 100).clamp(0.0, 1.0),
                             color: const Color(0xFFB24BF3),
@@ -102,7 +103,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () => _shareAsImage(context, key),
                 icon: const Icon(Icons.ios_share, size: 18),
-                label: const Text('Share image'),
+                label: Text(AppLocalizations.of(context).shareBodyAnalyzerShareImage),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -135,7 +136,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Share failed')),
+          SnackBar(content: Text(AppLocalizations.of(context).shareBodyAnalyzerShareFailed)),
         );
       }
     }

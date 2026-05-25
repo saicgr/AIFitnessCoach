@@ -8,6 +8,7 @@ import '../../../../data/services/api_client.dart';
 import '../../../../data/services/personal_goals_service.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// A card displaying weekly personal goals summary on the home screen
 class WeeklyGoalsCard extends ConsumerStatefulWidget {
   final bool isDark;
@@ -194,7 +195,7 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Weekly Goals',
+                AppLocalizations.of(context).weeklyGoalsCardWeeklyGoals,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -313,7 +314,7 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Weekly Goals',
+                AppLocalizations.of(context).weeklyGoalsCardWeeklyGoals,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -322,7 +323,7 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Set a challenge to push your limits!',
+                AppLocalizations.of(context).weeklyGoalsCardSetAChallengeTo,
                 style: TextStyle(
                   fontSize: 14,
                   color: textMuted,

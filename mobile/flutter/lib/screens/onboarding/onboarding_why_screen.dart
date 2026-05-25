@@ -9,6 +9,7 @@ import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Onboarding conversion v6 — "What's your why" screen.
 ///
 /// The emotional anchor, asked FIRST (right after /intro, before the
@@ -140,12 +141,12 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                       visualDensity: VisualDensity.compact,
                       icon: Icon(Icons.arrow_back_rounded,
                           color: t.textSecondary, size: 24),
-                      tooltip: 'Back',
+                      tooltip: AppLocalizations.of(context).commonBack,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'FIRST, THE WHY',
+                    AppLocalizations.of(context).onboardingWhyFirstTheWhy,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -155,7 +156,7 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                   ).animate().fadeIn(),
                   const SizedBox(height: 8),
                   Text(
-                    "What's driving this?",
+                    AppLocalizations.of(context).onboardingWhyWhatSDrivingThis,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -202,7 +203,7 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                     child: TextButton(
                       onPressed: _skip,
                       child: Text(
-                        'Skip',
+                        AppLocalizations.of(context).onboardingSkip,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -319,7 +320,7 @@ class _ContinueButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: enabled,
-      label: 'Continue',
+      label: AppLocalizations.of(context).onboardingContinueButton,
       child: GestureDetector(
         onTap: enabled ? onTap : null,
         child: AnimatedOpacity(
@@ -344,12 +345,12 @@ class _ContinueButton extends StatelessWidget {
                     ]
                   : null,
             ),
-            child: const Center(
+            child: Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Continue',
+                    AppLocalizations.of(context).onboardingContinueButton,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,

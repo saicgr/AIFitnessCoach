@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/masteries_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// 3-column grid of levelled mastery badges (Steps Lv.6 etc.). Each cell
 /// renders a hex-shaped badge with the mastery icon, colour-tiered by
 /// current level, and a subtitle showing the user's level.
@@ -241,7 +242,7 @@ class _EmptyState extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
-        'Your masteries will level up as you log workouts, steps, and cardio.',
+        AppLocalizations.of(context).masteriesGridYourMasteriesWillLevel,
         style: TextStyle(
           color:
               isDark ? AppColors.textMuted : AppColorsLight.textMuted,

@@ -23,7 +23,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                       color: isDark ? AppColors.textMuted : AppColorsLight.textMuted),
                   const SizedBox(width: 4),
                   Text(
-                    'Back to results',
+                    AppLocalizations.of(context).logMealSheetBackToResults,
                     style: TextStyle(
                         fontSize: 13,
                         color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -169,8 +169,8 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                 children: [
                   const Icon(Icons.camera_alt_rounded, size: 44, color: Colors.white),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Snap a photo',
+                  Text(
+                    AppLocalizations.of(context).logMealSheetSnapAPhoto,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -179,7 +179,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'One tap — instant nutrition',
+                    AppLocalizations.of(context).logMealSheetOneTapInstantNutrition,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.white.withValues(alpha: 0.9),
@@ -200,7 +200,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                 Icon(Icons.photo_library_outlined, size: 16, color: textMuted),
                 const SizedBox(width: 6),
                 Text(
-                  'Pick from gallery',
+                  AppLocalizations.of(context).logMealSheetPickFromGallery,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -212,7 +212,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
           ),
           const SizedBox(height: 18),
           Text(
-            'Need to add notes or multiple photos? Use Describe.',
+            AppLocalizations.of(context).logMealSheetNeedToAddNotes,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -237,7 +237,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
           ),
           const SizedBox(height: 8),
           Text(
-            'AI estimates from a photo — you can refine the result after.',
+            AppLocalizations.of(context).logMealSheetAiEstimatesFromA,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,
@@ -308,7 +308,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
         children: [
           // ── Photo picker ───────────────────────────────────────
           Text(
-            'Photos',
+            AppLocalizations.of(context).progressPhotos,
             style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
           ),
@@ -338,13 +338,13 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
 
           // ── Instruction field ──────────────────────────────────
           Text(
-            'Instructions (optional)',
+            AppLocalizations.of(context).logMealSheetInstructionsOptional,
             style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
           ),
           const SizedBox(height: 3),
           Text(
-            'Tell the AI anything that helps — portion eaten, swaps, plate size.',
+            AppLocalizations.of(context).logMealSheetTellTheAiAnything,
             style: TextStyle(fontSize: 11.5, height: 1.4, color: textMuted),
           ),
           const SizedBox(height: 8),
@@ -369,7 +369,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
-                hintText: 'e.g. "grilled chicken bowl, I ate half"',
+                hintText: AppLocalizations.of(context).logMealSheetEGGrilledChicken,
                 hintStyle: TextStyle(
                     color: textMuted.withValues(alpha: 0.7), fontSize: 14, height: 1.35),
               ),
@@ -408,7 +408,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                           valueColor: AlwaysStoppedAnimation(Colors.white)))
                   : const Icon(Icons.auto_awesome, size: 18),
               label: Text(
-                _describeAnalyzing ? 'Analyzing...' : 'Analyze',
+                _describeAnalyzing ? AppLocalizations.of(context).recipeBuilderSheetAnalyzing : AppLocalizations.of(context).nutritionShowcaseAnalyze,
                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
@@ -425,7 +425,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
           if (!hasInput) ...[
             const SizedBox(height: 8),
             Text(
-              'Add a photo or describe the meal to analyze.',
+              AppLocalizations.of(context).logMealSheetAddAPhotoOr,
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 11.5, color: textMuted, fontStyle: FontStyle.italic),
@@ -596,7 +596,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
             Icon(Icons.add_a_photo_outlined, size: 22, color: accent),
             const SizedBox(height: 4),
             Text(
-              _describePhotos.isEmpty ? 'Add' : '${_describePhotos.length}/5',
+              _describePhotos.isEmpty ? AppLocalizations.of(context).tilePickerAdd : '${_describePhotos.length}/5',
               style: TextStyle(
                   fontSize: 11, fontWeight: FontWeight.w600, color: textMuted),
             ),
@@ -671,7 +671,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                 onSubmitted: (_) => _triggerImmediateSearch(),
                 style: TextStyle(color: textPrimary, fontSize: 18, height: 1.4),
                 decoration: InputDecoration(
-                  hintText: _isListening ? 'Listening...' : 'What did you eat?',
+                  hintText: _isListening ? AppLocalizations.of(context).quickLogFabListening : AppLocalizations.of(context).nutritionShowcaseWhatDidYouEat,
                   hintStyle: TextStyle(
                     color: _isListening ? orange : textMuted.withValues(alpha: 0.6),
                     fontSize: 18,
@@ -683,7 +683,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                       ? IconButton(
                           icon: Icon(Icons.search, color: textMuted, size: 22),
                           onPressed: _triggerImmediateSearch,
-                          tooltip: 'Search foods',
+                          tooltip: AppLocalizations.of(context).logMealSheetSearchFoods,
                         )
                       : IconButton(
                           icon: Icon(
@@ -697,7 +697,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                           ),
                           onPressed: _toggleVoiceInput,
                           tooltip:
-                              _isListening ? 'Stop listening' : 'Voice input',
+                              _isListening ? AppLocalizations.of(context).logMealSheetStopListening : AppLocalizations.of(context).logMealSheetVoiceInput,
                         ),
                 ),
               ),
@@ -714,7 +714,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                             valueColor: AlwaysStoppedAnimation(orange)),
                       ),
                       const SizedBox(width: 8),
-                      Text('Speak now... tap mic to stop',
+                      Text(AppLocalizations.of(context).logMealSheetSpeakNowTapMic,
                           style: TextStyle(
                               fontSize: 12,
                               color: orange,
@@ -766,7 +766,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
     if (remaining <= 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Up to 5 photos — remove one to add more.')),
+          SnackBar(content: Text(AppLocalizations.of(context).logMealSheetUpTo5Photos)),
         );
       }
       return;
@@ -789,7 +789,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
                     child: Text(
-                      'Add photos',
+                      AppLocalizations.of(context).logMealSheetAddPhotos,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -799,7 +799,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                   ),
                   _GlassMenuOption(
                     icon: Icons.camera_alt_outlined,
-                    label: 'Take a photo',
+                    label: AppLocalizations.of(context).logMealSheetTakeAPhoto,
                     color: accent,
                     isDark: colors.isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.camera),
@@ -807,7 +807,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                   const SizedBox(height: 10),
                   _GlassMenuOption(
                     icon: Icons.collections_outlined,
-                    label: 'Choose from gallery',
+                    label: AppLocalizations.of(context).recipesChooseFromGallery,
                     subtitle: 'Pick up to $remaining',
                     color: accent,
                     isDark: colors.isDark,
@@ -842,8 +842,8 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
           });
           if (picked.length > remaining) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('Added the first 5 photos (max).')),
+              SnackBar(
+                  content: Text(AppLocalizations.of(context).logMealSheetAddedTheFirst5)),
             );
           }
         }

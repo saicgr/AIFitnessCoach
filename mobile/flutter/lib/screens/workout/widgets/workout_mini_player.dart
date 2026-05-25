@@ -13,6 +13,7 @@ import '../../../core/providers/workout_mini_player_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../navigation/app_router.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Position options for the mini player
 enum MiniPlayerPosition {
   bottomLeft,
@@ -299,7 +300,7 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
       children: [
         // Exercise name
         Text(
-          state.currentExerciseName ?? 'Workout',
+          state.currentExerciseName ?? AppLocalizations.of(context).navWorkout,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -411,18 +412,18 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
           borderRadius: BorderRadius.circular(16),
         ),
         title: Text(
-          'End Workout?',
+          AppLocalizations.of(context).workoutMiniPlayerEndWorkout,
           style: TextStyle(color: colors.textPrimary),
         ),
         content: Text(
-          'Your workout progress will not be saved.',
+          AppLocalizations.of(context).workoutMiniPlayerYourWorkoutProgressWill,
           style: TextStyle(color: colors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(color: colors.textMuted),
             ),
           ),
@@ -431,8 +432,8 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
               Navigator.pop(dialogContext);
               widget.onClose();
             },
-            child: const Text(
-              'End Workout',
+            child: Text(
+              AppLocalizations.of(context).workoutMiniPlayerEndWorkout2,
               style: TextStyle(color: Colors.red),
             ),
           ),

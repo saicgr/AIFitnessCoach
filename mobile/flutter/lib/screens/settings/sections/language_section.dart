@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../widgets/section_header.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Phase 5 — language picker. Surfaces 36 locales (Gravl-parity 8 plus the
 /// 28 added 2026-05-24). Display names are in each locale's native script so
 /// the picker is self-identifying ("Español" not "Spanish"). Writes to
@@ -84,7 +85,7 @@ class LanguageSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'LANGUAGE'),
+        SectionHeader(title: AppLocalizations.of(context).languageLanguage),
         const SizedBox(height: 12),
         Material(
           color: elevatedColor,
@@ -112,7 +113,7 @@ class LanguageSection extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Language',
+                          AppLocalizations.of(context).settingsLanguage,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,

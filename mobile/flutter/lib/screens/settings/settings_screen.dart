@@ -41,6 +41,7 @@ import '../home/widgets/manage_gym_profiles_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'settings_screen_part_social_icon.dart';
 
 part 'settings_screen_ui.dart';
@@ -559,12 +560,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Build sections
     final sections = [
       _SettingsSection(
-        label: 'TRAINING',
+        label: AppLocalizations.of(context).trainingPreferencesTraining,
         rows: [
           _SettingsRow(
             icon: Icons.dashboard_customize_outlined,
             iconColor: workoutUiModeAccent,
-            title: 'Workout Mode',
+            title: AppLocalizations.of(context).workoutUiModeWorkoutMode,
             value: workoutUiModeSubtitle,
             sectionKeys: const [
               'training',
@@ -579,7 +580,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.speed,
             iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-            title: 'Workout Settings',
+            title: AppLocalizations.of(context).workoutSettingsWorkoutSettings,
             value: '$splitName \u00B7 $daysPerWeek days',
             route: '/settings/workout-settings',
             sectionKeys: const ['training'],
@@ -587,7 +588,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.storefront_outlined,
             iconColor: isDark ? AppColors.green : AppColorsLight.green,
-            title: 'My Gyms',
+            title: AppLocalizations.of(context).settingsMyGyms,
             value: gymProfileName,
             sectionKeys: const ['training', 'gym', 'equipment', 'location'],
             onTap: () {
@@ -601,23 +602,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.fitness_center,
             iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
-            title: 'Exercise Prefs',
-            value: 'Favorites, avoided & queue',
+            title: AppLocalizations.of(context).settingsExercisePrefs,
+            value: AppLocalizations.of(context).settingsFavoritesAvoidedQueue,
             route: '/settings/my-exercises',
             sectionKeys: const ['custom_content'],
           ),
           _SettingsRow(
             icon: Icons.trending_up,
             iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-            title: 'Training Methods',
-            value: 'Set progression & research',
+            title: AppLocalizations.of(context).trainingMethodsTrainingMethods,
+            value: AppLocalizations.of(context).settingsSetProgressionResearch,
             route: '/settings/training-methods',
             sectionKeys: const ['training'],
           ),
           _SettingsRow(
             icon: Icons.fitness_center,
             iconColor: isDark ? AppColors.success : AppColorsLight.success,
-            title: 'Equipment',
+            title: AppLocalizations.of(context).trainingSetupCardEquipment,
             value: gymProfileName,
             route: '/settings/equipment',
             sectionKeys: const ['custom_content', 'warmup_settings', 'superset'],
@@ -625,13 +626,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
       _SettingsSection(
-        label: 'PERSONALIZATION',
+        label: AppLocalizations.of(context).settingsPersonalization,
         rows: [
           _SettingsRow(
             icon: Icons.auto_awesome,
             iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
-            title: 'AI Coach',
-            value: 'Voice & personality',
+            title: AppLocalizations.of(context).authIntroAiCoach,
+            value: AppLocalizations.of(context).settingsVoicePersonality,
             route: '/settings/ai-coach',
             sectionKeys: const ['ai_coach', 'ai_privacy'],
           ),
@@ -656,7 +657,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.palette_outlined,
             iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-            title: 'Appearance',
+            title: AppLocalizations.of(context).settingsAppearance,
             route: '/settings/appearance',
             sectionKeys: const ['preferences', 'haptics', 'app_mode', 'accessibility'],
             isThemeRow: true,
@@ -664,8 +665,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.notifications_outlined,
             iconColor: isDark ? AppColors.info : AppColorsLight.info,
-            title: 'Sound & Notifs',
-            value: 'Voice, audio, reminders',
+            title: AppLocalizations.of(context).settingsSoundNotifs,
+            value: AppLocalizations.of(context).settingsVoiceAudioReminders,
             route: '/settings/sound-notifications',
             sectionKeys: const ['voice_announcements', 'audio_settings', 'notifications'],
           ),
@@ -680,8 +681,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.alarm_rounded,
             iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-            title: 'Meal Reminders',
-            value: 'Recipe schedules + sharing + versioning',
+            title: AppLocalizations.of(context).settingsMealReminders,
+            value: AppLocalizations.of(context).settingsRecipeSchedulesSharingV,
             sectionKeys: const [
               'meal_reminders', 'recipe_schedules', 'recipe_sharing', 'recipe_versions',
             ],
@@ -703,8 +704,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.rocket_launch_rounded,
             iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
-            title: 'Coming Soon',
-            value: '24 upcoming features',
+            title: AppLocalizations.of(context).settingsComingSoon,
+            value: AppLocalizations.of(context).settings24UpcomingFeatures,
             sectionKeys: const ['coming_soon', 'upcoming', 'new_features'],
             onTap: () => Navigator.push(
               context,
@@ -714,25 +715,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
       _SettingsSection(
-        label: 'CONNECTIONS',
+        label: AppLocalizations.of(context).settingsConnections,
         rows: [
           _SettingsRow(
             icon: Icons.favorite_outline,
             iconColor: isDark ? AppColors.error : AppColorsLight.error,
-            title: 'Health & Devices',
-            value: Platform.isIOS ? 'Apple Health' : 'Health Connect',
+            title: AppLocalizations.of(context).settingsHealthDevices,
+            value: Platform.isIOS ? AppLocalizations.of(context).workoutHistoryImportAppleHealth : AppLocalizations.of(context).settingsHealthConnect,
             route: '/settings/health-devices',
             sectionKeys: const ['nutrition_fasting', 'health_sync', 'wear_os'],
           ),
         ],
       ),
       _SettingsSection(
-        label: 'ACCOUNT',
+        label: AppLocalizations.of(context).settingsAccount,
         rows: [
           _SettingsRow(
             icon: Icons.diamond_outlined,
             iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-            title: 'Subscription',
+            title: AppLocalizations.of(context).settingsSubscription,
             value: subscriptionValue,
             route: '/subscription-management',
             sectionKeys: const ['subscription'],
@@ -740,20 +741,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.lock_outline,
             iconColor: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            title: 'Privacy & Data',
-            value: 'Sharing, export, email',
+            title: AppLocalizations.of(context).settingsPrivacyData,
+            value: AppLocalizations.of(context).settingsSharingExportEmail,
             route: '/settings/privacy-data',
             sectionKeys: const ['social_privacy', 'email_preferences', 'data_management'],
           ),
         ],
       ),
       _SettingsSection(
-        label: 'HELP & SUPPORT',
+        label: AppLocalizations.of(context).settingsHelpSupport,
         rows: [
           _SettingsRow(
             icon: Icons.email_outlined,
             iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-            title: 'Contact Support',
+            title: AppLocalizations.of(context).settingsContactSupport,
             value: AppLinks.supportEmail,
             sectionKeys: const ['help_center', 'report_issue', 'support'],
             onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Support Request'),
@@ -765,8 +766,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.play_circle_outline_rounded,
             iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-            title: 'Tutorials & Hints',
-            value: 'Replay tours or reset inline hints',
+            title: AppLocalizations.of(context).settingsTutorialsHints,
+            value: AppLocalizations.of(context).settingsReplayToursOrReset,
             sectionKeys: const ['tutorial', 'tips', 'help_center'],
             onTap: () => _showReplayTutorialsSheet(context, ref, isDark),
           ),
@@ -785,28 +786,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.science_outlined,
             iconColor: isDark ? AppColors.info : AppColorsLight.info,
-            title: 'Research & Science',
+            title: AppLocalizations.of(context).settingsResearchScience,
             route: '/settings/research',
             sectionKeys: const ['research'],
           ),
           _SettingsRow(
             icon: Icons.privacy_tip_outlined,
             iconColor: textMuted,
-            title: 'Privacy Policy',
+            title: AppLocalizations.of(context).settingsPrivacyPolicy,
             sectionKeys: const ['privacy_policy', 'support'],
             onTap: () => _launchExternalUrl(AppLinks.privacyPolicy),
           ),
           _SettingsRow(
             icon: Icons.description_outlined,
             iconColor: textMuted,
-            title: 'Terms of Service',
+            title: AppLocalizations.of(context).settingsTermsOfService,
             sectionKeys: const ['terms_of_service', 'support'],
             onTap: () => _launchExternalUrl(AppLinks.termsOfService),
           ),
           _SettingsRow(
             icon: Icons.star_outline,
             iconColor: isDark ? AppColors.warning : AppColorsLight.warning,
-            title: 'Rate App',
+            title: AppLocalizations.of(context).settingsRateApp,
             sectionKeys: const ['rate_app'],
             onTap: () => _launchExternalUrl(
               Platform.isIOS
@@ -871,8 +872,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         children: [
                           ListTile(
                             leading: Icon(Icons.military_tech_rounded, color: Colors.amber),
-                            title: Text('Test Level-Up (Level 2→3)', style: TextStyle(color: textPrimary, fontSize: 14)),
-                            subtitle: Text('Single level, with crate reward', style: TextStyle(color: textMuted, fontSize: 12)),
+                            title: Text(AppLocalizations.of(context).settingsTestLevelUpLevel, style: TextStyle(color: textPrimary, fontSize: 14)),
+                            subtitle: Text(AppLocalizations.of(context).settingsSingleLevelWithCrate, style: TextStyle(color: textMuted, fontSize: 12)),
                             trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
                             onTap: () {
                               showLevelUpDialog(
@@ -891,8 +892,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           Divider(height: 1, color: cardBorder),
                           ListTile(
                             leading: Icon(Icons.stars_rounded, color: Colors.purple),
-                            title: Text('Test Level-Up (Level 10→11)', style: TextStyle(color: textPrimary, fontSize: 14)),
-                            subtitle: Text('Title change: Beginner → Novice', style: TextStyle(color: textMuted, fontSize: 12)),
+                            title: Text(AppLocalizations.of(context).settingsTestLevelUpLevel2, style: TextStyle(color: textPrimary, fontSize: 14)),
+                            subtitle: Text(AppLocalizations.of(context).settingsTitleChangeBeginnerNovic, style: TextStyle(color: textMuted, fontSize: 12)),
                             trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
                             onTap: () {
                               showLevelUpDialog(
@@ -913,8 +914,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           Divider(height: 1, color: cardBorder),
                           ListTile(
                             leading: Icon(Icons.rocket_launch_rounded, color: Colors.orange),
-                            title: Text('Test Multi-Level (1→5)', style: TextStyle(color: textPrimary, fontSize: 14)),
-                            subtitle: Text('With cascade overlay + dialog', style: TextStyle(color: textMuted, fontSize: 12)),
+                            title: Text(AppLocalizations.of(context).settingsTestMultiLevel1, style: TextStyle(color: textPrimary, fontSize: 14)),
+                            subtitle: Text(AppLocalizations.of(context).settingsWithCascadeOverlayDialog, style: TextStyle(color: textMuted, fontSize: 12)),
                             trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
                             onTap: () {
                               showLevelUpDialog(
@@ -945,8 +946,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         _SettingsRow(
                           icon: Icons.local_fire_department,
                           iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-                          title: 'Beast Mode',
-                          value: 'Power user tools',
+                          title: AppLocalizations.of(context).settingsBeastMode,
+                          value: AppLocalizations.of(context).settingsPowerUserTools,
                           route: '/settings/beast-mode',
                           sectionKeys: const ['beast_mode'],
                         ),
@@ -977,7 +978,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       child: TextButton(
                         onPressed: () => _showDeleteAccountDialog(context, ref),
                         child: Text(
-                          'Delete Account',
+                          AppLocalizations.of(context).settingsDeleteAccount,
                           style: TextStyle(
                             color: (isDark ? AppColors.error : AppColorsLight.error)
                                 .withValues(alpha: 0.7),
@@ -1088,7 +1089,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        'Settings',
+                        AppLocalizations.of(context).settingsTitle,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -1155,7 +1156,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       controller: _searchController,
                       focusNode: _searchFocusNode,
                       onChanged: _onSearchChanged,
-                      hintText: 'Search settings',
+                      hintText: AppLocalizations.of(context).settingsSearchSettings,
                       autofocus: true,
                       onClear: () {
                         if (mounted) {

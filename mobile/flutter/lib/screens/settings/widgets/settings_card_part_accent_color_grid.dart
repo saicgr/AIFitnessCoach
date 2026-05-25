@@ -327,7 +327,7 @@ class _WorkoutTypeOptionTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Recommended',
+                            AppLocalizations.of(context).settingsCardPartRecommended,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -442,7 +442,7 @@ class _EquipmentSelectorSheetState extends State<_EquipmentSelectorSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'My Equipment',
+                AppLocalizations.of(context).trainingPreferencesMyEquipment,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -454,7 +454,7 @@ class _EquipmentSelectorSheetState extends State<_EquipmentSelectorSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Select all equipment you have access to',
+                AppLocalizations.of(context).settingsCardPartSelectAllEquipmentYou,
                 style: TextStyle(
                   fontSize: 14,
                   color: textMuted,
@@ -469,7 +469,7 @@ class _EquipmentSelectorSheetState extends State<_EquipmentSelectorSheet> {
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(
-                  hintText: 'Search equipment...',
+                  hintText: AppLocalizations.of(context).settingsCardPartSearchEquipment,
                   prefixIcon: Icon(Icons.search, color: textMuted),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -515,7 +515,7 @@ class _EquipmentSelectorSheetState extends State<_EquipmentSelectorSheet> {
                     TextButton(
                       onPressed: () => setState(() => _selectedEquipment.clear()),
                       child: Text(
-                        'Clear all',
+                        AppLocalizations.of(context).settingsCardPartClearAll,
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.cyan,
@@ -561,8 +561,8 @@ class _EquipmentSelectorSheetState extends State<_EquipmentSelectorSheet> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Save Equipment',
+                  child: Text(
+                    AppLocalizations.of(context).settingsCardPartSaveEquipment,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -712,7 +712,7 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'For Learning',
+                            AppLocalizations.of(context).settingsCardPartForLearning,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,

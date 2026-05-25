@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/cardio_dedup_repository.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Manage Duplicate Imports
 ///
 /// Surfaces dedup groups created by `cardio_dedup_service` so the user can:
@@ -70,7 +71,7 @@ class _ManageDuplicateImportsScreenState
       await repo.unlink(row.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unlinked from group')),
+        SnackBar(content: Text(AppLocalizations.of(context).manageDuplicateImportsUnlinkedFromGroup)),
       );
       await _refresh();
     } catch (e) {
@@ -85,7 +86,7 @@ class _ManageDuplicateImportsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Duplicate imports'),
+        title: Text(AppLocalizations.of(context).manageDuplicateImportsDuplicateImports),
       ),
       body: FutureBuilder<List<DedupGroup>>(
         future: _future,
@@ -152,7 +153,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No duplicate imports detected',
+            AppLocalizations.of(context).manageDuplicateImportsNoDuplicateImportsDetected,
             style: theme.textTheme.titleMedium,
             textAlign: TextAlign.center,
           ),
@@ -188,7 +189,7 @@ class _ErrorView extends StatelessWidget {
             Icon(Icons.error_outline, color: theme.colorScheme.error, size: 48),
             const SizedBox(height: 12),
             Text(
-              'Could not load duplicate imports',
+              AppLocalizations.of(context).manageDuplicateImportsCouldNotLoadDuplicate,
               style: theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -201,7 +202,7 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(AppLocalizations.of(context).buttonRetry)),
           ],
         ),
       ),
@@ -308,7 +309,7 @@ class _MemberRow extends StatelessWidget {
           Row(
             children: [
               _Badge(
-                label: row.isPrimary ? 'Primary' : 'Hidden',
+                label: row.isPrimary ? AppLocalizations.of(context).nutritionSettingsScreenPrimary : AppLocalizations.of(context).manageDuplicateImportsHidden,
                 color: row.isPrimary ? Colors.green : Colors.grey,
               ),
               const SizedBox(width: 8),
@@ -323,10 +324,10 @@ class _MemberRow extends StatelessWidget {
                 onSelected: (v) {
                   if (v == 'unlink') onUnlink();
                 },
-                itemBuilder: (_) => const [
+                itemBuilder: (_) => [
                   PopupMenuItem<String>(
                     value: 'unlink',
-                    child: Text('Unlink from group'),
+                    child: Text(AppLocalizations.of(context).manageDuplicateImportsUnlinkFromGroup),
                   ),
                 ],
               ),
@@ -346,7 +347,7 @@ class _MemberRow extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: onMakePrimary,
-                child: const Text('Make this primary'),
+                child: Text(AppLocalizations.of(context).manageDuplicateImportsMakeThisPrimary),
               ),
             ),
           ],

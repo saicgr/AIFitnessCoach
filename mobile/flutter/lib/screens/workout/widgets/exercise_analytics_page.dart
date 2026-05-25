@@ -19,6 +19,7 @@ import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Exercise Analytics Page - full page with My Analytics and Friends tabs
 class ExerciseAnalyticsPage extends StatefulWidget {
   final WorkoutExercise exercise;
@@ -69,9 +70,9 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
           SegmentedTabBar(
             controller: _tabController,
             showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'My Analytics'),
-              SegmentedTabItem(label: 'Friends'),
+            tabs: [
+              SegmentedTabItem(label: AppLocalizations.of(context).exerciseAnalyticsMyAnalytics),
+              SegmentedTabItem(label: AppLocalizations.of(context).discoverFriends),
             ],
           ),
           Expanded(
@@ -105,7 +106,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
 
         // Weight Progression Chart
         _buildChartCard(
-          title: 'Weight Progression',
+          title: AppLocalizations.of(context).exerciseAnalyticsWeightProgression,
           icon: Icons.trending_up_rounded,
           color: AppColors.electricBlue,
           isDark: isDark,
@@ -117,7 +118,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
 
         // Volume Chart
         _buildChartCard(
-          title: 'Total Volume',
+          title: AppLocalizations.of(context).volumeHistoryTotalVolume,
           icon: Icons.bar_chart_rounded,
           color: AppColors.purple,
           isDark: isDark,
@@ -162,7 +163,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             ),
             const SizedBox(height: 24),
             Text(
-              'Compare with Friends',
+              AppLocalizations.of(context).exerciseAnalyticsCompareWithFriends,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -187,7 +188,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                 Share.share('Join me on ${Branding.appName} and let\'s compare our lifts! 💪 https://${Branding.marketingDomain}');
               },
               icon: const Icon(Icons.person_add_outlined),
-              label: const Text('Invite Friends'),
+              label: Text(AppLocalizations.of(context).referralsInviteFriends),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.purple,
                 side: BorderSide(color: AppColors.purple),
@@ -259,7 +260,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Personal Record',
+                  AppLocalizations.of(context).setTrackingSheetsPersonalRecord,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -343,7 +344,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Last Session',
+                  AppLocalizations.of(context).workoutSheetsMixinLastSession,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -440,7 +441,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             ),
             const SizedBox(height: 8),
             Text(
-              'Weight progression chart',
+              AppLocalizations.of(context).exerciseAnalyticsWeightProgressionChart,
               style: TextStyle(
                 fontSize: 13,
                 color: textMuted,
@@ -448,7 +449,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             ),
             const SizedBox(height: 4),
             Text(
-              'Complete more sessions to see trends',
+              AppLocalizations.of(context).exerciseAnalyticsCompleteMoreSessionsTo,
               style: TextStyle(
                 fontSize: 11,
                 color: textMuted.withOpacity(0.7),
@@ -481,7 +482,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             ),
             const SizedBox(height: 8),
             Text(
-              'Volume (weight x reps) over time',
+              AppLocalizations.of(context).exerciseAnalyticsVolumeWeightXReps,
               style: TextStyle(
                 fontSize: 13,
                 color: textMuted,
@@ -489,7 +490,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             ),
             const SizedBox(height: 4),
             Text(
-              'Complete more sessions to see trends',
+              AppLocalizations.of(context).exerciseAnalyticsCompleteMoreSessionsTo,
               style: TextStyle(
                 fontSize: 11,
                 color: textMuted.withOpacity(0.7),
@@ -522,7 +523,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               Icon(Icons.pie_chart_outline_rounded, color: AppColors.orange, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Set Type Distribution',
+                AppLocalizations.of(context).workoutSummaryAdvancedSetTypeDistribution,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -536,7 +537,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             children: [
               Expanded(
                 child: _buildSetTypeItem(
-                  label: 'Working',
+                  label: AppLocalizations.of(context).exerciseAnalyticsWorking,
                   count: 0,
                   color: AppColors.electricBlue,
                   isDark: isDark,
@@ -546,7 +547,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               ),
               Expanded(
                 child: _buildSetTypeItem(
-                  label: 'Warmup',
+                  label: AppLocalizations.of(context).workoutSummaryAdvancedWarmup,
                   count: 0,
                   color: AppColors.orange,
                   isDark: isDark,
@@ -556,7 +557,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               ),
               Expanded(
                 child: _buildSetTypeItem(
-                  label: 'Drop',
+                  label: AppLocalizations.of(context).exerciseAnalyticsDrop,
                   count: 0,
                   color: AppColors.purple,
                   isDark: isDark,
@@ -566,7 +567,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               ),
               Expanded(
                 child: _buildSetTypeItem(
-                  label: 'Failure',
+                  label: AppLocalizations.of(context).rpeFailure,
                   count: 0,
                   color: AppColors.error,
                   isDark: isDark,
@@ -643,7 +644,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               Icon(Icons.insights_rounded, color: AppColors.cyan, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Quick Stats',
+                AppLocalizations.of(context).exerciseAnalyticsQuickStats,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -657,7 +658,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             children: [
               Expanded(
                 child: _buildStatItem(
-                  label: 'Total Sessions',
+                  label: AppLocalizations.of(context).exerciseAnalyticsTotalSessions,
                   value: '0',
                   color: AppColors.electricBlue,
                   isDark: isDark,
@@ -667,7 +668,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               ),
               Expanded(
                 child: _buildStatItem(
-                  label: 'Total Sets',
+                  label: AppLocalizations.of(context).muscleDetailTotalSets,
                   value: '0',
                   color: AppColors.purple,
                   isDark: isDark,
@@ -677,7 +678,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               ),
               Expanded(
                 child: _buildStatItem(
-                  label: 'Total Volume',
+                  label: AppLocalizations.of(context).volumeHistoryTotalVolume,
                   value: '0 $_unit',
                   color: AppColors.success,
                   isDark: isDark,

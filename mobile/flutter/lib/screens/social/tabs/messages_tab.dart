@@ -13,6 +13,7 @@ import '../conversation_screen.dart';
 import '../group_create_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Messages Tab - Shows direct messages and group conversations
 /// First message for new users is from support@zealova.com
 class MessagesTab extends ConsumerStatefulWidget {
@@ -32,8 +33,8 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
     if (userId == null) {
       return SocialEmptyState(
         icon: Icons.error_outline_rounded,
-        title: 'Not Logged In',
-        description: 'Please log in to see your messages',
+        title: AppLocalizations.of(context).messagesNotLoggedIn,
+        description: AppLocalizations.of(context).messagesPleaseLogInTo,
         actionLabel: null,
         onAction: null,
       );
@@ -54,8 +55,8 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
         debugPrint('Error loading conversations: $error');
         return SocialEmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Failed to Load Messages',
-          description: 'Could not load your conversations.\nPlease try again later.',
+          title: AppLocalizations.of(context).messagesFailedToLoadMessages,
+          description: AppLocalizations.of(context).messagesCouldNotLoadYour,
           actionLabel: 'Retry',
           onAction: () {
             ref.invalidate(conversationsProvider(userId));
@@ -66,8 +67,8 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
         if (conversations.isEmpty) {
           return SocialEmptyState(
             icon: Icons.chat_bubble_outline_rounded,
-            title: 'No Messages Yet',
-            description: 'Start a conversation with your friends!\nYour messages will appear here.',
+            title: AppLocalizations.of(context).messagesNoMessagesYet,
+            description: AppLocalizations.of(context).messagesStartAConversationWith,
             actionLabel: null,
             onAction: null,
           );
@@ -114,7 +115,7 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
                         );
                       },
                       icon: const Icon(Icons.group_add_rounded, size: 18),
-                      label: const Text('New Group'),
+                      label: Text(AppLocalizations.of(context).socialScreenPartNewGroup),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: context.colors.accent,
                         side: BorderSide(color: context.colors.accent.withValues(alpha: 0.3)),

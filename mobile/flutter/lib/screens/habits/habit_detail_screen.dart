@@ -21,6 +21,7 @@ import '../../widgets/glass_back_button.dart';
 import '../../utils/image_capture_utils.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'habit_detail_screen_part_compact_hero_section.dart';
 part 'habit_detail_screen_part_yearly_heatmap_state.dart';
 
@@ -613,7 +614,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
       if (bytes == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to capture image')),
+            SnackBar(content: Text(AppLocalizations.of(context).prShareCardFailedToCaptureImage)),
           );
         }
         return;
@@ -624,7 +625,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
       );
       if (result.success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Shared successfully!')),
+          SnackBar(content: Text(AppLocalizations.of(context).habitDetailSharedSuccessfully)),
         );
       }
     } catch (e) {
@@ -668,13 +669,13 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                   children: [
                     Icon(Icons.error_outline, size: 48, color: textSecondary),
                     const SizedBox(height: 16),
-                    Text('Failed to load habit details',
+                    Text(AppLocalizations.of(context).habitDetailFailedToLoadHabit,
                         style: TextStyle(color: textSecondary)),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () =>
                           ref.invalidate(habitDetailProvider(widget.habitId)),
-                      child: const Text('Retry'),
+                      child: Text(AppLocalizations.of(context).buttonRetry),
                     ),
                   ],
                 ),
@@ -689,7 +690,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
               }
               // Resolved to null → the habit genuinely doesn't exist.
               return Center(
-                child: Text('Habit not found',
+                child: Text(AppLocalizations.of(context).habitDetailHabitNotFound,
                     style: TextStyle(color: textSecondary)),
               );
             }
@@ -727,10 +728,10 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                         SegmentedTabBar(
                           controller: _tabController,
                           showIcons: false,
-                          tabs: const [
-                            SegmentedTabItem(label: 'Overview'),
-                            SegmentedTabItem(label: 'Calendar'),
-                            SegmentedTabItem(label: 'History'),
+                          tabs: [
+                            SegmentedTabItem(label: AppLocalizations.of(context).youHubOverview),
+                            SegmentedTabItem(label: AppLocalizations.of(context).habitDetailCalendar),
+                            SegmentedTabItem(label: AppLocalizations.of(context).workoutHistory),
                           ],
                         ),
                         // Tab content

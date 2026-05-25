@@ -6,6 +6,7 @@ import '../data/services/share_service.dart';
 import '../utils/image_capture_utils.dart';
 import 'glass_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Declarative description of a single shareable template inside a
 /// [ShareTemplateSheet] carousel.
 ///
@@ -338,7 +339,7 @@ class _WatermarkRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            'Show Watermark',
+            AppLocalizations.of(context).wrappedShareShowWatermark,
             style: TextStyle(
               fontSize: 14,
               color: value ? null : Colors.grey,
@@ -457,7 +458,7 @@ class _ActionButtons extends StatelessWidget {
                 child: _ShareButton(
                   onPressed: onInstagram,
                   icon: Icons.camera_alt_rounded,
-                  label: 'Instagram',
+                  label: AppLocalizations.of(context).wrappedShareInstagram,
                   isPrimary: true,
                   isLoading: isSharing,
                 ),
@@ -467,7 +468,7 @@ class _ActionButtons extends StatelessWidget {
                 child: _ShareButton(
                   onPressed: onShare,
                   icon: Icons.share_rounded,
-                  label: 'Share',
+                  label: AppLocalizations.of(context).commonShare,
                   isPrimary: false,
                   isLoading: isSharing,
                 ),
@@ -481,7 +482,7 @@ class _ActionButtons extends StatelessWidget {
                 child: _ShareButton(
                   onPressed: onSave,
                   icon: Icons.save_alt_rounded,
-                  label: 'Save Only',
+                  label: AppLocalizations.of(context).shareWorkoutSaveOnly,
                   isPrimary: false,
                   isLoading: isSaving,
                 ),

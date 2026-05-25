@@ -10,6 +10,7 @@ import '../../../data/services/api_client.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 import '../widgets/widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // ════════════════════════════════════════════════════════════════════════
 // Cycle-research consent (Phase H — MacroFactor 1.10).
 //
@@ -130,8 +131,8 @@ class AIPrivacySection extends ConsumerWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Couldn't update consent. Please try again."),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).aiPrivacyCouldnTUpdateConsent),
           ),
         );
       }
@@ -153,17 +154,17 @@ class AIPrivacySection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(
-          title: 'PRIVACY & DATA',
-          subtitle: 'Control how your data is used',
+        SectionHeader(
+          title: AppLocalizations.of(context).aiSettingsPrivacyData,
+          subtitle: AppLocalizations.of(context).aiPrivacyControlHowYourData,
         ),
         const SizedBox(height: 12),
 
         // Data usage explainer — navigation tile
         _buildNavigationTile(
           icon: Icons.info_outlined,
-          title: 'How Your Data Is Used',
-          subtitle: 'See what data is processed and how',
+          title: AppLocalizations.of(context).aiPrivacyHowYourDataIs,
+          subtitle: AppLocalizations.of(context).aiPrivacySeeWhatDataIs,
           color: AppColors.info,
           onTap: () => context.push('/settings/ai-data-usage'),
           textPrimary: textPrimary,
@@ -200,7 +201,7 @@ class AIPrivacySection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Personalization',
+                      AppLocalizations.of(context).aiPrivacyPersonalization,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -209,7 +210,7 @@ class AIPrivacySection extends ConsumerWidget {
                     ),
                     Text(
                       personalizationEnabled
-                          ? 'Your coach personalizes workouts and chat'
+                          ? AppLocalizations.of(context).aiPrivacyYourCoachPersonalizesWorkou
                           : 'Personalization is paused — coach chat is disabled',
                       style: TextStyle(
                         fontSize: 11,
@@ -257,7 +258,7 @@ class AIPrivacySection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Save Chat History',
+                      AppLocalizations.of(context).aiSettingsScreenSaveChatHistory,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -266,7 +267,7 @@ class AIPrivacySection extends ConsumerWidget {
                     ),
                     Text(
                       saveChatHistory
-                          ? 'Messages are stored so your coach remembers context'
+                          ? AppLocalizations.of(context).aiPrivacyMessagesAreStoredSo
                           : 'Messages are discarded after each reply',
                       style: TextStyle(
                         fontSize: 11,
@@ -315,7 +316,7 @@ class AIPrivacySection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Contribute to Women\'s Health Research',
+                      AppLocalizations.of(context).aiPrivacyContributeToWomenS,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -349,8 +350,8 @@ class AIPrivacySection extends ConsumerWidget {
         // Medical Disclaimer - navigation tile
         _buildNavigationTile(
           icon: Icons.medical_information_outlined,
-          title: 'Medical Disclaimer',
-          subtitle: 'Important health information',
+          title: AppLocalizations.of(context).medicalDisclaimerMedicalDisclaimer,
+          subtitle: AppLocalizations.of(context).aiPrivacyImportantHealthInformation,
           color: AppColors.warning,
           onTap: () => context.push('/settings/medical-disclaimer'),
           textPrimary: textPrimary,

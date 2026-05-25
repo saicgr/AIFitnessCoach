@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Calendar icon button for navigating to the schedule screen
 /// Used in the home screen header
 class CalendarIconButton extends ConsumerWidget {
@@ -24,7 +25,7 @@ class CalendarIconButton extends ConsumerWidget {
         color: textMuted,
         size: 24,
       ),
-      tooltip: 'Schedule',
+      tooltip: AppLocalizations.of(context).scheduleWorkoutSchedule,
       onPressed: () {
         HapticService.light();
         context.push('/schedule');

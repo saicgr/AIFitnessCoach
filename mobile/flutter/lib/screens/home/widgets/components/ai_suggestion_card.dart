@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'sheet_theme_colors.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// A card displaying an AI workout suggestion
 class AISuggestionCard extends StatelessWidget {
   /// The suggestion data
@@ -229,7 +230,7 @@ class AISuggestionCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Exercises Preview',
+                          AppLocalizations.of(context).aiSuggestionCardExercisesPreview,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,

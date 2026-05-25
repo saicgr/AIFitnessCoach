@@ -11,6 +11,7 @@ import '../../data/providers/mcp_integrations_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// "AI Integrations" settings screen.
 ///
 /// Lets yearly subscribers generate Personal Access Tokens that connect
@@ -37,7 +38,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('AI Integrations'),
+        title: Text(AppLocalizations.of(context).aiIntegrationsAiIntegrations),
         centerTitle: false,
         elevation: 0,
       ),
@@ -45,7 +46,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () => _openCreateFlow(context, ref, accent, isDark),
               icon: const Icon(Icons.add_link),
-              label: const Text('Create Connection'),
+              label: Text(AppLocalizations.of(context).aiIntegrationsCreateConnection),
               backgroundColor: accent,
               foregroundColor: Colors.white,
             )
@@ -179,7 +180,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
       final err = ref.read(mcpIntegrationsProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(err ?? 'Could not create connection.'),
+          content: Text(err ?? AppLocalizations.of(context).aiIntegrationsCouldNotCreateConnection),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
         ),
@@ -216,7 +217,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Disconnect this assistant?'),
+          title: Text(AppLocalizations.of(context).aiIntegrationsDisconnectThisAssistant),
           content: Text(
             '${integration.name} will immediately lose access to your '
             '${Branding.appName} data. You can create a new connection anytime.',
@@ -224,12 +225,12 @@ class AiIntegrationsScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context).buttonCancel),
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: TextButton.styleFrom(foregroundColor: Colors.red.shade400),
-              child: const Text('Disconnect'),
+              child: Text(AppLocalizations.of(context).googleCalendarConnectDisconnect),
             ),
           ],
         );
@@ -345,7 +346,7 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                 ),
               ),
               Text(
-                'Create Connection',
+                AppLocalizations.of(context).aiIntegrationsCreateConnection,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -362,7 +363,7 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
 
               // ─── Name ─────────────────────────────────────────────────
               Text(
-                'Name',
+                AppLocalizations.of(context).menuAnalysisName,
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -372,7 +373,7 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                 controller: _nameController,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
-                  hintText: 'My Laptop Claude',
+                  hintText: AppLocalizations.of(context).aiIntegrationsMyLaptopClaude,
                   filled: true,
                   fillColor: theme.colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
@@ -393,14 +394,14 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
               // ─── Custom scope picker (collapsed by default) ───────────
               if (_showCustom) ...[
                 Text(
-                  'Permissions',
+                  AppLocalizations.of(context).aiIntegrationsPermissions,
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Uncheck anything you want to withhold from this connection.',
+                  AppLocalizations.of(context).aiIntegrationsUncheckAnythingYouWant,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -427,7 +428,7 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                           ),
                         ),
                         child: Text(
-                          'Custom',
+                          AppLocalizations.of(context).workoutsCustom,
                           style: TextStyle(
                             color: accent,
                             fontWeight: FontWeight.w600,
@@ -448,8 +449,8 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Quick Setup',
+                        child: Text(
+                          AppLocalizations.of(context).aiIntegrationsQuickSetup,
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -458,7 +459,7 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                     Expanded(
                       child: TextButton(
                         onPressed: () => setState(() => _showCustom = false),
-                        child: const Text('Back'),
+                        child: Text(AppLocalizations.of(context).commonBack),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -476,8 +477,8 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Generate',
+                        child: Text(
+                          AppLocalizations.of(context).aiIntegrationsGenerate,
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -561,8 +562,8 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Give this connection a name first.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).aiIntegrationsGiveThisConnectionA),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -646,7 +647,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
             const SizedBox(height: 16),
             Center(
               child: Text(
-                'Connection ready!',
+                AppLocalizations.of(context).aiIntegrationsConnectionReady,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -655,7 +656,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
             const SizedBox(height: 6),
             Center(
               child: Text(
-                'Paste this config into your AI client.',
+                AppLocalizations.of(context).aiIntegrationsPasteThisConfigInto,
                 style: theme.textTheme.bodyMedium?.copyWith(color: textMuted),
               ),
             ),
@@ -727,7 +728,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
                       size: 16,
                     ),
                     label: Text(
-                      _justCopied == 'json' ? 'Copied!' : 'Copy config',
+                      _justCopied == 'json' ? AppLocalizations.of(context).aiIntegrationsCopied : AppLocalizations.of(context).aiIntegrationsCopyConfig,
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: accent,
@@ -750,7 +751,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
                       color: accent,
                     ),
                     label: Text(
-                      _justCopied == 'token' ? 'Copied!' : 'Copy token only',
+                      _justCopied == 'token' ? AppLocalizations.of(context).aiIntegrationsCopied : AppLocalizations.of(context).aiIntegrationsCopyTokenOnly,
                       style: TextStyle(
                           color: accent, fontWeight: FontWeight.w600),
                     ),
@@ -798,7 +799,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
             Center(
               child: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text("I've saved my config  ·  Done"),
+                child: Text(AppLocalizations.of(context).aiIntegrationsIVeSavedMy),
               ),
             ),
           ],
@@ -926,7 +927,7 @@ class _HeaderCard extends StatelessWidget {
                   Icon(Icons.open_in_new, size: 16, color: accent),
                   const SizedBox(width: 6),
                   Text(
-                    'Setup guide',
+                    AppLocalizations.of(context).healthSyncSetupGuide,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -1032,7 +1033,7 @@ class _IntegrationCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                'OAuth',
+                                AppLocalizations.of(context).aiIntegrationsOauth,
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
@@ -1056,7 +1057,7 @@ class _IntegrationCard extends StatelessWidget {
             if (integration.scopes.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Granted permissions',
+                AppLocalizations.of(context).aiIntegrationsGrantedPermissions,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1090,7 +1091,7 @@ class _IntegrationCard extends StatelessWidget {
                     : Icon(Icons.link_off,
                         size: 18, color: Colors.red.shade400),
                 label: Text(
-                  isDisconnecting ? 'Disconnecting…' : 'Disconnect',
+                  isDisconnecting ? AppLocalizations.of(context).aiIntegrationsDisconnecting : AppLocalizations.of(context).googleCalendarConnectDisconnect,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: Colors.red.shade400,
@@ -1228,7 +1229,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No connections yet',
+            AppLocalizations.of(context).aiIntegrationsNoConnectionsYet,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,
@@ -1246,8 +1247,8 @@ class _EmptyState extends StatelessWidget {
           FilledButton.icon(
             onPressed: onCreate,
             icon: const Icon(Icons.add_link, size: 18),
-            label: const Text(
-              'Create Connection',
+            label: Text(
+              AppLocalizations.of(context).aiIntegrationsCreateConnection,
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
             style: FilledButton.styleFrom(
@@ -1265,7 +1266,7 @@ class _EmptyState extends StatelessWidget {
             onPressed: onOpenDocs,
             icon: Icon(Icons.open_in_new, size: 14, color: accent),
             label: Text(
-              'Setup guide',
+              AppLocalizations.of(context).healthSyncSetupGuide,
               style: TextStyle(color: accent, fontWeight: FontWeight.w600),
             ),
           ),
@@ -1304,7 +1305,7 @@ class _ErrorView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Could not load integrations',
+          AppLocalizations.of(context).aiIntegrationsCouldNotLoadIntegrations,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 16,
@@ -1326,7 +1327,7 @@ class _ErrorView extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Try again'),
+            label: Text(AppLocalizations.of(context).workoutReviewTryAgain),
             style: FilledButton.styleFrom(
               backgroundColor: accent,
               foregroundColor: Colors.white,

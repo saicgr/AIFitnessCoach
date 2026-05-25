@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Retention offer model
 class RetentionOffer {
   final String id;
@@ -257,7 +258,7 @@ class _CancelConfirmationSheetState
                         ),
                       ),
                       Text(
-                        'We\'d hate to see you go',
+                        AppLocalizations.of(context).cancelConfirmationWeDHateTo,
                         style: TextStyle(
                           fontSize: 14,
                           color: textSecondary,
@@ -308,7 +309,7 @@ class _CancelConfirmationSheetState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Help us improve',
+          AppLocalizations.of(context).cancelConfirmationHelpUsImprove,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -317,7 +318,7 @@ class _CancelConfirmationSheetState
         ),
         const SizedBox(height: 8),
         Text(
-          'Why are you thinking about cancelling?',
+          AppLocalizations.of(context).cancelConfirmationWhyAreYouThinking,
           style: TextStyle(
             fontSize: 14,
             color: textSecondary,
@@ -340,7 +341,7 @@ class _CancelConfirmationSheetState
             onChanged: (value) => _additionalFeedback = value,
             maxLines: 3,
             decoration: InputDecoration(
-              hintText: 'Anything else you\'d like to share? (optional)',
+              hintText: AppLocalizations.of(context).cancelConfirmationAnythingElseYouD,
               hintStyle: TextStyle(color: textMuted),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -450,7 +451,7 @@ class _CancelConfirmationSheetState
                   Icon(Icons.warning_amber, size: 20, color: Colors.red.shade400),
                   const SizedBox(width: 8),
                   Text(
-                    'What you\'ll lose',
+                    AppLocalizations.of(context).cancelConfirmationWhatYouLlLose,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -480,7 +481,7 @@ class _CancelConfirmationSheetState
           )
         else if (_retentionOffers.isNotEmpty) ...[
           Text(
-            'Special offers just for you',
+            AppLocalizations.of(context).cancelConfirmationSpecialOffersJustFor,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -681,7 +682,7 @@ class _CancelConfirmationSheetState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Need a break instead?',
+                        AppLocalizations.of(context).cancelConfirmationNeedABreakInstead,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -689,7 +690,7 @@ class _CancelConfirmationSheetState
                         ),
                       ),
                       Text(
-                        'Pause for up to 3 months',
+                        AppLocalizations.of(context).cancelConfirmationPauseForUpTo,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -727,8 +728,8 @@ class _CancelConfirmationSheetState
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Continue',
+            child: Text(
+              AppLocalizations.of(context).onboardingContinueButton,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -740,7 +741,7 @@ class _CancelConfirmationSheetState
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Never mind, keep my subscription',
+            AppLocalizations.of(context).cancelConfirmationNeverMindKeepMy,
             style: TextStyle(
               fontSize: 14,
               color: textSecondary,
@@ -773,8 +774,8 @@ class _CancelConfirmationSheetState
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text(
-                    'Cancel anyway',
+                : Text(
+                    AppLocalizations.of(context).cancelConfirmationCancelAnyway,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -786,7 +787,7 @@ class _CancelConfirmationSheetState
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Keep my subscription',
+            AppLocalizations.of(context).cancelConfirmationKeepMySubscription,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,

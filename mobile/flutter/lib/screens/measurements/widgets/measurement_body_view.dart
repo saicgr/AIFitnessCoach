@@ -10,6 +10,7 @@ import '../../../data/services/haptic_service.dart';
 import 'measurement_value_pill.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Anatomical anchor (x, y) for each body-part pill, expressed as a fraction
 /// of the body panel's width and height.
 ///
@@ -386,8 +387,8 @@ class _MoreDerivedDropdown extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'More metrics',
+                Text(
+                  AppLocalizations.of(context).measurementBodyMoreMetrics,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),

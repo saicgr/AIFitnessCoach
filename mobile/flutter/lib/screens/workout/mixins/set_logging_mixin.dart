@@ -28,6 +28,7 @@ import '../widgets/exercise_options_sheet.dart' show RepProgressionType;
 import '../widgets/intensity_prompt_sheet.dart';
 import '../widgets/number_input_widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'set_logging_mixin_ui.dart';
 
 
@@ -525,7 +526,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
               NumberInputField(
                 controller: editRepsController,
                 icon: Icons.repeat,
-                hint: 'Reps',
+                hint: AppLocalizations.of(context).workoutSummaryGeneralReps,
                 color: accent,
               ),
               const SizedBox(height: 16),
@@ -533,7 +534,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'RIR (Reps in Reserve)',
+                  AppLocalizations.of(context).setLoggingMixinRirRepsInReserve,
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
@@ -586,7 +587,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: Text('Cancel',
+              child: Text(AppLocalizations.of(context).buttonCancel,
                   style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
             ),
             TextButton(
@@ -613,7 +614,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
                     .replaceSet(viewingExerciseIndex, setIndex, editedLog);
                 Navigator.pop(dialogContext);
               },
-              child: Text('Save',
+              child: Text(AppLocalizations.of(context).buttonSave,
                   style: TextStyle(color: accent)),
             ),
           ],
@@ -783,10 +784,10 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
                           color: isDark ? Colors.white : Colors.black,
                         ),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Center(
                           child: Text(
-                            'Set Target RIR',
+                            AppLocalizations.of(context).setLoggingMixinSetTargetRir,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -877,8 +878,8 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Save',
+                      child: Text(
+                        AppLocalizations.of(context).buttonSave,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

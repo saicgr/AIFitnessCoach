@@ -7,6 +7,7 @@ import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Today's Workout Card Widget
 ///
 /// A prominent home screen card that provides a "Quick Start" / "Today's Workout"
@@ -126,7 +127,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           ),
           const SizedBox(height: 12),
           Text(
-            'Loading today\'s workout...',
+            AppLocalizations.of(context).todayWorkoutCardLoadingTodaySWorkout,
             style: TextStyle(fontSize: 14, color: textMuted),
           ),
         ],
@@ -152,7 +153,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           const Icon(Icons.error_outline, color: AppColors.error, size: 32),
           const SizedBox(height: 12),
           Text(
-            'Could not load workout',
+            AppLocalizations.of(context).todayWorkoutCardCouldNotLoadWorkout,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -162,7 +163,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh(),
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context).buttonRetry),
           ),
         ],
       ),
@@ -197,7 +198,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           ),
           const SizedBox(height: 16),
           Text(
-            'No workouts scheduled',
+            AppLocalizations.of(context).todayWorkoutCardNoWorkoutsScheduled,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -206,7 +207,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           ),
           const SizedBox(height: 8),
           Text(
-            'Generate a workout program to get started!',
+            AppLocalizations.of(context).todayWorkoutCardGenerateAWorkoutProgram,
             style: TextStyle(fontSize: 14, color: textMuted),
             textAlign: TextAlign.center,
           ),
@@ -219,8 +220,8 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
                 context.go('/pre-auth-quiz');
               },
               icon: const Icon(Icons.add, size: 20),
-              label: const Text(
-                'Generate Workouts',
+              label: Text(
+                AppLocalizations.of(context).todayWorkoutCardGenerateWorkouts,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -407,8 +408,8 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
                 child: ElevatedButton.icon(
                   onPressed: () => _startWorkoutFromSummary(workout),
                   icon: const Icon(Icons.play_arrow, size: 24),
-                  label: const Text(
-                    'START WORKOUT',
+                  label: Text(
+                    AppLocalizations.of(context).todayWorkoutCardStartWorkout,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -466,7 +467,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
 
           // Rest day message
           Text(
-            'Rest Day',
+            AppLocalizations.of(context).workoutDayDetailRestDay,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -475,7 +476,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           ),
           const SizedBox(height: 8),
           Text(
-            response.restDayMessage ?? 'Take it easy today! Your muscles are recovering.',
+            response.restDayMessage ?? AppLocalizations.of(context).todayWorkoutCardTakeItEasyToday,
             style: TextStyle(fontSize: 14, color: textMuted),
             textAlign: TextAlign.center,
           ),
@@ -550,7 +551,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           TextButton.icon(
             onPressed: _viewUpcoming,
             icon: const Icon(Icons.calendar_month, size: 18),
-            label: const Text('View Upcoming'),
+            label: Text(AppLocalizations.of(context).todayWorkoutCardViewUpcoming),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.cyan,
             ),

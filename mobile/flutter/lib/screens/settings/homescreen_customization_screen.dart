@@ -6,6 +6,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Provider for homescreen card visibility settings
 final homescreenCardsProvider =
     StateNotifierProvider<HomescreenCardsNotifier, HomescreenCardsState>((ref) {
@@ -165,7 +166,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Customize Home',
+        title: AppLocalizations.of(context).homescreenCustomizationCustomizeHome,
         actions: [
           PillAppBarAction(
             icon: Icons.refresh_rounded,
@@ -173,8 +174,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
               HapticService.light();
               cardsNotifier.resetToDefaults();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Reset to defaults'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).homescreenCustomizationResetToDefaults),
                   duration: Duration(seconds: 2),
                 ),
               );
@@ -191,7 +192,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Text(
-                    'Choose which cards to show on your home screen',
+                    AppLocalizations.of(context).homescreenCustomizationChooseWhichCardsTo,
                     style: TextStyle(
                       fontSize: 14,
                       color: textMuted,
@@ -205,8 +206,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
                 _buildToggleCard(
                   context: context,
-                  title: 'Fitness Score',
-                  subtitle: 'Overall fitness, strength & nutrition scores',
+                  title: AppLocalizations.of(context).strengthFitnessScore,
+                  subtitle: AppLocalizations.of(context).homescreenCustomizationOverallFitnessStrengthNu,
                   icon: Icons.insights,
                   iconColor: AppColors.cyan,
                   value: cardsState.showFitnessScoreCard,
@@ -223,8 +224,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
                 _buildToggleCard(
                   context: context,
-                  title: 'Mood Check-in',
-                  subtitle: 'Quick mood picker for instant workouts',
+                  title: AppLocalizations.of(context).homescreenCustomizationMoodCheckIn,
+                  subtitle: AppLocalizations.of(context).homescreenCustomizationQuickMoodPickerFor,
                   icon: Icons.wb_sunny_outlined,
                   iconColor: AppColors.orange,
                   value: cardsState.showMoodPickerCard,
@@ -241,8 +242,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
                 _buildToggleCard(
                   context: context,
-                  title: 'Daily Activity',
-                  subtitle: 'Health device activity summary',
+                  title: AppLocalizations.of(context).neatDashboardDailyActivity,
+                  subtitle: AppLocalizations.of(context).homescreenCustomizationHealthDeviceActivitySummary,
                   icon: Icons.watch,
                   iconColor: AppColors.green,
                   value: cardsState.showDailyActivityCard,
@@ -259,8 +260,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
                 _buildToggleCard(
                   context: context,
-                  title: 'Quick Actions',
-                  subtitle: 'Log Food, Stats, Share, Water buttons',
+                  title: AppLocalizations.of(context).mainShellPartQuickActions,
+                  subtitle: AppLocalizations.of(context).homescreenCustomizationLogFoodStatsShare,
                   icon: Icons.apps,
                   iconColor: AppColors.purple,
                   value: cardsState.showQuickActionsRow,
@@ -277,8 +278,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
                 _buildToggleCard(
                   context: context,
-                  title: 'Upcoming Features',
-                  subtitle: 'Feature voting and roadmap preview',
+                  title: AppLocalizations.of(context).homescreenCustomizationUpcomingFeatures,
+                  subtitle: AppLocalizations.of(context).homescreenCustomizationFeatureVotingAndRoadmap,
                   icon: Icons.new_releases_outlined,
                   iconColor: AppColors.yellow,
                   value: cardsState.showUpcomingFeaturesCard,
@@ -300,8 +301,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
                 _buildToggleCard(
                   context: context,
-                  title: 'Week Changes',
-                  subtitle: 'Exercise variation this week',
+                  title: AppLocalizations.of(context).homescreenCustomizationWeekChanges,
+                  subtitle: AppLocalizations.of(context).homescreenCustomizationExerciseVariationThisWeek,
                   icon: Icons.swap_horiz,
                   iconColor: AppColors.cyan,
                   value: cardsState.showWeekChangesCard,
@@ -318,8 +319,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
                 _buildToggleCard(
                   context: context,
-                  title: 'Weekly Progress',
-                  subtitle: 'Workout completion progress ring',
+                  title: AppLocalizations.of(context).homescreenCustomizationWeeklyProgress,
+                  subtitle: AppLocalizations.of(context).homescreenCustomizationWorkoutCompletionProgressRi,
                   icon: Icons.donut_large,
                   iconColor: AppColors.green,
                   value: cardsState.showWeeklyProgressCard,
@@ -336,8 +337,8 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
 
                 _buildToggleCard(
                   context: context,
-                  title: 'Weekly Goals',
-                  subtitle: 'Goals and milestones for the week',
+                  title: AppLocalizations.of(context).weeklyGoalsCardWeeklyGoals,
+                  subtitle: AppLocalizations.of(context).homescreenCustomizationGoalsAndMilestonesFor,
                   icon: Icons.flag_outlined,
                   iconColor: AppColors.orange,
                   value: cardsState.showWeeklyGoalsCard,
@@ -373,7 +374,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Changes are saved automatically and apply immediately.',
+                          AppLocalizations.of(context).homescreenCustomizationChangesAreSavedAutomaticall,
                           style: TextStyle(
                             fontSize: 13,
                             color: textMuted,

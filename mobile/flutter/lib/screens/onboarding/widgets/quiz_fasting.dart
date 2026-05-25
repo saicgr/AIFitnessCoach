@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
 import 'scroll_hint_arrow.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'quiz_fasting_ui.dart';
 
 
@@ -326,7 +327,7 @@ class _QuizFastingState extends State<QuizFasting> {
             children: [
               if (widget.showHeader) ...[
                 Text(
-                  'Intermittent fasting can help you reach your goals faster',
+                  AppLocalizations.of(context).quizFastingIntermittentFastingCanHelp,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -378,7 +379,7 @@ class _QuizFastingState extends State<QuizFasting> {
                 children: [
                   Expanded(
                     child: _buildCompactChoiceButton(
-                      label: "Yes, let's try it",
+                      label: AppLocalizations.of(context).quizFastingYesLetSTry,
                       icon: Icons.rocket_launch_outlined,
                       isSelected: widget.interestedInFasting == true,
                       onTap: () {
@@ -391,7 +392,7 @@ class _QuizFastingState extends State<QuizFasting> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _buildCompactChoiceButton(
-                      label: 'Maybe later',
+                      label: AppLocalizations.of(context).notifsLaterButton,
                       icon: Icons.schedule_outlined,
                       isSelected: widget.interestedInFasting == false,
                       onTap: () {
@@ -409,7 +410,7 @@ class _QuizFastingState extends State<QuizFasting> {
               if (widget.interestedInFasting == true) ...[
                 const SizedBox(height: 20),
                 Text(
-                  'Choose a fasting protocol',
+                  AppLocalizations.of(context).quizFastingChooseAFastingProtocol,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -418,7 +419,7 @@ class _QuizFastingState extends State<QuizFasting> {
                 ).animate().fadeIn(delay: 100.ms),
                 const SizedBox(height: 2),
                 Text(
-                  'Optional - you can set this later',
+                  AppLocalizations.of(context).quizFastingOptionalYouCanSet,
                   style: TextStyle(
                     fontSize: 12,
                     color: t.textSecondary,
@@ -528,7 +529,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                                     borderRadius: BorderRadius.circular(4),
                                                   ),
                                                   child: Text(
-                                                    'Recommended',
+                                                    AppLocalizations.of(context).settingsCardPartRecommended,
                                                     style: TextStyle(
                                                       fontSize: 10,
                                                       fontWeight: FontWeight.w600,
@@ -546,7 +547,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                                     borderRadius: BorderRadius.circular(4),
                                                   ),
                                                   child: Text(
-                                                    'Popular',
+                                                    AppLocalizations.of(context).quizFastingPopular,
                                                     style: TextStyle(
                                                       fontSize: 10,
                                                       fontWeight: FontWeight.w600,
@@ -668,7 +669,7 @@ class _QuizFastingState extends State<QuizFasting> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Set your custom fasting window',
+                AppLocalizations.of(context).quizFastingSetYourCustomFasting,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -685,7 +686,7 @@ class _QuizFastingState extends State<QuizFasting> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Fasting hours',
+                          AppLocalizations.of(context).quizFastingFastingHours,
                           style: TextStyle(
                             fontSize: 12,
                             color: t.textSecondary,
@@ -737,7 +738,7 @@ class _QuizFastingState extends State<QuizFasting> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Eating hours',
+                          AppLocalizations.of(context).quizFastingEatingHours,
                           style: TextStyle(
                             fontSize: 12,
                             color: t.textSecondary,
@@ -855,7 +856,7 @@ class _QuizFastingState extends State<QuizFasting> {
                           ),
                           child: Center(
                             child: Text(
-                              'Apply Custom Protocol',
+                              AppLocalizations.of(context).quizFastingApplyCustomProtocol,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,

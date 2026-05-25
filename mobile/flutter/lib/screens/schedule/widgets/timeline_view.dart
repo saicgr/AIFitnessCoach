@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/schedule_item.dart';
 import 'timeline_item_block.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Vertical 24-hour scrollable timeline widget.
 /// Displays hours 5AM-11PM in a left gutter, schedule items as positioned colored blocks,
 /// Google Calendar busy times as semi-transparent grey overlays,
@@ -187,7 +188,7 @@ class _TimelineViewState extends State<TimelineView>
             alignment: Alignment.topLeft,
             padding: const EdgeInsets.all(4),
             child: Text(
-              'Busy',
+              AppLocalizations.of(context).timelineBusy,
               style: TextStyle(
                 fontSize: 10,
                 color: widget.isDark ? Colors.white24 : Colors.black26,

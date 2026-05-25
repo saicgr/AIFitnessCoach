@@ -10,6 +10,7 @@ import '../../../data/services/context_logging_service.dart';
 import '../widgets/info_badge.dart';
 import 'week_duration_selector.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet showing program details
 class ProgramDetailSheet extends ConsumerStatefulWidget {
   final BrandedProgram program;
@@ -229,26 +230,26 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
                   children: [
                     DetailBadge(
                       icon: _getCategoryIcon(program.category),
-                      label: 'Category',
-                      value: program.category ?? 'Program',
+                      label: AppLocalizations.of(context).suggestFeatureCategory,
+                      value: program.category ?? AppLocalizations.of(context).workoutDetailProgram,
                       color: categoryColor,
                     ),
                     if (program.difficultyLevel != null)
                       DetailBadge(
                         icon: Icons.signal_cellular_alt,
-                        label: 'Level',
+                        label: AppLocalizations.of(context).programSummaryLevel,
                         value: DifficultyUtils.getDisplayName(program.difficultyLevel!),
                         color: DifficultyUtils.getColor(program.difficultyLevel!),
                       ),
                     DetailBadge(
                       icon: Icons.calendar_today,
-                      label: 'Duration',
+                      label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                       value: '$_selectedWeeks weeks',
                       color: cyan,
                     ),
                     DetailBadge(
                       icon: Icons.repeat,
-                      label: 'Sessions',
+                      label: AppLocalizations.of(context).syncedWorkoutsHistorySessions,
                       value: '$_selectedSessionsPerWeek/week',
                       color: cyan,
                     ),
@@ -289,7 +290,7 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'DESCRIPTION',
+                        AppLocalizations.of(context).programDetailDescription,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

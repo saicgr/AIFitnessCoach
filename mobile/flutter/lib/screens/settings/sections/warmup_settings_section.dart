@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../widgets/section_header.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The warmup and stretch settings section for configuring durations.
 ///
 /// Allows users to customize:
@@ -18,8 +19,8 @@ class WarmupSettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'WARMUP & COOLDOWN'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).warmupSettingsWarmupCooldown),
         SizedBox(height: 12),
         _WarmupSettingsCard(),
       ],
@@ -64,7 +65,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Enable Warmup Phase',
+                        AppLocalizations.of(context).warmupSettingsEnableWarmupPhase,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
@@ -73,7 +74,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Show warmup screen before workouts',
+                        AppLocalizations.of(context).warmupSettingsShowWarmupScreenBefore,
                         style: TextStyle(fontSize: 12, color: textMuted),
                       ),
                     ],
@@ -112,7 +113,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Warmup Duration',
+                      AppLocalizations.of(context).warmupSettingsWarmupDuration,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
@@ -123,7 +124,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'How long to warm up before workouts',
+                  AppLocalizations.of(context).warmupSettingsHowLongToWarm,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
                 const SizedBox(height: 12),
@@ -160,7 +161,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Enable Cooldown Stretch',
+                        AppLocalizations.of(context).warmupSettingsEnableCooldownStretch,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
@@ -169,7 +170,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Show stretch screen after workouts',
+                        AppLocalizations.of(context).warmupSettingsShowStretchScreenAfter,
                         style: TextStyle(fontSize: 12, color: textMuted),
                       ),
                     ],
@@ -209,7 +210,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Cooldown Stretch Duration',
+                      AppLocalizations.of(context).warmupSettingsCooldownStretchDuration,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
@@ -220,7 +221,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'How long to stretch after workouts',
+                  AppLocalizations.of(context).warmupSettingsHowLongToStretch,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
                 const SizedBox(height: 12),
@@ -262,7 +263,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Tips for effective warm-ups:',
+                      AppLocalizations.of(context).warmupSettingsTipsForEffectiveWarm,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -429,7 +430,7 @@ class _SkipWarningToggleState extends State<_SkipWarningToggle> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Incomplete Exercise Warning',
+                  AppLocalizations.of(context).workoutSettingsIncompleteExerciseWarning,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -438,7 +439,7 @@ class _SkipWarningToggleState extends State<_SkipWarningToggle> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Warn before finishing with unlogged sets',
+                  AppLocalizations.of(context).warmupSettingsWarnBeforeFinishingWith,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
               ],

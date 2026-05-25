@@ -43,6 +43,7 @@ import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'recipe_search_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // Inline-chip source groupings
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,11 +230,11 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
                       SizedBox(width: 8),
                       Text(
-                        'Build',
+                        AppLocalizations.of(context).recipesBuild,
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -290,7 +291,7 @@ class _ComingUpCarousel extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'Coming up today',
+            AppLocalizations.of(context).recipesComingUpToday,
             style:
                 TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: muted),
           ),
@@ -366,7 +367,7 @@ class _UpcomingCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  item.recipeName ?? 'Scheduled meal',
+                  item.recipeName ?? AppLocalizations.of(context).recipesScheduledMeal,
                   style: TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w700, color: text),
                   maxLines: 1,
@@ -423,7 +424,7 @@ class _LeftoverCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  item.isExpired ? 'EXPIRED' : 'LEFTOVERS',
+                  item.isExpired ? AppLocalizations.of(context).recipesExpired : AppLocalizations.of(context).recipesLeftovers,
                   style: TextStyle(
                       fontSize: 10,
                       color: warningColor,
@@ -432,7 +433,7 @@ class _LeftoverCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  item.recipeName ?? 'Cooked dish',
+                  item.recipeName ?? AppLocalizations.of(context).recipesCookedDish,
                   style: TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w700, color: text),
                   maxLines: 1,
@@ -505,26 +506,26 @@ class _QuickActions extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Scan your fridge',
+                Text(AppLocalizations.of(context).recipesScanYourFridge,
                     style: TextStyle(
                         color: text,
                         fontSize: 18,
                         fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('Up to 5 photos — fridge, pantry, freezer',
+                Text(AppLocalizations.of(context).recipesUpTo5Photos,
                     style: TextStyle(color: muted, fontSize: 13)),
                 const SizedBox(height: 16),
                 _SheetAction(
                   icon: Icons.camera_alt_rounded,
-                  label: 'Take photo',
+                  label: AppLocalizations.of(context).recipesTakePhoto,
                   accent: accent,
                   onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
                 ),
                 const SizedBox(height: 10),
                 _SheetAction(
                   icon: Icons.photo_library_outlined,
-                  label: 'Choose from gallery',
-                  subtitle: 'Multi-select supported',
+                  label: AppLocalizations.of(context).recipesChooseFromGallery,
+                  subtitle: AppLocalizations.of(context).recipesMultiSelectSupported,
                   accent: accent,
                   onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
                 ),
@@ -584,7 +585,7 @@ class _QuickActions extends ConsumerWidget {
     final actions = <_QuickAction>[
       _QuickAction(
         icon: Icons.kitchen_outlined,
-        label: 'Fridge',
+        label: AppLocalizations.of(context).recipesFridge,
         // Open the photo picker first (matches Scan Menu) so the user
         // lands on the scan screen with their photos already attached
         // and detection in flight, instead of an empty input.
@@ -592,13 +593,13 @@ class _QuickActions extends ConsumerWidget {
       ),
       _QuickAction(
         icon: Icons.download_rounded,
-        label: 'Import',
+        label: AppLocalizations.of(context).recipesImport,
         onTap: () => _pushAndRestoreNavBar(
             context, ref, RecipeImportScreen(userId: userId, isDark: isDark)),
       ),
       _QuickAction(
         icon: Icons.calendar_today_rounded,
-        label: 'Plan day',
+        label: AppLocalizations.of(context).recipesPlanDay,
         onTap: () => _pushAndRestoreNavBar(
             context,
             ref,
@@ -607,19 +608,19 @@ class _QuickActions extends ConsumerWidget {
       ),
       _QuickAction(
         icon: Icons.shopping_cart_outlined,
-        label: 'Lists',
+        label: AppLocalizations.of(context).recipesLists,
         onTap: () => _pushAndRestoreNavBar(context, ref,
             GroceryListsIndexScreen(userId: userId, isDark: isDark)),
       ),
       _QuickAction(
         icon: Icons.favorite_outline,
-        label: 'Favorites',
+        label: AppLocalizations.of(context).workoutsFavorites,
         onTap: () => _pushAndRestoreNavBar(
             context, ref, FavoritesScreen(userId: userId, isDark: isDark)),
       ),
       _QuickAction(
         icon: Icons.public_outlined,
-        label: 'Discover',
+        label: AppLocalizations.of(context).navDiscover,
         onTap: () => _pushAndRestoreNavBar(
             context, ref, DiscoverScreen(userId: userId, isDark: isDark)),
       ),
@@ -917,7 +918,7 @@ class _RecipeSearchFilterSortBarState
     }
     if (state.favoritesOnly) {
       pills.add(_ActivePill(
-        label: '⭐ Favorites',
+        label: AppLocalizations.of(context).recipesFavorites2,
         accent: accent,
         onRemove: () =>
             widget.onStateChanged(state.copyWith(favoritesOnly: false)),
@@ -925,7 +926,7 @@ class _RecipeSearchFilterSortBarState
     }
     if (state.hasLeftoversOnly) {
       pills.add(_ActivePill(
-        label: '🍱 Has leftovers',
+        label: AppLocalizations.of(context).recipesHasLeftovers,
         accent: accent,
         onRemove: () =>
             widget.onStateChanged(state.copyWith(hasLeftoversOnly: false)),
@@ -1041,7 +1042,7 @@ class _SortDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      tooltip: 'Sort recipes',
+      tooltip: AppLocalizations.of(context).recipesSortRecipes,
       onSelected: onChanged,
       position: PopupMenuPosition.under,
       offset: const Offset(0, 6),
@@ -1143,7 +1144,7 @@ class _FiltersButton extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              'Filters',
+              AppLocalizations.of(context).recipesFilters,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -1464,7 +1465,7 @@ class _MyRecipesGridState extends ConsumerState<_MyRecipesGrid> {
           children: [
             ListTile(
               leading: const Icon(Icons.open_in_new, size: 20),
-              title: const Text('Open'),
+              title: Text(AppLocalizations.of(context).recipesOpen),
               onTap: () {
                 Navigator.of(ctx).pop();
                 Navigator.of(context).push(MaterialPageRoute(
@@ -1478,7 +1479,7 @@ class _MyRecipesGridState extends ConsumerState<_MyRecipesGrid> {
             if (!s.isCurated)
               ListTile(
                 leading: Icon(Icons.delete_outline, size: 20, color: AppColors.error),
-                title: Text('Delete', style: TextStyle(color: AppColors.error)),
+                title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _confirmDeleteRecipe(context, ref, s);
@@ -1495,13 +1496,13 @@ class _MyRecipesGridState extends ConsumerState<_MyRecipesGrid> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete recipe?'),
+        title: Text(AppLocalizations.of(context).recipesDeleteRecipe),
         content: Text('Are you sure you want to delete "${s.name}"? This cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppLocalizations.of(context).buttonCancel)),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -1522,7 +1523,7 @@ class _MyRecipesGridState extends ConsumerState<_MyRecipesGrid> {
       DataCacheService.instance
           .invalidate(_cacheKey, userId: widget.userId);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipe deleted'), duration: Duration(seconds: 2)),
+        SnackBar(content: Text(AppLocalizations.of(context).recipesRecipeDeleted), duration: Duration(seconds: 2)),
       );
     } catch (e) {
       if (!context.mounted) return;
@@ -1551,13 +1552,13 @@ class _EmptyState extends StatelessWidget {
               size: 64, color: accent.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
           Text(
-            hint ?? 'No recipes yet',
+            hint ?? AppLocalizations.of(context).recipesNoRecipesYet,
             style: TextStyle(
                 fontSize: 18, fontWeight: FontWeight.w700, color: text),
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap Build to create your first one, or try a fridge / import path above.',
+            AppLocalizations.of(context).recipesTapBuildToCreate,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: muted, height: 1.5),
           ),

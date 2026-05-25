@@ -5,6 +5,7 @@ import '../core/constants/app_colors.dart';
 import '../core/providers/weight_increments_provider.dart';
 import 'glass_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Shows the weight increments customization bottom sheet.
 Future<void> showWeightIncrementsSheet(BuildContext context) async {
   await showGlassSheet(
@@ -93,14 +94,14 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Weight Increments',
+                        AppLocalizations.of(context).workoutSettingsWeightIncrements,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: textPrimary,
                         ),
                       ),
                       Text(
-                        'Customize +/- step size per equipment',
+                        AppLocalizations.of(context).weightIncrementsCustomizeStepSizePer,
                         style: TextStyle(color: textSecondary, fontSize: 12),
                       ),
                     ],
@@ -188,7 +189,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                     );
                   },
                   icon: Icon(Icons.refresh, color: textMuted, size: 16),
-                  label: Text('Use Defaults', style: TextStyle(color: textMuted, fontSize: 13)),
+                  label: Text(AppLocalizations.of(context).weightIncrementsUseDefaults, style: TextStyle(color: textMuted, fontSize: 13)),
                 ),
                 GestureDetector(
                   onTap: () {
@@ -201,7 +202,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Based on standard commercial gym equipment:', style: TextStyle(fontSize: 13)),
+                            Text(AppLocalizations.of(context).weightIncrementsBasedOnStandardCommercial, style: TextStyle(fontSize: 13)),
                             const SizedBox(height: 12),
                             _infoRow('Dumbbells', defaults.dumbbell, state.unit),
                             _infoRow('Barbell', defaults.barbell, '${state.unit} total'),
@@ -209,10 +210,10 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                             _infoRow('Kettlebell', defaults.kettlebell, state.unit),
                             _infoRow('Cable', defaults.cable, state.unit),
                             const SizedBox(height: 12),
-                            Text('Sources: Rogue, Life Fitness, Eleiko', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                            Text(AppLocalizations.of(context).weightIncrementsSourcesRogueLifeFitness, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
                           ],
                         ),
-                        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Got it'))],
+                        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context).weightIncrementsGotIt))],
                       ),
                     );
                   },
@@ -286,7 +287,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
             children: [
               Icon(Icons.sports_martial_arts, size: 16, color: textSecondary),
               const SizedBox(width: 6),
-              Text('Barbell', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
+              Text(AppLocalizations.of(context).weightIncrementsBarbell, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
               const Spacer(),
               _valueBadge(displayValue, perSide ? '${state.unit}/side' : state.unit, accent),
               const SizedBox(width: 6),
@@ -321,7 +322,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                     ),
                   ),
                   child: Text(
-                    'Per side',
+                    AppLocalizations.of(context).weightIncrementsPerSide,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: perSide ? FontWeight.w700 : FontWeight.w500,
@@ -431,14 +432,14 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Custom Increment'),
+        title: Text(AppLocalizations.of(context).weightIncrementsCustomIncrement),
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
           decoration: InputDecoration(
             suffixText: unit,
-            hintText: 'e.g. 2.5',
+            hintText: AppLocalizations.of(context).weightIncrementsEG25,
             border: const OutlineInputBorder(),
           ),
           inputFormatters: [
@@ -448,7 +449,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           FilledButton(
             onPressed: () {
@@ -458,7 +459,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Set'),
+            child: Text(AppLocalizations.of(context).workoutSummaryAdvancedSet),
           ),
         ],
       ),

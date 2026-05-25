@@ -4,6 +4,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/theme/accent_color_provider.dart';
 import '../../utils/voice_set_parser.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Floating mic FAB for in-workout voice set logging.
 ///
 /// Tap once → start listening. Tap again (or auto-stop on silence) → run the
@@ -194,7 +195,7 @@ class _VoiceMicFabState extends State<VoiceMicFab>
       backgroundColor: _isListening ? accent : accent.withValues(alpha: 0.9),
       foregroundColor: Colors.white,
       icon: icon,
-      label: Text(_isListening ? 'Hearing…' : widget.label),
+      label: Text(_isListening ? AppLocalizations.of(context).voiceMicFabHearing : widget.label),
     );
   }
 }

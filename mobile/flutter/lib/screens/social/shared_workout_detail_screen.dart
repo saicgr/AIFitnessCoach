@@ -12,6 +12,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/app_snackbar.dart';
 import 'widgets/schedule_workout_dialog.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full-screen detail view for a shared/completed workout from the social feed.
 ///
 /// Built entirely from [activityData] — no backend fetch needed since UserB
@@ -77,8 +78,8 @@ class _SharedWorkoutDetailScreenState
       body: CustomScrollView(
         slivers: [
           // App bar
-          const SliverToBoxAdapter(
-            child: PillAppBar(title: 'Workout Details'),
+          SliverToBoxAdapter(
+            child: PillAppBar(title: AppLocalizations.of(context).sharedWorkoutDetailWorkoutDetails),
           ),
 
           SliverPadding(
@@ -181,7 +182,7 @@ class _SharedWorkoutDetailScreenState
                       Icon(Icons.list_rounded, size: 20, color: textMuted),
                       const SizedBox(width: 8),
                       Text(
-                        'Exercises',
+                        AppLocalizations.of(context).authIntroExercises,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -243,7 +244,7 @@ class _SharedWorkoutDetailScreenState
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Exercise details not available',
+                          AppLocalizations.of(context).sharedWorkoutDetailExerciseDetailsNotAvailable,
                           style: TextStyle(
                             fontSize: 14,
                             color: textMuted,
@@ -274,7 +275,7 @@ class _SharedWorkoutDetailScreenState
                           )
                         : const Icon(Icons.bolt_rounded, size: 22),
                     label: Text(
-                      _isAccepting ? 'Starting...' : 'ACCEPT CHALLENGE',
+                      _isAccepting ? AppLocalizations.of(context).sharedWorkoutDetailStarting : AppLocalizations.of(context).sharedWorkoutDetailAcceptChallenge,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -306,7 +307,7 @@ class _SharedWorkoutDetailScreenState
                       color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
                     ),
                     label: Text(
-                      'Schedule for Later',
+                      AppLocalizations.of(context).sharedWorkoutDetailScheduleForLater,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -545,7 +546,7 @@ class _ExerciseTile extends StatelessWidget {
                 if (detailParts.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
-                    detailParts.join('  \u2022  '),
+                    detailParts.join(AppLocalizations.of(context).xpGoalsU2022),
                     style: TextStyle(
                       fontSize: 13,
                       color: textMuted,
@@ -555,7 +556,7 @@ class _ExerciseTile extends StatelessWidget {
                 if (metaParts.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    metaParts.join('  \u2022  '),
+                    metaParts.join(AppLocalizations.of(context).xpGoalsU2022),
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted.withValues(alpha: 0.7),

@@ -205,7 +205,7 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Failed to load insights',
+              AppLocalizations.of(context).insightsScreenPartFailedToLoadInsights,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -214,7 +214,7 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Please check your connection and try again.',
+              AppLocalizations.of(context).workoutSummaryScreenPleaseCheckYourConnection,
               style: TextStyle(fontSize: 14, color: textMuted),
               textAlign: TextAlign.center,
             ),
@@ -222,7 +222,7 @@ class _ErrorState extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: OutlinedButton.styleFrom(
                 foregroundColor: errorColor,
                 side: BorderSide(color: errorColor),
@@ -366,7 +366,7 @@ class _OverviewCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Overview',
+                AppLocalizations.of(context).youHubOverview,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -469,7 +469,7 @@ class _OverviewCard extends StatelessWidget {
               _MiniStat(
                 icon: Icons.trending_up,
                 value: '${totals.totalPrs}',
-                label: 'PRs',
+                label: AppLocalizations.of(context).weeklyWrappedPrs,
                 color: success,
                 isDark: isDark,
               ),
@@ -605,7 +605,7 @@ class _NutritionCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Nutrition',
+                AppLocalizations.of(context).settingsNutritionSection,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -662,7 +662,7 @@ class _NutritionCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'Start tracking nutrition to see insights here',
+                AppLocalizations.of(context).insightsScreenPartStartTrackingNutritionTo,
                 style: TextStyle(fontSize: 14, color: textMuted),
               ),
             ),
@@ -733,7 +733,7 @@ class _RecoveryCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Recovery',
+                AppLocalizations.of(context).recoveryLabel,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -748,7 +748,7 @@ class _RecoveryCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'Log your readiness and mood to see recovery insights',
+                AppLocalizations.of(context).insightsScreenPartLogYourReadinessAnd,
                 style: TextStyle(fontSize: 14, color: textMuted),
               ),
             )
@@ -807,7 +807,7 @@ class _RecoveryCard extends StatelessWidget {
             if (moods != null && moods.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Mood Distribution',
+                AppLocalizations.of(context).moodAnalyticsCardMoodDistribution,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

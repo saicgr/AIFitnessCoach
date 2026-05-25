@@ -8,6 +8,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../onboarding/pre_auth_quiz_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Inline "Have a referral code?" expander for the paywall pricing screen.
 ///
 /// Onboarding v5.1: replaces the standalone /referral-code screen. Users on
@@ -123,7 +124,7 @@ class _InlineReferralExpanderState
                   const SizedBox(width: 8),
                   Text(
                     _success != null
-                        ? '✓ Referral code applied'
+                        ? AppLocalizations.of(context).inlineReferralExpanderReferralCodeApplied
                         : 'Have a referral code?',
                     style: TextStyle(
                       fontSize: 13,
@@ -168,7 +169,7 @@ class _InlineReferralExpanderState
                             letterSpacing: 1.0,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'ENTER CODE',
+                            hintText: AppLocalizations.of(context).inlineReferralExpanderEnterCode,
                             hintStyle: TextStyle(
                               color:
                                   textSecondary.withValues(alpha: 0.5),
@@ -230,8 +231,8 @@ class _InlineReferralExpanderState
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text(
-                                    'Apply',
+                                : Text(
+                                    AppLocalizations.of(context).setAdjustmentSheetApply,
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w800,

@@ -11,6 +11,7 @@ import '../../../data/repositories/nutrition_preferences_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../nutrition/log_meal_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Hero nutrition card with Apple Watch-style concentric macro rings.
 /// Outer = Protein, Middle = Carbs, Inner = Fat.
 /// Center shows calorie remaining count.
@@ -312,7 +313,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                                     ),
                                   ),
                                   Text(
-                                    caloriesRemaining >= 0 ? 'cal left' : 'cal over',
+                                    caloriesRemaining >= 0 ? AppLocalizations.of(context).heroNutritionCardCalLeft : AppLocalizations.of(context).heroNutritionCardCalOver,
                                     style: TextStyle(
                                       fontSize: 10,
                                       color: textSecondary,
@@ -332,7 +333,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
               // Horizontal macro progress bars
               if (!_isLoading) ...[
                 _MacroProgressBar(
-                  label: 'Protein',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   consumed: proteinConsumed,
                   target: proteinTarget,
                   color: proteinColor,
@@ -340,7 +341,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                 ),
                 const SizedBox(height: 4),
                 _MacroProgressBar(
-                  label: 'Carbs',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   consumed: carbsConsumed,
                   target: carbsTarget,
                   color: carbsRingColor,
@@ -348,7 +349,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                 ),
                 const SizedBox(height: 4),
                 _MacroProgressBar(
-                  label: 'Fat',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   consumed: fatConsumed,
                   target: fatTarget,
                   color: fatColor,
@@ -375,13 +376,13 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.restaurant_outlined, size: 20),
                       SizedBox(width: 8),
                       Text(
-                        'Log Meal',
+                        AppLocalizations.of(context).heroNutritionCardLogMeal,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -406,7 +407,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                       Icon(Icons.insights_outlined, size: 13, color: textSecondary),
                       const SizedBox(width: 4),
                       Text(
-                        'View Details',
+                        AppLocalizations.of(context).heroWorkoutCardViewDetails,
                         style: TextStyle(color: textSecondary, fontSize: 11),
                       ),
                     ],

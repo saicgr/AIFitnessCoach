@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// 5-4-3-2-1 sensory grounding prompt — an alternative to breath work for
 /// Anxious-mood pre-start screens. Non-timed; user advances with Next.
 class GroundingPromptWidget extends StatefulWidget {
@@ -51,7 +52,7 @@ class _GroundingPromptWidgetState extends State<GroundingPromptWidget> {
                 child: TextButton(
                   onPressed: widget.onDone,
                   child: Text(
-                    'Skip',
+                    AppLocalizations.of(context).onboardingSkip,
                     style: TextStyle(color: textMuted, fontSize: 14),
                   ),
                 ),
@@ -65,7 +66,7 @@ class _GroundingPromptWidgetState extends State<GroundingPromptWidget> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Ground yourself',
+                        AppLocalizations.of(context).groundingPromptGroundYourself,
                         style: TextStyle(
                           fontSize: 14,
                           letterSpacing: 3,
@@ -121,7 +122,7 @@ class _GroundingPromptWidgetState extends State<GroundingPromptWidget> {
                     ),
                   ),
                   child: Text(
-                    _step < _steps.length - 1 ? 'Next' : "I'm ready",
+                    _step < _steps.length - 1 ? AppLocalizations.of(context).commonNext : AppLocalizations.of(context).groundingPromptIMReady,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,

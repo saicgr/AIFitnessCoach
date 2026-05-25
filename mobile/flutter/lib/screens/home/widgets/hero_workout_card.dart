@@ -35,6 +35,7 @@ import '../../pillar/widgets/ask_coach_button.dart';
 import 'workout_card/workout_card_mode.dart' show WorkoutCardMode;
 
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
 part 'hero_workout_card_part_stat_chip.dart';
 
@@ -203,7 +204,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Couldn\'t regenerate workout. Please try again.'),
+            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldnTRegenerateWorkout),
             backgroundColor: AppColors.error,
           ),
         );
@@ -214,8 +215,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     if (newWorkout != null && mounted) {
       // Provider refresh already handled by showRegenerateWorkoutSheet
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Workout regenerated!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutRegenerated),
           backgroundColor: AppColors.success,
         ),
       );
@@ -225,8 +226,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   Future<void> _skipWorkout() async {
     final confirm = await AppDialog.destructive(
       context,
-      title: 'Skip Workout?',
-      message: 'This workout will be marked as skipped.',
+      title: AppLocalizations.of(context).workoutOptionsSkipWorkout,
+      message: AppLocalizations.of(context).workoutOptionsThisWorkoutWillBe,
       confirmText: 'Skip',
       icon: Icons.skip_next_rounded,
     );
@@ -244,8 +245,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Workout skipped'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
               backgroundColor: AppColors.textMuted,
             ),
           );
@@ -254,8 +255,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not skip workout'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout),
             backgroundColor: AppColors.error,
           ),
         );
@@ -275,8 +276,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   Future<void> _markAsUndone() async {
     final confirm = await AppDialog.destructive(
       context,
-      title: 'Undo Completion?',
-      message: 'This will mark the workout as not done.',
+      title: AppLocalizations.of(context).heroWorkoutCardUndoCompletion,
+      message: AppLocalizations.of(context).heroWorkoutCardThisWillMarkThe,
       confirmText: 'Undo',
       icon: Icons.undo_rounded,
     );
@@ -292,8 +293,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Workout unmarked'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).heroWorkoutCardWorkoutUnmarked),
               backgroundColor: AppColors.textMuted,
             ),
           );
@@ -302,8 +303,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not undo completion'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotUndoCompletion),
             backgroundColor: AppColors.error,
           ),
         );
@@ -344,7 +345,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     if (shareable == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nothing to share yet — log a workout first')),
+          SnackBar(content: Text(AppLocalizations.of(context).heroWorkoutCardNothingToShareYet)),
         );
       }
       return;
@@ -402,7 +403,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     );
     if (shareable == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nothing to share yet — log a workout first')),
+        SnackBar(content: Text(AppLocalizations.of(context).heroWorkoutCardNothingToShareYet)),
       );
       return;
     }
@@ -442,8 +443,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
       ref.read(workoutsProvider.notifier).silentRefresh();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Exercise added!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).heroWorkoutCardExerciseAdded),
           backgroundColor: AppColors.success,
         ),
       );
@@ -614,7 +615,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                                 ),
                               ),
                               child: Text(
-                                'Quick',
+                                AppLocalizations.of(context).quickActionsRowQuick,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -678,7 +679,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
                   // Workout title - large and prominent
                   Text(
-                    workout.name ?? 'Workout',
+                    workout.name ?? AppLocalizations.of(context).navWorkout,
                     style: TextStyle(
                       color: isDark ? Colors.white : Colors.black87,
                       fontSize: 22,
@@ -787,8 +788,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text(
-                                'Workout is not ready yet. Please try regenerating.',
+                              content: Text(
+                                AppLocalizations.of(context).heroWorkoutCardWorkoutIsNotReady,
                               ),
                               backgroundColor: Colors.orange,
                               behavior: SnackBarBehavior.floating,
@@ -878,7 +879,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'View Details',
+                                  AppLocalizations.of(context).heroWorkoutCardViewDetails,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -917,7 +918,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Regenerate',
+                                  AppLocalizations.of(context).workoutActionsRegenerate,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -1013,7 +1014,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Missed Workout',
+                            AppLocalizations.of(context).missedWorkoutBannerMissedWorkout,
                             style: TextStyle(
                               color: isDark ? Colors.white : Colors.black87,
                               fontSize: 20,
@@ -1057,7 +1058,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                             children: [
                               _buildOverlayButton(
                                 icon: Icons.visibility,
-                                label: 'View Details',
+                                label: AppLocalizations.of(context).heroWorkoutCardViewDetails,
                                 onTap: () {
                                   HapticService.selection();
                                   context.push('/workout/${workout.id}', extra: workout);
@@ -1067,7 +1068,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                               const SizedBox(width: 12),
                               _buildOverlayButton(
                                 icon: Icons.replay,
-                                label: 'Do Today',
+                                label: AppLocalizations.of(context).missedWorkoutBannerDoToday,
                                 onTap: _repeatWorkout,
                                 isDark: isDark,
                               ),

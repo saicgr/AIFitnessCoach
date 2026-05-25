@@ -16,6 +16,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/models/subjective_feedback.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Main screen for viewing subjective results/feel results
 class FeelResultsScreen extends ConsumerStatefulWidget {
   const FeelResultsScreen({super.key});
@@ -60,7 +61,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Feel Results',
+        title: AppLocalizations.of(context).feelResultsFeelResults,
       ),
       body: feedbackState.isLoading
           ? AppLoading.fullScreen()
@@ -141,8 +142,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
               color: AppColors.cyan,
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Start Tracking Your Progress!',
+            Text(
+              AppLocalizations.of(context).feelResultsStartTrackingYourProgress,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -152,7 +153,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete workouts with mood check-ins to see how exercise improves how you feel.',
+              AppLocalizations.of(context).feelResultsCompleteWorkoutsWithMood,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -370,7 +371,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
               Icon(Icons.compare_arrows, size: 20, color: textSecondary),
               const SizedBox(width: 8),
               Text(
-                'Mood Before vs After',
+                AppLocalizations.of(context).feelResultsMoodBeforeVsAfter,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -606,7 +607,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
               Icon(Icons.show_chart, size: 20, color: textSecondary),
               const SizedBox(width: 8),
               Text(
-                'Weekly Trends',
+                AppLocalizations.of(context).feelResultsWeeklyTrends,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -832,13 +833,13 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
               children: [
                 Row(
                   children: [
-                    const Text(
-                      '\u{1F4AA}',
+                    Text(
+                      AppLocalizations.of(context).feelResultsU1f4aa,
                       style: TextStyle(fontSize: 20),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Feeling Stronger',
+                      AppLocalizations.of(context).workoutSummaryAdvancedFeelingStronger,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -863,8 +864,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                       color: AppColors.success.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      'Your training is working!',
+                    child: Text(
+                      AppLocalizations.of(context).feelResultsYourTrainingIsWorking,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,

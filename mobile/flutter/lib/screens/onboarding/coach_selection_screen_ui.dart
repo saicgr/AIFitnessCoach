@@ -264,7 +264,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
         Row(
           children: [
             Text(
-              'Energy',
+              AppLocalizations.of(context).workoutSummaryGeneralEnergy,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -321,7 +321,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                       size: 13, color: textSecondary),
                   const SizedBox(width: 5),
                   Text(
-                    'How they talk',
+                    AppLocalizations.of(context).coachSelectionScreenHowTheyTalk,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -393,7 +393,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                       ),
                     ),
                     child: Text(
-                      'Skip',
+                      AppLocalizations.of(context).onboardingSkip,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -527,7 +527,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.fromSettings ? 'Change Coach' : 'Meet Your Coach',
+                    widget.fromSettings ? AppLocalizations.of(context).coachSelectionScreenChangeCoach : AppLocalizations.of(context).coachSelectionScreenMeetYourCoach,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -537,7 +537,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                   const SizedBox(height: 2),
                   Text(
                     widget.fromSettings
-                        ? 'Select a new AI coach persona'
+                        ? AppLocalizations.of(context).coachSelectionScreenSelectANewAi
                         : 'You can always change this later',
                     style: TextStyle(
                       fontSize: 14,
@@ -579,7 +579,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
             ),
             const SizedBox(width: 8),
             Text(
-              'Create Your Own Coach',
+              AppLocalizations.of(context).coachSelectionScreenCreateYourOwnCoach,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -641,7 +641,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          widget.fromSettings ? 'Save Coach' : 'Continue',
+                          widget.fromSettings ? AppLocalizations.of(context).coachSelectionScreenSaveCoach : AppLocalizations.of(context).onboardingContinueButton,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

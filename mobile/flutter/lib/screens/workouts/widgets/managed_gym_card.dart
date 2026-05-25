@@ -7,6 +7,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/manage_gym_profiles_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Dedicated "Managed Gym" section card for the Workouts tab.
 ///
 /// Surfaces the user's active gym profile (name, environment, equipment
@@ -109,7 +110,7 @@ class ManagedGymCard extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: Text(
-                                'ACTIVE',
+                                AppLocalizations.of(context).managedGymCardActive,
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w800,

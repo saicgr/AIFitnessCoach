@@ -8,6 +8,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/manage_gym_profiles_sheet.dart';
 import '../widgets/widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class PreferencesSection extends ConsumerWidget {
   const PreferencesSection({super.key});
 
@@ -24,26 +25,26 @@ class PreferencesSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'PREFERENCES'),
+        SectionHeader(title: AppLocalizations.of(context).preferencesPreferences),
         const SizedBox(height: 12),
         SettingsCard(
           items: [
             SettingItemData(
               icon: Icons.palette_outlined,
-              title: 'Theme',
-              subtitle: 'System, Light, or Dark',
+              title: AppLocalizations.of(context).settingsThemeMode,
+              subtitle: AppLocalizations.of(context).preferencesSystemLightOrDark,
               isThemeSelector: true,
             ),
             SettingItemData(
               icon: Icons.color_lens_outlined,
-              title: 'Accent Color',
-              subtitle: 'Choose your app accent color',
+              title: AppLocalizations.of(context).settingsCardUiAccentColor,
+              subtitle: AppLocalizations.of(context).preferencesChooseYourAppAccent,
               isAccentColorSelector: true,
             ),
             SettingItemData(
               icon: Icons.fitness_center,
-              title: 'Gym Profiles',
-              subtitle: 'Manage gyms, equipment, and locations',
+              title: AppLocalizations.of(context).preferencesGymProfiles,
+              subtitle: AppLocalizations.of(context).preferencesManageGymsEquipmentAnd,
               onTap: () {
                 HapticFeedback.lightImpact();
                 showGlassSheet(
@@ -54,20 +55,20 @@ class PreferencesSection extends ConsumerWidget {
             ),
             SettingItemData(
               icon: Icons.travel_explore_outlined,
-              title: 'Timezone',
-              subtitle: 'Auto-detected, override if traveling',
+              title: AppLocalizations.of(context).preferencesTimezone,
+              subtitle: AppLocalizations.of(context).preferencesAutoDetectedOverrideIf,
               isTimezoneSelector: true,
             ),
             SettingItemData(
               icon: Icons.fitness_center_outlined,
-              title: 'Weight Unit',
-              subtitle: 'Kilograms or Pounds',
+              title: AppLocalizations.of(context).preferencesWeightUnit,
+              subtitle: AppLocalizations.of(context).preferencesKilogramsOrPounds,
               isWeightUnitSelector: true,
             ),
             SettingItemData(
               icon: Icons.bolt_outlined,
-              title: 'Show Daily Goals',
-              subtitle: 'XP progress strip on home screen',
+              title: AppLocalizations.of(context).preferencesShowDailyGoals,
+              subtitle: AppLocalizations.of(context).preferencesXpProgressStripOn,
               isDailyXPStripToggle: true,
             ),
           ],
@@ -91,7 +92,7 @@ class PreferencesSection extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Training Focus', style: TextStyle(fontSize: 15)),
+                          Text(AppLocalizations.of(context).trainingFocusTrainingFocus, style: TextStyle(fontSize: 15)),
                           Text(
                             currentFocus.description,
                             style: TextStyle(fontSize: 12, color: textMuted),

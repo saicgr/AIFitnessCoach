@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// FitBudd-style pink-to-purple gradient hero showing the /100 rating.
 class BodyAnalyzerHero extends StatelessWidget {
   final int score; // 0..100
@@ -44,8 +45,8 @@ class BodyAnalyzerHero extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Overall Rating',
+                Text(
+                  AppLocalizations.of(context).bodyAnalyzerHeroOverallRating,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 13,

@@ -4,6 +4,7 @@ import '../../workout/widgets/share_templates/_share_common.dart';
 import '_report_common.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Newspaper — cream-paper "THE ZEALOVA TIMES" masthead with a serif
 /// headline built from the user's name + hero value + period label. Short
 /// body copy is stitched together from top highlights so the sheet reads
@@ -55,8 +56,8 @@ class ReportNewspaperTemplate extends StatelessWidget {
                       letterSpacing: 1.2,
                     ),
                   ),
-                  const Text(
-                    'THE ZEALOVA TIMES',
+                  Text(
+                    AppLocalizations.of(context).reportNewspaperTemplateTheZealovaTimes,
                     style: TextStyle(
                       fontFamily: 'Times New Roman',
                       fontSize: 24,
@@ -66,7 +67,7 @@ class ReportNewspaperTemplate extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'NO. 01',
+                    AppLocalizations.of(context).reportNewspaperTemplateNo01,
                     style: const TextStyle(
                       fontFamily: 'Times New Roman',
                       fontSize: 10,
@@ -85,8 +86,8 @@ class ReportNewspaperTemplate extends StatelessWidget {
               height: 4,
             ),
             const SizedBox(height: 18),
-            const Text(
-              'EXCLUSIVE REPORT',
+            Text(
+              AppLocalizations.of(context).reportNewspaperTemplateExclusiveReport,
               style: TextStyle(
                 fontFamily: 'Times New Roman',
                 fontSize: 10,

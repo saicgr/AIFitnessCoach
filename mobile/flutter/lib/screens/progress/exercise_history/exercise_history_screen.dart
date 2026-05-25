@@ -15,6 +15,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../reports/widgets/report_share_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Main screen showing list of most performed exercises and personal records
 /// Two-tab layout: "Exercises" tab and "PRs" tab
 class ExerciseHistoryScreen extends ConsumerStatefulWidget {
@@ -73,7 +74,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
 
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Exercises & PRs',
+        title: AppLocalizations.of(context).strengthExercisesPrs,
         actions: [
           PillAppBarAction(
             icon: Icons.ios_share_rounded,
@@ -130,7 +131,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
         DateFormat('MMM yyyy').format(DateTime.now()).toUpperCase();
     final data = ReportShareData(
       reportType: ReportType.exerciseHistory,
-      title: 'Exercise History',
+      title: AppLocalizations.of(context).setTrackingSheetsExerciseHistory,
       periodLabel: periodLabel,
       primaryStats: {
         'exercises_count': list.length,
@@ -156,7 +157,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search exercises...',
+              hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
@@ -240,14 +241,14 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
             ),
             const SizedBox(height: 24),
             Text(
-              'No Exercise History Yet',
+              AppLocalizations.of(context).exerciseHistoryNoExerciseHistoryYet,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Complete some workouts to see your exercise history and track your progress over time.',
+              AppLocalizations.of(context).exerciseHistoryCompleteSomeWorkoutsTo,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -273,7 +274,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to load exercises',
+              AppLocalizations.of(context).netflixExercisesFailedToLoadExercises,
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
@@ -290,7 +291,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
                 ref.invalidate(mostPerformedExercisesProvider);
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -380,7 +381,7 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                'Recent Personal Records',
+                AppLocalizations.of(context).strengthRecentPersonalRecords,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -418,7 +419,7 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
           children: [
             _SummaryStatItem(
               value: prStats.totalPrs.toString(),
-              label: 'Total PRs',
+              label: AppLocalizations.of(context).exerciseHistoryTotalPrs,
               icon: Icons.emoji_events,
               color: Colors.amber,
             ),
@@ -429,7 +430,7 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
             ),
             _SummaryStatItem(
               value: prStats.prsThisPeriod.toString(),
-              label: 'Last 30 Days',
+              label: AppLocalizations.of(context).habitCardLast30Days,
               icon: Icons.calendar_month,
               color: Colors.amber.shade700,
             ),
@@ -440,7 +441,7 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
             ),
             _SummaryStatItem(
               value: prStats.currentPrStreak.toString(),
-              label: 'PR Streak',
+              label: AppLocalizations.of(context).exerciseHistoryPrStreak,
               icon: Icons.local_fire_department,
               color: Colors.deepOrange,
             ),
@@ -552,7 +553,7 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      'ALL-TIME',
+                      AppLocalizations.of(context).workoutSummaryScreenAllTime,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: Colors.amber.shade700,
                         fontWeight: FontWeight.bold,
@@ -583,14 +584,14 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No Personal Records Yet',
+              AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Keep training and pushing your limits. Your personal records will appear here as you get stronger.',
+              AppLocalizations.of(context).exerciseHistoryKeepTrainingAndPushing,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

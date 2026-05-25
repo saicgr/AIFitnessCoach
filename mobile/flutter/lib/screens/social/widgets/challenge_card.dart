@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/safe_num.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Challenge Card - Displays a fitness challenge
 class ChallengeCard extends StatelessWidget {
   final String title;
@@ -115,8 +116,8 @@ class ChallengeCard extends StatelessWidget {
                           color: AppColors.orange.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
-                          'ACTIVE',
+                        child: Text(
+                          AppLocalizations.of(context).managedGymCardActive,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,

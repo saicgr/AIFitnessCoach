@@ -18,6 +18,7 @@ import 'widgets/sleep_hypnogram.dart';
 import 'widgets/sleep_score.dart';
 import '../pillar/widgets/ask_coach_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Dedicated Sleep detail screen — route `/health/sleep`.
 ///
 /// Reached by tapping the "Last Night's Sleep" card. A date strip scrubs
@@ -73,7 +74,7 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
                   const GlassBackButton(),
                   const SizedBox(width: 12),
                   Text(
-                    'Sleep',
+                    AppLocalizations.of(context).sleepDetailSleep,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -183,7 +184,7 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
         Center(
           child: OutlinedButton.icon(
             icon: const Icon(Icons.auto_graph_rounded, size: 16),
-            label: const Text('Custom Trends'),
+            label: Text(AppLocalizations.of(context).statsRewardsCustomTrends),
             onPressed: () {
               try {
                 context.push('/trends/custom',
@@ -251,7 +252,7 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
             children: [
               Expanded(
                 child: _MiniMetric(
-                  label: 'Efficiency',
+                  label: AppLocalizations.of(context).sleepDetailEfficiency,
                   value: main.efficiency != null
                       ? '${(main.efficiency! * 100).round()}%'
                       : '–',
@@ -263,7 +264,7 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: _MiniMetric(
-                  label: 'Fell asleep in',
+                  label: AppLocalizations.of(context).sleepDetailFellAsleepIn,
                   value: main.latencyMinutes != null
                       ? '${main.latencyMinutes} min'
                       : '–',
@@ -532,7 +533,7 @@ class _NapsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          naps.length == 1 ? 'Nap' : '${naps.length} naps',
+          naps.length == 1 ? AppLocalizations.of(context).sleepDetailNap : '${naps.length} naps',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
@@ -612,7 +613,7 @@ class _SevenNightChart extends StatelessWidget {
           _CardHeader(
             icon: Icons.bar_chart_rounded,
             color: AppColors.cyan,
-            title: 'Last 7 nights',
+            title: AppLocalizations.of(context).sleepDetailLast7Nights,
             isDark: isDark,
           ),
           const SizedBox(height: 14),
@@ -620,7 +621,7 @@ class _SevenNightChart extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
-                'No sleep tracked in the last 7 nights.',
+                AppLocalizations.of(context).sleepDetailNoSleepTrackedIn,
                 style: TextStyle(fontSize: 12, color: textMuted),
               ),
             )
@@ -755,7 +756,7 @@ class _ThirtyDayTrend extends ConsumerWidget {
           _CardHeader(
             icon: Icons.show_chart_rounded,
             color: AppColors.purple,
-            title: '30-day trend',
+            title: AppLocalizations.of(context).sleepDetail30DayTrend,
             isDark: isDark,
           ),
           const SizedBox(height: 12),
@@ -765,7 +766,7 @@ class _ThirtyDayTrend extends ConsumerWidget {
               child: Center(child: CircularProgressIndicator()),
             ),
             error: (_, __) => Text(
-              'Trend unavailable.',
+              AppLocalizations.of(context).sleepDetailTrendUnavailable,
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
             data: (series) {
@@ -773,7 +774,7 @@ class _ThirtyDayTrend extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    'Two or more synced nights are needed to chart a trend.',
+                    AppLocalizations.of(context).sleepDetailTwoOrMoreSynced,
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
                 );
@@ -782,7 +783,7 @@ class _ThirtyDayTrend extends ConsumerWidget {
                 height: 180,
                 accent: AppColors.purple,
                 primary: TrendChartSeries(
-                  label: 'Sleep',
+                  label: AppLocalizations.of(context).sleepDetailSleep,
                   unit: series.unit,
                   points: series.points,
                 ),
@@ -816,7 +817,7 @@ class _DebtRegularityCard extends StatelessWidget {
           _CardHeader(
             icon: Icons.balance_rounded,
             color: AppColors.teal,
-            title: 'Debt & regularity',
+            title: AppLocalizations.of(context).sleepDetailDebtRegularity,
             isDark: isDark,
           ),
           const SizedBox(height: 14),
@@ -824,7 +825,7 @@ class _DebtRegularityCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MiniMetric(
-                  label: 'Sleep debt (14d)',
+                  label: AppLocalizations.of(context).sleepDetailSleepDebt14d,
                   value: debt <= 0
                       ? 'None'
                       : '${debt ~/ 60}h ${debt % 60}m',
@@ -836,7 +837,7 @@ class _DebtRegularityCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _MiniMetric(
-                  label: 'Regularity',
+                  label: AppLocalizations.of(context).sleepDetailRegularity,
                   value: regularity != null ? '$regularity / 100' : '–',
                   icon: Icons.event_repeat_rounded,
                   color: AppColors.cyan,
@@ -869,7 +870,7 @@ class _MonthlySummaryCard extends StatelessWidget {
           _CardHeader(
             icon: Icons.calendar_month_rounded,
             color: AppColors.cyan,
-            title: 'Monthly summary',
+            title: AppLocalizations.of(context).sleepDetailMonthlySummary,
             isDark: isDark,
           ),
           const SizedBox(height: 14),
@@ -884,7 +885,7 @@ class _MonthlySummaryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _MiniMetric(
-                    label: 'Avg / night',
+                    label: AppLocalizations.of(context).sleepDetailAvgNight,
                     value:
                         '${summary.avgAsleepMinutes ~/ 60}h ${summary.avgAsleepMinutes % 60}m',
                     icon: Icons.nightlight_round,
@@ -895,7 +896,7 @@ class _MonthlySummaryCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _MiniMetric(
-                    label: 'Best night',
+                    label: AppLocalizations.of(context).sleepDetailBestNight,
                     value:
                         '${summary.bestAsleepMinutes ~/ 60}h ${summary.bestAsleepMinutes % 60}m',
                     icon: Icons.star_rounded,
@@ -910,7 +911,7 @@ class _MonthlySummaryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _MiniMetric(
-                    label: 'Shortest night',
+                    label: AppLocalizations.of(context).sleepDetailShortestNight,
                     value:
                         '${summary.worstAsleepMinutes ~/ 60}h ${summary.worstAsleepMinutes % 60}m',
                     icon: Icons.trending_down_rounded,
@@ -921,7 +922,7 @@ class _MonthlySummaryCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _MiniMetric(
-                    label: 'Nights with naps',
+                    label: AppLocalizations.of(context).sleepDetailNightsWithNaps,
                     value: '${summary.napNightCount}',
                     icon: Icons.wb_sunny_outlined,
                     color: AppColors.cyan,
@@ -982,7 +983,7 @@ class _CoachingCard extends StatelessWidget {
           _CardHeader(
             icon: Icons.lightbulb_outline_rounded,
             color: AppColors.warning,
-            title: 'Coaching tips',
+            title: AppLocalizations.of(context).sleepDetailCoachingTips,
             isDark: isDark,
           ),
           const SizedBox(height: 12),
@@ -1063,7 +1064,7 @@ class _SleepGoalCardState extends ConsumerState<_SleepGoalCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save sleep goal.')),
+          SnackBar(content: Text(AppLocalizations.of(context).sleepDetailCouldNotSaveSleep)),
         );
       }
     } finally {
@@ -1089,7 +1090,7 @@ class _SleepGoalCardState extends ConsumerState<_SleepGoalCard> {
           _CardHeader(
             icon: Icons.flag_rounded,
             color: AppColors.success,
-            title: 'Sleep goal',
+            title: AppLocalizations.of(context).sleepDetailSleepGoal,
             isDark: isDark,
           ),
           const SizedBox(height: 6),
@@ -1122,7 +1123,7 @@ class _SleepGoalCardState extends ConsumerState<_SleepGoalCard> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 const SizedBox(width: 8),
-                Text('Saving…',
+                Text(AppLocalizations.of(context).sleepDetailSaving,
                     style: TextStyle(fontSize: 11, color: textMuted)),
               ],
             ),
@@ -1280,7 +1281,7 @@ class _ConnectHealthEmpty extends ConsumerWidget {
             Icon(Icons.bedtime_outlined, size: 48, color: textMuted),
             const SizedBox(height: 16),
             Text(
-              'Connect Health to see your sleep',
+              AppLocalizations.of(context).sleepDetailConnectHealthToSee,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -1301,7 +1302,7 @@ class _ConnectHealthEmpty extends ConsumerWidget {
                 HapticService.light();
                 ref.read(healthSyncProvider.notifier).connect();
               },
-              child: const Text('Connect Health'),
+              child: Text(AppLocalizations.of(context).todaysHealthCardConnectHealth),
             ),
           ],
         ),
@@ -1326,7 +1327,7 @@ class _ErrorEmpty extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 40, color: textMuted),
             const SizedBox(height: 12),
             Text(
-              'Could not load sleep data. Pull back and try again.',
+              AppLocalizations.of(context).sleepDetailCouldNotLoadSleep,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: textMuted),
             ),

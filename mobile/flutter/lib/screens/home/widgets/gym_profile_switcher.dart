@@ -14,6 +14,7 @@ import 'components/sheet_theme_colors.dart';
 import 'edit_gym_profile_sheet.dart';
 import 'manage_gym_profiles_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Robinhood-style horizontal gym profile switcher strip
 ///
 /// Features:
@@ -160,7 +161,7 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
           Icon(Icons.refresh_rounded, size: 16, color: color),
           const SizedBox(width: 6),
           Text(
-            'Tap to retry',
+            AppLocalizations.of(context).upNextCardTapToRetry,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -188,7 +189,7 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
           Icon(Icons.add_circle_outline_rounded, size: 16, color: color),
           const SizedBox(width: 6),
           Text(
-            'Add gym',
+            AppLocalizations.of(context).gymProfileSwitcherAddGym,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -501,7 +502,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Switch Gym',
+                                  AppLocalizations.of(context).gymProfileSwitcherSwitchGym,
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -509,7 +510,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                                   ),
                                 ),
                                 Text(
-                                  'Drag to reorder profiles',
+                                  AppLocalizations.of(context).gymProfileSwitcherDragToReorderProfiles,
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: colors.textMuted,
@@ -524,7 +525,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                           // to advanced options (reorder, days, split, location)
                           // without leaving Home.
                           IconButton(
-                            tooltip: 'Manage profiles',
+                            tooltip: AppLocalizations.of(context).gymProfileSwitcherManageProfiles,
                             onPressed: () {
                               HapticService.light();
                               widget.onManageProfiles();
@@ -877,7 +878,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                           ),
                           const SizedBox(width: 3),
                           Text(
-                            'Active',
+                            AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -922,7 +923,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
-            'Duplicate Gym',
+            AppLocalizations.of(context).gymProfileSwitcherDuplicateGym,
             style: TextStyle(color: colors.textPrimary),
           ),
           content: Column(
@@ -930,7 +931,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Enter a name for the duplicated gym:',
+                AppLocalizations.of(context).gymProfileSwitcherEnterANameFor,
                 style: TextStyle(color: colors.textSecondary, fontSize: 14),
               ),
               const SizedBox(height: 12),
@@ -939,7 +940,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                 autofocus: true,
                 style: TextStyle(color: colors.textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Gym name',
+                  hintText: AppLocalizations.of(context).gymProfileSwitcherGymName,
                   hintStyle: TextStyle(color: colors.textMuted),
                   errorText: errorText,
                   filled: true,
@@ -976,7 +977,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
-                'Cancel',
+                AppLocalizations.of(context).buttonCancel,
                 style: TextStyle(color: colors.textSecondary),
               ),
             ),
@@ -996,7 +997,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                 Navigator.pop(dialogContext, newName);
               },
               child: Text(
-                'Duplicate',
+                AppLocalizations.of(context).manageGymProfilesDuplicate,
                 style: TextStyle(color: profile.profileColor),
               ),
             ),
@@ -1037,7 +1038,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
-              'Delete Gym?',
+              AppLocalizations.of(context).gymProfileSwitcherDeleteGym,
               style: TextStyle(color: colors.textPrimary),
             ),
             content: Text(
@@ -1048,14 +1049,14 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
                 child: Text(
-                  'Cancel',
+                  AppLocalizations.of(context).buttonCancel,
                   style: TextStyle(color: colors.textSecondary),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(
-                  'Delete',
+                  AppLocalizations.of(context).buttonDelete,
                   style: TextStyle(color: Colors.red.shade400),
                 ),
               ),

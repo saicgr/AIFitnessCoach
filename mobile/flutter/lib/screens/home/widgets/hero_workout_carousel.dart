@@ -14,6 +14,7 @@ import '../../../core/providers/synced_visibility_provider.dart';
 import 'hero_workout_card.dart';
 import 'synced_workouts_summary_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Represents either a workout, a placeholder date, or an aggregate of all
 /// synced workouts for one day in the carousel.
 class CarouselItem {
@@ -845,7 +846,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             ),
             const SizedBox(height: 16),
             Text(
-              isToday ? 'Today' : dayName,
+              isToday ? AppLocalizations.of(context).todayScoreCardToday : dayName,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -867,7 +868,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Generating workout...',
+                    AppLocalizations.of(context).heroWorkoutCarouselGeneratingWorkout,
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark ? Colors.white54 : Colors.black45,
@@ -877,7 +878,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               )
             else
               Text(
-                'No workout yet',
+                AppLocalizations.of(context).heroWorkoutCarouselNoWorkoutYet,
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark ? Colors.white54 : Colors.black45,
@@ -908,12 +909,12 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             children: [
               Icon(Icons.calendar_today_outlined, size: 48, color: accentColor.withValues(alpha: 0.5)),
               const SizedBox(height: 16),
-              Text('Set your workout days', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
+              Text(AppLocalizations.of(context).heroWorkoutCarouselSetYourWorkoutDays, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Tap to set up in Settings', style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.black45)),
+                  Text(AppLocalizations.of(context).heroWorkoutCarouselTapToSetUp, style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.black45)),
                   const SizedBox(width: 4),
                   Icon(Icons.arrow_forward_ios, size: 14, color: accentColor),
                 ],
@@ -940,9 +941,9 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           children: [
             Icon(Icons.check_circle_outline, size: 48, color: accentColor),
             const SizedBox(height: 16),
-            Text('All done for this week!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
+            Text(AppLocalizations.of(context).heroWorkoutCarouselAllDoneForThis, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 8),
-            Text('Rest up for next week', style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.black45)),
+            Text(AppLocalizations.of(context).heroWorkoutCarouselRestUpForNext, style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : Colors.black45)),
           ],
         ),
       ),
@@ -971,7 +972,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Setting up your workout...',
+              AppLocalizations.of(context).heroWorkoutCarouselSettingUpYourWorkout,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -1002,7 +1003,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Center(
-        child: Text('Could not load workouts', style: TextStyle(color: isDark ? Colors.white60 : Colors.black45)),
+        child: Text(AppLocalizations.of(context).heroWorkoutCarouselCouldNotLoadWorkouts, style: TextStyle(color: isDark ? Colors.white60 : Colors.black45)),
       ),
     );
   }

@@ -56,8 +56,8 @@ extension _DemoActiveWorkoutScreenStateUI1 on _DemoActiveWorkoutScreenState {
                   ),
                   TextButton(
                     onPressed: _skipWarmup,
-                    child: const Text(
-                      'Skip',
+                    child: Text(
+                      AppLocalizations.of(context).onboardingSkip,
                       style: TextStyle(
                         color: AppColors.orange,
                         fontWeight: FontWeight.w600,
@@ -88,8 +88,8 @@ extension _DemoActiveWorkoutScreenStateUI1 on _DemoActiveWorkoutScreenState {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'WARM UP',
+                      Text(
+                        AppLocalizations.of(context).workoutDetailWarmUp,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -357,7 +357,7 @@ extension _DemoActiveWorkoutScreenStateUI1 on _DemoActiveWorkoutScreenState {
               const SizedBox(height: 32),
 
               Text(
-                isExerciseTransition ? 'Next Exercise Coming Up!' : 'Rest Time',
+                isExerciseTransition ? AppLocalizations.of(context).demoActiveWorkoutNextExerciseComingUp : AppLocalizations.of(context).demoActiveWorkoutRestTime,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -412,7 +412,7 @@ extension _DemoActiveWorkoutScreenStateUI1 on _DemoActiveWorkoutScreenState {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'AI Coach Tip',
+                          AppLocalizations.of(context).neatDashboardScreenAiCoachTip,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -456,7 +456,7 @@ extension _DemoActiveWorkoutScreenStateUI1 on _DemoActiveWorkoutScreenState {
                     ),
                   ),
                   child: Text(
-                    'Skip Rest',
+                    AppLocalizations.of(context).restTimerOverlaySkipRest,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -526,8 +526,8 @@ extension _DemoActiveWorkoutScreenStateUI1 on _DemoActiveWorkoutScreenState {
                   ),
                   TextButton(
                     onPressed: _skipStretches,
-                    child: const Text(
-                      'Skip All',
+                    child: Text(
+                      AppLocalizations.of(context).stretchPhaseSkipAll,
                       style: TextStyle(
                         color: AppColors.green,
                         fontWeight: FontWeight.w600,
@@ -558,8 +558,8 @@ extension _DemoActiveWorkoutScreenStateUI1 on _DemoActiveWorkoutScreenState {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'COOL DOWN',
+                      Text(
+                        AppLocalizations.of(context).stretchPhaseCoolDown,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -602,7 +602,7 @@ extension _DemoActiveWorkoutScreenStateUI1 on _DemoActiveWorkoutScreenState {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Great job! Time to stretch and recover.',
+                        AppLocalizations.of(context).stretchPhaseGreatJobTimeTo,
                         style: TextStyle(
                           fontSize: 14,
                           color: textPrimary,

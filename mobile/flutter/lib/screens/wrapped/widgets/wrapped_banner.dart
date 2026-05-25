@@ -6,6 +6,7 @@ import '../../../data/models/wrapped_summary.dart';
 import '../../../data/providers/wrapped_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Engaging banner shown on the home screen driven by [wrappedSummaryProvider].
 ///
 /// State A: A new (unviewed) Wrapped is available - prominent, non-dismissible
@@ -160,7 +161,7 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Tap to reveal your gym personality',
+                      AppLocalizations.of(context).wrappedBannerTapToRevealYour,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
@@ -181,8 +182,8 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
                           color: Colors.white.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: const Text(
-                        'View My Wrapped',
+                      child: Text(
+                        AppLocalizations.of(context).wrappedBannerViewMyWrapped,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,

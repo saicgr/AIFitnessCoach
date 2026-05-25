@@ -12,6 +12,7 @@ import '../../data/services/sync_engine.dart';
 import '../../data/services/sync_failure_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen showing details about failed sync items (dead letters).
 /// Provides actions to retry, export, or re-authenticate.
 class SyncDetailsScreen extends ConsumerStatefulWidget {
@@ -198,13 +199,13 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
     if (retried) {
       ref.read(syncEngineProvider.notifier).syncNow();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Retrying...')),
+        SnackBar(content: Text(AppLocalizations.of(context).syncDetailsRetrying)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-              "This error won't fix itself on retry. Use Edit & re-log or Discard."),
+              AppLocalizations.of(context).syncDetailsThisErrorWonT),
         ),
       );
     }
@@ -215,19 +216,19 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Discard this change?'),
+        title: Text(AppLocalizations.of(context).syncDetailsDiscardThisChange),
         content: const Text(
             'This will permanently delete the unsent change from your device. '
             'Existing data on the server is unaffected.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Discard'),
+            child: Text(AppLocalizations.of(context).syncDetailsDiscard),
           ),
         ],
       ),
@@ -238,7 +239,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
     await service.discardItem(item.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Discarded')),
+      SnackBar(content: Text(AppLocalizations.of(context).syncDetailsDiscarded)),
     );
     await _loadDeadLetterItems();
   }
@@ -260,7 +261,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Sync Details'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).syncDetailsSyncDetails),
       body: _isLoading
           // Local Drift query — fast, but show a layout-matched skeleton
           // instead of a blocking spinner so the first frame is never empty.
@@ -282,7 +283,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'All synced!',
+                        AppLocalizations.of(context).syncDetailsAllSynced,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -291,7 +292,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'No failed sync items.',
+                        AppLocalizations.of(context).syncDetailsNoFailedSyncItems,
                         style: TextStyle(
                           fontSize: 14,
                           color: textSecondary,
@@ -488,7 +489,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                       icon: const Icon(
                                           Icons.delete_outline_rounded,
                                           size: 16),
-                                      label: const Text('Discard'),
+                                      label: Text(AppLocalizations.of(context).syncDetailsDiscard),
                                       style: TextButton.styleFrom(
                                         foregroundColor: AppColors.error,
                                         padding: const EdgeInsets.symmetric(
@@ -506,7 +507,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                       icon: const Icon(Icons.refresh_rounded,
                                           size: 16),
                                       label: Text(kind.isRetryable
-                                          ? 'Retry'
+                                          ? AppLocalizations.of(context).buttonRetry
                                           : 'Edit & re-log'),
                                       style: TextButton.styleFrom(
                                         foregroundColor: AppColors.info,
@@ -551,7 +552,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                       )
                                     : const Icon(Icons.download_rounded,
                                         size: 18),
-                                label: const Text('Export'),
+                                label: Text(AppLocalizations.of(context).syncDetailsExport),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: textSecondary,
                                   side: BorderSide(color: borderColor),
@@ -576,7 +577,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                       )
                                     : const Icon(Icons.refresh_rounded,
                                         size: 18),
-                                label: const Text('Retry All'),
+                                label: Text(AppLocalizations.of(context).syncDetailsRetryAll),
                                 style: FilledButton.styleFrom(
                                   backgroundColor: AppColors.info,
                                   foregroundColor: Colors.white,

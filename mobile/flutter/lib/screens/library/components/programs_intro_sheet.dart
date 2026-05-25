@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Introductory sheet shown when users first navigate to Programs tab
 /// Uses glassmorphism styling with accent colors
 class ProgramsIntroSheet extends StatelessWidget {
@@ -84,7 +85,7 @@ class ProgramsIntroSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Workout Programs',
+                              AppLocalizations.of(context).programsIntroWorkoutPrograms,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -101,7 +102,7 @@ class ProgramsIntroSheet extends StatelessWidget {
 
                   // What to expect section
                   Text(
-                    'What You Can Expect',
+                    AppLocalizations.of(context).programsIntroWhatYouCanExpect,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -112,8 +113,8 @@ class ProgramsIntroSheet extends StatelessWidget {
 
                   _buildExpectationItem(
                     icon: Icons.calendar_month_rounded,
-                    title: 'Flexible Duration',
-                    description: 'Programs from 1 to 16 weeks',
+                    title: AppLocalizations.of(context).programsIntroFlexibleDuration,
+                    description: AppLocalizations.of(context).programsIntroProgramsFrom1To,
                     accentColor: accentColor,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
@@ -121,8 +122,8 @@ class ProgramsIntroSheet extends StatelessWidget {
 
                   _buildExpectationItem(
                     icon: Icons.event_repeat_rounded,
-                    title: 'Custom Frequency',
-                    description: '3-7 workout days per week',
+                    title: AppLocalizations.of(context).programsIntroCustomFrequency,
+                    description: AppLocalizations.of(context).programsIntro37WorkoutDays,
                     accentColor: accentColor,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
@@ -130,8 +131,8 @@ class ProgramsIntroSheet extends StatelessWidget {
 
                   _buildExpectationItem(
                     icon: Icons.speed_rounded,
-                    title: 'All Levels',
-                    description: 'Beginner to Advanced',
+                    title: AppLocalizations.of(context).xpGoalsScreenAllLevels,
+                    description: AppLocalizations.of(context).programsIntroBeginnerToAdvanced,
                     accentColor: accentColor,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
@@ -139,8 +140,8 @@ class ProgramsIntroSheet extends StatelessWidget {
 
                   _buildExpectationItem(
                     icon: Icons.list_alt_rounded,
-                    title: '185+ Programs',
-                    description: 'Strength, cardio, mobility & more',
+                    title: AppLocalizations.of(context).programsIntro185Programs,
+                    description: AppLocalizations.of(context).programsIntroStrengthCardioMobilityM,
                     accentColor: accentColor,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
@@ -148,8 +149,8 @@ class ProgramsIntroSheet extends StatelessWidget {
 
                   _buildExpectationItem(
                     icon: Icons.play_circle_outline_rounded,
-                    title: 'Video Demos',
-                    description: 'Professional exercise tutorials',
+                    title: AppLocalizations.of(context).programsIntroVideoDemos,
+                    description: AppLocalizations.of(context).programsIntroProfessionalExerciseTutorial,
                     accentColor: accentColor,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
@@ -159,7 +160,7 @@ class ProgramsIntroSheet extends StatelessWidget {
 
                   // Program categories preview
                   Text(
-                    'Categories',
+                    AppLocalizations.of(context).programsIntroCategories,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -211,9 +212,9 @@ class ProgramsIntroSheet extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'Browse Programs',
+                                AppLocalizations.of(context).programsIntroBrowsePrograms,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,

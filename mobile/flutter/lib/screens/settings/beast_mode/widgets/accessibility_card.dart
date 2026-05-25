@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class AccessibilityCard extends ConsumerWidget {
   final BeastThemeData theme;
   const AccessibilityCard({super.key, required this.theme});
@@ -19,7 +20,7 @@ class AccessibilityCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Accessibility',
+            AppLocalizations.of(context).accessibilityCardAccessibility,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -28,7 +29,7 @@ class AccessibilityCard extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Visual and interaction adjustments',
+            AppLocalizations.of(context).accessibilityCardVisualAndInteractionAdjustm,
             style: TextStyle(fontSize: 11, color: theme.textMuted),
           ),
           const SizedBox(height: 16),
@@ -36,8 +37,8 @@ class AccessibilityCard extends ConsumerWidget {
           // High Contrast
           _AccessibilityToggle(
             icon: Icons.contrast,
-            label: 'High Contrast',
-            description: 'Increase color contrast for better visibility',
+            label: AppLocalizations.of(context).accessibilityHighContrast,
+            description: AppLocalizations.of(context).accessibilityCardIncreaseColorContrastFor,
             value: settings.highContrast,
             onChanged: (_) {
               ref.read(accessibilityProvider.notifier).toggleHighContrast();
@@ -49,8 +50,8 @@ class AccessibilityCard extends ConsumerWidget {
           // Large Buttons
           _AccessibilityToggle(
             icon: Icons.touch_app,
-            label: 'Large Buttons',
-            description: 'Bigger touch targets for easier tapping',
+            label: AppLocalizations.of(context).accessibilityLargeButtons,
+            description: AppLocalizations.of(context).accessibilityCardBiggerTouchTargetsFor,
             value: settings.largeButtons,
             onChanged: (_) {
               ref.read(accessibilityProvider.notifier).toggleLargeButtons();
@@ -62,8 +63,8 @@ class AccessibilityCard extends ConsumerWidget {
           // Reduce Animations
           _AccessibilityToggle(
             icon: Icons.animation,
-            label: 'Reduce Animations',
-            description: 'Minimize motion effects',
+            label: AppLocalizations.of(context).accessibilityReduceAnimations,
+            description: AppLocalizations.of(context).accessibilityCardMinimizeMotionEffects,
             value: settings.reduceAnimations,
             onChanged: (_) {
               ref.read(accessibilityProvider.notifier).toggleReduceAnimations();

@@ -45,7 +45,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
           Row(
             children: [
               Text(
-                'Level Progress',
+                AppLocalizations.of(context).xpGoalsScreenLevelProgress,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -270,7 +270,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'View All Levels & Rewards',
+                    AppLocalizations.of(context).xpGoalsScreenViewAllLevelsRewards,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -318,55 +318,55 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
 
     final dailyGoals = [
       _DailyGoal(
-        title: 'Log in today',
+        title: AppLocalizations.of(context).xpGoalsScreenLogInToday,
         xp: dailyLoginXP,
         isComplete: hasLoggedInToday,
         icon: Icons.login,
       ),
       _DailyGoal(
-        title: 'Complete 1 workout',
+        title: AppLocalizations.of(context).xpGoalsScreenComplete1Workout,
         xp: 100,
         isComplete: dailyGoalsState?.completedWorkout ?? false,
         icon: Icons.fitness_center,
       ),
       _DailyGoal(
-        title: 'Log a meal',
+        title: AppLocalizations.of(context).homeLogMeal,
         xp: 25,
         isComplete: dailyGoalsState?.loggedMeal ?? false,
         icon: Icons.restaurant,
       ),
       _DailyGoal(
-        title: 'Log weight',
+        title: AppLocalizations.of(context).xpGoalsScreenLogWeight,
         xp: 15,
         isComplete: dailyGoalsState?.loggedWeight ?? false,
         icon: Icons.monitor_weight_outlined,
       ),
       _DailyGoal(
-        title: 'Hit protein goal',
+        title: AppLocalizations.of(context).xpGoalsScreenHitProteinGoal,
         xp: 50,
         isComplete: dailyGoalsState?.hitProteinGoal ?? false,
         icon: Icons.egg_alt,
       ),
       _DailyGoal(
-        title: 'Log body measurements',
+        title: AppLocalizations.of(context).xpGoalsScreenLogBodyMeasurements,
         xp: 20,
         isComplete: dailyGoalsState?.loggedBodyMeasurements ?? false,
         icon: Icons.straighten,
       ),
       _DailyGoal(
-        title: 'Hit 10k steps',
+        title: AppLocalizations.of(context).xpGoalsScreenHit10kSteps,
         xp: 100,
         isComplete: dailyGoalsState?.hitStepsGoal ?? false,
         icon: Icons.directions_walk,
       ),
       _DailyGoal(
-        title: 'Hit hydration goal',
+        title: AppLocalizations.of(context).xpGoalsScreenHitHydrationGoal,
         xp: 40,
         isComplete: dailyGoalsState?.hitHydrationGoal ?? false,
         icon: Icons.water_drop_outlined,
       ),
       _DailyGoal(
-        title: 'Hit calorie goal',
+        title: AppLocalizations.of(context).xpGoalsScreenHitCalorieGoal,
         xp: 60,
         isComplete: dailyGoalsState?.hitCalorieGoal ?? false,
         icon: Icons.local_fire_department_outlined,
@@ -466,7 +466,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor, width: 1.5),
         ),
-        child: Text('Error loading weekly progress', style: TextStyle(color: textMuted)),
+        child: Text(AppLocalizations.of(context).xpGoalsScreenErrorLoadingWeeklyProgress, style: TextStyle(color: textMuted)),
       ),
       data: (progress) {
         final earnedXP = progress.totalXpEarned;
@@ -649,7 +649,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor, width: 1.5),
         ),
-        child: Text('Error loading monthly achievements', style: TextStyle(color: textMuted)),
+        child: Text(AppLocalizations.of(context).xpGoalsScreenErrorLoadingMonthlyAchievem, style: TextStyle(color: textMuted)),
       ),
       data: (progress) {
         final earnedXP = progress.totalXpEarned;
@@ -914,7 +914,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                'Inventory',
+                AppLocalizations.of(context).xpGoalsScreenInventory,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

@@ -21,6 +21,7 @@ import 'widgets/comparison_enums.dart';
 import 'widgets/comparison_supporting_widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 // Re-export enums so existing importers still work
 export 'widgets/comparison_enums.dart';
 
@@ -734,19 +735,19 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: SafeArea(top: false, child: Column(mainAxisSize: MainAxisSize.min, children: [
         SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-          ComparisonToolbarChip(label: 'Logo', icon: Icons.auto_awesome, isActive: _settings.showLogo, colorScheme: colorScheme, onTap: () => setState(() => _settings = _settings.copyWith(showLogo: !_settings.showLogo))),
+          ComparisonToolbarChip(label: AppLocalizations.of(context).comparisonLogo, icon: Icons.auto_awesome, isActive: _settings.showLogo, colorScheme: colorScheme, onTap: () => setState(() => _settings = _settings.copyWith(showLogo: !_settings.showLogo))),
           const SizedBox(width: 8),
-          ComparisonToolbarChip(label: 'Username', icon: Icons.alternate_email, isActive: _showUsername, colorScheme: colorScheme, onTap: () => setState(() => _showUsername = !_showUsername)),
+          ComparisonToolbarChip(label: AppLocalizations.of(context).comparisonUsername, icon: Icons.alternate_email, isActive: _showUsername, colorScheme: colorScheme, onTap: () => setState(() => _showUsername = !_showUsername)),
           const SizedBox(width: 8),
-          ComparisonToolbarChip(label: 'Stats', icon: Icons.bar_chart, isActive: _showStats, colorScheme: colorScheme, onTap: () => setState(() => _showStats = !_showStats)),
+          ComparisonToolbarChip(label: AppLocalizations.of(context).youHubStats, icon: Icons.bar_chart, isActive: _showStats, colorScheme: colorScheme, onTap: () => setState(() => _showStats = !_showStats)),
           const SizedBox(width: 8),
-          ComparisonToolbarChip(label: 'Weights', icon: Icons.monitor_weight_outlined, isActive: _showPhotoWeights, colorScheme: colorScheme, onTap: () => setState(() => _showPhotoWeights = !_showPhotoWeights)),
+          ComparisonToolbarChip(label: AppLocalizations.of(context).editWorkoutEquipmentWeights, icon: Icons.monitor_weight_outlined, isActive: _showPhotoWeights, colorScheme: colorScheme, onTap: () => setState(() => _showPhotoWeights = !_showPhotoWeights)),
           const SizedBox(width: 8),
-          ComparisonToolbarChip(label: 'Dates', icon: Icons.calendar_today, isActive: _settings.showDates, colorScheme: colorScheme, onTap: () => setState(() => _settings = _settings.copyWith(showDates: !_settings.showDates))),
+          ComparisonToolbarChip(label: AppLocalizations.of(context).comparisonDates, icon: Icons.calendar_today, isActive: _settings.showDates, colorScheme: colorScheme, onTap: () => setState(() => _settings = _settings.copyWith(showDates: !_settings.showDates))),
           const SizedBox(width: 8),
-          ComparisonToolbarChip(label: 'AI Summary', icon: Icons.auto_fix_high, isActive: _settings.showAiSummary, isLoading: _isLoadingAiSummary, colorScheme: colorScheme, onTap: _handleAiSummaryToggle),
+          ComparisonToolbarChip(label: AppLocalizations.of(context).weeklySummaryAiSummary, icon: Icons.auto_fix_high, isActive: _settings.showAiSummary, isLoading: _isLoadingAiSummary, colorScheme: colorScheme, onTap: _handleAiSummaryToggle),
           const SizedBox(width: 8),
-          ComparisonToolbarChip(label: 'Ghost', icon: Icons.layers_outlined, isActive: _ghostOverlayEnabled, colorScheme: colorScheme, onTap: () => setState(() => _ghostOverlayEnabled = !_ghostOverlayEnabled)),
+          ComparisonToolbarChip(label: AppLocalizations.of(context).comparisonGhost, icon: Icons.layers_outlined, isActive: _ghostOverlayEnabled, colorScheme: colorScheme, onTap: () => setState(() => _ghostOverlayEnabled = !_ghostOverlayEnabled)),
           const SizedBox(width: 8),
           ComparisonToolbarChip(label: 'CTA', icon: Icons.flash_on, isActive: _showCta, colorScheme: colorScheme, onTap: () => setState(() { _showCta = !_showCta; if (_showCta) _ctaPosition = const Offset(-1, -1); })),
           const SizedBox(width: 16),
@@ -785,7 +786,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
   Widget _buildDatePositionPills(ColorScheme colorScheme) {
     return AnimatedSize(duration: const Duration(milliseconds: 200), curve: Curves.easeInOut, child: _settings.showDates
         ? Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [
-            Text('Align', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+            Text(AppLocalizations.of(context).comparisonAlign, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
             const SizedBox(width: 8),
             ...DatePosition.values.map((pos) {
               final isActive = _datePosition == pos;
@@ -804,7 +805,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
   Widget _buildStyleControls(ColorScheme colorScheme) {
     return Padding(padding: const EdgeInsets.only(top: 10), child: Column(mainAxisSize: MainAxisSize.min, children: [
       SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-        Text('Shape', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+        Text(AppLocalizations.of(context).comparisonShape, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
         const SizedBox(width: 8),
         ...PhotoShape.values.map((shape) {
           final isActive = _photoShape == shape;
@@ -817,14 +818,14 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
           ));
         }),
         const SizedBox(width: 12),
-        ComparisonToolbarChip(label: 'Border', icon: Icons.border_style, isActive: _photoBorderEnabled, colorScheme: colorScheme, onTap: () => setState(() => _photoBorderEnabled = !_photoBorderEnabled)),
+        ComparisonToolbarChip(label: AppLocalizations.of(context).comparisonBorder, icon: Icons.border_style, isActive: _photoBorderEnabled, colorScheme: colorScheme, onTap: () => setState(() => _photoBorderEnabled = !_photoBorderEnabled)),
       ])),
       AnimatedSize(duration: const Duration(milliseconds: 200), child: _photoShape == PhotoShape.squircle
-          ? Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [Text('Radius', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)), Expanded(child: SliderTheme(data: SliderTheme.of(context).copyWith(trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)), child: Slider(value: _squircleRadius, min: 0, max: 48, onChanged: (v) => setState(() => _squircleRadius = v)))), SizedBox(width: 28, child: Text('${_squircleRadius.round()}', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)))]))
+          ? Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [Text(AppLocalizations.of(context).comparisonRadius, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)), Expanded(child: SliderTheme(data: SliderTheme.of(context).copyWith(trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)), child: Slider(value: _squircleRadius, min: 0, max: 48, onChanged: (v) => setState(() => _squircleRadius = v)))), SizedBox(width: 28, child: Text('${_squircleRadius.round()}', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)))]))
           : const SizedBox.shrink()),
       AnimatedSize(duration: const Duration(milliseconds: 200), child: _photoBorderEnabled
           ? Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [
-              Text('Width', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+              Text(AppLocalizations.of(context).comparisonWidth, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
               SizedBox(width: 100, child: SliderTheme(data: SliderTheme.of(context).copyWith(trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)), child: Slider(value: _photoBorderWidth, min: 1, max: 8, onChanged: (v) => setState(() => _photoBorderWidth = v)))),
               Text('${_photoBorderWidth.toStringAsFixed(1)}', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
               const SizedBox(width: 12),
@@ -832,13 +833,13 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
             ]))
           : const SizedBox.shrink()),
       Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [
-        Text('Gap', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+        Text(AppLocalizations.of(context).comparisonGap, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
         Expanded(child: SliderTheme(data: SliderTheme.of(context).copyWith(trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)), child: Slider(value: _photoSpacing, min: 0, max: 24, onChanged: (v) => setState(() => _photoSpacing = v)))),
         SizedBox(width: 28, child: Text('${_photoSpacing.round()}', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant))),
       ])),
       AnimatedSize(duration: const Duration(milliseconds: 200), child: _settings.showLogo
           ? Padding(padding: const EdgeInsets.only(top: 8), child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-              Text('Logo', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+              Text(AppLocalizations.of(context).comparisonLogo, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
               const SizedBox(width: 8),
               ..._buildLogoVariantPills(colorScheme),
             ])))
@@ -876,7 +877,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         ? Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [
             Icon(Icons.opacity, size: 14, color: colorScheme.onSurfaceVariant),
             const SizedBox(width: 4),
-            Text('Ghost', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+            Text(AppLocalizations.of(context).comparisonGhost, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
             Expanded(child: SliderTheme(data: SliderTheme.of(context).copyWith(trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)), child: Slider(value: _ghostOpacity, min: 0.1, max: 0.9, onChanged: (v) => setState(() => _ghostOpacity = v)))),
             SizedBox(width: 32, child: Text('${(_ghostOpacity * 100).round()}%', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant))),
           ]))
@@ -939,7 +940,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
           setState(() => _currentStep++);
         } : null,
         icon: const Icon(Icons.arrow_forward, size: 18),
-        label: Text(_currentStep == 0 ? 'Next: Select Photos' : 'Next: Customize'),
+        label: Text(_currentStep == 0 ? AppLocalizations.of(context).comparisonNextSelectPhotos : AppLocalizations.of(context).comparisonNextCustomize),
       )),
     );
   }
@@ -998,7 +999,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         if (created == null) throw Exception('Failed to create comparison');
         await notifier.updateComparison(comparisonId: created.id, layout: _selectedLayout.value, settingsJson: finalSettings.toJson(), aiSummary: _aiSummary, photosJson: photosJsonList);
       }
-      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Comparison saved!'), backgroundColor: Theme.of(context).colorScheme.primary)); Navigator.pop(context, true); }
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).comparisonComparisonSaved), backgroundColor: Theme.of(context).colorScheme.primary)); Navigator.pop(context, true); }
     } catch (e) {
       if (mounted) { setState(() => _isSaving = false); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e'), backgroundColor: Theme.of(context).colorScheme.error)); }
     }
@@ -1125,17 +1126,17 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('CTA label'),
+        title: Text(AppLocalizations.of(context).comparisonCtaLabel),
         content: TextField(
           controller: controller,
           autofocus: true,
           maxLength: 20,
           textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(hintText: 'START NOW'),
+          decoration: InputDecoration(hintText: AppLocalizations.of(context).comparisonStartNow),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: const Text('Save')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context).buttonCancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: Text(AppLocalizations.of(context).buttonSave)),
         ],
       ),
     );
@@ -1208,7 +1209,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
                   TextButton.icon(
                     onPressed: () => setState(() => _ctaPosition = const Offset(-1, -1)),
                     icon: Icon(Icons.restart_alt, size: 14, color: colorScheme.onSurfaceVariant),
-                    label: Text('Reset', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
+                    label: Text(AppLocalizations.of(context).trophyFilterReset, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       minimumSize: Size.zero,
@@ -1247,7 +1248,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
           Row(children: [
             Icon(Icons.auto_awesome, size: 14, color: colorScheme.primary),
             const SizedBox(width: 6),
-            Text('Templates', style: TextStyle(
+            Text(AppLocalizations.of(context).templatePickerTemplates, style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface,
             )),
             const SizedBox(width: 8),
@@ -1270,7 +1271,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('See all', style: TextStyle(
+                Text(AppLocalizations.of(context).profileScreenPartSeeAll, style: TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.primary,
                 )),
                 const SizedBox(width: 2),
@@ -1361,7 +1362,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         const SizedBox(height: 4),
         SizedBox(
           width: 54,
-          child: Text('See all',
+          child: Text(AppLocalizations.of(context).profileScreenPartSeeAll,
             maxLines: 1, overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: colorScheme.primary),
           ),

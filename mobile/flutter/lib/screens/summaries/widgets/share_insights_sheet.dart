@@ -13,6 +13,7 @@ import 'share_templates/insights_streak_template.dart';
 import 'share_templates/insights_summary_template.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Opens the share-template carousel for the current insights period.
 ///
 /// 6 templates, each period-aware via [periodName]:
@@ -54,7 +55,7 @@ class ShareInsightsSheet {
 
     await ShareTemplateSheet.show(
       context: context,
-      title: 'Share Report',
+      title: AppLocalizations.of(context).shareInsightsShareReport,
       caption: 'My ${Branding.appName} ${periodName.toLowerCase()} report',
       subject: 'My ${Branding.appName} Report',
       templatesBuilder: (showWatermark) => [

@@ -4,6 +4,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Step labels for the generation progress UI
 const _stepLabels = [
   'Analyzing profile',
@@ -398,7 +399,7 @@ class _GenerateWorkoutPlaceholderState
             Expanded(
               child: Text(
                 widget.isGenerationFailed
-                    ? 'Generation failed'
+                    ? AppLocalizations.of(context).generateWorkoutPlaceholderGenerationFailed
                     : widget.isGenerating
                         ? 'Generating your ${_getFullDayName()} workout...'
                         : 'Ready to train?',
@@ -421,7 +422,7 @@ class _GenerateWorkoutPlaceholderState
         // Subtitle
         Text(
           widget.isGenerationFailed
-              ? 'Tap below to try again'
+              ? AppLocalizations.of(context).generateWorkoutPlaceholderTapBelowToTry
               : widget.isGenerating
                   ? '${_getDateLabel()} - This may take a moment'
                   : 'Tap below to generate your personalized workout',
@@ -452,8 +453,8 @@ class _GenerateWorkoutPlaceholderState
                         widget.onGenerate();
                       },
                       icon: const Icon(Icons.auto_awesome, size: 20),
-                      label: const Text(
-                        'GENERATE WORKOUT',
+                      label: Text(
+                        AppLocalizations.of(context).generateWorkoutPlaceholderGenerateWorkout,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
@@ -534,7 +535,7 @@ class _GenerateWorkoutPlaceholderState
         ),
         const SizedBox(width: 6),
         Text(
-          'Personalized using your workout history',
+          AppLocalizations.of(context).generateWorkoutPlaceholderPersonalizedUsingYourWorkou,
           style: TextStyle(
             fontSize: 12,
             color: isDark
@@ -565,7 +566,7 @@ class _GenerateWorkoutPlaceholderState
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'What powers your workout?',
+                    AppLocalizations.of(context).generateWorkoutPlaceholderWhatPowersYourWorkout,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -576,7 +577,7 @@ class _GenerateWorkoutPlaceholderState
               ),
               const SizedBox(height: 16),
               Text(
-                'Your AI coach creates workouts based on:',
+                AppLocalizations.of(context).generateWorkoutPlaceholderYourAiCoachCreates,
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark
@@ -609,7 +610,7 @@ class _GenerateWorkoutPlaceholderState
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Each workout adapts to help you progress safely!',
+                        AppLocalizations.of(context).generateWorkoutPlaceholderEachWorkoutAdaptsTo,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -681,7 +682,7 @@ class _GenerateWorkoutPlaceholderState
               ),
               const SizedBox(width: 12),
               Text(
-                'GENERATING...',
+                AppLocalizations.of(context).generateWorkoutPlaceholderGenerating,
                 style: TextStyle(
                   color: accentColor,
                   fontWeight: FontWeight.bold,
@@ -704,8 +705,8 @@ class _GenerateWorkoutPlaceholderState
         widget.onGenerate();
       },
       icon: const Icon(Icons.refresh, size: 20),
-      label: const Text(
-        'TAP TO RETRY',
+      label: Text(
+        AppLocalizations.of(context).generateWorkoutPlaceholderTapToRetry,
         style: TextStyle(
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,

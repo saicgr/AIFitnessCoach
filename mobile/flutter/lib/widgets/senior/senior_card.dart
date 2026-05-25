@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Simplified card for Senior Mode with large text and easy tap targets
 class SeniorCard extends StatelessWidget {
   final String? title;
@@ -168,7 +169,7 @@ class SeniorWorkoutCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Text(
-                "TODAY'S WORKOUT",
+                AppLocalizations.of(context).seniorCardTodaySWorkout,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -218,7 +219,7 @@ class SeniorWorkoutCard extends StatelessWidget {
                       size: 36,
                     ),
               label: Text(
-                isLoading ? 'Loading...' : 'START WORKOUT',
+                isLoading ? AppLocalizations.of(context).weekProgressStripLoading : AppLocalizations.of(context).todayWorkoutCardStartWorkout,
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,

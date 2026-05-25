@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/injury.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class BodyPartSelector extends StatefulWidget {
   final String? selectedBodyPart;
   final ValueChanged<String> onBodyPartSelected;
@@ -73,7 +74,7 @@ class _BodyPartSelectorState extends State<BodyPartSelector> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Select Body Part',
+          AppLocalizations.of(context).bodyPartSelectorSelectBodyPart,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -82,7 +83,7 @@ class _BodyPartSelectorState extends State<BodyPartSelector> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Tap the affected area',
+          AppLocalizations.of(context).bodyPartSelectorTapTheAffectedArea,
           style: TextStyle(
             fontSize: 12,
             color: textMuted,

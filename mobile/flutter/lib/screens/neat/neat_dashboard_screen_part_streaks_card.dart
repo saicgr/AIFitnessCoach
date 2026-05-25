@@ -46,7 +46,7 @@ class _StreaksCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Streaks',
+                AppLocalizations.of(context).neatDashboardScreenStreaks,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -64,7 +64,7 @@ class _StreaksCard extends StatelessWidget {
               Expanded(
                 child: _StreakItem(
                   icon: Icons.directions_walk,
-                  label: 'Steps',
+                  label: AppLocalizations.of(context).syncedWorkoutDetailSteps,
                   current: streaks.currentStepStreak,
                   longest: streaks.longestStepStreak,
                   color: AppColors.cyan,
@@ -80,7 +80,7 @@ class _StreaksCard extends StatelessWidget {
               Expanded(
                 child: _StreakItem(
                   icon: Icons.schedule,
-                  label: 'Active',
+                  label: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                   current: streaks.currentActiveHoursStreak,
                   longest: streaks.longestActiveHoursStreak,
                   color: AppColors.success,
@@ -135,7 +135,7 @@ class _StreaksCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Longest NEAT Streak',
+                          AppLocalizations.of(context).neatDashboardScreenLongestNeatStreak,
                           style: TextStyle(
                             fontSize: 12,
                             color: textSecondary,
@@ -282,7 +282,7 @@ class _AchievementsCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Achievements',
+                AppLocalizations.of(context).youAchievements,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -293,7 +293,7 @@ class _AchievementsCard extends StatelessWidget {
               TextButton(
                 onPressed: onSeeAll,
                 child: Text(
-                  'See All',
+                  AppLocalizations.of(context).weightTrackingCardSeeAll,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.cyan,
@@ -317,7 +317,7 @@ class _AchievementsCard extends StatelessWidget {
             if (recentAchievements.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
-                'Recent',
+                AppLocalizations.of(context).nutritionShowcaseRecent,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -340,7 +340,7 @@ class _AchievementsCard extends StatelessWidget {
             if (nextAchievements.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                'Up Next',
+                AppLocalizations.of(context).upNextCardUpNext,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -579,7 +579,7 @@ class _MovementReminderCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Movement Reminders',
+                AppLocalizations.of(context).neatDashboardScreenMovementReminders,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -603,7 +603,7 @@ class _MovementReminderCard extends StatelessWidget {
 
             // Interval selector
             Text(
-              'Remind every',
+              AppLocalizations.of(context).notificationsRemindEvery,
               style: TextStyle(
                 fontSize: 12,
                 color: textSecondary,
@@ -646,7 +646,7 @@ class _MovementReminderCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'If below',
+                  AppLocalizations.of(context).neatDashboardScreenIfBelow,
                   style: TextStyle(
                     fontSize: 12,
                     color: textSecondary,
@@ -683,7 +683,7 @@ class _MovementReminderCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Work hours only (9am - 5pm)',
+                    AppLocalizations.of(context).neatDashboardScreenWorkHoursOnly9am,
                     style: TextStyle(
                       fontSize: 13,
                       color: textSecondary,
@@ -717,7 +717,7 @@ class _MovementReminderCard extends StatelessWidget {
                   TextButton(
                     onPressed: () => _showQuietHoursPicker(context),
                     child: Text(
-                      'Edit',
+                      AppLocalizations.of(context).commonEdit,
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.cyan,
@@ -823,7 +823,7 @@ class _AiTipsCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                'AI Coach Tip',
+                AppLocalizations.of(context).neatDashboardScreenAiCoachTip,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

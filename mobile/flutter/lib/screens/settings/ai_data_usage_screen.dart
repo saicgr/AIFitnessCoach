@@ -6,6 +6,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen explaining how AI uses user data, what it sees and doesn't see,
 /// and how data is protected.
 class AIDataUsageScreen extends ConsumerWidget {
@@ -24,8 +25,8 @@ class AIDataUsageScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
-        title: 'How Your Data Is Used',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).aiPrivacyHowYourDataIs,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -57,7 +58,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'How Your Data Is Used',
+                    AppLocalizations.of(context).aiPrivacyHowYourDataIs,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -85,8 +86,8 @@ class AIDataUsageScreen extends ConsumerWidget {
               context,
               icon: Icons.visibility_outlined,
               iconColor: AppColors.success,
-              title: 'What Models Receive',
-              subtitle: 'Everything needed to coach you',
+              title: AppLocalizations.of(context).aiDataUsageWhatModelsReceive,
+              subtitle: AppLocalizations.of(context).aiDataUsageEverythingNeededToCoach,
               items: const [
                 'Your fitness profile (age, height, weight, goals, equipment)',
                 'Workout history (exercises, sets, reps, weights, RPE)',
@@ -110,8 +111,8 @@ class AIDataUsageScreen extends ConsumerWidget {
               context,
               icon: Icons.visibility_off_outlined,
               iconColor: AppColors.error,
-              title: 'What Never Leaves Our Servers',
-              subtitle: 'Data we do not share with the models',
+              title: AppLocalizations.of(context).aiDataUsageWhatNeverLeavesOur,
+              subtitle: AppLocalizations.of(context).aiDataUsageDataWeDoNot,
               items: const [
                 'Your email address and full name',
                 'Payment or billing information',
@@ -134,8 +135,8 @@ class AIDataUsageScreen extends ConsumerWidget {
               context,
               icon: Icons.lock_outlined,
               iconColor: AppColors.info,
-              title: 'How Data is Protected',
-              subtitle: 'Technical safeguards in place',
+              title: AppLocalizations.of(context).aiDataUsageHowDataIsProtected,
+              subtitle: AppLocalizations.of(context).aiDataUsageTechnicalSafeguardsInPlace,
               items: const [
                 'TLS/HTTPS encryption for all data in transit',
                 'Encryption at rest in our database',
@@ -158,8 +159,8 @@ class AIDataUsageScreen extends ConsumerWidget {
               context,
               icon: Icons.tune,
               iconColor: AppColors.purple,
-              title: 'Your Controls',
-              subtitle: 'You are in charge of your data',
+              title: AppLocalizations.of(context).aiDataUsageYourControls,
+              subtitle: AppLocalizations.of(context).aiDataUsageYouAreInCharge,
               items: const [
                 'Toggle personalization on or off in Settings → Privacy',
                 'When off, chats and photos stop being sent to the models',

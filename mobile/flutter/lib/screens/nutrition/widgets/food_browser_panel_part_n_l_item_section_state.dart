@@ -401,7 +401,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
                   '$displayCalories',
                   style: TextStyle(color: textPrimary, fontSize: 13, fontWeight: FontWeight.w700),
                 ),
-                Text(' kcal', style: TextStyle(color: textMuted, fontSize: 11)),
+                Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(color: textMuted, fontSize: 11)),
                 const SizedBox(width: 4),
                 _FlagIconButton(
                   isDark: widget.isDark,
@@ -486,7 +486,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
                     controller: _searchCtrl,
                     style: TextStyle(fontSize: 13, color: textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Search alternatives...',
+                      hintText: AppLocalizations.of(context).foodBrowserPanelSearchAlternatives,
                       hintStyle: TextStyle(fontSize: 13, color: textMuted.withValues(alpha: 0.5)),
                       prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
                       isDense: true,
@@ -513,7 +513,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
               if (widget.showHint) ...[
                 const SizedBox(height: 6),
                 Text(
-                  'Tap items to adjust or pick alternatives',
+                  AppLocalizations.of(context).foodBrowserPanelTapItemsToAdjust,
                   style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.5), fontStyle: FontStyle.italic),
                 ),
               ],
@@ -670,7 +670,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Doneness', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
+          Text(AppLocalizations.of(context).foodBrowserPanelDoneness, style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
           Wrap(
             spacing: 4,
@@ -713,7 +713,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
         children: [
           Icon(mod.type == search.FoodModifierType.cookingMethod ? Icons.local_fire_department : Icons.straighten, size: 14, color: textMuted),
           const SizedBox(width: 4),
-          Text(mod.type == search.FoodModifierType.cookingMethod ? 'Cooking' : 'Size', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
+          Text(mod.type == search.FoodModifierType.cookingMethod ? AppLocalizations.of(context).foodBrowserPanelCooking : AppLocalizations.of(context).photoEditorSize, style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -737,7 +737,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
           ),
           const Spacer(),
           Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500)),
-          Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted.withValues(alpha: 0.6))),
+          Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted.withValues(alpha: 0.6))),
         ],
       ),
     );
@@ -765,7 +765,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
           const SizedBox(width: 6),
           Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary))),
           Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),
-          Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+          Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted)),
         ],
       ),
     );
@@ -883,7 +883,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
           children: [
             Icon(Icons.add, size: 14, color: teal),
             const SizedBox(width: 2),
-            Text('Log', style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
+            Text(AppLocalizations.of(context).recipeDetailLog, style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

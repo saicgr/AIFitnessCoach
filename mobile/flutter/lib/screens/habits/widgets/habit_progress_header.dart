@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Progress header showing today's habit completion stats
 class HabitProgressHeader extends StatelessWidget {
   final int completed;
@@ -94,7 +95,7 @@ class HabitProgressHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isComplete ? 'All Done!' : "Today's Habits",
+                  isComplete ? AppLocalizations.of(context).habitProgressHeaderAllDone : AppLocalizations.of(context).habitsTileCardTodaySHabits,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -104,7 +105,7 @@ class HabitProgressHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   isComplete
-                      ? 'You completed all your habits today!'
+                      ? AppLocalizations.of(context).habitProgressHeaderYouCompletedAllYour
                       : '${total - completed} habits remaining',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),

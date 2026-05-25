@@ -15,6 +15,7 @@ import 'report_strain_screen.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Provider for strain dashboard data
 final strainDashboardProvider =
     StateNotifierProvider<StrainDashboardNotifier, StrainDashboardState>(
@@ -210,7 +211,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: PillAppBar(
-        title: 'Strain Prevention',
+        title: AppLocalizations.of(context).strainDashboardStrainPrevention,
         actions: [
           PillAppBarAction(icon: Icons.history, onTap: _navigateToVolumeHistory),
           PillAppBarAction(icon: Icons.add_circle_outline, onTap: _navigateToReportStrain),
@@ -320,7 +321,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to Load Data',
+              AppLocalizations.of(context).strainDashboardFailedToLoadData,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -340,7 +341,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
               onPressed: () =>
                   ref.read(strainDashboardProvider.notifier).loadData(),
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -362,7 +363,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No Strain Data Yet',
+              AppLocalizations.of(context).strainDashboardNoStrainDataYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -371,7 +372,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete some workouts to see your strain prevention insights.',
+              AppLocalizations.of(context).strainDashboardCompleteSomeWorkoutsTo,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -427,7 +428,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Overall Status',
+                      AppLocalizations.of(context).strainDashboardOverallStatus,
                       style: TextStyle(
                         fontSize: 14,
                         color: colorScheme.onSurfaceVariant,
@@ -669,7 +670,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                     Icon(Icons.warning_amber, color: Colors.amber.shade700),
                     const SizedBox(width: 8),
                     Text(
-                      'Volume Alerts',
+                      AppLocalizations.of(context).strainDashboardVolumeAlerts,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -790,7 +791,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                       _navigateToVolumeHistory(muscleGroup: risk.muscleGroup);
                     },
                     icon: const Icon(Icons.timeline),
-                    label: const Text('View History'),
+                    label: Text(AppLocalizations.of(context).strainDashboardViewHistory),
                   ),
                 ),
               ],

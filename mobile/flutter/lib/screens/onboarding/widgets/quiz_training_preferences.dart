@@ -7,6 +7,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'onboarding_theme.dart';
 import 'scroll_hint_arrow.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Combined Training Preferences widget for quiz screens.
 /// Includes: Training Split, Workout Type, Progression Pace, Sleep Quality, and Obstacles
 /// With glassmorphic cards and learn more functionality.
@@ -117,7 +118,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               children: [
                 const SizedBox(height: 8),
               Text(
-                'Training Splits Explained',
+                AppLocalizations.of(context).quizTrainingPreferencesTrainingSplitsExplained,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -135,7 +136,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               )),
               const SizedBox(height: 24),
               Text(
-                'Workout Types',
+                AppLocalizations.of(context).quizTrainingPreferencesWorkoutTypes,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -148,7 +149,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               _buildExplanationItem('Mixed', 'Combination of strength training and cardio', AppColors.accent, Icons.sports_gymnastics, textPrimary, textSecondary),
               const SizedBox(height: 24),
               Text(
-                'Progression Pace',
+                AppLocalizations.of(context).workoutSettingsProgressionPace,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -244,7 +245,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
           if (widget.showHeader) ...[
             // Title
             Text(
-              "Training Preferences",
+              AppLocalizations.of(context).quizTrainingPreferencesTrainingPreferences,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -257,7 +258,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
             Row(
               children: [
                 Text(
-                  'All optional',
+                  AppLocalizations.of(context).quizTrainingPreferencesAllOptional,
                   style: TextStyle(fontSize: 12, color: t.textSecondary),
                 ),
                 const SizedBox(width: 6),
@@ -267,7 +268,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     _showExplanationSheet(context);
                   },
                   child: Text(
-                    'Not sure? Tap to learn more',
+                    AppLocalizations.of(context).quizTrainingPreferencesNotSureTapTo,
                     style: TextStyle(
                       fontSize: 12,
                       color: t.textPrimary,
@@ -306,7 +307,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Progressive overload & RIR integrated',
+                      AppLocalizations.of(context).quizTrainingPreferencesProgressiveOverloadRirInt,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -710,7 +711,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
         Row(
           children: [
             Text(
-              'Biggest Obstacles',
+              AppLocalizations.of(context).quizTrainingPreferencesBiggestObstacles,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

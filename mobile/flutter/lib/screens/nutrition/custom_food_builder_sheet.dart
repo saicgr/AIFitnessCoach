@@ -12,6 +12,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// A4 — Create a custom food, with an optional "AI fill" path.
 ///
 /// Two AI paths:
@@ -222,7 +223,7 @@ class _CustomFoodBuilderSheetState
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: theme.elevated,
-          title: Text('Already in your library',
+          title: Text(AppLocalizations.of(context).customFoodBuilderAlreadyInYourLibrary,
               style: TextStyle(color: theme.textPrimary)),
           content: Text(
             '"${dup.name}" already exists as a custom food'
@@ -233,7 +234,7 @@ class _CustomFoodBuilderSheetState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Create new anyway',
+              child: Text(AppLocalizations.of(context).customFoodBuilderCreateNewAnyway,
                   style: TextStyle(color: theme.textMuted)),
             ),
             FilledButton(
@@ -243,7 +244,7 @@ class _CustomFoodBuilderSheetState
                 // Pop the sheet, signalling the existing food id to the caller.
                 Navigator.pop(context, CustomFoodResult.useExisting(dup.id));
               },
-              child: const Text('Use existing'),
+              child: Text(AppLocalizations.of(context).importExercisePreviewUseExisting),
             ),
           ],
         ),
@@ -344,7 +345,7 @@ class _CustomFoodBuilderSheetState
 
             Row(
               children: [
-                Text('Create custom food',
+                Text(AppLocalizations.of(context).customFoodBuilderCreateCustomFood,
                     style: TextStyle(
                       color: theme.textPrimary,
                       fontSize: 20,
@@ -360,14 +361,14 @@ class _CustomFoodBuilderSheetState
             ),
             const SizedBox(height: 4),
             Text(
-              'Fill it in yourself, or let AI suggest from a name or a label photo. Every value stays editable.',
+              AppLocalizations.of(context).customFoodBuilderFillItInYourself,
               style: TextStyle(color: theme.textMuted, fontSize: 12.5),
             ),
             const SizedBox(height: 16),
 
             // ---- Name ----
             _LabeledField(
-              label: 'Name',
+              label: AppLocalizations.of(context).menuAnalysisName,
               theme: theme,
               child: TextField(
                 controller: _nameController,
@@ -396,7 +397,7 @@ class _CustomFoodBuilderSheetState
 
             // ---- Brand (optional — only captured, never invented) ----
             _LabeledField(
-              label: 'Brand (optional)',
+              label: AppLocalizations.of(context).customFoodBuilderBrandOptional,
               theme: theme,
               child: TextField(
                 controller: _brandController,
@@ -410,7 +411,7 @@ class _CustomFoodBuilderSheetState
 
             // ---- Serving amount ----
             _LabeledField(
-              label: 'Serving (optional)',
+              label: AppLocalizations.of(context).customFoodBuilderServingOptional,
               theme: theme,
               child: TextField(
                 controller: _amountController,
@@ -421,7 +422,7 @@ class _CustomFoodBuilderSheetState
             const SizedBox(height: 16),
 
             // ---- Macros ----
-            Text('Nutrition',
+            Text(AppLocalizations.of(context).settingsNutritionSection,
                 style: TextStyle(
                   color: theme.textPrimary,
                   fontSize: 14,
@@ -487,7 +488,7 @@ class _CustomFoodBuilderSheetState
                         child:
                             CircularProgressIndicator(strokeWidth: 2.2),
                       )
-                    : const Text('Save custom food',
+                    : Text(AppLocalizations.of(context).customFoodBuilderSaveCustomFood,
                         style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
@@ -696,7 +697,7 @@ class _AiFillRow extends StatelessWidget {
                 strokeWidth: 2, color: theme.accent),
           ),
           const SizedBox(width: 10),
-          Text('AI is suggesting…',
+          Text(AppLocalizations.of(context).customFoodBuilderAiIsSuggesting,
               style: TextStyle(color: theme.textSecondary, fontSize: 13)),
         ],
       );
@@ -709,19 +710,19 @@ class _AiFillRow extends StatelessWidget {
         _AiChip(
           theme: theme,
           icon: Icons.auto_awesome_rounded,
-          label: 'AI fill from name',
+          label: AppLocalizations.of(context).customFoodBuilderAiFillFromName,
           onTap: onFromName,
         ),
         _AiChip(
           theme: theme,
           icon: Icons.camera_alt_rounded,
-          label: 'Scan label',
+          label: AppLocalizations.of(context).customFoodBuilderScanLabel,
           onTap: onFromCamera,
         ),
         _AiChip(
           theme: theme,
           icon: Icons.photo_library_rounded,
-          label: 'Label from photos',
+          label: AppLocalizations.of(context).customFoodBuilderLabelFromPhotos,
           onTap: onFromGallery,
         ),
       ],

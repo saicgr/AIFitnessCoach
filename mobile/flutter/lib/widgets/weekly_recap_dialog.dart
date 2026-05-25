@@ -11,6 +11,7 @@ import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
 import 'minigame/nutrient_rush_game.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Monday-morning celebration modal. Shown on first foreground open after
 /// Monday 06:00 device-local time, if the user has a meaningful recap from
 /// last week. Dismissing via the CTA or the SKIP button both write an ack
@@ -191,7 +192,7 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
                       // rather than wondering what's dimming the screen.
                       Center(
                         child: Text(
-                          'WEEKLY RECAP',
+                          AppLocalizations.of(context).weeklyRecapWeeklyRecap,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -299,7 +300,7 @@ class _HeaderChip extends StatelessWidget {
           border: Border.all(color: tierColor.withValues(alpha: 0.5)),
         ),
         child: Text(
-          'LAST WEEK',
+          AppLocalizations.of(context).weeklyRecapLastWeek,
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w900,
@@ -415,7 +416,7 @@ class _XpEarnedRow extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              'earned last week',
+              AppLocalizations.of(context).weeklyRecapEarnedLastWeek,
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
           ],
@@ -505,7 +506,7 @@ class _AwardsList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'REWARDS UNLOCKED',
+          AppLocalizations.of(context).weeklyRecapRewardsUnlocked,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w900,
@@ -621,12 +622,12 @@ class _ShieldRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Text('🛡️', style: TextStyle(fontSize: 18)),
+        Text(AppLocalizations.of(context).weeklyRecap, style: TextStyle(fontSize: 18)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             count == 1
-                ? 'Rank Shield activated — streak preserved'
+                ? AppLocalizations.of(context).weeklyRecapRankShieldActivatedStreak
                 : '$count Rank Shields activated',
             style: TextStyle(fontSize: 12, color: textColor),
           ),
@@ -656,7 +657,7 @@ class _MovementRow extends StatelessWidget {
           Expanded(
             child: _StatPill(
               icon: Icons.arrow_upward,
-              label: 'Passed',
+              label: AppLocalizations.of(context).weeklyRecapPassed,
               value: passes,
               color: const Color(0xFF39C96B),
               textColor: textColor,
@@ -668,7 +669,7 @@ class _MovementRow extends StatelessWidget {
           Expanded(
             child: _StatPill(
               icon: Icons.arrow_downward,
-              label: 'Passed by',
+              label: AppLocalizations.of(context).weeklyRecapPassedBy,
               value: overtaken,
               color: const Color(0xFFE05A5A),
               textColor: textColor,
@@ -741,8 +742,8 @@ class _CtaButton extends StatelessWidget {
         minimumSize: const Size.fromHeight(48),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-      child: const Text(
-        'START THIS WEEK →',
+      child: Text(
+        AppLocalizations.of(context).weeklyRecapStartThisWeek,
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w900,
@@ -794,7 +795,7 @@ class _SkipPill extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Skip',
+                    AppLocalizations.of(context).onboardingSkip,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -874,7 +875,7 @@ class _BonusRoundCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bonus Round',
+                      AppLocalizations.of(context).weeklyRecapBonusRound,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
@@ -883,7 +884,7 @@ class _BonusRoundCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Catch nutrients, win bonus XP',
+                      AppLocalizations.of(context).weeklyRecapCatchNutrientsWinBonus,
                       style: TextStyle(fontSize: 12, color: textMuted),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

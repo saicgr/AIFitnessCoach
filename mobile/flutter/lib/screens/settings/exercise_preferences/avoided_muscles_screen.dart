@@ -12,6 +12,7 @@ import '../../../widgets/body_muscle_selector.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Provider for avoided muscles list
 final avoidedMusclesProvider =
     FutureProvider.family<List<AvoidedMuscle>, String>((ref, userId) async {
@@ -53,11 +54,11 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
     final userId = authState.user?.id;
 
     if (userId == null) {
-      final notLoggedIn = Center(child: Text('Please log in', style: TextStyle(color: textMuted)));
+      final notLoggedIn = Center(child: Text(AppLocalizations.of(context).avoidedMusclesPleaseLogIn, style: TextStyle(color: textMuted)));
       if (widget.embedded) return notLoggedIn;
       return Scaffold(
         backgroundColor: backgroundColor,
-        appBar: const PillAppBar(title: 'Muscles to Avoid'),
+        appBar: PillAppBar(title: AppLocalizations.of(context).trainingPreferencesMusclesToAvoid),
         body: notLoggedIn,
       );
     }
@@ -88,11 +89,11 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
             children: [
               Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
-              Text('Error loading muscles', style: TextStyle(color: textMuted)),
+              Text(AppLocalizations.of(context).avoidedMusclesErrorLoadingMuscles, style: TextStyle(color: textMuted)),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => ref.invalidate(avoidedMusclesProvider(userId)),
-                child: const Text('Retry'),
+                child: Text(AppLocalizations.of(context).buttonRetry),
               ),
             ],
           ),
@@ -116,7 +117,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                       children: [
                         // Instruction text
                         Text(
-                          'Select muscles to avoid or reduce in your workouts',
+                          AppLocalizations.of(context).avoidedMusclesSelectMusclesToAvoid,
                           style: TextStyle(
                             fontSize: 14,
                             color: textMuted,
@@ -156,7 +157,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                         // Already avoided muscles section
                         if (avoidedMuscles.isNotEmpty) ...[
                           Text(
-                            'Currently Avoided',
+                            AppLocalizations.of(context).avoidedMusclesCurrentlyAvoided,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -263,7 +264,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                                   ? null
                                   : () => _addMuscles(userId, 'avoid'),
                               icon: const Icon(Icons.block, size: 18),
-                              label: const Text('Avoid'),
+                              label: Text(AppLocalizations.of(context).menuFilterAvoid),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.error,
                                 foregroundColor: Colors.white,
@@ -281,7 +282,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                                   ? null
                                   : () => _addMuscles(userId, 'reduce'),
                               icon: const Icon(Icons.remove_circle_outline, size: 18),
-                              label: const Text('Reduce'),
+                              label: Text(AppLocalizations.of(context).avoidedMusclesReduce),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.orange,
                                 foregroundColor: Colors.white,
@@ -307,7 +308,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Muscles to Avoid',
+        title: AppLocalizations.of(context).trainingPreferencesMusclesToAvoid,
         actions: [
           PillAppBarAction(
             icon: Icons.clear_all_rounded,
@@ -351,7 +352,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -366,7 +367,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
               backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
       ),
@@ -415,7 +416,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                 const SizedBox(height: 20),
                 // Severity toggle
                 Text(
-                  'Severity',
+                  AppLocalizations.of(context).reportInjurySeverity,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -458,7 +459,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                                     color: isAvoid ? AppColors.error : textMuted),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Avoid',
+                                  AppLocalizations.of(context).menuFilterAvoid,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight:
@@ -499,7 +500,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                                     color: !isAvoid ? AppColors.orange : textMuted),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Reduce',
+                                  AppLocalizations.of(context).avoidedMusclesReduce,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight:
@@ -518,7 +519,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                 const SizedBox(height: 8),
                 Text(
                   isAvoid
-                      ? 'Exercises targeting this muscle will be fully excluded'
+                      ? AppLocalizations.of(context).avoidedMusclesExercisesTargetingThisMuscl
                       : 'Exercises targeting this muscle will be limited',
                   style: TextStyle(fontSize: 12, color: textMuted),
                   textAlign: TextAlign.center,
@@ -536,7 +537,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                           _updateMuscleSeverity(userId, muscle, selectedSeverity);
                         },
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Save Changes'),
+                        label: Text(AppLocalizations.of(context).vacationModeSaveChanges),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: severityColor,
                           foregroundColor: Colors.white,
@@ -558,7 +559,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                             _removeMuscle(userId, muscle);
                           },
                           icon: const Icon(Icons.delete_outline, size: 18),
-                          label: const Text('Remove from Avoid List'),
+                          label: Text(AppLocalizations.of(context).avoidedMusclesRemoveFromAvoidList),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.error,
                             side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
@@ -574,7 +575,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                             _removeMuscle(userId, muscle);
                           },
                           icon: const Icon(Icons.delete_outline),
-                          label: const Text('Remove from Avoid List'),
+                          label: Text(AppLocalizations.of(context).avoidedMusclesRemoveFromAvoidList),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.error,
                             foregroundColor: Colors.white,
@@ -668,7 +669,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
           SnackBar(
             content: Text(
               count == 1
-                  ? 'Replaced exercises targeting this muscle in upcoming workouts'
+                  ? AppLocalizations.of(context).avoidedMusclesReplacedExercisesTargetingT
                   : 'Replaced exercises targeting $count muscles in upcoming workouts',
             ),
             backgroundColor: AppColors.success,

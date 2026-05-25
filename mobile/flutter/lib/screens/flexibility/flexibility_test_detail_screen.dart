@@ -7,6 +7,7 @@ import 'widgets/record_assessment_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Detailed view of a specific flexibility test with progress tracking
 class FlexibilityTestDetailScreen extends ConsumerStatefulWidget {
   final FlexibilityTest test;
@@ -72,7 +73,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
             // Flexibility Trends chart
             if (trend != null && trend.trendData.length > 1) ...[
               Text(
-                'Flexibility Trends',
+                AppLocalizations.of(context).flexibilityTestDetailFlexibilityTrends,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -89,7 +90,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
 
             // Description
             Text(
-              'About This Test',
+              AppLocalizations.of(context).flexibilityTestDetailAboutThisTest,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -106,7 +107,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
             // Target Muscles
             if (widget.test.targetMuscles.isNotEmpty) ...[
               Text(
-                'Target Muscles',
+                AppLocalizations.of(context).flexibilityTestDetailTargetMuscles,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -127,7 +128,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
 
             // Instructions
             Text(
-              'Instructions',
+              AppLocalizations.of(context).workoutShowcaseInstructions,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -175,7 +176,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
             // Equipment Needed
             if (widget.test.equipmentNeeded.isNotEmpty) ...[
               Text(
-                'Equipment Needed',
+                AppLocalizations.of(context).flexibilityTestDetailEquipmentNeeded,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -220,7 +221,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Tips',
+                    AppLocalizations.of(context).recordAssessmentTips,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -243,7 +244,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '\u2022 ',
+                            AppLocalizations.of(context).xpGoalsU2022,
                             style: TextStyle(
                               color: Colors.amber.shade800,
                               fontSize: 16,
@@ -275,7 +276,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Common Mistakes to Avoid',
+                    AppLocalizations.of(context).flexibilityTestDetailCommonMistakesToAvoid,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -321,7 +322,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
             // Recent History
             if (state.assessmentHistory.isNotEmpty) ...[
               Text(
-                'Recent Assessments',
+                AppLocalizations.of(context).flexibilityTestDetailRecentAssessments,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -339,7 +340,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showRecordSheet(),
         icon: const Icon(Icons.add),
-        label: Text(latestAssessment != null ? 'Update' : 'Take Test'),
+        label: Text(latestAssessment != null ? AppLocalizations.of(context).quickLogMeasurementsUpdate : AppLocalizations.of(context).flexibilityTestDetailTakeTest),
       ),
     );
   }
@@ -358,14 +359,14 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
               ),
               const SizedBox(height: 16),
               Text(
-                'Not Yet Assessed',
+                AppLocalizations.of(context).flexibilityTestDetailNotYetAssessed,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Take this test to get your flexibility rating and personalized recommendations',
+                AppLocalizations.of(context).flexibilityTestDetailTakeThisTestTo,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -374,7 +375,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => _showRecordSheet(),
-                child: const Text('Start Assessment'),
+                child: Text(AppLocalizations.of(context).flexibilityTestDetailStartAssessment),
               ),
             ],
           ),

@@ -8,6 +8,7 @@ import '../../../data/providers/guest_usage_limits_provider.dart';
 import '../../../data/providers/weekly_plan_provider.dart';
 import '../../../widgets/guest_upgrade_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for generating a new weekly plan
 class GeneratePlanSheet extends ConsumerStatefulWidget {
   const GeneratePlanSheet({super.key});
@@ -80,8 +81,8 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
     if (plan != null && mounted) {
       navigator.pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Weekly plan generated!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).generatePlanWeeklyPlanGenerated),
           backgroundColor: Colors.green,
         ),
       );
@@ -150,7 +151,7 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Generate Weekly Plan',
+                      AppLocalizations.of(context).generatePlanGenerateWeeklyPlan,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -159,14 +160,14 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Create a holistic plan that coordinates your workouts, nutrition, and fasting.',
+                  AppLocalizations.of(context).generatePlanCreateAHolisticPlan,
                   style: TextStyle(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 32),
 
                 // Workout Days Selection
                 Text(
-                  'Training Days',
+                  AppLocalizations.of(context).generatePlanTrainingDays,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -177,7 +178,7 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
 
                 // Fasting Protocol
                 Text(
-                  'Fasting Protocol',
+                  AppLocalizations.of(context).nutritionFastingFastingProtocol,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -188,7 +189,7 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
 
                 // Nutrition Strategy
                 Text(
-                  'Nutrition Strategy',
+                  AppLocalizations.of(context).generatePlanNutritionStrategy,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -199,7 +200,7 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
 
                 // Preferred Workout Time
                 Text(
-                  'Preferred Workout Time',
+                  AppLocalizations.of(context).generatePlanPreferredWorkoutTime,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -224,7 +225,7 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
                             ),
                           )
                         : const Icon(Icons.auto_awesome),
-                    label: Text(isGenerating ? 'Generating...' : 'Generate Plan'),
+                    label: Text(isGenerating ? AppLocalizations.of(context).upcomingWorkoutsGenerating : AppLocalizations.of(context).weeklyPlanGeneratePlan),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),

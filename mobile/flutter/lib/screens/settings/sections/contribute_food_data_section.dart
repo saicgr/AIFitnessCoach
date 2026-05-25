@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class ContributeFoodDataSection extends ConsumerStatefulWidget {
   const ContributeFoodDataSection({super.key});
 
@@ -88,7 +89,7 @@ class _ContributeFoodDataSectionState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete food contributions?'),
+        title: Text(AppLocalizations.of(context).contributeFoodDataDeleteFoodContributions),
         content: const Text(
           'This permanently removes every dish you\'ve contributed to the '
           'community nutrition cache. Your own food log stays intact.\n\n'
@@ -97,12 +98,12 @@ class _ContributeFoodDataSectionState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -121,7 +122,7 @@ class _ContributeFoodDataSectionState
         SnackBar(
           content: Text(
             n == 0
-                ? 'No contributions to delete'
+                ? AppLocalizations.of(context).contributeFoodDataNoContributionsToDelete
                 : 'Deleted $n contributed dish${n == 1 ? '' : 'es'}',
           ),
         ),
@@ -130,7 +131,7 @@ class _ContributeFoodDataSectionState
       if (!mounted) return;
       setState(() => _deleting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not delete — please try again')),
+        SnackBar(content: Text(AppLocalizations.of(context).contributeFoodDataCouldNotDeletePlease)),
       );
     }
   }
@@ -158,7 +159,7 @@ class _ContributeFoodDataSectionState
               Icon(Icons.restaurant_menu, color: accent, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Help improve nutrition data',
+                AppLocalizations.of(context).contributeFoodDataHelpImproveNutritionData,
                 style: TextStyle(
                   color: textPrimary,
                   fontSize: 16,
@@ -184,7 +185,7 @@ class _ContributeFoodDataSectionState
                 Expanded(
                   child: Text(
                     _enabled
-                        ? 'Sharing novel dishes (recommended)'
+                        ? AppLocalizations.of(context).contributeFoodDataSharingNovelDishesRecommen
                         : 'Not sharing novel dishes',
                     style: TextStyle(
                       color: textPrimary,
@@ -216,7 +217,7 @@ class _ContributeFoodDataSectionState
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.delete_outline, size: 18),
-            label: const Text('Delete my food contributions'),
+            label: Text(AppLocalizations.of(context).contributeFoodDataDeleteMyFoodContributions),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               side: const BorderSide(color: Colors.red, width: 1),

@@ -12,6 +12,7 @@ import '../../data/repositories/chat_repository.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../coach_avatar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Global chat overlay that handles the modal chat UI
 /// The AI button is now in main_shell.dart (fixed position beside nav bar)
 class GlobalChatBubble extends ConsumerWidget {
@@ -171,7 +172,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                         ),
                       ),
                       Text(
-                        _isLoading ? 'Typing...' : 'Online',
+                        _isLoading ? AppLocalizations.of(context).globalChatBubbleTyping : AppLocalizations.of(context).globalChatBubbleOnline,
                         style: TextStyle(
                           fontSize: 13,
                           color: _isLoading
@@ -188,7 +189,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     widget.onClose();
                     context.push('/coach-selection?fromSettings=true');
                   },
-                  tooltip: 'Change coach',
+                  tooltip: AppLocalizations.of(context).workoutAiCoachChangeCoach,
                 ),
                 IconButton(
                   icon: Icon(Icons.close, color: textMuted, size: 24),
@@ -216,10 +217,10 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                         color: isDark ? AppColors.error : AppColorsLight.error,
                         size: 40),
                     const SizedBox(height: 12),
-                    Text('Error loading messages', style: TextStyle(color: textMuted)),
+                    Text(AppLocalizations.of(context).globalChatBubbleErrorLoadingMessages, style: TextStyle(color: textMuted)),
                     TextButton(
                       onPressed: () => ref.read(chatMessagesProvider.notifier).loadHistory(force: true),
-                      child: const Text('Retry'),
+                      child: Text(AppLocalizations.of(context).buttonRetry),
                     ),
                   ],
                 ),
@@ -265,7 +266,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     minLines: 1,
                     style: TextStyle(fontSize: 15, color: textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Ask your AI coach...',
+                      hintText: AppLocalizations.of(context).globalChatBubbleAskYourAiCoach,
                       hintStyle: TextStyle(color: textMuted),
                       filled: true,
                       fillColor: glassSurface,
@@ -348,7 +349,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           ),
           const SizedBox(height: 20),
           Text(
-            'How can I help you today?',
+            AppLocalizations.of(context).globalChatBubbleHowCanIHelp,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -357,7 +358,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Ask me anything about fitness',
+            AppLocalizations.of(context).globalChatBubbleAskMeAnythingAbout,
             style: TextStyle(
               fontSize: 15,
               color: textSecondary,

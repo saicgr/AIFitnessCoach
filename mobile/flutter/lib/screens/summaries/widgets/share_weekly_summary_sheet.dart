@@ -8,6 +8,7 @@ import 'share_templates/weekly_prs_template.dart';
 import 'share_templates/weekly_recap_template.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Opens the share-template carousel for a single [WeeklySummary].
 ///
 /// Three templates: Recap (completion + stats), PRs (weekly records),
@@ -25,7 +26,7 @@ class ShareWeeklySummarySheet {
 
     await ShareTemplateSheet.show(
       context: context,
-      title: 'Share Your Week',
+      title: AppLocalizations.of(context).shareWeeklySummaryShareYourWeek,
       caption: 'My ${Branding.appName} week — $dateRange',
       subject: 'My ${Branding.appName} Weekly Report',
       templatesBuilder: (showWatermark) => [

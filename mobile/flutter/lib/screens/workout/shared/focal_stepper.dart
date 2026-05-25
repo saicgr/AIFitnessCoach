@@ -23,6 +23,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import 'focal_stepper_internals.dart';
 import 'focal_stepper_numeric_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class FocalStepper extends StatefulWidget {
   final double value;
   final double step;
@@ -118,7 +119,7 @@ class _FocalStepperState extends State<FocalStepper> {
       integerOnly: widget.integerOnly,
       min: widget.min,
       max: widget.max,
-      label: widget.label ?? 'Value',
+      label: widget.label ?? AppLocalizations.of(context).focalStepperValue,
     );
     if (result != null) {
       await HapticService.instance.success();

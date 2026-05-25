@@ -14,6 +14,7 @@ import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'exercise_info_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Rep progression types
 enum RepProgressionType {
   straight,
@@ -280,7 +281,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         // action is one tap from a long-press (was 3-tap "Replace" before).
         _buildOptionItem(
           icon: Icons.swap_horiz_rounded,
-          label: 'Swap exercise',
+          label: AppLocalizations.of(context).workoutReviewSwapExercise,
           onTap: () {
             Navigator.pop(context);
             widget.onReplace();
@@ -294,7 +295,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         if (widget.onReportPain != null)
           _buildOptionItem(
             icon: Icons.healing_outlined,
-            label: 'Report pain',
+            label: AppLocalizations.of(context).exerciseOptionsReportPain,
             onTap: () {
               Navigator.pop(context);
               widget.onReportPain!();
@@ -310,7 +311,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         if (widget.onChangeEquipment != null)
           _buildOptionItem(
             icon: Icons.fitness_center_rounded,
-            label: 'Change equipment',
+            label: AppLocalizations.of(context).exerciseOptionsChangeEquipment,
             onTap: () {
               Navigator.pop(context);
               widget.onChangeEquipment!();
@@ -322,7 +323,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         // Change Reps Progression
         _buildOptionItem(
           icon: Icons.trending_up_rounded,
-          label: 'Change Reps Progression',
+          label: AppLocalizations.of(context).workoutSheetsMixinChangeRepsProgression,
           subtitle: widget.currentProgression.displayName,
           onTap: () {
             HapticFeedback.selectionClick();
@@ -337,7 +338,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         if (widget.onAddToSuperset != null)
           _buildOptionItem(
             icon: Icons.link_rounded,
-            label: 'Add to Superset',
+            label: AppLocalizations.of(context).exerciseOptionsAddToSuperset,
             onTap: () {
               Navigator.pop(context);
               widget.onAddToSuperset!();
@@ -349,7 +350,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         // Video & Instructions
         _buildOptionItem(
           icon: Icons.play_circle_outline_rounded,
-          label: 'Video & Instructions',
+          label: AppLocalizations.of(context).exerciseOptionsVideoInstructions,
           onTap: () {
             Navigator.pop(context);
             widget.onViewInstructions();
@@ -361,7 +362,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         // Exercise History
         _buildOptionItem(
           icon: Icons.history_rounded,
-          label: 'Exercise History',
+          label: AppLocalizations.of(context).setTrackingSheetsExerciseHistory,
           onTap: () {
             Navigator.pop(context);
             widget.onViewHistory();
@@ -373,7 +374,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         // Notes
         _buildOptionItem(
           icon: Icons.chat_bubble_outline_rounded,
-          label: 'Notes',
+          label: AppLocalizations.of(context).syncedWorkoutDetailNotes,
           onTap: () {
             Navigator.pop(context);
             widget.onAddNotes();
@@ -395,7 +396,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         // Remove from workout (destructive)
         _buildOptionItem(
           icon: Icons.delete_outline_rounded,
-          label: 'Remove from Workout',
+          label: AppLocalizations.of(context).expandedExerciseCardRemoveFromWorkout,
           onTap: () {
             Navigator.pop(context);
             widget.onRemoveFromWorkout();
@@ -409,7 +410,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
         if (widget.onRemoveAndDontRecommend != null)
           _buildOptionItem(
             icon: Icons.block_rounded,
-            label: "Remove and Don't Recommend",
+            label: AppLocalizations.of(context).exerciseOptionsRemoveAndDonT,
             onTap: () {
               Navigator.pop(context);
               widget.onRemoveAndDontRecommend!();
@@ -506,7 +507,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
                 ),
               ),
               Text(
-                'Change Reps Progression',
+                AppLocalizations.of(context).workoutSheetsMixinChangeRepsProgression,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

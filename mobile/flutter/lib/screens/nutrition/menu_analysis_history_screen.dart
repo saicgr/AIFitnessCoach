@@ -16,6 +16,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'menu_analysis_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class MenuAnalysisHistoryScreen extends ConsumerStatefulWidget {
   const MenuAnalysisHistoryScreen({super.key});
 
@@ -69,8 +70,8 @@ class _MenuAnalysisHistoryScreenState
   void _showOfflineMessage() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("You're offline — this needs a connection"),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).menuAnalysisYouReOfflineThis),
       ),
     );
   }
@@ -206,7 +207,7 @@ class _MenuAnalysisHistoryScreenState
             final showQuickFill = restaurant.isNotEmpty &&
                 restaurant != nameController.text.trim();
             return AlertDialog(
-              title: const Text('Edit details'),
+              title: Text(AppLocalizations.of(context).menuAnalysisHistoryEditDetails),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -215,9 +216,9 @@ class _MenuAnalysisHistoryScreenState
                     autofocus: true,
                     maxLength: 60,
                     onChanged: (_) => setLocal(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      hintText: 'e.g. Indian place near work',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).menuAnalysisName,
+                      hintText: AppLocalizations.of(context).menuAnalysisHistoryEGIndianPlace,
                     ),
                   ),
                   if (showQuickFill)
@@ -228,7 +229,7 @@ class _MenuAnalysisHistoryScreenState
                         child: ActionChip(
                           avatar:
                               const Icon(Icons.storefront_outlined, size: 16),
-                          label: const Text('Use restaurant name',
+                          label: Text(AppLocalizations.of(context).menuAnalysisUseRestaurantName,
                               style: TextStyle(fontSize: 12)),
                           onPressed: () => setLocal(() {
                             nameController.text = restaurant;
@@ -240,9 +241,9 @@ class _MenuAnalysisHistoryScreenState
                     controller: addressController,
                     maxLines: 2,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Address (optional)',
-                      hintText: 'e.g. 123 Main St, or just "downtown"',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).menuAnalysisHistoryAddressOptional,
+                      hintText: AppLocalizations.of(context).menuAnalysisHistoryEG123Main,
                     ),
                   ),
                 ],
@@ -250,10 +251,10 @@ class _MenuAnalysisHistoryScreenState
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Cancel')),
+                    child: Text(AppLocalizations.of(context).buttonCancel)),
                 FilledButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Save'),
+                  child: Text(AppLocalizations.of(context).buttonSave),
                 ),
               ],
             );
@@ -308,7 +309,7 @@ class _MenuAnalysisHistoryScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Saved Menus',
+        title: AppLocalizations.of(context).menuAnalysisHistorySavedMenus,
         actions: [
           PillAppBarAction(icon: Icons.refresh, onTap: _load),
         ],
@@ -321,7 +322,7 @@ class _MenuAnalysisHistoryScreenState
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.error_outline, size: 48, color: AppColors.error),
                     const SizedBox(height: 12),
-                    Text('Couldn\'t load your saved menus', style: TextStyle(color: AppColors.error)),
+                    Text(AppLocalizations.of(context).menuAnalysisHistoryCouldnTLoadYour, style: TextStyle(color: AppColors.error)),
                     const SizedBox(height: 4),
                     Text(_error!, style: const TextStyle(fontSize: 11), textAlign: TextAlign.center),
                   ]),
@@ -402,7 +403,7 @@ class _SearchField extends StatelessWidget {
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           isDense: true,
-          hintText: 'Search by name, restaurant, or address',
+          hintText: AppLocalizations.of(context).menuAnalysisHistorySearchByNameRestaurant,
           prefixIcon: const Icon(Icons.search, size: 20),
           // ValueListenableBuilder keeps the clear button in sync with the
           // field contents without an extra setState on every keystroke.
@@ -412,7 +413,7 @@ class _SearchField extends StatelessWidget {
                 ? const SizedBox.shrink()
                 : IconButton(
                     icon: const Icon(Icons.clear, size: 18),
-                    tooltip: 'Clear search',
+                    tooltip: AppLocalizations.of(context).netflixExercisesTabClearSearch,
                     onPressed: onClear,
                   ),
           ),
@@ -438,12 +439,12 @@ class _NoMatchesState extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.search_off, size: 56, color: AppColors.textMuted),
         const SizedBox(height: 12),
-        const Text('No matching menus',
+        Text(AppLocalizations.of(context).menuAnalysisHistoryNoMatchingMenus,
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         const SizedBox(height: 4),
         Text(
           query.trim().isEmpty
-              ? 'Try a different search.'
+              ? AppLocalizations.of(context).menuAnalysisHistoryTryADifferentSearch
               : 'Nothing matched "${query.trim()}". Try another search.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 13, color: AppColors.textMuted),
@@ -487,17 +488,17 @@ class _Card extends StatelessWidget {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             ListTile(
               leading: Icon(isPinned ? Icons.push_pin : Icons.push_pin_outlined),
-              title: Text(isPinned ? 'Unpin' : 'Pin'),
+              title: Text(isPinned ? AppLocalizations.of(context).pinnedMessageBarUnpin : AppLocalizations.of(context).menuAnalysisHistoryPin),
               onTap: () { Navigator.pop(context); onPin(); },
             ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit details'),
+              title: Text(AppLocalizations.of(context).menuAnalysisHistoryEditDetails),
               onTap: () { Navigator.pop(context); onEditDetails(); },
             ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.error),
-              title: Text('Delete', style: TextStyle(color: AppColors.error)),
+              title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
               onTap: () { Navigator.pop(context); onDelete(); },
             ),
           ]),
@@ -614,7 +615,7 @@ class _Card extends StatelessWidget {
                                 size: 11, color: AppColors.textMuted),
                             const SizedBox(width: 2),
                             Text(
-                              'Add address',
+                              AppLocalizations.of(context).menuAnalysisHistoryAddAddress,
                               style: TextStyle(
                                   fontSize: 10,
                                   color: AppColors.textMuted,
@@ -648,10 +649,10 @@ class _EmptyState extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.menu_book, size: 56, color: AppColors.textMuted),
         const SizedBox(height: 12),
-        const Text('No saved menus yet', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        Text(AppLocalizations.of(context).menuAnalysisHistoryNoSavedMenusYet, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         const SizedBox(height: 4),
         Text(
-          'Tap the bookmark button after a menu scan to save it here.',
+          AppLocalizations.of(context).menuAnalysisHistoryTapTheBookmarkButton,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 13, color: AppColors.textMuted),
         ),

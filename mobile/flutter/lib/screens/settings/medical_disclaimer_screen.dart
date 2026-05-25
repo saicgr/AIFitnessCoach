@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen displaying the medical disclaimer for AI-generated fitness content.
 class MedicalDisclaimerScreen extends StatelessWidget {
   const MedicalDisclaimerScreen({super.key});
@@ -20,8 +21,8 @@ class MedicalDisclaimerScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
-        title: 'Medical Disclaimer',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).medicalDisclaimerMedicalDisclaimer,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -55,7 +56,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Important Health Notice',
+                    AppLocalizations.of(context).medicalDisclaimerImportantHealthNotice,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -82,7 +83,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             _buildDisclaimerCard(
               icon: Icons.info_outlined,
               iconColor: AppColors.info,
-              title: 'Not Medical Advice',
+              title: AppLocalizations.of(context).medicalDisclaimerNotMedicalAdvice,
               content: '${Branding.appName} provides AI-generated fitness recommendations for informational and educational purposes only. The content provided by this app is not intended to be a substitute for professional medical advice, diagnosis, or treatment.',
               elevated: elevated,
               cardBorder: cardBorder,
@@ -96,8 +97,8 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             _buildDisclaimerCard(
               icon: Icons.local_hospital_outlined,
               iconColor: AppColors.error,
-              title: 'Consult Your Doctor',
-              content: 'Always seek the advice of your physician or other qualified health provider before starting any new exercise program, especially if you have any pre-existing medical conditions, injuries, or health concerns. Never disregard professional medical advice or delay seeking it because of something you read in this app.',
+              title: AppLocalizations.of(context).medicalDisclaimerConsultYourDoctor,
+              content: AppLocalizations.of(context).medicalDisclaimerAlwaysSeekTheAdvice,
               elevated: elevated,
               cardBorder: cardBorder,
               textPrimary: textPrimary,
@@ -110,8 +111,8 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             _buildDisclaimerCard(
               icon: Icons.monitor_heart_outlined,
               iconColor: AppColors.success,
-              title: 'Listen to Your Body',
-              content: 'Stop exercising immediately if you experience pain, dizziness, shortness of breath, nausea, or any discomfort beyond normal exertion. The AI cannot assess your physical condition in real-time, so it is your responsibility to exercise within your limits.',
+              title: AppLocalizations.of(context).medicalDisclaimerListenToYourBody,
+              content: AppLocalizations.of(context).medicalDisclaimerStopExercisingImmediatelyIf,
               elevated: elevated,
               cardBorder: cardBorder,
               textPrimary: textPrimary,
@@ -124,8 +125,8 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             _buildDisclaimerCard(
               icon: Icons.psychology_outlined,
               iconColor: AppColors.purple,
-              title: 'AI Recommendations',
-              content: 'Workout recommendations are generated based on the information you provide (fitness level, goals, equipment, etc.). While the AI strives for accuracy, it cannot account for all individual factors. Recommendations may not be suitable for everyone.',
+              title: AppLocalizations.of(context).medicalDisclaimerAiRecommendations,
+              content: AppLocalizations.of(context).medicalDisclaimerWorkoutRecommendationsAreGe,
               elevated: elevated,
               cardBorder: cardBorder,
               textPrimary: textPrimary,
@@ -138,7 +139,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             _buildDisclaimerCard(
               icon: Icons.warning_amber_outlined,
               iconColor: AppColors.warning,
-              title: 'Assumption of Risk',
+              title: AppLocalizations.of(context).medicalDisclaimerAssumptionOfRisk,
               content: 'Physical exercise involves inherent risks. By using ${Branding.appName}, you acknowledge that you are voluntarily participating in physical activities and assume all risks associated with such activities, including but not limited to injury, illness, or death.',
               elevated: elevated,
               cardBorder: cardBorder,

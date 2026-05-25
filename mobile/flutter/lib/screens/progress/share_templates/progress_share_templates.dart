@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'progress_share_data.dart';
 import 'progress_share_primitives.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // =============================================================================
 // 1. IG Story CTA — matches the Instagram story reference exactly:
 //    two photos stacked, dates overlaid, "START NOW" link pill at bottom.
@@ -124,7 +125,7 @@ class WrappedTemplate extends StatelessWidget {
             )),
           ]),
           const SizedBox(height: 12),
-          const Text('MY TRANSFORMATION',
+          Text(AppLocalizations.of(context).progressShareTemplatesMyTransformation,
               style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 4)),
           const SizedBox(height: 8),
           Row(children: [
@@ -153,7 +154,7 @@ class WrappedTemplate extends StatelessWidget {
             color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900, height: 0.95, letterSpacing: -1,
           )),
           const SizedBox(height: 4),
-          Text('of discipline.'.toUpperCase(), style: const TextStyle(
+          Text(AppLocalizations.of(context).progressShareTemplatesOfDiscipline.toUpperCase(), style: const TextStyle(
             color: Colors.white70, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2,
           )),
           const Spacer(),
@@ -189,7 +190,7 @@ class ReceiptTemplate extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Center(child: Text('ZEALOVA MARKET', style: TextStyle(
+          Center(child: Text(AppLocalizations.of(context).progressShareTemplatesZealovaMarket, style: TextStyle(
             fontFamily: 'Courier', fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 3,
           ))),
           const SizedBox(height: 2),
@@ -303,7 +304,7 @@ class TradingCardTemplate extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Row(children: [
-                Text(data.username?.toUpperCase() ?? 'THE TRANSFORMATION', style: TextStyle(
+                Text(data.username?.toUpperCase() ?? AppLocalizations.of(context).progressShareTemplatesTheTransformation, style: TextStyle(
                   color: gold, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 2,
                 )),
                 const Spacer(),
@@ -376,7 +377,7 @@ class NewspaperTemplate extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Row(children: [
-            const Text('THE DAILY GAINS', style: TextStyle(
+            Text(AppLocalizations.of(context).progressShareTemplatesTheDailyGains, style: TextStyle(
               fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: -0.5,
               fontFamily: 'serif',
             )),
@@ -408,15 +409,15 @@ class NewspaperTemplate extends StatelessWidget {
             Expanded(child: AspectRatio(aspectRatio: 0.7, child: _photoWithCaption(data.after.photoUrl, 'AFTER: ${formatCompactDate(data.afterDate)}'))),
           ])),
           const SizedBox(height: 10),
-          const Text(
-            'Sources close to the subject confirm the shift is due to consistent training, honest eating, and refusing to skip leg day. Experts call it "unprecedented dedication."',
+          Text(
+            AppLocalizations.of(context).progressShareTemplatesSourcesCloseToThe,
             style: TextStyle(fontSize: 10, fontFamily: 'serif', height: 1.4),
           ),
           const SizedBox(height: 10),
           Container(height: 0.5, color: Colors.black),
           const SizedBox(height: 6),
           Row(children: [
-            const Text('REPORTED BY', style: TextStyle(fontSize: 9, fontFamily: 'serif', fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context).progressShareTemplatesReportedBy, style: TextStyle(fontSize: 9, fontFamily: 'serif', fontWeight: FontWeight.bold)),
             const SizedBox(width: 6),
             if (showWatermark) const ProgressShareWatermark(color: Colors.black, compact: true),
           ]),
@@ -463,7 +464,7 @@ class PolaroidDiaryTemplate extends StatelessWidget {
             Text('from ${data.durationText} ago', style: TextStyle(
               fontSize: 16, fontStyle: FontStyle.italic, color: Colors.brown.shade800,
             )),
-            Text('to right now.', style: TextStyle(
+            Text(AppLocalizations.of(context).progressShareTemplatesToRightNow, style: TextStyle(
               fontSize: 28, fontWeight: FontWeight.w900, color: Colors.brown.shade900,
               fontFamily: 'cursive',
             )),
@@ -526,7 +527,7 @@ class MagazineCoverTemplate extends StatelessWidget {
         Positioned(
           top: 16, left: 16, right: 16,
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('ZEALOVA', style: TextStyle(
+            Text(AppLocalizations.of(context).workoutShowcaseZealova, style: TextStyle(
               color: Colors.white, fontFamily: 'serif', fontWeight: FontWeight.w900,
               fontSize: 38, letterSpacing: -1.5, height: 1,
             )),
@@ -567,7 +568,7 @@ class MagazineCoverTemplate extends StatelessWidget {
               Text(data.durationText.toUpperCase(), style: const TextStyle(
                 color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, height: 1, letterSpacing: -1,
               )),
-              const Text('OF CONSISTENCY', style: TextStyle(
+              Text(AppLocalizations.of(context).progressShareTemplatesOfConsistency, style: TextStyle(
                 color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 3,
               )),
             ]),
@@ -609,7 +610,7 @@ class Retro80sTemplate extends StatelessWidget {
         Positioned(
           top: 32, left: 0, right: 0,
           child: Center(
-            child: Text('TRANSFORMED', style: TextStyle(
+            child: Text(AppLocalizations.of(context).progressShareTemplatesTransformed, style: TextStyle(
               color: const Color(0xFFFFE9F1), fontSize: 34, fontWeight: FontWeight.w900,
               letterSpacing: 4, height: 1,
               shadows: const [
@@ -697,7 +698,7 @@ class NeonTabloidTemplate extends StatelessWidget {
                 color: const Color(0xFFFF2DCE),
                 boxShadow: const [BoxShadow(color: Color(0xFFFF2DCE), blurRadius: 20)],
               ),
-              child: const Text('BREAKING', style: TextStyle(
+              child: Text(AppLocalizations.of(context).progressShareTemplatesBreaking, style: TextStyle(
                 color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 3,
               )),
             ),
@@ -717,7 +718,7 @@ class NeonTabloidTemplate extends StatelessWidget {
               color: Color(0xFFFFE9F1), fontSize: 40, fontWeight: FontWeight.w900, height: 1,
               letterSpacing: -1,
             )),
-            const Text('OF PURE WORK', style: TextStyle(
+            Text(AppLocalizations.of(context).progressShareTemplatesOfPureWork, style: TextStyle(
               color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2,
             )),
             const SizedBox(height: 10),
@@ -775,7 +776,7 @@ class SwissEditorialTemplate extends StatelessWidget {
             )),
           ]),
           Container(height: 1, color: Colors.black, margin: const EdgeInsets.symmetric(vertical: 8)),
-          const Text('A\nTRANSFORMATION\nSTUDY', style: TextStyle(
+          Text(AppLocalizations.of(context).progressShareTemplatesANtransformationNstudy, style: TextStyle(
             color: Colors.black, fontSize: 32, fontWeight: FontWeight.w900, height: 1, letterSpacing: -1.5,
             fontFamily: 'Helvetica',
           )),
@@ -925,7 +926,7 @@ class CalendarGridTemplate extends StatelessWidget {
             const Spacer(),
             if (showWatermark) const ProgressShareWatermark(compact: true),
           ]),
-          const Text('IN GREEN BOXES', style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2)),
+          Text(AppLocalizations.of(context).progressShareTemplatesInGreenBoxes, style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2)),
           const SizedBox(height: 14),
           Row(children: [
             Expanded(child: AspectRatio(aspectRatio: 0.8, child: ProgressShareImage(url: data.before.photoUrl, borderRadius: BorderRadius.circular(8)))),
@@ -1004,13 +1005,13 @@ class ProgressBarTemplate extends StatelessWidget {
           Row(children: [
             if (showWatermark) const ProgressShareWatermark(compact: true),
             const Spacer(),
-            const Text('PROGRESS', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 3)),
+            Text(AppLocalizations.of(context).statsRewardsProgress, style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 3)),
           ]),
           const SizedBox(height: 16),
           Text('${(pct * 100).round()}%', style: const TextStyle(
             color: Color(0xFFA8FF60), fontSize: 92, fontWeight: FontWeight.w900, height: 0.9, letterSpacing: -3,
           )),
-          const Text('CONSISTENCY', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 3)),
+          Text(AppLocalizations.of(context).progressShareTemplatesConsistency, style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 3)),
           const SizedBox(height: 18),
           Container(
             width: double.infinity,
@@ -1090,7 +1091,7 @@ class TapeMeasureTemplate extends StatelessWidget {
               style: const TextStyle(color: Color(0xFF2B2416), fontSize: 40, fontWeight: FontWeight.w900, height: 1, letterSpacing: -1),
             ),
             const SizedBox(height: 4),
-            const Text('IN THE BOOKS', style: TextStyle(color: Color(0xFF5A4A28), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 2)),
+            Text(AppLocalizations.of(context).progressShareTemplatesInTheBooks, style: TextStyle(color: Color(0xFF5A4A28), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 2)),
             const SizedBox(height: 20),
             Expanded(child: Row(children: [
               Expanded(child: AspectRatio(aspectRatio: 0.75, child: ProgressShareImage(url: data.before.photoUrl))),
@@ -1168,7 +1169,7 @@ class TransformationTuesdayTemplate extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(color: const Color(0xFFFFE600), borderRadius: BorderRadius.circular(4)),
-              child: const Text('#TRANSFORMATION\nTUESDAY', style: TextStyle(
+              child: Text(AppLocalizations.of(context).progressShareTemplatesTransformationNtuesday, style: TextStyle(
                 color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5, height: 1.1,
               )),
             ),
@@ -1195,7 +1196,7 @@ class TransformationTuesdayTemplate extends StatelessWidget {
             ]),
           ),
           const SizedBox(height: 14),
-          Text('FROM "I\'LL START MONDAY"', style: TextStyle(
+          Text(AppLocalizations.of(context).progressShareTemplatesFromILlStart, style: TextStyle(
             color: Colors.white.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 2,
           )),
           const SizedBox(height: 2),
@@ -1265,7 +1266,7 @@ class TimelineRulerTemplate extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Row(children: [
-            const Text('TIMELINE', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+            Text(AppLocalizations.of(context).progressShareTemplatesTimeline, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
             const Spacer(),
             Text('W1 → W$weeks', style: const TextStyle(
               color: Color(0xFFFF8A00), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 2,

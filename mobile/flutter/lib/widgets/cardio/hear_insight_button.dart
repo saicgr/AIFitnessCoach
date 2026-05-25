@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../services/cardio_audio_cues_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Inline "🔊 Hear it" button rendered next to a coach's-take line on the
 /// post-cardio (synced workout) detail screen.
 ///
@@ -69,9 +70,9 @@ class _HearInsightButtonState extends State<HearInsightButton> {
     if (!ok) {
       setState(() => _isPlaying = false);
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'No audio output available — connect headphones or unmute.',
+            AppLocalizations.of(context).hearInsightButtonNoAudioOutputAvailable,
           ),
           duration: Duration(seconds: 3),
         ),
@@ -103,12 +104,12 @@ class _HearInsightButtonState extends State<HearInsightButton> {
       child: IconButton(
         padding: EdgeInsets.zero,
         iconSize: 18,
-        tooltip: _isPlaying ? 'Stop' : widget.tooltip,
+        tooltip: _isPlaying ? AppLocalizations.of(context).hearInsightButtonStop : widget.tooltip,
         onPressed: disabled ? null : _onTap,
         icon: Icon(
           _isPlaying ? Icons.stop_circle_outlined : Icons.volume_up_rounded,
           color: color,
-          semanticLabel: _isPlaying ? 'Stop insight playback' : widget.tooltip,
+          semanticLabel: _isPlaying ? AppLocalizations.of(context).hearInsightButtonStopInsightPlayback : widget.tooltip,
         ),
       ),
     );

@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class FontScaleCard extends ConsumerWidget {
   final BeastThemeData theme;
   const FontScaleCard({super.key, required this.theme});
@@ -25,9 +26,9 @@ class FontScaleCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Font Scale', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
+                    Text(AppLocalizations.of(context).fontScaleCardFontScale, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('Precise font scaling control', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                    Text(AppLocalizations.of(context).fontScaleCardPreciseFontScalingControl, style: TextStyle(fontSize: 11, color: theme.textMuted)),
                   ],
                 ),
               ),
@@ -68,7 +69,7 @@ class FontScaleCard extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('0.85x', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                Text(AppLocalizations.of(context).fontScaleCard085x, style: TextStyle(fontSize: 11, color: theme.textMuted)),
                 Text('1.0x', style: TextStyle(fontSize: 11, color: theme.textMuted)),
                 Text('1.5x', style: TextStyle(fontSize: 11, color: theme.textMuted)),
               ],

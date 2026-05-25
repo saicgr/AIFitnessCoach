@@ -17,6 +17,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'unresolved_exercises_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 Future<void> showUnresolvedExercisesBulkSheet({
   required BuildContext context,
   required WorkoutHistoryImportFileRepository repository,
@@ -95,7 +96,7 @@ class _BulkBodyState extends State<_BulkBody> {
           ),
           action: result.auditId.isNotEmpty
               ? SnackBarAction(
-                  label: 'Undo',
+                  label: AppLocalizations.of(context).workoutUiBuildersUndo,
                   onPressed: () => _undo(result.auditId),
                 )
               : null,
@@ -147,10 +148,10 @@ class _BulkBodyState extends State<_BulkBody> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Fix unresolved exercises',
+                    Text(AppLocalizations.of(context).unresolvedExercisesBulkFixUnresolvedExercises,
                         style: theme.textTheme.titleLarge),
                     Text(
-                      'Map raw names from your imports to library exercises.',
+                      AppLocalizations.of(context).unresolvedExercisesBulkMapRawNamesFrom,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -195,7 +196,7 @@ class _BulkBodyState extends State<_BulkBody> {
                           style:
                               FilledButton.styleFrom(backgroundColor: accent),
                           onPressed: _refresh,
-                          child: const Text('Retry'),
+                          child: Text(AppLocalizations.of(context).buttonRetry),
                         ),
                       ],
                     ),
@@ -211,7 +212,7 @@ class _BulkBodyState extends State<_BulkBody> {
                             color: Colors.green.shade600, size: 48),
                         const SizedBox(height: 12),
                         Text(
-                          'Nothing to fix — every imported exercise is mapped!',
+                          AppLocalizations.of(context).unresolvedExercisesBulkNothingToFixEvery,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.titleSmall,
                         ),
@@ -326,7 +327,7 @@ class _GroupTile extends StatelessWidget {
               else
                 Expanded(
                   child: Text(
-                    'No auto-suggestion — open to pick manually.',
+                    AppLocalizations.of(context).unresolvedExercisesBulkNoAutoSuggestionOpen,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -335,7 +336,7 @@ class _GroupTile extends StatelessWidget {
               const SizedBox(width: 8),
               OutlinedButton(
                 onPressed: onOpenDetail,
-                child: const Text('More…'),
+                child: Text(AppLocalizations.of(context).unresolvedExercisesBulkMore),
               ),
             ],
           ),

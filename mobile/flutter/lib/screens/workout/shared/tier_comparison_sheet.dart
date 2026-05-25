@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 Future<void> showTierComparisonSheet(BuildContext context) {
   return showGlassSheet<void>(
     context: context,
@@ -54,13 +55,13 @@ class _TierComparisonContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Which tier is right for me?',
+            AppLocalizations.of(context).tierComparisonWhichTierIsRight,
             style: TextStyle(
                 fontSize: 20, fontWeight: FontWeight.w700, color: fg),
           ),
           const SizedBox(height: 4),
           Text(
-            'Long-press the Easy / Advanced pill any time to reopen this.',
+            AppLocalizations.of(context).tierComparisonLongPressTheEasy,
             style: TextStyle(fontSize: 12, color: muted),
           ),
           const SizedBox(height: 16),
@@ -86,7 +87,7 @@ class _TierComparisonContent extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _TierSummary(
-            title: 'Advanced',
+            title: AppLocalizations.of(context).workoutUiModeAdvanced,
             accent: accent,
             fg: fg,
             body:
@@ -114,9 +115,9 @@ class _ColumnHeader extends StatelessWidget {
         letterSpacing: 0.4);
     return Row(
       children: [
-        Expanded(flex: 6, child: Text('FEATURE', style: h)),
+        Expanded(flex: 6, child: Text(AppLocalizations.of(context).tierComparisonFeature, style: h)),
         Expanded(flex: 2, child: Center(child: Text('EASY', style: h))),
-        Expanded(flex: 2, child: Center(child: Text('ADV.', style: h))),
+        Expanded(flex: 2, child: Center(child: Text(AppLocalizations.of(context).tierComparisonAdv, style: h))),
       ],
     );
   }

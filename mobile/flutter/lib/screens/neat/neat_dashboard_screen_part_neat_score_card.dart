@@ -61,7 +61,7 @@ class _NeatScoreCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'NEAT Score',
+                AppLocalizations.of(context).neatScoreDisplayNeatScore,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -115,7 +115,7 @@ class _NeatScoreCard extends StatelessWidget {
               _QuickStat(
                 icon: Icons.directions_walk,
                 value: _formatNumber(score.steps),
-                label: 'Steps',
+                label: AppLocalizations.of(context).syncedWorkoutDetailSteps,
                 color: AppColors.cyan,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
@@ -128,7 +128,7 @@ class _NeatScoreCard extends StatelessWidget {
               _QuickStat(
                 icon: Icons.schedule,
                 value: '${score.activeHours}',
-                label: 'Active Hours',
+                label: AppLocalizations.of(context).neatDashboardScreenActiveHours,
                 color: AppColors.success,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
@@ -141,7 +141,7 @@ class _NeatScoreCard extends StatelessWidget {
               _QuickStat(
                 icon: Icons.local_fire_department,
                 value: '${((score.steps * 0.04).round())}',
-                label: 'Calories',
+                label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                 color: AppColors.orange,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
@@ -355,7 +355,7 @@ class _StepGoalCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Step Goal',
+                AppLocalizations.of(context).neatDashboardScreenStepGoal,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -371,8 +371,8 @@ class _StepGoalCard extends StatelessWidget {
                     color: AppColors.purple.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
-                    'PROGRESSIVE',
+                  child: Text(
+                    AppLocalizations.of(context).neatDashboardScreenProgressive,
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -399,8 +399,8 @@ class _StepGoalCard extends StatelessWidget {
                         size: 14,
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        'COMPLETE',
+                      Text(
+                        AppLocalizations.of(context).timedExerciseTimerComplete,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -550,7 +550,7 @@ class _HourlyActivityCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Hourly Activity',
+                AppLocalizations.of(context).neatDashboardScreenHourlyActivity,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -766,7 +766,7 @@ class _ActiveHoursCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Active Hours',
+                AppLocalizations.of(context).neatDashboardScreenActiveHours,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -799,7 +799,7 @@ class _ActiveHoursCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Active Hours\nToday',
+                AppLocalizations.of(context).neatDashboardScreenActiveHoursNtoday,
                 style: TextStyle(
                   fontSize: 14,
                   color: textSecondary,
@@ -857,7 +857,7 @@ class _ActiveHoursCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     isGoalMet
-                        ? 'Great job! You\'ve met your active hours goal today.'
+                        ? AppLocalizations.of(context).neatDashboardScreenGreatJobYouVe
                         : 'Try to move at least 250 steps every hour for better health.',
                     style: TextStyle(
                       fontSize: 12,

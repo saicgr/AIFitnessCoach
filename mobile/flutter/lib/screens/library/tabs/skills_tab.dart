@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Tab displaying skill progressions
 class SkillsTab extends StatelessWidget {
   const SkillsTab({super.key});
@@ -37,7 +38,7 @@ class SkillsTab extends StatelessWidget {
 
             // Title
             Text(
-              'Skill Progressions',
+              AppLocalizations.of(context).skillsSkillProgressions,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -46,7 +47,7 @@ class SkillsTab extends StatelessWidget {
 
             // Description
             Text(
-              'Master bodyweight skills step by step with guided progression chains.',
+              AppLocalizations.of(context).skillsMasterBodyweightSkillsStep,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: textSecondary,
                     height: 1.5,

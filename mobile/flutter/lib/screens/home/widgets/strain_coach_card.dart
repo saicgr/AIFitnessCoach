@@ -26,6 +26,7 @@ import '../../../services/strain_recommendation_service.dart';
 import '../../../widgets/health_connect_sheet.dart';
 import 'home/unified_home_widgets.dart' show kHomeHPad;
 
+import '../../../l10n/generated/app_localizations.dart';
 class StrainCoachCard extends ConsumerWidget {
   const StrainCoachCard({super.key});
 
@@ -100,7 +101,7 @@ class StrainCoachCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "TODAY'S INTENSITY",
+                AppLocalizations.of(context).strainCoachCardTodaySIntensity,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -168,7 +169,7 @@ class StrainCoachCard extends ConsumerWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Connect health for an intensity call.',
+                AppLocalizations.of(context).strainCoachCardConnectHealthForAn,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -191,8 +192,8 @@ class StrainCoachCard extends ConsumerWidget {
                 HapticService.light();
                 showHealthConnectSheet(context, ref);
               },
-              child: const Text(
-                'Connect',
+              child: Text(
+                AppLocalizations.of(context).unifiedHomeWidgetsConnect,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),

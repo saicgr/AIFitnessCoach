@@ -17,6 +17,7 @@ import '../../progress/comparison_view.dart';
 import '../../progress/comparison_gallery.dart';
 import '../../progress/photo_editor_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'photos_tab_ui.dart';
 
 
@@ -222,7 +223,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                       });
                     },
                     child: Text(
-                      'All',
+                      AppLocalizations.of(context).syncedWorkoutsHistoryAll,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -246,7 +247,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                           const Icon(Icons.delete_outline, size: 18, color: Colors.red),
                           const SizedBox(width: 4),
                           Text(
-                            'Delete',
+                            AppLocalizations.of(context).buttonDelete,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -442,7 +443,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                   Icon(Icons.compare_arrows_rounded, size: 14, color: accentColor),
                   const SizedBox(width: 4),
                   Text(
-                    'Compare',
+                    AppLocalizations.of(context).recipeHistoryCompare,
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: accentColor),
                   ),
                 ],
@@ -499,7 +500,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                     ),
                   );
                 },
-                child: const Text('View All'),
+                child: Text(AppLocalizations.of(context).workoutHistoryImportViewAll),
               ),
             ],
           ),
@@ -545,7 +546,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
           Row(
             children: [
               Text(
-                'Latest by View',
+                AppLocalizations.of(context).progressScreenUiLatestByView,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -666,14 +667,14 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
-                subtitle: const Text('Use camera'),
+                title: Text(AppLocalizations.of(context).progressTakePhoto),
+                subtitle: Text(AppLocalizations.of(context).progressUseCamera),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                subtitle: const Text('Select existing photo'),
+                title: Text(AppLocalizations.of(context).progressChooseFromGallery),
+                subtitle: Text(AppLocalizations.of(context).progressSelectExistingPhoto),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
             ],
@@ -720,7 +721,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select View Type',
+                AppLocalizations.of(context).progressSelectViewType,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -759,14 +760,14 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
-                subtitle: const Text('Use camera'),
+                title: Text(AppLocalizations.of(context).progressTakePhoto),
+                subtitle: Text(AppLocalizations.of(context).progressUseCamera),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                subtitle: const Text('Select existing photo'),
+                title: Text(AppLocalizations.of(context).progressChooseFromGallery),
+                subtitle: Text(AppLocalizations.of(context).progressSelectExistingPhoto),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
             ],
@@ -807,12 +808,12 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
         content: Row(
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 16),
-            Text('Uploading photo...'),
+            Text(AppLocalizations.of(context).quickActionsRowUploadingPhoto),
           ],
         ),
       ),
@@ -922,13 +923,13 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                           onPressed: () => _editExistingPhoto(photo),
                           icon: Icon(Icons.edit_outlined,
                               color: colorScheme.onSurfaceVariant),
-                          tooltip: 'Edit',
+                          tooltip: AppLocalizations.of(context).commonEdit,
                         ),
                         IconButton(
                           onPressed: () => _deletePhoto(photo),
                           icon: Icon(Icons.delete_outline,
                               color: colorScheme.error),
-                          tooltip: 'Delete',
+                          tooltip: AppLocalizations.of(context).buttonDelete,
                         ),
                       ],
                     ),
@@ -1017,19 +1018,19 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Photo?'),
-        content: const Text('This action cannot be undone.'),
+        title: Text(AppLocalizations.of(context).progressDeletePhoto),
+        content: Text(AppLocalizations.of(context).workoutActionsThisActionCannotBe),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -1051,18 +1052,18 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Delete $count photo${count > 1 ? 's' : ''}?'),
-        content: const Text('This action cannot be undone.'),
+        content: Text(AppLocalizations.of(context).workoutActionsThisActionCannotBe),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -1212,7 +1213,7 @@ class ProgressPhotoCaptureFlow {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select View Type',
+                AppLocalizations.of(context).progressSelectViewType,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -1252,14 +1253,14 @@ class ProgressPhotoCaptureFlow {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
-                subtitle: const Text('Use camera'),
+                title: Text(AppLocalizations.of(context).progressTakePhoto),
+                subtitle: Text(AppLocalizations.of(context).progressUseCamera),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                subtitle: const Text('Select existing photo'),
+                title: Text(AppLocalizations.of(context).progressChooseFromGallery),
+                subtitle: Text(AppLocalizations.of(context).progressSelectExistingPhoto),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
             ],

@@ -14,6 +14,7 @@ import '../../../widgets/app_tour/app_tour_controller.dart';
 import 'streak_explainer_sheet.dart';
 import 'week_calendar_strip.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Clean, minimal header for the "Minimalist" home screen preset.
 ///
 /// Layout:
@@ -107,7 +108,7 @@ class _OverflowMenuButton extends ConsumerWidget {
     final weekCollapsed = ref.watch(weekCalendarCollapsedProvider);
     final weekHidden = ref.watch(weekCalendarHiddenProvider);
     return PopupMenuButton<String>(
-      tooltip: 'More',
+      tooltip: AppLocalizations.of(context).homeMore,
       icon: Icon(Icons.more_vert, size: 22, color: iconColor),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -142,7 +143,7 @@ class _OverflowMenuButton extends ConsumerWidget {
             children: [
               Icon(Icons.storefront_outlined, size: 20, color: iconColor),
               const SizedBox(width: 12),
-              const Text('Change gym profile'),
+              Text(AppLocalizations.of(context).minimalHeaderChangeGymProfile),
             ],
           ),
         ),
@@ -160,7 +161,7 @@ class _OverflowMenuButton extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(weekCollapsed
-                    ? 'Expand week strip'
+                    ? AppLocalizations.of(context).minimalHeaderExpandWeekStrip
                     : 'Collapse week strip'),
               ],
             ),
@@ -178,7 +179,7 @@ class _OverflowMenuButton extends ConsumerWidget {
                 color: iconColor,
               ),
               const SizedBox(width: 12),
-              Text(weekHidden ? 'Show day strip' : 'Hide day strip'),
+              Text(weekHidden ? AppLocalizations.of(context).minimalHeaderShowDayStrip : AppLocalizations.of(context).minimalHeaderHideDayStrip),
             ],
           ),
         ),
@@ -189,7 +190,7 @@ class _OverflowMenuButton extends ConsumerWidget {
               Icon(Icons.dashboard_customize_outlined,
                   size: 20, color: iconColor),
               const SizedBox(width: 12),
-              const Text('My Space'),
+              Text(AppLocalizations.of(context).programMenuButtonMySpace),
             ],
           ),
         ),
@@ -199,7 +200,7 @@ class _OverflowMenuButton extends ConsumerWidget {
             children: [
               Icon(Icons.settings_outlined, size: 20, color: iconColor),
               const SizedBox(width: 12),
-              const Text('Settings'),
+              Text(AppLocalizations.of(context).settingsTitle),
             ],
           ),
         ),

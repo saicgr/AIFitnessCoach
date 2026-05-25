@@ -5,6 +5,7 @@ import '../../../data/services/personal_goals_service.dart';
 import '../../../data/providers/goal_suggestions_provider.dart';
 import 'suggestion_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Netflix-style carousel for goal suggestions organized by category
 class SuggestionCarousel extends ConsumerWidget {
   final String userId;
@@ -58,7 +59,7 @@ class SuggestionCarousel extends ConsumerWidget {
         const Icon(Icons.lightbulb_outline, color: AppColors.orange, size: 20),
         const SizedBox(width: 8),
         Text(
-          'Suggested Goals',
+          AppLocalizations.of(context).suggestionCarouselSuggestedGoals,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -73,7 +74,7 @@ class SuggestionCarousel extends ConsumerWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          'AI',
+          AppLocalizations.of(context).exercisePickerSheetAi,
           style: TextStyle(
             fontSize: 12,
             color: AppColors.purple.withValues(alpha: 0.7),
@@ -209,7 +210,7 @@ class SuggestionCarousel extends ConsumerWidget {
           Icon(Icons.error_outline, color: textSecondary, size: 20),
           const SizedBox(width: 8),
           Text(
-            'Could not load suggestions',
+            AppLocalizations.of(context).suggestionCarouselCouldNotLoadSuggestions,
             style: TextStyle(color: textSecondary, fontSize: 14),
           ),
           const Spacer(),
@@ -219,7 +220,7 @@ class SuggestionCarousel extends ConsumerWidget {
                 GoalSuggestionsParams(userId: userId, forceRefresh: true),
               ));
             },
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context).buttonRetry),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class NutritionErrorState extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
@@ -42,7 +43,7 @@ class NutritionErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Unable to load nutrition data',
+              AppLocalizations.of(context).nutritionErrorStateUnableToLoadNutrition,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -52,7 +53,7 @@ class NutritionErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Please check your connection and try again',
+              AppLocalizations.of(context).nutritionErrorStatePleaseCheckYourConnection,
               style: TextStyle(
                 fontSize: 14,
                 color: textSecondary,
@@ -63,7 +64,7 @@ class NutritionErrorState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded, size: 20),
-              label: const Text('Try Again'),
+              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
               style: FilledButton.styleFrom(
                 backgroundColor: errorColor,
                 foregroundColor: Colors.white,

@@ -12,6 +12,7 @@ import '../../../data/models/workout_import_preview.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The resolution the caller should apply. Returned via [Navigator.pop].
 @immutable
 class UnresolvedExerciseResolution {
@@ -80,7 +81,7 @@ class _SingleResolutionBodyState extends State<_SingleResolutionBody> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Map exercise', style: theme.textTheme.titleLarge),
+          Text(AppLocalizations.of(context).unresolvedExercisesMapExercise, style: theme.textTheme.titleLarge),
           const SizedBox(height: 4),
           Text(
             'You imported "${g.rawName}" ${g.rowCount} time${g.rowCount == 1 ? '' : 's'}.',
@@ -96,7 +97,7 @@ class _SingleResolutionBodyState extends State<_SingleResolutionBody> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (g.suggestions.isNotEmpty) ...[
-                    Text('Suggestions', style: theme.textTheme.titleSmall),
+                    Text(AppLocalizations.of(context).unresolvedExercisesSuggestions, style: theme.textTheme.titleSmall),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -122,7 +123,7 @@ class _SingleResolutionBodyState extends State<_SingleResolutionBody> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
-                        'No automatic suggestions for this name.',
+                        AppLocalizations.of(context).unresolvedExercisesNoAutomaticSuggestionsFor,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -130,14 +131,14 @@ class _SingleResolutionBodyState extends State<_SingleResolutionBody> {
                     ),
 
                   // Custom / manual entry
-                  Text('Or type a canonical name', style: theme.textTheme.titleSmall),
+                  Text(AppLocalizations.of(context).unresolvedExercisesOrTypeACanonical, style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _customController,
                     textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.edit_rounded),
-                      hintText: 'e.g., Barbell Back Squat',
+                      hintText: AppLocalizations.of(context).unresolvedExercisesEGBarbellBack,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -155,7 +156,7 @@ class _SingleResolutionBodyState extends State<_SingleResolutionBody> {
                         }
                       },
                       icon: const Icon(Icons.search_rounded),
-                      label: const Text('Search library…'),
+                      label: Text(AppLocalizations.of(context).unresolvedExercisesSearchLibrary),
                     ),
                   ],
                 ],
@@ -172,7 +173,7 @@ class _SingleResolutionBodyState extends State<_SingleResolutionBody> {
                     HapticService.light();
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context).buttonCancel),
                 ),
               ),
               const SizedBox(width: 12),
@@ -188,7 +189,7 @@ class _SingleResolutionBodyState extends State<_SingleResolutionBody> {
                       UnresolvedExerciseResolution(canonicalName: name),
                     );
                   },
-                  child: const Text('Apply mapping'),
+                  child: Text(AppLocalizations.of(context).unresolvedExercisesApplyMapping),
                 ),
               ),
             ],

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../data/models/schedule_item.dart';
 import 'recurrence_picker.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for creating or editing schedule items.
 /// Supports dynamic fields per item type and common fields like
 /// date/time pickers, notification toggle, recurrence, and Google Calendar sync.
@@ -124,7 +125,7 @@ class _AddScheduleItemSheetState extends State<AddScheduleItemSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      widget.existingItem != null ? 'Edit Item' : 'Add to Schedule',
+                      widget.existingItem != null ? AppLocalizations.of(context).addScheduleItemEditItem : AppLocalizations.of(context).addScheduleItemAddToSchedule,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -491,7 +492,7 @@ class _AddScheduleItemSheetState extends State<AddScheduleItemSheet> {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            'Add to Google Calendar',
+            AppLocalizations.of(context).addScheduleItemAddToGoogleCalendar,
             style: TextStyle(fontSize: 14, color: textColor),
           ),
         ),
@@ -521,7 +522,7 @@ class _AddScheduleItemSheetState extends State<AddScheduleItemSheet> {
           elevation: 0,
         ),
         child: Text(
-          widget.existingItem != null ? 'Save Changes' : 'Add to Schedule',
+          widget.existingItem != null ? AppLocalizations.of(context).vacationModeSaveChanges : AppLocalizations.of(context).addScheduleItemAddToSchedule,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),

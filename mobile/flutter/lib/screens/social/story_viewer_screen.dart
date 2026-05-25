@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/social_provider.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full-screen story viewer (F11)
 /// - PageView for swiping between users' stories
 /// - Linear progress bar timer at top (5s per image)
@@ -153,9 +154,9 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
   Widget build(BuildContext context) {
     final stories = _currentUserStories;
     if (stories.isEmpty) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: Text('No stories', style: TextStyle(color: Colors.white))),
+        body: Center(child: Text(AppLocalizations.of(context).storyViewerNoStories, style: TextStyle(color: Colors.white))),
       );
     }
 

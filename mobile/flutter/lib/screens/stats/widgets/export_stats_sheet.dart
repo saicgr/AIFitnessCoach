@@ -17,6 +17,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../settings/dialogs/export_dialog.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for exporting stats in various formats
 class ExportStatsSheet extends ConsumerStatefulWidget {
   const ExportStatsSheet({super.key});
@@ -74,7 +75,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Export Stats',
+                    AppLocalizations.of(context).exportStatsExportStats,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -94,8 +95,8 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
                   _ExportOptionCard(
                     icon: Icons.folder_zip_outlined,
                     iconColor: Colors.orange,
-                    title: 'CSV / ZIP',
-                    description: 'Full data export with all workouts, PRs, and measurements',
+                    title: AppLocalizations.of(context).exportStatsCsvZip,
+                    description: AppLocalizations.of(context).exportStatsFullDataExportWith,
                     onTap: _isExporting ? null : () => _exportCsvZip(context),
                   ),
                   const SizedBox(height: 12),
@@ -104,8 +105,8 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
                   _ExportOptionCard(
                     icon: Icons.picture_as_pdf_outlined,
                     iconColor: Colors.red,
-                    title: 'PDF Report',
-                    description: 'Styled report with stats summary and progress',
+                    title: AppLocalizations.of(context).exportStatsPdfReport,
+                    description: AppLocalizations.of(context).exportStatsStyledReportWithStats,
                     onTap: _isExporting ? null : _exportPdf,
                   ),
                   const SizedBox(height: 12),
@@ -114,8 +115,8 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
                   _ExportOptionCard(
                     icon: Icons.text_snippet_outlined,
                     iconColor: Colors.blue,
-                    title: 'Text Summary',
-                    description: 'Quick shareable text summary of your stats',
+                    title: AppLocalizations.of(context).exportStatsTextSummary,
+                    description: AppLocalizations.of(context).exportStatsQuickShareableTextSummary,
                     onTap: _isExporting ? null : _exportText,
                   ),
                 ],

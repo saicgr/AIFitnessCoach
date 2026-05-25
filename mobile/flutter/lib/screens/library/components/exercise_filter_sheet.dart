@@ -7,6 +7,7 @@ import '../../../data/services/context_logging_service.dart';
 import '../providers/library_providers.dart';
 import '../providers/muscle_group_images_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for filtering exercises — all sections open with pills, no dropdowns.
 class ExerciseFilterSheet extends ConsumerWidget {
   const ExerciseFilterSheet({super.key});
@@ -76,7 +77,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Filters',
+                        AppLocalizations.of(context).recipesFilters,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -84,7 +85,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                       TextButton(
                         onPressed: () => clearAllFilters(ref),
                         child: Text(
-                          'Clear all',
+                          AppLocalizations.of(context).settingsCardPartClearAll,
                           style: TextStyle(color: cyan),
                         ),
                       ),
@@ -106,11 +107,11 @@ class ExerciseFilterSheet extends ConsumerWidget {
                         children: [
                           Icon(Icons.error_outline, color: textMuted, size: 48),
                           const SizedBox(height: 16),
-                          Text('Failed to load filters',
+                          Text(AppLocalizations.of(context).exerciseFilterFailedToLoadFilters,
                               style: TextStyle(color: textMuted)),
                           TextButton(
                             onPressed: () => ref.refresh(filterOptionsProvider),
-                            child: const Text('Retry'),
+                            child: Text(AppLocalizations.of(context).buttonRetry),
                           ),
                         ],
                       ),
@@ -124,7 +125,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                           children: [
                             // ── BODY PART — muscle image pills ──
                             _SectionHeader(
-                              title: 'Body Part',
+                              title: AppLocalizations.of(context).exerciseFilterBodyPart,
                               icon: Icons.accessibility_new,
                               color: purple,
                               count: selectedMuscles.length,
@@ -158,7 +159,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
 
                             // ── EQUIPMENT — pills ──
                             _SectionHeader(
-                              title: 'Equipment',
+                              title: AppLocalizations.of(context).trainingSetupCardEquipment,
                               icon: Icons.fitness_center,
                               color: cyan,
                               count: selectedEquipments.length,
@@ -192,7 +193,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
 
                             // ── EXERCISE TYPE — pills ──
                             _SectionHeader(
-                              title: 'Exercise Type',
+                              title: AppLocalizations.of(context).exerciseFilterExerciseType,
                               icon: Icons.category,
                               color: success,
                               count: selectedTypes.length,
@@ -226,7 +227,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
 
                             // ── GOALS — pills ──
                             _SectionHeader(
-                              title: 'Goals',
+                              title: AppLocalizations.of(context).fastingCalendarGoals,
                               icon: Icons.track_changes,
                               color: Colors.orange,
                               count: selectedGoals.length,
@@ -261,7 +262,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                             // ── SUITABLE FOR — pills ──
                             if (filterOptions.suitableFor.isNotEmpty) ...[
                               _SectionHeader(
-                                title: 'Suitable For',
+                                title: AppLocalizations.of(context).exerciseFilterSuitableFor,
                                 icon: Icons.person_outline,
                                 color: Colors.teal,
                                 count: selectedSuitableFor.length,
@@ -292,7 +293,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                             // ── AVOID IF YOU HAVE — pills ──
                             if (filterOptions.avoidIf.isNotEmpty) ...[
                               _SectionHeader(
-                                title: 'Avoid If You Have',
+                                title: AppLocalizations.of(context).exerciseFilterAvoidIfYouHave,
                                 icon: Icons.warning_amber_rounded,
                                 color: Colors.redAccent,
                                 count: selectedAvoid.length,
@@ -348,8 +349,8 @@ class ExerciseFilterSheet extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Apply Filters',
+                      child: Text(
+                        AppLocalizations.of(context).exerciseFilterApplyFilters,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

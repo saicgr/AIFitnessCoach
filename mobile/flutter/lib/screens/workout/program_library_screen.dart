@@ -11,6 +11,7 @@ import '../../data/services/haptic_service.dart';
 import 'program_template_builder_screen.dart';
 import 'widgets/program_library_card.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Route metadata for the program library — kept here so the builder and the
 /// router reference one path constant without a circular import.
 class ProgramLibraryRoute {
@@ -98,7 +99,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         backgroundColor: bg,
         elevation: 0,
         title: Text(
-          'Program Library',
+          AppLocalizations.of(context).programLibraryProgramLibrary,
           style: TextStyle(
             color: textPrimary,
             fontWeight: FontWeight.w800,
@@ -137,7 +138,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           _reload();
         },
         decoration: InputDecoration(
-          hintText: 'Search programs',
+          hintText: AppLocalizations.of(context).programLibrarySearchPrograms,
           hintStyle: TextStyle(color: muted, fontSize: 14),
           prefixIcon: Icon(Icons.search_rounded, color: muted, size: 20),
           suffixIcon: _search.isEmpty
@@ -176,7 +177,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           final cat = _kCategories[i];
           final selected = _category == cat;
           return _FilterChip(
-            label: cat ?? 'All',
+            label: cat ?? AppLocalizations.of(context).syncedWorkoutsHistoryAll,
             selected: selected,
             accent: accent,
             isDark: isDark,
@@ -198,7 +199,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       child: Row(
         children: [
           Text(
-            'Level',
+            AppLocalizations.of(context).programSummaryLevel,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -213,7 +214,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               children: [
                 for (final d in _kDifficulties)
                   _FilterChip(
-                    label: d ?? 'Any',
+                    label: d ?? AppLocalizations.of(context).programLibraryAny,
                     compact: true,
                     selected: _difficulty == d,
                     accent: accent,
@@ -406,7 +407,7 @@ class _ErrorState extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -440,7 +441,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               hasFilters
-                  ? 'No programs match these filters.'
+                  ? AppLocalizations.of(context).programLibraryNoProgramsMatchThese
                   : 'No programs available right now.',
               textAlign: TextAlign.center,
               style: TextStyle(color: textSecondary, fontSize: 14),
@@ -449,7 +450,7 @@ class _EmptyState extends StatelessWidget {
               const SizedBox(height: 16),
               OutlinedButton(
                 onPressed: onClear,
-                child: const Text('Clear filters'),
+                child: Text(AppLocalizations.of(context).programsClearFilters),
               ),
             ],
           ],
@@ -505,8 +506,8 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
       if (!mounted) return;
       setState(() => _importing = false);
       messenger.showSnackBar(
-        const SnackBar(
-            content: Text('Could not import this program. Please try again.')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).programLibraryCouldNotImportThis)),
       );
     }
   }
@@ -632,7 +633,7 @@ class _ProgramPreviewSheetState extends ConsumerState<_ProgramPreviewSheet> {
                             )
                           : const Icon(Icons.tune_rounded, size: 18),
                       label: Text(
-                        _importing ? 'Importing...' : 'Import & customize',
+                        _importing ? AppLocalizations.of(context).programLibraryImporting : AppLocalizations.of(context).programLibraryImportCustomize,
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -739,7 +740,7 @@ class _DayPreviewTile extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('•  ',
+                  Text(AppLocalizations.of(context).programLibrary,
                       style: TextStyle(color: textSecondary, fontSize: 13)),
                   Expanded(
                     child: Text(

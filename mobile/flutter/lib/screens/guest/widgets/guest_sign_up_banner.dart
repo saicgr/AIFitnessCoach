@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A persistent banner prompting guests to sign up for full access
 class GuestSignUpBanner extends StatelessWidget {
   /// Callback when sign up is tapped
@@ -77,7 +78,7 @@ class GuestSignUpBanner extends StatelessWidget {
                         children: [
                           Flexible(
                             child: Text(
-                              'Get Your Personal Plan',
+                              AppLocalizations.of(context).guestSignUpGetYourPersonalPlan,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -106,7 +107,7 @@ class GuestSignUpBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'See your full workout plan before paying - no credit card needed!',
+                        AppLocalizations.of(context).guestSignUpSeeYourFullWorkout,
                         style: TextStyle(
                           fontSize: 12,
                           color: textPrimary.withOpacity(0.7),
@@ -128,8 +129,8 @@ class GuestSignUpBanner extends StatelessWidget {
                     color: AppColors.cyan,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
-                    'Sign Up',
+                  child: Text(
+                    AppLocalizations.of(context).mainShellPartSignUp,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

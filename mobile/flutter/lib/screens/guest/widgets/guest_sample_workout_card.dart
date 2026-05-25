@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A sample workout card for guest mode that shows what a real workout looks like
 /// Tapping shows a demo preview without actual workout functionality
 class GuestSampleWorkoutCard extends ConsumerWidget {
@@ -71,7 +72,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                           Row(
                             children: [
                               Text(
-                                'Sample Workout',
+                                AppLocalizations.of(context).guestSampleWorkoutSampleWorkout,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -102,7 +103,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Full Body Strength',
+                            AppLocalizations.of(context).guestSampleWorkoutFullBodyStrength,
                             style: TextStyle(
                               fontSize: 14,
                               color: textSecondary,
@@ -147,7 +148,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Exercises included:',
+                        AppLocalizations.of(context).guestSampleWorkoutExercisesIncluded,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -174,7 +175,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                 // CTA text
                 Center(
                   child: Text(
-                    'Tap to see workout demo',
+                    AppLocalizations.of(context).guestSampleWorkoutTapToSeeWorkout,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.cyan,
@@ -273,7 +274,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Full Body Strength',
+                              AppLocalizations.of(context).guestSampleWorkoutFullBodyStrength,
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -281,7 +282,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              'Sample Workout Demo',
+                              AppLocalizations.of(context).guestSampleWorkoutSampleWorkoutDemo,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: textSecondary,
@@ -315,7 +316,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   Text(
-                    'EXERCISES',
+                    AppLocalizations.of(context).workoutSummaryGeneralExercises,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -369,7 +370,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Get Personalized Workouts',
+                          AppLocalizations.of(context).guestSampleWorkoutGetPersonalizedWorkouts,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -379,7 +380,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Sign up free to get AI-generated workouts tailored to your goals, equipment, and schedule.',
+                          AppLocalizations.of(context).guestSampleWorkoutSignUpFreeTo,
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -403,8 +404,8 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Sign Up Free',
+                            child: Text(
+                              AppLocalizations.of(context).guestUpgradeSignUpFree,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,

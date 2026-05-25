@@ -18,6 +18,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/pr_detection_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// PR Share card widget
 class PRShareCard extends StatelessWidget {
   final DetectedPR pr;
@@ -83,7 +84,7 @@ class PRShareCard extends StatelessWidget {
 
                 // Title
                 Text(
-                  'NEW PERSONAL RECORD!',
+                  AppLocalizations.of(context).prShareCardNewPersonalRecord,
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -486,7 +487,7 @@ class _PRShareSheetState extends State<PRShareSheet> {
             child: Row(
               children: [
                 Text(
-                  'Share Your PR',
+                  AppLocalizations.of(context).prShareCardShareYourPr,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -566,7 +567,7 @@ class _PRShareSheetState extends State<PRShareSheet> {
                   child: OutlinedButton.icon(
                     onPressed: _copyText,
                     icon: const Icon(Icons.copy),
-                    label: const Text('Copy Text'),
+                    label: Text(AppLocalizations.of(context).wrappedShareCopyText),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -581,7 +582,7 @@ class _PRShareSheetState extends State<PRShareSheet> {
                   child: ElevatedButton.icon(
                     onPressed: _shareImage,
                     icon: const Icon(Icons.share),
-                    label: const Text('Share Image'),
+                    label: Text(AppLocalizations.of(context).prShareCardShareImage),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.cyan,
                       foregroundColor: Colors.white,
@@ -645,7 +646,7 @@ ${DateFormat('MMMM d, yyyy').format(widget.pr.achievedAt)}
     // Copy to clipboard
     Clipboard.setData(ClipboardData(text: textToCopy));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Copied to clipboard!')),
+      SnackBar(content: Text(AppLocalizations.of(context).prShareCardCopiedToClipboard)),
     );
     Navigator.pop(context);
   }
@@ -659,7 +660,7 @@ ${DateFormat('MMMM d, yyyy').format(widget.pr.achievedAt)}
       if (imageBytes == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to capture image')),
+            SnackBar(content: Text(AppLocalizations.of(context).prShareCardFailedToCaptureImage)),
           );
         }
         return;
@@ -679,7 +680,7 @@ ${DateFormat('MMMM d, yyyy').format(widget.pr.achievedAt)}
       debugPrint('Error sharing PR card: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to share')),
+          SnackBar(content: Text(AppLocalizations.of(context).prShareCardFailedToShare)),
         );
       }
     }

@@ -15,6 +15,7 @@ import '../../../data/services/data_cache_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class GroceryListScreen extends ConsumerStatefulWidget {
   final String listId;
   final String userId;
@@ -147,7 +148,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
     } else {
       await Clipboard.setData(ClipboardData(text: txt));
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Copied to clipboard')));
+          SnackBar(content: Text(AppLocalizations.of(context).recipeShareCopiedToClipboard)));
     }
   }
 
@@ -169,12 +170,12 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
                 color: text,
               ),
               title: Text(
-                _showStaples ? 'Hide pantry staples' : 'Show pantry staples',
+                _showStaples ? AppLocalizations.of(context).groceryListHidePantryStaples : AppLocalizations.of(context).groceryListShowPantryStaples,
                 style: TextStyle(color: text),
               ),
               subtitle: Text(
                 _showStaples
-                    ? 'Hiding keeps the list focused on what you actually need'
+                    ? AppLocalizations.of(context).groceryListHidingKeepsTheList
                     : 'Also show items you likely already have (salt, oil, etc.)',
                 style: TextStyle(color: muted, fontSize: 12),
               ),
@@ -186,7 +187,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
             const Divider(height: 1),
             ListTile(
               leading: Icon(Icons.content_copy, color: text),
-              title: Text('Copy as text', style: TextStyle(color: text)),
+              title: Text(AppLocalizations.of(context).groceryListCopyAsText, style: TextStyle(color: text)),
               onTap: () {
                 Navigator.pop(sheetCtx);
                 _export('text');
@@ -194,7 +195,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
             ),
             ListTile(
               leading: Icon(Icons.ios_share, color: text),
-              title: Text('Share as CSV', style: TextStyle(color: text)),
+              title: Text(AppLocalizations.of(context).groceryListShareAsCsv, style: TextStyle(color: text)),
               onTap: () {
                 Navigator.pop(sheetCtx);
                 _export('csv');
@@ -238,7 +239,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Add item',
+                  AppLocalizations.of(context).groceryListAddItem,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -252,7 +253,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   style: TextStyle(color: text),
                   decoration: InputDecoration(
-                    labelText: 'Item name',
+                    labelText: AppLocalizations.of(context).groceryListItemName,
                     labelStyle: TextStyle(color: muted),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -273,7 +274,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         style: TextStyle(color: text),
                         decoration: InputDecoration(
-                          labelText: 'Qty',
+                          labelText: AppLocalizations.of(context).groceryListQty,
                           labelStyle: TextStyle(color: muted),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -292,7 +293,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
                         controller: unitController,
                         style: TextStyle(color: text),
                         decoration: InputDecoration(
-                          labelText: 'Unit (g, cup, ...)',
+                          labelText: AppLocalizations.of(context).groceryListUnitGCup,
                           labelStyle: TextStyle(color: muted),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -308,7 +309,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Aisle (optional)',
+                  AppLocalizations.of(context).groceryListAisleOptional,
                   style: TextStyle(fontSize: 12, color: muted, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
@@ -371,7 +372,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text('Add', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    child: Text(AppLocalizations.of(context).tilePickerAdd, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -419,7 +420,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: PillAppBar(
-        title: _list?.name ?? 'Grocery list',
+        title: _list?.name ?? AppLocalizations.of(context).recipeDetailGroceryList,
         actions: [
           PillAppBarAction(
             icon: Icons.more_horiz,
@@ -440,7 +441,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
               backgroundColor: accent,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
-              label: const Text('Add item', style: TextStyle(fontWeight: FontWeight.w600)),
+              label: Text(AppLocalizations.of(context).groceryListAddItem, style: TextStyle(fontWeight: FontWeight.w600)),
             ),
     );
   }
@@ -463,7 +464,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'No items yet',
+                AppLocalizations.of(context).groceryListNoItemsYet,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -472,7 +473,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Tap the + button below to add ingredients.',
+                AppLocalizations.of(context).groceryListTapTheButtonBelow,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,

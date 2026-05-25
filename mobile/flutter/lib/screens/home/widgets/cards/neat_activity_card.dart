@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../data/providers/neat_provider.dart';
 import '../../../../data/services/api_client.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// NEAT Activity Card for the home screen
 /// Shows step progress, NEAT score, and active hours at a glance
 /// Tapping navigates to the full NEAT dashboard
@@ -110,7 +111,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Daily Activity',
+                  AppLocalizations.of(context).neatDashboardDailyActivity,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -218,7 +219,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                 const SizedBox(width: 8),
                 _buildStatPill(
                   icon: Icons.timer_outlined,
-                  label: 'Active',
+                  label: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                   value: '${activeHours}h',
                   color: activeHours >= 8
                       ? Colors.green
@@ -249,7 +250,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Goal Met!',
+                          AppLocalizations.of(context).neatActivityCardGoalMet,
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -316,7 +317,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
               ),
               const SizedBox(width: 8),
               Text(
-                'Daily Activity',
+                AppLocalizations.of(context).neatDashboardDailyActivity,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -365,7 +366,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Daily Activity',
+                  AppLocalizations.of(context).neatDashboardDailyActivity,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
@@ -381,7 +382,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
             ),
             const SizedBox(height: 12),
             Text(
-              'Track your daily steps and activity',
+              AppLocalizations.of(context).neatActivityCardTrackYourDailySteps,
               style: TextStyle(
                 color: colorScheme.onSurfaceVariant,
                 fontSize: 14,
@@ -395,7 +396,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                'Set up step goals →',
+                AppLocalizations.of(context).neatActivityCardSetUpStepGoals,
                 style: TextStyle(
                   color: colorScheme.primary,
                   fontWeight: FontWeight.w600,

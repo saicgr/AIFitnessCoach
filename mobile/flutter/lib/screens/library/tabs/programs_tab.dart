@@ -14,6 +14,7 @@ import '../widgets/program_carousel_section.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/programs_intro_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Format category name: replace underscores with spaces and capitalize each word
 String _formatCategoryName(String category) {
   return category
@@ -176,7 +177,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
                   Icon(Icons.fitness_center_rounded, color: cyan, size: 16),
                   const SizedBox(width: 8),
                   Text(
-                    'Tap any program to learn more',
+                    AppLocalizations.of(context).programsTapAnyProgramTo,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -201,7 +202,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     children: [
                       FilterChipWidget(
-                        label: 'All',
+                        label: AppLocalizations.of(context).syncedWorkoutsHistoryAll,
                         isSelected: selectedCategory == null,
                         onTap: () {
                           ref.read(selectedProgramCategoryProvider.notifier).state =
@@ -268,7 +269,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
                           ElevatedButton.icon(
                             onPressed: () => ref.invalidate(programsProvider),
                             icon: const Icon(Icons.refresh),
-                            label: const Text('Try Again'),
+                            label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: cyan,
                               foregroundColor: Colors.white,
@@ -323,7 +324,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
                             size: 48,
                           ),
                           const SizedBox(height: 16),
-                          const Text('No programs found'),
+                          Text(AppLocalizations.of(context).programsNoProgramsFound),
                           if (searchQuery.isNotEmpty || selectedCategory != null)
                             TextButton(
                               onPressed: () {
@@ -336,7 +337,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
                                   _searchController.clear();
                                 });
                               },
-                              child: const Text('Clear filters'),
+                              child: Text(AppLocalizations.of(context).programsClearFilters),
                             ),
                         ],
                       ),
@@ -456,7 +457,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Search',
+                    AppLocalizations.of(context).programsSearch,
                     style: TextStyle(
                       color: iconColor,
                       fontSize: 14,
@@ -516,7 +517,7 @@ class _ProgramsTabState extends ConsumerState<ProgramsTab> {
                       fontSize: 16,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Search programs...',
+                      hintText: AppLocalizations.of(context).programsSearchPrograms,
                       hintStyle: TextStyle(
                         color: textMuted.withValues(alpha: 0.7),
                         fontSize: 16,

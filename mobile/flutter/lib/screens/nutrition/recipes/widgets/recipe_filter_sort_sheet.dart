@@ -23,6 +23,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Sentinel class for [RecipeFilterSortState.copyWith]. A dedicated class is
 /// used (rather than `Object()`, which is NOT a const constructor) so callers
 /// can explicitly pass `mealType: null` to clear the meal-type filter,
@@ -276,7 +277,7 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Filters',
+                AppLocalizations.of(context).recipesFilters,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -307,7 +308,7 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
                         // ── Meal type ─────────────────────────────────────
                         _SectionLabel(
                           icon: Icons.restaurant_menu_rounded,
-                          label: 'Meal type',
+                          label: AppLocalizations.of(context).recipeFilterSortMealType,
                           accent: accent,
                           isDark: isDark,
                         ),
@@ -333,7 +334,7 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
                         // ── Source ────────────────────────────────────────
                         _SectionLabel(
                           icon: Icons.category_outlined,
-                          label: 'Source',
+                          label: AppLocalizations.of(context).recipeFilterSortSource,
                           accent: accent,
                           isDark: isDark,
                         ),
@@ -358,7 +359,7 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
                         // ── Other toggles ─────────────────────────────────
                         _SectionLabel(
                           icon: Icons.tune_rounded,
-                          label: 'Other',
+                          label: AppLocalizations.of(context).selectableChipOther,
                           accent: accent,
                           isDark: isDark,
                         ),
@@ -368,7 +369,7 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
                           runSpacing: 8,
                           children: [
                             _FilterChipPill(
-                              label: '⭐ Favorites only',
+                              label: AppLocalizations.of(context).recipeFilterSortFavoritesOnly,
                               selected: _state.favoritesOnly,
                               accent: accent,
                               isDark: isDark,
@@ -376,7 +377,7 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
                                   .copyWith(favoritesOnly: !_state.favoritesOnly)),
                             ),
                             _FilterChipPill(
-                              label: '🍱 Has leftovers only',
+                              label: AppLocalizations.of(context).recipeFilterSortHasLeftoversOnly,
                               selected: _state.hasLeftoversOnly,
                               accent: accent,
                               isDark: isDark,
@@ -411,8 +412,8 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text(
-                'Apply',
+              child: Text(
+                AppLocalizations.of(context).setAdjustmentSheetApply,
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
@@ -550,7 +551,7 @@ class _ClearAllPill extends StatelessWidget {
           border: Border.all(color: color.withValues(alpha: 0.6)),
         ),
         child: Text(
-          'Clear all',
+          AppLocalizations.of(context).settingsCardPartClearAll,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,

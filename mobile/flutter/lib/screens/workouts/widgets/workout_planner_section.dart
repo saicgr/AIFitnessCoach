@@ -15,6 +15,7 @@ import '../../home/widgets/hero_workout_carousel.dart';
 import '../../home/widgets/hero_workout_card.dart' show GeneratingHeroCard;
 import '../../home/widgets/week_calendar_strip.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The workout date strip + carousel, moved out of the home screen onto the
 /// Workouts tab. Self-contained: owns its own `PageController`, the
 /// strip-selected day, and the carousel↔strip two-way sync — so it can be
@@ -265,7 +266,7 @@ class WorkoutTuneMenu extends ConsumerWidget {
     final startsSunday = ref.watch(weekStartsSundayProvider);
     final showSynced = ref.watch(showSyncedInCarouselProvider);
     return PopupMenuButton<_TuneAction>(
-      tooltip: 'Calendar display options',
+      tooltip: AppLocalizations.of(context).workoutPlannerCalendarDisplayOptions,
       icon: Icon(Icons.tune, size: 18, color: tint),
       padding: EdgeInsets.zero,
       onSelected: (action) {
@@ -289,12 +290,12 @@ class WorkoutTuneMenu extends ConsumerWidget {
               Expanded(
                 child: Text(
                   startsSunday
-                      ? 'Start week on Monday'
+                      ? AppLocalizations.of(context).workoutPlannerStartWeekOnMonday
                       : 'Start week on Sunday',
                 ),
               ),
               Text(
-                startsSunday ? 'Sun' : 'Mon',
+                startsSunday ? AppLocalizations.of(context).workoutPlannerSun : AppLocalizations.of(context).workoutPlannerMon,
                 style: const TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w600),
               ),
@@ -312,7 +313,7 @@ class WorkoutTuneMenu extends ConsumerWidget {
                 size: 18,
               ),
               const SizedBox(width: 10),
-              const Expanded(child: Text('Show synced workouts')),
+              Expanded(child: Text(AppLocalizations.of(context).workoutPlannerShowSyncedWorkouts)),
               Switch.adaptive(
                 value: showSynced,
                 onChanged: (_) {

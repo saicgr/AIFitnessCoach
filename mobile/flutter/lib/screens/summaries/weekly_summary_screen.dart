@@ -12,6 +12,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class WeeklySummaryScreen extends ConsumerStatefulWidget {
   const WeeklySummaryScreen({super.key});
 
@@ -53,7 +54,7 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Weekly Summaries',
+        title: AppLocalizations.of(context).weeklySummaryWeeklySummaries,
         actions: [
           PillAppBarAction(
             icon: Icons.add,
@@ -102,8 +103,8 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
 
     if (mounted && result != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Weekly summary generated!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).weeklySummaryWeeklySummaryGenerated),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
@@ -282,7 +283,7 @@ class _SummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Tap to view details',
+                  AppLocalizations.of(context).weeklySummaryTapToViewDetails,
                   style: TextStyle(
                     fontSize: 12,
                     color: textMuted,
@@ -556,7 +557,7 @@ class _SummaryDetailSheetState extends State<_SummaryDetailSheet> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.ios_share_rounded),
-                          tooltip: 'Share report',
+                          tooltip: AppLocalizations.of(context).weeklySummaryShareReport,
                           onPressed: () => shareReportScreen(
                             context: context,
                             repaintKey: _reportKey,
@@ -597,7 +598,7 @@ class _SummaryDetailSheetState extends State<_SummaryDetailSheet> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'AI Summary',
+                              AppLocalizations.of(context).weeklySummaryAiSummary,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -624,7 +625,7 @@ class _SummaryDetailSheetState extends State<_SummaryDetailSheet> {
                 // Highlights
                 if (summary.aiHighlights != null &&
                     summary.aiHighlights!.isNotEmpty) ...[
-                  _SectionTitle(title: 'Highlights', isDark: isDark),
+                  _SectionTitle(title: AppLocalizations.of(context).workoutSummaryScreenHighlights, isDark: isDark),
                   const SizedBox(height: 12),
                   ...summary.aiHighlights!.map((highlight) {
                     return Padding(
@@ -691,7 +692,7 @@ class _SummaryDetailSheetState extends State<_SummaryDetailSheet> {
                 // Tips for next week
                 if (summary.aiNextWeekTips != null &&
                     summary.aiNextWeekTips!.isNotEmpty) ...[
-                  _SectionTitle(title: 'Tips for Next Week', isDark: isDark),
+                  _SectionTitle(title: AppLocalizations.of(context).weeklySummaryTipsForNextWeek, isDark: isDark),
                   const SizedBox(height: 12),
                   ...summary.aiNextWeekTips!.asMap().entries.map((entry) {
                     return Container(
@@ -824,7 +825,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'No summaries yet',
+              AppLocalizations.of(context).weeklySummaryNoSummariesYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -833,7 +834,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Generate your first weekly summary to see your progress with AI-powered insights',
+              AppLocalizations.of(context).weeklySummaryGenerateYourFirstWeekly,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -844,7 +845,7 @@ class _EmptyState extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onGenerate,
               icon: const Icon(Icons.auto_awesome),
-              label: const Text('Generate Summary'),
+              label: Text(AppLocalizations.of(context).weeklySummaryGenerateSummary),
               style: ElevatedButton.styleFrom(
                 backgroundColor: purple,
                 padding: const EdgeInsets.symmetric(

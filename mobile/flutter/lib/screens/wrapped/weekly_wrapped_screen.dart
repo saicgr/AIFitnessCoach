@@ -27,6 +27,7 @@ import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/data_cache_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class WeeklyWrappedScreen extends ConsumerStatefulWidget {
   final String? weekStart; // YYYY-MM-DD
   const WeeklyWrappedScreen({super.key, this.weekStart});
@@ -181,7 +182,7 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
       appBar: AppBar(
         backgroundColor: bg,
         elevation: 0,
-        title: const Text('Your Week'),
+        title: Text(AppLocalizations.of(context).weeklyWrappedYourWeek),
         titleTextStyle:
             TextStyle(color: fg, fontSize: 18, fontWeight: FontWeight.w700),
         iconTheme: IconThemeData(color: fg),
@@ -251,13 +252,13 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
           // Stats row
           Row(
             children: [
-              Expanded(child: _StatTile(value: '$workouts', label: 'Workouts', accent: accent, fg: fg)),
+              Expanded(child: _StatTile(value: '$workouts', label: AppLocalizations.of(context).workoutListTitle, accent: accent, fg: fg)),
               const SizedBox(width: 12),
-              Expanded(child: _StatTile(value: '$totalSets', label: 'Sets', accent: accent, fg: fg)),
+              Expanded(child: _StatTile(value: '$totalSets', label: AppLocalizations.of(context).workoutSummaryGeneralSets, accent: accent, fg: fg)),
               const SizedBox(width: 12),
-              Expanded(child: _StatTile(value: '$prs', label: 'PRs', accent: accent, fg: fg, highlight: prs > 0)),
+              Expanded(child: _StatTile(value: '$prs', label: AppLocalizations.of(context).weeklyWrappedPrs, accent: accent, fg: fg, highlight: prs > 0)),
               const SizedBox(width: 12),
-              Expanded(child: _StatTile(value: '$streak', label: 'Streak', accent: accent, fg: fg, highlight: streak >= 7)),
+              Expanded(child: _StatTile(value: '$streak', label: AppLocalizations.of(context).xpProgressCardStreak, accent: accent, fg: fg, highlight: streak >= 7)),
             ],
           ),
           const SizedBox(height: 24),
@@ -278,7 +279,7 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
                     children: [
                       Icon(Icons.auto_awesome_rounded, size: 14, color: accent),
                       const SizedBox(width: 6),
-                      Text('FROM YOUR COACH',
+                      Text(AppLocalizations.of(context).weeklyWrappedFromYourCoach,
                           style: TextStyle(
                             color: accent,
                             fontSize: 10,
@@ -315,7 +316,7 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
           const SizedBox(height: 10),
           if (_upcoming == null || _upcoming!.isEmpty)
             Text(
-              'No workouts scheduled yet. Generate a plan from Home.',
+              AppLocalizations.of(context).weeklyWrappedNoWorkoutsScheduledYet,
               style: TextStyle(color: fg.withValues(alpha: 0.6), fontSize: 13),
             )
           else

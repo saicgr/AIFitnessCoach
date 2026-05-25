@@ -20,6 +20,7 @@ import '../../widgets/segmented_tab_bar.dart';
 import 'recipe_builder_sheet.dart';
 import 'custom_food_builder_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'food_library_screen_part_food_library_card.dart';
 
 
@@ -648,7 +649,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     final confirm = await AppDialog.destructive(
       context,
       title: 'Delete ${item.name}?',
-      message: 'This action cannot be undone.',
+      message: AppLocalizations.of(context).workoutActionsThisActionCannotBe,
       icon: Icons.delete_rounded,
     );
 
@@ -682,7 +683,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to delete'),
+          content: Text(AppLocalizations.of(context).foodLibraryFailedToDelete),
           backgroundColor: AppColors.textMuted,
           behavior: SnackBarBehavior.floating,
         ),
@@ -717,7 +718,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Food Library',
+        title: AppLocalizations.of(context).foodLibraryFoodLibrary,
         actions: [PillAppBarAction(icon: Icons.sort_rounded, onTap: _showSortOptions)],
       ),
       body: Column(
@@ -760,7 +761,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
                       onChanged: _onSearchChanged,
                       style: TextStyle(color: textPrimary, fontSize: 16),
                       decoration: InputDecoration(
-                        hintText: 'Search foods and recipes...',
+                        hintText: AppLocalizations.of(context).foodLibrarySearchFoodsAndRecipes,
                         hintStyle: TextStyle(color: textMuted, fontSize: 16),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
@@ -857,8 +858,8 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
         backgroundColor: accentColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          'Add',
+        label: Text(
+          AppLocalizations.of(context).tilePickerAdd,
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
@@ -886,19 +887,19 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
           children: [
             ListTile(
               leading: Icon(Icons.restaurant_menu_rounded, color: textPrimary),
-              title: Text('Custom food',
+              title: Text(AppLocalizations.of(context).foodLibraryCustomFood,
                   style: TextStyle(
                       color: textPrimary, fontWeight: FontWeight.w600)),
-              subtitle: Text('A single food — type it or let AI fill it in',
+              subtitle: Text(AppLocalizations.of(context).foodLibraryASingleFoodType,
                   style: TextStyle(color: textMuted, fontSize: 12)),
               onTap: () => Navigator.pop(ctx, 'food'),
             ),
             ListTile(
               leading: Icon(Icons.menu_book_rounded, color: textPrimary),
-              title: Text('Recipe',
+              title: Text(AppLocalizations.of(context).mealPlannerRecipe,
                   style: TextStyle(
                       color: textPrimary, fontWeight: FontWeight.w600)),
-              subtitle: Text('A homemade meal with multiple ingredients',
+              subtitle: Text(AppLocalizations.of(context).foodLibraryAHomemadeMealWith,
                   style: TextStyle(color: textMuted, fontSize: 12)),
               onTap: () => Navigator.pop(ctx, 'recipe'),
             ),
@@ -943,7 +944,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
       );
     } else if (result.useExistingId != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Using your existing custom food')),
+        SnackBar(content: Text(AppLocalizations.of(context).foodLibraryUsingYourExistingCustom)),
       );
     }
   }
@@ -980,7 +981,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
               },
               icon: Icon(Icons.refresh_rounded, color: accentColor),
               label: Text(
-                'Retry',
+                AppLocalizations.of(context).buttonRetry,
                 style: TextStyle(
                   color: accentColor,
                   fontWeight: FontWeight.w600,

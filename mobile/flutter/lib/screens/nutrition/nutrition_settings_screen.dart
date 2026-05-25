@@ -17,6 +17,7 @@ import 'food_library_screen.dart';
 import 'food_logging_rules_screen.dart';
 import 'weekly_checkin_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'nutrition_settings_screen_ui_1.dart';
 part 'nutrition_settings_screen_ui_2.dart';
 
@@ -78,7 +79,7 @@ class _NutritionSettingsScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Nutrition Settings'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).nutritionSettingsNutritionSettings),
       body: prefsState.isLoading || preferences == null
           ? _buildSkeleton(isDark, elevated, cardBorder)
           : SingleChildScrollView(
@@ -123,7 +124,7 @@ class _NutritionSettingsScreenState
                     children: [
                       _buildSwitchTile(
                         context,
-                        title: 'Quick Log Mode',
+                        title: AppLocalizations.of(context).nutritionSettingsQuickLogMode,
                         subtitle:
                             'Show quick add button for faster meal logging',
                         value: preferences.quickLogModeEnabled,
@@ -137,7 +138,7 @@ class _NutritionSettingsScreenState
                       _buildDivider(isDark),
                       _buildSwitchTile(
                         context,
-                        title: 'Show Macros on Log',
+                        title: AppLocalizations.of(context).nutritionSettingsShowMacrosOnLog,
                         subtitle:
                             'Display macro breakdown when confirming a logged meal',
                         value: preferences.showMacrosOnLog,
@@ -215,7 +216,7 @@ class _NutritionSettingsScreenState
                     children: [
                       _buildSwitchTile(
                         context,
-                        title: 'Training Day Boost',
+                        title: AppLocalizations.of(context).nutritionSettingsTrainingDayBoost,
                         subtitle:
                             'Increase calories on workout days for better performance',
                         value: preferences.adjustCaloriesForTraining,
@@ -229,7 +230,7 @@ class _NutritionSettingsScreenState
                       _buildDivider(isDark),
                       _buildSwitchTile(
                         context,
-                        title: 'Rest Day Reduction',
+                        title: AppLocalizations.of(context).nutritionSettingsRestDayReduction,
                         subtitle:
                             'Slightly reduce calories on rest days',
                         value: preferences.adjustCaloriesForRest,
@@ -243,7 +244,7 @@ class _NutritionSettingsScreenState
                       _buildDivider(isDark),
                       _buildSwitchTile(
                         context,
-                        title: 'Weekly Check-in Reminders',
+                        title: AppLocalizations.of(context).nutritionSettingsWeeklyCheckInReminders,
                         subtitle: preferences.weeklyCheckinEnabled
                             ? 'Get reminded to review and adjust your targets weekly'
                             : 'Disabled - targets won\'t auto-adjust',
@@ -299,7 +300,7 @@ class _NutritionSettingsScreenState
                     children: [
                       _buildSwitchTile(
                         context,
-                        title: 'Compact Tracker View',
+                        title: AppLocalizations.of(context).nutritionSettingsCompactTrackerView,
                         subtitle:
                             'Use a condensed layout with meals at the top',
                         value: preferences.compactTrackerViewEnabled,
@@ -332,7 +333,7 @@ class _NutritionSettingsScreenState
                     children: [
                       _buildSwitchTile(
                         context,
-                        title: 'Disable AI Food Tips',
+                        title: AppLocalizations.of(context).nutritionSettingsDisableAiFoodTips,
                         subtitle:
                             'Hide nutrition suggestions after logging meals',
                         value: !preferences.showAiFeedbackAfterLogging,
@@ -367,7 +368,7 @@ class _NutritionSettingsScreenState
                     children: [
                       _buildSwitchTile(
                         context,
-                        title: 'Calm Mode',
+                        title: AppLocalizations.of(context).nutritionSettingsCalmMode,
                         subtitle:
                             'Hide calorie numbers and focus on food quality instead',
                         value: preferences.calmModeEnabled,
@@ -381,7 +382,7 @@ class _NutritionSettingsScreenState
                       _buildDivider(isDark),
                       _buildSwitchTile(
                         context,
-                        title: 'Weekly View',
+                        title: AppLocalizations.of(context).nutritionSettingsWeeklyView,
                         subtitle:
                             'Show weekly averages instead of daily targets',
                         value: preferences.showWeeklyInsteadOfDaily,
@@ -395,7 +396,7 @@ class _NutritionSettingsScreenState
                       _buildDivider(isDark),
                       _buildSwitchTile(
                         context,
-                        title: 'Post-Meal Check-in',
+                        title: AppLocalizations.of(context).nutritionSettingsPostMealCheckIn,
                         subtitle:
                             'Ask how you feel after logging a meal (mood, energy)',
                         value: !_hidePostMealReview,
@@ -430,8 +431,8 @@ class _NutritionSettingsScreenState
                     cardBorder,
                     textPrimary,
                     textMuted,
-                    title: 'Saved Foods & Recipes',
-                    subtitle: 'Manage your food library for quick logging',
+                    title: AppLocalizations.of(context).nutritionSettingsSavedFoodsRecipes,
+                    subtitle: AppLocalizations.of(context).nutritionSettingsManageYourFoodLibrary,
                     icon: Icons.bookmark_rounded,
                     iconColor: AppColors.orange,
                     onTap: () {
@@ -454,9 +455,9 @@ class _NutritionSettingsScreenState
                     cardBorder,
                     textPrimary,
                     textMuted,
-                    title: 'Always-Rules',
+                    title: AppLocalizations.of(context).nutritionSettingsAlwaysRules,
                     subtitle:
-                        'Standing rules Zealova applies to every food analysis',
+                        AppLocalizations.of(context).nutritionSettingsStandingRulesZealovaApplies,
                     icon: Icons.auto_awesome_rounded,
                     iconColor: AppColors.purple,
                     onTap: () {
@@ -492,7 +493,7 @@ class _NutritionSettingsScreenState
               children: [
                 Icon(Icons.ac_unit, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
-                Text('Streak freeze used! Your streak is protected.'),
+                Text(AppLocalizations.of(context).nutritionSettingsStreakFreezeUsedYour),
               ],
             ),
             backgroundColor: AppColors.textMuted,
@@ -530,8 +531,8 @@ class _NutritionSettingsScreenState
           .recalculateTargets(userId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Targets recalculated from your profile.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).nutritionSettingsTargetsRecalculatedFromYour),
             backgroundColor: AppColors.textMuted,
             behavior: SnackBarBehavior.floating,
           ),
@@ -701,7 +702,7 @@ class _NutritionSettingsScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Calorie Estimate Bias',
+                        AppLocalizations.of(context).nutritionSettingsScreenCalorieEstimateBias,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -710,7 +711,7 @@ class _NutritionSettingsScreenState
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Adjust AI calorie estimates to match your experience',
+                        AppLocalizations.of(context).nutritionSettingsAdjustAiCalorieEstimates,
                         style: TextStyle(
                           fontSize: 13,
                           color: textMuted,

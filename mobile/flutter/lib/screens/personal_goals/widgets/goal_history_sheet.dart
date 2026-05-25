@@ -6,6 +6,7 @@ import '../../../data/services/personal_goals_service.dart';
 import 'goal_history_chart.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet displaying goal history with a progress chart
 class GoalHistorySheet extends ConsumerStatefulWidget {
   final String exerciseName;
@@ -205,7 +206,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
         if (widget.currentValue != null)
           Expanded(
             child: _buildStatCard(
-              label: 'This Week',
+              label: AppLocalizations.of(context).workoutCompleteThisWeek,
               value: '${widget.currentValue}',
               unit: 'reps',
               color: AppColors.cyan,
@@ -217,7 +218,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
         if (_allTimeBest != null)
           Expanded(
             child: _buildStatCard(
-              label: 'All-Time Best',
+              label: AppLocalizations.of(context).goalHistoryChartAllTimeBest,
               value: '$_allTimeBest',
               unit: 'reps',
               color: AppColors.orange,
@@ -295,7 +296,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Could not load history',
+            AppLocalizations.of(context).goalHistoryCouldNotLoadHistory,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -305,7 +306,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadHistory,
-            child: const Text('Try Again'),
+            child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
           ),
         ],
       ),
@@ -331,7 +332,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
               Icon(Icons.lightbulb_outline, size: 18, color: AppColors.yellow),
               const SizedBox(width: 8),
               Text(
-                'Tips for beating your PR',
+                AppLocalizations.of(context).goalHistoryTipsForBeatingYour,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -365,7 +366,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '\u2022 ',
+            AppLocalizations.of(context).xpGoalsU2022,
             style: TextStyle(
               fontSize: 14,
               color: textSecondary,

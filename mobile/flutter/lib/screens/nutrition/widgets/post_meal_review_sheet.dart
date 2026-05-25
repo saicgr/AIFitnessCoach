@@ -9,6 +9,7 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 const _kHidePostMealReviewKey = 'hide_post_meal_review';
 
 /// Shows a compact post-meal review sheet after logging a meal.
@@ -116,7 +117,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Meal Logged!',
+                          AppLocalizations.of(context).postMealReviewMealLogged,
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textPrimary),
                         ),
                         Text(
@@ -131,7 +132,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                   // Skip button
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Skip', style: TextStyle(fontSize: 13, color: textMuted)),
+                    child: Text(AppLocalizations.of(context).onboardingSkip, style: TextStyle(fontSize: 13, color: textMuted)),
                   ),
                 ],
               ),
@@ -139,7 +140,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
 
               // Quick review prompt
               Text(
-                'Quick check-in (optional)',
+                AppLocalizations.of(context).postMealReviewQuickCheckInOptional,
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
               ),
               const SizedBox(height: 4),
@@ -150,7 +151,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                     Icon(Icons.info_outline, size: 14, color: teal),
                     const SizedBox(width: 4),
                     Text(
-                      _showWhyItMatters ? 'Hide' : 'Why track this?',
+                      _showWhyItMatters ? AppLocalizations.of(context).workoutSheetsMixinHide : AppLocalizations.of(context).postMealReviewWhyTrackThis,
                       style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w500),
                     ),
                   ],
@@ -186,7 +187,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
 
               // Before eating mood
               Text(
-                'How did you feel before eating?',
+                AppLocalizations.of(context).postMealReviewHowDidYouFeel,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
               ),
               const SizedBox(height: 8),
@@ -206,7 +207,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
 
               // After eating mood
               Text(
-                'How do you feel after?',
+                AppLocalizations.of(context).postMealReviewHowDoYouFeel,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
               ),
               const SizedBox(height: 8),
@@ -227,7 +228,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
               Row(
                 children: [
                   Text(
-                    'Energy level',
+                    AppLocalizations.of(context).preWorkoutCheckinEnergyLevel,
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
                   ),
                   const Spacer(),
@@ -278,7 +279,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: const Text('Save Check-in', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  child: Text(AppLocalizations.of(context).postMealReviewSaveCheckIn, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(height: 10),
@@ -305,8 +306,8 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                     Navigator.pop(context);
                     messenger.showSnackBar(
                       SnackBar(
-                        content: const Text(
-                          'Check-in disabled. Re-enable from Nutrition → Patterns.',
+                        content: Text(
+                          AppLocalizations.of(context).postMealReviewCheckInDisabledRe,
                         ),
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
@@ -336,7 +337,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                     }();
                   },
                   child: Text(
-                    "Don't show again",
+                    AppLocalizations.of(context).postMealReviewDonTShowAgain,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted.withValues(alpha: 0.6),
@@ -388,11 +389,11 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Row(
+        content: Row(
           children: [
             Icon(Icons.mood, color: Colors.white, size: 18),
             SizedBox(width: 8),
-            Text('Check-in saved!'),
+            Text(AppLocalizations.of(context).postMealReviewCheckInSaved),
           ],
         ),
         backgroundColor: teal,

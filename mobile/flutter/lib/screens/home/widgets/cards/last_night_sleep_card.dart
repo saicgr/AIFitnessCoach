@@ -7,6 +7,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// "Last Night's Sleep" card matching the GymBeat / FitOn reference: large
 /// duration, time window underneath, and a horizontal stage bar split into
 /// deep / light / REM / awake bands. Reads from the existing
@@ -105,7 +106,7 @@ class LastNightSleepCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      "Last Night's Sleep",
+                      AppLocalizations.of(context).lastNightSleepLastNightSSleep,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,

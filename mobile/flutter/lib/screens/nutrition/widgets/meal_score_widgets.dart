@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import 'score_explain_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Animated calorie chip with count-up and shimmer effect
 class AnimatedCalorieChip extends StatefulWidget {
   final int calories;
@@ -335,7 +336,7 @@ class MealScoreBreakdownRow extends StatelessWidget {
               ),
               child: _LabeledScorePill(
                 icon: Icons.favorite,
-                label: 'Health',
+                label: AppLocalizations.of(context).mealScoreWidgetsHealth,
                 value: '${healthScore!}/10',
                 color: _healthColor(healthScore!),
                 showHelpIcon: true,
@@ -347,7 +348,7 @@ class MealScoreBreakdownRow extends StatelessWidget {
         if (goalAlignmentPercentage != null)
           _LabeledScorePill(
             icon: Icons.flag,
-            label: 'Goal fit',
+            label: AppLocalizations.of(context).mealScoreWidgetsGoalFit,
             value: '${goalAlignmentPercentage!}%',
             color: _alignmentColor(goalAlignmentPercentage!),
             selfExpand: true,

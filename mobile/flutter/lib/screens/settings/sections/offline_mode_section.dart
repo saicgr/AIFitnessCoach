@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The offline mode settings section.
 ///
 /// Displays the offline mode feature card.
@@ -46,7 +47,7 @@ class OfflineModeSection extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Offline Mode',
+            AppLocalizations.of(context).offlineModeOfflineMode,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -55,7 +56,7 @@ class OfflineModeSection extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Work out without internet. On-device AI, pre-cached workouts, exercise video downloads, and background sync.',
+            AppLocalizations.of(context).offlineModeWorkOutWithoutInternet,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

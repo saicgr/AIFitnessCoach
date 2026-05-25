@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/sort_spec.dart';
 import '../../../../widgets/glass_sheet.dart' show GlassSheet, showGlassSheet;
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for configuring the Menu Analysis multi-sort.
 ///
 /// Replaces the old inline strip of 8+ sort pills with a single full-height
@@ -136,7 +137,7 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
                 Icon(Icons.sort_rounded, color: textPrimary, size: 22),
                 const SizedBox(width: 10),
                 Text(
-                  'Sort menu',
+                  AppLocalizations.of(context).sortOptionsSortMenu,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -163,7 +164,7 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Text(
-                      'Clear',
+                      AppLocalizations.of(context).vacationModeClear,
                       style: TextStyle(
                         color: AppColors.orange,
                         fontWeight: FontWeight.w600,
@@ -180,7 +181,7 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
               alignment: Alignment.centerLeft,
               child: Text(
                 _sort.isEmpty
-                    ? 'Tap a field to sort by it.'
+                    ? AppLocalizations.of(context).sortOptionsTapAFieldTo
                     : 'Tap to add or remove. Drag the handle to reorder priority.',
                 style: TextStyle(
                   fontSize: 11,
@@ -261,8 +262,8 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Done',
+                child: Text(
+                  AppLocalizations.of(context).commonDone,
                   style:
                       TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                 ),
@@ -380,7 +381,7 @@ class _UnifiedFieldTile extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isAsc ? 'Low → High' : 'High → Low',
+                            isAsc ? AppLocalizations.of(context).sortOptionsLowHigh : AppLocalizations.of(context).sortOptionsHighLow,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -398,7 +399,7 @@ class _UnifiedFieldTile extends StatelessWidget {
                     icon: Icon(Icons.check_circle,
                         color: AppColors.orange, size: 22),
                     padding: EdgeInsets.zero,
-                    tooltip: 'Remove from sort',
+                    tooltip: AppLocalizations.of(context).sortOptionsRemoveFromSort,
                     constraints:
                         const BoxConstraints(minWidth: 32, minHeight: 32),
                     visualDensity: VisualDensity.compact,

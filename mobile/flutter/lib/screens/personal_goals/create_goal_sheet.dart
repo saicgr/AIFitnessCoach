@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/goal_unit.dart';
 import '../../data/services/personal_goals_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for creating a new weekly personal goal
 class CreateGoalSheet extends StatefulWidget {
   final Future<void> Function(String exerciseName, PersonalGoalType goalType, double targetValue, GoalUnit unit) onSubmit;
@@ -50,7 +51,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
 
     if (exercise.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an exercise name')),
+        SnackBar(content: Text(AppLocalizations.of(context).createGoalPleaseEnterAnExercise)),
       );
       return;
     }
@@ -58,7 +59,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
     final target = double.tryParse(targetText);
     if (target == null || target <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid target')),
+        SnackBar(content: Text(AppLocalizations.of(context).createGoalPleaseEnterAValid)),
       );
       return;
     }
@@ -137,7 +138,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
 
             // Title
             Text(
-              'Set Weekly Goal',
+              AppLocalizations.of(context).createGoalSetWeeklyGoal,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -146,7 +147,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Challenge yourself to beat your personal best!',
+              AppLocalizations.of(context).createGoalChallengeYourselfToBeat,
               style: TextStyle(
                 fontSize: 14,
                 color: textSecondary,
@@ -156,7 +157,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
 
             // Goal type selection
             Text(
-              'Goal Type',
+              AppLocalizations.of(context).createGoalGoalType,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -168,16 +169,16 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
               children: [
                 _GoalTypeOption(
                   icon: Icons.emoji_events,
-                  title: 'Max Reps',
-                  subtitle: 'One set max effort',
+                  title: AppLocalizations.of(context).personalGoalsMaxReps,
+                  subtitle: AppLocalizations.of(context).createGoalOneSetMaxEffort,
                   isSelected: _selectedType == PersonalGoalType.singleMax,
                   onTap: () => setState(() => _selectedType = PersonalGoalType.singleMax),
                 ),
                 const SizedBox(width: 12),
                 _GoalTypeOption(
                   icon: Icons.repeat,
-                  title: 'Weekly Volume',
-                  subtitle: 'Total reps this week',
+                  title: AppLocalizations.of(context).personalGoalsWeeklyVolume,
+                  subtitle: AppLocalizations.of(context).createGoalTotalRepsThisWeek,
                   isSelected: _selectedType == PersonalGoalType.weeklyVolume,
                   onTap: () => setState(() => _selectedType = PersonalGoalType.weeklyVolume),
                 ),
@@ -187,7 +188,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
 
             // Unit selection
             Text(
-              'Unit',
+              AppLocalizations.of(context).createGoalUnit,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -222,7 +223,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
 
             // Exercise name
             Text(
-              'Exercise',
+              AppLocalizations.of(context).demoActiveWorkoutExercise,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -271,7 +272,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
               controller: _exerciseController,
               style: TextStyle(color: textPrimary),
               decoration: InputDecoration(
-                hintText: 'Or type custom exercise...',
+                hintText: AppLocalizations.of(context).createGoalOrTypeCustomExercise,
                 hintStyle: TextStyle(color: textMuted),
                 filled: true,
                 fillColor: elevated,
@@ -357,8 +358,8 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Set Goal',
+                    : Text(
+                        AppLocalizations.of(context).createGoalSetGoal,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

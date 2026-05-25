@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Standard glassmorphic bottom sheet styling constants
 class GlassSheetStyle {
   GlassSheetStyle._();
@@ -213,7 +214,7 @@ class GlassSheetHandle extends StatelessWidget {
           // Centered drag handle. Wrapped in Semantics so screen readers
           // announce it as a resize/dismiss affordance (Fix #3 a11y).
           Semantics(
-            label: 'Drag to resize',
+            label: AppLocalizations.of(context).glassDragToResize,
             container: true,
             child: Container(
               width: GlassSheetStyle.handleWidth,

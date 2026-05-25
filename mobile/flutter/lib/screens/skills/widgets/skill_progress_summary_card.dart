@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/skill_progression.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Summary card showing user's overall skill progression stats
 class SkillProgressSummaryCard extends StatelessWidget {
   final SkillProgressionSummary summary;
@@ -54,7 +55,7 @@ class SkillProgressSummaryCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Your Progress',
+                AppLocalizations.of(context).skillProgressSummaryYourProgress,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -69,7 +70,7 @@ class SkillProgressSummaryCard extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   value: summary.totalChainsStarted.toString(),
-                  label: 'Skills Started',
+                  label: AppLocalizations.of(context).skillProgressSummarySkillsStarted,
                   icon: Icons.play_arrow_rounded,
                   color: AppColors.purple,
                 ),
@@ -77,7 +78,7 @@ class SkillProgressSummaryCard extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   value: summary.totalChainsCompleted.toString(),
-                  label: 'Mastered',
+                  label: AppLocalizations.of(context).skillProgressSummaryMastered,
                   icon: Icons.emoji_events_rounded,
                   color: AppColors.orange,
                 ),
@@ -85,7 +86,7 @@ class SkillProgressSummaryCard extends StatelessWidget {
               Expanded(
                 child: _StatItem(
                   value: summary.totalStepsUnlocked.toString(),
-                  label: 'Steps Unlocked',
+                  label: AppLocalizations.of(context).skillProgressSummaryStepsUnlocked,
                   icon: Icons.lock_open_rounded,
                   color: AppColors.green,
                 ),

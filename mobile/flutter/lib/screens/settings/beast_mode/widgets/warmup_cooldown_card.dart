@@ -6,6 +6,7 @@ import '../../../../core/providers/warmup_duration_provider.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Beast Mode card with continuous sliders for precise warmup & cooldown control.
 class WarmupCooldownCard extends ConsumerWidget {
   final BeastThemeData theme;
@@ -20,9 +21,9 @@ class WarmupCooldownCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Warmup & Cooldown', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
+          Text(AppLocalizations.of(context).warmupCooldownCardWarmupCooldown, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
           const SizedBox(height: 4),
-          Text('Precise duration control (1-15 min)', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+          Text(AppLocalizations.of(context).warmupCooldownCardPreciseDurationControl1, style: TextStyle(fontSize: 11, color: theme.textMuted)),
           const SizedBox(height: 16),
 
           // Warmup slider
@@ -61,7 +62,7 @@ class WarmupCooldownCard extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('1 min', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                Text(AppLocalizations.of(context).warmupCooldownCard1Min, style: TextStyle(fontSize: 11, color: theme.textMuted)),
                 Text('8 min', style: TextStyle(fontSize: 11, color: theme.textMuted)),
                 Text('15 min', style: TextStyle(fontSize: 11, color: theme.textMuted)),
               ],
@@ -105,7 +106,7 @@ class WarmupCooldownCard extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('1 min', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                Text(AppLocalizations.of(context).warmupCooldownCard1Min, style: TextStyle(fontSize: 11, color: theme.textMuted)),
                 Text('8 min', style: TextStyle(fontSize: 11, color: theme.textMuted)),
                 Text('15 min', style: TextStyle(fontSize: 11, color: theme.textMuted)),
               ],

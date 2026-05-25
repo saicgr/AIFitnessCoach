@@ -18,6 +18,7 @@ import '../../../widgets/sheet_header.dart';
 import '../../gym_profile/gym_location_picker_screen.dart';
 import 'gym_equipment_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'edit_gym_profile_sheet_ui.dart';
 
 part 'edit_gym_profile_sheet_ext.dart';
@@ -299,7 +300,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                       children: [
                         _buildActionChip(
                           icon: Icons.home_rounded,
-                          label: 'Edit Icon',
+                          label: AppLocalizations.of(context).editGymProfileEditIcon,
                           onTap: _showIconPicker,
                           isDark: isDark,
                           textSecondary: textSecondary,
@@ -307,7 +308,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                         const SizedBox(width: 8),
                         _buildActionChip(
                           icon: Icons.edit_rounded,
-                          label: 'Rename Gym',
+                          label: AppLocalizations.of(context).editGymProfileRenameGym,
                           onTap: _showRenameDialog,
                           isDark: isDark,
                           textSecondary: textSecondary,
@@ -315,7 +316,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                         const SizedBox(width: 8),
                         _buildActionChip(
                           icon: Icons.copy_rounded,
-                          label: 'Duplicate',
+                          label: AppLocalizations.of(context).manageGymProfilesDuplicate,
                           onTap: _duplicateProfile,
                           isDark: isDark,
                           textSecondary: textSecondary,
@@ -337,7 +338,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                   children: [
                     // Name field
                     Text(
-                      'Name',
+                      AppLocalizations.of(context).menuAnalysisName,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -350,7 +351,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                       onChanged: (_) => _markChanged(),
                       style: TextStyle(color: textPrimary, fontSize: 16),
                       decoration: InputDecoration(
-                        hintText: 'Enter gym name',
+                        hintText: AppLocalizations.of(context).editGymProfileEnterGymName,
                         hintStyle:
                             TextStyle(color: textSecondary.withOpacity(0.5)),
                         filled: true,
@@ -373,7 +374,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Environment
                     Text(
-                      'Environment',
+                      AppLocalizations.of(context).workoutPreferencesCardEnvironment,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -445,7 +446,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Icon selection
                     Text(
-                      'Icon',
+                      AppLocalizations.of(context).editGymProfileIcon,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -496,7 +497,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Color selection
                     Text(
-                      'Color',
+                      AppLocalizations.of(context).editGymProfileColor,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -553,7 +554,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Equipment - tap to open advanced equipment sheet
                     Text(
-                      'Equipment',
+                      AppLocalizations.of(context).trainingSetupCardEquipment,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -604,7 +605,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Tap to add, remove, or edit weights',
+                                    AppLocalizations.of(context).editGymProfileTapToAddRemove,
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: textSecondary,
@@ -627,7 +628,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Training preferences section
                     Text(
-                      'Training Preferences (Optional)',
+                      AppLocalizations.of(context).editGymProfileTrainingPreferencesOptional,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -636,7 +637,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Customize workouts for this gym',
+                      AppLocalizations.of(context).editGymProfileCustomizeWorkoutsForThis,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,
@@ -656,7 +657,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Workout Days picker
                     Text(
-                      'Workout Days',
+                      AppLocalizations.of(context).workoutSettingsWorkoutDays,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -678,7 +679,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                     if (_isAiDecideSplit && _selectedWorkoutDays.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       Text(
-                        'Pin focus per day (optional)',
+                        AppLocalizations.of(context).editGymProfilePinFocusPerDay,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -687,7 +688,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Leave on Auto for AI to decide, or pin a focus to a specific day (e.g. Tue → Upper).",
+                        AppLocalizations.of(context).editGymProfileLeaveOnAutoFor,
                         style: TextStyle(fontSize: 12, color: textSecondary),
                       ),
                       const SizedBox(height: 8),
@@ -713,7 +714,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Experience selector
                     Text(
-                      'Experience Level',
+                      AppLocalizations.of(context).editGymProfileExperienceLevel,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -732,7 +733,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Focus Areas selector
                     Text(
-                      'Focus Areas',
+                      AppLocalizations.of(context).workoutPreferencesCardFocusAreas,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -741,7 +742,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Muscle groups to prioritize',
+                      AppLocalizations.of(context).editGymProfileMuscleGroupsToPrioritize,
                       style: TextStyle(fontSize: 12, color: textSecondary),
                     ),
                     const SizedBox(height: 8),
@@ -756,7 +757,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Weekly Variety selector
                     Text(
-                      'Weekly Variety',
+                      AppLocalizations.of(context).workoutSettingsWeeklyVariety,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -765,7 +766,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'How much exercise variety each week',
+                      AppLocalizations.of(context).editGymProfileHowMuchExerciseVariety,
                       style: TextStyle(fontSize: 12, color: textSecondary),
                     ),
                     const SizedBox(height: 8),
@@ -779,7 +780,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Location section
                     Text(
-                      'Location (Optional)',
+                      AppLocalizations.of(context).editGymProfileLocationOptional,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -788,7 +789,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Set a location to auto-switch profiles',
+                      AppLocalizations.of(context).editGymProfileSetALocationTo,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,
@@ -916,7 +917,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Auto-switch when I arrive',
+                                    AppLocalizations.of(context).editGymProfileAutoSwitchWhenI,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
@@ -924,7 +925,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                                     ),
                                   ),
                                   Text(
-                                    'Requires location permission',
+                                    AppLocalizations.of(context).editGymProfileRequiresLocationPermission,
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: textSecondary,
@@ -951,7 +952,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
 
                     // Time preference section
                     Text(
-                      'Workout Time (Optional)',
+                      AppLocalizations.of(context).editGymProfileWorkoutTimeOptional,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -960,7 +961,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'When do you usually workout here?',
+                      AppLocalizations.of(context).editGymProfileWhenDoYouUsually,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,
@@ -1001,7 +1002,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Auto-switch at this time',
+                                    AppLocalizations.of(context).editGymProfileAutoSwitchAtThis,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
@@ -1057,7 +1058,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: Text(
-                        'Cancel',
+                        AppLocalizations.of(context).buttonCancel,
                         style: TextStyle(color: textSecondary),
                       ),
                     ),
@@ -1087,8 +1088,8 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Save Changes',
+                          : Text(
+                              AppLocalizations.of(context).vacationModeSaveChanges,
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                     ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/coach_persona.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Form for creating a custom coach persona.
 class CustomCoachForm extends StatelessWidget {
   final String name;
@@ -46,7 +47,7 @@ class CustomCoachForm extends StatelessWidget {
         children: [
           // Name Field
           Text(
-            'Coach Name',
+            AppLocalizations.of(context).customCoachFormCoachName,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -58,7 +59,7 @@ class CustomCoachForm extends StatelessWidget {
             onChanged: onNameChanged,
             style: TextStyle(color: textPrimary),
             decoration: InputDecoration(
-              hintText: 'e.g., My Coach, Ace, etc.',
+              hintText: AppLocalizations.of(context).customCoachFormEGMyCoach,
               hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.6)),
               filled: true,
               fillColor: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
@@ -82,7 +83,7 @@ class CustomCoachForm extends StatelessWidget {
 
           // Coaching Style
           Text(
-            'Coaching Style',
+            AppLocalizations.of(context).customCoachFormCoachingStyle,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -113,7 +114,7 @@ class CustomCoachForm extends StatelessWidget {
 
           // Communication Tone
           Text(
-            'Communication Tone',
+            AppLocalizations.of(context).customCoachFormCommunicationTone,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -147,7 +148,7 @@ class CustomCoachForm extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Encouragement Level',
+                AppLocalizations.of(context).customCoachFormEncouragementLevel,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -182,11 +183,11 @@ class CustomCoachForm extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Minimal',
+                AppLocalizations.of(context).notificationsMinimal,
                 style: TextStyle(fontSize: 11, color: textSecondary),
               ),
               Text(
-                'Maximum',
+                AppLocalizations.of(context).customCoachFormMaximum,
                 style: TextStyle(fontSize: 11, color: textSecondary),
               ),
             ],

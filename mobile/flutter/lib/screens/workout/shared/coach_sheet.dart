@@ -18,6 +18,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Default quick replies — balanced framing for general use.
 const kCoachQuickReplies = <String>[
   'Is this too heavy?',
@@ -126,7 +127,7 @@ class _CoachSheetState extends ConsumerState<CoachSheet> {
             child: Row(children: [
               const Text('🎭', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
-              Text('Ask your coach',
+              Text(AppLocalizations.of(context).easyChatPillAskYourCoach,
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -214,7 +215,7 @@ class _CoachSheetState extends ConsumerState<CoachSheet> {
             maxLines: 3,
             style: TextStyle(fontSize: 14, color: fg),
             decoration: InputDecoration(
-              hintText: 'Ask anything…',
+              hintText: AppLocalizations.of(context).coachAskAnything,
               hintStyle: TextStyle(color: muted, fontSize: 14),
               filled: true,
               fillColor:

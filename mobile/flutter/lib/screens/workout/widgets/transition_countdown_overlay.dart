@@ -14,6 +14,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Transition countdown overlay displayed before moving to next exercise
 class TransitionCountdownOverlay extends StatefulWidget {
   /// Current countdown seconds remaining
@@ -125,7 +126,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
     return Column(
       children: [
         Text(
-          'GET READY',
+          AppLocalizations.of(context).transitionCountdownOverlayGetReady,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -139,7 +140,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
             ),
         const SizedBox(height: 8),
         Text(
-          'Next exercise starting soon',
+          AppLocalizations.of(context).transitionCountdownOverlayNextExerciseStartingSoon,
           style: TextStyle(
             fontSize: 14,
             color: Colors.white.withOpacity(0.6),
@@ -318,7 +319,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              'UP NEXT',
+              AppLocalizations.of(context).warmupPhaseUpNext,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -446,7 +447,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
       ),
       icon: Icon(Icons.skip_next, color: AppColors.cyan, size: 22),
       label: Text(
-        'Start Now',
+        AppLocalizations.of(context).transitionCountdownOverlayStartNow,
         style: TextStyle(
           color: AppColors.cyan,
           fontWeight: FontWeight.w700,

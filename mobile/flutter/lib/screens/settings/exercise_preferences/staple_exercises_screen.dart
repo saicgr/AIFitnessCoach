@@ -19,6 +19,7 @@ import '../../library/components/exercise_detail_sheet.dart';
 import 'widgets/empty_state_with_suggestions.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'staple_exercises_screen_part_staple_exercise_tile.dart';
 
 
@@ -179,8 +180,8 @@ class StapleExercisesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
-        title: 'Staple Exercises',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).trainingPreferencesStapleExercises,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -265,7 +266,7 @@ class StapleExercisesScreen extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'These core lifts will NEVER be rotated out of your workouts, regardless of your variety setting.',
+                  AppLocalizations.of(context).stapleExercisesTheseCoreLiftsWill,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white : AppColorsLight.textPrimary,
@@ -477,7 +478,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   // Section selector
                   Text(
-                    'Section',
+                    AppLocalizations.of(context).stapleExercisesSection,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -525,7 +526,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   if (exerciseType == _ExerciseType.strength) ...[
                     // Strength: Weight + Sets + Reps + Rest
                     Text(
-                      'Weight / Sets / Reps / Rest',
+                      AppLocalizations.of(context).stapleExercisesWeightSetsRepsRest,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -538,7 +539,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: weightController,
-                            label: 'Weight',
+                            label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                             suffix: 'lbs',
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           ),
@@ -547,7 +548,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: setsController,
-                            label: 'Sets',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralSets,
                           ),
                         ),
                       ],
@@ -558,8 +559,8 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: repsController,
-                            label: 'Reps',
-                            hint: 'e.g. 8-12',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralReps,
+                            hint: AppLocalizations.of(context).stapleExercisesEG812,
                             keyboardType: TextInputType.text,
                           ),
                         ),
@@ -567,7 +568,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: restController,
-                            label: 'Rest',
+                            label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
                             suffix: 'sec',
                           ),
                         ),
@@ -576,7 +577,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   ] else if (exerciseType == _ExerciseType.timed) ...[
                     // Timed: Duration + Sets + Rest
                     Text(
-                      'Duration / Sets / Rest',
+                      AppLocalizations.of(context).stapleExercisesDurationSetsRest,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -589,7 +590,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: durationController,
-                            label: 'Duration',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                             suffix: 'min',
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           ),
@@ -598,14 +599,14 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: setsController,
-                            label: 'Sets',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralSets,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: buildField(
                             controller: restController,
-                            label: 'Rest',
+                            label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
                             suffix: 'sec',
                           ),
                         ),
@@ -614,7 +615,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   ] else if (exerciseType == _ExerciseType.treadmill) ...[
                     // Treadmill: Duration + Speed + Incline
                     Text(
-                      'Treadmill Settings',
+                      AppLocalizations.of(context).stapleExercisesTreadmillSettings,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -627,7 +628,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: durationController,
-                            label: 'Duration',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                             suffix: 'min',
                           ),
                         ),
@@ -635,7 +636,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: speedController,
-                            label: 'Speed',
+                            label: AppLocalizations.of(context).warmupPhaseSpeed,
                             suffix: 'mph',
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           ),
@@ -644,7 +645,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: inclineController,
-                            label: 'Incline',
+                            label: AppLocalizations.of(context).warmupPhaseIncline,
                           ),
                         ),
                       ],
@@ -652,7 +653,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   ] else if (exerciseType == _ExerciseType.bike) ...[
                     // Bike: Duration + RPM + Resistance
                     Text(
-                      'Bike Settings',
+                      AppLocalizations.of(context).stapleExercisesBikeSettings,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -665,7 +666,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: durationController,
-                            label: 'Duration',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                             suffix: 'min',
                           ),
                         ),
@@ -680,7 +681,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: resistanceController,
-                            label: 'Resistance',
+                            label: AppLocalizations.of(context).stapleExercisesResistance,
                           ),
                         ),
                       ],
@@ -688,7 +689,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   ] else if (exerciseType == _ExerciseType.rower) ...[
                     // Rower: Duration + Stroke Rate
                     Text(
-                      'Rower Settings',
+                      AppLocalizations.of(context).stapleExercisesRowerSettings,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -701,7 +702,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: durationController,
-                            label: 'Duration',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                             suffix: 'min',
                           ),
                         ),
@@ -709,7 +710,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: strokeRateController,
-                            label: 'Stroke Rate',
+                            label: AppLocalizations.of(context).stapleExercisesStrokeRate,
                             suffix: 'spm',
                           ),
                         ),
@@ -718,7 +719,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   ] else if (exerciseType == _ExerciseType.elliptical) ...[
                     // Elliptical: Duration + Resistance
                     Text(
-                      'Elliptical Settings',
+                      AppLocalizations.of(context).stapleExercisesEllipticalSettings,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -731,7 +732,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: durationController,
-                            label: 'Duration',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                             suffix: 'min',
                           ),
                         ),
@@ -739,7 +740,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                         Expanded(
                           child: buildField(
                             controller: resistanceController,
-                            label: 'Resistance',
+                            label: AppLocalizations.of(context).stapleExercisesResistance,
                           ),
                         ),
                       ],
@@ -747,7 +748,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   ] else ...[
                     // Generic cardio: Duration only
                     Text(
-                      'Cardio Settings',
+                      AppLocalizations.of(context).stapleExercisesCardioSettings,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -757,7 +758,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                     buildField(
                       controller: durationController,
-                      label: 'Duration',
+                      label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                       suffix: 'min',
                     ),
                   ],
@@ -765,7 +766,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   const SizedBox(height: 20),
                   // Day picker
                   Text(
-                    'Target Days',
+                    AppLocalizations.of(context).stapleExercisesTargetDays,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -880,7 +881,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          'Highlighted = your workout days',
+                          AppLocalizations.of(context).stapleExercisesHighlightedYourWorkoutDay,
                           style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.6)),
                         ),
                       ),
@@ -899,8 +900,8 @@ class StapleExercisesScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Save Changes',
+                      child: Text(
+                        AppLocalizations.of(context).vacationModeSaveChanges,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -1005,7 +1006,7 @@ class StapleExercisesScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: const Text('Remove Staple?'),
+        title: Text(AppLocalizations.of(context).stapleExercisesRemoveStaple),
         content: Text(
           'Remove "$exerciseName" from your staples? This exercise may be rotated out in future workouts.',
         ),
@@ -1013,7 +1014,7 @@ class StapleExercisesScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -1022,7 +1023,7 @@ class StapleExercisesScreen extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
-              'Remove',
+              AppLocalizations.of(context).workoutPlanDrawerRemove,
               style: TextStyle(color: AppColors.error),
             ),
           ),

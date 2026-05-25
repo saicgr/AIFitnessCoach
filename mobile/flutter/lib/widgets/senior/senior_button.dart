@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Large, accessible button for Senior Mode
 /// Features: Large touch target, high contrast, bold text
 class SeniorButton extends StatelessWidget {
@@ -241,8 +242,8 @@ class SeniorModeSelectionButton extends StatelessWidget {
                         color: const Color(0xFF4CAF50),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'Recommended',
+                      child: Text(
+                        AppLocalizations.of(context).settingsCardPartRecommended,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,

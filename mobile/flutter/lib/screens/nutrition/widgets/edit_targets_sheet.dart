@@ -12,6 +12,7 @@ import '../../../data/repositories/measurements_repository.dart';
 import '../../onboarding/widgets/calorie_macro_estimator.dart';
 import 'nutrition_goals_card.dart' show showNutritionCalculationSheet;
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Identifies which macro field the user just edited, so the lock-calories
 /// balance pass knows which two OTHER fields to recompute.
 enum _MacroField { protein, carbs, fat }
@@ -615,9 +616,9 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         // No recommendation available — TDEE not yet computed. Surface it
         // rather than silently writing stale/empty values.
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-                'Recommendation unavailable — recalculate from profile first'),
+                AppLocalizations.of(context).editTargetsRecommendationUnavailableR),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -692,7 +693,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       final teal = isDark ? AppColors.teal : AppColorsLight.teal;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Targets recalculated from profile'),
+          content: Text(AppLocalizations.of(context).editTargetsTargetsRecalculatedFromProf),
           backgroundColor: teal,
           behavior: SnackBarBehavior.floating,
         ),
@@ -762,7 +763,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         final teal = isDark ? AppColors.teal : AppColorsLight.teal;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Targets updated'),
+            content: Text(AppLocalizations.of(context).editTargetsTargetsUpdated),
             backgroundColor: teal,
             behavior: SnackBarBehavior.floating,
           ),
@@ -829,7 +830,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Edit Daily Targets',
+                AppLocalizations.of(context).editTargetsEditDailyTargets,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -869,7 +870,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                       )
                     : Icon(Icons.refresh, size: 14, color: accent),
                 label: Text(
-                  'Recalculate from profile',
+                  AppLocalizations.of(context).nutritionSettingsScreenRecalculateFromProfile,
                   style: TextStyle(
                     fontSize: 12,
                     color: accent,
@@ -1075,7 +1076,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               onPressed: _isSaving ? null : _resetToInitial,
               icon: Icon(Icons.restart_alt_rounded, size: 14, color: textMuted),
               label: Text(
-                'Reset',
+                AppLocalizations.of(context).trophyFilterReset,
                 style: TextStyle(
                   fontSize: 12,
                   color: textMuted,
@@ -1115,7 +1116,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                           ),
                         )
                       : Text(
-                          'Use Recommended',
+                          AppLocalizations.of(context).editTargetsUseRecommended,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
@@ -1144,8 +1145,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Save Targets',
+                      : Text(
+                          AppLocalizations.of(context).editTargetsSaveTargets,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
@@ -1333,7 +1334,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             ),
             const SizedBox(width: 5),
             Text(
-              'Lock calories',
+              AppLocalizations.of(context).editTargetsLockCalories,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -1729,7 +1730,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                         // Tiny "Rec" tag under the recommended stop.
                         if (isRec)
                           Text(
-                            'Rec',
+                            AppLocalizations.of(context).editTargetsRec,
                             style: TextStyle(
                               fontSize: 7,
                               fontWeight: FontWeight.w700,
@@ -1813,7 +1814,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           ),
           const SizedBox(width: 4),
           Text(
-            ok ? 'Total: 100%' : 'Total: $sum% \u00b7 Must equal 100%',
+            ok ? AppLocalizations.of(context).editTargetsTotal100 : 'Total: $sum% \u00b7 Must equal 100%',
             style: TextStyle(
               fontSize: 12,
               color: ok ? textMuted : Colors.orange,
@@ -1878,7 +1879,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             Icon(Icons.flag_outlined, size: 14, color: textMuted),
             const SizedBox(width: 4),
             Text(
-              'Maintaining weight',
+              AppLocalizations.of(context).editTargetsMaintainingWeight,
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
           ],
@@ -2032,7 +2033,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Weekly Rate (kg/wk)',
+          AppLocalizations.of(context).editTargetsWeeklyRateKgWk,
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted),
         ),
         const SizedBox(height: 6),
@@ -2235,7 +2236,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Diet preset',
+          AppLocalizations.of(context).editTargetsDietPreset,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,

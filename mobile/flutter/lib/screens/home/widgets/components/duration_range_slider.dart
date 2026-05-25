@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'sheet_theme_colors.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// A widget for selecting workout duration range with a two-thumb slider
 class DurationRangeSlider extends StatelessWidget {
   /// Current minimum duration value in minutes
@@ -64,7 +65,7 @@ class DurationRangeSlider extends StatelessWidget {
               Icon(Icons.timer_outlined, size: 20, color: sliderColor),
               const SizedBox(width: 8),
               Text(
-                'Duration',
+                AppLocalizations.of(context).workoutSummaryGeneralDuration,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 16,

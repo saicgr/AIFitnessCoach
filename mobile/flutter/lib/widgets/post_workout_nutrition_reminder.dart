@@ -5,6 +5,7 @@ import '../data/providers/unified_state_provider.dart';
 import '../data/providers/nutrition_preferences_provider.dart';
 import '../data/services/dynamic_nutrition_service.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// A widget that displays post-workout nutrition reminders
 /// Shows when user is in post-workout window and needs to refuel
 class PostWorkoutNutritionReminder extends ConsumerWidget {
@@ -193,8 +194,8 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
                     color: AppColors.orange.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
-                    'Fasted',
+                  child: Text(
+                    AppLocalizations.of(context).postWorkoutNutritionFasted,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -219,19 +220,19 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
             child: Row(
               children: [
                 _MacroChip(
-                  label: 'Protein',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   value: '${guidance.proteinTarget}g',
                   color: AppColors.cyan,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
-                  label: 'Carbs',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   value: '${guidance.carbsTarget}g',
                   color: AppColors.purple,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
-                  label: 'Fat',
+                  label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   value: '${guidance.fatTarget}g',
                   color: AppColors.orange,
                 ),
@@ -246,7 +247,7 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Quick options:',
+                    AppLocalizations.of(context).postWorkoutNutritionQuickOptions,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -299,8 +300,8 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
                     ),
                   ),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text(
-                    'Log Post-Workout Meal',
+                  label: Text(
+                    AppLocalizations.of(context).postWorkoutNutritionLogPostWorkoutMeal,
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -359,8 +360,8 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
                   color: iconColor,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  'Log',
+                child: Text(
+                  AppLocalizations.of(context).recipeDetailLog,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

@@ -8,6 +8,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/delete_account_flow.dart';
 import '../widgets/widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The danger zone section containing destructive actions.
 class DangerZoneSection extends ConsumerWidget {
   const DangerZoneSection({super.key});
@@ -17,20 +18,20 @@ class DangerZoneSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'DANGER ZONE'),
+        SectionHeader(title: AppLocalizations.of(context).dangerZoneDangerZone),
         const SizedBox(height: 12),
         DangerZoneCard(
           items: [
             DangerItemData(
               icon: Icons.refresh,
-              title: 'Reset Program',
-              subtitle: 'Delete workouts, keep account',
+              title: AppLocalizations.of(context).dangerZoneResetProgram,
+              subtitle: AppLocalizations.of(context).dangerZoneDeleteWorkoutsKeepAccount,
               onTap: () => _showResetProgramDialog(context, ref),
             ),
             DangerItemData(
               icon: Icons.delete_forever,
-              title: 'Delete Account',
-              subtitle: 'Permanently delete all data',
+              title: AppLocalizations.of(context).settingsDeleteAccount,
+              subtitle: AppLocalizations.of(context).dangerZonePermanentlyDeleteAllData,
               onTap: () => showDeleteAccountFlow(context, ref),
             ),
           ],
@@ -51,7 +52,7 @@ class DangerZoneSection extends ConsumerWidget {
             Icon(Icons.refresh, color: AppColors.orange, size: 24),
             const SizedBox(width: 12),
             Text(
-              'Reset Program?',
+              AppLocalizations.of(context).dangerZoneResetProgram2,
               style: TextStyle(
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
               ),
@@ -63,7 +64,7 @@ class DangerZoneSection extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'This will:',
+              AppLocalizations.of(context).dangerZoneThisWill,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -87,7 +88,7 @@ class DangerZoneSection extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Your completed workout history will be preserved.',
+              AppLocalizations.of(context).dangerZoneYourCompletedWorkoutHistory,
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -99,7 +100,7 @@ class DangerZoneSection extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -110,8 +111,8 @@ class DangerZoneSection extends ConsumerWidget {
               Navigator.pop(context);
               await _resetProgram(context, ref);
             },
-            child: const Text(
-              'Reset Program',
+            child: Text(
+              AppLocalizations.of(context).dangerZoneResetProgram,
               style: TextStyle(color: AppColors.orange),
             ),
           ),

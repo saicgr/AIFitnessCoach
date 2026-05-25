@@ -52,6 +52,7 @@ import '../../core/theme/accent_color_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widgets/complete_screen_helper_widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../l10n/generated/app_localizations.dart';
 export 'widgets/complete_screen_helper_widgets.dart' show HeartRateReadingData;
 
 part 'workout_complete_screen_ui_1.dart';
@@ -561,7 +562,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _showShareSheet,
                       icon: const Icon(Icons.share_rounded, size: 18),
-                      label: const Text('Share'),
+                      label: Text(AppLocalizations.of(context).commonShare),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.orange,
                         side: BorderSide(color: AppColors.orange.withOpacity(0.5)),
@@ -601,8 +602,8 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                                 height: 20,
                                 child: LottieLoading(size: 20, useDots: true, color: Colors.white),
                               )
-                            : const Text(
-                                'Done',
+                            : Text(
+                                AppLocalizations.of(context).commonDone,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -622,7 +623,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'Skip rating',
+                  AppLocalizations.of(context).workoutCompleteSkipRating,
                   style: TextStyle(
                     fontSize: 13,
                     color: textSecondary,
@@ -674,13 +675,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Workout Complete!',
+                              AppLocalizations.of(context).workoutCompleteWorkoutComplete,
                               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              widget.workout.name ?? 'Workout',
+                              widget.workout.name ?? AppLocalizations.of(context).navWorkout,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: textSecondary,
@@ -724,7 +725,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   // Rating Section
                   Text(
-                    'How was your workout?',
+                    AppLocalizations.of(context).workoutCompleteHowWasYourWorkout,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -758,7 +759,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ),
                   const SizedBox(height: 6),
                   Text(
-                    'Your ratings help us personalize your future workouts',
+                    AppLocalizations.of(context).workoutCompleteYourRatingsHelpUs,
                     style: TextStyle(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
@@ -792,7 +793,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                               )
                             : const Icon(Icons.add, size: 16),
                         label: Text(
-                          _isExtendingWorkout ? 'Adding...' : 'Do More',
+                          _isExtendingWorkout ? AppLocalizations.of(context).workoutReviewAdding : AppLocalizations.of(context).workoutCompleteDoMore,
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
@@ -807,7 +808,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           color: _saunaMinutes != null ? AppColors.textMuted : null,
                         ),
                         label: Text(
-                          _saunaMinutes != null ? '${_saunaMinutes}min' : 'Sauna',
+                          _saunaMinutes != null ? '${_saunaMinutes}min' : AppLocalizations.of(context).workoutCompleteSauna,
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
@@ -823,8 +824,8 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                             '/workout-summary/${widget.workout.id}?tab=summary',
                           ),
                           icon: const Icon(Icons.summarize_outlined, size: 16),
-                          label: const Text(
-                            'Summary',
+                          label: Text(
+                            AppLocalizations.of(context).workoutCompleteSummary,
                             style: TextStyle(fontSize: 13),
                           ),
                           style: TextButton.styleFrom(
@@ -838,7 +839,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           size: 16,
                         ),
                         label: Text(
-                          _showDetailedFeedback ? 'Less' : 'Give Detailed Feedback',
+                          _showDetailedFeedback ? AppLocalizations.of(context).workoutCompleteLess : AppLocalizations.of(context).workoutCompleteGiveDetailedFeedback,
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
@@ -848,7 +849,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       // Overflow menu — holds the less-frequently-used
                       // actions so they don't consume a full row each.
                       PopupMenuButton<String>(
-                        tooltip: 'More actions',
+                        tooltip: AppLocalizations.of(context).workoutCompleteMoreActions,
                         onSelected: (value) {
                           switch (value) {
                             case 'water':
@@ -867,7 +868,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                                 Icon(Icons.water_drop_rounded,
                                     size: 18, color: AppColors.waterBlue),
                                 const SizedBox(width: 10),
-                                const Text('Log Water'),
+                                Text(AppLocalizations.of(context).workoutCompleteLogWater),
                               ],
                             ),
                           ),
@@ -878,7 +879,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                                 Icon(Icons.insights_outlined,
                                     size: 18, color: AppColors.cyan),
                                 const SizedBox(width: 10),
-                                const Text('This Week'),
+                                Text(AppLocalizations.of(context).workoutCompleteThisWeek),
                               ],
                             ),
                           ),
@@ -893,7 +894,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                                   size: 16, color: AppColors.textMuted),
                               const SizedBox(width: 4),
                               Text(
-                                'More',
+                                AppLocalizations.of(context).homeMore,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textMuted,
@@ -941,7 +942,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                     // Difficulty Section
                     Text(
-                      'How was the difficulty?',
+                      AppLocalizations.of(context).workoutCompleteHowWasTheDifficulty,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -950,7 +951,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     Row(
                       children: [
                         DifficultyOption(
-                          label: 'Too Easy',
+                          label: AppLocalizations.of(context).workoutCompleteTooEasy,
                           icon: Icons.sentiment_very_satisfied,
                           isSelected: _difficulty == 'too_easy',
                           onTap: () => setState(() => _difficulty = 'too_easy'),
@@ -958,7 +959,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         ),
                         const SizedBox(width: 8),
                         DifficultyOption(
-                          label: 'Just Right',
+                          label: AppLocalizations.of(context).workoutCompleteJustRight,
                           icon: Icons.sentiment_satisfied,
                           isSelected: _difficulty == 'just_right',
                           onTap: () => setState(() => _difficulty = 'just_right'),
@@ -966,7 +967,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         ),
                         const SizedBox(width: 8),
                         DifficultyOption(
-                          label: 'Too Hard',
+                          label: AppLocalizations.of(context).workoutCompleteTooHard,
                           icon: Icons.sentiment_dissatisfied,
                           isSelected: _difficulty == 'too_hard',
                           onTap: () => setState(() => _difficulty = 'too_hard'),
@@ -979,7 +980,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                     // Per-exercise feedback
                     Text(
-                      'Rate exercises',
+                      AppLocalizations.of(context).workoutCompleteRateExercises,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),

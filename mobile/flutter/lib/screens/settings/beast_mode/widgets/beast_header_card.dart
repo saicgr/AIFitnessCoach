@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class BeastHeaderCard extends StatelessWidget {
   final bool isDark;
   const BeastHeaderCard({super.key, required this.isDark});
@@ -45,7 +46,7 @@ class BeastHeaderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'BEAST MODE',
+                  AppLocalizations.of(context).beastModeUnlockBeastMode,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -55,7 +56,7 @@ class BeastHeaderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Power user toolkit',
+                  AppLocalizations.of(context).beastHeaderCardPowerUserToolkit,
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark

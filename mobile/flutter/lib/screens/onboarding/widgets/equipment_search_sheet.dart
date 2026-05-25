@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet with searchable equipment list
 class EquipmentSearchSheet extends StatefulWidget {
   final Set<String> selectedEquipment;
@@ -134,7 +135,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Text(
-          'Add Custom Equipment',
+          AppLocalizations.of(context).equipmentSearchAddCustomEquipment,
           style: TextStyle(color: textPrimary),
         ),
         content: TextField(
@@ -143,7 +144,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
           textCapitalization: TextCapitalization.words,
           style: TextStyle(color: textPrimary),
           decoration: InputDecoration(
-            hintText: 'e.g., Homemade pull-up bar',
+            hintText: AppLocalizations.of(context).equipmentSearchEGHomemadePull,
             hintStyle: TextStyle(
               color: (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
             ),
@@ -169,7 +170,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
             ),
           ),
@@ -184,7 +185,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
               backgroundColor: AppColors.onboardingAccent,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Add'),
+            child: Text(AppLocalizations.of(context).tilePickerAdd),
           ),
         ],
       ),
@@ -237,7 +238,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Other Equipment',
+                      AppLocalizations.of(context).equipmentSearchOtherEquipment,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -268,7 +269,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Search from 100+ equipment types',
+                  AppLocalizations.of(context).equipmentSearchSearchFrom100Equipment,
                   style: TextStyle(
                     fontSize: 14,
                     color: textSecondary,
@@ -296,7 +297,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                 },
                 style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Search equipment...',
+                  hintText: AppLocalizations.of(context).settingsCardPartSearchEquipment,
                   hintStyle: TextStyle(color: textSecondary),
                   prefixIcon: Icon(Icons.search, color: textSecondary),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -345,7 +346,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'No equipment found',
+                          AppLocalizations.of(context).equipmentSearchNoEquipmentFound,
                           style: TextStyle(
                             fontSize: 16,
                             color: textSecondary,
@@ -405,8 +406,8 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Done',
+                  child: Text(
+                    AppLocalizations.of(context).commonDone,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -461,8 +462,8 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Can't find your equipment?",
+                    Text(
+                      AppLocalizations.of(context).equipmentSearchCanTFindYour,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -470,7 +471,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                       ),
                     ),
                     Text(
-                      'Add custom equipment',
+                      AppLocalizations.of(context).equipmentSearchAddCustomEquipment2,
                       style: TextStyle(
                         fontSize: 12,
                         color: textSecondary,
@@ -556,7 +557,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'CUSTOM',
+                          AppLocalizations.of(context).exercisePickerSheetCustom,
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,

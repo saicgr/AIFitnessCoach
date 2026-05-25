@@ -7,6 +7,7 @@ import '../../../../../data/services/haptic_service.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class VolumeProgressionCard extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -23,9 +24,9 @@ class VolumeProgressionCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Volume Progression Curves', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
+          Text(AppLocalizations.of(context).volumeProgressionCardVolumeProgressionCurves, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
           const SizedBox(height: 4),
-          Text('How training volume increases over time', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+          Text(AppLocalizations.of(context).volumeProgressionCardHowTrainingVolumeIncreases, style: TextStyle(fontSize: 11, color: theme.textMuted)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -64,9 +65,9 @@ class VolumeProgressionCard extends ConsumerWidget {
                 (v) => notifier.updateProgressionStepJump(v)),
           ],
           if (model == 'undulating')
-            Text('Wave pattern: volume cycles up and down weekly', style: TextStyle(fontSize: 12, color: theme.textMuted)),
+            Text(AppLocalizations.of(context).volumeProgressionCardWavePatternVolumeCycles, style: TextStyle(fontSize: 12, color: theme.textMuted)),
           if (model == 'custom')
-            Text('Define custom progression via JSON (advanced)', style: TextStyle(fontSize: 12, color: theme.textMuted)),
+            Text(AppLocalizations.of(context).volumeProgressionCardDefineCustomProgressionVia, style: TextStyle(fontSize: 12, color: theme.textMuted)),
           const SizedBox(height: 12),
           SizedBox(height: 160, child: _buildChart(config)),
         ],

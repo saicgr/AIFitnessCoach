@@ -13,6 +13,7 @@ import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart';
 import '../edit_program_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Settings icon button for the home screen header
 /// Navigates directly to settings screen
 class SettingsButton extends StatelessWidget {
@@ -38,7 +39,7 @@ class SettingsButton extends StatelessWidget {
         color: textMuted,
         size: 24,
       ),
-      tooltip: 'Settings',
+      tooltip: AppLocalizations.of(context).settingsTitle,
     );
   }
 }
@@ -160,7 +161,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                     Icon(Icons.fitness_center, color: AppColors.cyan, size: 24),
                     const SizedBox(width: 12),
                     Text(
-                      'Program Options',
+                      AppLocalizations.of(context).programMenuButtonProgramOptions,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -174,7 +175,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  'Customize your workout program or regenerate with current settings.',
+                  AppLocalizations.of(context).programMenuButtonCustomizeYourWorkoutProgram,
                   style: TextStyle(
                     fontSize: 13,
                     color: textSecondary,
@@ -221,7 +222,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Regenerate This Week',
+                                  AppLocalizations.of(context).programMenuButtonRegenerateThisWeek,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -230,7 +231,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Get fresh workouts with your current settings',
+                                  AppLocalizations.of(context).programMenuButtonGetFreshWorkoutsWith,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: textSecondary,
@@ -291,7 +292,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Customize Program',
+                                  AppLocalizations.of(context).programMenuButtonCustomizeProgram,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -300,7 +301,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Change days, equipment, difficulty, and more',
+                                  AppLocalizations.of(context).programMenuButtonChangeDaysEquipmentDiffic,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: textSecondary,
@@ -362,7 +363,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'View My Preferences',
+                                  AppLocalizations.of(context).programMenuButtonViewMyPreferences,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -371,7 +372,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'See your workout days, experience level & goals',
+                                  AppLocalizations.of(context).programMenuButtonSeeYourWorkoutDays,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: textSecondary,
@@ -432,7 +433,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Browse Programs',
+                                  AppLocalizations.of(context).programsIntroBrowsePrograms,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -441,7 +442,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Try celebrity workouts, sport training & more',
+                                  AppLocalizations.of(context).programMenuButtonTryCelebrityWorkoutsSport,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: textSecondary,
@@ -479,8 +480,8 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
     // Show confirmation dialog
     final confirmed = await AppDialog.confirm(
       context,
-      title: 'Regenerate Workouts?',
-      message: 'This will delete your upcoming incomplete workouts and generate fresh ones using your current program settings.\n\nCompleted workouts will NOT be affected.',
+      title: AppLocalizations.of(context).programMenuButtonRegenerateWorkouts,
+      message: AppLocalizations.of(context).programMenuButtonThisWillDeleteYour,
       confirmText: 'Regenerate',
       confirmColor: AppColors.orange,
       icon: Icons.refresh_rounded,
@@ -498,8 +499,8 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
         if (mounted) {
           setState(() => _isRegenerating = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please log in to regenerate workouts'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).programMenuButtonPleaseLogInTo),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
             ),
@@ -516,7 +517,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
           setState(() => _isRegenerating = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result['message'] ?? 'Failed to clear workouts'),
+              content: Text(result['message'] ?? AppLocalizations.of(context).programMenuButtonFailedToClearWorkouts),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
             ),
@@ -630,8 +631,8 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Program updated! Your new workouts are ready.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).programMenuButtonProgramUpdatedYourNew),
             backgroundColor: AppColors.success,
           ),
         );
@@ -681,7 +682,7 @@ class CustomizeButton extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              'Edit',
+              AppLocalizations.of(context).commonEdit,
               style: TextStyle(
                 color: purple,
                 fontSize: 13,
@@ -737,7 +738,7 @@ class MySpaceButton extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'My Space',
+                AppLocalizations.of(context).programMenuButtonMySpace,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

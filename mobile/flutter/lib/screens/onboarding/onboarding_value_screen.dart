@@ -8,6 +8,7 @@ import '../../core/services/posthog_service.dart';
 import 'onboarding_experiments.dart';
 import 'widgets/onboarding_theme.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Onboarding conversion v6 — price-anchor "value stack".
 ///
 /// Shown right before the paywall. It stacks what the user would pay to
@@ -121,7 +122,7 @@ class _OnboardingValueScreenState
                 children: [
                   const SizedBox(height: 28),
                   Text(
-                    'Three tools. One app.',
+                    AppLocalizations.of(context).onboardingValueThreeToolsOneApp,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -131,7 +132,7 @@ class _OnboardingValueScreenState
                   ).animate().fadeIn().slideY(begin: -0.1),
                   const SizedBox(height: 6),
                   Text(
-                    "Here's what that costs as separate subscriptions.",
+                    AppLocalizations.of(context).onboardingValueHereSWhatThat,
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.4,
@@ -288,7 +289,7 @@ class _TotalRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Separate apps',
+          AppLocalizations.of(context).onboardingValueSeparateApps,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -359,7 +360,7 @@ class _ZealovaCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Zealova, all of it',
+                  AppLocalizations.of(context).onboardingValueZealovaAllOfIt,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
@@ -416,7 +417,7 @@ class _ValueContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'See my plan and price',
+      label: AppLocalizations.of(context).onboardingValueSeeMyPlanAnd,
       child: GestureDetector(
         onTap: onTap,
         child: Container(
@@ -435,12 +436,12 @@ class _ValueContinueButton extends StatelessWidget {
               ),
             ],
           ),
-          child: const Center(
+          child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'See my plan',
+                  AppLocalizations.of(context).onboardingValueSeeMyPlan,
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,

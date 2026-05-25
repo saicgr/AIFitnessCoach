@@ -66,7 +66,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
                 Icon(Icons.timer, color: AppColors.cyan, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  'Cardio Settings',
+                  AppLocalizations.of(context).stapleExercisesCardioSettings,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -77,7 +77,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
             ),
             const SizedBox(height: 12),
             _buildCardioField(
-              label: 'Duration',
+              label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
               controller: _durationController,
               suffix: 'min',
               textPrimary: textPrimary,
@@ -86,7 +86,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
             if (type == 'treadmill' || type == 'walking' || type == 'running') ...[
               const SizedBox(height: 8),
               _buildCardioField(
-                label: 'Speed',
+                label: AppLocalizations.of(context).warmupPhaseSpeed,
                 controller: _speedController,
                 suffix: 'mph',
                 textPrimary: textPrimary,
@@ -94,7 +94,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
               ),
               const SizedBox(height: 8),
               _buildCardioField(
-                label: 'Incline',
+                label: AppLocalizations.of(context).warmupPhaseIncline,
                 controller: _inclineController,
                 suffix: '%',
                 textPrimary: textPrimary,
@@ -102,7 +102,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
               ),
               const SizedBox(height: 8),
               _buildCardioField(
-                label: 'Distance',
+                label: AppLocalizations.of(context).workoutImportDistance,
                 controller: _distanceController,
                 suffix: 'mi',
                 textPrimary: textPrimary,
@@ -112,7 +112,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
             if (type == 'swimming') ...[
               const SizedBox(height: 8),
               _buildCardioField(
-                label: 'Distance',
+                label: AppLocalizations.of(context).workoutImportDistance,
                 controller: _distanceController,
                 suffix: 'mi',
                 textPrimary: textPrimary,
@@ -130,7 +130,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
               ),
               const SizedBox(height: 8),
               _buildCardioField(
-                label: 'Resistance',
+                label: AppLocalizations.of(context).stapleExercisesResistance,
                 controller: _resistanceController,
                 suffix: '',
                 textPrimary: textPrimary,
@@ -140,7 +140,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
             if (type == 'rower') ...[
               const SizedBox(height: 8),
               _buildCardioField(
-                label: 'Stroke Rate',
+                label: AppLocalizations.of(context).stapleExercisesStrokeRate,
                 controller: _strokeRateController,
                 suffix: 'spm',
                 textPrimary: textPrimary,
@@ -150,7 +150,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
             if (type == 'elliptical') ...[
               const SizedBox(height: 8),
               _buildCardioField(
-                label: 'Resistance',
+                label: AppLocalizations.of(context).stapleExercisesResistance,
                 controller: _resistanceController,
                 suffix: '',
                 textPrimary: textPrimary,
@@ -269,7 +269,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'No workout available',
+              AppLocalizations.of(context).stapleChoiceSheetNoWorkoutAvailable,
               style: TextStyle(fontSize: 13, color: textMuted),
             ),
           );
@@ -279,7 +279,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'No exercises in workout',
+              AppLocalizations.of(context).stapleChoiceSheetNoExercisesInWorkout,
               style: TextStyle(fontSize: 13, color: textMuted),
             ),
           );
@@ -327,7 +327,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
       error: (_, __) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'Could not load workout',
+          AppLocalizations.of(context).todayWorkoutCardCouldNotLoadWorkout,
           style: TextStyle(fontSize: 13, color: textMuted),
         ),
       ),

@@ -30,7 +30,7 @@ extension __QuizBodyMetricsStateExt on _QuizBodyMetricsState {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Height',
+                    AppLocalizations.of(context).quizBodyMetricsHeight,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -132,7 +132,7 @@ extension __QuizBodyMetricsStateExt on _QuizBodyMetricsState {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Weight',
+                    AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

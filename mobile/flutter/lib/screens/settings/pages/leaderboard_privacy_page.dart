@@ -7,6 +7,7 @@ import '../../../data/providers/privacy_settings_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Full-screen Leaderboard Privacy settings. Opened from the Profile screen's
 /// compact "Leaderboard privacy" row so the Profile landing stays scannable.
 /// Hosts the three toggles that were previously stacked inline on Profile:
@@ -31,7 +32,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: const PillAppBar(title: 'Leaderboard Privacy'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).leaderboardPrivacyLeaderboardPrivacy),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -69,7 +70,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                   error: (e, _) => Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      "Couldn't load privacy settings. Pull to retry.",
+                      AppLocalizations.of(context).leaderboardPrivacyCouldnTLoadPrivacy,
                       style: TextStyle(color: textMuted, fontSize: 13),
                     ),
                   ),
@@ -78,7 +79,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                     return Column(
                       children: [
                         _row(
-                          title: 'Show me on leaderboards',
+                          title: AppLocalizations.of(context).leaderboardPrivacyShowMeOnLeaderboards,
                           subtitle:
                               "When off, you won't appear in the Discover "
                               'tab for anyone.',
@@ -93,7 +94,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                         ),
                         Divider(height: 1, color: border),
                         _row(
-                          title: 'Anonymous mode',
+                          title: AppLocalizations.of(context).leaderboardPrivacyAnonymousMode,
                           subtitle:
                               "Rank normally, but show as 'Anonymous athlete' "
                               'without name or avatar.',
@@ -108,7 +109,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                         ),
                         Divider(height: 1, color: border),
                         _row(
-                          title: 'Show my stats on my profile peek',
+                          title: AppLocalizations.of(context).leaderboardPrivacyShowMyStatsOn,
                           subtitle:
                               'Your bio and fitness shape appear when someone '
                               'taps your leaderboard entry.',

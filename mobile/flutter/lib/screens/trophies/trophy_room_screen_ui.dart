@@ -44,7 +44,7 @@ extension _TrophyRoomScreenStateUI on _TrophyRoomScreenState {
               ),
               const SizedBox(width: 12),
               Text(
-                'Trophy Room',
+                AppLocalizations.of(context).xpGoalsTrophyRoom,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

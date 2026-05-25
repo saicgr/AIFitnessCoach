@@ -7,6 +7,7 @@ import '../../../data/providers/social_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Local toggle for the public workout-share-link feature.
 /// When false, the "Share" button on a completed workout never calls
 /// `POST /workouts/{id}/share-link` — no URL is generated. Stored
@@ -230,8 +231,8 @@ class SocialPrivacySection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'SOCIAL & PRIVACY'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).socialPrivacySocialPrivacy),
         SizedBox(height: 12),
         _SocialPrivacyCard(),
       ],
@@ -278,7 +279,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
                 Icon(Icons.lock_outline_rounded, color: AppColors.cyan, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  'Privacy',
+                  AppLocalizations.of(context).settingsPrivacySection,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -296,8 +297,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.shield_outlined,
             iconColor: AppColors.purple,
-            title: 'Private Account',
-            subtitle: 'Require approval for follow requests',
+            title: AppLocalizations.of(context).socialPrivacyPrivateAccount,
+            subtitle: AppLocalizations.of(context).socialPrivacyRequireApprovalForFollow,
             value: socialSettings.requireFollowApproval,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -313,8 +314,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.person_add_outlined,
             iconColor: AppColors.cyan,
-            title: 'Allow Friend Requests',
-            subtitle: 'Let others send you friend requests',
+            title: AppLocalizations.of(context).socialPrivacyAllowFriendRequests,
+            subtitle: AppLocalizations.of(context).socialPrivacyLetOthersSendYou,
             value: socialSettings.allowFriendRequests,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -330,8 +331,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.emoji_events_outlined,
             iconColor: AppColors.orange,
-            title: 'Allow Challenge Invites',
-            subtitle: 'Let others invite you to challenges',
+            title: AppLocalizations.of(context).socialPrivacyAllowChallengeInvites,
+            subtitle: AppLocalizations.of(context).socialPrivacyLetOthersInviteYou,
             value: socialSettings.allowChallengeInvites,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -347,8 +348,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.leaderboard_outlined,
             iconColor: AppColors.success,
-            title: 'Show on Leaderboards',
-            subtitle: 'Appear in public and friend leaderboards',
+            title: AppLocalizations.of(context).socialPrivacyShowOnLeaderboards,
+            subtitle: AppLocalizations.of(context).socialPrivacyAppearInPublicAnd,
             value: socialSettings.showOnLeaderboards,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -365,9 +366,9 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.public_rounded,
             iconColor: AppColors.cyan,
-            title: 'Public Share Links',
+            title: AppLocalizations.of(context).socialPrivacyPublicShareLinks,
             subtitle:
-                'Allow generating shareable workout URLs anyone can open',
+                AppLocalizations.of(context).socialPrivacyAllowGeneratingShareableWor,
             value: ref.watch(publicShareLinksProvider),
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -383,8 +384,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.done_all_rounded,
             iconColor: AppColors.cyan,
-            title: 'Read Receipts',
-            subtitle: 'Let others see when you\'ve read their messages',
+            title: AppLocalizations.of(context).socialPrivacyReadReceipts,
+            subtitle: AppLocalizations.of(context).socialPrivacyLetOthersSeeWhen,
             value: socialSettings.showReadReceipts,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -403,7 +404,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
                 Icon(Icons.notifications_outlined, color: AppColors.cyan, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  'Social Notifications',
+                  AppLocalizations.of(context).socialPrivacySocialNotifications,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -421,8 +422,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.person_add_alt_1_rounded,
             iconColor: AppColors.cyan,
-            title: 'Friend Requests',
-            subtitle: 'When someone sends you a friend request',
+            title: AppLocalizations.of(context).socialPrivacyFriendRequests,
+            subtitle: AppLocalizations.of(context).socialPrivacyWhenSomeoneSendsYou,
             value: socialSettings.notifyFriendRequests,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -438,8 +439,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.favorite_outline,
             iconColor: AppColors.pink,
-            title: 'Reactions',
-            subtitle: 'When someone reacts to your posts',
+            title: AppLocalizations.of(context).socialPrivacyReactions,
+            subtitle: AppLocalizations.of(context).socialPrivacyWhenSomeoneReactsTo,
             value: socialSettings.notifyReactions,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -455,8 +456,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.chat_bubble_outline,
             iconColor: AppColors.purple,
-            title: 'Comments',
-            subtitle: 'When someone comments on your posts',
+            title: AppLocalizations.of(context).socialPrivacyComments,
+            subtitle: AppLocalizations.of(context).socialPrivacyWhenSomeoneCommentsOn,
             value: socialSettings.notifyComments,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -472,8 +473,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.sports_score_rounded,
             iconColor: AppColors.orange,
-            title: 'Challenge Invites',
-            subtitle: 'When someone invites you to a challenge',
+            title: AppLocalizations.of(context).socialPrivacyChallengeInvites,
+            subtitle: AppLocalizations.of(context).socialPrivacyWhenSomeoneInvitesYou,
             value: socialSettings.notifyChallengeInvites,
             onChanged: (value) {
               HapticFeedback.selectionClick();
@@ -489,8 +490,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
             ref: ref,
             icon: Icons.directions_run_rounded,
             iconColor: AppColors.success,
-            title: 'Friend Activity',
-            subtitle: 'When friends complete workouts or hit milestones',
+            title: AppLocalizations.of(context).socialPrivacyFriendActivity,
+            subtitle: AppLocalizations.of(context).socialPrivacyWhenFriendsCompleteWorkouts,
             value: socialSettings.notifyFriendActivity,
             onChanged: (value) {
               HapticFeedback.selectionClick();

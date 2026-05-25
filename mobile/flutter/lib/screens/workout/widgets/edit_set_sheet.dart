@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Mutable data class backing each editable set row.
 class _EditableSet {
   int setNumber;
@@ -247,7 +248,7 @@ class _EditSetSheetState extends State<EditSetSheet> {
           ),
         ),
         content: Text(
-          'This set will be removed.',
+          AppLocalizations.of(context).editSetThisSetWillBe,
           style: TextStyle(
             color:
                 widget.isDark ? AppColors.textSecondary : Colors.grey.shade600,
@@ -257,7 +258,7 @@ class _EditSetSheetState extends State<EditSetSheet> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: widget.isDark
                     ? AppColors.textSecondary
@@ -270,8 +271,8 @@ class _EditSetSheetState extends State<EditSetSheet> {
               Navigator.pop(ctx);
               doDelete();
             },
-            child: const Text(
-              'Delete',
+            child: Text(
+              AppLocalizations.of(context).buttonDelete,
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -364,7 +365,7 @@ class _EditSetSheetState extends State<EditSetSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Edit Sets',
+                  AppLocalizations.of(context).setAdjustmentSheetEditSets,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -423,7 +424,7 @@ class _EditSetSheetState extends State<EditSetSheet> {
           const SizedBox(width: 8),
           Expanded(flex: 3, child: Text('REPS', style: style)),
           const SizedBox(width: 8),
-          Expanded(flex: 3, child: Text('WEIGHT (kg)', style: style)),
+          Expanded(flex: 3, child: Text(AppLocalizations.of(context).editSetWeightKg, style: style)),
           const SizedBox(width: 8),
           Expanded(flex: 2, child: Text('RPE', style: style)),
           const SizedBox(width: 36), // space for delete icon
@@ -664,7 +665,7 @@ class _EditSetSheetState extends State<EditSetSheet> {
               ),
               const SizedBox(width: 6),
               Text(
-                'Add Set',
+                AppLocalizations.of(context).setTrackingTableAddSet,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -699,8 +700,8 @@ class _EditSetSheetState extends State<EditSetSheet> {
               borderRadius: BorderRadius.circular(14),
             ),
           ),
-          child: const Text(
-            'Save Changes',
+          child: Text(
+            AppLocalizations.of(context).vacationModeSaveChanges,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,

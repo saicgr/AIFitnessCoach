@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/body_analyzer.dart';
 import '../../../data/repositories/body_analyzer_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Per-muscle weekly-volume bars. Bars extend toward the `cap_sets` value
 /// from `muscle_volume_caps`; a red segment appears when the user's weekly
 /// sets meet or exceed the cap so overreach is obvious.
@@ -68,7 +69,7 @@ class _WeeklyVolumeBarsState extends ConsumerState<WeeklyVolumeBars> {
                   size: 18, color: textMuted),
               const SizedBox(width: 8),
               Text(
-                'Weekly volume per muscle',
+                AppLocalizations.of(context).weeklyVolumeBarsWeeklyVolumePerMuscle,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,

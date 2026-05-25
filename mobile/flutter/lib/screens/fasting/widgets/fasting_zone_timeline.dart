@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Horizontal timeline showing upcoming fasting zones
 class FastingZoneTimeline extends ConsumerWidget {
   final FastingRecord activeFast;
@@ -46,7 +47,7 @@ class FastingZoneTimeline extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Fasting Zones',
+            AppLocalizations.of(context).fastingZoneTimelineFastingZones,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

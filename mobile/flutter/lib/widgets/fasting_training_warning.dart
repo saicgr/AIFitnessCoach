@@ -4,6 +4,7 @@ import '../core/constants/app_colors.dart';
 import '../data/providers/unified_state_provider.dart';
 import '../data/models/fasting.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// A widget that displays fasting-related warnings for training
 /// Shows when user is in a fasted state and may need to be aware
 /// of the implications for their workout.
@@ -275,7 +276,7 @@ class FastingTrainingWarning extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Suggestions:',
+                    AppLocalizations.of(context).fastingTrainingWarningSuggestions,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

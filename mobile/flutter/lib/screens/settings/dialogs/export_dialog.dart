@@ -11,6 +11,7 @@ import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'export_dialog_part_export_data_dialog.dart';
 
 
@@ -91,14 +92,14 @@ Future<void> _exportData(
           const CircularProgressIndicator(color: AppColors.cyan),
           const SizedBox(height: 16),
           Text(
-            'Exporting your data...',
+            AppLocalizations.of(context).exportExportingYourData,
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'This may take a few seconds',
+            AppLocalizations.of(context).exportThisMayTakeA,
             style: TextStyle(
               fontSize: 12,
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -155,8 +156,8 @@ Future<void> _exportData(
     // Handle error responses
     if (response.statusCode == 404) {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('User data not found. Please try logging out and back in.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportUserDataNotFound),
           backgroundColor: AppColors.error,
         ),
       );
@@ -187,15 +188,15 @@ Future<void> _exportData(
       );
 
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Data exported successfully!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportDataExportedSuccessfully),
           backgroundColor: AppColors.success,
         ),
       );
     } else {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('No data received from server'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportNoDataReceivedFrom),
           backgroundColor: AppColors.error,
         ),
       );
@@ -252,14 +253,14 @@ Future<void> _exportDataAsText(
           const CircularProgressIndicator(color: AppColors.cyan),
           const SizedBox(height: 16),
           Text(
-            'Exporting your data as text...',
+            AppLocalizations.of(context).exportExportingYourDataAs,
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'This may take a few seconds',
+            AppLocalizations.of(context).exportThisMayTakeA,
             style: TextStyle(
               fontSize: 12,
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -313,8 +314,8 @@ Future<void> _exportDataAsText(
     // Handle error responses
     if (response.statusCode == 404) {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('User data not found. Please try logging out and back in.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportUserDataNotFound),
           backgroundColor: AppColors.error,
         ),
       );
@@ -347,15 +348,15 @@ Future<void> _exportDataAsText(
       );
 
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Data exported as text successfully!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportDataExportedAsText),
           backgroundColor: AppColors.success,
         ),
       );
     } else {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('No data received from server'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportNoDataReceivedFrom),
           backgroundColor: AppColors.error,
         ),
       );
@@ -435,14 +436,14 @@ Future<void> _exportDataWithFormat(
           const CircularProgressIndicator(color: AppColors.cyan),
           const SizedBox(height: 16),
           Text(
-            'Exporting your data...',
+            AppLocalizations.of(context).exportExportingYourData,
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'This may take a few seconds',
+            AppLocalizations.of(context).exportThisMayTakeA,
             style: TextStyle(
               fontSize: 12,
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -494,8 +495,8 @@ Future<void> _exportDataWithFormat(
 
     if (response.statusCode == 404) {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('User data not found. Please try logging out and back in.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportUserDataNotFound),
           backgroundColor: AppColors.error,
         ),
       );
@@ -529,15 +530,15 @@ Future<void> _exportDataWithFormat(
       );
 
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Data exported successfully!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportDataExportedSuccessfully),
           backgroundColor: AppColors.success,
         ),
       );
     } else {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('No data received from server'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).exportNoDataReceivedFrom),
           backgroundColor: AppColors.error,
         ),
       );

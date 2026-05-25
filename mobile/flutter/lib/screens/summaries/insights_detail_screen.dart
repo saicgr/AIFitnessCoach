@@ -9,6 +9,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'widgets/share_weekly_summary_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full detail screen for a past weekly summary report.
 ///
 /// Receives a [WeeklySummary] via GoRouter's `extra` parameter and
@@ -204,7 +205,7 @@ class _CompletionHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Completion Rate',
+                  AppLocalizations.of(context).insightsDetailCompletionRate,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -303,7 +304,7 @@ class _WorkoutCard extends StatelessWidget {
               Icon(Icons.fitness_center, color: cyan, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Workout Summary',
+                AppLocalizations.of(context).workoutSummaryWorkoutSummary,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -598,7 +599,7 @@ class _AiNarrativeCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'No AI analysis yet for this report',
+                    AppLocalizations.of(context).insightsDetailNoAiAnalysisYet,
                     style: TextStyle(fontSize: 14, color: textMuted),
                   ),
                 ),
@@ -620,7 +621,7 @@ class _AiNarrativeCard extends StatelessWidget {
                       )
                     : Icon(Icons.auto_awesome_rounded, color: cyan, size: 18),
                 label: Text(
-                  isRegenerating ? 'Generating...' : 'Generate AI Analysis',
+                  isRegenerating ? AppLocalizations.of(context).upcomingWorkoutsGenerating : AppLocalizations.of(context).insightsDetailGenerateAiAnalysis,
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: cyan,
@@ -661,7 +662,7 @@ class _AiNarrativeCard extends StatelessWidget {
                     Icon(Icons.auto_awesome, color: cyan, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'AI Analysis',
+                      AppLocalizations.of(context).insightsScreenPartAiAnalysis,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -671,7 +672,7 @@ class _AiNarrativeCard extends StatelessWidget {
                     const Spacer(),
                     // Compact refresh affordance when narrative already exists.
                     IconButton(
-                      tooltip: 'Regenerate AI analysis',
+                      tooltip: AppLocalizations.of(context).insightsDetailRegenerateAiAnalysis,
                       onPressed: isRegenerating ? null : onRegenerate,
                       icon: isRegenerating
                           ? SizedBox(
@@ -707,7 +708,7 @@ class _AiNarrativeCard extends StatelessWidget {
 
         // Highlights
         if (_effectiveHighlights.isNotEmpty) ...[
-          _SectionTitle(title: 'Highlights', isDark: isDark),
+          _SectionTitle(title: AppLocalizations.of(context).workoutSummaryScreenHighlights, isDark: isDark),
           const SizedBox(height: 12),
           ..._effectiveHighlights.map((highlight) {
             return Padding(
@@ -763,7 +764,7 @@ class _AiNarrativeCard extends StatelessWidget {
 
         // Tips for next week
         if (_effectiveTips.isNotEmpty) ...[
-          _SectionTitle(title: 'Tips for Next Week', isDark: isDark),
+          _SectionTitle(title: AppLocalizations.of(context).weeklySummaryTipsForNextWeek, isDark: isDark),
           const SizedBox(height: 12),
           ..._effectiveTips.asMap().entries.map((entry) {
             return Container(

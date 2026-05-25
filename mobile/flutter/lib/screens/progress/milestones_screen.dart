@@ -16,6 +16,7 @@ import '../../core/services/posthog_service.dart';
 import '../reports/widgets/report_share_sheet.dart';
 import 'widgets/milestone_celebration_dialog.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'milestones_screen_ui.dart';
 
 
@@ -72,7 +73,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Your Journey',
+        title: AppLocalizations.of(context).milestonesYourJourney,
       ),
       body: Column(
         children: [
@@ -80,8 +81,8 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
             controller: _tabController,
             showIcons: false,
             tabs: [
-              SegmentedTabItem(label: 'Milestones'),
-              SegmentedTabItem(label: 'Your ROI'),
+              SegmentedTabItem(label: AppLocalizations.of(context).trophiesEarnedMilestones),
+              SegmentedTabItem(label: AppLocalizations.of(context).milestonesYourRoi),
             ],
           ),
           Expanded(
@@ -168,7 +169,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
       );
     }
     highlights.add(
-      ReportHighlight(label: 'POINTS', value: '${def?.points ?? 0}'),
+      ReportHighlight(label: AppLocalizations.of(context).milestonesPoints, value: '${def?.points ?? 0}'),
     );
     highlights.add(
       ReportHighlight(label: 'TOTAL', value: '${state.totalPoints}'),
@@ -176,7 +177,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
 
     final data = ReportShareData(
       reportType: ReportType.milestones,
-      title: def?.name ?? 'Milestone',
+      title: def?.name ?? AppLocalizations.of(context).milestonesMilestone,
       periodLabel: periodLabel,
       primaryStats: {
         'hero_value': '${def?.points ?? 0}',
@@ -240,7 +241,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                     ),
                   ),
                   Text(
-                    'Points',
+                    AppLocalizations.of(context).trophyRoomPoints,
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -273,7 +274,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                     ),
                   ),
                   Text(
-                    'Achieved',
+                    AppLocalizations.of(context).milestonesAchieved,
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -305,7 +306,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
-                label: const Text('All'),
+                label: Text(AppLocalizations.of(context).syncedWorkoutsHistoryAll),
                 selected: isSelected,
                 onSelected: (_) {
                   HapticService.light();
@@ -376,7 +377,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Next Milestone',
+                  AppLocalizations.of(context).milestonesNextMilestone,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -716,7 +717,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
             ),
           ),
           Text(
-            'Total Workouts',
+            AppLocalizations.of(context).trophiesEarnedTotalWorkouts,
             style: TextStyle(
               fontSize: 16,
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -823,7 +824,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Your Journey',
+            AppLocalizations.of(context).milestonesYourJourney,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,

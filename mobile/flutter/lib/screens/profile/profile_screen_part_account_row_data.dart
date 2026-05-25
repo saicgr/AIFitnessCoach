@@ -190,7 +190,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                 child: TextField(
                   controller: _textController,
                   decoration: InputDecoration(
-                    hintText: 'Enter equipment name...',
+                    hintText: AppLocalizations.of(context).profileScreenPartEnterEquipmentName,
                     hintStyle: TextStyle(color: textMuted),
                     filled: true,
                     fillColor:
@@ -229,8 +229,8 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Add',
+                child: Text(
+                  AppLocalizations.of(context).tilePickerAdd,
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -253,7 +253,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'No custom equipment yet',
+                        AppLocalizations.of(context).profileScreenPartNoCustomEquipmentYet,
                         style: TextStyle(
                           fontSize: 16,
                           color: textMuted,
@@ -261,7 +261,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Add equipment above to get started',
+                        AppLocalizations.of(context).profileScreenPartAddEquipmentAboveTo,
                         style: TextStyle(
                           fontSize: 14,
                           color: textMuted,
@@ -372,7 +372,7 @@ class _TrainingFocusCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Training Focus',
+                      AppLocalizations.of(context).trainingFocusTrainingFocus,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
@@ -380,7 +380,7 @@ class _TrainingFocusCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      'Primary goal & muscle priorities',
+                      AppLocalizations.of(context).profileScreenPartPrimaryGoalMusclePrioriti,
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                   ],
@@ -430,7 +430,7 @@ class _SyncedWorkoutsRow extends ConsumerWidget {
           border: Border.all(color: cardBorder),
         ),
         child: Text(
-          'No synced workouts yet',
+          AppLocalizations.of(context).syncedWorkoutsHistoryNoSyncedWorkoutsYet,
           style: TextStyle(fontSize: 13, color: textMuted),
           textAlign: TextAlign.center,
         ),
@@ -832,7 +832,7 @@ class _SeeAllSyncedCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'See all',
+                AppLocalizations.of(context).profileScreenPartSeeAll,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,

@@ -26,6 +26,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RegionVariantDropdown extends ConsumerStatefulWidget {
   /// The food_log row id this item belongs to. Required for the swap RPC.
   final String foodLogId;
@@ -108,8 +109,8 @@ class _RegionVariantDropdownState extends ConsumerState<RegionVariantDropdown> {
     } else {
       // Show a subtle failure indicator — toast/snackbar is the parent's job
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(
-          content: Text('Could not swap variant. Please try again.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).regionVariantDropdownCouldNotSwapVariant),
           duration: Duration(seconds: 2),
         ),
       );
@@ -137,7 +138,7 @@ class _RegionVariantDropdownState extends ConsumerState<RegionVariantDropdown> {
           Icon(Icons.public, size: 14, color: muted),
           const SizedBox(width: 6),
           Text(
-            'Region',
+            AppLocalizations.of(context).regionVariantDropdownRegion,
             style: TextStyle(
               fontSize: 12, fontWeight: FontWeight.w500, color: muted,
             ),

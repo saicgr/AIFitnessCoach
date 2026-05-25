@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// A dialog shown when there's a mismatch between selected training split
 /// and the user's current workout days.
 ///
@@ -57,7 +58,7 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
           Icon(Icons.calendar_month, color: AppColors.orange, size: 24),
           const SizedBox(width: 10),
           Text(
-            'Schedule Mismatch',
+            AppLocalizations.of(context).scheduleMismatchScheduleMismatch,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -83,7 +84,7 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
           _buildOptionTile(
             isSelected: _selectedOption == 'keep',
             onTap: () => setState(() => _selectedOption = 'keep'),
-            title: 'Keep my current days',
+            title: AppLocalizations.of(context).scheduleMismatchKeepMyCurrentDays,
             subtitle: widget.currentDayNames,
             description: 'AI will switch to ${widget.compatibleSplitName} instead',
             isDark: isDark,
@@ -115,7 +116,7 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
-            'Cancel',
+            AppLocalizations.of(context).buttonCancel,
             style: TextStyle(color: textMuted),
           ),
         ),
@@ -130,7 +131,7 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
                   }
                 },
           child: Text(
-            'Confirm',
+            AppLocalizations.of(context).workoutUiBuildersConfirm,
             style: TextStyle(
               color: _selectedOption == null ? textMuted : accentColor,
               fontWeight: FontWeight.w600,
@@ -224,8 +225,8 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
                             color: AppColors.success,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'Recommended',
+                          child: Text(
+                            AppLocalizations.of(context).settingsCardPartRecommended,
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,

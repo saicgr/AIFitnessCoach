@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card 1: Intro card - "Your [Month] Wrapped" with total workouts hero number
 class WrappedIntroCard extends StatelessWidget {
   final WrappedData data;
@@ -110,7 +111,7 @@ class WrappedIntroCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'month.',
+                    AppLocalizations.of(context).introCardMonth,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 20,

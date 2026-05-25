@@ -7,6 +7,7 @@ import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/services/notification_service.dart';
 import '../widgets/widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class NotificationsSection extends StatelessWidget {
   const NotificationsSection({super.key});
 
@@ -14,8 +15,8 @@ class NotificationsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'NOTIFICATIONS'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).notificationsNotifications),
         SizedBox(height: 12),
         _NotificationsCard(),
       ],
@@ -68,7 +69,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Notification Frequency',
+                  AppLocalizations.of(context).notificationsNotificationFrequency,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -80,8 +81,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   children: [
                     _buildPresetCard(
                       icon: Icons.notifications_paused_outlined,
-                      label: 'Minimal',
-                      subtitle: '3/day',
+                      label: AppLocalizations.of(context).notificationsMinimal,
+                      subtitle: AppLocalizations.of(context).notifications3Day,
                       isSelected: preset == 'minimal',
                       onTap: () => ref.read(notificationPreferencesProvider.notifier)
                           .setFrequencyPreset('minimal'),
@@ -90,8 +91,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     const SizedBox(width: 8),
                     _buildPresetCard(
                       icon: Icons.notifications_active_outlined,
-                      label: 'Balanced',
-                      subtitle: '4-5/day',
+                      label: AppLocalizations.of(context).quizProgressionConstraintsBalanced,
+                      subtitle: AppLocalizations.of(context).notifications45Day,
                       isSelected: preset == 'balanced',
                       isRecommended: true,
                       onTap: () => ref.read(notificationPreferencesProvider.notifier)
@@ -101,8 +102,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     const SizedBox(width: 8),
                     _buildPresetCard(
                       icon: Icons.notifications_outlined,
-                      label: 'Full Coach',
-                      subtitle: '8-10/day',
+                      label: AppLocalizations.of(context).notificationsFullCoach,
+                      subtitle: AppLocalizations.of(context).notifications810Day,
                       isSelected: preset == 'full_coach',
                       onTap: () => ref.read(notificationPreferencesProvider.notifier)
                           .setFrequencyPreset('full_coach'),
@@ -121,7 +122,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
               icon: Icons.wb_sunny_outlined,
               iconColor: const Color(0xFFFBBF24),
               label: 'Morning Brief',
-              subtitle: 'Workout + Breakfast',
+              subtitle: AppLocalizations.of(context).notificationsWorkoutBreakfast,
               time: notifPrefs.morningBundleTime,
               onTimeChanged: (time) =>
                   ref.read(notificationPreferencesProvider.notifier).setMorningBundleTime(time),
@@ -146,7 +147,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 icon: Icons.directions_walk_outlined,
                 iconColor: const Color(0xFF34D399),
                 label: 'Afternoon Nudge',
-                subtitle: 'Movement + Hydration',
+                subtitle: AppLocalizations.of(context).notificationsMovementHydration,
                 time: notifPrefs.afternoonNudgeTime,
                 onTimeChanged: (time) =>
                     ref.read(notificationPreferencesProvider.notifier).setAfternoonNudgeTime(time),
@@ -179,9 +180,9 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Weekend times', style: TextStyle(fontSize: 14)),
+                        Text(AppLocalizations.of(context).notificationsWeekendTimes, style: TextStyle(fontSize: 14)),
                         Text(
-                          'Different schedule on Sat & Sun',
+                          AppLocalizations.of(context).notificationsDifferentScheduleOnSat,
                           style: TextStyle(fontSize: 11, color: textMuted),
                         ),
                       ],
@@ -209,7 +210,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   child: Column(
                     children: [
                       TimePickerTile(
-                        label: 'Morning',
+                        label: AppLocalizations.of(context).notificationsMorning,
                         time: notifPrefs.morningBundleTimeWeekend,
                         onTimeChanged: (time) =>
                             ref.read(notificationPreferencesProvider.notifier).setWeekendBundleTimes(
@@ -221,7 +222,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       ),
                       const SizedBox(height: 8),
                       TimePickerTile(
-                        label: 'Midday',
+                        label: AppLocalizations.of(context).notificationsMidday,
                         time: notifPrefs.middayBundleTimeWeekend,
                         onTimeChanged: (time) =>
                             ref.read(notificationPreferencesProvider.notifier).setWeekendBundleTimes(
@@ -233,7 +234,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       ),
                       const SizedBox(height: 8),
                       TimePickerTile(
-                        label: 'Evening',
+                        label: AppLocalizations.of(context).notificationsEvening,
                         time: notifPrefs.eveningBundleTimeWeekend,
                         onTimeChanged: (time) =>
                             ref.read(notificationPreferencesProvider.notifier).setWeekendBundleTimes(
@@ -269,7 +270,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
               children: [
                 Expanded(
                   child: TimePickerTile(
-                    label: 'Start',
+                    label: AppLocalizations.of(context).buttonStart,
                     time: notifPrefs.quietHoursStart,
                     onTimeChanged: (time) =>
                         ref.read(notificationPreferencesProvider.notifier).setQuietHours(
@@ -281,7 +282,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: TimePickerTile(
-                    label: 'End',
+                    label: AppLocalizations.of(context).quickActionsSheetEnd,
                     time: notifPrefs.quietHoursEnd,
                     onTimeChanged: (time) =>
                         ref.read(notificationPreferencesProvider.notifier).setQuietHours(
@@ -300,8 +301,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             sectionKey: 'weekly',
             icon: Icons.bar_chart,
             iconColor: AppColors.purple,
-            title: 'Weekly Report',
-            subtitle: 'Your progress summary',
+            title: AppLocalizations.of(context).notificationsWeeklyReport,
+            subtitle: AppLocalizations.of(context).notificationsYourProgressSummary,
             value: notifPrefs.weeklySummary,
             onChanged: (value) {
               ref.read(notificationPreferencesProvider.notifier).setWeeklySummary(value);
@@ -312,7 +313,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             timeWidget: Column(
               children: [
                 DayPickerTile(
-                  label: 'Day',
+                  label: AppLocalizations.of(context).notificationsDay,
                   day: notifPrefs.weeklySummaryDay,
                   onChanged: (day) {
                     ref.read(notificationPreferencesProvider.notifier).setWeeklySummarySchedule(
@@ -323,7 +324,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 ),
                 const SizedBox(height: 8),
                 TimePickerTile(
-                  label: 'Time',
+                  label: AppLocalizations.of(context).workoutShowcaseTime,
                   time: notifPrefs.weeklySummaryTime,
                   onTimeChanged: (time) {
                     ref.read(notificationPreferencesProvider.notifier).setWeeklySummarySchedule(
@@ -354,7 +355,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Advanced',
+                          AppLocalizations.of(context).workoutUiModeAdvanced,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
@@ -362,7 +363,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                           ),
                         ),
                         Text(
-                          'Fine-tune individual notification types',
+                          AppLocalizations.of(context).notificationsFineTuneIndividualNotificat,
                           style: TextStyle(fontSize: 12, color: textMuted),
                         ),
                       ],
@@ -387,8 +388,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   sectionKey: 'workout',
                   icon: Icons.fitness_center,
                   iconColor: AppColors.cyan,
-                  title: 'Workout Reminders',
-                  subtitle: 'Remind on workout days',
+                  title: AppLocalizations.of(context).notificationsWorkoutReminders,
+                  subtitle: AppLocalizations.of(context).notificationsRemindOnWorkoutDays,
                   value: notifPrefs.workoutReminders,
                   onChanged: (value) {
                     ref.read(notificationPreferencesProvider.notifier).setWorkoutReminders(value);
@@ -397,7 +398,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   textMuted: textMuted,
                   isDark: isDark,
                   timeWidget: TimePickerTile(
-                    label: 'Reminder time',
+                    label: AppLocalizations.of(context).notificationsReminderTime,
                     time: notifPrefs.workoutReminderTime,
                     onTimeChanged: (time) {
                       ref.read(notificationPreferencesProvider.notifier).setWorkoutReminderTime(time);
@@ -411,8 +412,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   sectionKey: 'nutrition',
                   icon: Icons.restaurant,
                   iconColor: AppColors.success,
-                  title: 'Meal Reminders',
-                  subtitle: 'Breakfast, lunch & dinner',
+                  title: AppLocalizations.of(context).settingsMealReminders,
+                  subtitle: AppLocalizations.of(context).notificationsBreakfastLunchDinner,
                   value: notifPrefs.nutritionReminders,
                   onChanged: (value) {
                     ref.read(notificationPreferencesProvider.notifier).setNutritionReminders(value);
@@ -423,7 +424,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   timeWidget: Column(
                     children: [
                       TimePickerTile(
-                        label: 'Breakfast',
+                        label: AppLocalizations.of(context).quickLogOverlayBreakfast,
                         time: notifPrefs.nutritionBreakfastTime,
                         onTimeChanged: (time) {
                           ref.read(notificationPreferencesProvider.notifier).setNutritionBreakfastTime(time);
@@ -432,7 +433,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       ),
                       const SizedBox(height: 8),
                       TimePickerTile(
-                        label: 'Lunch',
+                        label: AppLocalizations.of(context).quickLogOverlayLunch,
                         time: notifPrefs.nutritionLunchTime,
                         onTimeChanged: (time) {
                           ref.read(notificationPreferencesProvider.notifier).setNutritionLunchTime(time);
@@ -441,7 +442,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       ),
                       const SizedBox(height: 8),
                       TimePickerTile(
-                        label: 'Dinner',
+                        label: AppLocalizations.of(context).quickLogOverlayDinner,
                         time: notifPrefs.nutritionDinnerTime,
                         onTimeChanged: (time) {
                           ref.read(notificationPreferencesProvider.notifier).setNutritionDinnerTime(time);
@@ -457,8 +458,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   sectionKey: 'hydration',
                   icon: Icons.water_drop,
                   iconColor: Colors.blue,
-                  title: 'Water Reminders',
-                  subtitle: 'Stay hydrated throughout the day',
+                  title: AppLocalizations.of(context).notificationsWaterReminders,
+                  subtitle: AppLocalizations.of(context).notificationsStayHydratedThroughoutThe,
                   value: notifPrefs.hydrationReminders,
                   onChanged: (value) {
                     ref.read(notificationPreferencesProvider.notifier).setHydrationReminders(value);
@@ -472,7 +473,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                         children: [
                           Expanded(
                             child: TimePickerTile(
-                              label: 'Start',
+                              label: AppLocalizations.of(context).buttonStart,
                               time: notifPrefs.hydrationStartTime,
                               onTimeChanged: (time) {
                                 ref.read(notificationPreferencesProvider.notifier).setHydrationTimes(
@@ -485,7 +486,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: TimePickerTile(
-                              label: 'End',
+                              label: AppLocalizations.of(context).quickActionsSheetEnd,
                               time: notifPrefs.hydrationEndTime,
                               onTimeChanged: (time) {
                                 ref.read(notificationPreferencesProvider.notifier).setHydrationTimes(
@@ -499,7 +500,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       ),
                       const SizedBox(height: 8),
                       IntervalPickerTile(
-                        label: 'Remind every',
+                        label: AppLocalizations.of(context).notificationsRemindEvery,
                         minutes: notifPrefs.hydrationIntervalMinutes,
                         onChanged: (minutes) {
                           ref.read(notificationPreferencesProvider.notifier).setHydrationTimes(
@@ -518,7 +519,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   icon: Icons.directions_walk,
                   iconColor: const Color(0xFFEAB308),
                   title: 'Movement Reminders',
-                  subtitle: 'Hourly during work hours',
+                  subtitle: AppLocalizations.of(context).notificationsHourlyDuringWorkHours,
                   value: notifPrefs.movementReminders,
                   onChanged: (value) {
                     ref.read(notificationPreferencesProvider.notifier).setMovementReminders(value);
@@ -530,7 +531,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     children: [
                       Expanded(
                         child: TimePickerTile(
-                          label: 'Start',
+                          label: AppLocalizations.of(context).buttonStart,
                           time: notifPrefs.movementReminderStartTime,
                           onTimeChanged: (time) {
                             ref.read(notificationPreferencesProvider.notifier).setMovementReminderTimes(
@@ -543,7 +544,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: TimePickerTile(
-                          label: 'End',
+                          label: AppLocalizations.of(context).quickActionsSheetEnd,
                           time: notifPrefs.movementReminderEndTime,
                           onTimeChanged: (time) {
                             ref.read(notificationPreferencesProvider.notifier).setMovementReminderTimes(
@@ -565,7 +566,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   icon: Icons.wb_twilight,
                   iconColor: const Color(0xFFFB923C),
                   title: 'Daily Briefing',
-                  subtitle: 'Morning readiness check-in',
+                  subtitle: AppLocalizations.of(context).notificationsMorningReadinessCheckIn,
                   value: notifPrefs.dailyBriefingNudge,
                   onChanged: (value) {
                     ref.read(notificationPreferencesProvider.notifier)
@@ -575,7 +576,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   textMuted: textMuted,
                   isDark: isDark,
                   timeWidget: TimePickerTile(
-                    label: 'Delivery time',
+                    label: AppLocalizations.of(context).notificationsDeliveryTime,
                     time: notifPrefs.dailyBriefingTime,
                     onTimeChanged: (time) {
                       ref.read(notificationPreferencesProvider.notifier)
@@ -603,10 +604,10 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Anomaly Alerts',
+                            Text(AppLocalizations.of(context).notificationsAnomalyAlerts,
                                 style: TextStyle(fontSize: 15)),
                             Text(
-                              'Heads-up when resting heart rate runs high',
+                              AppLocalizations.of(context).notificationsHeadsUpWhenResting,
                               style: TextStyle(fontSize: 12, color: textMuted),
                             ),
                           ],
@@ -631,7 +632,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   icon: Icons.directions_walk_outlined,
                   iconColor: const Color(0xFF34D399),
                   title: 'Activity Nudges',
-                  subtitle: 'Reminder when you\'re behind your step goal',
+                  subtitle: AppLocalizations.of(context).notificationsReminderWhenYouRe,
                   value: notifPrefs.activityGoalNudge,
                   onChanged: (value) {
                     ref.read(notificationPreferencesProvider.notifier)
@@ -641,7 +642,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   textMuted: textMuted,
                   isDark: isDark,
                   timeWidget: TimePickerTile(
-                    label: 'Nudge time',
+                    label: AppLocalizations.of(context).notificationsNudgeTime,
                     time: notifPrefs.activityNudgeTime,
                     onTimeChanged: (time) {
                       ref.read(notificationPreferencesProvider.notifier)
@@ -672,10 +673,10 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Cycle Reminders',
+                                Text(AppLocalizations.of(context).notificationsCycleReminders,
                                     style: TextStyle(fontSize: 15)),
                                 Text(
-                                  'Period, fertility, and logging reminders',
+                                  AppLocalizations.of(context).notificationsPeriodFertilityAndLogging,
                                   style: TextStyle(
                                       fontSize: 12, color: textMuted),
                                 ),
@@ -706,10 +707,10 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Guilt Notifications',
+                            Text(AppLocalizations.of(context).notificationsGuiltNotifications,
                                 style: TextStyle(fontSize: 15)),
                             Text(
-                              'Duolingo-style nudges when inactive',
+                              AppLocalizations.of(context).notificationsDuolingoStyleNudgesWhen,
                               style: TextStyle(fontSize: 12, color: textMuted),
                             ),
                           ],
@@ -739,10 +740,10 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Include Emoji',
+                            Text(AppLocalizations.of(context).notificationsIncludeEmoji,
                                 style: TextStyle(fontSize: 15)),
                             Text(
-                              'Show emoji in notification text',
+                              AppLocalizations.of(context).notificationsShowEmojiInNotification,
                               style: TextStyle(fontSize: 12, color: textMuted),
                             ),
                           ],
@@ -829,7 +830,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    'Recommended',
+                    AppLocalizations.of(context).settingsCardPartRecommended,
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w600,

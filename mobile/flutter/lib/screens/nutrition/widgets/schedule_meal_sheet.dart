@@ -7,6 +7,7 @@ import '../../../data/models/nutrition.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// One of the 11 cadence presets the meal long-press menu offers. Each
 /// preset materializes into a `ScheduleSpec` when the user taps Confirm —
 /// presets carry just enough info for the spec to be derived, the rest
@@ -144,10 +145,10 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Schedule this meal',
+          Text(AppLocalizations.of(context).scheduleMealScheduleThisMeal,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textPrimary)),
           const SizedBox(height: 4),
-          Text('Pick a cadence; we’ll handle the AI recipe save for you.',
+          Text(AppLocalizations.of(context).scheduleMealPickACadenceWe,
               style: TextStyle(fontSize: 12, color: textMuted)),
           const SizedBox(height: 14),
 
@@ -182,7 +183,7 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
 
           // Day picker (Sun..Sat) — shown only when the preset needs it.
           if (_preset.needsDayPicker) ...[
-            Text('Days', style: TextStyle(fontSize: 12, color: textMuted)),
+            Text(AppLocalizations.of(context).scheduleMealDays, style: TextStyle(fontSize: 12, color: textMuted)),
             const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -221,8 +222,8 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
           // End date — Daily until / custom + end date.
           if (_preset.needsEndDate) ...[
             _Tile(
-              label: 'End date',
-              value: _endDate == null ? 'Pick a date' : _formatDate(_endDate!),
+              label: AppLocalizations.of(context).vacationModeEndDate,
+              value: _endDate == null ? AppLocalizations.of(context).scheduleMealPickADate : _formatDate(_endDate!),
               icon: Icons.event_busy,
               accent: accent,
               textPrimary: textPrimary,
@@ -245,7 +246,7 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
           // Interval stepper — Every N days.
           if (_preset.needsInterval) ...[
             _Tile(
-              label: 'Interval',
+              label: AppLocalizations.of(context).scheduleMealInterval,
               value: 'Every $_intervalDays days',
               icon: Icons.timelapse,
               accent: accent,
@@ -259,7 +260,7 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
 
           // Time picker — used by every preset.
           _Tile(
-            label: 'Time',
+            label: AppLocalizations.of(context).workoutShowcaseTime,
             value: _time.format(context),
             icon: Icons.schedule,
             accent: accent,
@@ -283,7 +284,7 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Schedule', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: Text(AppLocalizations.of(context).scheduleWorkoutSchedule, style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
         ],
@@ -308,7 +309,7 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
             ),
           ),
           TextButton(onPressed: () { setState(() => _intervalDays = v); Navigator.pop(context); },
-              child: Text('Done', style: TextStyle(color: accent))),
+              child: Text(AppLocalizations.of(context).commonDone, style: TextStyle(color: accent))),
         ]),
       ),
     );
@@ -318,13 +319,13 @@ class _ScheduleMealSheetState extends State<_ScheduleMealSheet> {
     // Validate per-preset before constructing the spec.
     if (_preset.needsDayPicker && _selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pick at least one day'), behavior: SnackBarBehavior.floating),
+        SnackBar(content: Text(AppLocalizations.of(context).scheduleMealPickAtLeastOne), behavior: SnackBarBehavior.floating),
       );
       return;
     }
     if (_preset.needsEndDate && _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pick an end date'), behavior: SnackBarBehavior.floating),
+        SnackBar(content: Text(AppLocalizations.of(context).scheduleMealPickAnEndDate), behavior: SnackBarBehavior.floating),
       );
       return;
     }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../log_meal_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Floating action button for quick meal logging
 /// Always visible for easy access to food logging
 class QuickAddFAB extends ConsumerWidget {
@@ -33,8 +34,8 @@ class QuickAddFAB extends ConsumerWidget {
         elevation: 6,
         highlightElevation: 8,
         icon: const Icon(Icons.add_rounded, size: 24),
-        label: const Text(
-          'Log Food',
+        label: Text(
+          AppLocalizations.of(context).quickLogFabLogFood,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 14,
@@ -75,8 +76,8 @@ class QuickAddFABSimple extends ConsumerWidget {
       elevation: 6,
       highlightElevation: 8,
       icon: const Icon(Icons.add_rounded, size: 24),
-      label: const Text(
-        'Log Food',
+      label: Text(
+        AppLocalizations.of(context).quickLogFabLogFood,
         style: TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 14,

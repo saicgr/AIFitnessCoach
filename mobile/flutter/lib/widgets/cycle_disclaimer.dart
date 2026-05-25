@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Reusable non-contraceptive / not-medical-advice safety disclaimer for the
 /// cycle-tracking feature.
 ///
@@ -83,7 +84,7 @@ class CycleDisclaimer extends StatelessWidget {
                 Icon(Icons.shield_outlined, size: 16, color: accent),
                 const SizedBox(width: 6),
                 Text(
-                  'Before you start',
+                  AppLocalizations.of(context).cycleDisclaimerBeforeYouStart,
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,

@@ -65,7 +65,7 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                           Row(
                             children: [
                               Text(
-                                'AI Coach Chat',
+                                AppLocalizations.of(context).guestHomeScreenAiCoachChat,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -79,8 +79,8 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                                   color: AppColors.cyan.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Text(
-                                  'LIVE DEMO',
+                                child: Text(
+                                  AppLocalizations.of(context).guestHomeScreenLiveDemo,
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
@@ -92,7 +92,7 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Ask anything about fitness',
+                            AppLocalizations.of(context).guestHomeScreenAskAnythingAboutFitness,
                             style: TextStyle(fontSize: 13, color: textSecondary),
                           ),
                         ],
@@ -132,7 +132,7 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                       Icon(Icons.touch_app, size: 16, color: AppColors.purple),
                       const SizedBox(width: 6),
                       Text(
-                        'Tap to try AI Coach',
+                        AppLocalizations.of(context).guestHomeScreenTapToTryAi,
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.purple,

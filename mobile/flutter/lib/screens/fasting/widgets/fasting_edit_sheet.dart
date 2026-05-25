@@ -8,6 +8,7 @@ import '../../../data/providers/fasting_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Edit-past-fast sheet (Section I).
 ///
 /// Lets the user correct the start/end times of a completed fast. Calls
@@ -96,8 +97,8 @@ class _FastingEditSheetState extends ConsumerState<FastingEditSheet> {
     if (ok) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Fast updated'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).fastingEditFastUpdated),
           duration: Duration(seconds: 2),
         ),
       );
@@ -161,7 +162,7 @@ class _FastingEditSheetState extends ConsumerState<FastingEditSheet> {
                         color: colors.accent, size: 22),
                     const SizedBox(width: 10),
                     Text(
-                      'Edit Fast',
+                      AppLocalizations.of(context).fastingEditEditFast,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -172,7 +173,7 @@ class _FastingEditSheetState extends ConsumerState<FastingEditSheet> {
                 ),
                 const SizedBox(height: 18),
                 _TimeField(
-                  label: 'Start',
+                  label: AppLocalizations.of(context).buttonStart,
                   value: dateFmt.format(_start),
                   icon: Icons.play_arrow_rounded,
                   colors: colors,
@@ -180,7 +181,7 @@ class _FastingEditSheetState extends ConsumerState<FastingEditSheet> {
                 ),
                 const SizedBox(height: 10),
                 _TimeField(
-                  label: 'End',
+                  label: AppLocalizations.of(context).quickActionsSheetEnd,
                   value: dateFmt.format(_end),
                   icon: Icons.flag_rounded,
                   colors: colors,
@@ -200,7 +201,7 @@ class _FastingEditSheetState extends ConsumerState<FastingEditSheet> {
                           size: 17, color: colors.accent),
                       const SizedBox(width: 8),
                       Text(
-                        'Duration: ',
+                        AppLocalizations.of(context).fastingEditDuration,
                         style: TextStyle(
                           fontSize: 13,
                           color: colors.textSecondary,
@@ -261,8 +262,8 @@ class _FastingEditSheetState extends ConsumerState<FastingEditSheet> {
                               color: colors.accentContrast,
                             ),
                           )
-                        : const Text(
-                            'Save Changes',
+                        : Text(
+                            AppLocalizations.of(context).vacationModeSaveChanges,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

@@ -7,6 +7,7 @@ import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Model for body measurement entry
 class BodyMeasurement {
   final String? id;
@@ -265,12 +266,12 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context).buttonCancel),
                   ),
                   Column(
                     children: [
                       Text(
-                        'Log Measurements',
+                        AppLocalizations.of(context).quickLogMeasurementsLogMeasurements,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -314,7 +315,7 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Save'),
+                        : Text(AppLocalizations.of(context).buttonSave),
                   ),
                 ],
               ),
@@ -434,7 +435,7 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
                       controller: _notesController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'Any notes about this measurement...',
+                        hintText: AppLocalizations.of(context).logMeasurementAnyNotesAboutThis,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -473,7 +474,7 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Measurement Date',
+                  AppLocalizations.of(context).logMeasurementMeasurementDate,
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -640,7 +641,7 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
     if (!hasAnyMeasurement) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please enter at least one measurement'),
+          content: Text(AppLocalizations.of(context).logMeasurementPleaseEnterAtLeast),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -683,7 +684,7 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Measurements saved!'),
+            content: Text(AppLocalizations.of(context).logMeasurementMeasurementsSaved),
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );

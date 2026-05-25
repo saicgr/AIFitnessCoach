@@ -20,6 +20,7 @@ import '../../settings/sections/social_privacy_section.dart'
 import '../../workout/widgets/exercise_add_sheet.dart';
 import 'regenerate_workout_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Standalone, reusable workout-options bottom sheet.
 ///
 /// This is the exact option set the Workouts-tab hero carousel exposes
@@ -191,9 +192,9 @@ Future<void> _markAsDone(
   final isToday = dateLabel == 'TODAY';
   final confirm = await AppDialog.confirm(
     context,
-    title: 'Mark as Done?',
+    title: AppLocalizations.of(context).workoutOptionsMarkAsDone,
     message: isToday
-        ? 'This will mark the workout as completed without tracking sets.'
+        ? AppLocalizations.of(context).workoutOptionsThisWillMarkThe
         : 'Mark workout for $dateLabel as done? This will mark it as '
             'completed without tracking sets.',
     confirmText: 'Mark Done',
@@ -220,8 +221,8 @@ Future<void> _skipWorkout(
     BuildContext context, WidgetRef ref, Workout workout) async {
   final confirm = await AppDialog.destructive(
     context,
-    title: 'Skip Workout?',
-    message: 'This workout will be marked as skipped.',
+    title: AppLocalizations.of(context).workoutOptionsSkipWorkout,
+    message: AppLocalizations.of(context).workoutOptionsThisWorkoutWillBe,
     confirmText: 'Skip',
     icon: Icons.skip_next_rounded,
   );
@@ -245,7 +246,7 @@ Future<void> _dismissQuick(
     BuildContext context, WidgetRef ref, Workout workout) async {
   final keepGoing = await AppDialog.destructive(
     context,
-    title: 'Dismiss Quick Workout?',
+    title: AppLocalizations.of(context).workoutOptionsDismissQuickWorkout,
     message:
         "You'll lose this Quick. Any logged sets in it will be discarded. "
         'Continue?',
@@ -338,7 +339,7 @@ void _glanceWorkout(BuildContext context, Workout workout) {
               children: [
                 Expanded(
                   child: Text(
-                    workout.name ?? 'Workout',
+                    workout.name ?? AppLocalizations.of(context).navWorkout,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/home_layout.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for picking tiles to add to home screen
 class TilePickerSheet extends StatelessWidget {
   final List<HomeTile> currentTiles;
@@ -81,7 +82,7 @@ class TilePickerSheet extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Add Tile',
+                        AppLocalizations.of(context).tilePickerAddTile,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -239,12 +240,12 @@ class TilePickerSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.add, size: 16),
                 SizedBox(width: 4),
-                Text('Add', style: TextStyle(fontSize: 12)),
+                Text(AppLocalizations.of(context).tilePickerAdd, style: TextStyle(fontSize: 12)),
               ],
             ),
           ),

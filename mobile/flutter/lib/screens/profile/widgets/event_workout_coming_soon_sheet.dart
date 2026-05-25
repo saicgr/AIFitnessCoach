@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Glassmorphic bottom sheet previewing the Event-Based Workout feature.
 class EventWorkoutComingSoonSheet extends StatelessWidget {
   const EventWorkoutComingSoonSheet({super.key});
@@ -102,7 +103,7 @@ class EventWorkoutComingSoonSheet extends StatelessWidget {
               // Title
               Center(
                 child: Text(
-                  'Event-Based Workouts',
+                  AppLocalizations.of(context).eventWorkoutComingEventBasedWorkouts,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -116,7 +117,7 @@ class EventWorkoutComingSoonSheet extends StatelessWidget {
               // Subtitle
               Center(
                 child: Text(
-                  'Train smarter for your big moments',
+                  AppLocalizations.of(context).eventWorkoutComingTrainSmarterForYour,
                   style: TextStyle(
                     color: textSecondary,
                     fontSize: 14,
@@ -143,7 +144,7 @@ class EventWorkoutComingSoonSheet extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Wedding Prep',
+                            AppLocalizations.of(context).eventWorkoutComingWeddingPrep,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -155,7 +156,7 @@ class EventWorkoutComingSoonSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'June 15, 2026  •  183 days left',
+                      AppLocalizations.of(context).eventWorkoutComingJune152026183,
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,
@@ -203,7 +204,7 @@ class EventWorkoutComingSoonSheet extends StatelessWidget {
 
               // Feature list header
               Text(
-                'What you\'ll be able to do:',
+                AppLocalizations.of(context).eventWorkoutComingWhatYouLlBe,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -277,9 +278,9 @@ class EventWorkoutComingSoonSheet extends StatelessWidget {
                             width: 1,
                           ),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            'Got it!',
+                            AppLocalizations.of(context).xpGoalsGotIt,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

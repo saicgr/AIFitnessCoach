@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A compact, always-visible card showing the user's workout program settings.
 /// Displays workout days, experience level, and primary goal with tap-to-edit.
 class MyProgramSummaryCard extends ConsumerWidget {
@@ -68,7 +69,7 @@ class MyProgramSummaryCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'My Program',
+                      AppLocalizations.of(context).myProgramSummaryMyProgram,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

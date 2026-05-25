@@ -7,6 +7,7 @@ import '../../../data/repositories/achievements_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Achievements section for home screen
 /// Shows recent achievements and total points
 class AchievementsSection extends ConsumerStatefulWidget {
@@ -62,7 +63,7 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Achievements',
+                  AppLocalizations.of(context).youAchievements,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -75,7 +76,7 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
                     context.push('/achievements');
                   },
                   child: Text(
-                    'See All',
+                    AppLocalizations.of(context).weightTrackingCardSeeAll,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -105,7 +106,7 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
                     child: _buildStatItem(
                       icon: Icons.stars_rounded,
                       value: '$totalPoints',
-                      label: 'Total Points',
+                      label: AppLocalizations.of(context).achievementsTotalPoints,
                       accentColor: accentColor,
                       textPrimary: textPrimary,
                       textSecondary: textSecondary,
@@ -121,7 +122,7 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
                     child: _buildStatItem(
                       icon: Icons.emoji_events_rounded,
                       value: '$totalAchievements',
-                      label: 'Unlocked',
+                      label: AppLocalizations.of(context).exerciseProgressionsUnlocked,
                       accentColor: accentColor,
                       textPrimary: textPrimary,
                       textSecondary: textSecondary,
@@ -180,7 +181,7 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Complete workouts to earn achievements!',
+                        AppLocalizations.of(context).achievementsCompleteWorkoutsToEarn,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,

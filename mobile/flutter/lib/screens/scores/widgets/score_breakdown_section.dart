@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Section showing breakdown of all score components.
 class ScoreBreakdownSection extends StatelessWidget {
   final int strengthScore;
@@ -25,7 +26,7 @@ class ScoreBreakdownSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Score Breakdown',
+          AppLocalizations.of(context).scoreBreakdownScoreBreakdown,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -38,7 +39,7 @@ class ScoreBreakdownSection extends StatelessWidget {
             Expanded(
               child: _ScoreBreakdownItem(
                 icon: Icons.fitness_center,
-                label: 'Strength',
+                label: AppLocalizations.of(context).scoreBreakdownStrength,
                 score: strengthScore,
                 weight: '40%',
                 color: _getScoreColor(strengthScore),
@@ -49,7 +50,7 @@ class ScoreBreakdownSection extends StatelessWidget {
             Expanded(
               child: _ScoreBreakdownItem(
                 icon: Icons.restaurant,
-                label: 'Nutrition',
+                label: AppLocalizations.of(context).settingsNutritionSection,
                 score: nutritionScore,
                 weight: '20%',
                 color: _getScoreColor(nutritionScore),
@@ -64,7 +65,7 @@ class ScoreBreakdownSection extends StatelessWidget {
             Expanded(
               child: _ScoreBreakdownItem(
                 icon: Icons.trending_up,
-                label: 'Consistency',
+                label: AppLocalizations.of(context).scoreBreakdownConsistency,
                 score: consistencyScore,
                 weight: '30%',
                 color: _getScoreColor(consistencyScore),
@@ -75,7 +76,7 @@ class ScoreBreakdownSection extends StatelessWidget {
             Expanded(
               child: _ScoreBreakdownItem(
                 icon: Icons.local_fire_department,
-                label: 'Readiness',
+                label: AppLocalizations.of(context).strengthOverviewCardReadiness,
                 score: readinessScore,
                 weight: '10%',
                 color: _getScoreColor(readinessScore),

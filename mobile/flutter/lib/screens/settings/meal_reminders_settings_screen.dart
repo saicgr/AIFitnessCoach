@@ -16,6 +16,7 @@ import '../../data/providers/recipe_providers.dart';
 import '../../data/repositories/recipe_repository.dart';
 import '../../data/services/api_client.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class MealRemindersSettingsScreen extends ConsumerStatefulWidget {
   final bool isDark;
   const MealRemindersSettingsScreen({super.key, required this.isDark});
@@ -72,13 +73,13 @@ class _MealRemindersSettingsScreenState
       appBar: AppBar(
         backgroundColor: bg,
         elevation: 0,
-        title: Text('Meal reminders', style: TextStyle(color: text)),
+        title: Text(AppLocalizations.of(context).mealRemindersSettingsMealReminders, style: TextStyle(color: text)),
         iconTheme: IconThemeData(color: text),
       ),
       body: ListView(
         children: [
           SwitchListTile(
-            title: Text('Meal reminder notifications', style: TextStyle(color: text)),
+            title: Text(AppLocalizations.of(context).mealRemindersSettingsMealReminderNotifications, style: TextStyle(color: text)),
             subtitle: Text(
               'Push notifications for scheduled recipes. Tap to confirm and one-tap log.',
               style: TextStyle(color: muted, fontSize: 12),
@@ -91,7 +92,7 @@ class _MealRemindersSettingsScreenState
             activeThumbColor: accent,
           ),
           SwitchListTile(
-            title: Text('Public sharing default', style: TextStyle(color: text)),
+            title: Text(AppLocalizations.of(context).mealRemindersSettingsPublicSharingDefault, style: TextStyle(color: text)),
             subtitle: Text(
               'New recipes are shareable by default. You can always toggle per recipe.',
               style: TextStyle(color: muted, fontSize: 12),
@@ -104,7 +105,7 @@ class _MealRemindersSettingsScreenState
             activeThumbColor: accent,
           ),
           SwitchListTile(
-            title: Text('Auto-snapshot recipe versions', style: TextStyle(color: text)),
+            title: Text(AppLocalizations.of(context).mealRemindersSettingsAutoSnapshotRecipeVersions, style: TextStyle(color: text)),
             subtitle: Text(
               'Every edit captures a new version for diff + revert.',
               style: TextStyle(color: muted, fontSize: 12),
@@ -120,7 +121,7 @@ class _MealRemindersSettingsScreenState
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
-              'ACTIVE SCHEDULES',
+              AppLocalizations.of(context).mealRemindersSettingsActiveSchedules,
               style: TextStyle(
                 color: muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8,
               ),
@@ -129,7 +130,7 @@ class _MealRemindersSettingsScreenState
           if (_userId == null)
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Sign in to see your schedules.', style: TextStyle(color: muted)),
+              child: Text(AppLocalizations.of(context).mealRemindersSettingsSignInToSee, style: TextStyle(color: muted)),
             )
           else
             _SchedulesList(userId: _userId!, isDark: isDark, accent: accent),
@@ -161,7 +162,7 @@ class _SchedulesList extends ConsumerWidget {
         if (list.isEmpty) {
           return Padding(
             padding: const EdgeInsets.all(16),
-            child: Text('No schedules yet. Add one from a recipe detail screen.',
+            child: Text(AppLocalizations.of(context).mealRemindersSettingsNoSchedulesYetAdd,
                 style: TextStyle(color: muted)),
           );
         }
@@ -233,10 +234,10 @@ class _ScheduleRow extends StatelessWidget {
         return await showDialog<bool>(
               context: context,
               builder: (dCtx) => AlertDialog(
-                title: const Text('Delete schedule?'),
+                title: Text(AppLocalizations.of(context).mealRemindersSettingsDeleteSchedule),
                 actions: [
-                  TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancel')),
-                  ElevatedButton(onPressed: () => Navigator.pop(dCtx, true), child: const Text('Delete')),
+                  TextButton(onPressed: () => Navigator.pop(dCtx, false), child: Text(AppLocalizations.of(context).buttonCancel)),
+                  ElevatedButton(onPressed: () => Navigator.pop(dCtx, true), child: Text(AppLocalizations.of(context).buttonDelete)),
                 ],
               ),
             ) ==

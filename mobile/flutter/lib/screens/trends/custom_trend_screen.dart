@@ -16,6 +16,7 @@ import '../../widgets/trends/trend_ai_insight_card.dart';
 import '../../widgets/trends/trend_chart.dart';
 import '../../widgets/trends/trend_correlation.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// =========================================================================
 /// Custom Trends — graph-first, multi-metric builder (rebuilt G8)
 /// =========================================================================
@@ -204,7 +205,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         _listEq(t.overlays, _overlays));
     if (exists) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Already saved')),
+        SnackBar(content: Text(AppLocalizations.of(context).menuAnalysisAlreadySaved)),
       );
       return;
     }
@@ -218,7 +219,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     if (mounted) {
       HapticService.success();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Custom trend saved')),
+        SnackBar(content: Text(AppLocalizations.of(context).customTrendCustomTrendSaved)),
       );
     }
   }
@@ -304,7 +305,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
             },
           ),
           const SizedBox(width: 8),
-          Text('Custom Trends',
+          Text(AppLocalizations.of(context).statsRewardsCustomTrends,
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -833,7 +834,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
           children: [
             Icon(Icons.add, size: 14, color: colors.accent),
             const SizedBox(width: 5),
-            Text('Add metric',
+            Text(AppLocalizations.of(context).customTrendAddMetric,
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
@@ -911,7 +912,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
           border: Border.all(color: colors.cardBorder),
         ),
         child: Text(
-          'Compare last cycle · needs ≥ 2 cycles in range',
+          AppLocalizations.of(context).customTrendCompareLastCycleNeeds,
           style: TextStyle(
               fontSize: 11.5,
               fontStyle: FontStyle.italic,
@@ -945,7 +946,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
               painter: _LineSwatchPainter(color: color, dashed: true),
             ),
             const SizedBox(width: 7),
-            Text('Compare last cycle',
+            Text(AppLocalizations.of(context).customTrendCompareLastCycle,
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight:
@@ -995,7 +996,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
               ),
             ),
             const SizedBox(width: 7),
-            Text('Cycle phases',
+            Text(AppLocalizations.of(context).customTrendCyclePhases,
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight:
@@ -1455,7 +1456,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       child: OutlinedButton.icon(
         onPressed: _saveCurrent,
         icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-        label: const Text('Save this trend'),
+        label: Text(AppLocalizations.of(context).customTrendSaveThisTrend),
         style: OutlinedButton.styleFrom(
           foregroundColor: colors.accent,
           side: BorderSide(color: colors.cardBorder),

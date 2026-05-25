@@ -41,6 +41,7 @@ import '../profile/profile_screen.dart';
 import 'tabs/overview_tab.dart';
 import 'tabs/stats_rewards_tab.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class YouHubScreen extends ConsumerStatefulWidget {
   /// Initial tab index (0 = Overview, 1 = Profile, 2 = Stats & Rewards).
   /// Defaults to Overview. Deep links may pass `?tab=profile` etc.
@@ -154,8 +155,8 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
     messenger.showSnackBar(
-      const SnackBar(
-        content: Text('🎮 Mini-games unlocked!'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).youHubMiniGamesUnlocked),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -221,7 +222,7 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'You',
+                        AppLocalizations.of(context).navYou,
                         style: TextStyle(
                           color: fg,
                           fontSize: 28,
@@ -234,17 +235,17 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                       if (minigamesUnlocked)
                         IconButton(
                           icon: Icon(Icons.sports_esports_outlined, color: fg),
-                          tooltip: 'Mini-games',
+                          tooltip: AppLocalizations.of(context).youHubMiniGames,
                           onPressed: _launchFreeplay,
                         ),
                       IconButton(
                         icon: Icon(Icons.bar_chart_rounded, color: fg),
-                        tooltip: 'Stats & Scores',
+                        tooltip: AppLocalizations.of(context).youHubStatsScores,
                         onPressed: () => context.push('/stats'),
                       ),
                       IconButton(
                         icon: Icon(Icons.settings_outlined, color: fg),
-                        tooltip: 'Settings',
+                        tooltip: AppLocalizations.of(context).settingsTitle,
                         onPressed: () => context.push('/settings'),
                       ),
                     ],
@@ -277,17 +278,17 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                     accentColor: accent,
                     selectedIndex: _tabController.index,
                     onTap: (i) => _tabController.animateTo(i),
-                    items: const [
+                    items: [
                       FloatingTabItem(
-                        label: 'Overview',
+                        label: AppLocalizations.of(context).youHubOverview,
                         icon: Icons.home_outlined,
                       ),
                       FloatingTabItem(
-                        label: 'Profile',
+                        label: AppLocalizations.of(context).navProfile,
                         icon: Icons.person_outline,
                       ),
                       FloatingTabItem(
-                        label: 'Stats',
+                        label: AppLocalizations.of(context).youHubStats,
                         icon: Icons.emoji_events_outlined,
                       ),
                     ],

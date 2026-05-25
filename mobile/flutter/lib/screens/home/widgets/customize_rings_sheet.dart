@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'ring_catalog.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Show the customize-rings sheet. Returns when the sheet is dismissed.
 Future<void> showCustomizeRingsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
@@ -105,9 +106,9 @@ class _CustomizeRingsSheet extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(20, 8, 8, 12),
         child: Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Customize your rings',
+                AppLocalizations.of(context).customizeRingsCustomizeYourRings,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -226,10 +227,10 @@ class _ShowingTile extends StatelessWidget {
               ),
             ),
             if (kind.isCore)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(right: 8),
                 child: Text(
-                  'Core',
+                  AppLocalizations.of(context).quizMuscleFocusCore,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -301,7 +302,7 @@ class _HiddenTile extends StatelessWidget {
             TextButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add, size: 16),
-              label: const Text('Add'),
+              label: Text(AppLocalizations.of(context).tilePickerAdd),
               style: TextButton.styleFrom(
                 foregroundColor: kind.color,
                 textStyle: const TextStyle(
@@ -356,7 +357,7 @@ class _ResetButton extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: onTap,
           icon: const Icon(Icons.restart_alt, size: 18),
-          label: const Text('Reset to default'),
+          label: Text(AppLocalizations.of(context).customizeRingsResetToDefault),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF16161A),
             side: const BorderSide(color: Color(0xFFE0DED7)),

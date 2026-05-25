@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/scores.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card showing detailed nutrition score breakdown.
 class NutritionScoreCard extends StatelessWidget {
   final NutritionScoreData? score;
@@ -48,7 +49,7 @@ class NutritionScoreCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nutrition Score',
+                      AppLocalizations.of(context).nutritionScoreCardNutritionScore,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -56,7 +57,7 @@ class NutritionScoreCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Weekly nutrition adherence',
+                      AppLocalizations.of(context).nutritionScoreCardWeeklyNutritionAdherence,
                       style: TextStyle(
                         fontSize: 11,
                         color: textMuted,
@@ -138,7 +139,7 @@ class NutritionScoreCard extends StatelessWidget {
             ],
           ] else
             Text(
-              'Log your meals to see your nutrition score breakdown.',
+              AppLocalizations.of(context).nutritionScoreCardLogYourMealsTo,
               style: TextStyle(
                 fontSize: 13,
                 color: textMuted,

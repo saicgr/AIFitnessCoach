@@ -7,6 +7,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/api_client.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Pause Intercept Sheet — Onboarding v5
 ///
 /// Shown when user taps cancel during trial or active sub. Industry data:
@@ -120,7 +121,7 @@ class _PauseInterceptSheetState extends ConsumerState<PauseInterceptSheet> {
                   const SizedBox(height: 16),
 
                   Text(
-                    'Going on vacation? Life busy?',
+                    AppLocalizations.of(context).pauseInterceptGoingOnVacationLife,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -133,7 +134,7 @@ class _PauseInterceptSheetState extends ConsumerState<PauseInterceptSheet> {
                   const SizedBox(height: 8),
 
                   Text(
-                    "Pause your plan instead — pick up exactly where you left off.",
+                    AppLocalizations.of(context).pauseInterceptPauseYourPlanInstead,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -147,8 +148,8 @@ class _PauseInterceptSheetState extends ConsumerState<PauseInterceptSheet> {
                   // Two pause options
                   _PauseOption(
                     days: 14,
-                    label: 'Pause for 14 days',
-                    detail: 'Quick break — short trip, busy week',
+                    label: AppLocalizations.of(context).pauseInterceptPauseFor14Days,
+                    detail: AppLocalizations.of(context).pauseInterceptQuickBreakShortTrip,
                     onTap: () => _pause(14, PauseInterceptResult.paused14),
                     isDark: isDark,
                     enabled: !_submitting,
@@ -156,8 +157,8 @@ class _PauseInterceptSheetState extends ConsumerState<PauseInterceptSheet> {
                   const SizedBox(height: 10),
                   _PauseOption(
                     days: 30,
-                    label: 'Pause for 30 days',
-                    detail: 'Longer break — illness, transition, life',
+                    label: AppLocalizations.of(context).pauseInterceptPauseFor30Days,
+                    detail: AppLocalizations.of(context).pauseInterceptLongerBreakIllnessTransi,
                     onTap: () => _pause(30, PauseInterceptResult.paused30),
                     isDark: isDark,
                     enabled: !_submitting,
@@ -177,7 +178,7 @@ class _PauseInterceptSheetState extends ConsumerState<PauseInterceptSheet> {
                                 .pop(PauseInterceptResult.proceedToCancel);
                           },
                     child: Text(
-                      'No thanks, continue with cancel',
+                      AppLocalizations.of(context).pauseInterceptNoThanksContinueWith,
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,

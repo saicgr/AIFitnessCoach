@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/habit.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Individual habit card with toggle, streak, and actions
 class HabitCard extends StatelessWidget {
   final HabitWithStatus habit;
@@ -193,23 +194,23 @@ class HabitCard extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'edit',
                       child: Row(
                         children: [
                           Icon(Icons.edit, size: 20),
                           SizedBox(width: 8),
-                          Text('Edit'),
+                          Text(AppLocalizations.of(context).commonEdit),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
                       child: Row(
                         children: [
                           Icon(Icons.delete, size: 20, color: Colors.red),
                           SizedBox(width: 8),
-                          Text('Delete', style: TextStyle(color: Colors.red)),
+                          Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: Colors.red)),
                         ],
                       ),
                     ),

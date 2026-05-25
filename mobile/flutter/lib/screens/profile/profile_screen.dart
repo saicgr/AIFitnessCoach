@@ -32,6 +32,7 @@ import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../widgets/liquid_glass_action_bar.dart';
 import 'synced_workout_detail_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'profile_screen_part_account_row_data.dart';
 
 /// Main profile screen displaying user information, stats, and settings.
@@ -156,7 +157,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Row(
         children: [
           Text(
-            'FITNESS',
+            AppLocalizations.of(context).progressFitness,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -178,7 +179,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: Text('Cancel', style: TextStyle(color: textMuted, fontSize: 12)),
+              child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted, fontSize: 12)),
             ),
             TextButton(
               onPressed: isSaving
@@ -198,7 +199,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2, color: sectionColor),
                     )
-                  : const Text('Save', style: TextStyle(color: sectionColor, fontWeight: FontWeight.w600, fontSize: 12)),
+                  : Text(AppLocalizations.of(context).buttonSave, style: TextStyle(color: sectionColor, fontWeight: FontWeight.w600, fontSize: 12)),
             ),
           ] else
             TextButton.icon(
@@ -207,7 +208,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 setState(() {});
               },
               icon: const Icon(Icons.edit, size: 12, color: sectionColor),
-              label: const Text('Edit', style: TextStyle(color: sectionColor, fontSize: 12)),
+              label: Text(AppLocalizations.of(context).commonEdit, style: TextStyle(color: sectionColor, fontSize: 12)),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 minimumSize: Size.zero,
@@ -372,19 +373,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _AccountRowData(
         icon: Icons.shield_outlined,
         iconColor: AppColors.info,
-        title: 'AI Privacy',
+        title: AppLocalizations.of(context).profileAiPrivacy,
         onTap: () => context.push('/settings/ai-data-usage'),
       ),
       _AccountRowData(
         icon: Icons.menu_book,
         iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
-        title: 'Glossary',
+        title: AppLocalizations.of(context).profileGlossary,
         onTap: () => context.push('/glossary'),
       ),
       _AccountRowData(
         icon: Icons.card_membership,
         iconColor: isDark ? AppColors.success : AppColorsLight.success,
-        title: 'Manage Membership',
+        title: AppLocalizations.of(context).profileManageMembership,
         onTap: () => context.push('/subscription-management'),
       ),
     ];
@@ -468,13 +469,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _AccountRowData(
         icon: Icons.shield_moon_outlined,
         iconColor: isDark ? AppColors.info : AppColorsLight.info,
-        title: 'Privacy & Data',
+        title: AppLocalizations.of(context).settingsPrivacyData,
         onTap: () => context.push('/settings/privacy-data'),
       ),
       _AccountRowData(
         icon: Icons.history_outlined,
         iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-        title: 'Workout History Import',
+        title: AppLocalizations.of(context).profileWorkoutHistoryImport,
         onTap: () => context.push('/settings/workout-history-import'),
       ),
     ];
@@ -538,7 +539,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               : AppColorsLight.textPrimary),
                       const SizedBox(width: 12),
                       Text(
-                        'My Custom Equipment',
+                        AppLocalizations.of(context).trainingSetupCardMyCustomEquipment,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -554,7 +555,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Add equipment that will be used when generating your workouts.',
+                    AppLocalizations.of(context).profileAddEquipmentThatWill,
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark
@@ -678,7 +679,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _AccountRowData(
                     icon: Icons.auto_graph_rounded,
                     iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-                    title: 'Custom Trends',
+                    title: AppLocalizations.of(context).statsRewardsCustomTrends,
                     onTap: () => context.push('/trends/custom'),
                   ),
                   textPrimary,
@@ -691,7 +692,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _buildSectionLabel('SYNCED WORKOUTS', AppColors.purple),
               const SizedBox(height: 4),
               Text(
-                Platform.isIOS ? 'From Apple Health' : 'From Health Connect',
+                Platform.isIOS ? AppLocalizations.of(context).profileFromAppleHealth : AppLocalizations.of(context).profileFromHealthConnect,
                 style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
               ),
               const SizedBox(height: 8),
@@ -741,7 +742,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: TextButton(
                   onPressed: _showDeleteAccountDialog,
                   child: Text(
-                    'Delete Account',
+                    AppLocalizations.of(context).settingsDeleteAccount,
                     style: TextStyle(
                       color: (isDark ? AppColors.error : AppColorsLight.error)
                           .withValues(alpha: 0.7),

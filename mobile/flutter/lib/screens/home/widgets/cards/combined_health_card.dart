@@ -7,6 +7,7 @@ import '../../../../data/providers/recovery_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Compact entry-point card into the Combined Health hub (`/health/combined`).
 ///
 /// Self-hiding sibling card (the `DeloadRecommendationCard` pattern — no new
@@ -93,7 +94,7 @@ class CombinedHealthCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Health overview',
+                      AppLocalizations.of(context).combinedHealthCardHealthOverview,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,

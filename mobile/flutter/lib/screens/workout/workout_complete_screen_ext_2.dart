@@ -7,18 +7,18 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
     final shouldSkip = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Skip Rating?'),
-        content: const Text(
-          'Ratings help our AI create better workouts. Skip anyway?',
+        title: Text(AppLocalizations.of(context).workoutCompleteScreenSkipRating),
+        content: Text(
+          AppLocalizations.of(context).workoutCompleteScreenRatingsHelpOurAi,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Go Back'),
+            child: Text(AppLocalizations.of(context).workoutCompleteScreenGoBack),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Skip'),
+            child: Text(AppLocalizations.of(context).onboardingSkip),
           ),
         ],
       ),
@@ -114,7 +114,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Heart Rate Metrics',
+                          AppLocalizations.of(context).workoutCompleteScreenHeartRateMetrics,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -267,8 +267,8 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'How do you feel now?',
+                            Text(
+                              AppLocalizations.of(context).workoutCompleteScreenHowDoYouFeel,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -276,7 +276,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                               ),
                             ),
                             Text(
-                              'Track your mood to see your progress',
+                              AppLocalizations.of(context).workoutCompleteScreenTrackYourMoodTo,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: textSecondary,
@@ -303,7 +303,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                     children: [
                       // Mood after workout
                       Text(
-                        'Mood',
+                        AppLocalizations.of(context).workoutSummaryAdvancedMood,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -364,7 +364,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
 
                       // Energy after workout
                       Text(
-                        'Energy',
+                        AppLocalizations.of(context).workoutSummaryGeneralEnergy,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -476,7 +476,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Feeling stronger today!',
+                                      AppLocalizations.of(context).workoutCompleteScreenFeelingStrongerToday,
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
@@ -486,7 +486,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                                       ),
                                     ),
                                     Text(
-                                      'Notice improvements in your strength or endurance?',
+                                      AppLocalizations.of(context).workoutCompleteScreenNoticeImprovementsInYour,
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: textSecondary,
@@ -496,8 +496,8 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                                 ),
                               ),
                               if (_feelingStronger)
-                                const Text(
-                                  '\u{1F4AA}',
+                                Text(
+                                  AppLocalizations.of(context).workoutCompleteScreenU1f4aa,
                                   style: TextStyle(fontSize: 24),
                                 ),
                             ],
@@ -564,8 +564,8 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Rate Individual Exercises',
+                            Text(
+                              AppLocalizations.of(context).workoutCompleteScreenRateIndividualExercises,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -685,7 +685,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                   ),
                   const SizedBox(width: 6),
                   MiniDifficultyButton(
-                    label: 'OK',
+                    label: AppLocalizations.of(context).healthSyncOk,
                     isSelected: difficulty == 'just_right',
                     color: AppColors.cyan,
                     onTap: () {
@@ -696,7 +696,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                   ),
                   const SizedBox(width: 6),
                   MiniDifficultyButton(
-                    label: 'Hard',
+                    label: AppLocalizations.of(context).workoutCompleteScreenHard,
                     isSelected: difficulty == 'too_hard',
                     color: AppColors.error,
                     onTap: () {
@@ -760,9 +760,9 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Exercise Progress',
+                          AppLocalizations.of(context).workoutCompleteScreenExerciseProgress,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

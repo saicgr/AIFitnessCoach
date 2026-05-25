@@ -11,6 +11,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'demo_workout_screen_ui.dart';
 
 
@@ -190,7 +191,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
               const CircularProgressIndicator(color: AppColors.cyan),
               const SizedBox(height: 16),
               Text(
-                'Creating your personalized workout...',
+                AppLocalizations.of(context).demoWorkoutCreatingYourPersonalizedWor,
                 style: TextStyle(
                   color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                 ),
@@ -212,7 +213,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
               Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
               Text(
-                'Failed to load workout',
+                AppLocalizations.of(context).workoutDetailFailedToLoadWorkout,
                 style: TextStyle(
                   color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                   fontSize: 18,
@@ -222,7 +223,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: _loadPersonalizedWorkout,
-                child: const Text('Try Again'),
+                child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
               ),
             ],
           ),
@@ -441,7 +442,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           ),
           const SizedBox(width: 12),
           Text(
-            'EXERCISES',
+            AppLocalizations.of(context).workoutSummaryGeneralExercises,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -634,7 +635,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                             Icon(Icons.play_circle_outline, size: 12, color: AppColors.success),
                             const SizedBox(width: 2),
                             Text(
-                              'Video',
+                              AppLocalizations.of(context).workoutShowcaseVideo,
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
@@ -739,7 +740,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                                 Icon(Icons.videocam_off, size: 40, color: textMuted),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Video unavailable',
+                                  AppLocalizations.of(context).demoWorkoutVideoUnavailable,
                                   style: TextStyle(color: textMuted, fontSize: 12),
                                 ),
                               ],
@@ -760,7 +761,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'How to perform',
+                          AppLocalizations.of(context).easySheetHelpersHowToPerform,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -771,7 +772,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      notes.isNotEmpty ? notes : 'Focus on proper form and controlled movements.',
+                      notes.isNotEmpty ? notes : AppLocalizations.of(context).demoWorkoutFocusOnProperForm,
                       style: TextStyle(
                         fontSize: 14,
                         color: textSecondary,

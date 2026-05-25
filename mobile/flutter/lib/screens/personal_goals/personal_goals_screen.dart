@@ -18,6 +18,7 @@ import 'create_goal_sheet.dart';
 import 'record_attempt_dialog.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Main screen for viewing and managing personal weekly goals
 class PersonalGoalsScreen extends ConsumerStatefulWidget {
   const PersonalGoalsScreen({super.key});
@@ -150,13 +151,13 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Goal?'),
+        title: Text(AppLocalizations.of(context).personalGoalsDeleteGoal),
         content: Text('Permanently delete "$exerciseName"? This cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).buttonCancel)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -325,7 +326,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Weekly Goals',
+        title: AppLocalizations.of(context).weeklyGoalsCardWeeklyGoals,
         actions: [PillAppBarAction(icon: Icons.refresh, onTap: _loadData)],
       ),
       body: _isLoading
@@ -341,7 +342,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
               backgroundColor: AppColors.cyan,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
-              label: const Text('New Goal'),
+              label: Text(AppLocalizations.of(context).personalGoalsNewGoal),
             ),
     );
   }
@@ -373,7 +374,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           Icon(Icons.error_outline, size: 64, color: AppColors.error.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(
-            'Something went wrong',
+            AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -384,7 +385,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _error ?? 'Unknown error',
+            _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
             style: TextStyle(
               color: Theme.of(context).brightness == Brightness.dark
                   ? AppColors.textSecondary
@@ -395,7 +396,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _loadData,
-            child: const Text('Try Again'),
+            child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
           ),
         ],
       ),
@@ -425,7 +426,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
             Row(
               children: [
                 Text(
-                  'This Week',
+                  AppLocalizations.of(context).workoutCompleteThisWeek,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -479,7 +480,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
             // Personal records section
             if (records.isNotEmpty) ...[
               Text(
-                'Personal Records',
+                AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -492,7 +493,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
                 TextButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Full records view coming in a future update')),
+                      SnackBar(content: Text(AppLocalizations.of(context).personalGoalsFullRecordsViewComing)),
                     );
                   },
                   child: Text('View all ${records.length} records'),
@@ -531,7 +532,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           _buildSummaryItem(
             icon: Icons.flag,
             value: '$activeGoals',
-            label: 'Active Goals',
+            label: AppLocalizations.of(context).personalGoalsActiveGoals,
             color: AppColors.cyan,
           ),
           Container(
@@ -542,7 +543,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           _buildSummaryItem(
             icon: Icons.emoji_events,
             value: '$prsThisWeek',
-            label: 'New PRs',
+            label: AppLocalizations.of(context).personalGoalsNewPrs,
             color: AppColors.orange,
           ),
         ],
@@ -607,7 +608,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No goals this week',
+            AppLocalizations.of(context).personalGoalsNoGoalsThisWeek,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -616,7 +617,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Set a weekly challenge to push your limits!',
+            AppLocalizations.of(context).personalGoalsSetAWeeklyChallenge,
             style: TextStyle(
               fontSize: 14,
               color: textMuted,
@@ -627,7 +628,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           ElevatedButton.icon(
             onPressed: _showCreateGoalSheet,
             icon: const Icon(Icons.add),
-            label: const Text('Set Your First Goal'),
+            label: Text(AppLocalizations.of(context).personalGoalsSetYourFirstGoal),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.cyan,
               foregroundColor: Colors.white,
@@ -685,7 +686,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
                   ),
                 ),
                 Text(
-                  goalType == PersonalGoalType.singleMax ? 'Max Reps' : 'Weekly Volume',
+                  goalType == PersonalGoalType.singleMax ? AppLocalizations.of(context).personalGoalsMaxReps : AppLocalizations.of(context).personalGoalsWeeklyVolume,
                   style: TextStyle(
                     fontSize: 12,
                     color: textSecondary,
@@ -703,7 +704,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
             ),
           ),
           Text(
-            ' reps',
+            AppLocalizations.of(context).personalGoalsReps,
             style: TextStyle(
               fontSize: 14,
               color: textSecondary,

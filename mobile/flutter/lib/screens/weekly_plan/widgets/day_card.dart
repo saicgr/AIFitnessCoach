@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/weekly_plan.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card widget for a single day in the weekly plan
 class DayCard extends StatelessWidget {
   final DailyPlanEntry entry;
@@ -153,7 +154,7 @@ class DayCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        entry.workoutFocus ?? 'Workout',
+                        entry.workoutFocus ?? AppLocalizations.of(context).navWorkout,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),

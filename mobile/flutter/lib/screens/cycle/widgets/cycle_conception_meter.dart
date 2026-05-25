@@ -13,6 +13,7 @@ import '../../../data/models/hormonal_health.dart';
 import '../cycle_chat.dart';
 import '../cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class CycleConceptionMeter extends StatelessWidget {
   final CyclePrediction prediction;
   final Color accent;
@@ -69,7 +70,7 @@ class CycleConceptionMeter extends StatelessWidget {
               Icon(Icons.favorite_rounded, size: 16, color: meterColor),
               const SizedBox(width: 8),
               Text(
-                'Chance of conception',
+                AppLocalizations.of(context).cycleConceptionMeterChanceOfConception,
                 style: TextStyle(
                   color: fg,
                   fontSize: 13,

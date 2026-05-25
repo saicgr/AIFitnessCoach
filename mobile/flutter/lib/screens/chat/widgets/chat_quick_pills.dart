@@ -11,6 +11,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
+import '../../../l10n/generated/app_localizations.dart';
 class ChatQuickPills extends ConsumerStatefulWidget {
   final void Function(String prompt) onSendPrompt;
   final void Function(ChatMediaMode mode, String contextPrompt) onOpenMediaPicker;
@@ -82,7 +83,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                 const SizedBox(height: 16),
                 _MiniPickerOption(
                   icon: isVideo ? Icons.videocam_outlined : Icons.camera_alt_outlined,
-                  label: isVideo ? 'Record Video' : 'Take Photo',
+                  label: isVideo ? AppLocalizations.of(context).mediaPickerHelperRecordVideo : AppLocalizations.of(context).progressTakePhoto,
                   color: action.color,
                   onTap: () {
                     Navigator.pop(ctx);
@@ -96,7 +97,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                 const SizedBox(height: 8),
                 _MiniPickerOption(
                   icon: isVideo ? Icons.video_library_outlined : Icons.photo_library_outlined,
-                  label: isVideo ? 'Choose Video' : 'Choose Photo',
+                  label: isVideo ? AppLocalizations.of(context).mediaPickerHelperChooseVideo : AppLocalizations.of(context).mediaPickerHelperChoosePhoto,
                   color: action.color,
                   onTap: () {
                     Navigator.pop(ctx);
@@ -111,7 +112,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                   const SizedBox(height: 8),
                   _MiniPickerOption(
                     icon: Icons.collections_outlined,
-                    label: 'Choose Multiple Photos',
+                    label: AppLocalizations.of(context).mediaPickerHelperChooseMultiplePhotos,
                     color: action.color,
                     onTap: () {
                       Navigator.pop(ctx);
@@ -405,7 +406,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                   children: [
                     Expanded(
                       child: Text(
-                        'Chat Actions',
+                        AppLocalizations.of(context).chatQuickPillsChatActions,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -426,7 +427,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: Text(
-                  'Tap an action to use it. Long-press pills to reorder.',
+                  AppLocalizations.of(context).chatQuickPillsTapAnActionTo,
                   style: TextStyle(fontSize: 13, color: colors.textMuted),
                 ),
               ),
@@ -473,7 +474,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                 children: [
                   Expanded(
                     child: Text(
-                      'Customize Shortcuts',
+                      AppLocalizations.of(context).chatQuickPillsCustomizeShortcuts,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -484,7 +485,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                   TextButton(
                     onPressed: () => setState(() => _isEditMode = false),
                     child: Text(
-                      'Done',
+                      AppLocalizations.of(context).commonDone,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -498,7 +499,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Text(
-                'Drag to reorder. Top 5 appear as pills above the input bar.',
+                AppLocalizations.of(context).chatQuickPillsDragToReorderTop,
                 style: TextStyle(fontSize: 13, color: colors.textMuted),
               ),
             ),
@@ -613,7 +614,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                   ref.read(chatQuickActionOrderProvider.notifier).resetToDefault();
                 },
                 child: Text(
-                  'Reset to Default',
+                  AppLocalizations.of(context).quickActionsResetToDefault,
                   style: TextStyle(
                     fontSize: 14,
                     color: colors.textMuted,

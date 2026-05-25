@@ -6,6 +6,7 @@ import '../../../data/repositories/equipment_calibration_repository.dart';
 import '../../equipment/equipment_calibration_screen.dart';
 import '../widgets/section_header.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Entry point on the Equipment settings page that opens the per-user
 /// calibration flow (Phase 1 of workouts overhaul).
 ///
@@ -32,7 +33,7 @@ class EquipmentCalibrationSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'CALIBRATION'),
+        SectionHeader(title: AppLocalizations.of(context).equipmentCalibrationCalibration),
         const SizedBox(height: 12),
         Material(
           color: elevatedColor,
@@ -67,7 +68,7 @@ class EquipmentCalibrationSection extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Calibrate equipment',
+                          AppLocalizations.of(context).equipmentCalibrationTitle,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -77,7 +78,7 @@ class EquipmentCalibrationSection extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           count == 0
-                              ? 'Set bar / sled / cable / plate inventory'
+                              ? AppLocalizations.of(context).equipmentCalibrationSetBarSledCable
                               : '$count item${count == 1 ? '' : 's'} calibrated',
                           style: TextStyle(
                             fontSize: 12,

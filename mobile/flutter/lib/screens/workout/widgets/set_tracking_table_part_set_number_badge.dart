@@ -158,10 +158,10 @@ class _AutoTargetCell extends StatelessWidget {
                         color: isDarkTheme ? Colors.white : Colors.black,
                       ),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Center(
                         child: Text(
-                          'What is RIR?',
+                          AppLocalizations.of(context).setTrackingTableWhatIsRir,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -179,7 +179,7 @@ class _AutoTargetCell extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Hardest',
+                      AppLocalizations.of(context).setTrackingTableHardest,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -187,7 +187,7 @@ class _AutoTargetCell extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Easiest',
+                      AppLocalizations.of(context).setTrackingTableEasiest,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -201,14 +201,14 @@ class _AutoTargetCell extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'No reps in reserve',
+                      AppLocalizations.of(context).setTrackingTableNoRepsInReserve,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDarkTheme ? Colors.grey.shade400 : Colors.grey.shade600,
                       ),
                     ),
                     Text(
-                      'Many reps in reserve',
+                      AppLocalizations.of(context).setTrackingTableManyRepsInReserve,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDarkTheme ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -241,7 +241,7 @@ class _AutoTargetCell extends StatelessWidget {
 
                 // Explanation text
                 Text(
-                  'What you see above is an RIR scale',
+                  AppLocalizations.of(context).setTrackingTableWhatYouSeeAbove,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -250,7 +250,7 @@ class _AutoTargetCell extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'RIR stands for Reps in Reserve—a simple way to describe how challenging a set felt.',
+                  AppLocalizations.of(context).setTrackingTableRirStandsForReps,
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
@@ -259,7 +259,7 @@ class _AutoTargetCell extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'A lower RIR (0–1) means you pushed to your limit. A higher RIR (like 4–6+) means the set felt easier and you had plenty left in the tank.',
+                  AppLocalizations.of(context).setTrackingTableALowerRir0,
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
@@ -268,7 +268,7 @@ class _AutoTargetCell extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'You are not required to track RIR, but we strongly recommend it. Understanding your proximity to failure will help the app better accommodate your current strength levels and rates of fatigue.',
+                  AppLocalizations.of(context).setTrackingTableYouAreNotRequired,
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
@@ -283,7 +283,7 @@ class _AutoTargetCell extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'How your target RIR is calculated',
+                  AppLocalizations.of(context).setTrackingTableHowYourTargetRir,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -292,7 +292,7 @@ class _AutoTargetCell extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Your RIR target is personalized using three factors:',
+                  AppLocalizations.of(context).setTrackingTableYourRirTargetIs,
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
@@ -303,24 +303,24 @@ class _AutoTargetCell extends StatelessWidget {
                 _buildRirFactorRow(
                   icon: Icons.track_changes,
                   color: AppColors.orange,
-                  title: 'Training Goal + Exercise Type',
-                  description: 'Compound lifts (squats, presses) stay more conservative than isolation moves (curls, raises). Hypertrophy pushes closer to failure than strength.',
+                  title: AppLocalizations.of(context).setTrackingTableTrainingGoalExerciseType,
+                  description: AppLocalizations.of(context).setTrackingTableCompoundLiftsSquatsPresse,
                   isDark: isDarkTheme,
                 ),
                 const SizedBox(height: 10),
                 _buildRirFactorRow(
                   icon: Icons.fitness_center,
                   color: AppColors.cyan,
-                  title: 'Equipment Safety',
-                  description: 'Machines & cables are safer to push hard on. Barbells & kettlebells need more reserve due to injury risk.',
+                  title: AppLocalizations.of(context).setTrackingTableEquipmentSafety,
+                  description: AppLocalizations.of(context).setTrackingTableMachinesCablesAreSafer,
                   isDark: isDarkTheme,
                 ),
                 const SizedBox(height: 10),
                 _buildRirFactorRow(
                   icon: Icons.trending_up,
                   color: AppColors.green,
-                  title: 'Your Fitness Level',
-                  description: 'Beginners get extra buffer for form learning. Advanced lifters can push closer to failure safely.',
+                  title: AppLocalizations.of(context).setTrackingTableYourFitnessLevel,
+                  description: AppLocalizations.of(context).setTrackingTableBeginnersGetExtraBuffer,
                   isDark: isDarkTheme,
                 ),
                 const SizedBox(height: 16),
@@ -345,7 +345,7 @@ class _AutoTargetCell extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'RIR decreases across sets — the last set pushes hardest while earlier sets build up.',
+                          AppLocalizations.of(context).setTrackingTableRirDecreasesAcrossSets,
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.4,
@@ -763,10 +763,10 @@ class _PreviousCellWithRir extends StatelessWidget {
                           color: isDarkTheme ? Colors.white : Colors.black,
                         ),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Center(
                           child: Text(
-                            'What is RIR?',
+                            AppLocalizations.of(context).setTrackingTableWhatIsRir,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -779,7 +779,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'RIR stands for Reps in Reserve—a simple way to describe how challenging a set felt.',
+                    AppLocalizations.of(context).setTrackingTableRirStandsForReps,
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.5,
@@ -788,7 +788,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'A lower RIR (0–1) means you pushed close to your limit. A higher RIR (like 3–4) means you had more reps in the tank.',
+                    AppLocalizations.of(context).setTrackingTableALowerRir02,
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.5,
@@ -803,7 +803,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'How your target RIR is calculated',
+                    AppLocalizations.of(context).setTrackingTableHowYourTargetRir,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -812,7 +812,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Your RIR target is personalized using three factors:',
+                    AppLocalizations.of(context).setTrackingTableYourRirTargetIs,
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.5,
@@ -823,24 +823,24 @@ class _PreviousCellWithRir extends StatelessWidget {
                   _AutoTargetCell._buildRirFactorRow(
                     icon: Icons.track_changes,
                     color: AppColors.orange,
-                    title: 'Training Goal + Exercise Type',
-                    description: 'Compound lifts (squats, presses) stay more conservative than isolation moves (curls, raises). Hypertrophy pushes closer to failure than strength.',
+                    title: AppLocalizations.of(context).setTrackingTableTrainingGoalExerciseType,
+                    description: AppLocalizations.of(context).setTrackingTableCompoundLiftsSquatsPresse,
                     isDark: isDarkTheme,
                   ),
                   const SizedBox(height: 10),
                   _AutoTargetCell._buildRirFactorRow(
                     icon: Icons.fitness_center,
                     color: AppColors.cyan,
-                    title: 'Equipment Safety',
-                    description: 'Machines & cables are safer to push hard on. Barbells & kettlebells need more reserve due to injury risk.',
+                    title: AppLocalizations.of(context).setTrackingTableEquipmentSafety,
+                    description: AppLocalizations.of(context).setTrackingTableMachinesCablesAreSafer,
                     isDark: isDarkTheme,
                   ),
                   const SizedBox(height: 10),
                   _AutoTargetCell._buildRirFactorRow(
                     icon: Icons.trending_up,
                     color: AppColors.green,
-                    title: 'Your Fitness Level',
-                    description: 'Beginners get extra buffer for form learning. Advanced lifters can push closer to failure safely.',
+                    title: AppLocalizations.of(context).setTrackingTableYourFitnessLevel,
+                    description: AppLocalizations.of(context).setTrackingTableBeginnersGetExtraBuffer,
                     isDark: isDarkTheme,
                   ),
                   const SizedBox(height: 16),
@@ -865,7 +865,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'RIR decreases across sets — the last set pushes hardest while earlier sets build up.',
+                            AppLocalizations.of(context).setTrackingTableRirDecreasesAcrossSets,
                             style: TextStyle(
                               fontSize: 13,
                               height: 1.4,

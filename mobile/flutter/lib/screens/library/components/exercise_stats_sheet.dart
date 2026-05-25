@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../widgets/stat_badge.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet showing detailed exercise statistics
 class ExerciseStatsSheet extends StatelessWidget {
   final String exerciseName;
@@ -101,7 +102,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                         children: [
                           Expanded(
                             child: StatTile(
-                              title: 'Total Sets',
+                              title: AppLocalizations.of(context).muscleDetailTotalSets,
                               value: '${item.totalSets}',
                               icon: Icons.fitness_center,
                               color: cyan,
@@ -109,7 +110,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                           ),
                           Expanded(
                             child: StatTile(
-                              title: 'Max Weight',
+                              title: AppLocalizations.of(context).muscleDetailMaxWeight,
                               value: item.maxWeight != null
                                   ? '${item.maxWeight!.toStringAsFixed(1)} kg'
                                   : '-',
@@ -124,7 +125,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                         children: [
                           Expanded(
                             child: StatTile(
-                              title: 'Est. 1RM',
+                              title: AppLocalizations.of(context).exerciseStatsWidgetsEst1rm,
                               value: item.estimated1rm != null
                                   ? '${item.estimated1rm!.toStringAsFixed(1)} kg'
                                   : '-',
@@ -134,7 +135,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                           ),
                           Expanded(
                             child: StatTile(
-                              title: 'Max Reps',
+                              title: AppLocalizations.of(context).personalGoalsMaxReps,
                               value:
                                   item.maxReps != null ? '${item.maxReps}' : '-',
                               icon: Icons.repeat,
@@ -149,7 +150,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                           children: [
                             Expanded(
                               child: StatTile(
-                                title: 'Avg RPE',
+                                title: AppLocalizations.of(context).workoutSummaryAdvancedAvgRpe,
                                 value: item.avgRpe!.toStringAsFixed(1),
                                 icon: Icons.speed,
                                 color: cyan,
@@ -157,7 +158,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                             ),
                             Expanded(
                               child: StatTile(
-                                title: 'Volume',
+                                title: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
                                 value: item.totalVolume != null
                                     ? '${(item.totalVolume! / 1000).toStringAsFixed(1)}k kg'
                                     : '-',
@@ -212,7 +213,7 @@ class ExerciseStatsSheet extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Progression',
+                                AppLocalizations.of(context).setTrackingOverlayProgression,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleSmall

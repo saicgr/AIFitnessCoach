@@ -16,6 +16,7 @@ import '../widgets/pending_request_card.dart';
 import '../friend_search_screen.dart';
 import '../friend_profile_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Friends Tab - Shows pending requests, friends, followers, and following
 class FriendsTab extends ConsumerStatefulWidget {
   const FriendsTab({super.key});
@@ -178,10 +179,10 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         SegmentedTabBar(
           controller: _friendsTabController,
           showIcons: false,
-          tabs: const [
-            SegmentedTabItem(label: 'Friends', icon: Icons.people_rounded),
-            SegmentedTabItem(label: 'Followers', icon: Icons.person_add_rounded),
-            SegmentedTabItem(label: 'Following', icon: Icons.person_rounded),
+          tabs: [
+            SegmentedTabItem(label: AppLocalizations.of(context).discoverFriends, icon: Icons.people_rounded),
+            SegmentedTabItem(label: AppLocalizations.of(context).friendsFollowers, icon: Icons.person_add_rounded),
+            SegmentedTabItem(label: AppLocalizations.of(context).friendsFollowing, icon: Icons.person_rounded),
           ],
         ),
 
@@ -234,8 +235,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Friend Requests',
+                Text(
+                  AppLocalizations.of(context).socialPrivacyFriendRequests,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -345,8 +346,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         debugPrint('Error loading friends: $error');
         return SocialEmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Failed to Load Friends',
-          description: 'Could not load your friends list.\nPlease try again.',
+          title: AppLocalizations.of(context).friendsFailedToLoadFriends,
+          description: AppLocalizations.of(context).friendsCouldNotLoadYour,
           actionLabel: 'Retry',
           onAction: () {
             ref.invalidate(friendsListProvider(_userId!));
@@ -357,8 +358,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         if (friends.isEmpty) {
           return SocialEmptyState(
             icon: Icons.people_rounded,
-            title: 'No Friends Yet',
-            description: 'Add friends to see their workouts\nand compete in challenges together!',
+            title: AppLocalizations.of(context).friendsNoFriendsYet,
+            description: AppLocalizations.of(context).friendsAddFriendsToSee,
             actionLabel: 'Find Friends',
             onAction: () => _handleFindFriends(),
           );
@@ -404,8 +405,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         debugPrint('Error loading followers: $error');
         return SocialEmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Failed to Load Followers',
-          description: 'Could not load your followers list.\nPlease try again.',
+          title: AppLocalizations.of(context).friendsFailedToLoadFollowers,
+          description: AppLocalizations.of(context).friendsCouldNotLoadYour2,
           actionLabel: 'Retry',
           onAction: () {
             ref.invalidate(followersListProvider(_userId!));
@@ -416,8 +417,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         if (followers.isEmpty) {
           return SocialEmptyState(
             icon: Icons.person_add_outlined,
-            title: 'No Followers Yet',
-            description: 'Keep crushing your workouts!\nFriends will want to follow your progress.',
+            title: AppLocalizations.of(context).friendsNoFollowersYet,
+            description: AppLocalizations.of(context).friendsKeepCrushingYourWorkouts,
             actionLabel: null,
             onAction: null,
           );
@@ -464,8 +465,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         debugPrint('Error loading following: $error');
         return SocialEmptyState(
           icon: Icons.cloud_off_rounded,
-          title: 'Failed to Load Following',
-          description: 'Could not load users you follow.\nPlease try again.',
+          title: AppLocalizations.of(context).friendsFailedToLoadFollowing,
+          description: AppLocalizations.of(context).friendsCouldNotLoadUsers,
           actionLabel: 'Retry',
           onAction: () {
             ref.invalidate(followingListProvider(_userId!));
@@ -476,8 +477,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         if (following.isEmpty) {
           return SocialEmptyState(
             icon: Icons.person_search_outlined,
-            title: 'Not Following Anyone',
-            description: 'Follow friends to see their workouts\nand stay motivated together!',
+            title: AppLocalizations.of(context).friendsNotFollowingAnyone,
+            description: AppLocalizations.of(context).friendsFollowFriendsToSee,
             actionLabel: 'Find Friends',
             onAction: () => _handleFindFriends(),
           );
@@ -540,7 +541,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
               isDark: isDark,
               icon: Icons.people_rounded,
               value: friendsCount,
-              label: 'Friends',
+              label: AppLocalizations.of(context).discoverFriends,
               color: colors.accent,
               onTap: () {
                 HapticFeedback.lightImpact();
@@ -560,7 +561,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
               isDark: isDark,
               icon: Icons.person_rounded,
               value: followersCount,
-              label: 'Followers',
+              label: AppLocalizations.of(context).friendsFollowers,
               color: colors.accent,
               onTap: () {
                 HapticFeedback.lightImpact();
@@ -580,7 +581,7 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
               isDark: isDark,
               icon: Icons.person_add_alt_1_rounded,
               value: followingCount,
-              label: 'Following',
+              label: AppLocalizations.of(context).friendsFollowing,
               color: colors.accent,
               onTap: () {
                 HapticFeedback.lightImpact();

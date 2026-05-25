@@ -20,6 +20,7 @@ import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 part 'new_tiles_part_personal_records_card.dart';
 part 'new_tiles_part_active_challenge_card.dart';
 part 'new_tiles_part_my_journey_card.dart';
@@ -104,7 +105,7 @@ class StreakCounterCard extends ConsumerWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Streak',
+                AppLocalizations.of(context).xpProgressCardStreak,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -130,7 +131,7 @@ class StreakCounterCard extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               currentStreak >= 7
-                  ? 'Amazing streak! Keep going!'
+                  ? AppLocalizations.of(context).newTilesAmazingStreakKeepGoing
                   : 'Keep the fire burning!',
               style: TextStyle(
                 fontSize: 12,

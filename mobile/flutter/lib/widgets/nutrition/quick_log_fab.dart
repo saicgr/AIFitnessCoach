@@ -11,6 +11,7 @@ import '../common/last_used_badge.dart';
 import '../glass_sheet.dart';
 import 'batch_portioning_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 const String _kFoodInputMethodKey = 'food_input_method';
 
 /// Quick-Add FAB for nutrition logging
@@ -106,7 +107,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
               _buildOption(
                 index: 0,
                 icon: _isListening ? Icons.mic : Icons.mic_none,
-                label: _isListening ? 'Listening...' : 'Voice',
+                label: _isListening ? AppLocalizations.of(context).quickLogFabListening : AppLocalizations.of(context).quickLogFabVoice,
                 color: Colors.purple,
                 method: 'voice',
                 onTap: _startVoiceLogging,
@@ -116,7 +117,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
             _buildOption(
               index: 1,
               icon: Icons.camera_alt,
-              label: 'Photo',
+              label: AppLocalizations.of(context).recipeImportPhoto,
               color: Colors.blue,
               method: 'image',
               onTap: _openCameraLogging,
@@ -126,7 +127,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
             _buildOption(
               index: 2,
               icon: Icons.qr_code_scanner,
-              label: 'Scan',
+              label: AppLocalizations.of(context).quickLogFabScan,
               color: Colors.orange,
               method: 'barcode',
               onTap: _openBarcodeLogging,
@@ -136,7 +137,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
             _buildOption(
               index: 3,
               icon: Icons.edit,
-              label: 'Type',
+              label: AppLocalizations.of(context).workoutDetailType,
               color: Colors.teal,
               method: 'text',
               onTap: _openTextLogging,
@@ -146,7 +147,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
             _buildOption(
               index: 4,
               icon: Icons.pie_chart,
-              label: 'Batch',
+              label: AppLocalizations.of(context).quickLogFabBatch,
               color: Colors.deepPurple,
               method: 'batch',
               onTap: _openBatchPortioning,
@@ -394,7 +395,7 @@ class _QuickActionsSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Log Food',
+              AppLocalizations.of(context).quickLogFabLogFood,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -408,28 +409,28 @@ class _QuickActionsSheet extends StatelessWidget {
                 _buildQuickAction(
                   context,
                   icon: Icons.camera_alt,
-                  label: 'Photo',
+                  label: AppLocalizations.of(context).recipeImportPhoto,
                   color: Colors.blue,
                   onTap: () => _openLogging(context, 'image'),
                 ),
                 _buildQuickAction(
                   context,
                   icon: Icons.qr_code_scanner,
-                  label: 'Scan',
+                  label: AppLocalizations.of(context).quickLogFabScan,
                   color: Colors.orange,
                   onTap: () => _openLogging(context, 'barcode'),
                 ),
                 _buildQuickAction(
                   context,
                   icon: Icons.edit,
-                  label: 'Type',
+                  label: AppLocalizations.of(context).workoutDetailType,
                   color: Colors.teal,
                   onTap: () => _openLogging(context, 'text'),
                 ),
                 _buildQuickAction(
                   context,
                   icon: Icons.mic,
-                  label: 'Voice',
+                  label: AppLocalizations.of(context).quickLogFabVoice,
                   color: Colors.purple,
                   onTap: () => _openLogging(context, 'voice'),
                 ),
@@ -443,7 +444,7 @@ class _QuickActionsSheet extends StatelessWidget {
                 _buildQuickAction(
                   context,
                   icon: Icons.pie_chart,
-                  label: 'Batch',
+                  label: AppLocalizations.of(context).quickLogFabBatch,
                   color: Colors.deepPurple,
                   onTap: () => _openLogging(context, 'batch'),
                 ),

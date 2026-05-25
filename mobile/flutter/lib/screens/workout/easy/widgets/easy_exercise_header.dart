@@ -16,6 +16,7 @@ import '../../../../data/models/exercise.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../widgets/exercise_image.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class EasyExerciseHeader extends ConsumerWidget {
   final WorkoutExercise exercise;
   final int currentSet; // 1-indexed
@@ -114,7 +115,7 @@ class EasyExerciseHeader extends ConsumerWidget {
                   icon: Icons.remove_rounded,
                   onTap: onRemoveSet,
                   color: muted,
-                  tooltip: 'Remove set',
+                  tooltip: AppLocalizations.of(context).easyExerciseHeaderRemoveSet,
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -131,7 +132,7 @@ class EasyExerciseHeader extends ConsumerWidget {
                   icon: Icons.add_rounded,
                   onTap: onAddSet,
                   color: muted,
-                  tooltip: 'Add set',
+                  tooltip: AppLocalizations.of(context).easyExerciseHeaderAddSet,
                 ),
               ],
             ),
@@ -166,7 +167,7 @@ class EasyExerciseHeader extends ConsumerWidget {
               children: [
                 _LinkChip(
                   icon: Icons.play_circle_outline,
-                  label: 'Video',
+                  label: AppLocalizations.of(context).workoutShowcaseVideo,
                   color: textColor,
                   onTap: () async {
                     await HapticService.instance.tap();
@@ -176,7 +177,7 @@ class EasyExerciseHeader extends ConsumerWidget {
                 const SizedBox(width: 10),
                 _LinkChip(
                   icon: Icons.menu_book_outlined,
-                  label: 'Instructions',
+                  label: AppLocalizations.of(context).workoutShowcaseInstructions,
                   color: textColor,
                   onTap: () async {
                     await HapticService.instance.tap();
@@ -186,7 +187,7 @@ class EasyExerciseHeader extends ConsumerWidget {
                 const SizedBox(width: 10),
                 _LinkChip(
                   icon: Icons.list_alt_rounded,
-                  label: 'Plan',
+                  label: AppLocalizations.of(context).workoutsPlan,
                   color: textColor,
                   onTap: () async {
                     await HapticService.instance.tap();
@@ -205,7 +206,7 @@ class EasyExerciseHeader extends ConsumerWidget {
                   const SizedBox(width: 10),
                   _LinkChip(
                     icon: Icons.more_horiz_rounded,
-                    label: 'More',
+                    label: AppLocalizations.of(context).homeMore,
                     color: textColor,
                     onTap: () async {
                       await HapticService.instance.tap();

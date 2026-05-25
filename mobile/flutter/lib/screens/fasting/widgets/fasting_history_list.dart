@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
 import 'fasting_mood_checkin.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// List of past fasting records
 class FastingHistoryList extends StatelessWidget {
   final List<FastingRecord> history;
@@ -30,7 +31,7 @@ class FastingHistoryList extends StatelessWidget {
             child: TextButton(
               onPressed: onLoadMore,
               child: Text(
-                'Load More',
+                AppLocalizations.of(context).foodHistoryScreenLoadMore,
                 style: TextStyle(
                   color: isDark ? AppColors.accent : AppColorsLight.accent,
                 ),
@@ -144,7 +145,7 @@ class FastingHistoryCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       completedGoal
-                          ? 'Completed'
+                          ? AppLocalizations.of(context).progressionStepCardCompleted
                           : '${completionPercent.toStringAsFixed(0)}%',
                       style: TextStyle(
                         fontSize: 12,

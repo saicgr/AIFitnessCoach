@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers/email_verification_provider.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Slim, non-blocking "verify your email" banner shown at the top of the app
 /// shell while the signed-in user has not yet confirmed their email.
 ///
@@ -88,9 +89,9 @@ class _EmailVerificationBannerState
                       const Icon(Icons.mark_email_unread_outlined,
                           size: 18, color: Colors.white),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Verify your email to secure your account.',
+                          AppLocalizations.of(context).emailVerificationBannerVerifyYourEmailTo,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 13,
@@ -118,8 +119,8 @@ class _EmailVerificationBannerState
                                   color: Colors.white.withValues(alpha: 0.18),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Text(
-                                  'Resend',
+                                child: Text(
+                                  AppLocalizations.of(context).emailVerificationBannerResend,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,

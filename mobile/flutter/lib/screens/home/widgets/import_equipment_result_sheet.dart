@@ -19,6 +19,7 @@ import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/gym_profile_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Environment choices — must match backend `workout_environment` enum values.
 const List<(String, String)> _kEnvironmentOptions = [
   ('commercial_gym', 'Commercial Gym'),
@@ -237,7 +238,7 @@ class _ImportEquipmentResultSheetState
                   ),
                 ),
                 Text(
-                  'Review before saving. Tap a chip to remove it.',
+                  AppLocalizations.of(context).importEquipmentResultReviewBeforeSavingTap,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ],
@@ -258,7 +259,7 @@ class _ImportEquipmentResultSheetState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Workout environment',
+          AppLocalizations.of(context).importEquipmentResultWorkoutEnvironment,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -299,7 +300,7 @@ class _ImportEquipmentResultSheetState
         if (widget.result.inferredEnvironment != null) ...[
           const SizedBox(height: 4),
           Text(
-            'Inferred from imported content',
+            AppLocalizations.of(context).importEquipmentResultInferredFromImportedContent,
             style: TextStyle(fontSize: 11, color: textSecondary),
           ),
         ],
@@ -328,7 +329,7 @@ class _ImportEquipmentResultSheetState
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'No equipment could be matched from your import.',
+                AppLocalizations.of(context).importEquipmentResultNoEquipmentCouldBe,
                 style: TextStyle(fontSize: 13, color: textSecondary),
               ),
             ),
@@ -406,7 +407,7 @@ class _ImportEquipmentResultSheetState
         ),
         const SizedBox(height: 4),
         Text(
-          'We couldn\'t match these to known equipment. Skip or keep as custom.',
+          AppLocalizations.of(context).importEquipmentResultWeCouldnTMatch,
           style: TextStyle(fontSize: 12, color: textSecondary),
         ),
         const SizedBox(height: 10),
@@ -448,13 +449,13 @@ class _ImportEquipmentResultSheetState
                 const SizedBox(width: 8),
                 if (added)
                   _smallAction(
-                    label: 'Custom ✓',
+                    label: AppLocalizations.of(context).importEquipmentResultCustom,
                     color: Colors.green.shade600,
                     onTap: () => setState(() => _customAdded.remove(item.raw)),
                   )
                 else ...[
                   _smallAction(
-                    label: 'Skip',
+                    label: AppLocalizations.of(context).onboardingSkip,
                     color: textSecondary,
                     onTap: () {
                       // Purely visual — unmatched items are skipped by default,
@@ -464,7 +465,7 @@ class _ImportEquipmentResultSheetState
                   ),
                   const SizedBox(width: 6),
                   _smallAction(
-                    label: '+ Add',
+                    label: AppLocalizations.of(context).importEquipmentResultAdd,
                     color: accent,
                     onTap: () {
                       setState(() => _customAdded.add(item.raw));
@@ -528,7 +529,7 @@ class _ImportEquipmentResultSheetState
         children: [
           TextButton(
             onPressed: _saving ? null : () => Navigator.of(context).pop(),
-            child: Text('Cancel', style: TextStyle(color: textSecondary)),
+            child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textSecondary)),
           ),
           const Spacer(),
           ElevatedButton.icon(
@@ -544,7 +545,7 @@ class _ImportEquipmentResultSheetState
                   )
                 : const Icon(Icons.check_rounded, size: 18),
             label: Text(
-              _saving ? 'Saving...' : 'Save $keepCount items',
+              _saving ? AppLocalizations.of(context).workoutReviewSaving : 'Save $keepCount items',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             style: ElevatedButton.styleFrom(

@@ -25,6 +25,7 @@ import '../shared/set_rail_overflow_sheet.dart';
 import 'pre_set_coaching_banner.dart';
 import 'set_row_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'set_tracking_table_part_set_number_badge.dart';
 
 
@@ -468,7 +469,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'Delete',
+                  AppLocalizations.of(context).buttonDelete,
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -636,7 +637,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           SizedBox(
             width: 32,
             child: Text(
-              'Set',
+              AppLocalizations.of(context).workoutSummaryAdvancedSet,
               style: WorkoutDesign.tableHeaderStyle.copyWith(
                 color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
               ),
@@ -647,7 +648,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           Expanded(
             flex: 3,
             child: Text(
-              'Previous',
+              AppLocalizations.of(context).summaryExerciseTablePrevious,
               style: WorkoutDesign.tableHeaderStyle.copyWith(
                 color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
               ),
@@ -658,7 +659,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           Expanded(
             flex: 3,
             child: Text(
-              'TARGET',
+              AppLocalizations.of(context).summaryExerciseTableTarget,
               style: WorkoutDesign.tableHeaderStyle.copyWith(
                 color: WorkoutDesign.accentBlue,
                 fontWeight: FontWeight.w600,
@@ -705,7 +706,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Left',
+                    AppLocalizations.of(context).setTrackingTableLeft,
                     style: WorkoutDesign.tableHeaderStyle.copyWith(
                       color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
                       fontSize: 11,
@@ -723,7 +724,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Right',
+                    AppLocalizations.of(context).setTrackingTableRight,
                     style: WorkoutDesign.tableHeaderStyle.copyWith(
                       color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
                       fontSize: 11,
@@ -907,7 +908,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () => Navigator.pop(sheetCtx, selected),
-                      child: const Text('Save'),
+                      child: Text(AppLocalizations.of(context).buttonSave),
                     ),
                   ),
                 ],
@@ -1204,7 +1205,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             ),
             const SizedBox(width: 8),
             Text(
-              'Add Set',
+              AppLocalizations.of(context).setTrackingTableAddSet,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

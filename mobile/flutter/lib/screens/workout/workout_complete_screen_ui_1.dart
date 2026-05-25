@@ -27,7 +27,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               child: CompactStatTile(
                 icon: Icons.timer,
                 value: _formatDuration(widget.duration),
-                label: 'Time',
+                label: AppLocalizations.of(context).workoutShowcaseTime,
                 color: AppColors.orange,
               ),
             ),
@@ -36,7 +36,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               child: CompactStatTile(
                 icon: Icons.local_fire_department,
                 value: '${widget.calories}',
-                label: 'Cal',
+                label: AppLocalizations.of(context).workoutShowcaseCal,
                 color: AppColors.orange,
               ),
             ),
@@ -45,7 +45,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               child: CompactStatTile(
                 icon: Icons.scale,
                 value: '${displayVolume.toStringAsFixed(0)}$unit',
-                label: 'Volume',
+                label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
                 color: AppColors.green,
               ),
             ),
@@ -62,7 +62,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   child: CompactStatTile(
                     icon: Icons.fitness_center,
                     value: '${widget.workout.exercises.length}',
-                    label: 'Exercises',
+                    label: AppLocalizations.of(context).authIntroExercises,
                     color: AppColors.purple,
                   ),
                 ),
@@ -71,7 +71,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   child: CompactStatTile(
                     icon: Icons.repeat,
                     value: '${widget.totalSets ?? 0}',
-                    label: 'Sets',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralSets,
                     color: AppColors.purple,
                   ),
                 ),
@@ -80,7 +80,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   child: CompactStatTile(
                     icon: Icons.tag,
                     value: '${widget.totalReps ?? 0}',
-                    label: 'Reps',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralReps,
                     color: AppColors.orange,
                   ),
                 ),
@@ -101,7 +101,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
             color: textMuted,
           ),
           label: Text(
-            _showAllStats ? 'Hide details' : 'Show all stats',
+            _showAllStats ? AppLocalizations.of(context).workoutSummaryAdvancedHideDetails : AppLocalizations.of(context).workoutCompleteScreenShowAllStats,
             style: TextStyle(fontSize: 12, color: textMuted),
           ),
           style: TextButton.styleFrom(
@@ -167,7 +167,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               ),
               const SizedBox(width: 10),
               Text(
-                'Heart Rate Analysis',
+                AppLocalizations.of(context).workoutCompleteScreenHeartRateAnalysis,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -207,7 +207,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               ),
               icon: Icon(Icons.analytics_outlined, size: 18, color: accentColor),
               label: Text(
-                'View All Metrics',
+                AppLocalizations.of(context).workoutCompleteScreenViewAllMetrics,
                 style: TextStyle(color: accentColor),
               ),
               style: OutlinedButton.styleFrom(
@@ -380,8 +380,8 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                           shaderCallback: (bounds) => const LinearGradient(
                             colors: [Color(0xFFFFD700), AppColors.orange],
                           ).createShader(bounds),
-                          child: const Text(
-                            'Trophies Earned!',
+                          child: Text(
+                            AppLocalizations.of(context).workoutCompleteScreenTrophiesEarned,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -396,7 +396,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                             )
                       else
                         Text(
-                          'Trophies & Milestones',
+                          AppLocalizations.of(context).workoutCompleteScreenTrophiesMilestones,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -491,9 +491,9 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'READY TO LEVEL UP!',
+                      AppLocalizations.of(context).workoutCompleteScreenReadyToLevelUp,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -506,7 +506,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               ),
               const SizedBox(height: 8),
               Text(
-                'You\'ve mastered these exercises. Try a harder variant?',
+                AppLocalizations.of(context).workoutCompleteScreenYouVeMasteredThese,
                 style: TextStyle(
                   fontSize: 13,
                   color: textSecondaryProg,
@@ -636,7 +636,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('Not Yet'),
+                      child: Text(AppLocalizations.of(context).workoutCompleteScreenNotYet),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -644,7 +644,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                     child: ElevatedButton.icon(
                       onPressed: () => _acceptProgression(suggestion),
                       icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                      label: const Text('Level Up'),
+                      label: Text(AppLocalizations.of(context).workoutCompleteScreenLevelUp),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.purple,
                         foregroundColor: Colors.white,
@@ -704,9 +704,9 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'NEW PERSONAL RECORDS!',
+                      AppLocalizations.of(context).workoutCompleteScreenNewPersonalRecords,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

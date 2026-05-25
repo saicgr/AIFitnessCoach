@@ -8,6 +8,7 @@ import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/guest_usage_limits_provider.dart';
 import 'glass_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Types of features that can trigger upgrade prompts
 enum GuestFeatureLimit {
   chat,
@@ -243,7 +244,7 @@ class GuestUpgradeSheet extends ConsumerWidget {
                 child: Column(
                   children: [
                     Text(
-                      'YOUR GUEST USAGE TODAY',
+                      AppLocalizations.of(context).guestUpgradeYourGuestUsageToday,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -306,13 +307,13 @@ class GuestUpgradeSheet extends ConsumerWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.rocket_launch, size: 20),
                       SizedBox(width: 10),
                       Text(
-                        'Sign Up Free',
+                        AppLocalizations.of(context).guestUpgradeSignUpFree,
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
@@ -332,7 +333,7 @@ class GuestUpgradeSheet extends ConsumerWidget {
                   onDismiss?.call();
                 },
                 child: Text(
-                  'Continue as Guest',
+                  AppLocalizations.of(context).guestUpgradeContinueAsGuest,
                   style: TextStyle(
                     fontSize: 15,
                     color: textSecondary,
@@ -460,7 +461,7 @@ class GuestUsageBanner extends ConsumerWidget {
                 Row(
                   children: [
                     Text(
-                      'Guest Mode',
+                      AppLocalizations.of(context).mainShellPartGuestMode,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -487,7 +488,7 @@ class GuestUsageBanner extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Sign up free for unlimited access',
+                  AppLocalizations.of(context).mainShellPartSignUpFreeFor,
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -511,8 +512,8 @@ class GuestUsageBanner extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              'Sign Up',
+            child: Text(
+              AppLocalizations.of(context).mainShellPartSignUp,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,

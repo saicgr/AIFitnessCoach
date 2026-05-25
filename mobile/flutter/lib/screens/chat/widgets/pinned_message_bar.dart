@@ -3,6 +3,7 @@ import 'package:fitwiz/core/constants/app_colors.dart';
 import 'package:fitwiz/core/theme/theme_colors.dart';
 import 'package:fitwiz/data/models/chat_message.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A thin bar displayed at the top of the chat to indicate a pinned message.
 class PinnedMessageBar extends StatelessWidget {
   final ChatMessage message;
@@ -37,7 +38,7 @@ class PinnedMessageBar extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                message.content.split('\n').first,
+                message.content.split(AppLocalizations.of(context).pinnedMessageBarN).first,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -54,7 +55,7 @@ class PinnedMessageBar extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Text(
-                'Unpin',
+                AppLocalizations.of(context).pinnedMessageBarUnpin,
                 style: TextStyle(
                   color: colors.textMuted,
                   fontSize: 12,

@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // =============================================================================
 // Tracking pills visibility state + provider
 // =============================================================================
@@ -159,56 +160,56 @@ class EditTrackingSheet extends ConsumerWidget {
     final pills = [
       _PillOption(
         key: 'goals',
-        title: 'Daily Goals',
-        subtitle: 'Login, weight, meal & workout check',
+        title: AppLocalizations.of(context).nutritionGoalsCardDailyGoals,
+        subtitle: AppLocalizations.of(context).editTrackingLoginWeightMealWorkout,
         icon: Icons.flag_outlined,
         color: const Color(0xFF22C55E),
         enabled: pillsState.showGoals,
       ),
       _PillOption(
         key: 'nutrition',
-        title: 'Nutrition & Hydration',
-        subtitle: 'Calories, P/C/F macros & water intake',
+        title: AppLocalizations.of(context).editTrackingNutritionHydration,
+        subtitle: AppLocalizations.of(context).editTrackingCaloriesPCF,
         icon: Icons.restaurant_outlined,
         color: AppColors.orange,
         enabled: pillsState.showNutrition,
       ),
       _PillOption(
         key: 'burned',
-        title: 'Calories Burned',
-        subtitle: 'From connected health devices',
+        title: AppLocalizations.of(context).metricsDashboardCaloriesBurned,
+        subtitle: AppLocalizations.of(context).editTrackingFromConnectedHealthDevices,
         icon: Icons.local_fire_department,
         color: const Color(0xFFFF6B35),
         enabled: pillsState.showBurned,
       ),
       _PillOption(
         key: 'steps',
-        title: 'Steps',
-        subtitle: 'Daily step count from health devices',
+        title: AppLocalizations.of(context).syncedWorkoutDetailSteps,
+        subtitle: AppLocalizations.of(context).editTrackingDailyStepCountFrom,
         icon: Icons.directions_walk,
         color: const Color(0xFF8B5CF6),
         enabled: pillsState.showSteps,
       ),
       _PillOption(
         key: 'sleep',
-        title: 'Sleep',
-        subtitle: 'Last night\'s sleep duration & quality',
+        title: AppLocalizations.of(context).sleepDetailSleep,
+        subtitle: AppLocalizations.of(context).editTrackingLastNightSSleep,
         icon: Icons.bedtime_outlined,
         color: const Color(0xFF6366F1),
         enabled: pillsState.showSleep,
       ),
       _PillOption(
         key: 'streak',
-        title: 'Workout Streak',
-        subtitle: 'Consecutive workout days',
+        title: AppLocalizations.of(context).editTrackingWorkoutStreak,
+        subtitle: AppLocalizations.of(context).editTrackingConsecutiveWorkoutDays,
         icon: Icons.bolt_outlined,
         color: const Color(0xFFF59E0B),
         enabled: pillsState.showStreak,
       ),
       _PillOption(
         key: 'habits',
-        title: 'Habits',
-        subtitle: 'Daily habit completion progress',
+        title: AppLocalizations.of(context).habitsTileCardHabits,
+        subtitle: AppLocalizations.of(context).editTrackingDailyHabitCompletionProgres,
         icon: Icons.check_circle_outline,
         color: const Color(0xFF10B981),
         enabled: pillsState.showHabits,
@@ -226,7 +227,7 @@ class EditTrackingSheet extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Edit Tracking',
+                  AppLocalizations.of(context).editTrackingEditTracking,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -240,7 +241,7 @@ class EditTrackingSheet extends ConsumerWidget {
                   notifier.resetToDefaults();
                 },
                 child: Text(
-                  'Reset',
+                  AppLocalizations.of(context).trophyFilterReset,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -252,7 +253,7 @@ class EditTrackingSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Choose which stats to show in your tracking bar',
+            AppLocalizations.of(context).editTrackingChooseWhichStatsTo,
             style: TextStyle(fontSize: 13, color: textMuted),
           ),
           const SizedBox(height: 16),
@@ -292,7 +293,7 @@ class EditTrackingSheet extends ConsumerWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'At least one stat must remain visible',
+                  AppLocalizations.of(context).editTrackingAtLeastOneStat,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
               ),

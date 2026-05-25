@@ -19,7 +19,7 @@ extension __NetflixExercisesTabStateExt on _NetflixExercisesTabState {
             children: [
               CircularProgressIndicator(color: isDark ? AppColors.cyan : AppColorsLight.cyan),
               const SizedBox(height: 16),
-              Text('Searching...', style: TextStyle(color: textMuted)),
+              Text(AppLocalizations.of(context).netflixExercisesTabSearching, style: TextStyle(color: textMuted)),
             ],
           ),
         );
@@ -32,7 +32,7 @@ extension __NetflixExercisesTabStateExt on _NetflixExercisesTabState {
             children: [
               Icon(Icons.search_off, color: textMuted, size: 48),
               const SizedBox(height: 16),
-              const Text('No exercises found'),
+              Text(AppLocalizations.of(context).netflixExercisesTabNoExercisesFound),
               TextButton(
                 onPressed: () {
                   setState(() {
@@ -42,7 +42,7 @@ extension __NetflixExercisesTabStateExt on _NetflixExercisesTabState {
                     _searchTimeMs = null;
                   });
                 },
-                child: const Text('Clear search'),
+                child: Text(AppLocalizations.of(context).netflixExercisesTabClearSearch),
               ),
             ],
           ),
@@ -131,14 +131,14 @@ extension __NetflixExercisesTabStateExt on _NetflixExercisesTabState {
             children: [
               Icon(Icons.fitness_center, color: textMuted, size: 48),
               const SizedBox(height: 16),
-              const Text('No exercises found'),
+              Text(AppLocalizations.of(context).netflixExercisesTabNoExercisesFound),
               TextButton(
                 onPressed: () {
                   setState(() {
                     _searchController.clear();
                   });
                 },
-                child: const Text('Clear filters'),
+                child: Text(AppLocalizations.of(context).programsClearFilters),
               ),
             ],
           ),
@@ -193,7 +193,7 @@ extension __NetflixExercisesTabStateExt on _NetflixExercisesTabState {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Back',
+                        AppLocalizations.of(context).commonBack,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,

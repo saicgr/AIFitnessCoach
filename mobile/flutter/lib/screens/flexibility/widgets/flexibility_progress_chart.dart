@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/flexibility_assessment.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Flexibility Trends — chart of flexibility progression over time.
 ///
 /// Kept bespoke (NOT migrated to the shared [TrendChart]) because its
@@ -39,7 +40,7 @@ class _FlexibilityProgressChartState extends State<FlexibilityProgressChart> {
         height: height,
         child: Center(
           child: Text(
-            'No data available',
+            AppLocalizations.of(context).metricsDashboardNoDataAvailable,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
@@ -130,7 +131,7 @@ class _FlexibilityProgressChartState extends State<FlexibilityProgressChart> {
       children: [
         Expanded(
           child: _StatCard(
-            label: 'First',
+            label: AppLocalizations.of(context).flexibilityProgressChartFirst,
             value: _formatMeasurement(
               (trend.firstAssessment['measurement'] as num).toDouble(),
             ),
@@ -141,7 +142,7 @@ class _FlexibilityProgressChartState extends State<FlexibilityProgressChart> {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            label: 'Latest',
+            label: AppLocalizations.of(context).flexibilityProgressChartLatest,
             value: _formatMeasurement(
               (trend.latestAssessment['measurement'] as num).toDouble(),
             ),
@@ -152,7 +153,7 @@ class _FlexibilityProgressChartState extends State<FlexibilityProgressChart> {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            label: 'Change',
+            label: AppLocalizations.of(context).flexibilityProgressChartChange,
             value: '${isPositive ? '+' : ''}${trend.improvementAbsolute.toStringAsFixed(1)}',
             suffix: trend.unit == 'degrees' ? '\u00B0' : ' ${trend.unit}',
             isPositive: isPositive,

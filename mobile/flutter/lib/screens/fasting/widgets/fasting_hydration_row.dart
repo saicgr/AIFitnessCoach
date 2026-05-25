@@ -8,6 +8,7 @@ import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Water quick-log control for the Fasting screen (Section E).
 ///
 /// CRITICAL — single source of truth: this widget logs through the SAME
@@ -111,7 +112,7 @@ class _FastingHydrationRowState extends ConsumerState<FastingHydrationRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hydration',
+                      AppLocalizations.of(context).workoutSummaryAdvancedHydration,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -119,7 +120,7 @@ class _FastingHydrationRowState extends ConsumerState<FastingHydrationRow> {
                       ),
                     ),
                     Text(
-                      'Water keeps you energized while fasting',
+                      AppLocalizations.of(context).fastingHydrationRowWaterKeepsYouEnergized,
                       style: TextStyle(
                         fontSize: 11,
                         color: colors.textMuted,
@@ -175,8 +176,8 @@ class _FastingHydrationRowState extends ConsumerState<FastingHydrationRow> {
             children: [
               Expanded(
                 child: _AddButton(
-                  label: '+250 ml',
-                  caption: 'Glass',
+                  label: AppLocalizations.of(context).fastingHydrationRow250Ml,
+                  caption: AppLocalizations.of(context).quickActionsRowGlass,
                   color: waterBlue,
                   busy: _loggingAmount && _inFlightAmount == 250,
                   enabled: !_loggingAmount,
@@ -186,8 +187,8 @@ class _FastingHydrationRowState extends ConsumerState<FastingHydrationRow> {
               const SizedBox(width: 8),
               Expanded(
                 child: _AddButton(
-                  label: '+500 ml',
-                  caption: 'Bottle',
+                  label: AppLocalizations.of(context).fastingHydrationRow500Ml,
+                  caption: AppLocalizations.of(context).fastingHydrationRowBottle,
                   color: waterBlue,
                   busy: _loggingAmount && _inFlightAmount == 500,
                   enabled: !_loggingAmount,
@@ -205,7 +206,7 @@ class _FastingHydrationRowState extends ConsumerState<FastingHydrationRow> {
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text(
-                    'Synced — visible on Home and Nutrition too.',
+                    AppLocalizations.of(context).fastingHydrationRowSyncedVisibleOnHome,
                     style: TextStyle(
                       fontSize: 10.5,
                       color: colors.textMuted,

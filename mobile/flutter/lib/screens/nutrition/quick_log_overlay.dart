@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Shows a quick log meal overlay that appears immediately from widgets
 /// Has a "Go to App" button to navigate to full nutrition screen
 void showQuickLogOverlay(BuildContext context, WidgetRef ref) {
@@ -54,7 +55,7 @@ class QuickLogOverlay extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Quick Log',
+                    AppLocalizations.of(context).quickLogOverlayQuickLog,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -69,7 +70,7 @@ class QuickLogOverlay extends ConsumerWidget {
                           context.go('/nutrition');
                         },
                         icon: const Icon(Icons.open_in_new, size: 18),
-                        label: const Text('Go to App'),
+                        label: Text(AppLocalizations.of(context).quickLogOverlayGoToApp),
                         style: TextButton.styleFrom(
                           foregroundColor: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                         ),
@@ -96,29 +97,29 @@ class QuickLogOverlay extends ConsumerWidget {
                     children: [
                       _MealTypeChip(
                         emoji: '🌅',
-                        label: 'Breakfast',
+                        label: AppLocalizations.of(context).quickLogOverlayBreakfast,
                         onTap: () => _logMeal(context, ref, 'breakfast'),
                       ),
                       _MealTypeChip(
                         emoji: '☀️',
-                        label: 'Lunch',
+                        label: AppLocalizations.of(context).quickLogOverlayLunch,
                         onTap: () => _logMeal(context, ref, 'lunch'),
                       ),
                       _MealTypeChip(
                         emoji: '🌙',
-                        label: 'Dinner',
+                        label: AppLocalizations.of(context).quickLogOverlayDinner,
                         onTap: () => _logMeal(context, ref, 'dinner'),
                       ),
                       _MealTypeChip(
                         emoji: '🍎',
-                        label: 'Snack',
+                        label: AppLocalizations.of(context).quickLogOverlaySnack,
                         onTap: () => _logMeal(context, ref, 'snack'),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Tap a meal type to log, or go to the app for more options',
+                    AppLocalizations.of(context).quickLogOverlayTapAMealType,
                     style: TextStyle(
                       fontSize: 13,
                       color: isDark ? Colors.white60 : Colors.black54,

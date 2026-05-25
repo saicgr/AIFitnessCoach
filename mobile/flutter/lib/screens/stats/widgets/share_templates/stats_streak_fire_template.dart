@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Stats Streak Fire Template - Bold flame celebration
 /// Radial gradient orange → red → dark with flame-shaped paths
 class StatsStreakFireTemplate extends StatelessWidget {
@@ -104,8 +105,8 @@ class StatsStreakFireTemplate extends StatelessWidget {
                   ),
                 ),
 
-                const Text(
-                  'DAY STREAK',
+                Text(
+                  AppLocalizations.of(context).statsStreakFireDayStreak,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -131,7 +132,7 @@ class StatsStreakFireTemplate extends StatelessWidget {
                     children: [
                       _FireStat(
                         value: '$longestStreak',
-                        label: 'Longest',
+                        label: AppLocalizations.of(context).statsStreakFireLongest,
                         icon: Icons.whatshot,
                       ),
                       Container(
@@ -141,7 +142,7 @@ class StatsStreakFireTemplate extends StatelessWidget {
                       ),
                       _FireStat(
                         value: '$totalWorkouts',
-                        label: 'Total',
+                        label: AppLocalizations.of(context).statsStreakFireTotal,
                         icon: Icons.fitness_center,
                       ),
                     ],

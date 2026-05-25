@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class EquipmentPage extends ConsumerWidget {
   const EquipmentPage({super.key});
 
@@ -17,7 +18,7 @@ class EquipmentPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Equipment'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).trainingSetupCardEquipment),
       body: const SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16),

@@ -8,6 +8,7 @@ import '../../data/providers/unified_notifications_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'notifications_screen_part_empty_notifications_view.dart';
 
 
@@ -224,8 +225,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         break;
       case 'challenge_accepted':
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Your friend is doing your workout!'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).notificationsYourFriendIsDoing),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -292,7 +293,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Notifications',
+        title: AppLocalizations.of(context).permissionsPrimerNotifications,
         actions: [
           PillAppBarAction(
             icon: Icons.more_vert,
@@ -307,7 +308,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       children: [
                         Icon(Icons.done_all, size: 20, color: AppColors.cyan),
                         const SizedBox(width: 12),
-                        const Text('Mark all as read'),
+                        Text(AppLocalizations.of(context).notificationsMarkAllAsRead),
                       ],
                     ),
                   ),
@@ -317,7 +318,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       children: [
                         Icon(Icons.clear_all, size: 20, color: AppColors.error),
                         const SizedBox(width: 12),
-                        const Text('Clear all'),
+                        Text(AppLocalizations.of(context).settingsCardPartClearAll),
                       ],
                     ),
                   ),
@@ -341,11 +342,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             children: [
               Icon(Icons.error_outline, size: 48, color: textMuted),
               const SizedBox(height: 16),
-              Text('Failed to load notifications', style: TextStyle(color: textMuted)),
+              Text(AppLocalizations.of(context).notificationsFailedToLoadNotifications, style: TextStyle(color: textMuted)),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => ref.read(unifiedNotificationsProvider.notifier).refresh(),
-                child: const Text('Retry'),
+                child: Text(AppLocalizations.of(context).buttonRetry),
               ),
             ],
           ),
@@ -412,7 +413,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                             Icon(Icons.filter_list, size: 40, color: textMuted),
                             const SizedBox(height: 8),
                             Text(
-                              'No notifications in this category',
+                              AppLocalizations.of(context).notificationsNoNotificationsInThis,
                               style: TextStyle(color: textMuted, fontSize: 14),
                             ),
                           ],
@@ -465,8 +466,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Failed to accept request. Try again.'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context).notificationsFailedToAcceptRequest),
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );
@@ -481,8 +482,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   .declineFriendRequest(notification.id, notification.requestId!);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Friend request ignored'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context).notificationsFriendRequestIgnored),
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );
@@ -490,8 +491,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Failed to ignore request. Try again.'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context).notificationsFailedToIgnoreRequest),
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );

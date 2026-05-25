@@ -8,6 +8,7 @@ import '../../../data/providers/recipe_suggestion_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/nutrition_preferences_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for editing recipe preferences (body type, cuisines, spice tolerance)
 class RecipePreferencesSheet extends ConsumerStatefulWidget {
   const RecipePreferencesSheet({super.key});
@@ -66,7 +67,7 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
         if (success && mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Preferences saved!')),
+            SnackBar(content: Text(AppLocalizations.of(context).recipePreferencesPreferencesSaved)),
           );
         }
       }
@@ -134,7 +135,7 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                   children: [
                     Expanded(
                       child: Text(
-                        'Recipe Preferences',
+                        AppLocalizations.of(context).recipePreferencesRecipePreferences,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -151,7 +152,7 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Text(
-                              'Save',
+                              AppLocalizations.of(context).buttonSave,
                               style: TextStyle(
                                 color: accent,
                                 fontWeight: FontWeight.w600,
@@ -170,7 +171,7 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                     // Body Type Section
                     _buildSectionHeader('Body Type', textPrimary),
                     Text(
-                      'Your body type helps us suggest recipes optimized for your metabolism',
+                      AppLocalizations.of(context).recipePreferencesYourBodyTypeHelps,
                       style: TextStyle(color: textSecondary, fontSize: 13),
                     ),
                     const SizedBox(height: 12),
@@ -219,7 +220,7 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                     // Favorite Cuisines Section
                     _buildSectionHeader('Favorite Cuisines', textPrimary),
                     Text(
-                      'Select cuisines you enjoy (tap to toggle)',
+                      AppLocalizations.of(context).recipePreferencesSelectCuisinesYouEnjoy,
                       style: TextStyle(color: textSecondary, fontSize: 13),
                     ),
                     const SizedBox(height: 12),

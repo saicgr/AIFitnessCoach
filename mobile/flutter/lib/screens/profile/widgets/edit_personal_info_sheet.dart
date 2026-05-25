@@ -13,6 +13,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'edit_personal_info_sheet_ui.dart';
 
 
@@ -161,7 +162,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
               children: [
                 ListTile(
                   leading: Icon(Icons.camera_alt, color: isDark ? AppColors.accent : AppColorsLight.accent),
-                  title: const Text('Take Photo'),
+                  title: Text(AppLocalizations.of(context).progressTakePhoto),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.camera);
@@ -169,7 +170,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                 ),
                 ListTile(
                   leading: Icon(Icons.photo_library, color: isDark ? AppColors.accent : AppColorsLight.accent),
-                  title: const Text('Choose from Gallery'),
+                  title: Text(AppLocalizations.of(context).progressChooseFromGallery),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.gallery);
@@ -178,7 +179,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                 if (_currentPhotoUrl != null || _selectedPhotoFile != null)
                   ListTile(
                     leading: Icon(Icons.delete, color: AppColors.error),
-                    title: const Text('Remove Photo'),
+                    title: Text(AppLocalizations.of(context).editPersonalInfoRemovePhoto),
                     onTap: () {
                       Navigator.pop(context);
                       _removePhoto();
@@ -402,7 +403,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
           Icon(Icons.person_outline, color: cyan),
           const SizedBox(width: 12),
           Text(
-            'Edit Profile',
+            AppLocalizations.of(context).editPersonalInfoEditProfile,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -416,7 +417,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2, color: cyan),
                   )
-                : Text('Save', style: TextStyle(color: cyan, fontWeight: FontWeight.w600)),
+                : Text(AppLocalizations.of(context).buttonSave, style: TextStyle(color: cyan, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -474,7 +475,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         const SizedBox(height: 6),
         _buildTextField(
           controller: _emailController,
-          hint: 'your@email.com',
+          hint: AppLocalizations.of(context).editPersonalInfoYourEmailCom,
           isDark: isDark,
           elevatedColor: elevatedColor,
           cardBorder: cardBorder,
@@ -503,7 +504,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
               const SizedBox(height: 6),
               _buildTextField(
                 controller: _nameController,
-                hint: 'Your name',
+                hint: AppLocalizations.of(context).quizBodyMetricsYourName,
                 isDark: isDark,
                 elevatedColor: elevatedColor,
                 cardBorder: cardBorder,
@@ -560,7 +561,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
             bottom: MediaQuery.of(context).viewInsets.bottom + 120,
           ),
           decoration: InputDecoration(
-            hintText: 'Tell us about yourself...',
+            hintText: AppLocalizations.of(context).editPersonalInfoTellUsAboutYourself,
             hintStyle: TextStyle(
               color: textMuted.withValues(alpha: 0.5),
             ),
@@ -665,7 +666,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
       children: [
         Expanded(
           child: _buildUnitInput(
-            label: 'HEIGHT',
+            label: AppLocalizations.of(context).quizPersonalizationGateHeight,
             value: _heightCm,
             isMetric: _isHeightMetric,
             onMetricChanged: (isMetric) => setState(() => _isHeightMetric = isMetric),
@@ -683,7 +684,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         const SizedBox(width: 12),
         Expanded(
           child: _buildUnitInput(
-            label: 'WEIGHT',
+            label: AppLocalizations.of(context).insightsProgressTemplateWeight,
             value: _weightKg,
             isMetric: _isWeightMetric,
             onMetricChanged: (isMetric) => setState(() => _isWeightMetric = isMetric),
@@ -710,7 +711,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     Color cyan,
   ) {
     return _buildUnitInput(
-      label: 'TARGET WEIGHT',
+      label: AppLocalizations.of(context).editPersonalInfoTargetWeight,
       value: _targetWeightKg,
       isMetric: _isWeightMetric,
       onMetricChanged: (isMetric) => setState(() => _isWeightMetric = isMetric),

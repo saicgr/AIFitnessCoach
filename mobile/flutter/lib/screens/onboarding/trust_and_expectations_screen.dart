@@ -8,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../core/services/posthog_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Trust & Expectations — Onboarding v5.1
 ///
 /// Replaces TWO standalone screens (honest-expectations + privacy-trust)
@@ -41,7 +42,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
             children: [
               const SizedBox(height: 16),
               Text(
-                'Before we build your plan',
+                AppLocalizations.of(context).trustAndExpectationsBeforeWeBuildYour,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -54,7 +55,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
               const SizedBox(height: 4),
 
               Text(
-                'Two things you should know.',
+                AppLocalizations.of(context).trustAndExpectationsTwoThingsYouShould,
                 style: TextStyle(fontSize: 14, color: textSecondary),
               ).animate().fadeIn(delay: 150.ms),
 
@@ -68,7 +69,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                     _SectionHeader(
                       icon: Icons.handshake_outlined,
                       iconColor: AppColors.orange,
-                      title: 'A bit of honesty',
+                      title: AppLocalizations.of(context).trustAndExpectationsABitOfHonesty,
                       isDark: isDark,
                     ).animate().fadeIn(delay: 250.ms),
                     const SizedBox(height: 8),
@@ -76,7 +77,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                       delay: 350,
                       isDark: isDark,
                       tone: BulletTone.warm,
-                      title: 'Week 1 will feel slow.',
+                      title: AppLocalizations.of(context).trustAndExpectationsWeek1WillFeel,
                       detail:
                           "Most early weight change is water and glycogen — "
                           "real fat loss takes time to compound.",
@@ -86,7 +87,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                       delay: 450,
                       isDark: isDark,
                       tone: BulletTone.warm,
-                      title: 'Real change shows up in week 3.',
+                      title: AppLocalizations.of(context).trustAndExpectationsRealChangeShowsUp,
                       detail:
                           "By day 14-21 your body has adapted. That's when "
                           "most users see visible progress.",
@@ -96,7 +97,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                       delay: 550,
                       isDark: isDark,
                       tone: BulletTone.warm,
-                      title: "We won't sugarcoat it.",
+                      title: AppLocalizations.of(context).trustAndExpectationsWeWonTSugarcoat,
                       detail:
                           "Your coach will adjust the plan when something "
                           "isn't working — no fluff, just direction.",
@@ -116,7 +117,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                       delay: 800,
                       isDark: isDark,
                       tone: BulletTone.cool,
-                      title: 'We never sell your data.',
+                      title: AppLocalizations.of(context).trustAndExpectationsWeNeverSellYour,
                       detail:
                           'Weight, workouts, meals — none of it is sold or '
                           'shared with advertisers.',
@@ -126,15 +127,15 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                       delay: 900,
                       isDark: isDark,
                       tone: BulletTone.cool,
-                      title: 'Encrypted in transit and at rest.',
-                      detail: 'TLS 1.3 + AES-256. Same standards as your bank.',
+                      title: AppLocalizations.of(context).trustAndExpectationsEncryptedInTransitAnd,
+                      detail: AppLocalizations.of(context).trustAndExpectationsTls13Aes,
                     ),
                     const SizedBox(height: 8),
                     _Bullet(
                       delay: 1000,
                       isDark: isDark,
                       tone: BulletTone.cool,
-                      title: 'Delete anything, anytime.',
+                      title: AppLocalizations.of(context).trustAndExpectationsDeleteAnythingAnytime,
                       detail:
                           'One tap in Settings exports or wipes everything. '
                           'GDPR + CCPA compliant.',
@@ -144,7 +145,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                       onTap: () => _open(AppLinks.privacyPolicy),
                       child: Center(
                         child: Text(
-                          'Read our full privacy policy',
+                          AppLocalizations.of(context).trustAndExpectationsReadOurFullPrivacy,
                           style: TextStyle(
                             fontSize: 12,
                             color: textSecondary,
@@ -184,9 +185,9 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                   child: Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Text(
-                          'Sounds good',
+                          AppLocalizations.of(context).trustAndExpectationsSoundsGood,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,

@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class InlineEditPillExpanded extends StatelessWidget {
   final double weight;
   final int reps;
@@ -157,7 +158,7 @@ class _SaveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Save set',
+      label: AppLocalizations.of(context).inlineEditPillSaveSet,
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,

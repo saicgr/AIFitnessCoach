@@ -10,6 +10,7 @@ import '../../../data/services/health_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet showing today's completed workouts and their calorie contributions
 class CaloriesBurnedSheet extends ConsumerStatefulWidget {
   final double totalBurned;
@@ -181,7 +182,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
               Icon(Icons.local_fire_department, color: green, size: 22),
               const SizedBox(width: 8),
               Text(
-                "Today's Activity",
+                AppLocalizations.of(context).caloriesBurnedTodaySActivity,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -209,7 +210,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Calories burned today',
+            AppLocalizations.of(context).caloriesBurnedCaloriesBurnedToday,
             style: TextStyle(fontSize: 13, color: textMuted),
           ),
           const SizedBox(height: 12),
@@ -244,24 +245,24 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
               runSpacing: 8,
               children: [
                 _BreakdownChip(
-                  label: 'In-app',
+                  label: AppLocalizations.of(context).caloriesBurnedInApp,
                   value: inApp.round(),
                   color: AppColors.cyan,
                 ),
                 _BreakdownChip(
-                  label: 'Synced',
+                  label: AppLocalizations.of(context).caloriesBurnedSynced,
                   value: synced.round(),
                   color: AppColors.green,
                 ),
                 if (passive >= 1)
                   _BreakdownChip(
-                    label: 'Passive',
+                    label: AppLocalizations.of(context).caloriesBurnedPassive,
                     value: passive.round(),
                     color: AppColors.purple,
                   ),
                 if (saunaTotal > 0)
                   _BreakdownChip(
-                    label: 'Sauna',
+                    label: AppLocalizations.of(context).workoutCompleteSauna,
                     value: saunaTotal.round(),
                     color: const Color(0xFFE65100),
                   ),
@@ -303,7 +304,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
             )
           else if (_healthWorkouts.isNotEmpty) ...[
             _SectionLabel(
-              label: 'Synced from Health',
+              label: AppLocalizations.of(context).workoutDayDetailSyncedFromHealth,
               color: AppColors.green,
             ),
             const SizedBox(height: 8),
@@ -322,7 +323,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
           // Sauna section
           if (!_loadingSauna && _saunaSummary != null && _saunaSummary!.entries.isNotEmpty) ...[
             _SectionLabel(
-              label: 'Sauna',
+              label: AppLocalizations.of(context).workoutCompleteSauna,
               color: const Color(0xFFE65100),
             ),
             const SizedBox(height: 8),
@@ -357,7 +358,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   Icon(Icons.fitness_center, size: 36, color: textMuted),
                   const SizedBox(height: 8),
                   Text(
-                    'No activity recorded today',
+                    AppLocalizations.of(context).caloriesBurnedNoActivityRecordedToday,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -366,7 +367,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Complete a workout or sync from your health app',
+                    AppLocalizations.of(context).caloriesBurnedCompleteAWorkoutOr,
                     style: TextStyle(fontSize: 12, color: textMuted),
                   ),
                 ],
@@ -381,7 +382,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   Icon(Icons.directions_walk, size: 32, color: textMuted),
                   const SizedBox(height: 8),
                   Text(
-                    'All from background activity',
+                    AppLocalizations.of(context).caloriesBurnedAllFromBackgroundActivity,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -390,7 +391,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Steps, heart rate, and movement throughout the day',
+                    AppLocalizations.of(context).caloriesBurnedStepsHeartRateAnd,
                     style: TextStyle(fontSize: 12, color: textMuted),
                     textAlign: TextAlign.center,
                   ),

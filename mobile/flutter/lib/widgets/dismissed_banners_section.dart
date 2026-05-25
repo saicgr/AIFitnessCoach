@@ -5,6 +5,7 @@ import '../core/constants/app_colors.dart';
 import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Compact section showing dismissed home banners with a restore button.
 ///
 /// Used in Profile and XP Goals screens so users can re-enable
@@ -35,7 +36,7 @@ class DismissedBannersSection extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'DISMISSED BANNERS',
+            AppLocalizations.of(context).dismissedBannersDismissedBanners,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -58,7 +59,7 @@ class DismissedBannersSection extends ConsumerWidget {
               if (xpStripDismissed)
                 _DismissedBannerItem(
                   icon: Icons.bolt,
-                  label: 'Daily XP Goals',
+                  label: AppLocalizations.of(context).dismissedBannersDailyXpGoals,
                   isDark: isDark,
                   onRestore: () {
                     HapticService.light();
@@ -71,7 +72,7 @@ class DismissedBannersSection extends ConsumerWidget {
                 ),
               const SizedBox(height: 8),
               Text(
-                'Dismissed banners reset automatically at midnight.',
+                AppLocalizations.of(context).dismissedBannersDismissedBannersResetAutoma,
                 style: TextStyle(
                   fontSize: 12,
                   color: textSecondary,
@@ -130,8 +131,8 @@ class _DismissedBannerItem extends StatelessWidget {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text(
-            'Restore',
+          child: Text(
+            AppLocalizations.of(context).paywallPricingRestore,
             style: TextStyle(fontSize: 13),
           ),
         ),

@@ -9,6 +9,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/suggest_feature_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Feature voting screen (Robinhood-style with tabs and countdown timers)
 class FeatureVotingScreen extends ConsumerStatefulWidget {
   const FeatureVotingScreen({super.key});
@@ -60,10 +61,10 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
             controller: _tabController,
             showIcons: false,
             tabs: [
-              SegmentedTabItem(label: 'Voting'),
-              SegmentedTabItem(label: 'Planned'),
-              SegmentedTabItem(label: 'In Progress'),
-              SegmentedTabItem(label: 'Released'),
+              SegmentedTabItem(label: AppLocalizations.of(context).featureVotingVoting),
+              SegmentedTabItem(label: AppLocalizations.of(context).featureVotingPlanned),
+              SegmentedTabItem(label: AppLocalizations.of(context).featureVotingInProgress),
+              SegmentedTabItem(label: AppLocalizations.of(context).featureVotingReleased),
             ],
           ),
           Expanded(
@@ -79,7 +80,7 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.read(featuresProvider.notifier).refresh(),
-                child: const Text('Retry'),
+                child: Text(AppLocalizations.of(context).buttonRetry),
               ),
             ],
           ),
@@ -111,7 +112,7 @@ class _FeatureVotingScreenState extends ConsumerState<FeatureVotingScreen>
             Icon(Icons.inbox, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              'No features yet',
+              AppLocalizations.of(context).featureVotingNoFeaturesYet,
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ],

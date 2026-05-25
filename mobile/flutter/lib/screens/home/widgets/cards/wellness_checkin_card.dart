@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/theme_colors.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Data class holding all wellness check-in values.
 class WellnessCheckinData {
   /// Sleep quality on Hooper scale (1-7).
@@ -149,7 +150,7 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Checked in \u2713',
+                AppLocalizations.of(context).wellnessCheckinCardCheckedInU2713,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -209,14 +210,14 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
   Widget _buildHeader(ThemeColors colors) {
     return Row(
       children: [
-        const Text(
-          '\u{1F9D8}', // yoga emoji
+        Text(
+          AppLocalizations.of(context).wellnessCheckinCardU1f9d8, // yoga emoji
           style: TextStyle(fontSize: 20),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            'Daily Wellness Check-in',
+            AppLocalizations.of(context).wellnessCheckinCardDailyWellnessCheckIn,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -254,7 +255,7 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
           children: [
             _buildSliderRow(
               colors: colors,
-              label: 'Sleep Quality',
+              label: AppLocalizations.of(context).wellnessCheckinCardSleepQuality,
               icon: Icons.bedtime_outlined,
               value: _sleepQuality,
               onChanged: (v) => setState(() => _sleepQuality = v),
@@ -262,7 +263,7 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
             const SizedBox(height: 8),
             _buildSliderRow(
               colors: colors,
-              label: 'Energy Level',
+              label: AppLocalizations.of(context).wellnessCheckinCardEnergyLevel,
               icon: Icons.bolt_outlined,
               value: _energyLevel,
               onChanged: (v) => setState(() => _energyLevel = v),
@@ -275,7 +276,7 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
           children: [
             _buildSliderRow(
               colors: colors,
-              label: 'Muscle Soreness',
+              label: AppLocalizations.of(context).wellnessCheckinCardMuscleSoreness,
               icon: Icons.fitness_center,
               value: _muscleSoreness,
               onChanged: (v) => setState(() => _muscleSoreness = v),
@@ -283,7 +284,7 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
             const SizedBox(height: 8),
             _buildSliderRow(
               colors: colors,
-              label: 'Stress Level',
+              label: AppLocalizations.of(context).wellnessCheckinCardStressLevel,
               icon: Icons.psychology_outlined,
               value: _stressLevel,
               onChanged: (v) => setState(() => _stressLevel = v),
@@ -296,7 +297,7 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
           children: [
             // Mood emoji picker
             Text(
-              'How\'s your mood?',
+              AppLocalizations.of(context).wellnessCheckinCardHowSYourMood,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -363,7 +364,7 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
                 color: colors.textPrimary,
               ),
               decoration: InputDecoration(
-                hintText: 'Add a note (optional)',
+                hintText: AppLocalizations.of(context).wellnessCheckinCardAddANoteOptional,
                 hintStyle: TextStyle(
                   fontSize: 14,
                   color: colors.textMuted,
@@ -485,7 +486,7 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
               child: TextButton(
                 onPressed: () => setState(() => _currentStep--),
                 child: Text(
-                  'Back',
+                  AppLocalizations.of(context).commonBack,
                   style: TextStyle(color: colors.textSecondary),
                 ),
               ),

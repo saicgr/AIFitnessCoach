@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Instagram-Story template: streak + consistency.
 /// Big {PERIOD} / STREAK title, oversize streak number, flame flourish,
 /// and completion/total badges. Reads maxStreak from the period's totals —
@@ -71,8 +72,8 @@ class InsightsStreakTemplate extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Text(
-                  'STREAK',
+                Text(
+                  AppLocalizations.of(context).weeklyRecapTemplateStreak,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 26,
@@ -125,7 +126,7 @@ class InsightsStreakTemplate extends StatelessWidget {
                     Expanded(
                       child: _BadgePill(
                         icon: Icons.check_circle_rounded,
-                        label: 'WORKOUTS',
+                        label: AppLocalizations.of(context).weeklyRecapTemplateWorkouts,
                         value: workoutsScheduled > 0
                             ? '$workoutsCompleted / $workoutsScheduled'
                             : '$workoutsCompleted',

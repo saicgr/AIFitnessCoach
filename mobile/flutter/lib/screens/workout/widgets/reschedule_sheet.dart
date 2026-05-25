@@ -8,6 +8,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the reschedule sheet for a missed workout
 ///
 /// Returns true if successfully rescheduled, false/null otherwise
@@ -79,7 +80,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Reschedule Workout',
+                            AppLocalizations.of(context).rescheduleRescheduleWorkout,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -121,7 +122,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
                 child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Text(
-                    'Failed to load suggestions',
+                    AppLocalizations.of(context).rescheduleFailedToLoadSuggestions,
                     style: TextStyle(color: textSecondary),
                   ),
                 ),
@@ -418,7 +419,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pick a different day',
+                      AppLocalizations.of(context).reschedulePickADifferentDay,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -493,7 +494,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_swapWorkoutName != null
-                  ? 'Workout swapped successfully'
+                  ? AppLocalizations.of(context).rescheduleWorkoutSwappedSuccessfully
                   : 'Workout rescheduled'),
               backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
@@ -501,8 +502,8 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to reschedule workout'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).workoutActionsFailedToRescheduleWorkout),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
             ),

@@ -4,6 +4,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import '../data/services/sync_engine.dart';
 import '../data/services/connectivity_service.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// ListTile-style widget for display in Settings showing sync status.
 ///
 /// Shows: sync icon, last synced time, pending count badge.
@@ -108,7 +109,7 @@ class SyncStatusWidget extends ConsumerWidget {
             ? null
             : () => ref.read(syncEngineProvider.notifier).syncNow(),
         child: Text(
-          syncState.isSyncing ? 'Syncing...' : 'Sync Now',
+          syncState.isSyncing ? AppLocalizations.of(context).syncStatusSyncing : AppLocalizations.of(context).syncStatusSyncNow,
         ),
       ),
     );

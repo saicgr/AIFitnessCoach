@@ -132,7 +132,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                   if (eatingHours <= 4) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Tip: Consider larger, nutrient-dense meals',
+                      AppLocalizations.of(context).quizFastingUiTipConsiderLargerNutrient,
                       style: TextStyle(
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
@@ -223,7 +223,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Your sleep schedule',
+                            AppLocalizations.of(context).quizFastingUiYourSleepSchedule,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -231,7 +231,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                             ),
                           ),
                           Text(
-                            'Helps optimize your fasting window',
+                            AppLocalizations.of(context).quizFastingUiHelpsOptimizeYourFasting,
                             style: TextStyle(
                               fontSize: 12,
                               color: t.textSecondary,
@@ -249,7 +249,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                   children: [
                     Expanded(
                       child: _buildTimePicker(
-                        label: 'Wake up',
+                        label: AppLocalizations.of(context).quizFastingUiWakeUp,
                         icon: Icons.wb_sunny_outlined,
                         time: wakeTime,
                         onTap: () async {
@@ -277,7 +277,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildTimePicker(
-                        label: 'Bedtime',
+                        label: AppLocalizations.of(context).quizFastingUiBedtime,
                         icon: Icons.nightlight_outlined,
                         time: sleepTime,
                         onTap: () async {

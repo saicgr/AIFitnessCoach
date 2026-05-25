@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Beast Mode unlock celebration dialog.
 ///
 /// Shown when user taps the version label 7 times.
@@ -159,7 +160,7 @@ class _BeastModeUnlockDialogState extends State<BeastModeUnlockDialog>
                       ],
                     ).createShader(bounds),
                     child: Text(
-                      'BEAST MODE',
+                      AppLocalizations.of(context).beastModeUnlockBeastMode,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
@@ -179,7 +180,7 @@ class _BeastModeUnlockDialogState extends State<BeastModeUnlockDialog>
 
                   // "UNLOCKED"
                   Text(
-                    'UNLOCKED',
+                    AppLocalizations.of(context).beastModeUnlockUnlocked,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -194,7 +195,7 @@ class _BeastModeUnlockDialogState extends State<BeastModeUnlockDialog>
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
-                      "You've unlocked the power user toolkit. See the algorithms behind your workouts.",
+                      AppLocalizations.of(context).beastModeUnlockYouVeUnlockedThe,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -224,8 +225,8 @@ class _BeastModeUnlockDialogState extends State<BeastModeUnlockDialog>
                         elevation: 4,
                         shadowColor: orange.withValues(alpha: 0.5),
                       ),
-                      child: const Text(
-                        "Let's Go",
+                      child: Text(
+                        AppLocalizations.of(context).workoutDetailScreenLetSGo,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

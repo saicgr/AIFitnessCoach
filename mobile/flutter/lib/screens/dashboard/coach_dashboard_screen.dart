@@ -10,6 +10,7 @@ import '../../widgets/app_loading.dart';
 import '../../widgets/gradient_circular_progress_indicator.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Coach Dashboard — a "glance" view of the athlete's week.
 ///
 /// Displays workout compliance, nutrition adherence, readiness sparkline,
@@ -67,7 +68,7 @@ class _CoachDashboardScreenState extends ConsumerState<CoachDashboardScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: PillAppBar(title: 'This Week'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).workoutCompleteThisWeek),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _quickFuture,
         builder: (context, snapshot) {
@@ -146,7 +147,7 @@ class _CoachDashboardScreenState extends ConsumerState<CoachDashboardScreen> {
             Icon(Icons.error_outline, size: 64, color: colorScheme.error),
             const SizedBox(height: 16),
             Text(
-              'Failed to load dashboard',
+              AppLocalizations.of(context).coachDashboardFailedToLoadDashboard,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -163,7 +164,7 @@ class _CoachDashboardScreenState extends ConsumerState<CoachDashboardScreen> {
             FilledButton.icon(
               onPressed: _retry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
             ),
           ],
         ),
@@ -196,7 +197,7 @@ class _ComplianceRow extends StatelessWidget {
       children: [
         Expanded(
           child: _RingCard(
-            label: 'Workouts',
+            label: AppLocalizations.of(context).workoutListTitle,
             centerText: '$completed/$target',
             pct: workoutPct,
             colors: colors,
@@ -205,7 +206,7 @@ class _ComplianceRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _RingCard(
-            label: 'Nutrition',
+            label: AppLocalizations.of(context).settingsNutritionSection,
             centerText: '${nutritionPct.round()}%',
             pct: nutritionPct,
             colors: colors,
@@ -343,7 +344,7 @@ class _ReadinessSparkline extends StatelessWidget {
                   size: 20, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                'Readiness',
+                AppLocalizations.of(context).strengthOverviewCardReadiness,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -481,7 +482,7 @@ class _MeasurementCards extends StatelessWidget {
       children: [
         Expanded(
           child: _ChangeCard(
-            label: 'Weight',
+            label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
             value: weightChange,
             unit: 'kg',
             colors: colors,
@@ -490,7 +491,7 @@ class _MeasurementCards extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _ChangeCard(
-            label: 'Body Fat',
+            label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
             value: bfChange,
             unit: '%',
             colors: colors,
@@ -651,7 +652,7 @@ class _ActiveGoals extends StatelessWidget {
                   size: 20, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                'Active Goals',
+                AppLocalizations.of(context).personalGoalsActiveGoals,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

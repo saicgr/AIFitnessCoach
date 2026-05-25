@@ -10,6 +10,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 import 'body_score_overlay.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Share Strength bottom sheet with body diagram templates.
 ///
 /// Shows a carousel of 3 shareable templates and options to:
@@ -195,8 +196,8 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
                 ),
-                const Text(
-                  'Share Strength',
+                Text(
+                  AppLocalizations.of(context).shareStrengthShareStrength,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 48),
@@ -219,7 +220,7 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Show Watermark',
+                  AppLocalizations.of(context).wrappedShareShowWatermark,
                   style: TextStyle(
                     fontSize: 14,
                     color: _showWatermark ? null : Colors.grey,
@@ -304,7 +305,7 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
                       child: _buildShareButton(
                         onPressed: _shareToInstagram,
                         icon: Icons.camera_alt_rounded,
-                        label: 'Instagram',
+                        label: AppLocalizations.of(context).wrappedShareInstagram,
                         isPrimary: true,
                         isLoading: _isSharing,
                       ),
@@ -314,7 +315,7 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
                       child: _buildShareButton(
                         onPressed: _shareGeneric,
                         icon: Icons.share_rounded,
-                        label: 'Share',
+                        label: AppLocalizations.of(context).commonShare,
                         isPrimary: false,
                         isLoading: _isSharing,
                       ),
@@ -327,7 +328,7 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
                   child: _buildShareButton(
                     onPressed: _saveToGallery,
                     icon: Icons.save_alt_rounded,
-                    label: 'Save to Gallery',
+                    label: AppLocalizations.of(context).shareStrengthSaveToGallery,
                     isPrimary: false,
                     isLoading: _isSaving,
                   ),
@@ -500,7 +501,7 @@ class _BodyScoreTemplate extends StatelessWidget {
           children: [
             // Header
             Text(
-              'STRENGTH SCORE',
+              AppLocalizations.of(context).shareStrengthStrengthScore,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -606,7 +607,7 @@ class _MuscleSummaryTemplate extends StatelessWidget {
           children: [
             // Header
             Text(
-              'MUSCLE BREAKDOWN',
+              AppLocalizations.of(context).shareStrengthMuscleBreakdown,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -687,7 +688,7 @@ class _MuscleSummaryTemplate extends StatelessWidget {
 
             // Top 5 muscles list
             Text(
-              'TOP MUSCLES',
+              AppLocalizations.of(context).shareStrengthTopMuscles,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -814,8 +815,8 @@ class _SplitViewTemplate extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'STRENGTH SCORE',
+                    Text(
+                      AppLocalizations.of(context).shareStrengthStrengthScore,
                       style: TextStyle(
                         fontSize: 11,
                         letterSpacing: 1.5,
@@ -859,7 +860,7 @@ class _SplitViewTemplate extends StatelessWidget {
                       children: [
                         const SizedBox(height: 16),
                         Text(
-                          'TOP SCORES',
+                          AppLocalizations.of(context).shareStrengthTopScores,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -873,7 +874,7 @@ class _SplitViewTemplate extends StatelessWidget {
                         // Weakest
                         if (scores.weakestMuscles.isNotEmpty) ...[
                           Text(
-                            'FOCUS AREAS',
+                            AppLocalizations.of(context).shareStrengthFocusAreas,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,

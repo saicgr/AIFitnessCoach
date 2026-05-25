@@ -27,6 +27,7 @@ import 'share_templates/stats_elite_template.dart';
 import '../../../data/providers/cosmetics_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Share Stats Bottom Sheet
 ///
 /// Shows a carousel of 6 shareable stats templates and options to:
@@ -422,8 +423,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close_rounded),
                   ),
-                  const Text(
-                    'Share Your Stats',
+                  Text(
+                    AppLocalizations.of(context).shareStatsShareYourStats,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -449,7 +450,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Show Watermark',
+                    AppLocalizations.of(context).wrappedShareShowWatermark,
                     style: TextStyle(
                       fontSize: 14,
                       color: _showWatermark ? null : Colors.grey,
@@ -485,7 +486,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          'Log a workout to unlock share templates.',
+                          AppLocalizations.of(context).shareStatsLogAWorkoutTo,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
@@ -566,7 +567,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                         child: _buildShareButton(
                           onPressed: _shareToInstagram,
                           icon: Icons.camera_alt_rounded,
-                          label: 'Instagram',
+                          label: AppLocalizations.of(context).wrappedShareInstagram,
                           isPrimary: true,
                           isLoading: _isSharing,
                         ),
@@ -576,7 +577,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                         child: _buildShareButton(
                           onPressed: _shareGeneric,
                           icon: Icons.share_rounded,
-                          label: 'Share',
+                          label: AppLocalizations.of(context).commonShare,
                           isPrimary: false,
                           isLoading: _isSharing,
                         ),
@@ -604,7 +605,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                         child: _buildShareButton(
                           onPressed: _saveToGallery,
                           icon: Icons.save_alt_rounded,
-                          label: 'Save Only',
+                          label: AppLocalizations.of(context).shareWorkoutSaveOnly,
                           isPrimary: false,
                           isLoading: _isSaving,
                         ),
@@ -860,8 +861,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
               child: const Icon(Icons.lock, color: Color(0xFFFFD700), size: 38),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'ELITE TEMPLATE',
+            Text(
+              AppLocalizations.of(context).shareStatsEliteTemplate,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,

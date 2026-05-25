@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/muscle_analytics.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Chart showing push/pull and upper/lower balance ratios
 class MuscleBalanceChart extends StatelessWidget {
   final MuscleBalanceData balance;
@@ -16,9 +17,9 @@ class MuscleBalanceChart extends StatelessWidget {
       children: [
         // Push/Pull Balance
         _BalanceBar(
-          label: 'Push / Pull',
-          leftLabel: 'Push',
-          rightLabel: 'Pull',
+          label: AppLocalizations.of(context).muscleBalanceChartPushPull,
+          leftLabel: AppLocalizations.of(context).muscleBalanceChartPush,
+          rightLabel: AppLocalizations.of(context).muscleBalanceChartPull,
           leftValue: balance.pushVolumeKg ?? 0,
           rightValue: balance.pullVolumeKg ?? 0,
           isBalanced: balance.isPushPullBalanced,
@@ -27,9 +28,9 @@ class MuscleBalanceChart extends StatelessWidget {
 
         // Upper/Lower Balance
         _BalanceBar(
-          label: 'Upper / Lower',
-          leftLabel: 'Upper',
-          rightLabel: 'Lower',
+          label: AppLocalizations.of(context).quizTrainingStyleUpperLower,
+          leftLabel: AppLocalizations.of(context).muscleBalanceChartUpper,
+          rightLabel: AppLocalizations.of(context).muscleBalanceChartLower,
           leftValue: balance.upperVolumeKg ?? 0,
           rightValue: balance.lowerVolumeKg ?? 0,
           isBalanced: balance.isUpperLowerBalanced,
@@ -97,7 +98,7 @@ class _BalanceBar extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        isBalanced ? 'Balanced' : 'Imbalanced',
+                        isBalanced ? AppLocalizations.of(context).quizProgressionConstraintsBalanced : AppLocalizations.of(context).muscleBalanceChartImbalanced,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: isBalanced ? Colors.green : Colors.orange,
                           fontWeight: FontWeight.bold,

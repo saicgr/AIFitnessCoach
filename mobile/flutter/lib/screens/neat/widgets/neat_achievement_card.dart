@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Achievement tier levels with their properties
 enum AchievementTier {
   bronze('Bronze', 0.2),
@@ -613,8 +614,8 @@ class _NewBadgeState extends State<_NewBadge>
                 ),
               ],
             ),
-            child: const Text(
-              'NEW!',
+            child: Text(
+              AppLocalizations.of(context).neatAchievementCardNew,
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.bold,

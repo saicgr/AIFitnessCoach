@@ -25,7 +25,7 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
             const CircularProgressIndicator(color: AppColors.orange),
             const SizedBox(height: 20),
             Text(
-              'Preparing warmup...',
+              AppLocalizations.of(context).workoutUiBuildersPreparingWarmup,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -34,14 +34,14 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
             ),
             const SizedBox(height: 8),
             Text(
-              'Loading your personalized warmup exercises',
+              AppLocalizations.of(context).workoutUiBuildersLoadingYourPersonalizedWarm,
               style: TextStyle(fontSize: 13, color: textMuted),
             ),
             const SizedBox(height: 24),
             TextButton(
               onPressed: handleSkipWarmup,
               child: Text(
-                'Skip warmup',
+                AppLocalizations.of(context).workoutUiBuildersSkipWarmup,
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
@@ -441,7 +441,7 @@ class _FloatingRestPeekPill extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Tap to return',
+                  AppLocalizations.of(context).workoutUiBuildersTapToReturn,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

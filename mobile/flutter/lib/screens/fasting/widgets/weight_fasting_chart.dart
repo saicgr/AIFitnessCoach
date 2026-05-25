@@ -4,6 +4,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting_impact.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Weight Trends — weight on fasting vs non-fasting days.
 ///
 /// This chart is kept bespoke (NOT migrated to the shared [TrendChart])
@@ -57,7 +58,7 @@ class _WeightFastingChartState extends ConsumerState<WeightFastingChart> {
               Icon(Icons.show_chart, color: colors.textMuted, size: 48),
               const SizedBox(height: 8),
               Text(
-                'No weight data available',
+                AppLocalizations.of(context).weightFastingChartNoWeightDataAvailable,
                 style: TextStyle(color: colors.textMuted),
               ),
             ],
@@ -90,7 +91,7 @@ class _WeightFastingChartState extends ConsumerState<WeightFastingChart> {
               Icon(Icons.show_chart, color: colors.accent, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Weight Trends',
+                AppLocalizations.of(context).weightTrendCardWeightTrends,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

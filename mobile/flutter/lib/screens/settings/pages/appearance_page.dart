@@ -6,6 +6,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Sub-page for Appearance: theme, haptics, app mode, accessibility.
 class AppearancePage extends ConsumerWidget {
   const AppearancePage({super.key});
@@ -24,7 +25,7 @@ class AppearancePage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Appearance'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).settingsAppearance),
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -61,7 +62,7 @@ class AppearancePage extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Serious Mode',
+                            AppLocalizations.of(context).appearanceSeriousMode,
                             style: TextStyle(
                               color: textPrimary,
                               fontSize: 15,

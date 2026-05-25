@@ -8,6 +8,7 @@ import 'progress_share_data.dart';
 import 'progress_share_templates.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Gallery-style screen that shows every viral template at once so the
 /// user can pick visually. Per user feedback (feedback_share_gallery_viral_templates):
 /// all templates visible together, no blind-swipe carousel.
@@ -54,7 +55,7 @@ class _ProgressShareGalleryScreenState extends State<ProgressShareGalleryScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: PillAppBar(
-        title: 'Share Your Transformation',
+        title: AppLocalizations.of(context).progressShareGalleryShareYourTransformation,
         onBack: () => Navigator.of(context).pop(),
         actions: [
           PillAppBarAction(
@@ -73,7 +74,7 @@ class _ProgressShareGalleryScreenState extends State<ProgressShareGalleryScreen>
               fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface,
             )),
             const Spacer(),
-            Text('tap to open', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
+            Text(AppLocalizations.of(context).progressShareGalleryTapToOpen, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
           ]),
         ),
         Expanded(

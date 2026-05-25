@@ -5,6 +5,7 @@ import '../../../data/models/coach_persona.dart';
 import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Data class for quit workout result
 class QuitWorkoutResult {
   final String reason;
@@ -89,7 +90,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'End Workout Early?',
+                            AppLocalizations.of(context).quitWorkoutEndWorkoutEarly,
                             style: TextStyle(
                               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                               fontSize: 20,
@@ -136,7 +137,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
 
                 // Question
                 Text(
-                  'Why are you ending early?',
+                  AppLocalizations.of(context).quitWorkoutWhyAreYouEnding,
                   style: TextStyle(
                     color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                     fontSize: 16,
@@ -153,7 +154,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                   children: [
                     _ReasonChip(
                       reason: 'too_tired',
-                      label: 'Too tired',
+                      label: AppLocalizations.of(context).quitWorkoutTooTired,
                       icon: Icons.battery_1_bar,
                       isSelected: selectedReason == 'too_tired',
                       isDark: isDark,
@@ -161,7 +162,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                     ),
                     _ReasonChip(
                       reason: 'out_of_time',
-                      label: 'Out of time',
+                      label: AppLocalizations.of(context).quitWorkoutOutOfTime,
                       icon: Icons.timer_off,
                       isSelected: selectedReason == 'out_of_time',
                       isDark: isDark,
@@ -169,7 +170,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                     ),
                     _ReasonChip(
                       reason: 'not_feeling_well',
-                      label: 'Not feeling well',
+                      label: AppLocalizations.of(context).quitWorkoutNotFeelingWell,
                       icon: Icons.sick,
                       isSelected: selectedReason == 'not_feeling_well',
                       isDark: isDark,
@@ -177,7 +178,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                     ),
                     _ReasonChip(
                       reason: 'equipment_unavailable',
-                      label: 'Equipment busy',
+                      label: AppLocalizations.of(context).quitWorkoutEquipmentBusy,
                       icon: Icons.fitness_center,
                       isSelected: selectedReason == 'equipment_unavailable',
                       isDark: isDark,
@@ -185,7 +186,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                     ),
                     _ReasonChip(
                       reason: 'injury',
-                      label: 'Pain/Injury',
+                      label: AppLocalizations.of(context).quitWorkoutPainInjury,
                       icon: Icons.healing,
                       isSelected: selectedReason == 'injury',
                       isDark: isDark,
@@ -193,7 +194,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                     ),
                     _ReasonChip(
                       reason: 'other',
-                      label: 'Other reason',
+                      label: AppLocalizations.of(context).quitWorkoutOtherReason,
                       icon: Icons.more_horiz,
                       isSelected: selectedReason == 'other',
                       isDark: isDark,
@@ -213,7 +214,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                   ),
                   maxLines: 2,
                   decoration: InputDecoration(
-                    hintText: 'Add a note (optional)...',
+                    hintText: AppLocalizations.of(context).quitWorkoutAddANoteOptional,
                     hintStyle: TextStyle(
                       color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withValues(alpha: 0.6),
                     ),
@@ -243,8 +244,8 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Keep Going',
+                        child: Text(
+                          AppLocalizations.of(context).quitWorkoutKeepGoing,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -274,8 +275,8 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'End Workout',
+                        child: Text(
+                          AppLocalizations.of(context).workoutMiniPlayerEndWorkout2,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),

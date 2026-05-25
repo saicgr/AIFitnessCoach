@@ -64,7 +64,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
               ),
               child: Center(
                 child: Text(
-                  'Sample Workout',
+                  AppLocalizations.of(context).guestSampleWorkoutSampleWorkout,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -132,7 +132,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                 Row(
                   children: [
                     Text(
-                      isPersonalized ? 'Your Personalized Workout' : 'Sample Workout Preview',
+                      isPersonalized ? AppLocalizations.of(context).demoWorkoutScreenYourPersonalizedWorkout : AppLocalizations.of(context).demoWorkoutScreenSampleWorkoutPreview,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -147,8 +147,8 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                           color: AppColors.purple.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
-                          'AI',
+                        child: Text(
+                          AppLocalizations.of(context).demoWorkoutScreenAi,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -162,7 +162,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                 const SizedBox(height: 4),
                 Text(
                   isPersonalized
-                      ? 'Based on your goals, equipment & fitness level'
+                      ? AppLocalizations.of(context).demoWorkoutScreenBasedOnYourGoals
                       : 'See what your personalized workouts could look like',
                   style: TextStyle(
                     fontSize: 13,
@@ -202,13 +202,13 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
             runSpacing: 8,
             children: [
               _buildBadge(
-                label: 'Type',
+                label: AppLocalizations.of(context).workoutDetailType,
                 value: _workoutType.toUpperCase(),
                 color: typeColor,
                 backgroundColor: typeColor.withOpacity(0.2),
               ),
               _buildBadge(
-                label: 'Difficulty',
+                label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
                 value: DifficultyUtils.getDisplayName(_difficulty),
                 color: DifficultyUtils.getColor(_difficulty),
                 backgroundColor: DifficultyUtils.getColor(_difficulty)
@@ -307,7 +307,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'EQUIPMENT NEEDED',
+            AppLocalizations.of(context).exerciseDetailEquipmentNeeded,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -382,8 +382,8 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                 children: [
                   const Icon(Icons.play_arrow_rounded, size: 28),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Start Workout',
+                  Text(
+                    AppLocalizations.of(context).warmupPhaseStartWorkout,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -425,7 +425,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Get AI-Personalized Workouts',
+                  AppLocalizations.of(context).demoWorkoutScreenGetAiPersonalizedWorkouts,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -435,7 +435,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign up to get workouts tailored to your goals, fitness level, and available equipment.',
+                  AppLocalizations.of(context).demoWorkoutScreenSignUpToGet,
                   style: TextStyle(
                     fontSize: 14,
                     color: textSecondary,
@@ -459,11 +459,11 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                         borderRadius: BorderRadius.circular(26),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Get Personalized Workouts',
+                          AppLocalizations.of(context).guestSampleWorkoutGetPersonalizedWorkouts,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -485,7 +485,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
           TextButton.icon(
             onPressed: _tryAnotherSample,
             icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Try Another Sample Workout'),
+            label: Text(AppLocalizations.of(context).demoWorkoutScreenTryAnotherSampleWorkout),
             style: TextButton.styleFrom(
               foregroundColor: textSecondary,
               textStyle: const TextStyle(

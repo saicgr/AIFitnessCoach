@@ -73,7 +73,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           body:
               '${workout.exerciseCount} exercises · ${workout.formattedDurationShort}',
           primary: _PrimaryButton(
-            label: 'RESUME',
+            label: AppLocalizations.of(context).heroWorkoutCardResume,
             icon: Icons.play_arrow,
             onTap: () {
               HapticService.medium();
@@ -91,7 +91,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: AppColors.textMuted,
           body: 'Plan paused. Resume when you’re ready.',
           primary: _PrimaryButton(
-            label: 'RESUME NOW',
+            label: AppLocalizations.of(context).heroWorkoutCardResumeNow,
             onTap: () {
               HapticService.medium();
               context.push('/settings/vacation-mode');
@@ -110,7 +110,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: accent.withValues(alpha: 0.5),
           body: 'Sleep first. Tomorrow’s session will be waiting.',
           primary: _PrimaryButton(
-            label: 'SEE TOMORROW’S PLAN',
+            label: AppLocalizations.of(context).heroWorkoutCardSeeTomorrowSPlan,
             onTap: () {
               HapticService.selection();
               context.push('/workouts');
@@ -119,7 +119,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
             outline: true,
           ),
           secondary: _SecondaryGhost(
-            label: 'Start anyway',
+            label: AppLocalizations.of(context).suggestedReplyChipsStartAnyway,
             onTap: () {
               HapticService.medium();
               context.push('/active-workout', extra: workout);
@@ -138,7 +138,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: Colors.amber.shade700,
           body: 'Sleep was rough. Try a lighter variant today?',
           primary: _PrimaryButton(
-            label: 'START AS PLANNED',
+            label: AppLocalizations.of(context).heroWorkoutCardStartAsPlanned,
             onTap: () {
               HapticService.medium();
               context.push('/active-workout', extra: workout);
@@ -147,7 +147,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
             outline: true,
           ),
           secondary: _SecondaryFilled(
-            label: 'Switch to lighter',
+            label: AppLocalizations.of(context).suggestedReplyChipsSwitchToLighter,
             onTap: () => _showVariantPending(context, 'lighter'),
             accent: accent,
             isDark: isDark,
@@ -163,7 +163,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: Colors.purple.shade400,
           body: 'Luteal phase — moderate intensity may feel better.',
           primary: _PrimaryButton(
-            label: 'START AS PLANNED',
+            label: AppLocalizations.of(context).heroWorkoutCardStartAsPlanned,
             onTap: () {
               HapticService.medium();
               context.push('/active-workout', extra: workout);
@@ -172,7 +172,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
             outline: true,
           ),
           secondary: _SecondaryFilled(
-            label: 'Switch to moderate',
+            label: AppLocalizations.of(context).heroWorkoutCardSwitchToModerate,
             onTap: () => _showVariantPending(context, 'moderate'),
             accent: accent,
             isDark: isDark,
@@ -188,12 +188,12 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: Colors.orange.shade700,
           body: 'Some equipment isn’t in your current gym profile.',
           primary: _PrimaryButton(
-            label: 'BODYWEIGHT VARIANT',
+            label: AppLocalizations.of(context).heroWorkoutCardBodyweightVariant,
             onTap: () => _showVariantPending(context, 'bodyweight'),
             accent: accent,
           ),
           secondary: _SecondaryGhost(
-            label: 'Switch gym profile',
+            label: AppLocalizations.of(context).heroWorkoutCardSwitchGymProfile,
             onTap: () {
               HapticService.selection();
               context.push('/settings/equipment');
@@ -212,7 +212,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           body:
               'Fasted training is fine — keep intensity moderate, refuel within 30 min after.',
           primary: _PrimaryButton(
-            label: 'START FASTED',
+            label: AppLocalizations.of(context).heroWorkoutCardStartFasted,
             icon: Icons.play_arrow,
             onTap: () {
               HapticService.medium();
@@ -221,7 +221,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
             accent: accent,
           ),
           secondary: _SecondaryGhost(
-            label: 'Delay until fast ends',
+            label: AppLocalizations.of(context).heroWorkoutCardDelayUntilFastEnds,
             onTap: () {
               HapticService.selection();
               context.push('/fasting');
@@ -238,7 +238,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: Colors.amber.shade700,
           body: 'Last meal was a while ago — eat ~200kcal carbs?',
           primary: _PrimaryButton(
-            label: 'LOG A SNACK',
+            label: AppLocalizations.of(context).heroWorkoutCardLogASnack,
             onTap: () {
               HapticService.selection();
               context.push('/nutrition');
@@ -247,7 +247,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
             outline: true,
           ),
           secondary: _SecondaryFilled(
-            label: 'Start anyway',
+            label: AppLocalizations.of(context).suggestedReplyChipsStartAnyway,
             onTap: () {
               HapticService.medium();
               context.push('/active-workout', extra: workout);
@@ -266,12 +266,12 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           body:
               'First session for this muscle group in a while — ease in.',
           primary: _PrimaryButton(
-            label: 'START (LIGHTER)',
+            label: AppLocalizations.of(context).heroWorkoutCardStartLighter,
             onTap: () => _showVariantPending(context, 'lighter'),
             accent: accent,
           ),
           secondary: _SecondaryGhost(
-            label: 'Start as planned',
+            label: AppLocalizations.of(context).heroWorkoutCardStartAsPlanned2,
             onTap: () {
               HapticService.medium();
               context.push('/active-workout', extra: workout);
@@ -308,12 +308,12 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           body:
               '5 hard days, sleep dropping. Today’s an investment in next week.',
           primary: _PrimaryButton(
-            label: 'TAKE REST',
+            label: AppLocalizations.of(context).heroWorkoutCardTakeRest,
             onTap: () => _markRestDay(context),
             accent: accent,
           ),
           secondary: _SecondaryGhost(
-            label: 'Start anyway',
+            label: AppLocalizations.of(context).suggestedReplyChipsStartAnyway,
             onTap: () {
               HapticService.medium();
               context.push('/active-workout', extra: workout);
@@ -330,7 +330,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: AppColors.success,
           body: '30-min refuel window — protein + carbs locks in the work.',
           primary: _PrimaryButton(
-            label: 'LOG POST-WORKOUT MEAL',
+            label: AppLocalizations.of(context).heroWorkoutCardLogPostWorkoutMeal,
             onTap: () {
               HapticService.selection();
               context.push('/nutrition');
@@ -347,7 +347,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: accent.withValues(alpha: 0.6),
           body: 'Got 20 min? Squeeze in a quick session.',
           primary: _PrimaryButton(
-            label: 'QUICK WORKOUT',
+            label: AppLocalizations.of(context).heroWorkoutCardQuickWorkout,
             onTap: () {
               HapticService.medium();
               // Reuse the existing quick workout sheet path via /workouts —
@@ -368,7 +368,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
           pillColor: Colors.amber.shade700,
           body: 'Yesterday’s session is still open. Move it to today?',
           primary: _PrimaryButton(
-            label: 'MOVE TO TODAY',
+            label: AppLocalizations.of(context).heroWorkoutCardMoveToToday,
             onTap: () {
               HapticService.medium();
               context.push('/workouts');
@@ -376,7 +376,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
             accent: accent,
           ),
           secondary: _SecondaryGhost(
-            label: 'Skip',
+            label: AppLocalizations.of(context).onboardingSkip,
             onTap: () {
               HapticService.selection();
             },
@@ -424,8 +424,8 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
   Future<void> _markRestDay(BuildContext context) async {
     HapticService.medium();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Marked as a rest day. Recover well.'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).heroWorkoutCardMarkedAsARest),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.only(bottom: 120, left: 16, right: 16),
       ),

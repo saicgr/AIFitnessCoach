@@ -9,6 +9,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Screen showing list of workout environments with their equipment.
 class EnvironmentListScreen extends ConsumerStatefulWidget {
   const EnvironmentListScreen({super.key});
@@ -35,7 +36,7 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
       appBar: PillAppBar(
-        title: 'Workout Environment',
+        title: AppLocalizations.of(context).trainingPreferencesWorkoutEnvironment,
         actions: [
           PillAppBarAction(icon: Icons.add, onTap: () => _showAddEnvironmentSheet(context)),
         ],
@@ -63,7 +64,7 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Select your workout environment to customize the equipment available to you.',
+                    AppLocalizations.of(context).environmentListSelectYourWorkoutEnvironmen,
                     style: TextStyle(
                       fontSize: 13,
                       color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -224,8 +225,8 @@ class _EnvironmentCard extends StatelessWidget {
                                     color: AppColors.cyan,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Text(
-                                    'Active',
+                                  child: Text(
+                                    AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -287,7 +288,7 @@ class _EnvironmentCard extends StatelessWidget {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
-                          'Use This',
+                          AppLocalizations.of(context).nextSetPreviewUseThis,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -390,7 +391,7 @@ class _AddEnvironmentSheetState extends State<_AddEnvironmentSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Add Custom Environment',
+              AppLocalizations.of(context).environmentListAddCustomEnvironment,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -403,8 +404,8 @@ class _AddEnvironmentSheetState extends State<_AddEnvironmentSheet> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: 'Environment Name',
-                hintText: 'e.g., Beach Workout',
+                labelText: AppLocalizations.of(context).environmentListEnvironmentName,
+                hintText: AppLocalizations.of(context).environmentListEGBeachWorkout,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -414,7 +415,7 @@ class _AddEnvironmentSheetState extends State<_AddEnvironmentSheet> {
 
             // Icon selector
             Text(
-              'Choose Icon',
+              AppLocalizations.of(context).habitsScreenUiChooseIcon,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -467,8 +468,8 @@ class _AddEnvironmentSheetState extends State<_AddEnvironmentSheet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Create Environment',
+                child: Text(
+                  AppLocalizations.of(context).environmentListCreateEnvironment,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),

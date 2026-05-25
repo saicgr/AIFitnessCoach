@@ -18,6 +18,7 @@ import '../../core/constants/app_spacing.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../core/theme/theme_colors.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // Data model
 // ─────────────────────────────────────────────────────────────────────────────
@@ -379,7 +380,7 @@ class _ExerciseSafetyAuditScreenState
       appBar: AppBar(
         backgroundColor: colors.background,
         title: Text(
-          'Safety Tag Audit',
+          AppLocalizations.of(context).exerciseSafetyAuditSafetyTagAudit,
           style: TextStyle(
             color: colors.textPrimary,
             fontSize: 18,
@@ -393,7 +394,7 @@ class _ExerciseSafetyAuditScreenState
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: colors.accent),
-            tooltip: 'Refresh',
+            tooltip: AppLocalizations.of(context).timelineRefresh,
             onPressed: () => ref.read(_auditProvider.notifier).refresh(),
           ),
         ],
@@ -598,7 +599,7 @@ class _ExerciseRow extends StatelessWidget {
                   spacing: AppSpacing.xs,
                   children: [
                     _StatusChip(
-                      label: exercise.movementPattern ?? 'no pattern',
+                      label: exercise.movementPattern ?? AppLocalizations.of(context).exerciseSafetyAuditNoPattern,
                       color: exercise.movementPattern != null
                           ? colors.accent.withAlpha(51)
                           : Colors.orange.withAlpha(51),
@@ -607,7 +608,7 @@ class _ExerciseRow extends StatelessWidget {
                           : Colors.orange,
                     ),
                     _StatusChip(
-                      label: exercise.safetyDifficulty ?? 'no difficulty',
+                      label: exercise.safetyDifficulty ?? AppLocalizations.of(context).exerciseSafetyAuditNoDifficulty,
                       color: exercise.safetyDifficulty != null
                           ? colors.accent.withAlpha(51)
                           : Colors.orange.withAlpha(51),
@@ -636,8 +637,8 @@ class _ExerciseRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              'Review',
+            child: Text(
+              AppLocalizations.of(context).nutritionReview,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),
@@ -846,7 +847,7 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
             const SizedBox(height: AppSpacing.lg),
             // Injury safety checkboxes
             Text(
-              'INJURY-SAFE FLAGS',
+              AppLocalizations.of(context).exerciseSafetyAuditInjurySafeFlags,
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: 12,
@@ -880,7 +881,7 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
             const SizedBox(height: AppSpacing.lg),
             // Movement pattern dropdown
             Text(
-              'MOVEMENT PATTERN',
+              AppLocalizations.of(context).exerciseSafetyAuditMovementPattern,
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: 12,
@@ -891,7 +892,7 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
             const SizedBox(height: AppSpacing.sm),
             _StyledDropdown<String>(
               value: _movementPattern,
-              hint: 'Select movement pattern',
+              hint: AppLocalizations.of(context).exerciseSafetyAuditSelectMovementPattern,
               items: _kMovementPatterns,
               labelBuilder: (s) => s.replaceAll('_', ' '),
               onChanged: (v) => setState(() => _movementPattern = v),
@@ -900,7 +901,7 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
             const SizedBox(height: AppSpacing.md),
             // Safety difficulty dropdown
             Text(
-              'SAFETY DIFFICULTY',
+              AppLocalizations.of(context).exerciseSafetyAuditSafetyDifficulty,
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: 12,
@@ -911,7 +912,7 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
             const SizedBox(height: AppSpacing.sm),
             _StyledDropdown<String>(
               value: _safetyDifficulty,
-              hint: 'Select difficulty',
+              hint: AppLocalizations.of(context).exerciseSafetyAuditSelectDifficulty,
               items: _kSafetyDifficulties,
               labelBuilder: (s) => s[0].toUpperCase() + s.substring(1),
               onChanged: (v) => setState(() => _safetyDifficulty = v),
@@ -920,7 +921,7 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
             const SizedBox(height: AppSpacing.md),
             // Reviewer notes
             Text(
-              'REVIEWER NOTES',
+              AppLocalizations.of(context).exerciseSafetyAuditReviewerNotes,
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: 12,
@@ -938,7 +939,7 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
               ),
               decoration: InputDecoration(
                 hintText:
-                    'Optional: cite source, explain edge case, flag ambiguity...',
+                    AppLocalizations.of(context).exerciseSafetyAuditOptionalCiteSourceExplain,
                 hintStyle: TextStyle(
                   color: colors.textMuted,
                   fontSize: 14,
@@ -1011,8 +1012,8 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
                           color: colors.accentContrast,
                         ),
                       )
-                    : const Text(
-                        'Save Tags',
+                    : Text(
+                        AppLocalizations.of(context).exerciseSafetyAuditSaveTags,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -1255,7 +1256,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'All exercises tagged!',
+              AppLocalizations.of(context).exerciseSafetyAuditAllExercisesTagged,
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: 18,
@@ -1264,7 +1265,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'No exercises pending manual audit.',
+              AppLocalizations.of(context).exerciseSafetyAuditNoExercisesPendingManual,
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: 14,
@@ -1304,7 +1305,7 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Failed to load exercises',
+              AppLocalizations.of(context).netflixExercisesFailedToLoadExercises,
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: 16,
@@ -1326,7 +1327,7 @@ class _ErrorState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
             ),
           ],
         ),

@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/superset_preferences_provider.dart';
 import '../widgets/widgets.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Simplified superset settings section with basic enable/disable controls.
 ///
 /// Advanced superset algorithm tuning (compound sets, max supersets, rest times,
@@ -38,8 +39,8 @@ class SupersetSettingsSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'SUPERSET SETTINGS',
-          subtitle: 'Control how supersets are generated in your workouts',
+          title: AppLocalizations.of(context).supersetSettingsSupersetSettings,
+          subtitle: AppLocalizations.of(context).supersetSettingsControlHowSupersetsAre,
           helpTitle: 'Superset Settings',
           helpItems: _supersetHelpItems,
         ),
@@ -52,8 +53,8 @@ class SupersetSettingsSection extends ConsumerWidget {
             children: [
               _SupersetToggleTile(
                 icon: Icons.sync_alt,
-                title: 'Auto-generate supersets',
-                subtitle: 'Include superset pairs in AI-generated workouts',
+                title: AppLocalizations.of(context).supersetSettingsAutoGenerateSupersets,
+                subtitle: AppLocalizations.of(context).supersetSettingsIncludeSupersetPairsIn,
                 value: supersetPrefs.supersetsEnabled,
                 onChanged: (value) {
                   HapticFeedback.selectionClick();
@@ -64,8 +65,8 @@ class SupersetSettingsSection extends ConsumerWidget {
                 Divider(height: 1, color: cardBorder, indent: 50),
                 _SupersetToggleTile(
                   icon: Icons.compare_arrows,
-                  title: 'Prefer antagonist pairs',
-                  subtitle: 'Chest/back, biceps/triceps pairings',
+                  title: AppLocalizations.of(context).supersetSettingsPreferAntagonistPairs,
+                  subtitle: AppLocalizations.of(context).supersetSettingsChestBackBicepsTriceps,
                   value: supersetPrefs.preferAntagonistPairs,
                   onChanged: (value) {
                     HapticFeedback.selectionClick();

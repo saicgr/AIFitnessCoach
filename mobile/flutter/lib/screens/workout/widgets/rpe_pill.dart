@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Phase 2.D — RPE pill for set logging.
 ///
 /// Tap to cycle through 6 → 7 → 8 → 9 → 10. Tap-and-hold opens a quick scale
@@ -165,7 +166,7 @@ class _RpePickerState extends State<_RpePicker> {
               ),
             ),
             Text(
-              'RPE — Rate of Perceived Exertion',
+              AppLocalizations.of(context).rpePillRpeRateOfPerceived,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -204,7 +205,7 @@ class _RpePickerState extends State<_RpePicker> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => Navigator.pop(context, _selected),
-                child: const Text('Save'),
+                child: Text(AppLocalizations.of(context).buttonSave),
               ),
             ),
           ],

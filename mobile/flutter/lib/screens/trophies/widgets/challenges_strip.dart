@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Horizontal strip of active async challenges. Each card shows the
 /// challenge name, end-date, and a JOIN button. Tapping JOIN navigates
 /// to the challenge detail (hooked into the existing leaderboard screen).
@@ -28,22 +29,22 @@ class ChallengesStrip extends ConsumerWidget {
 
     final challenges = <_ChallengeData>[
       _ChallengeData(
-        title: 'Monthly Run Challenge',
-        subtitle: '25 km target',
+        title: AppLocalizations.of(context).challengesStripMonthlyRunChallenge,
+        subtitle: AppLocalizations.of(context).challengesStrip25KmTarget,
         endsLabel: endsLabel,
         emoji: '🏃',
         gradient: const [Color(0xFF22C55E), Color(0xFF86EFAC)],
       ),
       _ChallengeData(
         title: 'Monthly Cycling Challenge',
-        subtitle: '100 km target',
+        subtitle: AppLocalizations.of(context).challengesStrip100KmTarget,
         endsLabel: endsLabel,
         emoji: '🚴',
         gradient: const [Color(0xFF3B82F6), Color(0xFF60A5FA)],
       ),
       _ChallengeData(
         title: 'Consistency Week',
-        subtitle: '5 workouts in 7 days',
+        subtitle: AppLocalizations.of(context).challengesStrip5WorkoutsIn7,
         endsLabel: endsLabel,
         emoji: '🔥',
         gradient: const [Color(0xFFF97316), Color(0xFFFBBF24)],

@@ -7,6 +7,7 @@ import '../../../../data/models/home_layout.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Fasting Timer Card - Shows active fast progress or start prompt
 class FastingTimerCard extends ConsumerWidget {
   final TileSize size;
@@ -149,7 +150,7 @@ class FastingTimerCard extends ConsumerWidget {
               Icon(Icons.timer_outlined, color: textMuted, size: 16),
               const SizedBox(width: 6),
               Text(
-                'Fast',
+                AppLocalizations.of(context).fastingTileFast,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -183,7 +184,7 @@ class FastingTimerCard extends ConsumerWidget {
             Icon(Icons.timer, color: zoneColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Fasting',
+              AppLocalizations.of(context).unifiedHomeWidgetsFasting,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -277,7 +278,7 @@ class FastingTimerCard extends ConsumerWidget {
             Icon(Icons.timer_outlined, color: textMuted, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Fasting',
+              AppLocalizations.of(context).unifiedHomeWidgetsFasting,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -288,7 +289,7 @@ class FastingTimerCard extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Not fasting',
+          AppLocalizations.of(context).fastingTileNotFasting,
           style: TextStyle(
             fontSize: 16,
             color: textMuted,
@@ -301,7 +302,7 @@ class FastingTimerCard extends ConsumerWidget {
             context.go('/fasting');
           },
           icon: const Icon(Icons.play_arrow, size: 18),
-          label: const Text('Start'),
+          label: Text(AppLocalizations.of(context).buttonStart),
           style: ElevatedButton.styleFrom(
             backgroundColor: accentColor,
             foregroundColor: Colors.white,

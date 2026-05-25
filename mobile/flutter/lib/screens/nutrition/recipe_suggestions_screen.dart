@@ -13,6 +13,7 @@ import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/recipe_suggestion_card.dart';
 import 'widgets/recipe_preferences_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen for AI-powered recipe suggestions based on body type, culture, and diet
 class RecipeSuggestionsScreen extends ConsumerStatefulWidget {
   const RecipeSuggestionsScreen({super.key});
@@ -96,7 +97,7 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
     return Scaffold(
       backgroundColor: background,
       appBar: PillAppBar(
-        title: 'Recipe Suggestions',
+        title: AppLocalizations.of(context).recipeSuggestionsRecipeSuggestions,
         actions: [
           PillAppBarAction(
             icon: Icons.tune,
@@ -109,9 +110,9 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
           SegmentedTabBar(
             controller: _tabController,
             showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Suggestions'),
-              SegmentedTabItem(label: 'Saved'),
+            tabs: [
+              SegmentedTabItem(label: AppLocalizations.of(context).unresolvedExercisesSuggestions),
+              SegmentedTabItem(label: AppLocalizations.of(context).savedHubSaved),
             ],
           ),
           Expanded(
@@ -160,7 +161,7 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'What meal are you planning?',
+                  AppLocalizations.of(context).recipeSuggestionsWhatMealAreYou,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -200,7 +201,7 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
                   controller: _requirementsController,
                   style: TextStyle(color: textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Any specific requirements? (e.g., under 400 cal, high fiber)',
+                    hintText: AppLocalizations.of(context).recipeSuggestionsAnySpecificRequirementsE,
                     hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.7)),
                     filled: true,
                     fillColor: surface,
@@ -230,7 +231,7 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
                           )
                         : const Icon(Icons.auto_awesome),
                     label: Text(
-                      state.isGenerating ? 'Generating...' : 'Generate Suggestions',
+                      state.isGenerating ? AppLocalizations.of(context).upcomingWorkoutsGenerating : AppLocalizations.of(context).recipeSuggestionsGenerateSuggestions,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accent,
@@ -295,7 +296,7 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No suggestions yet',
+                      AppLocalizations.of(context).regenerateWorkoutSheetNoSuggestionsYet,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -304,7 +305,7 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Tap "Generate Suggestions" to get AI-powered recipe ideas based on your preferences',
+                      AppLocalizations.of(context).recipeSuggestionsTapGenerateSuggestionsTo,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: textSecondary),
                     ),
@@ -363,7 +364,7 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
               ),
               const SizedBox(height: 16),
               Text(
-                'No saved recipes',
+                AppLocalizations.of(context).recipeSuggestionsNoSavedRecipes,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -372,7 +373,7 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
               ),
               const SizedBox(height: 8),
               Text(
-                'Save recipes you like to find them here later',
+                AppLocalizations.of(context).recipeSuggestionsSaveRecipesYouLike,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: textSecondary),
               ),
@@ -443,8 +444,8 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Marked as cooked!'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).recipeSuggestionsMarkedAsCooked),
             duration: Duration(seconds: 2),
           ),
         );

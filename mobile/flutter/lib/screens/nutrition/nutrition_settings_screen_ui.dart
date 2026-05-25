@@ -43,7 +43,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Calorie Estimate Bias',
+                        AppLocalizations.of(context).nutritionSettingsScreenCalorieEstimateBias,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -135,7 +135,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Under More',
+                        Text(AppLocalizations.of(context).nutritionSettingsScreenUnderMore,
                             style: TextStyle(fontSize: 11, color: textMuted)),
                         Text('No Bias',
                             style: TextStyle(fontSize: 11, color: textMuted)),
@@ -191,8 +191,8 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Save',
+                      child: Text(
+                        AppLocalizations.of(context).buttonSave,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -252,14 +252,14 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Food Preferences', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary)),
+                    Text(AppLocalizations.of(context).nutritionSettingsScreenFoodPreferences, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary)),
                     IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close, color: textMuted)),
                   ],
                 ),
                 const SizedBox(height: 16),
 
                 // Meal Pattern
-                Text('Meal Pattern', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(AppLocalizations.of(context).nutritionSettingsScreenMealPattern, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8, runSpacing: 8,
@@ -282,7 +282,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 const SizedBox(height: 20),
 
                 // Cooking Skill
-                Text('Cooking Skill', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(AppLocalizations.of(context).nutritionSettingsScreenCookingSkill, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
                 const SizedBox(height: 8),
                 Row(
                   children: CookingSkill.values.map((skill) {
@@ -307,7 +307,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 const SizedBox(height: 20),
 
                 // Cooking Time
-                Text('Cooking Time (minutes)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(AppLocalizations.of(context).nutritionSettingsScreenCookingTimeMinutes, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8, runSpacing: 8,
@@ -330,7 +330,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 const SizedBox(height: 20),
 
                 // Budget
-                Text('Budget', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(AppLocalizations.of(context).nutritionSettingsScreenBudget, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
                 const SizedBox(height: 8),
                 Row(
                   children: BudgetLevel.values.map((b) {
@@ -355,7 +355,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 const SizedBox(height: 20),
 
                 // Allergens
-                Text('Allergens', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(AppLocalizations.of(context).nutritionSettingsScreenAllergens, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8, runSpacing: 8,
@@ -378,7 +378,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 const SizedBox(height: 20),
 
                 // Dietary Restrictions
-                Text('Dietary Restrictions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(AppLocalizations.of(context).nutritionSettingsScreenDietaryRestrictions, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8, runSpacing: 8,
@@ -427,7 +427,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: isSaving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    child: isSaving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(AppLocalizations.of(context).buttonSave, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -534,7 +534,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Edit Nutrition Goals',
+                      AppLocalizations.of(context).nutritionSettingsScreenEditNutritionGoals,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -549,7 +549,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Select your goals (first selected = primary)',
+                  AppLocalizations.of(context).nutritionSettingsScreenSelectYourGoalsFirst,
                   style: TextStyle(fontSize: 14, color: textMuted),
                 ),
                 const SizedBox(height: 16),
@@ -626,7 +626,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  'Primary',
+                                  AppLocalizations.of(context).nutritionSettingsScreenPrimary,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
@@ -651,7 +651,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                 const SizedBox(height: 16),
                 // Rate of change
                 Text(
-                  'Rate of Change',
+                  AppLocalizations.of(context).nutritionSettingsScreenRateOfChange,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -745,8 +745,8 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: const Text(
-                                        'Goals updated and targets recalculated!'),
+                                    content: Text(
+                                        AppLocalizations.of(context).nutritionSettingsScreenGoalsUpdatedAndTargets),
                                     backgroundColor:
                                         primaryGoalColor(selectedGoals),
                                     behavior: SnackBarBehavior.floating,
@@ -787,8 +787,8 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            'Save & Recalculate',
+                        : Text(
+                            AppLocalizations.of(context).nutritionSettingsScreenSaveRecalculate,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

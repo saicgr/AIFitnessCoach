@@ -12,6 +12,7 @@ import '../../../../data/repositories/measurements_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Quick Log Weight Tile - Inline weight logging on home screen
 /// Shows last logged weight and allows quick logging
 class QuickLogWeightCard extends ConsumerStatefulWidget {
@@ -219,7 +220,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Quick Log Weight',
+                  AppLocalizations.of(context).quickLogWeightQuickLogWeight,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -270,7 +271,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                   Icon(Icons.check_circle, color: AppColors.success, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    'Logged!',
+                    AppLocalizations.of(context).quickLogWeightLogged,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -472,7 +473,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
           Icon(Icons.info_outline, size: 14, color: textMuted),
           const SizedBox(width: 6),
           Text(
-            'Log more weights to see trends',
+            AppLocalizations.of(context).quickLogWeightLogMoreWeightsTo,
             style: TextStyle(
               fontSize: 12,
               color: textMuted,

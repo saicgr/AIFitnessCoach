@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/progress_charts.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Summary cards displaying key progress metrics
 class SummaryCards extends StatelessWidget {
   final ProgressSummary summary;
@@ -20,7 +21,7 @@ class SummaryCards extends StatelessWidget {
               context,
               icon: Icons.fitness_center,
               value: '${summary.totalWorkouts}',
-              label: 'Workouts',
+              label: AppLocalizations.of(context).workoutListTitle,
               color: colorScheme.primary,
             ),
           ),
@@ -30,7 +31,7 @@ class SummaryCards extends StatelessWidget {
               context,
               icon: Icons.emoji_events,
               value: '${summary.totalPRs}',
-              label: 'PRs',
+              label: AppLocalizations.of(context).weeklyWrappedPrs,
               color: Colors.amber,
             ),
           ),
@@ -40,7 +41,7 @@ class SummaryCards extends StatelessWidget {
               context,
               icon: _getTrendIcon(summary.volumeIncreasePercent),
               value: '${summary.volumeIncreasePercent >= 0 ? '+' : ''}${summary.volumeIncreasePercent.toStringAsFixed(1)}%',
-              label: 'Volume',
+              label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
               color: _getTrendColor(summary.volumeIncreasePercent),
             ),
           ),
@@ -50,7 +51,7 @@ class SummaryCards extends StatelessWidget {
               context,
               icon: Icons.local_fire_department,
               value: '${summary.currentStreak}',
-              label: 'Streak',
+              label: AppLocalizations.of(context).xpProgressCardStreak,
               color: Colors.deepOrange,
             ),
           ),

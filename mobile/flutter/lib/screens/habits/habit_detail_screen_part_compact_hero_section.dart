@@ -66,7 +66,7 @@ class _CompactHeroSection extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'day streak',
+                        AppLocalizations.of(context).newTilesPartDayStreak,
                         style: TextStyle(fontSize: 10, color: textSecondary),
                       ),
                     ],
@@ -165,13 +165,13 @@ class _CompactHeroSection extends StatelessWidget {
         // Row 2: Quick stats - 4 compact tiles
         Row(
           children: [
-            _MiniStatTile(icon: Icons.local_fire_department, value: '${data.currentStreak}', label: 'Streak', color: Colors.orange, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
+            _MiniStatTile(icon: Icons.local_fire_department, value: '${data.currentStreak}', label: AppLocalizations.of(context).xpProgressCardStreak, color: Colors.orange, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
             const SizedBox(width: 8),
-            _MiniStatTile(icon: Icons.emoji_events, value: '${data.longestStreak}', label: 'Best', color: Colors.amber, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
+            _MiniStatTile(icon: Icons.emoji_events, value: '${data.longestStreak}', label: AppLocalizations.of(context).habitDetailScreenBest, color: Colors.amber, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
             const SizedBox(width: 8),
-            _MiniStatTile(icon: Icons.check_circle_outline, value: '${data.totalCompletions}', label: 'Total', color: Colors.green, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
+            _MiniStatTile(icon: Icons.check_circle_outline, value: '${data.totalCompletions}', label: AppLocalizations.of(context).statsStreakFireTotal, color: Colors.green, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
             const SizedBox(width: 8),
-            _MiniStatTile(icon: Icons.trending_up, value: '${data.completionRate}%', label: 'Rate', color: habitColor, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
+            _MiniStatTile(icon: Icons.trending_up, value: '${data.completionRate}%', label: AppLocalizations.of(context).habitDetailScreenRate, color: habitColor, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
           ],
         ),
         // Best streak proximity alert
@@ -230,7 +230,7 @@ class _HabitStrengthBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Habit Strength',
+              AppLocalizations.of(context).habitDetailScreenHabitStrength,
               style: TextStyle(fontSize: 11, color: textSecondary, fontWeight: FontWeight.w500),
             ),
             Text(
@@ -448,7 +448,7 @@ class _TrendSparkline extends StatelessWidget {
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: trendColor),
               ),
               Text(
-                '8-week trend',
+                AppLocalizations.of(context).habitDetailScreen8WeekTrend,
                 style: TextStyle(fontSize: 11, color: textSecondary),
               ),
             ],
@@ -539,7 +539,7 @@ class _WeeklyBarChart extends StatelessWidget {
               Icon(Icons.bar_chart_rounded, color: habitColor, size: 18),
               const SizedBox(width: 8),
               Text(
-                'Weekly Completions',
+                AppLocalizations.of(context).habitDetailScreenWeeklyCompletions,
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
               ),
             ],
@@ -550,7 +550,7 @@ class _WeeklyBarChart extends StatelessWidget {
               height: 100,
               child: Center(
                 child: Text(
-                  'Complete this habit to see weekly trends',
+                  AppLocalizations.of(context).habitDetailScreenCompleteThisHabitTo,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ),
@@ -722,14 +722,14 @@ class _DayOfWeekChart extends StatelessWidget {
             children: [
               Icon(Icons.calendar_view_week_rounded, color: habitColor, size: 18),
               const SizedBox(width: 8),
-              Text('Day of Week', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+              Text(AppLocalizations.of(context).habitDetailScreenDayOfWeek, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
             ],
           ),
           const SizedBox(height: 16),
           if (!hasData)
             SizedBox(
               height: 60,
-              child: Center(child: Text('Not enough data yet', style: TextStyle(fontSize: 12, color: textSecondary))),
+              child: Center(child: Text(AppLocalizations.of(context).habitDetailScreenNotEnoughDataYet, style: TextStyle(fontSize: 12, color: textSecondary))),
             )
           else ...[
             SizedBox(
@@ -850,7 +850,7 @@ class _CalendarTab extends StatelessWidget {
         children: [
           _YearlyHeatmap(data: data, habitColor: habitColor, textPrimary: textPrimary, textSecondary: textSecondary, cardBg: cardBg, cardBorder: cardBorder, isDark: isDark),
           const SizedBox(height: 16),
-          Text('Monthly Summary', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+          Text(AppLocalizations.of(context).habitDetailScreenMonthlySummary, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
           const SizedBox(height: 10),
           _MonthlySummary(data: data, habitColor: habitColor, textPrimary: textPrimary, textSecondary: textSecondary, cardBg: cardBg, cardBorder: cardBorder),
         ],

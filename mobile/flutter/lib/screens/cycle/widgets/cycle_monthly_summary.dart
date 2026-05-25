@@ -11,6 +11,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class CycleMonthlySummary extends StatelessWidget {
   final CyclePrediction? prediction;
 
@@ -100,7 +101,7 @@ class CycleMonthlySummary extends StatelessWidget {
               Icon(Icons.auto_stories_rounded, size: 18, color: accent),
               const SizedBox(width: 8),
               Text(
-                'Your month in review',
+                AppLocalizations.of(context).cycleMonthlySummaryYourMonthInReview,
                 style: TextStyle(
                   color: fg,
                   fontSize: 15,
@@ -151,7 +152,7 @@ class CycleMonthlySummary extends StatelessWidget {
               )),
           const SizedBox(height: 8),
           Text(
-            'This recap stays private to you — cycle data is never shared.',
+            AppLocalizations.of(context).cycleMonthlySummaryThisRecapStaysPrivate,
             style: TextStyle(
               color: fg.withValues(alpha: 0.4),
               fontSize: 10,

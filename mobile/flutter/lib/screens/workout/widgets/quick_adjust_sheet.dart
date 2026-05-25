@@ -30,6 +30,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Response from POST /workouts/{id}/quick-adjust.
 class QuickAdjustResult {
   /// "trim" | "ease" | "ease_and_trim" | "reschedule_suggested" | "none"
@@ -213,7 +214,7 @@ class _QuickAdjustSheetState extends State<_QuickAdjustSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'How are you feeling?',
+              AppLocalizations.of(context).quickAdjustHowAreYouFeeling,
               style: TextStyle(
                 color: fg,
                 fontSize: 22,
@@ -222,7 +223,7 @@ class _QuickAdjustSheetState extends State<_QuickAdjustSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Adjust today\'s workout in place.',
+              AppLocalizations.of(context).quickAdjustAdjustTodaySWorkout,
               style: TextStyle(
                 color: fg.withValues(alpha: 0.6),
                 fontSize: 13,
@@ -231,9 +232,9 @@ class _QuickAdjustSheetState extends State<_QuickAdjustSheet> {
             const SizedBox(height: 20),
 
             _SliderRow(
-              label: 'Soreness',
-              leftLabel: 'None',
-              rightLabel: 'Very sore',
+              label: AppLocalizations.of(context).quickAdjustSoreness,
+              leftLabel: AppLocalizations.of(context).recipeCreateNone,
+              rightLabel: AppLocalizations.of(context).quickAdjustVerySore,
               value: _soreness,
               min: 1,
               max: 7,
@@ -244,9 +245,9 @@ class _QuickAdjustSheetState extends State<_QuickAdjustSheet> {
             ),
             const SizedBox(height: 16),
             _SliderRow(
-              label: 'Energy',
-              leftLabel: 'Drained',
-              rightLabel: 'Peak',
+              label: AppLocalizations.of(context).workoutSummaryGeneralEnergy,
+              leftLabel: AppLocalizations.of(context).quickAdjustDrained,
+              rightLabel: AppLocalizations.of(context).syncedWorkoutDetailPeak,
               value: _energy,
               min: 1,
               max: 7,
@@ -257,8 +258,8 @@ class _QuickAdjustSheetState extends State<_QuickAdjustSheet> {
             ),
             const SizedBox(height: 16),
             _SliderRow(
-              label: 'Time available',
-              leftLabel: '5 min',
+              label: AppLocalizations.of(context).quickAdjustTimeAvailable,
+              leftLabel: AppLocalizations.of(context).quickAdjust5Min,
               rightLabel: '120 min',
               value: _minutes,
               min: 5,
@@ -353,7 +354,7 @@ class _QuickAdjustSheetState extends State<_QuickAdjustSheet> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Adapt workout'),
+                    : Text(AppLocalizations.of(context).quickAdjustAdaptWorkout),
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/injury.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class InjuryCard extends StatelessWidget {
   final Injury injury;
   final VoidCallback? onTap;
@@ -118,7 +119,7 @@ class InjuryCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Recovery Progress', style: TextStyle(fontSize: 11, color: textMuted)),
+                      Text(AppLocalizations.of(context).injuryDetailRecoveryProgress, style: TextStyle(fontSize: 11, color: textMuted)),
                       Text('${injury.recoveryProgress.toInt()}%', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: severityColor)),
                     ],
                   ),
@@ -148,7 +149,7 @@ class InjuryCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   isHealed
-                      ? 'Healed'
+                      ? AppLocalizations.of(context).injuryCardHealed
                       : injury.daysUntilRecovery != null
                           ? '${injury.daysUntilRecovery} days left'
                           : '${injury.daysSinceReported} days ago',
@@ -159,7 +160,7 @@ class InjuryCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onCheckIn,
                     icon: const Icon(Icons.edit_note, size: 18),
-                    label: const Text('Check-in', style: TextStyle(fontSize: 13)),
+                    label: Text(AppLocalizations.of(context).injuryCardCheckIn, style: TextStyle(fontSize: 13)),
                     style: TextButton.styleFrom(
                       foregroundColor: severityColor,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -181,7 +182,7 @@ class InjuryCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.check_circle, size: 16, color: AppColors.success),
                     const SizedBox(width: 6),
-                    const Text('Fully Recovered', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.success)),
+                    Text(AppLocalizations.of(context).injuryCardFullyRecovered, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.success)),
                   ],
                 ),
               ),

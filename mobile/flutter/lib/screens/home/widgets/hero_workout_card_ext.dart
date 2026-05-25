@@ -13,9 +13,9 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
   Future<void> _dismissQuickWorkout() async {
     final keepGoing = await AppDialog.destructive(
       context,
-      title: 'Dismiss Quick Workout?',
+      title: AppLocalizations.of(context).workoutOptionsDismissQuickWorkout,
       message:
-          "You'll lose this Quick. Any logged sets in it will be discarded. Continue?",
+          AppLocalizations.of(context).heroWorkoutCardYouLlLoseThis,
       confirmText: 'Dismiss',
       icon: Icons.delete_outline,
     );
@@ -31,8 +31,8 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
         // sync when back online (no resurrection of card).
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Dismissed offline — will sync when online'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).heroWorkoutCardDismissedOfflineWillSync),
               backgroundColor: AppColors.textMuted,
             ),
           );
@@ -41,8 +41,8 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
         // Best-effort: keep workouts list in sync as well.
         ref.read(workoutsProvider.notifier).silentRefresh();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Quick workout dismissed'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).heroWorkoutCardQuickWorkoutDismissed),
             backgroundColor: AppColors.textMuted,
           ),
         );
@@ -50,8 +50,8 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not dismiss workout'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotDismissWorkout),
             backgroundColor: AppColors.error,
           ),
         );
@@ -69,9 +69,9 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
 
     final confirm = await AppDialog.confirm(
       context,
-      title: 'Mark as Done?',
+      title: AppLocalizations.of(context).workoutOptionsMarkAsDone,
       message: dialogMessage,
-      confirmText: 'Mark Done',
+      confirmText: AppLocalizations.of(context).heroWorkoutCardMarkDone,
       confirmColor: AppColors.success,
       icon: Icons.check_circle_rounded,
     );
@@ -89,8 +89,8 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
         ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Workout marked as done!'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).heroWorkoutCardWorkoutMarkedAsDone),
               backgroundColor: AppColors.success,
             ),
           );
@@ -99,8 +99,8 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not mark workout as done'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotMarkWorkout),
             backgroundColor: AppColors.error,
           ),
         );
@@ -133,7 +133,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                   color: isDark ? Colors.white70 : Colors.black54,
                 ),
                 title: Text(
-                  'Glance Workout',
+                  AppLocalizations.of(context).heroWorkoutCardGlanceWorkout,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 ),
                 onTap: () {
@@ -148,7 +148,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                   color: isDark ? Colors.white70 : Colors.black54,
                 ),
                 title: Text(
-                  'View Workout',
+                  AppLocalizations.of(context).heroWorkoutCardViewWorkout,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 ),
                 onTap: () {
@@ -163,7 +163,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                   color: isDark ? Colors.white70 : Colors.black54,
                 ),
                 title: Text(
-                  'Add Exercises',
+                  AppLocalizations.of(context).heroWorkoutCardAddExercises,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 ),
                 onTap: () {
@@ -178,7 +178,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                   color: isDark ? Colors.white70 : Colors.black54,
                 ),
                 title: Text(
-                  'Ask Coach',
+                  AppLocalizations.of(context).heroWorkoutCardAskCoach,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 ),
                 onTap: () {
@@ -202,7 +202,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                   color: isDark ? Colors.white70 : Colors.black54,
                 ),
                 title: Text(
-                  'Regenerate Workout',
+                  AppLocalizations.of(context).regenerateWorkoutSheetRegenerateWorkout,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 ),
                 onTap: () {
@@ -217,7 +217,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                   color: isDark ? Colors.white70 : Colors.black54,
                 ),
                 title: Text(
-                  'Share to Social',
+                  AppLocalizations.of(context).heroWorkoutCardShareToSocial,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 ),
                 onTap: () {
@@ -232,7 +232,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                   color: isDark ? AppColors.success : AppColors.success,
                 ),
                 title: Text(
-                  'Mark as Done',
+                  AppLocalizations.of(context).heroWorkoutCardMarkAsDone2,
                   style: TextStyle(
                     color: isDark ? AppColors.success : AppColors.success,
                     fontWeight: FontWeight.w500,
@@ -255,8 +255,8 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                     Icons.close_rounded,
                     color: AppColors.textMuted,
                   ),
-                  title: const Text(
-                    'Dismiss Quick',
+                  title: Text(
+                    AppLocalizations.of(context).heroWorkoutCardDismissQuick,
                     style: TextStyle(color: AppColors.textMuted),
                   ),
                   onTap: () {
@@ -270,8 +270,8 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                   Icons.skip_next_outlined,
                   color: AppColors.textMuted,
                 ),
-                title: const Text(
-                  'Skip Workout',
+                title: Text(
+                  AppLocalizations.of(context).heroWorkoutCardSkipWorkout,
                   style: TextStyle(color: AppColors.textMuted),
                 ),
                 onTap: () {
@@ -309,7 +309,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                 children: [
                   Expanded(
                     child: Text(
-                      workout.name ?? 'Workout',
+                      workout.name ?? AppLocalizations.of(context).navWorkout,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

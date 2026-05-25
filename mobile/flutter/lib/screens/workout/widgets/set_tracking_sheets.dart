@@ -11,6 +11,7 @@ import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'exercise_analytics_page.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Show exercise history bottom sheet
 void showExerciseHistorySheet({
   required BuildContext context,
@@ -61,20 +62,20 @@ void showExerciseHistorySheet({
               children: [
                 Icon(Icons.history_rounded, color: AppColors.electricBlue, size: 24),
                 const SizedBox(width: 10),
-                Text('Exercise History',
+                Text(AppLocalizations.of(context).setTrackingSheetsExerciseHistory,
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary)),
               ],
             ),
             const SizedBox(height: 20),
             _buildHistoryItem(
-              label: 'Last Session', value: lastDisplay,
+              label: AppLocalizations.of(context).workoutSheetsMixinLastSession, value: lastDisplay,
               subtitle: lastDate.isNotEmpty ? lastDate : null,
               color: AppColors.electricBlue, isDark: isDark,
               textPrimary: textPrimary, textMuted: textMuted,
             ),
             const SizedBox(height: 16),
             _buildHistoryItem(
-              label: 'Personal Record', value: prDisplay,
+              label: AppLocalizations.of(context).setTrackingSheetsPersonalRecord, value: prDisplay,
               color: AppColors.success, isDark: isDark,
               textPrimary: textPrimary, textMuted: textMuted,
               showTrophy: prData != null,
@@ -188,9 +189,9 @@ void showWeightIncrementSheet({
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Weight Increment',
+                      Text(AppLocalizations.of(context).setTrackingSheetsWeightIncrement,
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary)),
-                      Text('Amount to adjust weight by',
+                      Text(AppLocalizations.of(context).setTrackingSheetsAmountToAdjustWeight,
                         style: TextStyle(fontSize: 12, color: textMuted)),
                     ],
                   ),
@@ -270,14 +271,14 @@ void showRpeInfoSheet(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('What is RPE?',
+            Text(AppLocalizations.of(context).timerRestMixinWhatIsRpe,
               style: TextStyle(
                 fontSize: 20, fontWeight: FontWeight.bold,
                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
-            Text('Rate of Perceived Exertion measures how hard a set felt:',
+            Text(AppLocalizations.of(context).timerRestMixinRateOfPerceivedExertion,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -300,7 +301,7 @@ void showRpeInfoSheet(BuildContext context) {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Got it', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                child: Text(AppLocalizations.of(context).weightIncrementsGotIt, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               ),
             ),
             const SizedBox(height: 8),
@@ -353,7 +354,7 @@ void showSetTypeInfoSheet(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Set Types',
+            Text(AppLocalizations.of(context).setTrackingSheetsSetTypes,
               style: TextStyle(
                 fontSize: 20, fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
@@ -361,20 +362,20 @@ void showSetTypeInfoSheet(BuildContext context) {
             ),
             const SizedBox(height: 16),
             _buildSetTypeInfoRow(
-              icon: Icons.whatshot_outlined, tag: 'W', title: 'Warmup',
-              description: 'Light weight to prepare muscles. Not counted in workout volume.',
+              icon: Icons.whatshot_outlined, tag: 'W', title: AppLocalizations.of(context).workoutSummaryAdvancedWarmup,
+              description: AppLocalizations.of(context).setTrackingSheetsLightWeightToPrepare,
               color: AppColors.orange, isDark: isDark,
             ),
             const SizedBox(height: 16),
             _buildSetTypeInfoRow(
-              icon: Icons.trending_down_rounded, tag: 'D', title: 'Drop Set',
-              description: 'Immediately reduce weight after failure and continue repping. Great for muscle growth!',
+              icon: Icons.trending_down_rounded, tag: 'D', title: AppLocalizations.of(context).setTrackingSheetsDropSet,
+              description: AppLocalizations.of(context).setTrackingSheetsImmediatelyReduceWeightAfte,
               color: AppColors.purple, isDark: isDark,
             ),
             const SizedBox(height: 16),
             _buildSetTypeInfoRow(
-              icon: Icons.fitness_center_rounded, tag: 'F', title: 'Failure',
-              description: "Mark when you couldn't complete target reps. Helps track intensity.",
+              icon: Icons.fitness_center_rounded, tag: 'F', title: AppLocalizations.of(context).rpeFailure,
+              description: AppLocalizations.of(context).setTrackingSheetsMarkWhenYouCouldn,
               color: AppColors.error, isDark: isDark,
             ),
             SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
@@ -461,7 +462,7 @@ void showTargetEditSheet({
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Set Target',
+              Text(AppLocalizations.of(context).setTrackingSheetsSetTarget,
                 style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -477,7 +478,7 @@ void showTargetEditSheet({
                         color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        labelText: useKg ? 'Weight (kg)' : 'Weight (lbs)',
+                        labelText: useKg ? AppLocalizations.of(context).workoutHistoryImportWeightKg : AppLocalizations.of(context).setTrackingSheetsWeightLbs,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
@@ -492,7 +493,7 @@ void showTargetEditSheet({
                         color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        labelText: 'Reps',
+                        labelText: AppLocalizations.of(context).workoutSummaryGeneralReps,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
@@ -503,7 +504,7 @@ void showTargetEditSheet({
               const SizedBox(height: 20),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Target RIR',
+                child: Text(AppLocalizations.of(context).setTrackingSheetsTargetRir,
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -567,7 +568,7 @@ void showTargetEditSheet({
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Save Target',
+                  child: Text(AppLocalizations.of(context).setTrackingSheetsSaveTarget,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
               ),

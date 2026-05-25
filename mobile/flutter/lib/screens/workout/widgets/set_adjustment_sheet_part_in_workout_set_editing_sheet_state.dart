@@ -158,7 +158,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Edit Sets',
+                          AppLocalizations.of(context).setAdjustmentSheetEditSets,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -198,7 +198,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                   Expanded(
                     child: _QuickActionButton(
                       icon: Icons.add,
-                      label: '+1 Set',
+                      label: AppLocalizations.of(context).setAdjustmentSheet1Set,
                       color: AppColors.cyan,
                       onTap: () => _addSet(),
                     ),
@@ -209,7 +209,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                     Expanded(
                       child: _QuickActionButton(
                         icon: Icons.remove,
-                        label: '-1 Set',
+                        label: AppLocalizations.of(context).setAdjustmentSheet1Set2,
                         color: AppColors.orange,
                         onTap: _removeSet,
                       ),
@@ -220,7 +220,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                     Expanded(
                       child: _QuickActionButton(
                         icon: Icons.content_copy,
-                        label: 'Copy Last',
+                        label: AppLocalizations.of(context).setAdjustmentSheetCopyLast,
                         color: AppColors.purple,
                         onTap: () => _addSet(copyLast: true),
                       ),
@@ -367,7 +367,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                         // Reps input
                         Expanded(
                           child: _SetValueEditor(
-                            label: 'Reps',
+                            label: AppLocalizations.of(context).workoutSummaryGeneralReps,
                             value: set.reps.toDouble(),
                             unit: '',
                             isInteger: true,
@@ -380,7 +380,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                         // Weight input
                         Expanded(
                           child: _SetValueEditor(
-                            label: 'Weight',
+                            label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                             value: set.weight,
                             unit: weightUnit,
                             isInteger: false,
@@ -404,7 +404,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Why are you reducing sets?',
+                      AppLocalizations.of(context).setAdjustmentSheetWhyAreYouReducing,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -479,7 +479,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                       maxLines: 1,
                       style: TextStyle(fontSize: 14, color: textPrimary),
                       decoration: InputDecoration(
-                        hintText: 'Additional notes (optional)',
+                        hintText: AppLocalizations.of(context).setAdjustmentSheetAdditionalNotesOptional,
                         hintStyle: TextStyle(color: textMuted, fontSize: 13),
                         filled: true,
                         fillColor: cardBg,
@@ -518,7 +518,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                         ),
                       ),
                       child: Text(
-                        'Cancel',
+                        AppLocalizations.of(context).buttonCancel,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -545,7 +545,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                         ),
                       ),
                       child: Text(
-                        _requiresReason ? 'Save Changes' : 'Apply',
+                        _requiresReason ? AppLocalizations.of(context).vacationModeSaveChanges : AppLocalizations.of(context).setAdjustmentSheetApply,
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,

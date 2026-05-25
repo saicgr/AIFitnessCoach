@@ -22,7 +22,7 @@ class _MoreActionsButton extends ConsumerWidget {
         HapticService.medium();
         showQuickActionsSheet(context, ref, editMode: true);
       },
-      label: 'More',
+      label: AppLocalizations.of(context).homeMore,
       icon: Icons.more_horiz,
       iconColor: isDark
           ? AppColors.textPrimary

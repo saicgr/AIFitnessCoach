@@ -29,6 +29,7 @@ import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 
+import '../../l10n/generated/app_localizations.dart';
 part 'paywall_pricing_screen_part_accent_border_card.dart';
 part 'paywall_pricing_screen_part_plan_change_confirmation_dialog.dart';
 
@@ -331,14 +332,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         Icon(Icons.check_circle, color: Colors.green, size: 16),
                         const SizedBox(width: 6),
                         Text(
-                          '7-day free trial',
+                          AppLocalizations.of(context).paywallPricing7DayFreeTrial,
                           style: TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(width: 12),
                         Icon(Icons.cancel_outlined, color: colors.textSecondary, size: 16),
                         const SizedBox(width: 4),
                         Text(
-                          'Cancel anytime',
+                          AppLocalizations.of(context).paywallPricingCancelAnytime,
                           style: TextStyle(fontSize: 14, color: colors.textSecondary),
                         ),
                       ],
@@ -346,7 +347,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     const SizedBox(height: 20),
                   ] else ...[
                     Text(
-                      'Change Plan',
+                      AppLocalizations.of(context).paywallPricingChangePlan,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -367,8 +368,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   child: Row(
                     children: [
                       _BillingTab(
-                        label: 'Yearly',
-                        sublabel: 'Best value',
+                        label: AppLocalizations.of(context).paywallPricingYearly,
+                        sublabel: AppLocalizations.of(context).paywallPricingBestValue,
                         badge: 'SAVE ${_getSavingsPercent(offerings: subscriptionState.offerings)}%',
                         // Phase C: louder savings badge on the value plan.
                         prominentBadge: _experiments.pricingPsychology,
@@ -386,7 +387,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         colors: colors,
                       ),
                       _BillingTab(
-                        label: 'Monthly',
+                        label: AppLocalizations.of(context).xpGoalsMonthly,
                         sublabel: '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumMonthlyId, fallback: '\$7.99')}/mo',
                         // Phase C: quieter monthly tab so the annual + trial
                         // path reads as the obvious default.
@@ -481,7 +482,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          'Less than the price of a coffee each week',
+                          AppLocalizations.of(context).paywallPricingLessThanThePrice,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 12,
@@ -529,7 +530,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          'No payment due now',
+                          AppLocalizations.of(context).paywallPricingNoPaymentDueNow,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
@@ -600,7 +601,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Text(
-                          'Maybe later',
+                          AppLocalizations.of(context).notifsLaterButton,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
@@ -630,7 +631,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       Flexible(
                         child: Text(
                           Platform.isIOS
-                              ? 'Billed securely through the App Store'
+                              ? AppLocalizations.of(context).paywallPricingBilledSecurelyThroughThe
                               : 'Billed securely through Google Play',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -669,23 +670,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => _restorePurchases(context, ref),
-                      child: Text('Restore', style: TextStyle(fontSize: 13, color: colors.cyan)),
+                      child: Text(AppLocalizations.of(context).paywallPricingRestore, style: TextStyle(fontSize: 13, color: colors.cyan)),
                     ),
-                    Text(' • ', style: TextStyle(color: colors.textMuted)),
+                    Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: colors.textMuted)),
                     GestureDetector(
                       onTap: () => _openTermsOfService(),
-                      child: Text('Terms', style: TextStyle(fontSize: 13, color: colors.textMuted)),
+                      child: Text(AppLocalizations.of(context).paywallPricingTerms, style: TextStyle(fontSize: 13, color: colors.textMuted)),
                     ),
-                    Text(' • ', style: TextStyle(color: colors.textMuted)),
+                    Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: colors.textMuted)),
                     GestureDetector(
                       onTap: () => _openPrivacyPolicy(),
-                      child: Text('Privacy', style: TextStyle(fontSize: 13, color: colors.textMuted)),
+                      child: Text(AppLocalizations.of(context).settingsPrivacySection, style: TextStyle(fontSize: 13, color: colors.textMuted)),
                     ),
                     if (isSubscribed && currentTier != SubscriptionTier.lifetime) ...[
-                      Text(' • ', style: TextStyle(color: colors.textMuted)),
+                      Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: colors.textMuted)),
                       GestureDetector(
                         onTap: () => _openSubscriptionSettings(),
-                        child: Text('Cancel', style: TextStyle(fontSize: 13, color: Colors.red.shade400)),
+                        child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(fontSize: 13, color: Colors.red.shade400)),
                       ),
                     ],
                   ],
@@ -789,7 +790,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               padding: const EdgeInsets.symmetric(
                   horizontal: 8, vertical: 8),
               child: Text(
-                'Restore',
+                AppLocalizations.of(context).paywallPricingRestore,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -831,7 +832,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   size: 16, color: colors.textSecondary),
               const SizedBox(width: 6),
               Text(
-                'No Payment Due Now',
+                AppLocalizations.of(context).paywallPricingNoPaymentDueNow2,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -915,7 +916,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Text(
-                  'Maybe later',
+                  AppLocalizations.of(context).notifsLaterButton,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -952,7 +953,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Free for 7 days. Cancel anytime.',
+            AppLocalizations.of(context).paywallPricingFreeFor7Days,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -1027,7 +1028,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         children: [
           const SizedBox(height: 8),
           Text(
-            "We'll send you a reminder\nbefore your free trial ends",
+            AppLocalizations.of(context).paywallPricingWeLlSendYou,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 24,
@@ -1039,7 +1040,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'No surprises. Cancel anytime in Settings before day 7.',
+            AppLocalizations.of(context).paywallPricingNoSurprisesCancelAnytime,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -1161,7 +1162,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         children: [
           const SizedBox(height: 4),
           Text(
-            'Start your 7-day FREE\ntrial to continue',
+            AppLocalizations.of(context).paywallPricingStartYour7Day,
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w800,
@@ -1175,9 +1176,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             icon: Icons.lock_open_rounded,
             iconBg: _paywallAccent.withValues(alpha: 0.15),
             iconColor: _paywallAccent,
-            title: 'Today',
+            title: AppLocalizations.of(context).todayScoreCardToday,
             subtitle:
-                "Unlock unlimited AI workouts, food scan & macros, form analysis, and full progress tracking.",
+                AppLocalizations.of(context).paywallPricingUnlockUnlimitedAiWorkouts,
             isFirst: true,
             isLast: false,
             colors: colors,
@@ -1186,7 +1187,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             icon: Icons.notifications_rounded,
             iconBg: _paywallAccent.withValues(alpha: 0.15),
             iconColor: _paywallAccent,
-            title: 'In 5 Days · Reminder',
+            title: AppLocalizations.of(context).paywallPricingIn5DaysReminder,
             subtitle:
                 "We'll send you a reminder on ${_reminderDateString()} that your trial is ending soon.",
             isFirst: false,
@@ -1197,7 +1198,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             icon: Icons.workspace_premium_rounded,
             iconBg: _paywallAccent.withValues(alpha: 0.15),
             iconColor: _paywallAccent,
-            title: 'In 7 Days · Billing Starts',
+            title: AppLocalizations.of(context).paywallPricingIn7DaysBilling,
             subtitle:
                 "You'll be charged on ${_trialEndDateString()} unless you cancel anytime before.",
             isFirst: false,
@@ -1209,7 +1210,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             children: [
               Expanded(
                 child: _PlanTile(
-                  title: 'Monthly',
+                  title: AppLocalizations.of(context).xpGoalsMonthly,
                   price: monthlyPrice,
                   unit: '/mo',
                   isSelected: _selectedBillingCycle == 'monthly',
@@ -1235,7 +1236,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _PlanTile(
-                  title: 'Yearly',
+                  title: AppLocalizations.of(context).paywallPricingYearly,
                   price: yearlyMonthly,
                   unit: '/mo',
                   anchorPrice: monthlyPrice,
@@ -1286,7 +1287,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             children: [
               GestureDetector(
                 onTap: _openTermsOfService,
-                child: Text('Terms',
+                child: Text(AppLocalizations.of(context).paywallPricingTerms,
                     style: TextStyle(
                         fontSize: 12, color: colors.textMuted)),
               ),
@@ -1295,7 +1296,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       fontSize: 12, color: colors.textMuted)),
               GestureDetector(
                 onTap: _openPrivacyPolicy,
-                child: Text('Privacy',
+                child: Text(AppLocalizations.of(context).settingsPrivacySection,
                     style: TextStyle(
                         fontSize: 12, color: colors.textMuted)),
               ),
@@ -1337,7 +1338,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           final isReturning = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
           if (isReturning) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('You\'re all set. Your trial is now active.'), behavior: SnackBarBehavior.floating),
+              SnackBar(content: Text(AppLocalizations.of(context).paywallPricingYouReAllSet), behavior: SnackBarBehavior.floating),
             );
             context.go('/home');
           } else {
@@ -1456,7 +1457,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         // Existing user upgrading — snackbar + go home
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSubscribed ? 'Plan updated successfully!' : 'You\'re all set. Your trial is now active.'),
+            content: Text(isSubscribed ? AppLocalizations.of(context).paywallPricingPlanUpdatedSuccessfully : AppLocalizations.of(context).paywallPricingYouReAllSet),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1554,8 +1555,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
     if (isSameTier) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You are already on this plan'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).paywallPricingYouAreAlreadyOn),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1588,7 +1589,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success ? 'Purchases restored!' : 'No purchases found'),
+          content: Text(success ? AppLocalizations.of(context).paywallPricingPurchasesRestored : AppLocalizations.of(context).paywallPricingNoPurchasesFound),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1623,7 +1624,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       children: [
         // Title
         Text(
-          isSubscribed ? 'Change Plan' : 'Your AI coach',
+          isSubscribed ? AppLocalizations.of(context).paywallPricingChangePlan : AppLocalizations.of(context).paywallPricingYourAiCoach,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
@@ -1633,7 +1634,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         ),
         if (!isSubscribed)
           Text(
-            'is ready',
+            AppLocalizations.of(context).paywallPricingIsReady,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -1665,7 +1666,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '7-day free trial\nCancel anytime, no questions asked',
+                    AppLocalizations.of(context).paywallPricing7DayFreeTrial2,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -1681,7 +1682,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
         // What you get
         Text(
-          'What you get',
+          AppLocalizations.of(context).paywallPricingWhatYouGet,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -1719,7 +1720,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Start with a 7-day free trial. Cancel anytime — no charge until the trial ends.',
+                  AppLocalizations.of(context).paywallPricingStartWithA7,
                   style: TextStyle(
                     fontSize: 12,
                     color: colors.textSecondary,
@@ -1865,7 +1866,7 @@ class _WorkoutMockCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Today',
+            AppLocalizations.of(context).todayScoreCardToday,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -1875,7 +1876,7 @@ class _WorkoutMockCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'Push Day',
+            AppLocalizations.of(context).paywallPricingPushDay,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -1909,8 +1910,8 @@ class _WorkoutMockCard extends StatelessWidget {
                         color: Colors.white.withValues(alpha: 0.22),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        'AI · 6 EXERCISES',
+                      child: Text(
+                        AppLocalizations.of(context).paywallPricingAi6Exercises,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
@@ -1925,8 +1926,8 @@ class _WorkoutMockCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  '45 min',
+                Text(
+                  AppLocalizations.of(context).paywallPricing45Min,
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -1934,8 +1935,8 @@ class _WorkoutMockCard extends StatelessWidget {
                     letterSpacing: -0.5,
                   ),
                 ),
-                const Text(
-                  '· chest · shoulders · triceps',
+                Text(
+                  AppLocalizations.of(context).paywallPricingChestShouldersTriceps,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

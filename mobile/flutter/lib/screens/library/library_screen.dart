@@ -10,6 +10,7 @@ import 'tabs/discover_tab.dart';
 import 'tabs/exercises_tab.dart';
 import 'tabs/my_library_tab.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 // Export providers and models for external use
 export 'providers/library_providers.dart';
 export 'models/filter_option.dart';
@@ -130,7 +131,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Library',
+                        AppLocalizations.of(context).workoutsLibrary,
                         style: Theme.of(context)
                             .textTheme
                             .headlineMedium
@@ -179,7 +180,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                               fontSize: 14,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search exercises...',
+                              hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
                               hintStyle: TextStyle(
                                 color: textMuted,
                                 fontSize: 14,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Gate screen asking user if they want nutrition guidance.
 ///
 /// This screen is shown AFTER personalization (or after skipping personalization).
@@ -67,7 +68,7 @@ class QuizNutritionGate extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Recommended for you',
+                        AppLocalizations.of(context).quizNutritionGateRecommendedForYou,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -95,7 +96,7 @@ class QuizNutritionGate extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Optional',
+                    AppLocalizations.of(context).quizNutritionGateOptional,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -108,7 +109,7 @@ class QuizNutritionGate extends StatelessWidget {
           const SizedBox(height: 20),
           // Title
           Text(
-            'Want nutrition guidance too?',
+            AppLocalizations.of(context).quizNutritionGateWantNutritionGuidanceToo,
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -119,7 +120,7 @@ class QuizNutritionGate extends StatelessWidget {
           const SizedBox(height: 12),
           // Subtitle
           Text(
-            'Get personalized calorie and macro targets to support your fitness goals',
+            AppLocalizations.of(context).quizNutritionGateGetPersonalizedCalorieAnd,
             style: TextStyle(
               fontSize: 16,
               color: t.textSecondary,
@@ -135,24 +136,24 @@ class QuizNutritionGate extends StatelessWidget {
                   _buildBenefitItem(
                     t: t,
                     icon: Icons.restaurant_menu,
-                    title: 'Calorie & macro targets',
-                    description: 'Tailored to your goals and activity level',
+                    title: AppLocalizations.of(context).quizNutritionGateCalorieMacroTargets,
+                    description: AppLocalizations.of(context).quizNutritionGateTailoredToYourGoals,
                     delay: 400.ms,
                   ),
                   const SizedBox(height: 16),
                   _buildBenefitItem(
                     t: t,
                     icon: Icons.schedule,
-                    title: 'Meal timing guidance',
-                    description: 'Optimize when you eat for better results',
+                    title: AppLocalizations.of(context).quizNutritionGateMealTimingGuidance,
+                    description: AppLocalizations.of(context).quizNutritionGateOptimizeWhenYouEat,
                     delay: 500.ms,
                   ),
                   const SizedBox(height: 16),
                   _buildBenefitItem(
                     t: t,
                     icon: Icons.local_dining,
-                    title: 'Dietary preferences',
-                    description: 'Respects your restrictions and preferences',
+                    title: AppLocalizations.of(context).quizNutritionGateDietaryPreferences,
+                    description: AppLocalizations.of(context).quizNutritionGateRespectsYourRestrictionsAnd,
                     delay: 600.ms,
                   ),
                 ],
@@ -196,7 +197,7 @@ class QuizNutritionGate extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Yes, Set Nutrition',
+                                AppLocalizations.of(context).quizNutritionGateYesSetNutrition,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -230,7 +231,7 @@ class QuizNutritionGate extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Not Now',
+                    AppLocalizations.of(context).watchInstallBannerNotNow,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,

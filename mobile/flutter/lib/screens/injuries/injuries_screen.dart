@@ -11,6 +11,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/injury_card.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Filter tabs for injuries list
 enum InjuryFilter { active, recovering, healed }
 
@@ -141,7 +142,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('How is your pain level today?',
+                Text(AppLocalizations.of(context).injuriesHowIsYourPain,
                   style: TextStyle(fontSize: 14, color: isDark ? AppColors.textSecondary : Colors.black54)),
                 const SizedBox(height: 16),
                 Row(
@@ -161,21 +162,21 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Mild', style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : Colors.black38)),
-                    Text('Severe', style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : Colors.black38)),
+                    Text(AppLocalizations.of(context).injuriesMild, style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : Colors.black38)),
+                    Text(AppLocalizations.of(context).injuriesSevere, style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : Colors.black38)),
                   ],
                 ),
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context).buttonCancel)),
               FilledButton(
                 onPressed: () {
                   Navigator.pop(ctx);
                   AppSnackBar.success(context, 'Check-in saved: pain level $painLevel/10');
                   _loadInjuries();
                 },
-                child: const Text('Save'),
+                child: Text(AppLocalizations.of(context).buttonSave),
               ),
             ],
           );
@@ -197,7 +198,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Injury Tracker',
+        title: AppLocalizations.of(context).injuriesInjuryTracker,
         actions: [
           PillAppBarAction(icon: Icons.refresh, onTap: _loadInjuries),
         ],
@@ -207,10 +208,10 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
           SegmentedTabBar(
             controller: _tabController,
             showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Active'),
-              SegmentedTabItem(label: 'Recovering'),
-              SegmentedTabItem(label: 'Healed'),
+            tabs: [
+              SegmentedTabItem(label: AppLocalizations.of(context).syncedWorkoutsHistoryActive),
+              SegmentedTabItem(label: AppLocalizations.of(context).injuriesRecovering),
+              SegmentedTabItem(label: AppLocalizations.of(context).injuryCardHealed),
             ],
           ),
           Expanded(
@@ -227,7 +228,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
         backgroundColor: AppColors.coral,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('Report Injury'),
+        label: Text(AppLocalizations.of(context).reportInjuryReportInjury),
       ),
     );
   }
@@ -240,7 +241,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
           Icon(Icons.error_outline, size: 64, color: AppColors.error.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(
-            'Something went wrong',
+            AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -249,14 +250,14 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            _error ?? 'Unknown error',
+            _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
             style: TextStyle(color: textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _loadInjuries,
-            child: const Text('Try Again'),
+            child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
           ),
         ],
       ),
@@ -376,7 +377,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
               OutlinedButton.icon(
                 onPressed: _navigateToReportInjury,
                 icon: const Icon(Icons.add),
-                label: const Text('Report an Injury'),
+                label: Text(AppLocalizations.of(context).injuriesReportAnInjury),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.coral,
                   side: const BorderSide(color: AppColors.coral),

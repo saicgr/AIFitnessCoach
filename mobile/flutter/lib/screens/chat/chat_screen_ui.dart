@@ -89,7 +89,7 @@ class _StreamingBubble extends StatelessWidget {
                           size: 14, color: AppColors.warning),
                       const SizedBox(width: 6),
                       Text(
-                        'Connection dropped',
+                        AppLocalizations.of(context).chatScreenUiConnectionDropped,
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.warning,
@@ -109,8 +109,8 @@ class _StreamingBubble extends StatelessWidget {
                             const Icon(Icons.refresh_rounded,
                                 size: 14, color: AppColors.cyan),
                             const SizedBox(width: 4),
-                            const Text(
-                              'Retry',
+                            Text(
+                              AppLocalizations.of(context).buttonRetry,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.cyan,
@@ -129,7 +129,7 @@ class _StreamingBubble extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 4, left: 36),
                   child: Text(
-                    'typing…',
+                    AppLocalizations.of(context).chatScreenUiTyping,
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark

@@ -226,7 +226,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
           Expanded(
             flex: 3,
             child: Text(
-              'TARGET',
+              AppLocalizations.of(context).summaryExerciseTableTarget,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -312,7 +312,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
           // Set type label - hide on very compact screens
           if (!isCompact) ...[
             Text(
-              'Set Type:',
+              AppLocalizations.of(context).setTrackingOverlaySetType,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -381,7 +381,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                   ),
                   SizedBox(width: isCompact ? 2 : 4),
                   Text(
-                    'Set',
+                    AppLocalizations.of(context).workoutSummaryAdvancedSet,
                     style: TextStyle(
                       fontSize: isCompact ? 11 : 12,
                       fontWeight: FontWeight.w600,
@@ -447,7 +447,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isCollapsed ? 'Show' : 'Hide',
+                      isCollapsed ? AppLocalizations.of(context).setTrackingOverlayShow : AppLocalizations.of(context).workoutSheetsMixinHide,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -504,7 +504,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                hasNotes ? _notesController.text : 'Tap to add notes...',
+                hasNotes ? _notesController.text : AppLocalizations.of(context).setTrackingOverlayTapToAddNotes,
                 style: TextStyle(
                   fontSize: 13,
                   color: hasNotes

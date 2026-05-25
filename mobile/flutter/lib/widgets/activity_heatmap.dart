@@ -7,6 +7,7 @@ import '../data/models/consistency.dart';
 import '../data/providers/consistency_provider.dart';
 import '../data/services/api_client.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// GitHub-style activity heatmap widget showing workout history
 class ActivityHeatmap extends ConsumerStatefulWidget {
   final Function(String date)? onDayTapped;
@@ -111,7 +112,7 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
         Row(
           children: [
             Text(
-              'Activity',
+              AppLocalizations.of(context).activityHeatmapActivity,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -384,17 +385,17 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
         // Missed indicator
         _LegendCell(color: AppColors.coral.withOpacity(0.6)),
         const SizedBox(width: 2),
-        Text('Missed', style: mutedStyle),
+        Text(AppLocalizations.of(context).habitDetailScreenMissed, style: mutedStyle),
         const SizedBox(width: 12),
         // Completed indicator
         const _LegendCell(color: AppColors.success),
         const SizedBox(width: 2),
-        Text('Done', style: mutedStyle),
+        Text(AppLocalizations.of(context).commonDone, style: mutedStyle),
         const SizedBox(width: 12),
         // Rest indicator
         _LegendCell(color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1)),
         const SizedBox(width: 2),
-        Text('Rest', style: mutedStyle),
+        Text(AppLocalizations.of(context).workoutSummaryAdvancedRest, style: mutedStyle),
       ],
     );
   }
@@ -612,7 +613,7 @@ class _HeatmapError extends StatelessWidget {
             const Icon(Icons.error_outline, color: AppColors.error, size: 24),
             const SizedBox(height: 8),
             Text(
-              'Failed to load activity',
+              AppLocalizations.of(context).myLibraryTabFailedToLoadActivity,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -696,7 +697,7 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
                   focusNode: _focusNode,
                   style: Theme.of(context).textTheme.bodyMedium,
                   decoration: InputDecoration(
-                    hintText: 'Search exercise...',
+                    hintText: AppLocalizations.of(context).activityHeatmapSearchExercise,
                     hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textMuted,
                         ),

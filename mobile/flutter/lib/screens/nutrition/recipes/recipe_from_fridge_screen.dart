@@ -16,6 +16,7 @@ import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RecipeFromFridgeScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -238,7 +239,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
               GlassBackButton(onTap: () => Navigator.of(context).pop()),
               const SizedBox(width: 12),
               Expanded(
-                child: Text('From your fridge',
+                child: Text(AppLocalizations.of(context).recipeFromFridgeFromYourFridge,
                   style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
               ),
             ],
@@ -246,7 +247,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 52),
-            child: Text('Type ingredients or snap a photo',
+            child: Text(AppLocalizations.of(context).recipeFromFridgeTypeIngredientsOrSnap,
               style: TextStyle(color: muted, fontSize: 11, height: 1.3)),
           ),
           const SizedBox(height: 16),
@@ -257,7 +258,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
               child: TextField(
                 controller: _addCtrl, style: TextStyle(color: text),
                 decoration: InputDecoration(
-                  hintText: 'Type ingredient (eggs, spinach\u2026)',
+                  hintText: AppLocalizations.of(context).recipeFromFridgeTypeIngredientEggsSpinach,
                   hintStyle: TextStyle(color: muted),
                   filled: true, fillColor: surface,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -275,7 +276,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
               icon: Icons.photo_library_outlined,
               color: accent,
               surface: surface,
-              tooltip: 'Choose from gallery',
+              tooltip: AppLocalizations.of(context).recipesChooseFromGallery,
               onTap: () => _pickImage(ImageSource.gallery),
             ),
             const SizedBox(width: 8),
@@ -283,7 +284,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
               icon: Icons.camera_alt_rounded,
               color: accent,
               surface: surface,
-              tooltip: 'Snap fridge photo',
+              tooltip: AppLocalizations.of(context).recipeFromFridgeSnapFridgePhoto,
               onTap: () => _pickImage(ImageSource.camera),
             ),
           ]),
@@ -342,7 +343,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white.withValues(alpha: 0.7)),
                     )
                   : const Icon(Icons.auto_awesome),
-              label: Text(_searching ? 'Finding recipes\u2026' : 'Find recipes'),
+              label: Text(_searching ? AppLocalizations.of(context).recipeFromFridgeFindingRecipesU2026 : AppLocalizations.of(context).recipeFromFridgeFindRecipes),
               style: ElevatedButton.styleFrom(
                 backgroundColor: accent,
                 foregroundColor: Colors.white,
@@ -395,7 +396,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                           _findRecipes();
                         }
                       },
-                      tooltip: 'Retry',
+                      tooltip: AppLocalizations.of(context).buttonRetry,
                     ),
                   ],
                 ),
@@ -405,13 +406,13 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           // Recipe suggestions
           if (_result != null) ...[
             const SizedBox(height: 24),
-            Text('Suggestions', style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w700)),
+            Text(AppLocalizations.of(context).unresolvedExercisesSuggestions, style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             ..._result!.suggestions.map((s) => _SuggestionCard(suggestion: s, isDark: isDark, accent: accent)),
             if (_result!.suggestions.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Text('No recipes found for these ingredients. Try adding more items.',
+                child: Text(AppLocalizations.of(context).recipeFromFridgeNoRecipesFoundFor,
                   style: TextStyle(color: muted, fontSize: 13)),
               ),
           ],
@@ -488,7 +489,7 @@ class _PhotoStrip extends StatelessWidget {
                       style: TextStyle(color: muted, fontSize: 11)),
                 ])
               else
-                Text('Scan complete',
+                Text(AppLocalizations.of(context).recipeFromFridgeScanComplete,
                     style: TextStyle(
                         color: accent,
                         fontSize: 11,
@@ -652,7 +653,7 @@ class _AddMoreTile extends StatelessWidget {
           children: [
             Icon(Icons.add_a_photo_outlined, color: accent, size: 22),
             const SizedBox(height: 4),
-            Text('Add', style: TextStyle(color: accent, fontSize: 11)),
+            Text(AppLocalizations.of(context).tilePickerAdd, style: TextStyle(color: accent, fontSize: 11)),
           ],
         ),
       ),
@@ -686,7 +687,7 @@ class _DetectedItemsSection extends StatelessWidget {
         Row(children: [
           Icon(Icons.visibility, size: 16, color: accent),
           const SizedBox(width: 6),
-          Text('Found in your photo',
+          Text(AppLocalizations.of(context).recipeFromFridgeFoundInYourPhoto,
             style: TextStyle(color: text, fontSize: 13, fontWeight: FontWeight.w700)),
         ]),
         const SizedBox(height: 8),
@@ -710,7 +711,7 @@ class _DetectedItemsSection extends StatelessWidget {
             ),
         ]),
         const SizedBox(height: 4),
-        Text('Tap "Find recipes" to get suggestions using these ingredients',
+        Text(AppLocalizations.of(context).recipeFromFridgeTapFindRecipesTo,
           style: TextStyle(color: muted, fontSize: 11)),
       ],
     );

@@ -12,6 +12,7 @@ import '../../../widgets/sheet_header.dart';
 import 'add_gym_profile_sheet.dart';
 import 'edit_gym_profile_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for managing gym profiles (reorder, edit, delete)
 class ManageGymProfilesSheet extends ConsumerStatefulWidget {
   /// Optional callback for back button - if null, no back button shown
@@ -137,7 +138,7 @@ class _ManageGymProfilesSheetState
     // Show confirmation dialog
     final confirmed = await AppDialog.destructive(
       context,
-      title: 'Delete Gym Profile?',
+      title: AppLocalizations.of(context).manageGymProfilesDeleteGymProfile,
       message: 'Are you sure you want to delete "${profile.name}"? '
           'This cannot be undone.',
       icon: Icons.delete_rounded,
@@ -270,7 +271,7 @@ class _ManageGymProfilesSheetState
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Manage Gyms',
+                      AppLocalizations.of(context).manageGymProfilesManageGyms,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -281,7 +282,7 @@ class _ManageGymProfilesSheetState
                   if (_hasChanges)
                     TextButton(
                       onPressed: _saveChanges,
-                      child: const Text('Save'),
+                      child: Text(AppLocalizations.of(context).buttonSave),
                     ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -303,7 +304,7 @@ class _ManageGymProfilesSheetState
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Drag to reorder • Tap to edit',
+                    AppLocalizations.of(context).manageGymProfilesDragToReorderTap,
                     style: TextStyle(
                       fontSize: 13,
                       color: textSecondary,
@@ -320,7 +321,7 @@ class _ManageGymProfilesSheetState
               child: _profiles.isEmpty
                   ? Center(
                       child: Text(
-                        'No gym profiles yet',
+                        AppLocalizations.of(context).manageGymProfilesNoGymProfilesYet,
                         style: TextStyle(color: textSecondary),
                       ),
                     )
@@ -376,7 +377,7 @@ class _ManageGymProfilesSheetState
                   child: OutlinedButton.icon(
                     onPressed: _showAddSheet,
                     icon: const Icon(Icons.add_rounded),
-                    label: const Text('Add New Gym'),
+                    label: Text(AppLocalizations.of(context).manageGymProfilesAddNewGym),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.cyan,
                       side: BorderSide(color: AppColors.cyan),
@@ -494,7 +495,7 @@ class _ManageGymProfilesSheetState
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'Active',
+                                    AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -583,33 +584,33 @@ class _ManageGymProfilesSheetState
                   ),
                   itemBuilder: (context) => [
                     if (!isActive)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'activate',
                         child: Row(
                           children: [
                             Icon(Icons.check_circle_outline_rounded, size: 20),
                             SizedBox(width: 12),
-                            Text('Set as Active'),
+                            Text(AppLocalizations.of(context).manageGymProfilesSetAsActive),
                           ],
                         ),
                       ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'edit',
                       child: Row(
                         children: [
                           Icon(Icons.edit_rounded, size: 20),
                           SizedBox(width: 12),
-                          Text('Edit'),
+                          Text(AppLocalizations.of(context).commonEdit),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'duplicate',
                       child: Row(
                         children: [
                           Icon(Icons.copy_rounded, size: 20),
                           SizedBox(width: 12),
-                          Text('Duplicate'),
+                          Text(AppLocalizations.of(context).manageGymProfilesDuplicate),
                         ],
                       ),
                     ),
@@ -625,7 +626,7 @@ class _ManageGymProfilesSheetState
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              'Delete',
+                              AppLocalizations.of(context).buttonDelete,
                               style: TextStyle(color: AppColors.error),
                             ),
                           ],

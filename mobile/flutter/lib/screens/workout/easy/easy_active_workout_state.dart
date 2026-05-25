@@ -58,6 +58,7 @@ import 'easy_sheet_helpers.dart';
 import 'widgets/easy_exercise_actions_sheet.dart';
 import 'widgets/easy_help_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class EasyActiveWorkoutScreenState
     extends ConsumerState<EasyActiveWorkoutScreen> {
   late List<WorkoutExercise> _exercises;
@@ -702,8 +703,8 @@ class EasyActiveWorkoutScreenState
         // the pre-swap sets for that index.
         _syncEasySessionSets();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Exercise swapped'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).easyActiveWorkoutExerciseSwapped),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -820,7 +821,7 @@ class EasyActiveWorkoutScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Complete workout now?'),
+        title: Text(AppLocalizations.of(context).workoutFlowMixinCompleteWorkoutNow),
         content: const Text(
           'Any sets you haven’t logged will be saved as zero (0 weight, '
           '0 reps). You’ll go straight to the workout summary.',
@@ -828,11 +829,11 @@ class EasyActiveWorkoutScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep going'),
+            child: Text(AppLocalizations.of(context).workoutFlowMixinKeepGoing),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Complete'),
+            child: Text(AppLocalizations.of(context).workoutFlowMixinComplete),
           ),
         ],
       ),
@@ -894,19 +895,19 @@ class EasyActiveWorkoutScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Quit workout?'),
+        title: Text(AppLocalizations.of(context).easyActiveWorkoutQuitWorkout),
         content: const Text(
             'Your logged sets will still be saved. You can resume this '
             'workout from Today any time.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep going'),
+            child: Text(AppLocalizations.of(context).workoutFlowMixinKeepGoing),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-            child: const Text('Quit'),
+            child: Text(AppLocalizations.of(context).easyActiveWorkoutQuit),
           ),
         ],
       ),
@@ -1083,7 +1084,7 @@ class _EasySavingOverlay extends StatelessWidget {
                   .shake(duration: 300.ms),
               const SizedBox(height: 24),
               Text(
-                'Saving workout...',
+                AppLocalizations.of(context).workoutUiBuildersSavingWorkout,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

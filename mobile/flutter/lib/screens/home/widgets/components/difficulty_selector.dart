@@ -4,6 +4,7 @@ import '../../../../core/utils/difficulty_utils.dart';
 import 'sheet_theme_colors.dart';
 import 'section_title.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Default list of difficulty levels (internal values)
 const List<String> defaultDifficulties = ['easy', 'medium', 'hard', 'hell'];
 
@@ -70,7 +71,7 @@ class DifficultySelector extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                isHell ? 'Hell Intensity' : 'High Intensity',
+                isHell ? AppLocalizations.of(context).difficultySelectorHellIntensity : AppLocalizations.of(context).difficultySelectorHighIntensity,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.bold,
@@ -93,7 +94,7 @@ class DifficultySelector extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Choose Another',
+              AppLocalizations.of(context).difficultySelectorChooseAnother,
               style: TextStyle(color: colors.textMuted),
             ),
           ),
@@ -103,7 +104,7 @@ class DifficultySelector extends StatelessWidget {
               onSelectionChanged(difficulty);
             },
             child: Text(
-              'Continue Anyway',
+              AppLocalizations.of(context).difficultySelectorContinueAnyway,
               style: TextStyle(
                 color: isHell ? colors.error : colors.orange,
                 fontWeight: FontWeight.w600,
@@ -139,7 +140,7 @@ class DifficultySelector extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'HELL Mode Warning',
+                AppLocalizations.of(context).difficultySelectorHellModeWarning,
                 style: TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
@@ -154,7 +155,7 @@ class DifficultySelector extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'This is an extreme intensity workout designed to push your absolute limits.',
+              AppLocalizations.of(context).difficultySelectorThisIsAnExtreme,
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: 15,
@@ -181,7 +182,7 @@ class DifficultySelector extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Consider "Challenging" for a safer intense workout',
+                      AppLocalizations.of(context).difficultySelectorConsiderChallengingForA,
                       style: TextStyle(
                         color: colors.orange,
                         fontSize: 13,
@@ -198,7 +199,7 @@ class DifficultySelector extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Choose Different',
+              AppLocalizations.of(context).difficultySelectorChooseDifferent,
               style: TextStyle(color: colors.textMuted, fontSize: 15),
             ),
           ),
@@ -215,13 +216,13 @@ class DifficultySelector extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.local_fire_department, size: 18),
                 SizedBox(width: 6),
                 Text(
-                  'I Accept the Risk',
+                  AppLocalizations.of(context).difficultySelectorIAcceptTheRisk,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ],
@@ -304,7 +305,7 @@ class DifficultySelector extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Got it',
+              AppLocalizations.of(context).weightIncrementsGotIt,
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w600,
@@ -327,7 +328,7 @@ class DifficultySelector extends StatelessWidget {
         children: [
           SectionTitle(
             icon: Icons.speed,
-            title: 'Difficulty',
+            title: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
             iconColor: colors.cyan,
           ),
           const SizedBox(height: 12),

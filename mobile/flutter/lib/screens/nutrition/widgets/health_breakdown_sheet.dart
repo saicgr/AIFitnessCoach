@@ -5,6 +5,7 @@ import '../../../data/models/menu_item.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'score_explain_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Full-item health breakdown — opens from the "Full breakdown →" pill at
 /// the end of a dish card's Health Strip.
 ///
@@ -64,7 +65,7 @@ class HealthBreakdownSheet extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Health breakdown',
+                        AppLocalizations.of(context).healthBreakdownHealthBreakdown,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -118,7 +119,7 @@ class HealthBreakdownSheet extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Tap any row for the full explanation, scale, and education.',
+              AppLocalizations.of(context).healthBreakdownTapAnyRowFor,
               style: TextStyle(
                 fontSize: 11,
                 color: textMuted,
@@ -272,13 +273,13 @@ class _InflammationRow extends StatelessWidget {
     if (s == null) {
       return _SignalRow(
         emoji: '🔥',
-        label: 'Inflammation',
+        label: AppLocalizations.of(context).menuFilterInflammation,
         valueText: '—',
         accent: textMuted,
         textPrimary: textPrimary,
         textSecondary: textSecondary,
         textMuted: textMuted,
-        hint: 'Not computed for this dish.',
+        hint: AppLocalizations.of(context).healthBreakdownNotComputedForThis,
       );
     }
     final accent = s >= 7
@@ -295,12 +296,12 @@ class _InflammationRow extends StatelessWidget {
 
     return _SignalRow(
       emoji: '🔥',
-      label: 'Inflammation',
+      label: AppLocalizations.of(context).menuFilterInflammation,
       valueText: '$s/10',
       accent: accent,
       severityLabel: severityLabel,
       hint: triggers.isEmpty
-          ? 'Chronic low-grade inflammation affects joint comfort, energy, and recovery.'
+          ? AppLocalizations.of(context).healthBreakdownChronicLowGradeInflammation
           : 'Key drivers in this dish:',
       extra: triggers.isEmpty
           ? null
@@ -336,13 +337,13 @@ class _BloodSugarRow extends StatelessWidget {
     if (gl == null) {
       return _SignalRow(
         emoji: '🩸',
-        label: 'Blood sugar',
+        label: AppLocalizations.of(context).menuFilterBloodSugar,
         valueText: '—',
         accent: textMuted,
         textPrimary: textPrimary,
         textSecondary: textSecondary,
         textMuted: textMuted,
-        hint: 'No glycemic load computed (likely a carb-free dish).',
+        hint: AppLocalizations.of(context).healthBreakdownNoGlycemicLoadComputed,
       );
     }
     final accent = gl >= 20
@@ -357,12 +358,12 @@ class _BloodSugarRow extends StatelessWidget {
             : 'HIGH IMPACT';
     return _SignalRow(
       emoji: '🩸',
-      label: 'Blood sugar',
+      label: AppLocalizations.of(context).menuFilterBloodSugar,
       valueText: 'GL $gl',
       accent: accent,
       severityLabel: severityLabel,
       hint:
-          'Glycemic Load = GI × carbs ÷ 100. Lower = steadier energy and fewer spikes.',
+          AppLocalizations.of(context).healthBreakdownGlycemicLoadGiCarbs,
       textPrimary: textPrimary,
       textSecondary: textSecondary,
       textMuted: textMuted,
@@ -393,13 +394,13 @@ class _FodmapRow extends StatelessWidget {
     if (r == null) {
       return _SignalRow(
         emoji: '🧡',
-        label: 'FODMAP',
+        label: AppLocalizations.of(context).menuAnalysisItemFodmap,
         valueText: '—',
         accent: textMuted,
         textPrimary: textPrimary,
         textSecondary: textSecondary,
         textMuted: textMuted,
-        hint: 'Not classified for this dish.',
+        hint: AppLocalizations.of(context).healthBreakdownNotClassifiedForThis,
       );
     }
     final accent = r == 'high'
@@ -414,7 +415,7 @@ class _FodmapRow extends StatelessWidget {
             : 'GUT-FRIENDLY';
     return _SignalRow(
       emoji: '🧡',
-      label: 'FODMAP',
+      label: AppLocalizations.of(context).menuAnalysisItemFodmap,
       valueText: _titleCase(r),
       accent: accent,
       severityLabel: label,
@@ -455,13 +456,13 @@ class _AddedSugarRow extends StatelessWidget {
     if (g == null) {
       return _SignalRow(
         emoji: '🍬',
-        label: 'Added sugar',
+        label: AppLocalizations.of(context).menuAnalysisItemAddedSugar,
         valueText: '—',
         accent: textMuted,
         textPrimary: textPrimary,
         textSecondary: textSecondary,
         textMuted: textMuted,
-        hint: 'Not computed — likely no added sugar in this dish.',
+        hint: AppLocalizations.of(context).healthBreakdownNotComputedLikelyNo,
       );
     }
     final accent = g >= 15
@@ -480,7 +481,7 @@ class _AddedSugarRow extends StatelessWidget {
         : 'About $pct% of WHO\'s 25 g daily limit for adults.';
     return _SignalRow(
       emoji: '🍬',
-      label: 'Added sugar',
+      label: AppLocalizations.of(context).menuAnalysisItemAddedSugar,
       valueText: _fmt(g),
       accent: accent,
       severityLabel: severityLabel,
@@ -520,24 +521,24 @@ class _UltraProcessedRow extends StatelessWidget {
     if (v == null) {
       return _SignalRow(
         emoji: '🏭',
-        label: 'Ultra-processed',
+        label: AppLocalizations.of(context).scoreExplainUltraProcessed,
         valueText: '—',
         accent: textMuted,
         textPrimary: textPrimary,
         textSecondary: textSecondary,
         textMuted: textMuted,
-        hint: 'Not classified for this dish.',
+        hint: AppLocalizations.of(context).healthBreakdownNotClassifiedForThis,
       );
     }
     final accent = v ? AppColors.error : AppColors.success;
     return _SignalRow(
       emoji: '🏭',
-      label: 'Ultra-processed',
-      valueText: v ? 'Yes' : 'No',
+      label: AppLocalizations.of(context).scoreExplainUltraProcessed,
+      valueText: v ? AppLocalizations.of(context).commonYes : AppLocalizations.of(context).workoutImportPreviewNo,
       accent: accent,
       severityLabel: v ? 'NOVA 4' : 'WHOLE / MINIMALLY PROCESSED',
       hint: v
-          ? 'NOVA Group 4 — industrial recipes with emulsifiers, HFCS, artificial sweeteners, etc.'
+          ? AppLocalizations.of(context).healthBreakdownNovaGroup4Industrial
           : 'Built from raw or basic-cooked ingredients.',
       textPrimary: textPrimary,
       textSecondary: textSecondary,

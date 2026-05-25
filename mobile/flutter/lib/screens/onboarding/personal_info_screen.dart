@@ -12,6 +12,7 @@ import '../../data/services/api_client.dart';
 import 'cycle_onboarding_sheet.dart';
 import 'pre_auth_quiz_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Personal Info — name + date-of-birth, collected post-sign-in.
 ///
 /// Onboarding v5.1.1: Name and DOB are the only fields that genuinely need
@@ -123,7 +124,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please complete the body metrics step first.')),
+          SnackBar(content: Text(AppLocalizations.of(context).personalInfoPleaseCompleteTheBody)),
         );
         context.go('/pre-auth-quiz');
       }
@@ -226,7 +227,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           return AlertDialog(
             backgroundColor:
                 isDark ? AppColors.surface : AppColorsLight.surface,
-            title: const Text('Do you track a menstrual cycle?'),
+            title: Text(AppLocalizations.of(context).personalInfoDoYouTrackA),
             content: const Text(
               'Zealova can predict your cycle and adapt workouts and '
               'nutrition around it. Entirely optional — you can change '
@@ -235,11 +236,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('No thanks'),
+                child: Text(AppLocalizations.of(context).personalInfoNoThanks),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Yes, set it up'),
+                child: Text(AppLocalizations.of(context).personalInfoYesSetItUp),
               ),
             ],
           );
@@ -291,7 +292,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     children: [
               const SizedBox(height: 8),
               Text(
-                'A couple final details',
+                AppLocalizations.of(context).personalInfoACoupleFinalDetails,
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
@@ -302,7 +303,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               ).animate().fadeIn(),
               const SizedBox(height: 6),
               Text(
-                'We use these to personalize your coaching and keep your account safe.',
+                AppLocalizations.of(context).personalInfoWeUseTheseTo,
                 style: TextStyle(
                   fontSize: 14,
                   color: textSecondary,
@@ -314,7 +315,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
               // ── Name
               Text(
-                'YOUR NAME',
+                AppLocalizations.of(context).personalInfoYourName,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -336,7 +337,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                   color: textPrimary,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'First name',
+                  hintText: AppLocalizations.of(context).personalInfoFirstName,
                   hintStyle: TextStyle(color: textSecondary, fontSize: 16),
                   filled: true,
                   fillColor: fill,
@@ -361,7 +362,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
               // ── Date of birth
               Text(
-                'DATE OF BIRTH',
+                AppLocalizations.of(context).personalInfoDateOfBirth,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -405,7 +406,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               if (_dateOfBirth != null && (_age ?? 0) < 16) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'You must be at least 16 to use Zealova.',
+                  AppLocalizations.of(context).personalInfoYouMustBeAt,
                   style: TextStyle(fontSize: 13, color: AppColors.error),
                 ),
               ],
@@ -438,8 +439,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                             valueColor: AlwaysStoppedAnimation(Colors.white),
                           ),
                         )
-                      : const Text(
-                          'Continue',
+                      : Text(
+                          AppLocalizations.of(context).onboardingContinueButton,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 17,

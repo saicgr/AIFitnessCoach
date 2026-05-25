@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Result from the batch portioning calculator
 class BatchPortioningResult {
   final String recipeName;
@@ -195,7 +196,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Batch Portioning',
+                      AppLocalizations.of(context).batchPortioningBatchPortioning,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -203,7 +204,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                       ),
                     ),
                     Text(
-                      'Calculate nutrition per portion',
+                      AppLocalizations.of(context).batchPortioningCalculateNutritionPerPortio,
                       style: TextStyle(
                         fontSize: 14,
                         color: textMuted,
@@ -226,7 +227,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                     controller: _nameController,
                     style: TextStyle(color: textPrimary),
                     decoration: InputDecoration(
-                      labelText: 'Recipe/Meal Name',
+                      labelText: AppLocalizations.of(context).batchPortioningRecipeMealName,
                       labelStyle: TextStyle(color: textMuted),
                       hintText: 'e.g., Chicken Stir Fry',
                       hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
@@ -244,7 +245,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
 
                   // Total Nutrition Section
                   Text(
-                    'TOTAL BATCH NUTRITION',
+                    AppLocalizations.of(context).batchPortioningTotalBatchNutrition,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -268,7 +269,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                             Expanded(
                               child: _buildMacroInput(
                                 controller: _totalCaloriesController,
-                                label: 'Calories',
+                                label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                                 color: teal,
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
@@ -279,7 +280,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                             Expanded(
                               child: _buildMacroInput(
                                 controller: _totalProteinController,
-                                label: 'Protein (g)',
+                                label: AppLocalizations.of(context).batchPortioningProteinG,
                                 color: Colors.blue,
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
@@ -293,7 +294,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                             Expanded(
                               child: _buildMacroInput(
                                 controller: _totalCarbsController,
-                                label: 'Carbs (g)',
+                                label: AppLocalizations.of(context).batchPortioningCarbsG,
                                 color: Colors.orange,
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
@@ -303,7 +304,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                             Expanded(
                               child: _buildMacroInput(
                                 controller: _totalFatController,
-                                label: 'Fat (g)',
+                                label: AppLocalizations.of(context).batchPortioningFatG,
                                 color: Colors.purple,
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
@@ -318,7 +319,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
 
                   // Number of Servings
                   Text(
-                    'HOW MANY SERVINGS?',
+                    AppLocalizations.of(context).batchPortioningHowManyServings,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -337,7 +338,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                     child: Row(
                       children: [
                         Text(
-                          'This makes',
+                          AppLocalizations.of(context).batchPortioningThisMakes,
                           style: TextStyle(fontSize: 16, color: textPrimary),
                         ),
                         const SizedBox(width: 12),
@@ -383,7 +384,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                   // Per Serving Breakdown
                   if (_totalCalories > 0 && _totalServings > 0) ...[
                     Text(
-                      'PER SERVING',
+                      AppLocalizations.of(context).batchPortioningPerServing,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -438,7 +439,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
 
                     // How much did you eat?
                     Text(
-                      'HOW MUCH DID YOU EAT?',
+                      AppLocalizations.of(context).batchPortioningHowMuchDidYou,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -655,8 +656,8 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Log This Portion',
+                    child: Text(
+                      AppLocalizations.of(context).batchPortioningLogThisPortion,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

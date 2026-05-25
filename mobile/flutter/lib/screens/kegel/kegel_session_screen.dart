@@ -9,6 +9,7 @@ import '../../core/providers/user_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Guided kegel/pelvic floor exercise session with timer
 class KegelSessionScreen extends ConsumerStatefulWidget {
   final String? exerciseId;
@@ -174,12 +175,12 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       builder: (context) {
         return AlertDialog(
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-          title: const Text('Session Complete!'),
+          title: Text(AppLocalizations.of(context).kegelSessionSessionComplete),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _selectedExercise?.displayName ?? 'Kegel Exercise',
+                _selectedExercise?.displayName ?? AppLocalizations.of(context).kegelSessionKegelExercise,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 16),
@@ -202,7 +203,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                 }
                 context.pop();
               },
-              child: const Text('Done'),
+              child: Text(AppLocalizations.of(context).commonDone),
             ),
             FilledButton(
               onPressed: () {
@@ -216,7 +217,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                   _selectedExercise = null;
                 });
               },
-              child: const Text('Do Another'),
+              child: Text(AppLocalizations.of(context).kegelSessionDoAnother),
             ),
           ],
         );
@@ -284,7 +285,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
           : null,
       appBar: PillAppBar(
         title: _isActive
-            ? (_selectedExercise?.displayName ?? 'Kegel Session')
+            ? (_selectedExercise?.displayName ?? AppLocalizations.of(context).kegelSessionKegelSession)
             : 'Pelvic Floor Exercises',
         onBack: () {
           if (_isActive) {
@@ -307,7 +308,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       error: (e, _) => Center(child: Text('Error loading exercises: $e')),
       data: (exercises) {
         if (exercises.isEmpty) {
-          return const Center(child: Text('No exercises available'));
+          return Center(child: Text(AppLocalizations.of(context).kegelSessionNoExercisesAvailable));
         }
 
         // Group by difficulty
@@ -347,11 +348,11 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Quick Start',
+                              AppLocalizations.of(context).kegelSessionQuickStart,
                               style: theme.textTheme.titleLarge,
                             ),
                             Text(
-                              'Start a basic kegel session now',
+                              AppLocalizations.of(context).kegelSessionStartABasicKegel,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -395,7 +396,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                         ),
                         trailing: FilledButton.tonal(
                           onPressed: () => _startSession(exercise),
-                          child: const Text('Start'),
+                          child: Text(AppLocalizations.of(context).buttonStart),
                         ),
                         onTap: () => _showExerciseDetails(exercise),
                       ),
@@ -476,7 +477,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Instructions',
+                  AppLocalizations.of(context).workoutShowcaseInstructions,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -499,7 +500,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                 const SizedBox(height: 16),
                 if (exercise.benefits.isNotEmpty) ...[
                   Text(
-                    'Benefits',
+                    AppLocalizations.of(context).kegelSessionBenefits,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
@@ -518,7 +519,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                     _startSession(exercise);
                   },
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text('Start Exercise'),
+                  label: Text(AppLocalizations.of(context).kegelSessionStartExercise),
                 ),
               ],
             );
@@ -603,7 +604,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                             ),
                           ),
                           Text(
-                            _isHolding ? 'SQUEEZE' : 'RELAX',
+                            _isHolding ? AppLocalizations.of(context).kegelSessionSqueeze : 'RELAX',
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
@@ -628,7 +629,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               _isHolding
-                  ? 'Squeeze your pelvic floor muscles and hold...'
+                  ? AppLocalizations.of(context).kegelSessionSqueezeYourPelvicFloor
                   : 'Release and relax completely...',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge,
@@ -689,13 +690,13 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('End Session?'),
-          content: const Text(
-              'Are you sure you want to end this session early? Your progress will not be saved.'),
+          title: Text(AppLocalizations.of(context).kegelSessionEndSession),
+          content: Text(
+              AppLocalizations.of(context).kegelSessionAreYouSureYou),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Continue'),
+              child: Text(AppLocalizations.of(context).onboardingContinueButton),
             ),
             FilledButton(
               onPressed: () {
@@ -703,7 +704,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
                 _timer?.cancel();
                 this.context.pop();
               },
-              child: const Text('End Session'),
+              child: Text(AppLocalizations.of(context).kegelSessionEndSession2),
             ),
           ],
         );

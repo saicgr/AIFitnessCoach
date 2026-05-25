@@ -16,6 +16,7 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/exercise.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Full-screen rest countdown overlay.
 ///
 /// Wire-up (call-site):
@@ -100,7 +101,7 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Rest',
+                AppLocalizations.of(context).workoutSummaryAdvancedRest,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -166,7 +167,7 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
                       horizontal: 24, vertical: 12),
                 ),
                 child: Text(
-                  'Skip rest',
+                  AppLocalizations.of(context).easyRestOverlaySkipRest,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

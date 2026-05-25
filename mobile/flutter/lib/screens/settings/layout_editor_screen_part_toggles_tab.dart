@@ -78,7 +78,7 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
               ),
               const SizedBox(width: 5),
               Text(
-                'Drag to reorder • Tap to toggle',
+                AppLocalizations.of(context).layoutEditorScreenDragToReorderTap,
                 style: TextStyle(
                   fontSize: 11,
                   color: widget.textMuted,
@@ -147,7 +147,7 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
-                          'HIDDEN',
+                          AppLocalizations.of(context).layoutEditorScreenHidden,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -442,7 +442,7 @@ class _DiscoverTab extends ConsumerWidget {
           _buildSectionHeader('PRESETS', cyan),
           const SizedBox(height: 8),
           Text(
-            'Choose a preset to quickly customize your home screen',
+            AppLocalizations.of(context).layoutEditorScreenChooseAPresetTo,
             style: TextStyle(fontSize: 13, color: textMuted),
           ),
           const SizedBox(height: 16),
@@ -498,8 +498,8 @@ class _DiscoverTab extends ConsumerWidget {
         ref.read(localLayoutProvider.notifier).applyUserDefault();
         onUserDefaultApplied();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Applied your default layout'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).layoutEditorScreenAppliedYourDefaultLayout),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -539,7 +539,7 @@ class _DiscoverTab extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'My Default',
+                    AppLocalizations.of(context).layoutEditorScreenMyDefault,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -548,7 +548,7 @@ class _DiscoverTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Your saved custom layout',
+                    AppLocalizations.of(context).layoutEditorScreenYourSavedCustomLayout,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,
@@ -563,8 +563,8 @@ class _DiscoverTab extends ConsumerWidget {
                 color: purple,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                'Apply',
+              child: Text(
+                AppLocalizations.of(context).setAdjustmentSheetApply,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -645,7 +645,7 @@ class _DiscoverTab extends ConsumerWidget {
                     ),
                     child: Center(
                       child: Text(
-                        'Preview',
+                        AppLocalizations.of(context).layoutEditorScreenPreview,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -684,7 +684,7 @@ class _DiscoverTab extends ConsumerWidget {
                     ),
                     child: Center(
                       child: Text(
-                        'Apply',
+                        AppLocalizations.of(context).setAdjustmentSheetApply,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -779,7 +779,7 @@ class _DiscoverTab extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            'Apply',
+                            AppLocalizations.of(context).setAdjustmentSheetApply,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

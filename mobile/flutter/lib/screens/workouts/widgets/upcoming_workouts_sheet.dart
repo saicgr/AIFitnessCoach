@@ -12,6 +12,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the upcoming workouts bottom sheet
 Future<void> showUpcomingWorkoutsSheet(
   BuildContext context,
@@ -101,7 +102,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Upcoming Workouts',
+                        AppLocalizations.of(context).upcomingWorkoutsUpcomingWorkouts,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -110,7 +111,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Tap a date to generate your workout',
+                        AppLocalizations.of(context).upcomingWorkoutsTapADateTo,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -183,7 +184,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'No workout days scheduled',
+                              AppLocalizations.of(context).upcomingWorkoutsNoWorkoutDaysScheduled,
                               style: TextStyle(
                                 fontSize: 16,
                                 color: textSecondary,
@@ -191,7 +192,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Update your workout schedule in Settings',
+                              AppLocalizations.of(context).upcomingWorkoutsUpdateYourWorkoutSchedule,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: textSecondary.withValues(alpha: 0.7),
@@ -380,7 +381,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          workout.name ?? 'Workout',
+          workout.name ?? AppLocalizations.of(context).navWorkout,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -406,7 +407,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isGenerating ? 'Generating...' : 'Tap to Generate',
+          isGenerating ? AppLocalizations.of(context).upcomingWorkoutsGenerating : AppLocalizations.of(context).upcomingWorkoutsTapToGenerate,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -415,7 +416,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
         ),
         const SizedBox(height: 3),
         Text(
-          isGenerating ? 'Creating your personalized workout' : 'AI will create your workout',
+          isGenerating ? AppLocalizations.of(context).upcomingWorkoutsCreatingYourPersonalizedWor : AppLocalizations.of(context).upcomingWorkoutsAiWillCreateYour,
           style: TextStyle(
             fontSize: 12,
             color: textSecondary,
@@ -467,19 +468,19 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
               await showDialog<void>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Not enough equipment'),
+                  title: Text(AppLocalizations.of(context).upcomingWorkoutsNotEnoughEquipment),
                   content: Text(progress.message),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text('Later'),
+                      child: Text(AppLocalizations.of(context).upcomingWorkoutsLater),
                     ),
                     FilledButton(
                       onPressed: () {
                         Navigator.of(ctx).pop();
                         context.push('/gym-profiles');
                       },
-                      child: const Text('Edit Gym Profile'),
+                      child: Text(AppLocalizations.of(context).upcomingWorkoutsEditGymProfile),
                     ),
                   ],
                 ),

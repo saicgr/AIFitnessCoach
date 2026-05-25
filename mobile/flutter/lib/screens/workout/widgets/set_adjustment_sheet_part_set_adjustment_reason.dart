@@ -167,7 +167,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Done with this exercise?',
+                              AppLocalizations.of(context).setAdjustmentSheetDoneWithThisExercise,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -261,7 +261,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Why are you stopping early?',
+                    AppLocalizations.of(context).setAdjustmentSheetWhyAreYouStopping,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -371,7 +371,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                   color: textPrimary,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Additional notes (optional)',
+                  hintText: AppLocalizations.of(context).setAdjustmentSheetAdditionalNotesOptional,
                   hintStyle: TextStyle(
                     color: textMuted,
                     fontSize: 14,
@@ -411,7 +411,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                         ),
                       ),
                       child: Text(
-                        'Continue',
+                        AppLocalizations.of(context).onboardingContinueButton,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -437,8 +437,8 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Skip & Continue',
+                      child: Text(
+                        AppLocalizations.of(context).setAdjustmentSheetSkipContinue,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,

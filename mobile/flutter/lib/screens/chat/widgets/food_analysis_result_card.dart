@@ -14,6 +14,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../nutrition/widgets/portion_amount_input.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card that displays a structured food analysis result from the AI.
 /// Handles buffet analysis, menu analysis, and multi-food image analysis.
 class FoodAnalysisResultCard extends StatefulWidget {
@@ -186,7 +187,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
         if (greenDishes.isNotEmpty)
           _buildDishSection(
             colors, isDark,
-            label: 'Great Choices',
+            label: AppLocalizations.of(context).foodAnalysisResultGreatChoices,
             icon: Icons.check_circle,
             color: _greenColor,
             dishes: greenDishes,
@@ -196,7 +197,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
         if (yellowDishes.isNotEmpty)
           _buildDishSection(
             colors, isDark,
-            label: 'In Moderation',
+            label: AppLocalizations.of(context).foodAnalysisResultInModeration,
             icon: Icons.info_outline,
             color: _yellowColor,
             dishes: yellowDishes,
@@ -206,7 +207,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
         if (redDishes.isNotEmpty)
           _buildDishSection(
             colors, isDark,
-            label: 'Limit These',
+            label: AppLocalizations.of(context).foodAnalysisResultLimitThese,
             icon: Icons.warning_amber_rounded,
             color: _redColor,
             dishes: redDishes,
@@ -311,7 +312,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 2, bottom: 4),
                 child: Text(
-                  'Show less',
+                  AppLocalizations.of(context).quickWorkoutSheetShowLess,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -546,7 +547,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
                     ),
                   if (totalCalories != null && totalProtein != null)
                     Text(
-                      ' \u00b7 ',
+                      AppLocalizations.of(context).foodAnalysisResultU00b7,
                       style: TextStyle(fontSize: 11, color: colors.textMuted),
                     ),
                   if (totalProtein != null)
@@ -620,7 +621,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
             Icon(Icons.check_circle, size: 16, color: _greenColor),
             const SizedBox(width: 6),
             Text(
-              'Items logged to nutrition tracker',
+              AppLocalizations.of(context).foodAnalysisResultItemsLoggedToNutrition,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -658,7 +659,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
                   }
                 }),
                 child: Text(
-                  _selectedDishes.length == allDishes.length ? 'Deselect All' : 'Select All',
+                  _selectedDishes.length == allDishes.length ? AppLocalizations.of(context).measurementsScreenPartDeselectAll : 'Select All',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -711,7 +712,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
               icon: const Icon(Icons.add_circle_outline, size: 16),
               label: Text(
                 _selectedDishes.isEmpty
-                    ? 'Select items to log'
+                    ? AppLocalizations.of(context).foodAnalysisResultSelectItemsToLog
                     : 'Log ${_selectedDishes.length} Item${_selectedDishes.length == 1 ? '' : 's'}',
               ),
               style: ElevatedButton.styleFrom(
@@ -815,7 +816,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
               Icon(Icons.lightbulb_outline, size: 14, color: colors.textMuted),
               const SizedBox(width: 6),
               Text(
-                'Tips',
+                AppLocalizations.of(context).recordAssessmentTips,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -864,7 +865,7 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
       child: Text(
-        'AI nutrition analysis is estimated. Consult a dietitian for personalized dietary advice.',
+        AppLocalizations.of(context).foodAnalysisResultAiNutritionAnalysisIs,
         style: TextStyle(
           fontSize: 10,
           fontStyle: FontStyle.italic,

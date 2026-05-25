@@ -8,6 +8,7 @@ import '../../../../data/providers/scores_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Compact readiness indicator card for home screen
 /// Shows today's readiness score or prompts for check-in
 class HomeReadinessCard extends ConsumerStatefulWidget {
@@ -120,7 +121,7 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
                     Row(
                       children: [
                         Text(
-                          "Today's Readiness",
+                          AppLocalizations.of(context).homeReadinessCardTodaySReadiness,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -252,7 +253,7 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'How are you feeling?',
+                      AppLocalizations.of(context).quickAdjustHowAreYouFeeling,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -303,8 +304,8 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
                   color: accentColor,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text(
-                  'Check In',
+                child: Text(
+                  AppLocalizations.of(context).homeReadinessCardCheckIn,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

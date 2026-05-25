@@ -17,6 +17,7 @@ import '../../../widgets/segmented_tab_bar.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/line_icon.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Visual Progress Charts Screen
 /// Displays line and bar charts showing strength and volume progression over time
 class ProgressChartsScreen extends ConsumerStatefulWidget {
@@ -66,7 +67,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: PillAppBar(
-        title: 'Trends',
+        title: AppLocalizations.of(context).progressChartsTrends,
         actions: [
           PillAppBarAction(
             customIcon: LineIcon(
@@ -95,9 +96,9 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
                     SegmentedTabBar(
                       controller: _tabController,
                       showIcons: false,
-                      tabs: const [
-                        SegmentedTabItem(label: 'Volume Trends'),
-                        SegmentedTabItem(label: 'Strength Trends'),
+                      tabs: [
+                        SegmentedTabItem(label: AppLocalizations.of(context).volumeChartVolumeTrends),
+                        SegmentedTabItem(label: AppLocalizations.of(context).strengthChartStrengthTrends),
                       ],
                     ),
 
@@ -143,8 +144,8 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
     if (!state.hasVolumeData) {
       return _buildEmptyState(
         icon: Icons.bar_chart_outlined,
-        title: 'No Volume Data Yet',
-        message: 'Complete some workouts to see your volume progression over time.',
+        title: AppLocalizations.of(context).progressChartsNoVolumeDataYet,
+        message: AppLocalizations.of(context).progressChartsCompleteSomeWorkoutsTo,
       );
     }
 
@@ -193,9 +194,9 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
           if (!state.hasStrengthData)
             _buildEmptyState(
               icon: Icons.show_chart_outlined,
-              title: 'No Strength Data Yet',
+              title: AppLocalizations.of(context).strengthOverviewCardNoStrengthDataYet,
               message:
-                  'Complete weighted exercises to see your strength progression.',
+                  AppLocalizations.of(context).progressChartsCompleteWeightedExercisesTo,
             )
           else ...[
             StrengthChart(data: state.strengthData!)
@@ -227,7 +228,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to Load Data',
+              AppLocalizations.of(context).strainDashboardFailedToLoadData,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -247,7 +248,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               onPressed: () =>
                   ref.read(progressChartsProvider.notifier).refresh(userId: _userId),
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -314,7 +315,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               Icon(Icons.trending_up, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Volume Trend',
+                AppLocalizations.of(context).progressChartsVolumeTrend,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -390,7 +391,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               Icon(Icons.analytics, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Period Summary',
+                AppLocalizations.of(context).progressChartsPeriodSummary,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -449,7 +450,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               Icon(Icons.fitness_center, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Strength Summary',
+                AppLocalizations.of(context).progressChartsStrengthSummary,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -492,7 +493,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
                   Icon(Icons.star, color: colorScheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'Top Muscle: ',
+                    AppLocalizations.of(context).progressChartsTopMuscle,
                     style: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
                   Text(
@@ -541,7 +542,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               Icon(Icons.pie_chart, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Muscle Group Breakdown',
+                AppLocalizations.of(context).progressChartsMuscleGroupBreakdown,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

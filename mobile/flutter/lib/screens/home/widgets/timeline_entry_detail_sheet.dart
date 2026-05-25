@@ -13,6 +13,7 @@ import '../../../data/models/timeline_entry.dart';
 import '../../../data/providers/timeline_provider.dart';
 import '../../../data/services/api_client.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class TimelineEntryDetailSheet extends ConsumerWidget {
   final TimelineEntry entry;
 
@@ -102,19 +103,19 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
                   TextButton.icon(
                     onPressed: () => _onEdit(context, ref),
                     icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('Edit'),
+                    label: Text(AppLocalizations.of(context).commonEdit),
                   ),
                 if (entry.actions.contains('share'))
                   TextButton.icon(
                     onPressed: () => _onShare(context),
                     icon: const Icon(Icons.share_outlined, size: 18),
-                    label: const Text('Share'),
+                    label: Text(AppLocalizations.of(context).commonShare),
                   ),
-                if (entry.actions.contains('reLog'))
+                if (entry.actions.contains(AppLocalizations.of(context).timelineEntryDetailRelog))
                   TextButton.icon(
                     onPressed: () => _onRelog(context, ref),
                     icon: const Icon(Icons.replay, size: 18),
-                    label: const Text('Re-log'),
+                    label: Text(AppLocalizations.of(context).timelineEntryDetailReLog),
                   ),
                 const Spacer(),
                 if (entry.actions.contains('delete'))
@@ -122,7 +123,7 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
                     onPressed: () => _onDelete(context, ref),
                     icon: Icon(Icons.delete_outline,
                         size: 18, color: Colors.redAccent),
-                    label: Text('Delete',
+                    label: Text(AppLocalizations.of(context).buttonDelete,
                         style: TextStyle(color: Colors.redAccent)),
                   ),
               ],
@@ -188,11 +189,11 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
     final ok = await repo.deleteEntry(userId: userId, eventId: entry.id);
     messenger.showSnackBar(SnackBar(
       content:
-          Text(ok ? 'Deleted ✓' : 'Failed to delete — refresh to retry.'),
+          Text(ok ? AppLocalizations.of(context).timelineEntryDetailDeleted : AppLocalizations.of(context).timelineEntryDetailFailedToDeleteRefresh),
       duration: const Duration(seconds: 3),
       action: ok
           ? SnackBarAction(
-              label: 'Refresh',
+              label: AppLocalizations.of(context).timelineRefresh,
               onPressed: notifier.refresh,
             )
           : null,
@@ -211,7 +212,7 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
     final patch = await showDialog<Map<String, dynamic>?>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit duration (min)'),
+        title: Text(AppLocalizations.of(context).timelineEntryDetailEditDurationMin),
         content: TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
@@ -220,13 +221,13 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, null),
-              child: const Text('Cancel')),
+              child: Text(AppLocalizations.of(context).buttonCancel)),
           TextButton(
               onPressed: () => Navigator.pop(ctx, {
                     'duration_minutes':
                         int.tryParse(ctrl.text.trim()) ?? 0,
                   }),
-              child: const Text('Save')),
+              child: Text(AppLocalizations.of(context).buttonSave)),
         ],
       ),
     );
@@ -239,7 +240,7 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
       patch: patch,
     );
     messenger.showSnackBar(SnackBar(
-      content: Text(ok ? 'Updated ✓' : 'Failed to update'),
+      content: Text(ok ? AppLocalizations.of(context).timelineEntryDetailUpdated : AppLocalizations.of(context).timelineEntryDetailFailedToUpdate),
     ));
     if (ok) {
       ref.read(timelineProvider.notifier).refresh();
@@ -249,13 +250,13 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
 
   void _onRelog(BuildContext context, WidgetRef ref) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Re-log queued — coming in a moment')),
+      SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailReLogQueuedComing)),
     );
   }
 
   void _onShare(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Share sheet coming soon')),
+      SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailShareSheetComingSoon)),
     );
   }
 

@@ -13,6 +13,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../../l10n/generated/app_localizations.dart';
 /// Challenge History Screen - Shows all challenges with outcomes and retry options
 class ChallengeHistoryScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -222,7 +223,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Challenge History',
+        title: AppLocalizations.of(context).challengeHistoryChallengeHistory,
       ),
       // Cold-start skeleton — _isLoading is only true when the disk SWR
       // cache missed (genuine first-ever open). Returning users rehydrate
@@ -247,12 +248,12 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                       SegmentedTabBar(
                         controller: _tabController,
                         showIcons: false,
-                        tabs: const [
-                          SegmentedTabItem(label: 'All'),
-                          SegmentedTabItem(label: 'Won'),
-                          SegmentedTabItem(label: 'Lost'),
-                          SegmentedTabItem(label: 'Quit'),
-                          SegmentedTabItem(label: 'Pending'),
+                        tabs: [
+                          SegmentedTabItem(label: AppLocalizations.of(context).syncedWorkoutsHistoryAll),
+                          SegmentedTabItem(label: AppLocalizations.of(context).challengeHistoryWon),
+                          SegmentedTabItem(label: AppLocalizations.of(context).challengeHistoryLost),
+                          SegmentedTabItem(label: AppLocalizations.of(context).easyActiveWorkoutQuit),
+                          SegmentedTabItem(label: AppLocalizations.of(context).referralsPending),
                         ],
                       ),
 
@@ -321,8 +322,8 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             children: [
               const Icon(Icons.emoji_events, color: AppColors.cyan, size: 24),
               const SizedBox(width: 10),
-              const Text(
-                'Challenge Stats',
+              Text(
+                AppLocalizations.of(context).challengeHistoryChallengeStats,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -509,7 +510,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            isReceived ? 'You' : 'Them',
+                            isReceived ? AppLocalizations.of(context).navYou : AppLocalizations.of(context).discoverThem,
                             style: TextStyle(
                               fontSize: 13,
                               color: AppColors.textMuted,
@@ -628,7 +629,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                     child: OutlinedButton.icon(
                       onPressed: () => _retryChallenge(challenge),
                       icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text('Retry Challenge'),
+                      label: Text(AppLocalizations.of(context).challengeHistoryRetryChallenge),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.orange,
                         side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
@@ -690,7 +691,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
               Row(
                 children: [
                   Text(
-                    'You: ',
+                    AppLocalizations.of(context).challengeHistoryYou,
                     style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                   Text(
@@ -710,7 +711,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
               Row(
                 children: [
                   Text(
-                    'Target: ',
+                    AppLocalizations.of(context).challengeHistoryTarget,
                     style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                   Text(
@@ -787,7 +788,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              'Failed to load challenges',
+              AppLocalizations.of(context).challengeHistoryFailedToLoadChallenges,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -796,7 +797,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Unknown error',
+              _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
@@ -807,7 +808,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cyan,
               ),
@@ -851,8 +852,8 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             if (!mounted) return;
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('🔥 Retry challenge sent! Time for redemption!'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context).challengeHistoryRetryChallengeSentTime),
                 backgroundColor: AppColors.orange,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -931,8 +932,8 @@ class _RetryConfirmationDialog extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Title
-            const Text(
-              'RETRY CHALLENGE?',
+            Text(
+              AppLocalizations.of(context).challengeHistoryRetryChallenge2,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -991,7 +992,7 @@ class _RetryConfirmationDialog extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Not Now'),
+                    child: Text(AppLocalizations.of(context).watchInstallBannerNotNow),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1001,7 +1002,7 @@ class _RetryConfirmationDialog extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.orange,
                     ),
-                    child: const Text('Let\'s Go! 💪'),
+                    child: Text(AppLocalizations.of(context).challengeHistoryLetSGo),
                   ),
                 ),
               ],

@@ -8,6 +8,7 @@ import '../../../data/providers/time_slot_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../widgets/section_header.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Location settings section for auto-switch gym profiles
 ///
 /// Allows users to enable/disable location-based and time-based automatic gym profile switching.
@@ -18,8 +19,8 @@ class LocationSettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'AUTO-SWITCH PROFILES'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).locationSettingsAutoSwitchProfiles),
         SizedBox(height: 12),
         _LocationSettingsCard(),
         SizedBox(height: 16),
@@ -110,7 +111,7 @@ class _LocationSettingsCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Auto-switch gym profiles',
+                          AppLocalizations.of(context).locationSettingsAutoSwitchGymProfiles,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
@@ -203,7 +204,7 @@ class _LocationSettingsCard extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Add a location to your gym profiles to enable auto-switch. Edit a profile and tap "Add Location".',
+                      AppLocalizations.of(context).locationSettingsAddALocationTo,
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,
@@ -246,7 +247,7 @@ class _LocationSettingsCard extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Background location required',
+                                    AppLocalizations.of(context).locationSettingsBackgroundLocationRequired,
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
@@ -254,7 +255,7 @@ class _LocationSettingsCard extends ConsumerWidget {
                                     ),
                                   ),
                                   Text(
-                                    'Tap to grant permission',
+                                    AppLocalizations.of(context).locationSettingsTapToGrantPermission,
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: Colors.orange[700],
@@ -300,7 +301,7 @@ class _LocationSettingsCard extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Location Permission',
+                AppLocalizations.of(context).locationSettingsLocationPermission,
                 style: TextStyle(color: textPrimary, fontSize: 18),
               ),
             ),
@@ -311,7 +312,7 @@ class _LocationSettingsCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Auto-switch needs "Always" location access to detect when you arrive at your gym.',
+              AppLocalizations.of(context).locationSettingsAutoSwitchNeedsAlways,
               style: TextStyle(
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                 fontSize: 14,
@@ -319,7 +320,7 @@ class _LocationSettingsCard extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Your location is only used locally to check proximity to saved gyms.',
+              AppLocalizations.of(context).locationSettingsYourLocationIsOnly,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                 fontSize: 12,
@@ -331,7 +332,7 @@ class _LocationSettingsCard extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
               ),
@@ -346,7 +347,7 @@ class _LocationSettingsCard extends ConsumerWidget {
               await notifier.requestBackgroundPermission();
             },
             child: Text(
-              'Grant Permission',
+              AppLocalizations.of(context).locationSettingsGrantPermission,
               style: TextStyle(color: accentColor, fontWeight: FontWeight.w600),
             ),
           ),
@@ -412,7 +413,7 @@ class _TimeSettingsCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Time-based switching',
+                          AppLocalizations.of(context).locationSettingsTimeBasedSwitching,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
@@ -488,7 +489,7 @@ class _TimeSettingsCard extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Set a preferred workout time in your gym profiles to enable time-based switching.',
+                      AppLocalizations.of(context).locationSettingsSetAPreferredWorkout,
                       style: TextStyle(
                         fontSize: 13,
                         color: textSecondary,

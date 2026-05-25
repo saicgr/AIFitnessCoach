@@ -11,6 +11,7 @@ import 'fitness_crate_dialog.dart';
 import 'minigame/nutrient_rush_game.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../l10n/generated/app_localizations.dart';
 part 'level_up_dialog_part_accomplishment.dart';
 part 'level_up_dialog_part_progress_bar.dart';
 
@@ -204,7 +205,7 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
     if (tips.isNotEmpty) {
       items.add(_Accomplishment(
         icon: '💪',
-        title: "WHAT'S NEXT",
+        title: AppLocalizations.of(context).levelUpWhatSNext,
         subtitle: tips.first,
         xpText: '${titleXP.displayName.toUpperCase()} TIER',
         color: Colors.green.shade400,
@@ -436,7 +437,7 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                         curve: Curves.elasticOut,
                       ),
                       child: Text(
-                        'LEVEL UP!',
+                        AppLocalizations.of(context).neatGamificationWidgetsLevelUp,
                         style: TextStyle(
                           fontSize: compact ? 22 : 26,
                           fontWeight: FontWeight.w900,
@@ -670,8 +671,8 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                               elevation: 4,
                               shadowColor: accentColor.withValues(alpha: 0.5),
                             ),
-                            child: const Text(
-                              'CONTINUE',
+                            child: Text(
+                              AppLocalizations.of(context).levelUpContinue,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,

@@ -13,6 +13,7 @@ import '../../../widgets/main_shell.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Sub-page for AI Coach settings: voice, edge handle, privacy.
 ///
 /// Layout: essentials (Coach card, voice, nudge intensity + AI-personalized
@@ -68,7 +69,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'AI Coach'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).authIntroAiCoach),
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -139,7 +140,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'COACH NOTIFICATIONS',
+            AppLocalizations.of(context).aiCoachCoachNotifications,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -161,7 +162,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nudge Intensity',
+                      AppLocalizations.of(context).aiCoachNudgeIntensity,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -170,7 +171,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'How much your AI coach pushes you',
+                      AppLocalizations.of(context).aiCoachHowMuchYourAi,
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                     const SizedBox(height: 10),
@@ -178,11 +179,11 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                       width: double.infinity,
                       child: SegmentedButton<String>(
                         showSelectedIcon: false,
-                        segments: const [
-                          ButtonSegment(value: 'gentle', label: Text('Gentle', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'balanced', label: Text('Balanced', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'tough_love', label: Text('Tough', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'off', label: Text('Off', style: TextStyle(fontSize: 11))),
+                        segments: [
+                          ButtonSegment(value: 'gentle', label: Text(AppLocalizations.of(context).aiCoachGentle, style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'balanced', label: Text(AppLocalizations.of(context).quizProgressionConstraintsBalanced, style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'tough_love', label: Text(AppLocalizations.of(context).aiCoachTough, style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'off', label: Text(AppLocalizations.of(context).programBuilderPartOff, style: TextStyle(fontSize: 11))),
                         ],
                         selected: {prefs.accountabilityIntensity},
                         onSelectionChanged: (values) {
@@ -199,8 +200,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               _coachToggle(
                 icon: Icons.auto_awesome,
                 iconColor: AppColors.purple,
-                title: 'AI-Personalized Messages',
-                subtitle: "Match your coach's personality",
+                title: AppLocalizations.of(context).aiCoachAiPersonalizedMessages,
+                subtitle: AppLocalizations.of(context).aiCoachMatchYourCoachS,
                 value: prefs.aiPersonalizedNudges,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(v),
                 cardBorder: cardBorder,
@@ -208,8 +209,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               _coachToggle(
                 icon: Icons.alarm,
                 iconColor: AppColors.error,
-                title: 'Missed Workout Nudge',
-                subtitle: 'Remind by evening if you skip',
+                title: AppLocalizations.of(context).aiCoachMissedWorkoutNudge,
+                subtitle: AppLocalizations.of(context).aiCoachRemindByEveningIf,
                 value: prefs.missedWorkoutNudge,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(v),
                 cardBorder: cardBorder,
@@ -237,7 +238,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'OTHER NOTIFICATIONS',
+            AppLocalizations.of(context).aiCoachOtherNotifications,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -256,8 +257,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               _coachToggle(
                 icon: Icons.lunch_dining,
                 iconColor: AppColors.success,
-                title: 'Post-Workout Meal',
-                subtitle: 'Refuel reminder after training',
+                title: AppLocalizations.of(context).aiCoachPostWorkoutMeal,
+                subtitle: AppLocalizations.of(context).aiCoachRefuelReminderAfterTraining,
                 value: prefs.postWorkoutMealReminder,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(v),
                 cardBorder: cardBorder,
@@ -265,8 +266,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               _coachToggle(
                 icon: Icons.checklist,
                 iconColor: AppColors.cyan,
-                title: 'Habit Reminders',
-                subtitle: 'Evening check-in for habits',
+                title: AppLocalizations.of(context).aiCoachHabitReminders,
+                subtitle: AppLocalizations.of(context).aiCoachEveningCheckInFor,
                 value: prefs.habitReminders,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setHabitReminders(v),
                 cardBorder: cardBorder,
@@ -274,8 +275,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               _coachToggle(
                 icon: Icons.celebration,
                 iconColor: AppColors.warning,
-                title: 'Streak Celebrations',
-                subtitle: 'Celebrate streak milestones',
+                title: AppLocalizations.of(context).aiCoachStreakCelebrations,
+                subtitle: AppLocalizations.of(context).aiCoachCelebrateStreakMilestones,
                 value: prefs.streakCelebration,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v),
                 cardBorder: cardBorder,
@@ -284,7 +285,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                 icon: Icons.card_giftcard,
                 iconColor: const Color(0xFFFFB300),
                 title: 'Daily Crate Reminders',
-                subtitle: 'Get notified when your crate is ready',
+                subtitle: AppLocalizations.of(context).aiCoachGetNotifiedWhenYour,
                 value: prefs.dailyCrateReminders,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setDailyCrateReminders(v),
                 cardBorder: cardBorder,
@@ -357,7 +358,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    coach?.name ?? 'Coach Voice & Personality',
+                    coach?.name ?? AppLocalizations.of(context).aiCoachCoachVoicePersonality,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -438,7 +439,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Floating AI Chat Bubble',
+                  AppLocalizations.of(context).aiCoachFloatingAiChatBubble,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -446,7 +447,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                   ),
                 ),
                 Text(
-                  'Show floating bubble for quick AI Coach access',
+                  AppLocalizations.of(context).aiCoachShowFloatingBubbleFor,
                   style: TextStyle(
                     fontSize: 11,
                     color: textMuted,
@@ -505,7 +506,7 @@ class _AdvancedToggleRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Advanced settings',
+                  AppLocalizations.of(context).aiSettingsAdvancedSettings,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -513,7 +514,7 @@ class _AdvancedToggleRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Show floating chat bubble, niche notifications, and privacy controls',
+                  AppLocalizations.of(context).aiCoachShowFloatingChatBubble,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ],

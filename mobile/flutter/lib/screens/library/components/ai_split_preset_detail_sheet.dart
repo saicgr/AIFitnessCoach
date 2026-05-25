@@ -11,6 +11,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/schedule_mismatch_dialog.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet showing AI Split Preset details
 class AISplitPresetDetailSheet extends ConsumerStatefulWidget {
   final AISplitPreset preset;
@@ -86,7 +87,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
@@ -96,7 +97,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
                               ),
                               SizedBox(width: 4),
                               Text(
-                                'AI',
+                                AppLocalizations.of(context).exercisePickerSheetAi,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -129,7 +130,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
                       _StatChip(
                         icon: Icons.calendar_today,
                         label: widget.preset.daysPerWeek == 0
-                            ? 'Flexible'
+                            ? AppLocalizations.of(context).fastingPlanCardsFlexible
                             : '${widget.preset.daysPerWeek} days/week',
                         color: orange,
                         isDark: isDark,
@@ -232,7 +233,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
                   const SizedBox(height: 24),
 
                   // Schedule section
-                  _SectionHeader(title: 'Schedule', isDark: isDark),
+                  _SectionHeader(title: AppLocalizations.of(context).scheduleWorkoutSchedule, isDark: isDark),
                   const SizedBox(height: 12),
                   ...widget.preset.schedule.map((day) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -260,7 +261,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
                   const SizedBox(height: 24),
 
                   // Benefits section
-                  _SectionHeader(title: 'Benefits', isDark: isDark),
+                  _SectionHeader(title: AppLocalizations.of(context).kegelSessionBenefits, isDark: isDark),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,

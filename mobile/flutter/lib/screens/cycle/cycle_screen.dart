@@ -40,6 +40,7 @@ import 'widgets/log_period_sheet.dart';
 import 'widgets/today_cycle_length_sparkline.dart';
 import 'widgets/today_fertility_window_strip.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'cycle_screen_ui.dart';
 
 /// Cycle-feature accent — pink, per the plan. Mirrors `AccentColor.pink`'s
@@ -152,7 +153,7 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
             Expanded(
               child: Text(
                 what == 'period'
-                    ? 'Period saved — your coach has refreshed your insight'
+                    ? AppLocalizations.of(context).cyclePeriodSavedYourCoach
                     : 'Logged — tap your coach for a quick read on today',
                 style: const TextStyle(
                     color: Colors.white, fontSize: 12),
@@ -161,7 +162,7 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
           ],
         ),
         action: SnackBarAction(
-          label: 'Open',
+          label: AppLocalizations.of(context).recipesOpen,
           textColor: Colors.white,
           onPressed: () => openCycleChat(
             context,
@@ -188,7 +189,7 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Tracking mode',
+                AppLocalizations.of(context).cycleTrackingMode,
                 style: TextStyle(
                   color: fg,
                   fontSize: 17,
@@ -197,7 +198,7 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                'Switch how the Cycle screen works for where you are.',
+                AppLocalizations.of(context).cycleSwitchHowTheCycle,
                 style: TextStyle(
                   color: fg.withValues(alpha: 0.6),
                   fontSize: 12,
@@ -358,7 +359,7 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Text(
-                    'Cycle',
+                    AppLocalizations.of(context).overviewCycle,
                     style: TextStyle(
                       color: fg,
                       fontSize: 24,
@@ -443,15 +444,15 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
                         mode: FloatingTabBarMode.viewSwitcher,
                         accentColor: _accent,
                         selectedIndex: _selectedTab,
-                        items: const [
+                        items: [
                           FloatingTabItem(
-                              label: 'Today',
+                              label: AppLocalizations.of(context).todayScoreCardToday,
                               icon: Icons.today_rounded),
                           FloatingTabItem(
-                              label: 'Calendar',
+                              label: AppLocalizations.of(context).habitDetailCalendar,
                               icon: Icons.calendar_month_rounded),
                           FloatingTabItem(
-                              label: 'Insights',
+                              label: AppLocalizations.of(context).muscleDetailInsights,
                               icon: Icons.insights_rounded),
                         ],
                         onTap: (i) {
@@ -620,7 +621,7 @@ class _CoachAppBarButton extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         IconButton(
-          tooltip: 'Ask your cycle coach',
+          tooltip: AppLocalizations.of(context).cycleAskYourCycleCoach,
           icon: Icon(Icons.auto_awesome_rounded, color: fg),
           onPressed: () {
             HapticService.light();

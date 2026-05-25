@@ -21,6 +21,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the exercise preview overlay before starting an exercise
 /// Returns true if dismissed naturally (countdown finished), false if tapped early
 Future<bool> showExercisePreview({
@@ -209,7 +210,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
           ),
           const SizedBox(height: 12),
           Text(
-            'Form Demo',
+            AppLocalizations.of(context).exercisePreviewOverlayFormDemo,
             style: TextStyle(
               fontSize: 14,
               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -389,7 +390,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
             ),
             const SizedBox(width: 8),
             Text(
-              'Tap anywhere to start',
+              AppLocalizations.of(context).exercisePreviewOverlayTapAnywhereToStart,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,

@@ -17,6 +17,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../data/models/timeline_entry.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class PRCardShareSheet extends StatefulWidget {
   final TimelineEntry entry;
   final TimelineAchievement achievement;
@@ -78,7 +79,7 @@ class _PRCardShareSheetState extends State<PRCardShareSheet> {
                   child: ElevatedButton.icon(
                     onPressed: _sharing ? null : _onShare,
                     icon: const Icon(Icons.share, size: 18),
-                    label: Text(_sharing ? 'Preparing…' : 'Share PR'),
+                    label: Text(_sharing ? AppLocalizations.of(context).prCardSharePreparing : AppLocalizations.of(context).prCardShareSharePr),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber.shade700,
                       foregroundColor: Colors.black,
@@ -166,8 +167,8 @@ class _PRCardCanvas extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'NEW PR',
+              Text(
+                AppLocalizations.of(context).workoutShowcaseNewPr,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -180,7 +181,7 @@ class _PRCardCanvas extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            achievement.label.replaceAll('🏆 New PR · ', '').replaceAll('📈 e1RM · ', ''),
+            achievement.label.replaceAll(AppLocalizations.of(context).prCardShareNewPr2, '').replaceAll(AppLocalizations.of(context).prCardShareE1rm, ''),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 36,
@@ -209,11 +210,11 @@ class _PRCardCanvas extends StatelessWidget {
             ),
           Container(height: 1, color: Colors.white.withValues(alpha: 0.4)),
           const SizedBox(height: 12),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Zealova · AI Fitness Coach',
+                AppLocalizations.of(context).prCardShareZealovaAiFitnessCoach,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -221,7 +222,7 @@ class _PRCardCanvas extends StatelessWidget {
                 ),
               ),
               Text(
-                'zealova.com',
+                AppLocalizations.of(context).prCardShareZealovaCom,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,

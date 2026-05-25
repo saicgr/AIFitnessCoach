@@ -8,6 +8,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/exercise_progressions_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Exercise Progressions — surfaces the leverage-based progression-chain
 /// engine (backend `exercise_progressions.py`).
 ///
@@ -73,7 +74,7 @@ class _ExerciseProgressionsScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Advance progression?'),
+        title: Text(AppLocalizations.of(context).exerciseProgressionsAdvanceProgression),
         content: Text(
           'You will move from ${s.exerciseName} to ${s.suggestedExercise}. '
           'Your mastery streak resets so you can build it on the harder variant.',
@@ -81,12 +82,12 @@ class _ExerciseProgressionsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Not yet'),
+            child: Text(AppLocalizations.of(context).exerciseProgressionsNotYet),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: accent),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Advance'),
+            child: Text(AppLocalizations.of(context).exerciseProgressionsAdvance),
           ),
         ],
       ),
@@ -133,7 +134,7 @@ class _ExerciseProgressionsScreenState
 
     return Scaffold(
       backgroundColor: background,
-      appBar: PillAppBar(title: 'Progressions'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).exerciseProgressionsProgressions),
       body: FutureBuilder<_ProgressionData>(
         future: _future,
         builder: (context, snapshot) {
@@ -234,7 +235,7 @@ class _Content extends StatelessWidget {
         // ── Ready to advance ──
         if (data.suggestions.isNotEmpty) ...[
           _SectionLabel(
-            label: 'READY TO ADVANCE',
+            label: AppLocalizations.of(context).exerciseProgressionsReadyToAdvance,
             count: data.suggestions.length,
             isDark: isDark,
             accent: accent,
@@ -257,7 +258,7 @@ class _Content extends StatelessWidget {
         // ── Tracked chains ──
         if (tracked.isNotEmpty) ...[
           _SectionLabel(
-            label: 'YOUR PROGRESSION CHAINS',
+            label: AppLocalizations.of(context).exerciseProgressionsYourProgressionChains,
             count: tracked.length,
             isDark: isDark,
             accent: accent,
@@ -275,7 +276,7 @@ class _Content extends StatelessWidget {
         if (loose.isNotEmpty) ...[
           const SizedBox(height: 10),
           _SectionLabel(
-            label: 'OTHER TRACKED EXERCISES',
+            label: AppLocalizations.of(context).exerciseProgressionsOtherTrackedExercises,
             count: loose.length,
             isDark: isDark,
             accent: accent,
@@ -337,7 +338,7 @@ class _Intro extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Earn the harder variant',
+                  AppLocalizations.of(context).exerciseProgressionsEarnTheHarderVariant,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -468,7 +469,7 @@ class _ReadyCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   suggestion.chainName.isEmpty
-                      ? 'Ready to progress'
+                      ? AppLocalizations.of(context).exerciseProgressionsReadyToProgress
                       : suggestion.chainName,
                   style: TextStyle(
                     fontSize: 12,
@@ -691,20 +692,20 @@ class _ChainCard extends StatelessWidget {
             children: [
               _Stat(
                 icon: Icons.repeat_rounded,
-                label: 'Sessions',
+                label: AppLocalizations.of(context).syncedWorkoutsHistorySessions,
                 value: '${mastery.totalSessions}',
                 isDark: isDark,
               ),
               _Stat(
                 icon: Icons.fitness_center_rounded,
-                label: 'Best reps',
+                label: AppLocalizations.of(context).exerciseProgressionsBestReps,
                 value: '${mastery.currentMaxReps}',
                 isDark: isDark,
               ),
               if (mastery.currentMaxWeight != null)
                 _Stat(
                   icon: Icons.scale_rounded,
-                  label: 'Best load',
+                  label: AppLocalizations.of(context).exerciseProgressionsBestLoad,
                   value: '${mastery.currentMaxWeight!.toStringAsFixed(1)} kg',
                   isDark: isDark,
                 ),
@@ -744,7 +745,7 @@ class _ChainCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               mastery.consecutiveEasySessions >= 1
-                  ? 'One more "too easy" session unlocks the next variant.'
+                  ? AppLocalizations.of(context).exerciseProgressionsOneMoreTooEasy
                   : 'Keep logging sessions and rate the difficulty to climb.',
               style: TextStyle(
                 fontSize: 11.5,
@@ -908,7 +909,7 @@ class _MasteryBar extends StatelessWidget {
         Row(
           children: [
             Text(
-              ready ? 'Ready to advance' : 'Mastery progress',
+              ready ? AppLocalizations.of(context).exerciseProgressionsReadyToAdvance2 : AppLocalizations.of(context).exerciseProgressionsMasteryProgress,
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
@@ -921,7 +922,7 @@ class _MasteryBar extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              ready ? 'Unlocked' : '$consecutiveEasy / $_target easy sessions',
+              ready ? AppLocalizations.of(context).exerciseProgressionsUnlocked : '$consecutiveEasy / $_target easy sessions',
               style: TextStyle(
                 fontSize: 11,
                 color:
@@ -1002,7 +1003,7 @@ class _LoadingState extends StatelessWidget {
         children: [
           CircularProgressIndicator(color: accent),
           const SizedBox(height: 16),
-          const Text('Loading your progressions...'),
+          Text(AppLocalizations.of(context).exerciseProgressionsLoadingYourProgressions),
         ],
       ),
     );
@@ -1039,7 +1040,7 @@ class _ErrorState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try again'),
+              label: Text(AppLocalizations.of(context).workoutReviewTryAgain),
               style: FilledButton.styleFrom(backgroundColor: accent),
             ),
           ],
@@ -1075,7 +1076,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'No progressions yet',
+              AppLocalizations.of(context).exerciseProgressionsNoProgressionsYet,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
@@ -1102,7 +1103,7 @@ class _EmptyState extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRefresh,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Refresh'),
+              label: Text(AppLocalizations.of(context).timelineRefresh),
               style: OutlinedButton.styleFrom(foregroundColor: accent),
             ),
           ],

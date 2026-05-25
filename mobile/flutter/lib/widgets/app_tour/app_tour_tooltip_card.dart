@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Glassmorphic tooltip card shown during app tours.
 ///
 /// The card is height-bounded by [maxHeight]: the title + description scroll
@@ -203,7 +204,7 @@ class _CardContent extends StatelessWidget {
                     borderRadius: BorderRadius.circular(13),
                   ),
                   child: Text(
-                    'Skip tutorial',
+                    AppLocalizations.of(context).appTourTooltipSkipTutorial,
                     style: TextStyle(
                       color: skipText,
                       fontSize: 12,
@@ -311,7 +312,7 @@ class _CardContent extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        isLastStep ? 'Got it!' : 'Next',
+                        isLastStep ? AppLocalizations.of(context).xpGoalsGotIt : AppLocalizations.of(context).commonNext,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,

@@ -12,6 +12,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class PreSetCoachingBanner extends StatelessWidget {
   final String message;
   final VoidCallback onDismiss;
@@ -74,9 +75,9 @@ class PreSetCoachingBanner extends StatelessWidget {
               ),
               Semantics(
                 button: true,
-                label: 'Dismiss coaching insight',
+                label: AppLocalizations.of(context).preSetCoachingDismissCoachingInsight,
                 child: IconButton(
-                  tooltip: 'Dismiss',
+                  tooltip: AppLocalizations.of(context).upgradePromptDismiss,
                   iconSize: 18,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(

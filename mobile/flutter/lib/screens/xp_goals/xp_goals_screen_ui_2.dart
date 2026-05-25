@@ -21,14 +21,14 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
     final bonuses = [
       _FirstTimeBonus(
         type: 'first_workout',
-        title: 'Complete First Workout',
+        title: AppLocalizations.of(context).xpGoalsScreenCompleteFirstWorkout,
         xp: 150,
         icon: Icons.fitness_center,
         isAwarded: awardedBonuses.contains('first_workout'),
       ),
       _FirstTimeBonus(
         type: 'first_meal_log',
-        title: 'Log First Meal',
+        title: AppLocalizations.of(context).xpGoalsScreenLogFirstMeal,
         xp: 50,
         icon: Icons.restaurant,
         isAwarded: awardedBonuses.contains('first_breakfast') ||
@@ -38,28 +38,28 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
       ),
       _FirstTimeBonus(
         type: 'first_weight_log',
-        title: 'Log First Weight',
+        title: AppLocalizations.of(context).xpGoalsScreenLogFirstWeight,
         xp: 50,
         icon: Icons.monitor_weight_outlined,
         isAwarded: awardedBonuses.contains('first_weight_log'),
       ),
       _FirstTimeBonus(
         type: 'first_protein_goal',
-        title: 'Hit First Protein Goal',
+        title: AppLocalizations.of(context).xpGoalsScreenHitFirstProteinGoal,
         xp: 100,
         icon: Icons.egg_alt,
         isAwarded: awardedBonuses.contains('first_protein_goal'),
       ),
       _FirstTimeBonus(
         type: 'first_chat',
-        title: 'Chat with AI Coach',
+        title: AppLocalizations.of(context).xpGoalsScreenChatWithAiCoach,
         xp: 15,
         icon: Icons.chat_bubble_outline,
         isAwarded: awardedBonuses.contains('first_chat'),
       ),
       _FirstTimeBonus(
         type: 'first_pr',
-        title: 'Set First Personal Record',
+        title: AppLocalizations.of(context).xpGoalsScreenSetFirstPersonalRecord,
         xp: 100,
         icon: Icons.emoji_events,
         isAwarded: awardedBonuses.contains('first_pr'),

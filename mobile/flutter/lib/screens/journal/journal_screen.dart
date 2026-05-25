@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Phase 6 #16 — Lifetime training journal.
 ///
 /// Unified searchable timeline across workouts + meals + progress photos + PRs.
@@ -78,7 +79,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: const PillAppBar(title: 'Training journal'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).journalTitle),
       body: SafeArea(
         child: Column(
           children: [
@@ -88,7 +89,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 controller: _searchCtl,
                 onSubmitted: (_) => _load(),
                 decoration: InputDecoration(
-                  hintText: 'Search workouts, food, photos…',
+                  hintText: AppLocalizations.of(context).journalSearchHint,
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.refresh_rounded),
@@ -145,7 +146,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 size: 56, color: textSecondary.withOpacity(0.5)),
             const SizedBox(height: 12),
             Text(
-              'Your journal is empty',
+              AppLocalizations.of(context).journalYourJournalIsEmpty,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -154,7 +155,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Log a workout, meal, or photo to start your timeline.',
+              AppLocalizations.of(context).journalLogAWorkoutMeal,
               style: TextStyle(fontSize: 13, color: textSecondary),
               textAlign: TextAlign.center,
             ),
@@ -180,7 +181,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             TextButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),

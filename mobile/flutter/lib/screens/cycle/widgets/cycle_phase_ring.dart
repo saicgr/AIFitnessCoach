@@ -16,6 +16,7 @@ import '../../../data/models/hormonal_health.dart';
 import '../cycle_chat.dart';
 import '../cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class CyclePhaseRing extends StatelessWidget {
   final CyclePrediction prediction;
   final Color accent;
@@ -67,7 +68,7 @@ class CyclePhaseRing extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    phase?.displayName ?? 'No data',
+                    phase?.displayName ?? AppLocalizations.of(context).workoutCompleteScreenNoData,
                     style: TextStyle(
                       color: CyclePhaseColors.of(phase),
                       fontSize: 17,
@@ -153,7 +154,7 @@ class CyclePhaseRing extends StatelessWidget {
                 Icon(Icons.auto_awesome_rounded, size: 13, color: accent),
                 const SizedBox(width: 6),
                 Text(
-                  'Ask coach about this',
+                  AppLocalizations.of(context).cyclePhaseRingAskCoachAboutThis,
                   style: TextStyle(
                     color: accent,
                     fontSize: 12,

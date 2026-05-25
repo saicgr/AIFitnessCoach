@@ -152,11 +152,11 @@ class _YearlyHeatmapState extends State<_YearlyHeatmap> {
               children: [
                 Container(width: 9, height: 9, decoration: BoxDecoration(color: emptyColor, borderRadius: BorderRadius.circular(2))),
                 const SizedBox(width: 4),
-                Text('Missed', style: TextStyle(fontSize: 9, color: widget.textSecondary)),
+                Text(AppLocalizations.of(context).habitDetailScreenMissed, style: TextStyle(fontSize: 9, color: widget.textSecondary)),
                 const SizedBox(width: 14),
                 Container(width: 9, height: 9, decoration: BoxDecoration(color: widget.habitColor, borderRadius: BorderRadius.circular(2))),
                 const SizedBox(width: 4),
-                Text('Done', style: TextStyle(fontSize: 9, color: widget.textSecondary)),
+                Text(AppLocalizations.of(context).commonDone, style: TextStyle(fontSize: 9, color: widget.textSecondary)),
               ],
             ),
         ],
@@ -208,7 +208,7 @@ class _MonthlySummary extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Text('No monthly data yet', style: TextStyle(fontSize: 12, color: textSecondary)),
+          child: Text(AppLocalizations.of(context).habitDetailScreenNoMonthlyDataYet, style: TextStyle(fontSize: 12, color: textSecondary)),
         ),
       );
     }
@@ -294,9 +294,9 @@ class _HistoryTab extends StatelessWidget {
           children: [
             Icon(Icons.history_rounded, size: 44, color: textSecondary.withValues(alpha: 0.3)),
             const SizedBox(height: 14),
-            Text('No activity yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textPrimary)),
+            Text(AppLocalizations.of(context).habitDetailScreenNoActivityYet, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textPrimary)),
             const SizedBox(height: 6),
-            Text('Complete this habit to see your history', style: TextStyle(fontSize: 12, color: textSecondary)),
+            Text(AppLocalizations.of(context).habitDetailScreenCompleteThisHabitTo, style: TextStyle(fontSize: 12, color: textSecondary)),
           ],
         ),
       );
@@ -345,7 +345,7 @@ class _HistoryTab extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Completed', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
+                            Text(AppLocalizations.of(context).progressionStepCardCompleted, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
                             Text(_formatTime(log.date), style: TextStyle(fontSize: 11, color: textSecondary)),
                           ],
                         ),

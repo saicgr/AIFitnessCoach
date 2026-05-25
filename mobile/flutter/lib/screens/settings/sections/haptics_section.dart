@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../widgets/section_header.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The haptics section for configuring haptic feedback settings.
 ///
 /// Allows users to select their preferred haptic feedback intensity.
@@ -14,8 +15,8 @@ class HapticsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'HAPTICS'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).hapticsHaptics),
         SizedBox(height: 12),
         _HapticsSettingsCard(),
       ],
@@ -56,8 +57,8 @@ class _HapticsSettingsCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Haptic Feedback',
+                      Text(
+                        AppLocalizations.of(context).hapticsHapticFeedback,
                         style: TextStyle(fontSize: 15),
                       ),
                       Text(

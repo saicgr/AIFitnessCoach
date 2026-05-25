@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/muscle_analytics.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Widget displaying a simplified muscle heatmap visualization
 /// Shows muscle groups as a grid with color intensity based on training volume
 class MuscleHeatmapWidget extends StatelessWidget {
@@ -33,20 +34,20 @@ class MuscleHeatmapWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _LegendItem(color: _getIntensityColor(0.9), label: 'High'),
+                _LegendItem(color: _getIntensityColor(0.9), label: AppLocalizations.of(context).scoreExplainHigh),
                 const SizedBox(width: 16),
-                _LegendItem(color: _getIntensityColor(0.5), label: 'Medium'),
+                _LegendItem(color: _getIntensityColor(0.5), label: AppLocalizations.of(context).scoreExplainMedium),
                 const SizedBox(width: 16),
-                _LegendItem(color: _getIntensityColor(0.2), label: 'Low'),
+                _LegendItem(color: _getIntensityColor(0.2), label: AppLocalizations.of(context).scoreExplainLow),
                 const SizedBox(width: 16),
-                _LegendItem(color: _getIntensityColor(0.0), label: 'None'),
+                _LegendItem(color: _getIntensityColor(0.0), label: AppLocalizations.of(context).recipeCreateNone),
               ],
             ),
             const SizedBox(height: 24),
 
             // Upper Body Section
             Text(
-              'Upper Body',
+              AppLocalizations.of(context).quizMuscleFocusUpperBody,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -72,7 +73,7 @@ class MuscleHeatmapWidget extends StatelessWidget {
 
             // Core Section
             Text(
-              'Core',
+              AppLocalizations.of(context).quizMuscleFocusCore,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -98,7 +99,7 @@ class MuscleHeatmapWidget extends StatelessWidget {
 
             // Lower Body Section
             Text(
-              'Lower Body',
+              AppLocalizations.of(context).quizMuscleFocusLowerBody,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -136,7 +137,7 @@ class MuscleHeatmapWidget extends StatelessWidget {
                     const Divider(),
                     const SizedBox(height: 16),
                     Text(
-                      'Other',
+                      AppLocalizations.of(context).selectableChipOther,
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

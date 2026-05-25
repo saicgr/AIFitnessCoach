@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Subtle single-line banner indicating AI-generated content is not medical advice.
 /// Tappable - navigates to the medical disclaimer settings page.
 class MedicalDisclaimerBanner extends StatelessWidget {
@@ -17,7 +18,7 @@ class MedicalDisclaimerBanner extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: Text(
-          'AI-generated content - not medical advice',
+          AppLocalizations.of(context).medicalDisclaimerBannerAiGeneratedContentNot,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,

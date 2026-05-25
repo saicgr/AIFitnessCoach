@@ -108,7 +108,7 @@ class _ZoneLegendItem extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Got it',
+              AppLocalizations.of(context).weightIncrementsGotIt,
               style: TextStyle(
                 color: Color(zone.colorValue),
                 fontWeight: FontWeight.w600,

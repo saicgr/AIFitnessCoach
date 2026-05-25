@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/wearable_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Apple AirPods-style banner to prompt WearOS app installation.
 ///
 /// Shows when:
@@ -152,8 +153,8 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
         // Show error feedback
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open Play Store on watch. Please install manually.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).watchInstallBannerCouldNotOpenPlay),
               duration: Duration(seconds: 3),
             ),
           );
@@ -163,8 +164,8 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
       debugPrint('❌ Error prompting watch install: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to connect to watch. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).watchInstallBannerFailedToConnectTo),
             duration: Duration(seconds: 3),
           ),
         );
@@ -261,7 +262,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Watch Detected',
+                            AppLocalizations.of(context).watchInstallBannerWatchDetected,
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
@@ -271,7 +272,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Track workouts from your wrist',
+                            AppLocalizations.of(context).wearOsTrackWorkoutsFromYour,
                             style: TextStyle(
                               fontSize: 14,
                               color: textSecondary,
@@ -318,8 +319,8 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Not Now',
+                        child: Text(
+                          AppLocalizations.of(context).watchInstallBannerNotNow,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -352,13 +353,13 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
                                   color: Colors.white,
                                 ),
                               )
-                            : const Row(
+                            : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.download_rounded, size: 20),
                                   SizedBox(width: 8),
                                   Text(
-                                    'Install on Watch',
+                                    AppLocalizations.of(context).watchInstallBannerInstallOnWatch,
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,

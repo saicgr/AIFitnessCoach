@@ -13,6 +13,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../utils/tz.dart';
 import '../../cycle/cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for logging daily hormone + cycle metrics.
 ///
 /// Phase C upgrade — in addition to the original energy/sleep/mood sliders
@@ -119,7 +120,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Daily Check-in',
+                              Text(AppLocalizations.of(context).injuryDetailScreenDailyCheckIn,
                                   style: theme.textTheme.titleLarge),
                               if (widget.logDate != null)
                                 Text(
@@ -180,7 +181,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
                             accent),
                         const SizedBox(height: 8),
 
-                        Text('Mood', style: theme.textTheme.titleSmall),
+                        Text(AppLocalizations.of(context).workoutSummaryAdvancedMood, style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
@@ -198,7 +199,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
                         ),
                         const SizedBox(height: 24),
 
-                        Text('Symptoms', style: theme.textTheme.titleSmall),
+                        Text(AppLocalizations.of(context).hormoneLogSymptoms, style: theme.textTheme.titleSmall),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
@@ -224,9 +225,9 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
 
                         TextField(
                           controller: _notesController,
-                          decoration: const InputDecoration(
-                            labelText: 'Notes (optional)',
-                            hintText: 'How are you feeling today?',
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context).recordAttemptNotesOptional,
+                            hintText: AppLocalizations.of(context).strengthOverviewCardHowAreYouFeeling,
                             border: OutlineInputBorder(),
                           ),
                           maxLines: 3,
@@ -248,7 +249,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
                                 )
                               : const Icon(Icons.check),
                           label: Text(
-                              _isLoading ? 'Saving...' : 'Save Check-in'),
+                              _isLoading ? AppLocalizations.of(context).workoutReviewSaving : AppLocalizations.of(context).postMealReviewSaveCheckIn),
                         ),
                         const SizedBox(height: 32),
                       ],
@@ -294,7 +295,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
           children: [
             Icon(Icons.water_drop, size: 18, color: accent),
             const SizedBox(width: 8),
-            Text('Period flow', style: theme.textTheme.titleSmall),
+            Text(AppLocalizations.of(context).hormoneLogPeriodFlow, style: theme.textTheme.titleSmall),
           ],
         ),
         const SizedBox(height: 8),
@@ -303,7 +304,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
           runSpacing: 8,
           children: [
             ChoiceChip(
-              label: const Text('None'),
+              label: Text(AppLocalizations.of(context).recipeCreateNone),
               selected: _periodFlow == null,
               onSelected: (_) => setState(() => _periodFlow = null),
             ),
@@ -333,7 +334,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
           children: [
             Icon(Icons.thermostat, size: 18, color: accent),
             const SizedBox(width: 8),
-            Text('Basal temperature', style: theme.textTheme.titleSmall),
+            Text(AppLocalizations.of(context).hormoneLogBasalTemperature, style: theme.textTheme.titleSmall),
             const Spacer(),
             if (_bbtDisplay != null)
               Text(
@@ -347,7 +348,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
             else
               TextButton(
                 onPressed: () => setState(() => _bbtDisplay = value),
-                child: const Text('Add reading'),
+                child: Text(AppLocalizations.of(context).hormoneLogAddReading),
               ),
           ],
         ),
@@ -363,7 +364,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
                 () => _bbtDisplay = double.parse(v.toStringAsFixed(2))),
           ),
           Text(
-            'Take it first thing each morning, before getting up.',
+            AppLocalizations.of(context).hormoneLogTakeItFirstThing,
             style: theme.textTheme.labelSmall,
           ),
         ],
@@ -382,7 +383,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
           children: [
             Icon(Icons.opacity, size: 18, color: accent),
             const SizedBox(width: 8),
-            Text('Cervical mucus', style: theme.textTheme.titleSmall),
+            Text(AppLocalizations.of(context).hormoneLogCervicalMucus, style: theme.textTheme.titleSmall),
           ],
         ),
         const SizedBox(height: 8),
@@ -412,7 +413,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
           children: [
             Icon(Icons.science, size: 18, color: accent),
             const SizedBox(width: 8),
-            Text('LH ovulation test', style: theme.textTheme.titleSmall),
+            Text(AppLocalizations.of(context).hormoneLogLhOvulationTest, style: theme.textTheme.titleSmall),
           ],
         ),
         const SizedBox(height: 8),
@@ -437,9 +438,9 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
       activeThumbColor: accent,
-      title: Text('Sexual activity', style: theme.textTheme.titleSmall),
+      title: Text(AppLocalizations.of(context).hormoneLogSexualActivity, style: theme.textTheme.titleSmall),
       subtitle: Text(
-        'Helps your coach time fertility guidance',
+        AppLocalizations.of(context).hormoneLogHelpsYourCoachTime,
         style: theme.textTheme.labelSmall,
       ),
       secondary: Icon(Icons.favorite_border, size: 18, color: accent),
@@ -595,7 +596,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
         HapticService.success();
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Check-in saved!')),
+          SnackBar(content: Text(AppLocalizations.of(context).postMealReviewCheckInSaved)),
         );
       }
     } catch (e) {

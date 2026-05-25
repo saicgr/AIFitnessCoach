@@ -4,6 +4,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/mood.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Result of the end-fast mood + energy check-in (Section F).
 class FastingMoodEnergyResult {
   /// The selected [Mood] (its `.value` becomes `moodAfter`), or null if skipped.
@@ -63,7 +64,7 @@ class _FastingMoodCheckInSheetState extends State<FastingMoodCheckInSheet> {
           ),
           const SizedBox(height: 18),
           Text(
-            'How do you feel?',
+            AppLocalizations.of(context).fastingMoodCheckinHowDoYouFeel,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -72,7 +73,7 @@ class _FastingMoodCheckInSheetState extends State<FastingMoodCheckInSheet> {
           ),
           const SizedBox(height: 2),
           Text(
-            'Log your mood and energy after the fast (optional).',
+            AppLocalizations.of(context).fastingMoodCheckinLogYourMoodAnd,
             style: TextStyle(fontSize: 13, color: colors.textMuted),
           ),
           const SizedBox(height: 18),
@@ -138,7 +139,7 @@ class _FastingMoodCheckInSheetState extends State<FastingMoodCheckInSheet> {
           const SizedBox(height: 20),
 
           Text(
-            'ENERGY',
+            AppLocalizations.of(context).fastingMoodCheckinEnergy,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -213,7 +214,7 @@ class _FastingMoodCheckInSheetState extends State<FastingMoodCheckInSheet> {
                     minimumSize: const Size(0, 52),
                   ),
                   child: Text(
-                    'Skip',
+                    AppLocalizations.of(context).onboardingSkip,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -243,8 +244,8 @@ class _FastingMoodCheckInSheetState extends State<FastingMoodCheckInSheet> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'End Fast',
+                    child: Text(
+                      AppLocalizations.of(context).heroFastingCardEndFast,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

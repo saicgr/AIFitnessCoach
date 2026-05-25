@@ -8,6 +8,7 @@ import '../../../data/models/muscle_status.dart';
 import '../../../data/models/scores.dart';
 import '../../../widgets/body_muscle_selector.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// SVG path ID to muscle group mapping.
 /// Copied from body_muscle_selector.dart (local to getMuscleGroupFromMuscle).
 const Map<String, List<String>> _muscleGroupPathIds = {
@@ -224,7 +225,7 @@ class _BodyScoreOverlayState extends State<BodyScoreOverlay> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Loading body diagram...',
+                AppLocalizations.of(context).bodyScoreOverlayLoadingBodyDiagram,
                 style: TextStyle(fontSize: 12, color: textMuted),
               ),
             ],

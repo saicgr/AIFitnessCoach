@@ -23,6 +23,7 @@ import '../../../screens/chat/widgets/media_picker_helper.dart';
 import '../../../screens/chat/widgets/media_preview_strip.dart';
 import '../../../widgets/coach_avatar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Quick prompt for workout context
 class _QuickPrompt {
   final String label;
@@ -77,28 +78,28 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
 
   List<_QuickPrompt> get _quickPrompts => [
         _QuickPrompt(
-          label: 'Form',
+          label: AppLocalizations.of(context).workoutAiCoachForm,
           prompt:
               'What are the key form tips for ${widget.currentExercise.name}?',
           icon: Icons.sports_gymnastics,
           color: AppColors.cyan,
         ),
         _QuickPrompt(
-          label: 'Swaps',
+          label: AppLocalizations.of(context).workoutAiCoachSwaps,
           prompt:
               'What are some alternative exercises I can do instead of ${widget.currentExercise.name}?',
           icon: Icons.swap_horiz,
           color: AppColors.purple,
         ),
         _QuickPrompt(
-          label: 'Rest',
+          label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
           prompt:
               'How long should I rest between sets of ${widget.currentExercise.name}?',
           icon: Icons.timer_outlined,
           color: AppColors.orange,
         ),
         _QuickPrompt(
-          label: 'Sets',
+          label: AppLocalizations.of(context).workoutSummaryGeneralSets,
           prompt:
               'How many sets should I do of ${widget.currentExercise.name} for best results?',
           icon: Icons.format_list_numbered,
@@ -110,8 +111,8 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
         // tag, which the chat repo strips and forwards as message
         // metadata so the backend tool runs.
         _QuickPrompt(
-          label: "What's this?",
-          prompt: "[intent:identify_equipment] What's this machine?",
+          label: AppLocalizations.of(context).sectionHeaderWhatSThis,
+          prompt: AppLocalizations.of(context).inlineWorkoutChatIntentIdentifyEquipmentWh,
           icon: Icons.camera_alt_outlined,
           color: AppColors.cyan,
         ),
@@ -308,7 +309,7 @@ User question: $message
               ),
               error: (e, _) => Center(
                 child: Text(
-                  'Failed to load chat history',
+                  AppLocalizations.of(context).workoutAiCoachFailedToLoadChat,
                   style: TextStyle(
                     color: isDark ? AppColors.textMuted : Colors.black54,
                   ),
@@ -349,7 +350,7 @@ User question: $message
                   ),
                 ),
                 Text(
-                  'AI Coach',
+                  AppLocalizations.of(context).authIntroAiCoach,
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? AppColors.textMuted : Colors.black54,
@@ -365,7 +366,7 @@ User question: $message
               HapticFeedback.lightImpact();
               context.push('/coach-selection?fromSettings=true');
             },
-            tooltip: 'Change coach',
+            tooltip: AppLocalizations.of(context).workoutAiCoachChangeCoach,
             icon: Icon(
               Icons.swap_horiz,
               color: isDark ? AppColors.textMuted : Colors.black54,
@@ -377,7 +378,7 @@ User question: $message
           // Collapse/expand toggle
           IconButton(
             onPressed: _toggleExpanded,
-            tooltip: _isExpanded ? 'Collapse chat' : 'Expand chat',
+            tooltip: _isExpanded ? AppLocalizations.of(context).inlineWorkoutChatCollapseChat : AppLocalizations.of(context).inlineWorkoutChatExpandChat,
             icon: AnimatedRotation(
               turns: _isExpanded ? 0.0 : 0.5,
               duration: const Duration(milliseconds: 200),
@@ -476,7 +477,7 @@ User question: $message
             ),
             const SizedBox(height: 12),
             Text(
-              'Ask me anything!',
+              AppLocalizations.of(context).inlineWorkoutChatAskMeAnything,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.textMuted : Colors.black54,
@@ -715,7 +716,7 @@ User question: $message
                     ),
                     decoration: InputDecoration(
                       hintText: _selectedMedia.isNotEmpty
-                          ? 'Add a message...'
+                          ? AppLocalizations.of(context).inlineWorkoutChatAddAMessage
                           : 'Ask about your workout...',
                       hintStyle: TextStyle(
                         color: isDark ? AppColors.textMuted : Colors.black38,

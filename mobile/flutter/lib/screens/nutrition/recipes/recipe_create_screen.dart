@@ -25,6 +25,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RecipeCreateScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -104,18 +105,18 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
             children: [
               ListTile(
                 leading: Icon(Icons.camera_alt_rounded, color: text),
-                title: Text('Take photo', style: TextStyle(color: text)),
+                title: Text(AppLocalizations.of(context).recipesTakePhoto, style: TextStyle(color: text)),
                 onTap: () => Navigator.pop(ctx, ImageSource.camera),
               ),
               ListTile(
                 leading: Icon(Icons.photo_library_rounded, color: text),
-                title: Text('Choose from gallery', style: TextStyle(color: text)),
+                title: Text(AppLocalizations.of(context).recipesChooseFromGallery, style: TextStyle(color: text)),
                 onTap: () => Navigator.pop(ctx, ImageSource.gallery),
               ),
               if (_photo != null)
                 ListTile(
                   leading: Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                  title: Text('Remove photo', style: TextStyle(color: Colors.redAccent)),
+                  title: Text(AppLocalizations.of(context).recipeCreateRemovePhoto, style: TextStyle(color: Colors.redAccent)),
                   onTap: () {
                     setState(() => _photo = null);
                     Navigator.pop(ctx);
@@ -165,7 +166,7 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Recipe name required')));
+          .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).recipeCreateRecipeNameRequired)));
       return;
     }
     setState(() => _saving = true);
@@ -257,13 +258,13 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
                 GlassBackButton(onTap: () => Navigator.of(context).pop()),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text('New recipe',
+                  child: Text(AppLocalizations.of(context).recipeCreateNewRecipe,
                     style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
                 ),
                 TextButton(
                   onPressed: _saving ? null : _save,
                   child: Text(
-                    _saving ? 'Saving…' : 'Save',
+                    _saving ? AppLocalizations.of(context).sleepDetailSaving : AppLocalizations.of(context).buttonSave,
                     style: TextStyle(color: accent, fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                 ),
@@ -296,7 +297,7 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
           const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: Text('per serving', style: TextStyle(fontSize: 11, color: muted)),
+            child: Text(AppLocalizations.of(context).recipeCreatePerServing, style: TextStyle(fontSize: 11, color: muted)),
           ),
           const SizedBox(height: 16),
 
@@ -328,7 +329,7 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
                       children: [
                         Icon(Icons.add_a_photo_rounded, color: muted, size: 28),
                         const SizedBox(height: 6),
-                        Text('Add photo (optional)',
+                        Text(AppLocalizations.of(context).recipeCreateAddPhotoOptional,
                             style: TextStyle(color: muted, fontSize: 12)),
                       ],
                     )
@@ -566,7 +567,7 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
               },
               style: TextStyle(color: text),
               decoration: InputDecoration(
-                hintText: 'e.g., 4 oz grilled chicken breast',
+                hintText: AppLocalizations.of(context).recipeCreateEG4Oz,
                 hintStyle: TextStyle(color: muted),
                 filled: true,
                 fillColor: surface,
@@ -601,7 +602,7 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
 
     final a = widget.row.analysis;
     if (a == null) {
-      return InkWell(onTap: () => setState(() => _editing = true), child: Text(widget.row.error ?? 'Tap to edit'));
+      return InkWell(onTap: () => setState(() => _editing = true), child: Text(widget.row.error ?? AppLocalizations.of(context).recipeCreateTapToEdit));
     }
 
     final sourceColor = switch (a.nutritionSource) {
@@ -702,27 +703,27 @@ class _CategoryChips extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: surface,
-        title: Text('Custom category', style: TextStyle(color: text)),
+        title: Text(AppLocalizations.of(context).recipeCreateCustomCategory, style: TextStyle(color: text)),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           maxLength: 30,
           textCapitalization: TextCapitalization.words,
           style: TextStyle(color: text),
-          decoration: const InputDecoration(
-            hintText: 'e.g., Post-workout, Prep, Smoothie',
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context).recipeCreateEGPostWorkout,
           ),
           onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(ctrl.text.trim()),
             style: TextButton.styleFrom(foregroundColor: accent),
-            child: const Text('Save'),
+            child: Text(AppLocalizations.of(context).buttonSave),
           ),
         ],
       ),
@@ -745,7 +746,7 @@ class _CategoryChips extends StatelessWidget {
       runSpacing: 8,
       children: [
         _chip(
-          label: 'None',
+          label: AppLocalizations.of(context).recipeCreateNone,
           isSelected: selected == null,
           textColor: text,
           mutedColor: muted,
@@ -772,7 +773,7 @@ class _CategoryChips extends StatelessWidget {
           ),
         // Add-custom chip
         _chip(
-          label: _isCustom ? '✏️ Edit custom' : '+ Custom',
+          label: _isCustom ? AppLocalizations.of(context).recipeCreateEditCustom : AppLocalizations.of(context).recipeCreateCustom,
           isSelected: false,
           textColor: text,
           mutedColor: muted,

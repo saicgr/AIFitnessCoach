@@ -67,7 +67,7 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
               Icon(Icons.restaurant_outlined, color: textMuted, size: 40),
               const SizedBox(height: 12),
               Text(
-                'Log a meal to see your history here',
+                AppLocalizations.of(context).foodBrowserPanelLogAMealTo,
                 style: TextStyle(color: textMuted, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -84,7 +84,7 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
         if (uniqueRecent.isNotEmpty) ...[
           _BrowseSectionHeader(
             icon: Icons.schedule,
-            title: 'RECENT',
+            title: AppLocalizations.of(context).foodBrowserPanelRecent,
             count: uniqueRecent.length,
             onSeeAll: () {
               Navigator.push(
@@ -153,7 +153,7 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
         children: [
           _BrowseSectionHeader(
             icon: Icons.bookmark,
-            title: 'YOUR SAVED FOODS',
+            title: AppLocalizations.of(context).foodBrowserPanelYourSavedFoods,
             isDark: widget.isDark,
           ),
           const SizedBox(height: 6),
@@ -172,13 +172,13 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
               Icon(Icons.star_border, color: textMuted, size: 40),
               const SizedBox(height: 12),
               Text(
-                'No saved foods yet',
+                AppLocalizations.of(context).foodBrowserPanelNoSavedFoodsYet,
                 style: TextStyle(color: textMuted, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
-                'Star foods after logging to save them',
+                AppLocalizations.of(context).foodBrowserPanelStarFoodsAfterLogging,
                 style: TextStyle(color: textMuted.withValues(alpha: 0.7), fontSize: 12),
                 textAlign: TextAlign.center,
               ),
@@ -201,7 +201,7 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
         children: [
           _BrowseSectionHeader(
             icon: Icons.bookmark,
-            title: 'YOUR SAVED FOODS',
+            title: AppLocalizations.of(context).foodBrowserPanelYourSavedFoods,
             isDark: widget.isDark,
           ),
           const SizedBox(height: 6),

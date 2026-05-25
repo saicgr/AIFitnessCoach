@@ -14,6 +14,7 @@ import '../../../widgets/nutrition/health_metrics_card.dart';
 import '../../../widgets/nutrition/food_mood_analytics_card.dart';
 import '../weekly_checkin_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// My Foods sheet with 2 tabs: Saved Foods + My Recipes
 class MyFoodsSheet extends StatefulWidget {
   final String userId;
@@ -84,7 +85,7 @@ class _MyFoodsSheetState extends State<MyFoodsSheet>
               Icon(Icons.bookmark_outline, color: teal, size: 22),
               const SizedBox(width: 10),
               Text(
-                'My Foods',
+                AppLocalizations.of(context).myFoodsMyFoods,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -152,7 +153,7 @@ class _MyFoodsSheetState extends State<MyFoodsSheet>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Saved menus',
+                            AppLocalizations.of(context).myFoodsSavedMenus,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -160,7 +161,7 @@ class _MyFoodsSheetState extends State<MyFoodsSheet>
                             ),
                           ),
                           Text(
-                            'Reopen a restaurant menu you scanned before',
+                            AppLocalizations.of(context).myFoodsReopenARestaurantMenu,
                             style: TextStyle(
                               fontSize: 11,
                               color: textColor.withValues(alpha: 0.55),
@@ -337,7 +338,7 @@ class _SavedFoodsFilterSheetState extends State<SavedFoodsFilterSheet> {
               onChanged: _onSearchChanged,
               style: TextStyle(color: textPrimary, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'Search saved foods...',
+                hintText: AppLocalizations.of(context).myFoodsSearchSavedFoods,
                 hintStyle: TextStyle(color: textMuted, fontSize: 14),
                 prefixIcon: Icon(Icons.search, color: textMuted, size: 20),
                 suffixIcon: _searchController.text.isNotEmpty
@@ -410,12 +411,12 @@ class _SavedFoodsFilterSheetState extends State<SavedFoodsFilterSheet> {
                             Icon(Icons.bookmark_border, size: 48, color: textMuted),
                             const SizedBox(height: 12),
                             Text(
-                              'No saved foods found',
+                              AppLocalizations.of(context).myFoodsNoSavedFoodsFound,
                               style: TextStyle(fontSize: 14, color: textMuted),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Save foods when logging meals',
+                              AppLocalizations.of(context).myFoodsSaveFoodsWhenLogging,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: textMuted.withValues(alpha: 0.7),
@@ -643,7 +644,7 @@ class RecipesTab extends StatelessWidget {
                             Icon(Icons.add, color: teal),
                             const SizedBox(width: 8),
                             Text(
-                              'Create New Recipe',
+                              AppLocalizations.of(context).myFoodsCreateNewRecipe,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -811,7 +812,7 @@ class _EmptyRecipesState extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'No recipes yet',
+              AppLocalizations.of(context).recipesNoRecipesYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -820,7 +821,7 @@ class _EmptyRecipesState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Create recipes to quickly log meals you eat often',
+              AppLocalizations.of(context).myFoodsCreateRecipesToQuickly,
               style: TextStyle(fontSize: 14, color: textSecondary),
               textAlign: TextAlign.center,
             ),
@@ -828,7 +829,7 @@ class _EmptyRecipesState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onCreateRecipe,
               icon: const Icon(Icons.add),
-              label: const Text('Create Your First Recipe'),
+              label: Text(AppLocalizations.of(context).myFoodsCreateYourFirstRecipe),
               style: FilledButton.styleFrom(
                 backgroundColor: teal,
                 foregroundColor: Colors.white,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'sheet_theme_colors.dart';
 import 'section_title.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Default list of day names
 const List<String> defaultDayNames = [
   'Mon',
@@ -58,7 +59,7 @@ class WorkoutDaysSelector extends StatelessWidget {
           children: [
             SectionTitle(
               icon: Icons.calendar_month,
-              title: 'Workout Days',
+              title: AppLocalizations.of(context).workoutSettingsWorkoutDays,
               iconColor: colors.cyan,
               badge: '${selectedDays.length} days/week',
             ),
@@ -66,7 +67,7 @@ class WorkoutDaysSelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Select which days you want to work out',
+          AppLocalizations.of(context).workoutDaysSelectorSelectWhichDaysYou,
           style: TextStyle(fontSize: 13, color: colors.textMuted),
         ),
         const SizedBox(height: 12),

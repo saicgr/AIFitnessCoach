@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class ExpandableSummaryExerciseCard extends StatefulWidget {
   final WorkoutExercise exercise;
   final ExerciseComparisonInfo? comparison;
@@ -316,7 +317,7 @@ class _ExpandableSummaryExerciseCardState
           SizedBox(
             width: 40,
             child: Text(
-              'Set',
+              AppLocalizations.of(context).workoutSummaryAdvancedSet,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -329,7 +330,7 @@ class _ExpandableSummaryExerciseCardState
           Expanded(
             child: Center(
               child: Text(
-                'Reps',
+                AppLocalizations.of(context).workoutSummaryGeneralReps,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -343,7 +344,7 @@ class _ExpandableSummaryExerciseCardState
           Expanded(
             child: Center(
               child: Text(
-                'Weight',
+                AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -620,7 +621,7 @@ class _ExpandableSummaryExerciseCardState
               ),
               const SizedBox(width: 6),
               Text(
-                'vs Previous Session',
+                AppLocalizations.of(context).expandableSummaryExerciseVsPreviousSession,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -774,7 +775,7 @@ class _ExpandableSummaryExerciseCardState
               : Colors.grey.shade600,
         ),
         label: Text(
-          'Edit',
+          AppLocalizations.of(context).commonEdit,
           style: TextStyle(
             fontSize: 12,
             color: widget.isDark

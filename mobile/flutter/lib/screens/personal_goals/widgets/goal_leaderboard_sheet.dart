@@ -6,6 +6,7 @@ import '../../../data/services/goal_social_service.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../data/providers/goal_suggestions_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Mini-leaderboard modal showing friends' progress on a goal
 class GoalLeaderboardSheet extends ConsumerWidget {
   final String userId;
@@ -68,7 +69,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Friends Leaderboard',
+                        AppLocalizations.of(context).goalLeaderboardFriendsLeaderboard,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -206,13 +207,13 @@ class GoalLeaderboardSheet extends ConsumerWidget {
                           color: AppColors.orange.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.local_fire_department, size: 10, color: AppColors.orange),
                             SizedBox(width: 2),
                             Text(
-                              'PR',
+                              AppLocalizations.of(context).goalLeaderboardPr,
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
@@ -306,7 +307,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'You',
+                  AppLocalizations.of(context).navYou,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -353,7 +354,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No friends on this goal yet',
+            AppLocalizations.of(context).goalLeaderboardNoFriendsOnThis,
             style: TextStyle(
               fontSize: 16,
               color: textSecondary,
@@ -361,7 +362,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Invite friends to compete!',
+            AppLocalizations.of(context).goalLeaderboardInviteFriendsToCompete,
             style: TextStyle(
               fontSize: 13,
               color: textSecondary.withValues(alpha: 0.7),
@@ -385,7 +386,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Could not load leaderboard',
+            AppLocalizations.of(context).goalLeaderboardCouldNotLoadLeaderboard,
             style: TextStyle(
               fontSize: 14,
               color: textSecondary,

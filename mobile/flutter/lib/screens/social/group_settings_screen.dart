@@ -10,6 +10,7 @@ import '../../widgets/app_loading.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/nav_bar_hider_mixin.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Group settings/info screen (F12)
 /// - Edit group name (if admin)
 /// - Member list with roles (admin/member)
@@ -95,7 +96,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
           _isSavingName = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Group name updated')),
+          SnackBar(content: Text(AppLocalizations.of(context).groupSettingsGroupNameUpdated)),
         );
       }
     } catch (e) {
@@ -113,17 +114,17 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Member'),
+        title: Text(AppLocalizations.of(context).groupSettingsRemoveMember),
         content: Text('Remove $memberName from this group?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
       ),
@@ -166,7 +167,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
     if (availableFriends.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('All your friends are already in this group')),
+          SnackBar(content: Text(AppLocalizations.of(context).groupSettingsAllYourFriendsAre)),
         );
       }
       return;
@@ -209,19 +210,19 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Leave Group'),
-        content: const Text(
-          'Are you sure you want to leave this group? You will no longer receive messages from this conversation.',
+        title: Text(AppLocalizations.of(context).groupSettingsLeaveGroup),
+        content: Text(
+          AppLocalizations.of(context).groupSettingsAreYouSureYou,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Leave'),
+            child: Text(AppLocalizations.of(context).groupSettingsLeave),
           ),
         ],
       ),
@@ -261,7 +262,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Group Settings'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).groupSettingsGroupSettings),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
@@ -361,7 +362,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
             Row(
               children: [
                 Text(
-                  'Members',
+                  AppLocalizations.of(context).groupSettingsMembers,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -370,7 +371,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
                 TextButton.icon(
                   onPressed: _handleAddMembers,
                   icon: const Icon(Icons.person_add_rounded, size: 18),
-                  label: const Text('Add'),
+                  label: Text(AppLocalizations.of(context).tilePickerAdd),
                 ),
               ],
             ),
@@ -392,7 +393,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
                 ),
                 child: Center(
                   child: Text(
-                    'Member list will load from server',
+                    AppLocalizations.of(context).groupSettingsMemberListWillLoad,
                     style: TextStyle(color: textMuted),
                   ),
                 ),
@@ -446,7 +447,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
                       ),
                       subtitle: role == 'admin'
                           ? Text(
-                              'Admin',
+                              AppLocalizations.of(context).groupSettingsAdmin,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colors.accent,
@@ -473,7 +474,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
               child: OutlinedButton.icon(
                 onPressed: _handleLeaveGroup,
                 icon: const Icon(Icons.exit_to_app_rounded),
-                label: const Text('Leave Group'),
+                label: Text(AppLocalizations.of(context).groupSettingsLeaveGroup),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.red,
                   side: const BorderSide(color: Colors.red),
@@ -532,7 +533,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
             child: Row(
               children: [
                 Text(
-                  'Add Members',
+                  AppLocalizations.of(context).groupSettingsAddMembers,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

@@ -20,7 +20,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
         backgroundColor: AppColors.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          isDecimal ? 'Enter Weight (${useKg ? 'kg' : 'lbs'})' : 'Enter Reps',
+          isDecimal ? 'Enter Weight (${useKg ? 'kg' : 'lbs'})' : AppLocalizations.of(context).workoutSheetsMixinEnterReps,
           style: const TextStyle(color: AppColors.textPrimary),
         ),
         content: TextField(
@@ -59,7 +59,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child:
-                const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+                Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: AppColors.textMuted)),
           ),
           TextButton(
             onPressed: () {
@@ -74,7 +74,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
               _setState(() {});
               Navigator.pop(dialogContext);
             },
-            child: Text('OK',
+            child: Text(AppLocalizations.of(context).progressOk,
                 style: TextStyle(
                     color: ref.watch(accentColorProvider).getColor(Theme.of(dialogContext).brightness == Brightness.dark), fontWeight: FontWeight.bold)),
           ),
@@ -115,7 +115,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Change Reps Progression',
+                    AppLocalizations.of(context).workoutSheetsMixinChangeRepsProgression,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -332,7 +332,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                   Row(
                     children: [
                       Text(
-                        'Bar Type',
+                        AppLocalizations.of(context).workoutSheetsMixinBarType,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -362,7 +362,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Select the type of bar you are using',
+                    AppLocalizations.of(context).workoutSheetsMixinSelectTheTypeOf,
                     style: TextStyle(
                       fontSize: 13,
                       color: isDark ? Colors.white54 : Colors.black45,
@@ -575,15 +575,15 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                       breakSuperset(groupId);
                       ScaffoldMessenger.of(_ctx).clearSnackBars();
                       ScaffoldMessenger.of(_ctx).showSnackBar(
-                        const SnackBar(
-                          content: Text('Superset removed'),
+                        SnackBar(
+                          content: Text(AppLocalizations.of(context).workoutSheetsMixinSupersetRemoved),
                           behavior: SnackBarBehavior.floating,
                           duration: Duration(seconds: 2),
                         ),
                       );
                     },
                     icon: const Icon(Icons.link_off),
-                    label: const Text('Break Superset'),
+                    label: Text(AppLocalizations.of(context).workoutSheetsMixinBreakSuperset),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red.shade400,
                       foregroundColor: Colors.white,
@@ -598,7 +598,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                 // Hint text
                 Center(
                   child: Text(
-                    'Or drag exercises together to add more',
+                    AppLocalizations.of(context).workoutSheetsMixinOrDragExercisesTogether,
                     style: TextStyle(
                       color: isDark ? Colors.grey : Colors.grey.shade600,
                       fontSize: 12,
@@ -638,7 +638,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Create Superset',
+                        AppLocalizations.of(context).workoutSheetsMixinCreateSuperset,
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black,
                         fontSize: 18,
@@ -660,7 +660,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'How to create a superset:',
+                        AppLocalizations.of(context).workoutSheetsMixinHowToCreateA,
                         style: TextStyle(
                           color: isDark ? Colors.white : Colors.black,
                           fontWeight: FontWeight.w600,
@@ -689,7 +689,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Supersets help you save time by alternating between exercises with minimal rest.',
+                  AppLocalizations.of(context).workoutSheetsMixinSupersetsHelpYouSave,
                   style: TextStyle(
                     color: isDark ? Colors.grey : Colors.grey.shade600,
                     fontSize: 13,

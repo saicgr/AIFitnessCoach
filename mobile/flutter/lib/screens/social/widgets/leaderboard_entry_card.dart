@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/leaderboard_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Individual leaderboard entry card
 class LeaderboardEntryCard extends StatelessWidget {
   final Map<String, dynamic> entry;
@@ -103,8 +104,8 @@ class LeaderboardEntryCard extends StatelessWidget {
                           color: AppColors.green.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Text(
-                          '✓ Friend',
+                        child: Text(
+                          AppLocalizations.of(context).leaderboardEntryCardFriend,
                           style: TextStyle(
                             fontSize: 10,
                             color: AppColors.green,
@@ -129,7 +130,7 @@ class LeaderboardEntryCard extends StatelessWidget {
                 isFriend ? Icons.emoji_events : Icons.flash_on,
                 color: isFriend ? AppColors.orange : AppColors.cyan,
               ),
-              tooltip: isFriend ? 'Challenge Friend' : 'Beat Their Best',
+              tooltip: isFriend ? AppLocalizations.of(context).leaderboardEntryCardChallengeFriend : AppLocalizations.of(context).leaderboardEntryCardBeatTheirBest,
             ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Model for a heart rate zone
 class HRZone {
   final int min;
@@ -415,7 +416,7 @@ class _HRZonesCardState extends ConsumerState<HRZonesCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Heart Rate Zones',
+                AppLocalizations.of(context).hrZonesCardHeartRateZones,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -423,7 +424,7 @@ class _HRZonesCardState extends ConsumerState<HRZonesCard> {
                 ),
               ),
               Text(
-                maxHR != null ? 'Max HR: $maxHR bpm' : 'Personalized training zones',
+                maxHR != null ? 'Max HR: $maxHR bpm' : AppLocalizations.of(context).hrZonesCardPersonalizedTrainingZones,
                 style: TextStyle(
                   fontSize: 11,
                   color: textMuted,
@@ -622,7 +623,7 @@ class _HRZonesCardState extends ConsumerState<HRZonesCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'VO2 Max',
+                AppLocalizations.of(context).hrZonesCardVo2Max,
                 style: TextStyle(fontSize: 11, color: textMuted),
               ),
               const SizedBox(height: 4),
@@ -641,7 +642,7 @@ class _HRZonesCardState extends ConsumerState<HRZonesCard> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 2),
                     child: Text(
-                      'ml/kg/min',
+                      AppLocalizations.of(context).vo2maxDetailMlKgMin,
                       style: TextStyle(fontSize: 10, color: textMuted),
                     ),
                   ),
@@ -674,7 +675,7 @@ class _HRZonesCardState extends ConsumerState<HRZonesCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Fitness Age',
+                  AppLocalizations.of(context).hrZonesCardFitnessAge,
                   style: TextStyle(fontSize: 11, color: textMuted),
                 ),
                 const SizedBox(height: 4),
@@ -731,7 +732,7 @@ class _HRZonesCardState extends ConsumerState<HRZonesCard> {
       onPressed: widget.onSetCustomMaxHR,
       icon: Icon(Icons.edit, size: 16, color: textMuted),
       label: Text(
-        'Set custom max HR',
+        AppLocalizations.of(context).hrZonesCardSetCustomMaxHr,
         style: TextStyle(fontSize: 12, color: textMuted),
       ),
       style: TextButton.styleFrom(
@@ -792,7 +793,7 @@ class _EmptyStateCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'HR Zones Not Available',
+              AppLocalizations.of(context).hrZonesCardHrZonesNotAvailable,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -801,7 +802,7 @@ class _EmptyStateCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Add your date of birth to calculate personalized heart rate zones',
+              AppLocalizations.of(context).hrZonesCardAddYourDateOf,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
@@ -893,7 +894,7 @@ class _ErrorCard extends StatelessWidget {
             const SizedBox(height: 12),
             TextButton(
               onPressed: onRetry,
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),

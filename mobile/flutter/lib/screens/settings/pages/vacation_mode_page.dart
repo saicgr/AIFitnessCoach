@@ -7,6 +7,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Vacation Mode settings page.
 ///
 /// Lets the user pause non-critical push notifications + emails. Critical
@@ -131,8 +132,8 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
     if (start != null && end != null && start.isAfter(end)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vacation start must be on or before end date'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).vacationModeVacationStartMustBe),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -173,8 +174,8 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
         _stagedEndCleared = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vacation mode settings saved'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).vacationModeVacationModeSettingsSaved),
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 2),
         ),
@@ -219,7 +220,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
 
     return Scaffold(
       backgroundColor: background,
-      appBar: const PillAppBar(title: 'Vacation Mode'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).vacationModeVacationMode),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -340,7 +341,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
                 setState(() => _stagedEnabled = v);
               },
         title: Text(
-          'Vacation Mode',
+          AppLocalizations.of(context).vacationModeVacationMode,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -349,7 +350,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
         ),
         subtitle: Text(
           enabled
-              ? 'Suppressing non-critical notifications'
+              ? AppLocalizations.of(context).vacationModeSuppressingNonCriticalNotif
               : 'Receive all your notifications normally',
           style: TextStyle(fontSize: 13, color: textMuted),
         ),
@@ -381,8 +382,8 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
       child: Column(
         children: [
           _dateTile(
-            label: 'Start date',
-            hint: 'Leave empty to start immediately',
+            label: AppLocalizations.of(context).vacationModeStartDate,
+            hint: AppLocalizations.of(context).vacationModeLeaveEmptyToStart,
             iso: start,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -391,8 +392,8 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
           ),
           Divider(height: 1, color: cardBorder),
           _dateTile(
-            label: 'End date',
-            hint: 'Leave empty for open-ended vacation',
+            label: AppLocalizations.of(context).vacationModeEndDate,
+            hint: AppLocalizations.of(context).vacationModeLeaveEmptyForOpen,
             iso: end,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -437,7 +438,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
           if (onClear != null)
             IconButton(
               icon: Icon(Icons.clear_rounded, size: 20, color: textMuted),
-              tooltip: 'Clear',
+              tooltip: AppLocalizations.of(context).vacationModeClear,
               onPressed: onClear,
             ),
           Icon(Icons.calendar_today_rounded, size: 18, color: textMuted),
@@ -475,7 +476,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
               Icon(Icons.info_outline_rounded, size: 18, color: textMuted),
               const SizedBox(width: 8),
               Text(
-                'What vacation mode does',
+                AppLocalizations.of(context).vacationModeWhatVacationModeDoes,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -542,7 +543,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               )
             : Text(
-                _hasUnsavedChanges ? 'Save Changes' : 'No Changes',
+                _hasUnsavedChanges ? AppLocalizations.of(context).vacationModeSaveChanges : AppLocalizations.of(context).vacationModeNoChanges,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
       ),

@@ -7,6 +7,7 @@ import '../data/providers/consistency_provider.dart';
 import '../data/services/api_client.dart';
 import 'workout_day_detail_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Widget showing search results for exercise history
 class ExerciseSearchResults extends ConsumerWidget {
   final String? exerciseName;
@@ -234,7 +235,7 @@ class _ResultCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      result.prType ?? 'PR',
+                      result.prType ?? AppLocalizations.of(context).goalLeaderboardPr,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.yellow,
                             fontWeight: FontWeight.w600,
@@ -283,7 +284,7 @@ class _NoResults extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'No results found',
+            AppLocalizations.of(context).exerciseSearchResultsNoResultsFound,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -353,7 +354,7 @@ class _SearchError extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Failed to search exercises',
+              AppLocalizations.of(context).exerciseSearchResultsFailedToSearchExercises,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.error,
                   ),

@@ -21,6 +21,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Entry point — mirrors the codebase's `showReplayTutorialsSheet` style.
 /// Pass `context` from a ConsumerStatefulWidget's `build`.
 Future<void> showWorkoutUiModeSheet(BuildContext context) {
@@ -60,7 +61,7 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Workout Mode',
+                    AppLocalizations.of(context).workoutUiModeWorkoutMode,
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -69,7 +70,7 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Pick the level of detail you want while logging sets. You can change this any time.',
+                    AppLocalizations.of(context).workoutUiModePickTheLevelOf,
                     style: TextStyle(
                         fontSize: 13, color: textMuted, height: 1.35),
                   ),
@@ -79,7 +80,7 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
                     icon: Icons.spa_outlined,
                     title: 'Easy',
                     description:
-                        "Polished default. Steppers, AI coach, rest timer, notes with audio + photo, tap-to-edit past sets. Perfect for most sessions.",
+                        AppLocalizations.of(context).workoutUiModePolishedDefaultSteppersAi,
                     selected: current == WorkoutUiMode.easy,
                     accent: accent,
                     isDark: isDark,
@@ -89,9 +90,9 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
                   _TierCard(
                     mode: WorkoutUiMode.advanced,
                     icon: Icons.tune_rounded,
-                    title: 'Advanced',
+                    title: AppLocalizations.of(context).workoutUiModeAdvanced,
                     description:
-                        'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.',
+                        AppLocalizations.of(context).workoutUiModeEverythingWarmupStretchPh,
                     selected: current == WorkoutUiMode.advanced,
                     accent: accent,
                     isDark: isDark,
@@ -211,7 +212,7 @@ class _TierCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
-                                'Selected',
+                                AppLocalizations.of(context).workoutUiModeSelected,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,

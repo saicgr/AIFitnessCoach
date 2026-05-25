@@ -12,6 +12,7 @@ import '../../data/providers/consistency_provider.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Consistency Insights Dashboard Screen
 /// Displays streak information, workout patterns, and recovery options
 class ConsistencyScreen extends ConsumerStatefulWidget {
@@ -70,7 +71,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: PillAppBar(
-        title: 'Consistency',
+        title: AppLocalizations.of(context).scoreBreakdownConsistency,
       ),
       body: _isLoading || _userId == null
           ? AppLoading.fullScreen()
@@ -132,7 +133,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to load data',
+              AppLocalizations.of(context).measurementsFailedToLoadData,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -151,7 +152,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
             FilledButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
             ),
           ],
         ),
@@ -248,7 +249,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
             ),
           ),
           Text(
-            currentStreak == 1 ? 'DAY STREAK' : 'DAY STREAK',
+            currentStreak == 1 ? AppLocalizations.of(context).statsStreakFireDayStreak : AppLocalizations.of(context).statsStreakFireDayStreak,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -319,7 +320,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                   size: 20, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                'Last 4 Weeks',
+                AppLocalizations.of(context).consistencyLast4Weeks,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -509,7 +510,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
               Icon(Icons.insights, size: 20, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Workout Patterns',
+                AppLocalizations.of(context).consistencyWorkoutPatterns,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -634,7 +635,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                   size: 20, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                'This Month',
+                AppLocalizations.of(context).consistencyThisMonth,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -753,7 +754,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                   size: 20, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                'Weekly Trend',
+                AppLocalizations.of(context).consistencyWeeklyTrend,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -847,7 +848,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                 const SizedBox(height: 4),
                 // Label
                 Text(
-                  isLatest ? 'This week' : 'Wk ${index + 1}',
+                  isLatest ? AppLocalizations.of(context).nutritionStreakCardThisWeek : 'Wk ${index + 1}',
                   style: TextStyle(
                     fontSize: 10,
                     color: colorScheme.onSurfaceVariant,
@@ -902,7 +903,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Start Fresh Today!',
+                      AppLocalizations.of(context).consistencyStartFreshToday,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -930,7 +931,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                 child: FilledButton.icon(
                   onPressed: () => _startRecovery('standard'),
                   icon: const Icon(Icons.fitness_center, size: 18),
-                  label: const Text('Full Workout'),
+                  label: Text(AppLocalizations.of(context).consistencyFullWorkout),
                 ),
               ),
               const SizedBox(width: 12),
@@ -938,7 +939,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                 child: OutlinedButton.icon(
                   onPressed: () => _startRecovery('quick_recovery'),
                   icon: const Icon(Icons.timer, size: 18),
-                  label: const Text('Quick 15min'),
+                  label: Text(AppLocalizations.of(context).consistencyQuick15min),
                 ),
               ),
             ],

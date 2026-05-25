@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Progression pace selection widget (Phase 2 personalization).
 ///
 /// Allows user to select progression pace (Slow, Medium, Fast).
@@ -40,7 +41,7 @@ class QuizProgressionConstraints extends StatelessWidget {
         children: [
           if (showHeader) ...[
             Text(
-              'Progression Pace',
+              AppLocalizations.of(context).workoutSettingsProgressionPace,
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -49,7 +50,7 @@ class QuizProgressionConstraints extends StatelessWidget {
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 6),
             Text(
-              'How fast do you want to progress?',
+              AppLocalizations.of(context).quizProgressionConstraintsHowFastDoYou,
               style: TextStyle(
                 fontSize: 15,
                 color: t.textSecondary,
@@ -65,8 +66,8 @@ class QuizProgressionConstraints extends StatelessWidget {
                 _buildPaceCard(
                   context: context,
                   id: 'slow',
-                  title: 'Slow & Steady',
-                  description: 'Build strength gradually, lower injury risk',
+                  title: AppLocalizations.of(context).quizProgressionConstraintsSlowSteady,
+                  description: AppLocalizations.of(context).quizProgressionConstraintsBuildStrengthGraduallyLowe,
                   icon: Icons.trending_flat,
                   recommended: _recommendedPace == 'slow',
                   badgeLabel: _recommendedPace == 'slow' ? 'FOR YOU' : null,
@@ -76,8 +77,8 @@ class QuizProgressionConstraints extends StatelessWidget {
                 _buildPaceCard(
                   context: context,
                   id: 'medium',
-                  title: 'Balanced',
-                  description: 'Steady progress with manageable challenge',
+                  title: AppLocalizations.of(context).quizProgressionConstraintsBalanced,
+                  description: AppLocalizations.of(context).quizProgressionConstraintsSteadyProgressWithManageabl,
                   icon: Icons.trending_up,
                   recommended: true,
                   badgeLabel: 'Recommended',
@@ -87,8 +88,8 @@ class QuizProgressionConstraints extends StatelessWidget {
                 _buildPaceCard(
                   context: context,
                   id: 'fast',
-                  title: 'Fast & Aggressive',
-                  description: 'Push hard, faster gains (advanced)',
+                  title: AppLocalizations.of(context).quizProgressionConstraintsFastAggressive,
+                  description: AppLocalizations.of(context).quizProgressionConstraintsPushHardFasterGains,
                   icon: Icons.rocket_launch,
                   recommended: _recommendedPace == 'fast',
                   badgeLabel: _recommendedPace == 'fast' ? 'FOR YOU' : null,

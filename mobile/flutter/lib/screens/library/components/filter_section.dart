@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../models/filter_option.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Collapsible filter section with multi-select chips
 class FilterSection extends StatefulWidget {
   final String title;
@@ -289,7 +290,7 @@ class _FilterSectionState extends State<FilterSection> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Center(
                         child: Text(
-                          'No matching options',
+                          AppLocalizations.of(context).filterNoMatchingOptions,
                           style: TextStyle(
                             fontSize: 13,
                             color: textMuted,

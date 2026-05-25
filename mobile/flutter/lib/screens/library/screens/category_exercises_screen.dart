@@ -7,6 +7,7 @@ import '../../../widgets/pill_app_bar.dart';
 import '../../../core/services/posthog_service.dart';
 import '../widgets/exercise_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Screen showing all exercises for a specific category
 class CategoryExercisesScreen extends ConsumerStatefulWidget {
   final String categoryName;
@@ -187,7 +188,7 @@ class _CategoryExercisesScreenState
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No exercises found',
+                    AppLocalizations.of(context).netflixExercisesTabNoExercisesFound,
                     style: TextStyle(
                       fontSize: 16,
                       color: textMuted,
@@ -214,7 +215,7 @@ class _CategoryExercisesScreenState
                           : TextButton(
                               onPressed: _loadMoreExercises,
                               child: Text(
-                                'Load more',
+                                AppLocalizations.of(context).exercisesLoadMore,
                                 style: TextStyle(color: cyan),
                               ),
                             ),

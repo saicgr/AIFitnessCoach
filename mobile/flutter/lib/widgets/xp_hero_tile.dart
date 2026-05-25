@@ -8,6 +8,7 @@ import '../data/models/weekly_xp_summary.dart';
 import '../data/providers/weekly_xp_summary_provider.dart';
 import '../data/providers/xp_provider.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Three-row XP hero tile used on the You hub (Overview + Stats & Rewards).
 ///
 /// Row 1 — Weekly XP (hero metric per market research), delta chip, 7-day
@@ -148,7 +149,7 @@ class _WeeklyHeroRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'THIS WEEK',
+                AppLocalizations.of(context).xpHeroTileThisWeek,
                 style: TextStyle(
                   color: fg.withValues(alpha: 0.55),
                   fontSize: 10,
@@ -202,7 +203,7 @@ class _WeeklyHeroRow extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'vs last week',
+                      AppLocalizations.of(context).xpHeroTileVsLastWeek,
                       style: TextStyle(
                         color: fg.withValues(alpha: 0.5),
                         fontSize: 11,

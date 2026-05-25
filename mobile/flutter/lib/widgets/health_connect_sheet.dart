@@ -8,6 +8,7 @@ import '../data/services/health_service.dart';
 import 'glass_sheet.dart';
 import 'sheet_header.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// SharedPreferences key for tracking when the user last dismissed this sheet.
 const _kDismissedAtKey = 'health_connect_dismissed_at';
 
@@ -121,7 +122,7 @@ class _HealthConnectSheetContentState
         SheetHeader(
           icon: Icons.monitor_heart_outlined,
           iconColor: AppColors.green,
-          title: 'Connect Health',
+          title: AppLocalizations.of(context).todaysHealthCardConnectHealth,
           showHandle: false, // GlassSheet already shows handle
           onClose: _handleDismiss,
         ),
@@ -133,7 +134,7 @@ class _HealthConnectSheetContentState
             children: [
               // Description
               Text(
-                'Sync your health data for personalized fitness insights',
+                AppLocalizations.of(context).healthConnectSyncYourHealthData,
                 style: TextStyle(
                   fontSize: 14,
                   color: textSecondary,
@@ -214,7 +215,7 @@ class _HealthConnectSheetContentState
                           color: AppColors.success, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'Connected successfully!',
+                        AppLocalizations.of(context).healthConnectConnectedSuccessfully,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -257,7 +258,7 @@ class _HealthConnectSheetContentState
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _handleConnect,
-                          child: const Text('Retry'),
+                          child: Text(AppLocalizations.of(context).buttonRetry),
                         ),
                       ),
                     ],
@@ -294,8 +295,8 @@ class _HealthConnectSheetContentState
                                   : AppColorsLight.accentContrast,
                             ),
                           )
-                        : const Text(
-                            'Connect',
+                        : Text(
+                            AppLocalizations.of(context).unifiedHomeWidgetsConnect,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -310,7 +311,7 @@ class _HealthConnectSheetContentState
                   child: TextButton(
                     onPressed: _handleDismiss,
                     child: Text(
-                      'Maybe Later',
+                      AppLocalizations.of(context).healthConnectMaybeLater,
                       style: TextStyle(
                         fontSize: 14,
                         color: textSecondary,

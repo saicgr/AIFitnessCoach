@@ -29,6 +29,7 @@ import 'share_templates/transparent_sticker_template.dart';
 import 'share_templates/volume_hero_template.dart';
 import 'share_templates/wrapped_template.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'share_workout_sheet_part_simple_photo_editor.dart';
 
 part 'share_workout_sheet_ui.dart';
@@ -588,8 +589,8 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
                 ),
-                const Text(
-                  'Share Your Workout',
+                Text(
+                  AppLocalizations.of(context).shareWorkoutShareYourWorkout,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -602,7 +603,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                     Icons.edit_rounded,
                     color: AppColors.cyan,
                   ),
-                  tooltip: 'Edit Image',
+                  tooltip: AppLocalizations.of(context).shareWorkoutSheetEditImage,
                 ),
               ],
             ),
@@ -621,7 +622,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Show Watermark',
+                  AppLocalizations.of(context).wrappedShareShowWatermark,
                   style: TextStyle(
                     fontSize: 14,
                     color: _showWatermark ? null : Colors.grey,
@@ -703,7 +704,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                   size: 20,
                 ),
                 label: Text(
-                  _userPhotoBytes != null ? 'Change Photo' : 'Add Your Photo',
+                  _userPhotoBytes != null ? AppLocalizations.of(context).shareWorkoutChangePhoto : AppLocalizations.of(context).shareWorkoutAddYourPhoto,
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.cyan,
@@ -733,7 +734,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                       child: _buildShareButton(
                         onPressed: _shareToInstagram,
                         icon: Icons.camera_alt_rounded,
-                        label: 'Instagram',
+                        label: AppLocalizations.of(context).wrappedShareInstagram,
                         isPrimary: true,
                         isLoading: _isSharing,
                       ),
@@ -743,7 +744,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                       child: _buildShareButton(
                         onPressed: _shareGeneric,
                         icon: Icons.share_rounded,
-                        label: 'More',
+                        label: AppLocalizations.of(context).homeMore,
                         isPrimary: false,
                         isLoading: _isSharing,
                       ),
@@ -760,7 +761,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                       child: _buildShareButton(
                         onPressed: _saveToGallery,
                         icon: Icons.save_alt_rounded,
-                        label: 'Save Only',
+                        label: AppLocalizations.of(context).shareWorkoutSaveOnly,
                         isPrimary: false,
                         isLoading: _isSaving,
                       ),
@@ -770,7 +771,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                       child: _buildShareButton(
                         onPressed: _copyAiCaption,
                         icon: Icons.auto_awesome,
-                        label: _isGeneratingCaption ? 'Writing...' : 'AI Caption',
+                        label: _isGeneratingCaption ? AppLocalizations.of(context).shareWorkoutWriting : AppLocalizations.of(context).shareWorkoutAiCaption,
                         isPrimary: false,
                         isLoading: _isGeneratingCaption,
                       ),

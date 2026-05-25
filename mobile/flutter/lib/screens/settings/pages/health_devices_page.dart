@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class HealthDevicesPage extends ConsumerWidget {
   const HealthDevicesPage({super.key});
 
@@ -17,7 +18,7 @@ class HealthDevicesPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Health & Devices'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).settingsHealthDevices),
       body: const SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16),

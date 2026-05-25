@@ -11,6 +11,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'workout_detail_helpers.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Mixin providing AI insights, reasoning, and parameters modal functionality
 /// for the WorkoutDetailScreen.
 mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
@@ -122,7 +123,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI INSIGHTS',
+                      AppLocalizations.of(context).workoutDetailAiAiInsights,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -133,7 +134,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     const SizedBox(height: 4),
                     if (isLoadingSummary)
                       Text(
-                        'Generating insights...',
+                        AppLocalizations.of(context).workoutDetailAiGeneratingInsights,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -258,7 +259,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     ),
                     IconButton(
                       onPressed: isRegenerating ? null : regenerateInsights,
-                      tooltip: 'Regenerate insights',
+                      tooltip: AppLocalizations.of(context).workoutDetailAiRegenerateInsights,
                       icon: isRegenerating
                           ? SizedBox(
                               width: 20, height: 20,
@@ -283,7 +284,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                           children: [
                             CircularProgressIndicator(color: accentColor),
                             const SizedBox(height: 16),
-                            Text('Generating new insights...', style: TextStyle(color: textMuted)),
+                            Text(AppLocalizations.of(context).workoutDetailAiGeneratingNewInsights, style: TextStyle(color: textMuted)),
                           ],
                         ),
                       )
@@ -471,14 +472,14 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('WHY THESE EXERCISES?',
+                        Text(AppLocalizations.of(context).workoutDetailAiWhyTheseExercises,
                           style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 1)),
                         const SizedBox(height: 2),
                         if (isLoadingParams)
-                          Text('Loading AI reasoning...',
+                          Text(AppLocalizations.of(context).workoutDetailAiLoadingAiReasoning,
                             style: TextStyle(fontSize: 13, color: textSecondary, fontStyle: FontStyle.italic))
                         else
-                          Text('Tap to see AI reasoning for exercise selection',
+                          Text(AppLocalizations.of(context).workoutDetailAiTapToSeeAi,
                             style: TextStyle(fontSize: 12, color: textSecondary)),
                       ],
                     ),
@@ -510,7 +511,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                         Row(children: [
                           Icon(Icons.auto_awesome, color: accentColor, size: 16),
                           const SizedBox(width: 8),
-                          Text('Workout Design',
+                          Text(AppLocalizations.of(context).workoutDetailAiWorkoutDesign,
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: accentColor)),
                         ]),
                         const SizedBox(height: 8),
@@ -529,7 +530,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                           Row(children: [
                             Icon(Icons.fitness_center, color: accentColor, size: 16),
                             const SizedBox(width: 8),
-                            Text('Exercise Selection',
+                            Text(AppLocalizations.of(context).workoutDetailAiExerciseSelection,
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: accentColor)),
                           ]),
                           const SizedBox(height: 12),
@@ -582,7 +583,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                           children: [
                             Icon(Icons.tune, color: AppColors.orange, size: 18),
                             const SizedBox(width: 8),
-                            Text('View All Parameters Sent to AI',
+                            Text(AppLocalizations.of(context).workoutDetailAiViewAllParametersSent,
                               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.orange)),
                           ],
                         ),
@@ -635,7 +636,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text('AI Generation Parameters',
+                      child: Text(AppLocalizations.of(context).workoutDetailAiAiGenerationParameters,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold, color: textPrimary)),
                     ),
@@ -653,7 +654,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                   padding: const EdgeInsets.all(20),
                   children: [
                     _buildParamsSection(
-                      title: 'User Profile', icon: Icons.person, color: accentColor,
+                      title: AppLocalizations.of(context).workoutDetailAiUserProfile, icon: Icons.person, color: accentColor,
                       items: [
                         if (params.userProfile.fitnessLevel != null)
                           ParamItem('Fitness Level', params.userProfile.fitnessLevel!.capitalize()),
@@ -672,7 +673,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     ),
                     const SizedBox(height: 16),
                     _buildParamsSection(
-                      title: 'Program Preferences', icon: Icons.settings, color: accentColor,
+                      title: AppLocalizations.of(context).workoutDetailAiProgramPreferences, icon: Icons.settings, color: accentColor,
                       items: [
                         if (params.programPreferences.difficulty != null)
                           ParamItem('Difficulty', DifficultyUtils.getDisplayName(params.programPreferences.difficulty!)),
@@ -691,7 +692,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     ),
                     const SizedBox(height: 16),
                     _buildParamsSection(
-                      title: 'Workout Specifics', icon: Icons.fitness_center, color: AppColors.green,
+                      title: AppLocalizations.of(context).workoutDetailAiWorkoutSpecifics, icon: Icons.fitness_center, color: AppColors.green,
                       items: [
                         ParamItem('Workout Name', params.workoutName ?? 'N/A'),
                         ParamItem('Type', (params.workoutType ?? 'N/A').capitalize()),
@@ -718,7 +719,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'These parameters were used by the AI to generate personalized exercises that match your fitness level, goals, and available equipment.',
+                              AppLocalizations.of(context).workoutDetailAiTheseParametersWereUsed,
                               style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4),
                             ),
                           ),

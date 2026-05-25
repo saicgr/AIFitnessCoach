@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Tap callback for a single match. The handler decides whether to open
 /// Swap, Add, or quick-workout-with-equipment based on the surrounding
 /// app state (active workout? in-set?).
@@ -179,7 +180,7 @@ class EquipmentMatchCard extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onStartWorkoutWithEquipment,
             icon: const Icon(Icons.flash_on_outlined, size: 18),
-            label: const Text('Start a workout with this'),
+            label: Text(AppLocalizations.of(context).equipmentMatchCardStartAWorkoutWith),
             style: OutlinedButton.styleFrom(
               foregroundColor: colors.textPrimary,
               shape: RoundedRectangleBorder(
@@ -212,7 +213,7 @@ class EquipmentMatchCard extends StatelessWidget {
         TextButton.icon(
           onPressed: onStartWorkoutWithEquipment,
           icon: const Icon(Icons.flash_on_outlined, size: 16),
-          label: const Text('Start a workout with this'),
+          label: Text(AppLocalizations.of(context).equipmentMatchCardStartAWorkoutWith),
           style: TextButton.styleFrom(
             foregroundColor: AppColors.cyan,
             padding: EdgeInsets.zero,
@@ -329,8 +330,8 @@ class _MatchRow extends StatelessWidget {
                 color: AppColors.cyan,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
-                'Use',
+              child: Text(
+                AppLocalizations.of(context).nextSetPreviewUse,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,

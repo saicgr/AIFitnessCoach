@@ -21,6 +21,7 @@ import '../../../workout/widgets/quick_workout_sheet.dart';
 import '../../../../data/repositories/progress_photos_repository.dart';
 import '../../../stats/widgets/photos_tab.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 part 'quick_actions_row_part_hero_action_card.dart';
 part 'quick_actions_row_part_more_actions_button.dart';
 
@@ -46,7 +47,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
           color: quickActionRegistry['food']?.color ?? AppColors.accent,
         ),
         // v27 mockup labels this slot "Log Food", not just "Food".
-        label: 'Log Food',
+        label: AppLocalizations.of(context).quickLogFabLogFood,
         // Registry has been re-keyed across releases ('food' vs 'log_food');
         // a `!` here threw "Null check operator used on a null value" for
         // users on a stale install. Default to a safe accent if missing.
@@ -71,7 +72,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
     case 'quick_workout':
       return _GridActionItem(
         icon: Icons.flash_on,
-        label: 'Quick',
+        label: AppLocalizations.of(context).quickActionsRowQuick,
         iconColor: quickActionRegistry['quick_workout']?.color ?? AppColors.accent,
         onTap: () async {
           HapticService.light();
@@ -85,7 +86,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
     case 'chat':
       return _GridActionItem(
         icon: Icons.auto_awesome,
-        label: 'Chat',
+        label: AppLocalizations.of(context).quickActionsRowChat,
         iconColor: quickActionRegistry['chat']?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
@@ -97,7 +98,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final photoFood = quickActionRegistry['photo_food'];
       return _GridActionItem(
         icon: photoFood?.icon ?? Icons.lunch_dining_outlined,
-        label: photoFood?.label ?? 'Photo Log',
+        label: photoFood?.label ?? AppLocalizations.of(context).quickActionsRowPhotoLog,
         iconColor: photoFood?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
@@ -117,7 +118,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final barcodeFood = quickActionRegistry['barcode_food'];
       return _GridActionItem(
         icon: barcodeFood?.icon ?? Icons.qr_code_scanner_outlined,
-        label: barcodeFood?.label ?? 'Barcode',
+        label: barcodeFood?.label ?? AppLocalizations.of(context).quickActionsRowBarcode,
         iconColor: barcodeFood?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
@@ -134,7 +135,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final scanFood = quickActionRegistry['scan_food'];
       return _GridActionItem(
         icon: scanFood?.icon ?? Icons.camera_alt_outlined,
-        label: scanFood?.label ?? 'Scan',
+        label: scanFood?.label ?? AppLocalizations.of(context).quickLogFabScan,
         iconColor: scanFood?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
@@ -158,7 +159,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final identify = quickActionRegistry['identify_equipment'];
       return _GridActionItem(
         icon: identify?.icon ?? Icons.camera_alt_outlined,
-        label: identify?.label ?? "What's this?",
+        label: identify?.label ?? AppLocalizations.of(context).sectionHeaderWhatSThis,
         iconColor: identify?.color ?? AppColors.accent,
         onTap: () async {
           HapticService.light();
@@ -180,7 +181,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final scanMenu = quickActionRegistry['scan_menu'];
       return _GridActionItem(
         icon: scanMenu?.icon ?? Icons.menu_book_outlined,
-        label: scanMenu?.label ?? 'Menu',
+        label: scanMenu?.label ?? AppLocalizations.of(context).quickActionsRowMenu,
         iconColor: scanMenu?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
@@ -203,7 +204,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
           size: 18,
           color: workout?.color ?? AppColors.accent,
         ),
-        label: workout?.label ?? 'Workout',
+        label: workout?.label ?? AppLocalizations.of(context).navWorkout,
         iconColor: workout?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
@@ -589,7 +590,7 @@ class _CoachQuickActionState extends ConsumerState<_CoachQuickAction> {
 
     return Semantics(
       button: true,
-      label: 'Coach',
+      label: AppLocalizations.of(context).quickActionsRowCoach,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -629,7 +630,7 @@ class _CoachQuickActionState extends ConsumerState<_CoachQuickAction> {
                     SizedBox(
                       height: 24,
                       child: Text(
-                        'Coach',
+                        AppLocalizations.of(context).quickActionsRowCoach,
                         style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,

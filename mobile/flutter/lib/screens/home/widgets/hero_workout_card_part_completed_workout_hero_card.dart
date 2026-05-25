@@ -77,7 +77,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Today\'s workout complete!',
+                    AppLocalizations.of(context).heroWorkoutCardTodaySWorkoutComplete,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -121,7 +121,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                       GoRouter.of(context).push('/workout/${nextWorkout.id}');
                     },
                     child: Text(
-                      nextWorkout.name ?? 'Workout',
+                      nextWorkout.name ?? AppLocalizations.of(context).navWorkout,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -174,7 +174,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'PREVIEW',
+                            AppLocalizations.of(context).heroWorkoutCardPreview,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -305,7 +305,7 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  widget.message ?? 'Loading your workout...',
+                  widget.message ?? AppLocalizations.of(context).heroWorkoutCardLoadingYourWorkout,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -315,7 +315,7 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.subtitle ?? 'This may take a moment',
+                  widget.subtitle ?? AppLocalizations.of(context).heroWorkoutCardThisMayTakeA,
                   style: TextStyle(fontSize: 14, color: textSecondary),
                   textAlign: TextAlign.center,
                 ),
@@ -324,7 +324,7 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
                   FilledButton.icon(
                     onPressed: widget.onRetry,
                     icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Tap to retry'),
+                    label: Text(AppLocalizations.of(context).upNextCardTapToRetry),
                     style: FilledButton.styleFrom(
                       backgroundColor: accentColor,
                       foregroundColor: Colors.white,

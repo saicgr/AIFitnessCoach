@@ -65,7 +65,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'How your targets are calculated',
+            AppLocalizations.of(context).nutritionGoalsCardHowYourTargetsAre,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -82,7 +82,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    'BMR (Basal Metabolic Rate)',
+                    AppLocalizations.of(context).nutritionGoalsCardBmrBasalMetabolicRate,
                     style: TextStyle(
                       fontSize: 13,
                       color: textPrimary,
@@ -112,7 +112,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
             firstChild: Padding(
               padding: const EdgeInsets.only(left: 12, top: 4, bottom: 12),
               child: Text(
-                'Mifflin-St Jeor formula · tap to see details',
+                AppLocalizations.of(context).nutritionGoalsCardMifflinStJeorFormula,
                 style: TextStyle(fontSize: 11, color: textMuted),
               ),
             ),
@@ -131,7 +131,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
 
           // TDEE
           _CalcRow(
-            label: 'TDEE (Daily Energy Needs)',
+            label: AppLocalizations.of(context).nutritionGoalsCardTdeeDailyEnergyNeeds,
             value: '${fmt(tdee)} cal',
             isDark: isDark,
             isBold: true,
@@ -143,7 +143,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
 
           // Goal adjustment
           _CalcRow(
-            label: 'Goal Adjustment',
+            label: AppLocalizations.of(context).nutritionGoalsCardGoalAdjustment,
             value: '${goalAdjustment >= 0 ? '+' : ''}${fmt(goalAdjustment)} cal',
             isDark: isDark,
           ),
@@ -167,7 +167,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Daily Calorie Target',
+                  AppLocalizations.of(context).nutritionGoalsCardDailyCalorieTarget,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -202,21 +202,21 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
           Row(
             children: [
               _MacroChip(
-                label: 'Protein',
+                label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                 grams: prefs.targetProteinG ?? 0,
                 pct: proteinPct,
                 color: isDark ? AppColors.purple : AppColorsLight.purple,
               ),
               const SizedBox(width: 8),
               _MacroChip(
-                label: 'Carbs',
+                label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                 grams: prefs.targetCarbsG ?? 0,
                 pct: carbPct,
                 color: isDark ? AppColors.cyan : AppColorsLight.cyan,
               ),
               const SizedBox(width: 8),
               _MacroChip(
-                label: 'Fat',
+                label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                 grams: prefs.targetFatG ?? 0,
                 pct: fatPct,
                 color: isDark ? AppColors.orange : AppColorsLight.orange,
@@ -237,7 +237,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
                     child: FilledButton.icon(
                       onPressed: widget.onEdit,
                       icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text('Edit Targets'),
+                      label: Text(AppLocalizations.of(context).nutritionGoalsCardEditTargets),
                       style: FilledButton.styleFrom(
                         backgroundColor: teal,
                         foregroundColor: Colors.white,
@@ -255,7 +255,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
                     child: OutlinedButton.icon(
                       onPressed: widget.onRecalculate,
                       icon: Icon(Icons.refresh, size: 18, color: teal),
-                      label: Text('Recalculate', style: TextStyle(inherit: false, color: teal, fontSize: 14, fontWeight: FontWeight.w500)),
+                      label: Text(AppLocalizations.of(context).strengthOverviewCardRecalculate, style: TextStyle(inherit: false, color: teal, fontSize: 14, fontWeight: FontWeight.w500)),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: teal.withValues(alpha: 0.5)),
                         shape: RoundedRectangleBorder(
@@ -291,7 +291,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
       return Padding(
         padding: const EdgeInsets.only(left: 12, top: 4, bottom: 12),
         child: Text(
-          'Mifflin-St Jeor formula (profile data unavailable for breakdown)',
+          AppLocalizations.of(context).nutritionGoalsCardMifflinStJeorFormula2,
           style: TextStyle(fontSize: 11, color: textMuted),
         ),
       );
@@ -323,10 +323,10 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          _BmrFormulaRow(label: '10 × ${weight.toStringAsFixed(1)} kg', value: weightTerm, isDark: isDark, hint: 'more mass = more energy at rest'),
-          _BmrFormulaRow(label: '6.25 × ${height.toStringAsFixed(1)} cm', value: heightTerm, isDark: isDark, prefix: '+', hint: 'taller = larger surface area'),
-          _BmrFormulaRow(label: '5 × $age yrs', value: ageTerm.toDouble(), isDark: isDark, prefix: '−', hint: 'metabolism slows with age'),
-          _BmrFormulaRow(label: isMale ? 'Male constant' : 'Female constant', value: offset.toDouble(), isDark: isDark, prefix: offset >= 0 ? '+' : '−', showAbs: true, hint: isMale ? 'males have more lean mass' : 'females have different body composition'),
+          _BmrFormulaRow(label: '10 × ${weight.toStringAsFixed(1)} kg', value: weightTerm, isDark: isDark, hint: AppLocalizations.of(context).nutritionGoalsCardMoreMassMoreEnergy),
+          _BmrFormulaRow(label: '6.25 × ${height.toStringAsFixed(1)} cm', value: heightTerm, isDark: isDark, prefix: '+', hint: AppLocalizations.of(context).nutritionGoalsCardTallerLargerSurfaceArea),
+          _BmrFormulaRow(label: '5 × $age yrs', value: ageTerm.toDouble(), isDark: isDark, prefix: '−', hint: AppLocalizations.of(context).nutritionGoalsCardMetabolismSlowsWithAge),
+          _BmrFormulaRow(label: isMale ? AppLocalizations.of(context).nutritionGoalsCardMaleConstant : AppLocalizations.of(context).nutritionGoalsCardFemaleConstant, value: offset.toDouble(), isDark: isDark, prefix: offset >= 0 ? '+' : '−', showAbs: true, hint: isMale ? AppLocalizations.of(context).nutritionGoalsCardMalesHaveMoreLean : AppLocalizations.of(context).nutritionGoalsCardFemalesHaveDifferentBody),
           const SizedBox(height: 4),
           Divider(color: cardBorder, height: 1),
           const SizedBox(height: 6),

@@ -7,6 +7,7 @@ import '../../core/widgets/line_icon.dart';
 import '../../data/providers/home_sections_provider.dart';
 import '../../data/services/haptic_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// "My Space" — customize the home screen.
 ///
 /// Two tabs, switched from a floating bottom pill:
@@ -46,7 +47,7 @@ class _HomeMySpaceScreenState extends ConsumerState<HomeMySpaceScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
-          'My Space',
+          AppLocalizations.of(context).programMenuButtonMySpace,
           style: TextStyle(
             color: c.textPrimary,
             fontSize: 18,
@@ -62,7 +63,7 @@ class _HomeMySpaceScreenState extends ConsumerState<HomeMySpaceScreen>
                 notifier.resetToDefault();
               },
               child: Text(
-                'Reset',
+                AppLocalizations.of(context).trophyFilterReset,
                 style: TextStyle(
                   color: c.accent,
                   fontWeight: FontWeight.w700,
@@ -287,7 +288,7 @@ class _DiscoverTab extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
       children: [
         Text(
-          'Start from a ready-made layout, then fine-tune it in Customize.',
+          AppLocalizations.of(context).homeMySpaceStartFromAReady,
           style: TextStyle(
             fontSize: 13,
             height: 1.45,
@@ -402,7 +403,7 @@ class _PresetCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        '● Current layout',
+                        AppLocalizations.of(context).homeMySpaceCurrentLayout,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
@@ -419,8 +420,8 @@ class _PresetCard extends StatelessWidget {
                           color: c.accent,
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Text(
-                          'Apply',
+                        child: Text(
+                          AppLocalizations.of(context).setAdjustmentSheetApply,
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w800,

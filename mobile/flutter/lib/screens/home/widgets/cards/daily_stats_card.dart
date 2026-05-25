@@ -9,6 +9,7 @@ import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/health_service.dart';
 import '../../../../data/services/haptic_service.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Daily Stats Tile - Shows steps and calorie deficit
 /// Steps from HealthKit/Google Fit
 /// Deficit = target - consumed + exercise burned
@@ -243,7 +244,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
         ),
         const SizedBox(width: 8),
         Text(
-          'Loading stats...',
+          AppLocalizations.of(context).dailyStatsCardLoadingStats,
           style: TextStyle(
             fontSize: 14,
             color: textMuted,
@@ -279,7 +280,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                'Daily Stats',
+                AppLocalizations.of(context).dailyStatsCardDailyStats,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -344,7 +345,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
                 children: [
                   Flexible(
                     child: Text(
-                      'Steps Goal',
+                      AppLocalizations.of(context).dailyStatsCardStepsGoal,
                       style: TextStyle(
                         fontSize: 12,
                         color: textMuted,

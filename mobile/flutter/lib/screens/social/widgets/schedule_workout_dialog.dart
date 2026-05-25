@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/saved_workouts_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Schedule Workout Dialog - date picker with conflict detection.
 ///
 /// Extracted from ActivityCard so it can be reused by SharedWorkoutDetailScreen.
@@ -43,7 +44,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
 
     return AlertDialog(
       backgroundColor: widget.elevated,
-      title: const Text('Schedule Workout'),
+      title: Text(AppLocalizations.of(context).scheduleWorkoutScheduleWorkout),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +106,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Checking schedule...',
+                  AppLocalizations.of(context).scheduleWorkoutCheckingSchedule,
                   style: TextStyle(
                     fontSize: 12,
                     color: textMuted.withValues(alpha: 0.6),
@@ -148,13 +149,13 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
                   ...(_existingWorkouts!.map((w) => Padding(
                     padding: const EdgeInsets.only(left: 4, top: 2),
                     child: Text(
-                      '\u2022 ${w['workout_name'] ?? w['name'] ?? 'Unnamed workout'}',
+                      '\u2022 ${w['workout_nameAppLocalizations.of(context).scheduleWorkoutWname'] ?? 'Unnamed workout'}',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ))),
                   const SizedBox(height: 6),
                   Text(
-                    'This workout will be added alongside them.',
+                    AppLocalizations.of(context).scheduleWorkoutThisWorkoutWillBe,
                     style: TextStyle(
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
@@ -170,15 +171,15 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context).buttonCancel),
         ),
         ElevatedButton(
           onPressed: () async {
             Navigator.pop(context);
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Scheduling workout...'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context).scheduleWorkoutSchedulingWorkout),
                 duration: Duration(seconds: 1),
                 behavior: SnackBarBehavior.floating,
               ),
@@ -218,7 +219,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.orange,
           ),
-          child: const Text('Schedule'),
+          child: Text(AppLocalizations.of(context).scheduleWorkoutSchedule),
         ),
       ],
     );

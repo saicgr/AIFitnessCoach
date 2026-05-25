@@ -39,7 +39,7 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
-                  'Feed Data to RAG',
+                  AppLocalizations.of(context).exerciseScienceResearchFeedDataToRag,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -54,7 +54,7 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
 
           // Explanation
           Text(
-            'Feed your own research papers, exercise databases, and training methodologies into our RAG (Retrieval-Augmented Generation) system. This allows the AI coach to draw from even more high-quality sources when generating your personalized workout plans, making suggestions smarter and more tailored to cutting-edge science.',
+            AppLocalizations.of(context).exerciseScienceResearchFeedYourOwnResearch,
             style: TextStyle(
               fontSize: 13,
               color: textSecondary,
@@ -83,7 +83,7 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
                     Icon(Icons.lightbulb_outline, size: 14, color: AppColors.info),
                     const SizedBox(width: 6),
                     Text(
-                      'How it works',
+                      AppLocalizations.of(context).referralsHowItWorks,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -94,7 +94,7 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Upload PDFs, articles, or text files containing exercise science research. Our system processes and indexes the content, making it available as context for the AI when generating your workouts.',
+                  AppLocalizations.of(context).exerciseScienceResearchUploadPdfsArticlesOr,
                   style: TextStyle(
                     fontSize: 12,
                     color: textSecondary,
@@ -124,7 +124,7 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Every submitted source is reviewed and validated by a human before being added to the knowledge base.',
+                    AppLocalizations.of(context).exerciseScienceResearchEverySubmittedSourceIs,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -158,7 +158,7 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
                     Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.error),
                     const SizedBox(width: 6),
                     Text(
-                      'Important guidelines',
+                      AppLocalizations.of(context).exerciseScienceResearchImportantGuidelines,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -216,7 +216,7 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
                       Icon(Icons.upload_file, color: AppColors.purple, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'Upload Data',
+                        AppLocalizations.of(context).exerciseScienceResearchUploadData,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,

@@ -15,6 +15,7 @@ import '../../../data/providers/food_patterns_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // Disk-cache helper for the four blocking Patterns sections
 // ─────────────────────────────────────────────────────────────────────────────
@@ -150,7 +151,7 @@ class _NutritionPatternsTabState extends ConsumerState<NutritionPatternsTab>
     final userId = widget.userId;
     if (userId.isEmpty) {
       return Center(
-        child: Text('Sign in to see your patterns',
+        child: Text(AppLocalizations.of(context).nutritionPatternsSignInToSee,
             style: TextStyle(color: textMuted)),
       );
     }
@@ -478,15 +479,15 @@ class _MacroChartsSectionState extends ConsumerState<_MacroChartsSection> {
         fresh ?? (_cachedKey == _key ? _cached : null);
 
     return _SectionContainer(
-      title: widget.range == 'day' ? "Today's Macros" : 'Nutrition Trends',
+      title: widget.range == 'day' ? AppLocalizations.of(context).nutritionPatternsTodaySMacros : AppLocalizations.of(context).nutritionPatternsNutritionTrends,
       isDark: widget.isDark,
       child: Builder(builder: (context) {
         if (summary != null) {
           if (summary.daysCounted == 0) {
             return _EmptyStub(
               icon: Icons.pie_chart_outline,
-              title: 'No meals logged',
-              subtitle: 'Log a few meals to see your macro trends.',
+              title: AppLocalizations.of(context).nutritionPatternsNoMealsLogged,
+              subtitle: AppLocalizations.of(context).nutritionPatternsLogAFewMeals,
             );
           }
           return Column(
@@ -702,7 +703,7 @@ class _CalorieTrend extends ConsumerWidget {
       return SizedBox(
         height: 80,
         child: Center(
-          child: Text('Need more days of data',
+          child: Text(AppLocalizations.of(context).nutritionPatternsNeedMoreDaysOf,
               style: TextStyle(fontSize: 12, color: textMuted)),
         ),
       );
@@ -713,14 +714,14 @@ class _CalorieTrend extends ConsumerWidget {
       accent: colors.accent,
       height: 180,
       primary: TrendChartSeries(
-        label: 'Calorie Trends',
+        label: AppLocalizations.of(context).nutritionPatternsCalorieTrends,
         unit: 'kcal',
         points: trendPoints,
         zoneBands: [
           if (goal != null && goal > 0)
             TrendZoneBand(
               value: goal.toDouble(),
-              label: 'Goal',
+              label: AppLocalizations.of(context).challengeCreateFieldGoal,
               color: colors.warning,
             ),
         ],
@@ -843,7 +844,7 @@ class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
     final data = fresh ?? _cache[_key];
 
     return _SectionContainer(
-      title: 'Foods highest in…',
+      title: AppLocalizations.of(context).nutritionPatternsFoodsHighestIn,
       isDark: widget.isDark,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -896,7 +897,7 @@ class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
               if (data.items.isEmpty) {
                 return _EmptyStub(
                   icon: Icons.restaurant_menu_outlined,
-                  title: 'No foods yet',
+                  title: AppLocalizations.of(context).nutritionPatternsNoFoodsYet,
                   subtitle: 'Log meals to see your top ${_METRICS.firstWhere((e) => e.key == _metric).value.toLowerCase()} sources.',
                 );
               }
@@ -1103,8 +1104,8 @@ class _MoodSectionState extends ConsumerState<_MoodSection> {
     final isDark = widget.isDark;
 
     return _SectionContainer(
-      title: 'Your body\'s responses',
-      subtitle: 'Based on the last 90 days',
+      title: AppLocalizations.of(context).nutritionPatternsYourBodySResponses,
+      subtitle: AppLocalizations.of(context).nutritionPatternsBasedOnTheLast,
       isDark: isDark,
       child: Builder(builder: (context) {
         if (data != null) {
@@ -1118,15 +1119,15 @@ class _MoodSectionState extends ConsumerState<_MoodSection> {
           if (data.isEmpty) {
             return _EmptyStub(
               icon: Icons.insights_outlined,
-              title: 'No patterns yet',
-              subtitle: 'Log 3+ meals with a check-in to see which foods fuel you and which drag you down.',
+              title: AppLocalizations.of(context).nutritionPatternsNoPatternsYet,
+              subtitle: AppLocalizations.of(context).nutritionPatternsLog3MealsWith,
             );
           }
           return Column(
             children: [
               if (data.drainingFoods.isNotEmpty) ...[
                 _MoodListHeader(
-                  label: 'Foods that drag you down',
+                  label: AppLocalizations.of(context).nutritionPatternsFoodsThatDragYou,
                   color: AppColors.orange,
                   isDark: isDark,
                 ),
@@ -1136,7 +1137,7 @@ class _MoodSectionState extends ConsumerState<_MoodSection> {
               ],
               if (data.energizingFoods.isNotEmpty) ...[
                 _MoodListHeader(
-                  label: 'Foods that energize you',
+                  label: AppLocalizations.of(context).nutritionPatternsFoodsThatEnergizeYou,
                   color: AppColors.success,
                   isDark: isDark,
                 ),
@@ -1235,13 +1236,13 @@ class _CheckinDisabledBanner extends StatelessWidget {
             Icon(Icons.visibility_off_outlined, size: 18, color: AppColors.orange),
             const SizedBox(width: 8),
             Text(
-              'Check-ins are off',
+              AppLocalizations.of(context).nutritionPatternsCheckInsAreOff,
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
             ),
           ]),
           const SizedBox(height: 6),
           Text(
-            'Re-enable the post-meal check-in sheet to start building your food-mood patterns.',
+            AppLocalizations.of(context).nutritionPatternsReEnableThePost,
             style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
           ),
           const SizedBox(height: 12),
@@ -1254,7 +1255,7 @@ class _CheckinDisabledBanner extends StatelessWidget {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
-              child: const Text('Re-enable'),
+              child: Text(AppLocalizations.of(context).nutritionPatternsReEnable),
             ),
           ),
         ],
@@ -1342,7 +1343,7 @@ class _MoodFoodTile extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'AI guess',
+                        AppLocalizations.of(context).nutritionPatternsAiGuess,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -1461,7 +1462,7 @@ class _HistorySectionState extends ConsumerState<_HistorySection> {
     final rows = fresh ?? (_cachedKey == _key ? _cached : null);
 
     return _SectionContainer(
-      title: 'Meal history',
+      title: AppLocalizations.of(context).nutritionPatternsMealHistory,
       isDark: widget.isDark,
       child: Builder(builder: (context) {
         if (rows != null) {
@@ -1469,7 +1470,7 @@ class _HistorySectionState extends ConsumerState<_HistorySection> {
             return _EmptyStub(
               icon: Icons.event_note_outlined,
               title: 'No meals this ${widget.range}',
-              subtitle: 'Logged meals will show up here as a timeline.',
+              subtitle: AppLocalizations.of(context).nutritionPatternsLoggedMealsWillShow,
             );
           }
           // Cap at 25 visible rows, built lazily so off-screen rows are not
@@ -1668,15 +1669,15 @@ class _SettingsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(patternsSettingsProvider(userId));
     return _SectionContainer(
-      title: 'Check-in & Insights',
+      title: AppLocalizations.of(context).nutritionPatternsCheckInInsights,
       isDark: isDark,
       child: async.when(
         loading: () => const _LoadingStub(height: 160),
         error: (e, _) => _ErrorStub(message: 'Couldn\'t load settings'),
         data: (s) => Column(children: [
           _ToggleRow(
-            title: 'Post-meal check-in',
-            subtitle: 'The quick "how do you feel?" sheet after logging',
+            title: AppLocalizations.of(context).nutritionPatternsPostMealCheckIn,
+            subtitle: AppLocalizations.of(context).nutritionPatternsTheQuickHowDo,
             value: !s.postMealCheckinDisabled,
             onChanged: (v) async {
               await ref.read(nutritionRepositoryProvider)
@@ -1688,8 +1689,8 @@ class _SettingsRow extends ConsumerWidget {
             textMuted: textMuted,
           ),
           _ToggleRow(
-            title: '45-min reminder push',
-            subtitle: 'Nudge if you skip the check-in',
+            title: AppLocalizations.of(context).nutritionPatterns45MinReminderPush,
+            subtitle: AppLocalizations.of(context).nutritionPatternsNudgeIfYouSkip,
             value: s.postMealReminderEnabled,
             onChanged: (v) async {
               await ref.read(nutritionRepositoryProvider)
@@ -1700,8 +1701,8 @@ class _SettingsRow extends ConsumerWidget {
             textMuted: textMuted,
           ),
           _ToggleRow(
-            title: 'AI mood guesses',
-            subtitle: 'Auto-infer mood from nutrition when you skip check-ins',
+            title: AppLocalizations.of(context).nutritionPatternsAiMoodGuesses,
+            subtitle: AppLocalizations.of(context).nutritionPatternsAutoInferMoodFrom,
             value: s.passiveInferenceEnabled,
             onChanged: (v) async {
               await ref.read(nutritionRepositoryProvider)

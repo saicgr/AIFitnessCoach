@@ -17,6 +17,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../models/workout_state.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// MET value for moderate-vigorous resistance training. Source: Compendium
 /// of Physical Activities (Ainsworth et al.) — entry 02050 "resistance
 /// training, multiple exercises, 8–15 repetitions at varied resistance".
@@ -74,7 +75,7 @@ class WorkoutStatsStrip extends ConsumerWidget {
         children: [
           Expanded(
             child: _StatColumn(
-              label: 'Duration',
+              label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
               value: _formatDuration(workoutSeconds),
               leadingDot: true,
               textPrimary: textPrimary,
@@ -83,7 +84,7 @@ class WorkoutStatsStrip extends ConsumerWidget {
           ),
           Expanded(
             child: _StatColumn(
-              label: 'Calories',
+              label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
               value: '$calories kcal',
               textPrimary: textPrimary,
               textMuted: textMuted,
@@ -91,7 +92,7 @@ class WorkoutStatsStrip extends ConsumerWidget {
           ),
           Expanded(
             child: _StatColumn(
-              label: 'Volume',
+              label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
               value: _formatVolume(totalVolumeKg, useKg: useKg),
               textPrimary: textPrimary,
               textMuted: textMuted,

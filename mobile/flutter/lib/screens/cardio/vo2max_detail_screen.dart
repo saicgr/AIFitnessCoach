@@ -8,6 +8,7 @@ import '../../data/repositories/vo2max_repository.dart';
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// VO2max trend detail screen.
 ///
 /// Wave 2 (SLICE_VO2MAX). Self-contained — when MetricDetailScreen lands
@@ -35,7 +36,7 @@ class Vo2MaxDetailScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'VO2max',
+                      AppLocalizations.of(context).vo2maxDetailVo2max,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -130,7 +131,7 @@ class _Body extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No VO2max yet',
+            AppLocalizations.of(context).vo2maxDetailNoVo2maxYet,
             style: theme.textTheme.titleMedium,
             textAlign: TextAlign.center,
           ),
@@ -213,7 +214,7 @@ class _LatestHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Latest VO2max',
+            AppLocalizations.of(context).vo2maxDetailLatestVo2max,
             style: theme.textTheme.labelMedium?.copyWith(
               color: onSurface.withValues(alpha: 0.6),
               letterSpacing: 0.4,
@@ -235,7 +236,7 @@ class _LatestHero extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'ml/kg/min',
+                AppLocalizations.of(context).vo2maxDetailMlKgMin,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: onSurface.withValues(alpha: 0.65),
                   fontWeight: FontWeight.w600,
@@ -321,7 +322,7 @@ class _TrendCard extends StatelessWidget {
           border: Border.all(color: onSurface.withValues(alpha: 0.08)),
         ),
         child: Text(
-          'Trend will appear after a few logged measurements.',
+          AppLocalizations.of(context).vo2maxDetailTrendWillAppearAfter,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: onSurface.withValues(alpha: 0.6),
           ),
@@ -361,7 +362,7 @@ class _TrendCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Last 180 days',
+                AppLocalizations.of(context).vo2maxDetailLast180Days,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -500,9 +501,9 @@ class _StatRow extends StatelessWidget {
       spacing: 12,
       runSpacing: 12,
       children: [
-        _StatTile(label: 'Current', value: current, color: onSurface),
-        _StatTile(label: '30-day avg', value: avg30, color: onSurface),
-        _StatTile(label: 'All-time best', value: best, color: onSurface),
+        _StatTile(label: AppLocalizations.of(context).workoutPlanDrawerCurrent, value: current, color: onSurface),
+        _StatTile(label: AppLocalizations.of(context).vo2maxDetail30DayAvg, value: avg30, color: onSurface),
+        _StatTile(label: AppLocalizations.of(context).vo2maxDetailAllTimeBest, value: best, color: onSurface),
       ],
     );
   }
@@ -598,7 +599,7 @@ class _AskCoachFooter extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(
-          'Ask coach',
+          AppLocalizations.of(context).workoutShowcaseAskCoach,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),

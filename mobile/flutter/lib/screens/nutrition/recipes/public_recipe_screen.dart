@@ -10,6 +10,7 @@ import '../../../data/models/recipe_share.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/recipe_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class PublicRecipeScreen extends ConsumerWidget {
   final String slug;
   final bool isDark;
@@ -39,7 +40,7 @@ class PublicRecipeScreen extends ConsumerWidget {
               children: [
                 Icon(Icons.link_off, size: 64, color: muted),
                 const SizedBox(height: 12),
-                Text('Recipe not available', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w700)),
+                Text(AppLocalizations.of(context).publicRecipeRecipeNotAvailable, style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 Text(e.toString(), style: TextStyle(color: muted), textAlign: TextAlign.center),
               ],
@@ -77,7 +78,7 @@ class PublicRecipeScreen extends ConsumerWidget {
             _statChip('${v.proteinPerServingG!.toStringAsFixed(0)}g P', accent),
         ]),
         const SizedBox(height: 24),
-        Text('Ingredients', style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).recipeSuggestionCardIngredients, style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w700)),
         ...v.ingredients.map((i) => ListTile(
               dense: true,
               leading: Icon(Icons.circle, size: 6, color: accent),
@@ -86,7 +87,7 @@ class PublicRecipeScreen extends ConsumerWidget {
             )),
         if ((v.instructions ?? '').isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text('Instructions', style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(AppLocalizations.of(context).workoutShowcaseInstructions, style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w700)),
           Text(v.instructions!, style: TextStyle(color: text, height: 1.5)),
         ],
         const SizedBox(height: 32),
@@ -104,7 +105,7 @@ class PublicRecipeScreen extends ConsumerWidget {
             }
           },
           icon: const Icon(Icons.bookmark_add),
-          label: const Text('Save to my recipes'),
+          label: Text(AppLocalizations.of(context).publicRecipeSaveToMyRecipes),
           style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
         ),
       ],

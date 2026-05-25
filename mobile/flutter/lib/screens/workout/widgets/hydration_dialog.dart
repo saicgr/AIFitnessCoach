@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/hydration.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Result from the hydration dialog
 class HydrationDialogResult {
   final DrinkType drinkType;
@@ -267,7 +268,7 @@ Future<HydrationDialogResult?> showHydrationDialog({
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   style: TextStyle(color: textPrimary, fontSize: 16),
                   decoration: InputDecoration(
-                    hintText: 'Custom amount',
+                    hintText: AppLocalizations.of(context).quickActionsRowCustomAmount,
                     hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
                     filled: true,
                     fillColor: elevated,

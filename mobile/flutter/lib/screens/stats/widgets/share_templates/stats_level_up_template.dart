@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Stats Level Up Template - RPG/gaming style with XP bar and level ring
 /// Deep purple → indigo gradient with hexagonal grid
 class StatsLevelUpTemplate extends StatelessWidget {
@@ -126,8 +127,8 @@ class StatsLevelUpTemplate extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'EXPERIENCE',
+                        Text(
+                          AppLocalizations.of(context).statsLevelUpExperience,
                           style: TextStyle(
                             color: Color(0xFF94A3B8),
                             fontSize: 10,
@@ -191,7 +192,7 @@ class StatsLevelUpTemplate extends StatelessWidget {
                       child: _StatCard(
                         icon: Icons.fitness_center,
                         value: '$totalWorkouts',
-                        label: 'Workouts',
+                        label: AppLocalizations.of(context).workoutListTitle,
                         color: const Color(0xFF7C3AED),
                       ),
                     ),
@@ -200,7 +201,7 @@ class StatsLevelUpTemplate extends StatelessWidget {
                       child: _StatCard(
                         icon: Icons.local_fire_department,
                         value: '$currentStreak',
-                        label: 'Streak',
+                        label: AppLocalizations.of(context).xpProgressCardStreak,
                         color: const Color(0xFFF97316),
                       ),
                     ),

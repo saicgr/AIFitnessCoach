@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Classic Stats — refined 2×2 stat grid. Replaces the bland `stats_template.dart`
 /// that shipped originally. Keeps the grid-paper background aesthetic but
 /// promotes the hero typography and fixes the weight unit.
@@ -84,7 +85,7 @@ class ClassicStatsTemplate extends StatelessWidget {
                             Expanded(
                               child: _StatTile(
                                 icon: Icons.timer_outlined,
-                                label: 'DURATION',
+                                label: AppLocalizations.of(context).logCardioDuration,
                                 value: formatShareDurationLong(durationSeconds),
                                 accent: const Color(0xFFA855F7),
                               ),
@@ -93,7 +94,7 @@ class ClassicStatsTemplate extends StatelessWidget {
                             Expanded(
                               child: _StatTile(
                                 icon: Icons.fitness_center,
-                                label: 'EXERCISES',
+                                label: AppLocalizations.of(context).workoutSummaryGeneralExercises,
                                 value: '$exercisesCount',
                                 accent: const Color(0xFFA855F7),
                               ),
@@ -108,7 +109,7 @@ class ClassicStatsTemplate extends StatelessWidget {
                             Expanded(
                               child: _StatTile(
                                 icon: Icons.scale,
-                                label: 'VOLUME',
+                                label: AppLocalizations.of(context).wrappedTemplateVolume,
                                 value: totalVolumeKg == null
                                     ? '—'
                                     : formatShareWeightCompact(
@@ -122,7 +123,7 @@ class ClassicStatsTemplate extends StatelessWidget {
                             Expanded(
                               child: _StatTile(
                                 icon: Icons.local_fire_department,
-                                label: 'CALORIES',
+                                label: AppLocalizations.of(context).retro80sTemplateCalories,
                                 value: calories == null ? '—' : '$calories',
                                 accent: const Color(0xFFF97316),
                               ),

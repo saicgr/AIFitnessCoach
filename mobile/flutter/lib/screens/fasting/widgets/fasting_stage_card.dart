@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme_colors.dart';
 import 'fasting_stage_model.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card describing the user's current metabolic stage, what's happening in
 /// their body, and how long until the next stage.
 class FastingStageCard extends StatelessWidget {
@@ -70,7 +71,7 @@ class FastingStageCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Current stage',
+                      AppLocalizations.of(context).fastingStageCardCurrentStage,
                       style: TextStyle(
                         fontSize: 11,
                         letterSpacing: 0.8,
@@ -168,7 +169,7 @@ class FastingStageCard extends StatelessWidget {
                 Icon(Icons.flag_rounded, size: 15, color: stageColor),
                 const SizedBox(width: 6),
                 Text(
-                  'Final metabolic stage reached',
+                  AppLocalizations.of(context).fastingStageCardFinalMetabolicStageReached,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

@@ -10,6 +10,7 @@ import '../../../../data/providers/exercise_progression_provider.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class RepProgressionCard extends ConsumerWidget {
   final BeastThemeData theme;
   const RepProgressionCard({super.key, required this.theme});
@@ -27,9 +28,9 @@ class RepProgressionCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Rep & Progression', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
+          Text(AppLocalizations.of(context).repProgressionCardRepProgression, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary)),
           const SizedBox(height: 4),
-          Text('Fine-tune rep ranges and progression style', style: TextStyle(fontSize: 11, color: theme.textMuted)),
+          Text(AppLocalizations.of(context).repProgressionCardFineTuneRepRanges, style: TextStyle(fontSize: 11, color: theme.textMuted)),
           const SizedBox(height: 16),
 
           // Rep Range

@@ -8,6 +8,7 @@ import '../../../../data/services/context_logging_service.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/repositories/workout_repository.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Mood picker card for home screen.
 /// Allows users to select a mood and instantly generate a tailored workout.
 class MoodPickerCard extends ConsumerStatefulWidget {
@@ -137,7 +138,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'How are you feeling?',
+                            AppLocalizations.of(context).quickAdjustHowAreYouFeeling,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -146,7 +147,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Get a workout for your mood',
+                            AppLocalizations.of(context).moodPickerCardGetAWorkoutFor,
                             style: TextStyle(
                               fontSize: 12,
                               color: textMuted,
@@ -270,7 +271,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
               const SizedBox(height: 16),
               // Status message
               Text(
-                state.statusMessage ?? 'Generating your workout...',
+                state.statusMessage ?? AppLocalizations.of(context).moodPickerCardGeneratingYourWorkout,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -342,7 +343,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
               ),
               const SizedBox(height: 12),
               Text(
-                'Generation Failed',
+                AppLocalizations.of(context).workoutGenerationGenerationFailed,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -369,7 +370,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
                   foregroundColor: errorColor,
                   side: BorderSide(color: errorColor),
                 ),
-                child: const Text('Try Again'),
+                child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
               ),
             ],
           ),
@@ -547,14 +548,14 @@ class _MoodWorkoutGeneratingOverlay extends ConsumerWidget {
                       const Icon(Icons.error_outline, color: Colors.red, size: 32),
                       const SizedBox(height: 8),
                       Text(
-                        state.error ?? 'Something went wrong',
+                        state.error ?? AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Close', style: TextStyle(color: Colors.white)),
+                        child: Text(AppLocalizations.of(context).commonClose, style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),

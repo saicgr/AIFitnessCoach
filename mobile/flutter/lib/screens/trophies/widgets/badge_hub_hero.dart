@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Teal→green gradient hero banner at the top of the Badge Hub.
 /// Matches the reference art — stacked badges illustration on the right
 /// and a "How it works >" pill on the left. The right-side badges are
@@ -69,8 +70,8 @@ class BadgeHubHero extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Reward Your Progress',
+                  Text(
+                    AppLocalizations.of(context).badgeHubRewardYourProgress,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 19,
@@ -79,8 +80,8 @@ class BadgeHubHero extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Earn badges for every milestone, streak, and PB.',
+                  Text(
+                    AppLocalizations.of(context).badgeHubHeroEarnBadgesForEvery,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -90,8 +91,8 @@ class BadgeHubHero extends StatelessWidget {
                   const Spacer(),
                   Row(
                     children: [
-                      const Text(
-                        'How it works',
+                      Text(
+                        AppLocalizations.of(context).referralsHowItWorks,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13,

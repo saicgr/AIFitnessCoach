@@ -8,6 +8,7 @@ import '../../widgets/cardio/training_load_chart.dart';
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// =========================================================================
 /// TrainingLoadScreen — `/cardio/training-load`
 /// =========================================================================
@@ -53,7 +54,7 @@ class TrainingLoadScreen extends ConsumerWidget {
                     const GlassBackButton(),
                     const SizedBox(width: 12),
                     Text(
-                      'Training load',
+                      AppLocalizations.of(context).trainingLoadTrainingLoad,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -124,7 +125,7 @@ class TrainingLoadScreen extends ConsumerWidget {
                   children: [
                     AskCoachButton(
                       contextLabel: 'Training load · ACWR',
-                      semanticLabel: 'Ask coach about your training load',
+                      semanticLabel: AppLocalizations.of(context).trainingLoadAskCoachAboutYour,
                       statSnapshot: {
                         'source': 'training_load',
                         'state': asyncState.valueOrNull?.state,
@@ -245,7 +246,7 @@ class _StatCards extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            label: 'Acute (7d)',
+            label: AppLocalizations.of(context).trainingLoadAcute7d,
             value: state.acuteLoad.toStringAsFixed(0),
             unit: 'TRIMP',
           ),
@@ -253,7 +254,7 @@ class _StatCards extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _StatCard(
-            label: 'Chronic (28d)',
+            label: AppLocalizations.of(context).trainingLoadChronic28d,
             value: state.chronicLoad.toStringAsFixed(0),
             unit: 'TRIMP',
           ),

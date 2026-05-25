@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'sheet_theme_colors.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// A reusable selectable chip widget for multi-select options
 /// Used across workout customization sheets for equipment, focus areas, etc.
 class SelectableChip extends StatelessWidget {
@@ -139,7 +140,7 @@ class OtherInputChip extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              hasValue ? customValue : 'Other',
+              hasValue ? customValue : AppLocalizations.of(context).selectableChipOther,
               style: TextStyle(
                 color: hasValue ? accentColor : colors.textSecondary,
                 fontWeight: hasValue ? FontWeight.w600 : FontWeight.normal,

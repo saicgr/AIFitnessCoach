@@ -4,6 +4,7 @@ import '../../../core/accessibility/accessibility_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../widgets/section_header.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The App Mode section for selecting display mode (Standard, Senior, Kids).
 class AppModeSection extends StatelessWidget {
   const AppModeSection({super.key});
@@ -12,8 +13,8 @@ class AppModeSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'APP MODE'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).accessibilityAppMode),
         SizedBox(height: 12),
         _AppModeCard(),
       ],
@@ -31,8 +32,8 @@ class AccessibilitySection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'ACCESSIBILITY'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).accessibilityAccessibility),
         SizedBox(height: 12),
         _AccessibilitySettingsCard(),
       ],
@@ -66,7 +67,7 @@ class _AppModeCard extends ConsumerWidget {
               color: textSecondary,
               size: 22,
             ),
-            title: const Text('Current Mode', style: TextStyle(fontSize: 15)),
+            title: Text(AppLocalizations.of(context).accessibilityCurrentMode, style: TextStyle(fontSize: 15)),
             subtitle: Text(
               _getModeDescription(accessibilitySettings.mode),
               style: TextStyle(fontSize: 12, color: textMuted),
@@ -99,7 +100,7 @@ class _AppModeCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _AppModeButton(
-                    label: 'Standard',
+                    label: AppLocalizations.of(context).portionAmountInputStandard,
                     icon: Icons.apps,
                     description: 'Full features',
                     isSelected: accessibilitySettings.mode == AccessibilityMode.standard,
@@ -112,7 +113,7 @@ class _AppModeCard extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _AppModeButton(
-                    label: 'Senior',
+                    label: AppLocalizations.of(context).accessibilitySenior,
                     icon: Icons.accessibility_new,
                     description: 'Simplified',
                     isSelected: accessibilitySettings.mode == AccessibilityMode.senior,
@@ -271,7 +272,7 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
                   children: [
                     Icon(Icons.format_size, color: textSecondary, size: 22),
                     const SizedBox(width: 12),
-                    const Text('Font Size', style: TextStyle(fontSize: 15)),
+                    Text(AppLocalizations.of(context).accessibilityFontSize, style: TextStyle(fontSize: 15)),
                     const Spacer(),
                     Text(
                       _getFontSizeLabel(accessibilitySettings.fontScale),
@@ -303,7 +304,7 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
           // High Contrast toggle
           SwitchListTile(
             secondary: Icon(Icons.contrast, color: textSecondary, size: 22),
-            title: const Text('High Contrast', style: TextStyle(fontSize: 15)),
+            title: Text(AppLocalizations.of(context).accessibilityHighContrast, style: TextStyle(fontSize: 15)),
             subtitle: Text(
               'Increase color contrast for better visibility',
               style: TextStyle(fontSize: 12, color: textMuted),
@@ -319,7 +320,7 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
           // Large Buttons toggle
           SwitchListTile(
             secondary: Icon(Icons.touch_app, color: textSecondary, size: 22),
-            title: const Text('Large Buttons', style: TextStyle(fontSize: 15)),
+            title: Text(AppLocalizations.of(context).accessibilityLargeButtons, style: TextStyle(fontSize: 15)),
             subtitle: Text(
               'Bigger touch targets for easier tapping',
               style: TextStyle(fontSize: 12, color: textMuted),
@@ -335,7 +336,7 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
           // Reduce Animations toggle
           SwitchListTile(
             secondary: Icon(Icons.animation, color: textSecondary, size: 22),
-            title: const Text('Reduce Animations', style: TextStyle(fontSize: 15)),
+            title: Text(AppLocalizations.of(context).accessibilityReduceAnimations, style: TextStyle(fontSize: 15)),
             subtitle: Text(
               'Minimize motion effects',
               style: TextStyle(fontSize: 12, color: textMuted),
@@ -351,7 +352,7 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
           // Show Level-Up Progression toggle
           SwitchListTile(
             secondary: Icon(Icons.military_tech, color: textSecondary, size: 22),
-            title: const Text('Level-Up Progression', style: TextStyle(fontSize: 15)),
+            title: Text(AppLocalizations.of(context).accessibilityLevelUpProgression, style: TextStyle(fontSize: 15)),
             subtitle: Text(
               'Show animated progression screen on level-up',
               style: TextStyle(fontSize: 12, color: textMuted),

@@ -8,6 +8,7 @@ import '../../../../widgets/glass_sheet.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Beast Mode card for advanced superset algorithm tuning.
 ///
 /// Controls: compound sets toggle, max supersets slider, rest time selectors,
@@ -26,12 +27,12 @@ class SupersetAlgorithmCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Superset Algorithm',
+            AppLocalizations.of(context).supersetAlgorithmCardSupersetAlgorithm,
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
-            'Fine-tune superset generation',
+            AppLocalizations.of(context).supersetAlgorithmCardFineTuneSupersetGeneration,
             style: TextStyle(fontSize: 11, color: theme.textMuted),
           ),
           const SizedBox(height: 16),
@@ -318,7 +319,7 @@ class _FavoritePairsSection extends StatelessWidget {
             Icon(Icons.favorite, color: AppColors.error, size: 16),
             const SizedBox(width: 6),
             Text(
-              'FAVORITE PAIRS',
+              AppLocalizations.of(context).supersetAlgorithmCardFavoritePairs,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -351,12 +352,12 @@ class _FavoritePairsSection extends StatelessWidget {
                       Icon(Icons.link_off, size: 32, color: theme.textMuted.withOpacity(0.5)),
                       const SizedBox(height: 8),
                       Text(
-                        'No favorite pairs yet',
+                        AppLocalizations.of(context).supersetAlgorithmCardNoFavoritePairsYet,
                         style: TextStyle(fontSize: 12, color: theme.textPrimary),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Add your go-to exercise combinations',
+                        AppLocalizations.of(context).supersetAlgorithmCardAddYourGoTo,
                         style: TextStyle(fontSize: 10, color: theme.textMuted),
                       ),
                     ],
@@ -389,7 +390,7 @@ class _FavoritePairsSection extends StatelessWidget {
                       Icon(Icons.add_circle_outline, color: AppColors.cyan, size: 16),
                       const SizedBox(width: 6),
                       Text(
-                        'Add Favorite Pair',
+                        AppLocalizations.of(context).supersetAlgorithmCardAddFavoritePair,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -550,7 +551,7 @@ class _AddFavoritePairSheetState extends State<_AddFavoritePairSheet> {
           ),
           const SizedBox(height: 24),
           Text(
-            'Add Favorite Pair',
+            AppLocalizations.of(context).supersetAlgorithmCardAddFavoritePair,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -559,7 +560,7 @@ class _AddFavoritePairSheetState extends State<_AddFavoritePairSheet> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter two exercises you want to superset together',
+            AppLocalizations.of(context).supersetAlgorithmCardEnterTwoExercisesYou,
             style: TextStyle(fontSize: 14, color: textMuted),
             textAlign: TextAlign.center,
           ),
@@ -569,8 +570,8 @@ class _AddFavoritePairSheetState extends State<_AddFavoritePairSheet> {
             focusNode: _exercise1Focus,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'First Exercise',
-              hintText: 'e.g., Bench Press',
+              labelText: AppLocalizations.of(context).supersetAlgorithmCardFirstExercise,
+              hintText: AppLocalizations.of(context).supersetAlgorithmCardEGBenchPress,
               prefixIcon: Icon(Icons.fitness_center, color: AppColors.cyan),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -605,8 +606,8 @@ class _AddFavoritePairSheetState extends State<_AddFavoritePairSheet> {
             focusNode: _exercise2Focus,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Second Exercise',
-              hintText: 'e.g., Bent Over Rows',
+              labelText: AppLocalizations.of(context).supersetAlgorithmCardSecondExercise,
+              hintText: AppLocalizations.of(context).supersetAlgorithmCardEGBentOver,
               prefixIcon: Icon(Icons.fitness_center, color: AppColors.purple),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -638,8 +639,8 @@ class _AddFavoritePairSheetState extends State<_AddFavoritePairSheet> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Add Pair',
+              child: Text(
+                AppLocalizations.of(context).supersetAlgorithmCardAddPair,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/services/api_client.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Phase 6 #18 — Create-challenge sheet.
 ///
 /// The `challenges` + `challenge_participants` + `challenge_leaderboard`
@@ -119,7 +120,7 @@ class _ChallengeCreateSheetState extends ConsumerState<ChallengeCreateSheet> {
                 ),
               ),
               Text(
-                'Create challenge',
+                AppLocalizations.of(context).challengeCreateButton,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -129,17 +130,17 @@ class _ChallengeCreateSheetState extends ConsumerState<ChallengeCreateSheet> {
               const SizedBox(height: 12),
               TextField(
                 controller: _titleCtl,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'e.g. 100 chest sets this week',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).challengeCreateFieldTitle,
+                  hintText: AppLocalizations.of(context).challengeCreateEG100Chest,
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _descCtl,
-                decoration: const InputDecoration(
-                  labelText: 'Description (optional)',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).createHabitDescriptionOptional,
                   border: OutlineInputBorder(),
                 ),
                 minLines: 1,
@@ -187,8 +188,8 @@ class _ChallengeCreateSheetState extends ConsumerState<ChallengeCreateSheet> {
                         if (picked != null) setState(() => _endDate = picked);
                       },
                       child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Ends',
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context).challengeCreateFieldEnds,
                           border: OutlineInputBorder(),
                         ),
                         child: Text(
@@ -202,8 +203,8 @@ class _ChallengeCreateSheetState extends ConsumerState<ChallengeCreateSheet> {
               const SizedBox(height: 12),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Public'),
-                subtitle: const Text('Anyone can join via the social tab'),
+                title: Text(AppLocalizations.of(context).challengePublicToggle),
+                subtitle: Text(AppLocalizations.of(context).challengeCreateAnyoneCanJoinVia),
                 value: _isPublic,
                 onChanged: (v) => setState(() => _isPublic = v),
               ),
@@ -220,7 +221,7 @@ class _ChallengeCreateSheetState extends ConsumerState<ChallengeCreateSheet> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Create challenge'),
+                    : Text(AppLocalizations.of(context).challengeCreateButton),
               ),
             ],
           ),

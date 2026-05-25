@@ -9,6 +9,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Generic confirm card for AI-coach mutations that need explicit user
 /// confirmation before mutating the workout (Issue 3).
 ///
@@ -228,10 +229,10 @@ class ChatActionConfirmCardState
             Row(children: [
               Icon(Icons.check_circle, color: accent, size: 16),
               const SizedBox(width: 6),
-              Text('Applied', style: theme.textTheme.bodySmall),
+              Text(AppLocalizations.of(context).proposedChangeCardApplied, style: theme.textTheme.bodySmall),
             ])
           else if (_cancelled)
-            Text('Dismissed',
+            Text(AppLocalizations.of(context).proposedChangeCardDismissed,
                 style: theme.textTheme.bodySmall?.copyWith(color: muted))
           else
             Row(
@@ -239,7 +240,7 @@ class ChatActionConfirmCardState
               children: [
                 TextButton(
                   onPressed: _busy ? null : _onCancel,
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context).buttonCancel),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
@@ -251,7 +252,7 @@ class ChatActionConfirmCardState
                           height: 16,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
-                      : const Text('Apply'),
+                      : Text(AppLocalizations.of(context).setAdjustmentSheetApply),
                 ),
               ],
             ),

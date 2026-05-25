@@ -8,6 +8,7 @@ import '../../../data/services/pending_referral_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../onboarding/widgets/onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Pre-auth chip shown on the sign-in screen: "Got a code from a friend?"
 /// Tapping opens a bottom-sheet input. The entered code is stored via
 /// [PendingReferralService] and applied automatically by
@@ -61,8 +62,8 @@ class _PreAuthReferralChipState extends State<PreAuthReferralChip> {
       if (!mounted) return;
       if (!ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("That code doesn't look right — try again."),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).preAuthReferralThatCodeDoesnT),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -232,7 +233,7 @@ class _ReferralCodeSheetState extends State<_ReferralCodeSheet> {
                     Icon(Icons.card_giftcard_rounded, color: t.selectionAccent),
                     const SizedBox(width: 10),
                     Text(
-                      'Enter referral code',
+                      AppLocalizations.of(context).preAuthReferralEnterReferralCode,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -267,7 +268,7 @@ class _ReferralCodeSheetState extends State<_ReferralCodeSheet> {
                     fontFamily: 'monospace',
                   ),
                   decoration: InputDecoration(
-                    hintText: 'ABC123',
+                    hintText: AppLocalizations.of(context).referralsAbc123,
                     hintStyle: TextStyle(
                       color: t.textMuted.withValues(alpha: 0.4),
                       letterSpacing: 4,
@@ -300,7 +301,7 @@ class _ReferralCodeSheetState extends State<_ReferralCodeSheet> {
                       TextButton.icon(
                         onPressed: _remove,
                         icon: const Icon(Icons.close, size: 18),
-                        label: const Text('Remove'),
+                        label: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
                         style: TextButton.styleFrom(
                           foregroundColor: t.textMuted,
                         ),
@@ -309,7 +310,7 @@ class _ReferralCodeSheetState extends State<_ReferralCodeSheet> {
                     ElevatedButton.icon(
                       onPressed: _save,
                       icon: const Icon(Icons.check_rounded, size: 18),
-                      label: const Text('Save code'),
+                      label: Text(AppLocalizations.of(context).preAuthReferralSaveCode),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: t.selectionAccent,
                         foregroundColor: Colors.white,

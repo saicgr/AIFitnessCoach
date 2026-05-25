@@ -21,7 +21,7 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
           Icon(Icons.sync_alt, size: 12, color: displayColor),
           const SizedBox(width: 4),
           Text(
-            'Alternating Hands',
+            AppLocalizations.of(context).expandedExerciseCardAlternatingHands,
             style: TextStyle(
               fontSize: 11,
               color: displayColor,
@@ -59,7 +59,7 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
           children: [
             Icon(Icons.push_pin, size: 12, color: purple),
             const SizedBox(width: 4),
-            Text('Staple', style: TextStyle(fontSize: 11, color: purple, fontWeight: FontWeight.w500)),
+            Text(AppLocalizations.of(context).expandedExerciseCardStaple, style: TextStyle(fontSize: 11, color: purple, fontWeight: FontWeight.w500)),
           ],
         ),
       ));
@@ -80,7 +80,7 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
           children: [
             Icon(Icons.favorite, size: 12, color: red),
             const SizedBox(width: 4),
-            Text('Favorite', style: TextStyle(fontSize: 11, color: red, fontWeight: FontWeight.w500)),
+            Text(AppLocalizations.of(context).recipeDetailFavorite, style: TextStyle(fontSize: 11, color: red, fontWeight: FontWeight.w500)),
           ],
         ),
       ));
@@ -101,7 +101,7 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
           children: [
             Icon(Icons.playlist_add_check, size: 12, color: cyan),
             const SizedBox(width: 4),
-            Text('Queued', style: TextStyle(fontSize: 11, color: cyan, fontWeight: FontWeight.w500)),
+            Text(AppLocalizations.of(context).expandedExerciseCardQueued, style: TextStyle(fontSize: 11, color: cyan, fontWeight: FontWeight.w500)),
           ],
         ),
       ));

@@ -7,6 +7,7 @@ import '../../data/repositories/body_analyzer_repository.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Capture (or re-select) up to 4 progress photos and kick off the
 /// Body Analyzer run. The photos MUST already exist in the user's
 /// progress-photo library — this screen is a selector, not a camera
@@ -70,7 +71,7 @@ class _BodyAnalyzerCaptureScreenState
   Future<void> _analyze() async {
     if (_picked.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pick at least one photo.')),
+        SnackBar(content: Text(AppLocalizations.of(context).bodyAnalyzerCapturePickAtLeastOne)),
       );
       return;
     }
@@ -117,7 +118,7 @@ class _BodyAnalyzerCaptureScreenState
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(title: const Text('Pick photos')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).bodyAnalyzerCapturePickPhotos)),
       body: SafeArea(
         child: _loadingLibrary
             ? const Center(child: CircularProgressIndicator())
@@ -162,11 +163,11 @@ class _BodyAnalyzerCaptureScreenState
                         onChanged: (v) =>
                             setState(() => _includeMeasurements = v),
                         title: Text(
-                          'Use my stored measurements',
+                          AppLocalizations.of(context).bodyAnalyzerCaptureUseMyStoredMeasurements,
                           style: TextStyle(color: textPrimary, fontSize: 14),
                         ),
                         subtitle: Text(
-                          'Fuses height/weight/body-fat and tape values into the analysis.',
+                          AppLocalizations.of(context).bodyAnalyzerCaptureFusesHeightWeightBody,
                           style: TextStyle(color: textMuted, fontSize: 11),
                         ),
                       ),
@@ -174,7 +175,7 @@ class _BodyAnalyzerCaptureScreenState
                         value: _alsoExtract,
                         onChanged: (v) => setState(() => _alsoExtract = v),
                         title: Text(
-                          'Also estimate tape measurements from the photos',
+                          AppLocalizations.of(context).bodyAnalyzerCaptureAlsoEstimateTapeMeasurement,
                           style: TextStyle(color: textPrimary, fontSize: 14),
                         ),
                         subtitle: Text(
@@ -205,7 +206,7 @@ class _BodyAnalyzerCaptureScreenState
                     )
                   : const Icon(Icons.analytics_outlined),
               label: Text(_analyzing
-                  ? 'Analyzing…'
+                  ? AppLocalizations.of(context).logMealSheetAnalyzing
                   : 'Analyze (${_picked.length} photo${_picked.length == 1 ? '' : 's'})'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFB24BF3),

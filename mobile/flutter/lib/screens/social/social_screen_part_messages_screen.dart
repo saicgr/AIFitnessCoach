@@ -41,7 +41,7 @@ class _MessagesScreenState extends ConsumerState<_MessagesScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Messages',
+        title: AppLocalizations.of(context).socialScreenPartMessages,
         actions: [
           PillAppBarAction(
             icon: _isSearching ? Icons.close_rounded : Icons.search_rounded,
@@ -102,7 +102,7 @@ class _FilteredMessagesTab extends ConsumerWidget {
         itemCount: 8,
         scrollable: true,
       ),
-      error: (_, __) => const Center(child: Text('Failed to load')),
+      error: (_, __) => Center(child: Text(AppLocalizations.of(context).volumeHistoryFailedToLoad)),
       data: (conversations) {
         final filtered = conversations.where((c) {
           final name = (c['other_user_name'] as String? ?? '').toLowerCase();
@@ -112,7 +112,7 @@ class _FilteredMessagesTab extends ConsumerWidget {
         if (filtered.isEmpty) {
           return Center(
             child: Text(
-              'No conversations found',
+              AppLocalizations.of(context).socialScreenPartNoConversationsFound,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -227,9 +227,9 @@ class _NewMessagePickerScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'New Message'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).socialScreenPartNewMessage),
       body: userId == null
-          ? const Center(child: Text('Not logged in'))
+          ? Center(child: Text(AppLocalizations.of(context).socialScreenPartNotLoggedIn))
           : _buildFriendsList(context, ref, userId, isDark),
     );
   }
@@ -244,12 +244,12 @@ class _NewMessagePickerScreen extends ConsumerWidget {
         itemCount: 8,
         scrollable: true,
       ),
-      error: (_, __) => const Center(child: Text('Failed to load friends')),
+      error: (_, __) => Center(child: Text(AppLocalizations.of(context).socialScreenPartFailedToLoadFriends)),
       data: (friends) {
         if (friends.isEmpty) {
           return Center(
             child: Text(
-              'No friends to message',
+              AppLocalizations.of(context).socialScreenPartNoFriendsToMessage,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -304,7 +304,7 @@ class _NewMessagePickerScreen extends ConsumerWidget {
                       debugPrint('Failed to create conversation: $e');
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Failed to start conversation')),
+                          SnackBar(content: Text(AppLocalizations.of(context).socialScreenPartFailedToStartConversation)),
                         );
                       }
                     }
@@ -387,8 +387,8 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
     final name = _nameController.text.trim();
     if (name.isEmpty || _selectedMemberIds.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a group name and select at least 2 members'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).socialScreenPartEnterAGroupName),
         ),
       );
       return;
@@ -414,7 +414,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
       if (mounted) {
         setState(() => _isCreating = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to create group')),
+          SnackBar(content: Text(AppLocalizations.of(context).socialScreenPartFailedToCreateGroup)),
         );
       }
     }
@@ -431,7 +431,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'New Group',
+        title: AppLocalizations.of(context).socialScreenPartNewGroup,
         actions: [
           PillAppBarAction(
             icon: Icons.check_rounded,
@@ -449,7 +449,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
               controller: _nameController,
               style: Theme.of(context).textTheme.bodyLarge,
               decoration: InputDecoration(
-                hintText: 'Group name',
+                hintText: AppLocalizations.of(context).socialScreenPartGroupName,
                 hintStyle: TextStyle(
                   color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                 ),
@@ -483,7 +483,7 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
           // Friends list for selection
           Expanded(
             child: userId == null
-                ? const Center(child: Text('Not logged in'))
+                ? Center(child: Text(AppLocalizations.of(context).socialScreenPartNotLoggedIn))
                 : _buildFriendsSelector(context, userId, isDark),
           ),
         ],
@@ -502,12 +502,12 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
         itemCount: 8,
         scrollable: true,
       ),
-      error: (_, __) => const Center(child: Text('Failed to load friends')),
+      error: (_, __) => Center(child: Text(AppLocalizations.of(context).socialScreenPartFailedToLoadFriends)),
       data: (friends) {
         if (friends.isEmpty) {
           return Center(
             child: Text(
-              'No friends to add',
+              AppLocalizations.of(context).socialScreenPartNoFriendsToAdd,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),

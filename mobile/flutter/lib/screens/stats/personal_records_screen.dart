@@ -21,6 +21,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../core/widgets/line_icon.dart';
 import '../../data/providers/trend_series_provider.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 // ============================================================================
 // Sort Mode
 // ============================================================================
@@ -184,7 +185,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: PillAppBar(
-        title: 'Personal Records',
+        title: AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
         actions: [
           PillAppBarAction(
             customIcon: LineIcon(
@@ -288,8 +289,8 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
 
     if (topFive.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No PRs yet — log a workout to set one!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).personalRecordsNoPrsYetLog),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -301,7 +302,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
 
     final data = Shareable(
       kind: ShareableKind.personalRecords,
-      title: 'Personal Records',
+      title: AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
       periodLabel: periodLabel,
       heroValue: prStats?.totalPrs ?? grouped.length,
       heroUnitSingular: 'PR',
@@ -471,7 +472,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
           color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
         ),
         decoration: InputDecoration(
-          hintText: 'Search exercises...',
+          hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
           hintStyle: TextStyle(color: textMuted),
           prefixIcon: Icon(Icons.search, color: textMuted, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
@@ -512,7 +513,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
       child: Row(
         children: [
           Text(
-            'Sort by:',
+            AppLocalizations.of(context).personalRecordsSortBy,
             style: TextStyle(fontSize: 12, color: textMuted),
           ),
           const SizedBox(width: 8),
@@ -650,13 +651,13 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                 size: 64, color: Colors.amber.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              'No Personal Records Yet',
+              AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete workouts to start tracking your PRs across exercises.',
+              AppLocalizations.of(context).personalRecordsCompleteWorkoutsToStart,
               style: TextStyle(fontSize: 14, color: textMuted),
               textAlign: TextAlign.center,
             ),
@@ -804,7 +805,7 @@ class _ExercisePRCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      'ALL-TIME',
+                      AppLocalizations.of(context).workoutSummaryScreenAllTime,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,

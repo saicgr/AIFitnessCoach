@@ -20,6 +20,7 @@ import '../../../data/providers/recipe_providers.dart';
 import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../saved_hub_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class FastingSavedRow extends ConsumerWidget {
   final String userId;
   final bool isDark;
@@ -167,7 +168,7 @@ class _FastingCard extends ConsumerWidget {
     }
 
     return _SplitCard(
-      label: 'Fasting',
+      label: AppLocalizations.of(context).unifiedHomeWidgetsFasting,
       iconName: 'fasting',
       value: value,
       colors: colors,
@@ -208,7 +209,7 @@ class _SavedCard extends ConsumerWidget {
         'Recipes, foods & menus';
 
     return _SplitCard(
-      label: 'Saved',
+      label: AppLocalizations.of(context).savedHubSaved,
       iconName: 'nutrition',
       value: value,
       colors: colors,

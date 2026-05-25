@@ -6,6 +6,7 @@ import '../../data/models/equipment_calibration.dart';
 import '../../data/repositories/equipment_calibration_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Per-user equipment calibration — Phase 1 of workouts overhaul.
 ///
 /// Lets the user tell the app the *actual* weight of their gym hardware so
@@ -31,7 +32,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: bg,
       appBar: PillAppBar(
-        title: 'Calibrate equipment',
+        title: AppLocalizations.of(context).equipmentCalibrationTitle,
         actions: [
           PillAppBarAction(
             icon: Icons.add_rounded,
@@ -105,16 +106,16 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: Text('Remove ${c.label ?? c.category ?? 'equipment'}?'),
-        content: const Text('Plate math will fall back to standard defaults.'),
+        content: Text(AppLocalizations.of(context).equipmentCalibrationPlateMathWillFall),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
       ),
@@ -148,7 +149,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
               const Icon(Icons.tune_rounded, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Tell us your real gear',
+                AppLocalizations.of(context).equipmentCalibrationIntroTitle,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -189,7 +190,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'No calibrated equipment yet',
+                AppLocalizations.of(context).equipmentCalibrationNoCalibratedEquipmentYet,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -198,7 +199,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Add a barbell, machine, or cable to override defaults.',
+                AppLocalizations.of(context).equipmentCalibrationAddABarbellMachine,
                 style: TextStyle(
                   fontSize: 13,
                   color: textPrimary.withOpacity(0.65),
@@ -209,7 +210,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
               FilledButton.icon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.add_rounded),
-                label: const Text('Add equipment'),
+                label: Text(AppLocalizations.of(context).equipmentCalibrationAddEquipment),
               ),
             ],
           ),
@@ -234,7 +235,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Could not load calibrations',
+          AppLocalizations.of(context).equipmentCalibrationCouldNotLoadCalibrations,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -256,7 +257,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
           child: TextButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Retry'),
+            label: Text(AppLocalizations.of(context).buttonRetry),
           ),
         ),
       ],
@@ -580,7 +581,7 @@ class _CalibrationEditorSheetState
                 ),
               ),
               Text(
-                widget.existing == null ? 'Add equipment' : 'Edit equipment',
+                widget.existing == null ? AppLocalizations.of(context).equipmentCalibrationAddEquipment : AppLocalizations.of(context).equipmentCalibrationEditEquipment,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -592,9 +593,9 @@ class _CalibrationEditorSheetState
               const SizedBox(height: 12),
               TextField(
                 controller: _labelCtl,
-                decoration: const InputDecoration(
-                  labelText: 'Label (optional)',
-                  hintText: 'e.g. "Home rack EZ bar"',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).equipmentCalibrationLabelOptional,
+                  hintText: AppLocalizations.of(context).equipmentCalibrationEGHomeRack,
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -605,14 +606,14 @@ class _CalibrationEditorSheetState
                 _numericField(
                   controller: _barCtl,
                   label: 'Bar empty weight ($_weightUnit)',
-                  hint: _weightUnit == 'lb' ? '17.5 for EZ, 45 for Olympic' : '7.94 for EZ, 20 for Olympic',
+                  hint: _weightUnit == 'lb' ? AppLocalizations.of(context).equipmentCalibration175ForEz : AppLocalizations.of(context).equipmentCalibration794ForEz,
                 ),
               if (showSled) ...[
                 const SizedBox(height: 12),
                 _numericField(
                   controller: _sledCtl,
                   label: 'Machine sled / carriage ($_weightUnit)',
-                  hint: _weightUnit == 'lb' ? 'Leg press: 45' : 'Leg press: 20',
+                  hint: _weightUnit == 'lb' ? AppLocalizations.of(context).equipmentCalibrationLegPress45 : AppLocalizations.of(context).equipmentCalibrationLegPress20,
                 ),
               ],
               if (showCable) ...[
@@ -644,9 +645,9 @@ class _CalibrationEditorSheetState
                   decoration: InputDecoration(
                     labelText: 'Plate inventory ($_weightUnit × count)',
                     hintText: _weightUnit == 'lb'
-                        ? '45x4, 35x2, 25x4, 10x2, 5x2, 2.5x2'
+                        ? AppLocalizations.of(context).equipmentCalibration45x435x225x410x2
                         : '20x4, 15x2, 10x4, 5x2, 2.5x2, 1.25x2',
-                    helperText: 'Leave blank to use standard IPF set',
+                    helperText: AppLocalizations.of(context).equipmentCalibrationLeaveBlankToUse,
                     border: const OutlineInputBorder(),
                   ),
                   minLines: 1,
@@ -660,7 +661,7 @@ class _CalibrationEditorSheetState
                   decoration: InputDecoration(
                     labelText: 'Dumbbell inventory ($_weightUnit × count)',
                     hintText: _weightUnit == 'lb'
-                        ? '15x2, 20x2, 25x2, 30x2, 35x2'
+                        ? AppLocalizations.of(context).equipmentCalibration15x220x225x230x2
                         : '7x2, 10x2, 12x2, 15x2, 20x2',
                     border: const OutlineInputBorder(),
                   ),
@@ -684,7 +685,7 @@ class _CalibrationEditorSheetState
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(widget.existing == null ? 'Add equipment' : 'Save changes'),
+                    : Text(widget.existing == null ? AppLocalizations.of(context).equipmentCalibrationAddEquipment : AppLocalizations.of(context).equipmentCalibrationSaveChanges),
               ),
             ],
           ),
@@ -720,7 +721,7 @@ class _CalibrationEditorSheetState
     return Row(
       children: [
         Text(
-          'Units',
+          AppLocalizations.of(context).settingsCardUiUnits,
           style: TextStyle(
             fontSize: 13,
             color: textPrimary.withOpacity(0.7),

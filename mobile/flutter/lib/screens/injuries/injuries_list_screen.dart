@@ -9,6 +9,7 @@ import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 final injuriesListProvider = StateNotifierProvider<InjuriesListNotifier, InjuriesListState>((ref) => InjuriesListNotifier(ref));
 
 class InjuriesListState {
@@ -119,9 +120,9 @@ class _InjuriesListScreenState extends ConsumerState<InjuriesListScreen> {
     final st = ref.watch(injuriesListProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: PillAppBar(title: 'Injury Management', actions: [PillAppBarAction(icon: Icons.add_circle_outline, iconColor: AppColors.error, onTap: () => context.push('/injuries/report'))]),
+      appBar: PillAppBar(title: AppLocalizations.of(context).injuriesListInjuryManagement, actions: [PillAppBarAction(icon: Icons.add_circle_outline, iconColor: AppColors.error, onTap: () => context.push('/injuries/report'))]),
       body: Column(children: [_filters(d, st.filter), Expanded(child: _content(d, tp, tm, el, st))]),
-      floatingActionButton: FloatingActionButton.extended(onPressed: () => context.push('/injuries/report'), backgroundColor: AppColors.error, icon: const Icon(Icons.add), label: const Text('Report Injury')),
+      floatingActionButton: FloatingActionButton.extended(onPressed: () => context.push('/injuries/report'), backgroundColor: AppColors.error, icon: const Icon(Icons.add), label: Text(AppLocalizations.of(context).reportInjuryReportInjury)),
     );
   }
 
@@ -129,7 +130,7 @@ class _InjuriesListScreenState extends ConsumerState<InjuriesListScreen> {
 
   Widget _chip(String l, InjuryFilter f, InjuryFilter c, bool d) { final s = f == c; final el = d ? AppColors.elevated : AppColorsLight.elevated; final tm = d ? AppColors.textMuted : AppColorsLight.textMuted; return GestureDetector(onTap: () { HapticFeedback.lightImpact(); ref.read(injuriesListProvider.notifier).setFilter(f); }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: s ? AppColors.error.withOpacity(0.15) : el, borderRadius: BorderRadius.circular(20), border: Border.all(color: s ? AppColors.error : Colors.transparent)), child: Text(l, style: TextStyle(color: s ? AppColors.error : tm, fontWeight: s ? FontWeight.w600 : FontWeight.normal)))); }
 
-  Widget _content(bool d, Color tp, Color tm, Color el, InjuriesListState s) { if (s.isLoading && s.injuries.isEmpty) return const SkeletonList(itemCount: 5, padding: EdgeInsets.all(16), itemBuilder: _injurySkeletonRow); if (s.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text('Failed to load', style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(injuriesListProvider.notifier).loadInjuries(), child: const Text('Retry'))])); final inj = s.filteredInjuries; if (inj.isEmpty) return _empty(d, tp, tm, s.filter); return RefreshIndicator(onRefresh: () => ref.read(injuriesListProvider.notifier).loadInjuries(), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: inj.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _card(inj[i], d, tp, tm, el))); }
+  Widget _content(bool d, Color tp, Color tm, Color el, InjuriesListState s) { if (s.isLoading && s.injuries.isEmpty) return const SkeletonList(itemCount: 5, padding: EdgeInsets.all(16), itemBuilder: _injurySkeletonRow); if (s.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text(AppLocalizations.of(context).volumeHistoryFailedToLoad, style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(injuriesListProvider.notifier).loadInjuries(), child: Text(AppLocalizations.of(context).buttonRetry))])); final inj = s.filteredInjuries; if (inj.isEmpty) return _empty(d, tp, tm, s.filter); return RefreshIndicator(onRefresh: () => ref.read(injuriesListProvider.notifier).loadInjuries(), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: inj.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _card(inj[i], d, tp, tm, el))); }
 
   Widget _empty(bool d, Color tp, Color tm, InjuryFilter f) { final t = f == InjuryFilter.active ? 'No Active Injuries' : f == InjuryFilter.healed ? 'No Healed Injuries' : 'No Injuries'; final sub = f == InjuryFilter.active ? 'Great news!' : 'Tap below to report'; final ic = f == InjuryFilter.active ? Icons.health_and_safety : Icons.local_hospital_outlined; return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: AppColors.success.withOpacity(0.1), shape: BoxShape.circle), child: Icon(ic, color: AppColors.success, size: 48)), const SizedBox(height: 24), Text(t, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: tp)), const SizedBox(height: 8), Text(sub, style: TextStyle(color: tm))])); }
 

@@ -7,6 +7,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/reschedule_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Banner showing missed workout(s) with quick action buttons
 ///
 /// Displays when user has missed workout(s) from the past 3 days.
@@ -116,7 +117,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
         _dismiss();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Workout skipped'),
+            content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
             backgroundColor: AppColors.elevated,
             behavior: SnackBarBehavior.floating,
           ),
@@ -235,7 +236,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Missed Workout',
+                          AppLocalizations.of(context).missedWorkoutBannerMissedWorkout,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -334,8 +335,8 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Do Today',
+                          : Text(
+                              AppLocalizations.of(context).missedWorkoutBannerDoToday,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
@@ -360,8 +361,8 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                           color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                         ),
                       ),
-                      child: const Text(
-                        'Skip It',
+                      child: Text(
+                        AppLocalizations.of(context).missedWorkoutBannerSkipIt,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -473,7 +474,7 @@ class _SkipReasonSheet extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  'Why are you skipping?',
+                  AppLocalizations.of(context).missedWorkoutBannerWhyAreYouSkipping,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -482,7 +483,7 @@ class _SkipReasonSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'This helps us adjust your schedule',
+                  AppLocalizations.of(context).missedWorkoutBannerThisHelpsUsAdjust,
                   style: TextStyle(
                     fontSize: 14,
                     color: textSecondary,
@@ -559,7 +560,7 @@ class _SkipReasonSheet extends StatelessWidget {
                 );
               },
               child: Text(
-                'Skip without reason',
+                AppLocalizations.of(context).missedWorkoutBannerSkipWithoutReason,
                 style: TextStyle(
                   color: textSecondary,
                   fontSize: 14,

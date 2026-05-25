@@ -6,6 +6,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Single carousel slide that aggregates all Health-Connect / Apple-Health
 /// synced workouts for one day. Replaces the prior "one cyan card per synced
 /// row" design which crowded the carousel when a watch logged 6+ activities.
@@ -97,7 +98,7 @@ class SyncedWorkoutsSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 _Pill(
-                  label: 'SYNCED',
+                  label: AppLocalizations.of(context).syncedWorkoutsSummarySynced,
                   color: cyan,
                   isDark: isDark,
                 ),
@@ -122,7 +123,7 @@ class SyncedWorkoutsSummaryCard extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              count == 1 ? '1 synced workout' : '$count synced workouts',
+              count == 1 ? AppLocalizations.of(context).syncedWorkoutsSummary1SyncedWorkout : '$count synced workouts',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w800,
@@ -298,7 +299,7 @@ class _SyncedWorkoutsSheet extends StatelessWidget {
                     Expanded(
                       child: Text(
                         isToday
-                            ? 'Today\'s synced workouts'
+                            ? AppLocalizations.of(context).syncedWorkoutsSummaryTodaySSyncedWorkouts
                             : 'Synced ${date.month}/${date.day}',
                         style: TextStyle(
                           fontSize: 18,

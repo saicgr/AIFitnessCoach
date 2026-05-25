@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/providers/schedule_provider.dart';
 import '../../../../data/models/schedule_item.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Card showing the next 2-3 upcoming scheduled items on the home screen
 class UpNextCard extends ConsumerStatefulWidget {
   final bool isDark;
@@ -82,7 +83,7 @@ class _UpNextCardState extends ConsumerState<UpNextCard>
               ),
               const SizedBox(width: 12),
               Text(
-                'Up Next',
+                AppLocalizations.of(context).upNextCardUpNext,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -127,7 +128,7 @@ class _UpNextCardState extends ConsumerState<UpNextCard>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'View Full Schedule',
+                  AppLocalizations.of(context).upNextCardViewFullSchedule,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -155,7 +156,7 @@ class _UpNextCardState extends ConsumerState<UpNextCard>
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Center(
         child: Text(
-          'No upcoming items. Tap + to add to your schedule',
+          AppLocalizations.of(context).upNextCardNoUpcomingItemsTap,
           style: TextStyle(
             fontSize: 13,
             color: textMuted,
@@ -174,7 +175,7 @@ class _UpNextCardState extends ConsumerState<UpNextCard>
         child: Column(
           children: [
             Text(
-              'Could not load schedule',
+              AppLocalizations.of(context).upNextCardCouldNotLoadSchedule,
               style: TextStyle(
                 fontSize: 13,
                 color: textMuted,
@@ -184,7 +185,7 @@ class _UpNextCardState extends ConsumerState<UpNextCard>
             GestureDetector(
               onTap: () => ref.invalidate(upNextScheduleProvider),
               child: Text(
-                'Tap to retry',
+                AppLocalizations.of(context).upNextCardTapToRetry,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,

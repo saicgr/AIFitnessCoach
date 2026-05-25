@@ -12,6 +12,7 @@ import 'workout_summary_general.dart';
 import 'workout_summary_advanced.dart';
 import 'widgets/summary_floating_pill.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Pill selector state for [WorkoutSummaryScreenV2]. Kept as an enum (rather
 /// than a raw int) so callers — including the `?tab=` query param on
 /// `/workout-summary/:id` — can deep-link to a specific pane without knowing
@@ -214,7 +215,7 @@ class _WorkoutSummaryScreenV2State
           const LottieLoading(size: 80),
           const SizedBox(height: 16),
           Text(
-            'Loading summary...',
+            AppLocalizations.of(context).workoutSummaryScreenLoadingSummary,
             style: TextStyle(
               fontSize: 15,
               color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
@@ -239,7 +240,7 @@ class _WorkoutSummaryScreenV2State
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to load summary',
+              AppLocalizations.of(context).workoutSummaryScreenFailedToLoadSummary,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -248,7 +249,7 @@ class _WorkoutSummaryScreenV2State
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Please check your connection and try again.',
+              _error ?? AppLocalizations.of(context).workoutSummaryScreenPleaseCheckYourConnection,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -259,7 +260,7 @@ class _WorkoutSummaryScreenV2State
             FilledButton.icon(
               onPressed: _fetchData,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: FilledButton.styleFrom(
                 backgroundColor: accentColor,
                 foregroundColor: Colors.white,

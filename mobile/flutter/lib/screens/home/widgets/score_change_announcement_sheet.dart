@@ -24,6 +24,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'score_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 const String _kSeenKey = 'score_change_v2_seen';
 
 /// Show the sheet if it hasn't been shown to this device yet. Call once from
@@ -150,7 +151,7 @@ class _ScoreChangeBody extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'WHAT\'S NEW',
+                AppLocalizations.of(context).scoreChangeAnnouncementWhatSNew,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -162,7 +163,7 @@ class _ScoreChangeBody extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Sleep now counts toward your daily score.',
+            AppLocalizations.of(context).scoreChangeAnnouncementSleepNowCountsToward,
             style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w800,
@@ -189,11 +190,11 @@ class _ScoreChangeBody extends StatelessWidget {
           Wrap(
             spacing: 14,
             runSpacing: 8,
-            children: const [
-              _LegendChip(label: 'Train', color: kTrainColor, weight: 40),
-              _LegendChip(label: 'Nourish', color: kFuelColor, weight: 30),
-              _LegendChip(label: 'Move', color: kMoveColor, weight: 15),
-              _LegendChip(label: 'Sleep', color: kSleepColor, weight: 15),
+            children: [
+              _LegendChip(label: AppLocalizations.of(context).scoreChangeAnnouncementTrain, color: kTrainColor, weight: 40),
+              _LegendChip(label: AppLocalizations.of(context).scoreChangeAnnouncementNourish, color: kFuelColor, weight: 30),
+              _LegendChip(label: AppLocalizations.of(context).scoreChangeAnnouncementMove, color: kMoveColor, weight: 15),
+              _LegendChip(label: AppLocalizations.of(context).sleepDetailSleep, color: kSleepColor, weight: 15),
             ],
           ),
           const SizedBox(height: 22),
@@ -211,8 +212,8 @@ class _ScoreChangeBody extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                child: const Text(
-                  'Got it',
+                child: Text(
+                  AppLocalizations.of(context).weightIncrementsGotIt,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,

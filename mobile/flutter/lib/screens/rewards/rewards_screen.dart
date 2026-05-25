@@ -11,6 +11,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen displaying available and claimed rewards
 class RewardsScreen extends ConsumerStatefulWidget {
   const RewardsScreen({super.key});
@@ -242,7 +243,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
           keyboardType: TextInputType.emailAddress,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
-            hintText: 'your.email@example.com',
+            hintText: AppLocalizations.of(context).rewardsYourEmailExampleCom,
             hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
@@ -258,7 +259,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
             ),
           ),
@@ -273,7 +274,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
               backgroundColor: const Color(0xFFFFD700),
               foregroundColor: Colors.black,
             ),
-            child: const Text('Confirm'),
+            child: Text(AppLocalizations.of(context).workoutUiBuildersConfirm),
           ),
         ],
       ),
@@ -286,8 +287,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: const PillAppBar(
-        title: 'Rewards',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).statsRewardsRewards,
       ),
       body: Column(
         children: [
@@ -388,9 +389,9 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
           SegmentedTabBar(
             controller: _tabController,
             showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Available'),
-              SegmentedTabItem(label: 'Claimed'),
+            tabs: [
+              SegmentedTabItem(label: AppLocalizations.of(context).rewardsAvailable),
+              SegmentedTabItem(label: AppLocalizations.of(context).rewardsClaimed),
             ],
           ),
 
@@ -426,7 +427,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF2C2C2E),
                               ),
-                              child: const Text('Retry'),
+                              child: Text(AppLocalizations.of(context).buttonRetry),
                             ),
                           ],
                         ),
@@ -461,7 +462,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
             const SizedBox(height: 16),
             Text(
               isAvailable
-                  ? 'No rewards available yet'
+                  ? AppLocalizations.of(context).rewardsNoRewardsAvailableYet
                   : 'No rewards claimed yet',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.5),
@@ -471,7 +472,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
             if (isAvailable) ...[
               const SizedBox(height: 8),
               Text(
-                'Keep leveling up to unlock rewards!',
+                AppLocalizations.of(context).rewardsKeepLevelingUpTo,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.3),
                   fontSize: 14,
@@ -660,8 +661,8 @@ class _RewardCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text(
-                'Claim',
+              child: Text(
+                AppLocalizations.of(context).rewardsClaim,
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             )

@@ -21,6 +21,7 @@ import 'timeline_section.dart';
 import 'achievements_section.dart';
 import 'today_stats_row.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Factory class for creating tile widgets based on TileType
 class TileFactory {
   /// Build a widget for the given tile configuration
@@ -378,17 +379,17 @@ class _NutritionPatternsTile extends ConsumerWidget {
               child: const Icon(Icons.insights_rounded, color: Color(0xFF6366F1)),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Food Patterns',
+                    AppLocalizations.of(context).tileFactoryFoodPatterns,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'See which foods fuel you and which drag you down',
+                    AppLocalizations.of(context).tileFactorySeeWhichFoodsFuel,
                     style: TextStyle(fontSize: 12, height: 1.35),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

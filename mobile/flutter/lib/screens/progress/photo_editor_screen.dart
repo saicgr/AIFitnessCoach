@@ -13,6 +13,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 // ============================================================================
 // Photo filters — applied via pixel-level operations in a background isolate.
 // ============================================================================
@@ -372,8 +373,8 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
             ],
           ),
           IOSUiSettings(
-            title: 'Crop Photo',
-            doneButtonTitle: 'Done',
+            title: AppLocalizations.of(context).photoEditorCropPhoto,
+            doneButtonTitle: AppLocalizations.of(context).commonDone,
             cancelButtonTitle: 'Cancel',
             aspectRatioPickerButtonHidden: false,
             rotateButtonsHidden: false,
@@ -411,8 +412,8 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
       debugPrint('❌ [PhotoEditor] Error cropping image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to crop image. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).photoEditorFailedToCropImage),
           ),
         );
       }
@@ -794,7 +795,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                             children: [
                               Text(_emojiStickers[_activeEmojiIndex!].emoji, style: const TextStyle(fontSize: 18)),
                               const SizedBox(width: 6),
-                              Text('Size', style: TextStyle(color: secondaryColor, fontSize: 11)),
+                              Text(AppLocalizations.of(context).photoEditorSize, style: TextStyle(color: secondaryColor, fontSize: 11)),
                               Expanded(
                                 child: Slider(
                                   value: _emojiStickers[_activeEmojiIndex!].scale,
@@ -826,21 +827,21 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                             children: [
                               _buildToolButton(
                                 icon: Icons.crop,
-                                label: 'Crop',
+                                label: AppLocalizations.of(context).photoEditorCrop,
                                 onTap: _cropImage,
                                 enabled: !_isProcessing,
                               ),
                               const SizedBox(width: 18),
                               _buildToolButton(
                                 icon: Icons.rotate_90_degrees_cw,
-                                label: 'Rotate',
+                                label: AppLocalizations.of(context).photoEditorRotate,
                                 onTap: _rotateImage,
                                 enabled: !_isProcessing,
                               ),
                               const SizedBox(width: 18),
                               _buildToolButton(
                                 icon: Icons.flip,
-                                label: 'Flip',
+                                label: AppLocalizations.of(context).photoEditorFlip,
                                 onTap: _flipImage,
                                 enabled: !_isProcessing,
                               ),
@@ -849,14 +850,14 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                                 icon: _showLogo
                                     ? Icons.branding_watermark
                                     : Icons.branding_watermark_outlined,
-                                label: _showLogo ? 'Hide Logo' : 'Show Logo',
+                                label: _showLogo ? AppLocalizations.of(context).photoEditorHideLogo : AppLocalizations.of(context).photoEditorShowLogo,
                                 onTap: () => setState(() => _showLogo = !_showLogo),
                                 isActive: _showLogo,
                               ),
                               const SizedBox(width: 18),
                               _buildToolButton(
                                 icon: Icons.refresh,
-                                label: 'Reset Logo',
+                                label: AppLocalizations.of(context).photoEditorResetLogo,
                                 onTap: () {
                                   setState(() {
                                     _logoPosition = const Offset(20, 20);
@@ -904,8 +905,8 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Processing…',
+                        Text(
+                          AppLocalizations.of(context).photoEditorProcessing,
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 13,
@@ -1372,7 +1373,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Add Sticker',
+              AppLocalizations.of(context).photoEditorAddSticker,
               style: TextStyle(
                 color: textPrimary,
                 fontSize: 16,
@@ -1417,7 +1418,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'History',
+                              AppLocalizations.of(context).workoutHistory,
                               style: TextStyle(
                                 color: isSelected ? accentColor : secondaryColor,
                                 fontSize: 12,
@@ -1454,12 +1455,12 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
                           Icon(Icons.history, size: 40, color: mutedColor),
                           const SizedBox(height: 8),
                           Text(
-                            'No stickers used yet',
+                            AppLocalizations.of(context).photoEditorNoStickersUsedYet,
                             style: TextStyle(color: mutedColor, fontSize: 14),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Your recently used stickers will appear here',
+                            AppLocalizations.of(context).photoEditorYourRecentlyUsedStickers,
                             style: TextStyle(color: mutedColor.withValues(alpha: 0.7), fontSize: 12),
                           ),
                         ],

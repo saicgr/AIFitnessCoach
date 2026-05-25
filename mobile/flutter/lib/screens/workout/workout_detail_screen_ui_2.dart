@@ -7,8 +7,8 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
   Future<void> _breakSuperset(int groupNumber) async {
     final confirm = await AppDialog.destructive(
       context,
-      title: 'Break Superset?',
-      message: 'This will unlink these exercises so they are performed separately.',
+      title: AppLocalizations.of(context).workoutDetailScreenBreakSuperset,
+      message: AppLocalizations.of(context).workoutDetailScreenThisWillUnlinkThese,
       confirmText: 'Break',
       icon: Icons.link_off_rounded,
     );
@@ -288,8 +288,8 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
     // Don't allow removing the last exercise
     if (_workout!.exercises.length <= 1) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot remove the last exercise'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).workoutDetailScreenCannotRemoveTheLast),
           backgroundColor: AppColors.error,
         ),
       );
@@ -299,7 +299,7 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
     // Show confirmation dialog
     final confirmed = await AppDialog.destructive(
       context,
-      title: 'Remove Exercise',
+      title: AppLocalizations.of(context).workoutDetailScreenRemoveExercise,
       message: 'Remove "${exercise.name}" from this workout?',
       confirmText: 'Remove',
       icon: Icons.remove_circle_outline_rounded,
@@ -335,8 +335,8 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to remove exercise'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).workoutDetailScreenFailedToRemoveExercise),
               backgroundColor: AppColors.error,
             ),
           );
@@ -360,7 +360,7 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
     // Show confirmation dialog
     final confirmed = await AppDialog.destructive(
       context,
-      title: 'Never Recommend',
+      title: AppLocalizations.of(context).workoutDetailScreenNeverRecommend,
       message: 'Block "${exercise.name}" from all future AI recommendations?\n\n'
           'You can undo this in Settings > Exercise Preferences.',
       confirmText: 'Block',
@@ -399,7 +399,7 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to block exercise'),
+            content: Text(AppLocalizations.of(context).workoutDetailScreenFailedToBlockExercise),
             backgroundColor: AppColors.error,
           ),
         );

@@ -6,6 +6,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../screens/nutrition/menu_analysis_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Overlay shown on top of a video thumbnail while it is uploading or being analyzed.
 class MediaUploadOverlay extends StatefulWidget {
   final String phase; // 'uploading' | 'analyzing'
@@ -179,7 +180,7 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
                 _openMenuSheet(context, isDark);
               },
               icon: const Icon(Icons.visibility_outlined, size: 16),
-              label: const Text('View All & Log'),
+              label: Text(AppLocalizations.of(context).chatMediaWidgetsViewAllLog),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange,
                 foregroundColor: Colors.white,
@@ -323,7 +324,7 @@ class GoToWorkoutButton extends StatelessWidget {
             const SizedBox(width: 8),
             Flexible(
               child: Text(
-                workoutName != null ? 'Go to $workoutName' : 'Go to Workout',
+                workoutName != null ? 'Go to $workoutName' : AppLocalizations.of(context).chatMediaWidgetsGoToWorkout,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,

@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../widgets/coach_avatar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Collapsible AI Coach Tip (collapsed by default)
 class CollapsibleAISuggestion extends StatefulWidget {
   final String? suggestion;
@@ -258,7 +259,7 @@ class _CoachTipShimmerState extends State<_CoachTipShimmer>
             ),
             const SizedBox(width: 8),
             Text(
-              'Coach is reviewing your meal…',
+              AppLocalizations.of(context).aiSuggestionCoachIsReviewingYour,
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
           ],

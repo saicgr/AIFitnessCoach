@@ -25,6 +25,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// One BBT reading projected onto the chart's day axis.
 class CycleBbtSample {
   /// Calendar date of the reading (local-midnight).
@@ -133,7 +134,7 @@ class _CycleTemperatureChartState extends State<CycleTemperatureChart> {
                   size: 18, color: widget.accent),
               const SizedBox(width: 8),
               Text(
-                'Basal temperature',
+                AppLocalizations.of(context).hormoneLogBasalTemperature,
                 style: TextStyle(
                   color: fg,
                   fontSize: 15,
@@ -338,7 +339,7 @@ class _CycleTemperatureChartState extends State<CycleTemperatureChart> {
                 )
               : Center(
                   child: Text(
-                    'Drag across the chart to inspect any day',
+                    AppLocalizations.of(context).cycleTemperatureChartDragAcrossTheChart,
                     style: TextStyle(
                       color: fg.withValues(alpha: 0.45),
                       fontSize: 11,
@@ -702,7 +703,7 @@ class _ScrubCallout extends StatelessWidget {
                           size: 12, color: accent),
                       const SizedBox(width: 4),
                       Text(
-                        'Ask',
+                        AppLocalizations.of(context).cycleTemperatureChartAsk,
                         style: TextStyle(
                           color: accent,
                           fontSize: 10,
@@ -820,7 +821,7 @@ class _EmptyChartShell extends StatelessWidget {
                       size: 26, color: accent.withValues(alpha: 0.85)),
                   const SizedBox(height: 6),
                   Text(
-                    'Log basal temperature to fill this chart',
+                    AppLocalizations.of(context).cycleTemperatureChartLogBasalTemperatureTo,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: fg,

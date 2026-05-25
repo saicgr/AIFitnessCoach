@@ -8,6 +8,7 @@ import '../../progress/widgets/strength_overview_card.dart';
 import 'muscle_score_breakdown_sheet.dart';
 import 'overview_tab.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // ═══════════════════════════════════════════════════════════════════
 // STRENGTH TAB - Readiness, Strength Scores, PRs, Analytics
 // ═══════════════════════════════════════════════════════════════════
@@ -58,7 +59,7 @@ class StrengthTab extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // Recent Personal Records
-                SectionHeader(title: 'Recent Personal Records'),
+                SectionHeader(title: AppLocalizations.of(context).strengthRecentPersonalRecords),
                 const SizedBox(height: 12),
                 const PRListWidget(),
                 const SizedBox(height: 16),
@@ -94,7 +95,7 @@ class StrengthTab extends ConsumerWidget {
                 Expanded(
                   child: _FloatingNavButton(
                     icon: Icons.emoji_events,
-                    label: 'Exercises & PRs',
+                    label: AppLocalizations.of(context).strengthExercisesPrs,
                     color: colorScheme.primary,
                     onTap: () => context.push('/stats/exercise-history'),
                   ),
@@ -103,7 +104,7 @@ class StrengthTab extends ConsumerWidget {
                 Expanded(
                   child: _FloatingNavButton(
                     icon: Icons.fitness_center,
-                    label: 'Muscle Analytics',
+                    label: AppLocalizations.of(context).strengthMuscleAnalytics,
                     color: colorScheme.secondary,
                     onTap: () => context.push('/stats/muscle-analytics'),
                   ),
@@ -219,7 +220,7 @@ class FitnessScoreCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Fitness Score',
+                      AppLocalizations.of(context).strengthFitnessScore,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,

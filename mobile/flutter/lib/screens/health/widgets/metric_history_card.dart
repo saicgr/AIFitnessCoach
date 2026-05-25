@@ -6,6 +6,7 @@ import '../../../data/providers/trend_series_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/trends/trend_chart.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// One per-metric section on the Combined Health hub.
 ///
 /// Shows a header (icon + title + the selected-day value), then a
@@ -104,7 +105,7 @@ class _MetricHistoryCardState extends ConsumerState<MetricHistoryCard> {
                       ),
                     ),
                     Text(
-                      widget.valueText ?? 'No data for this day',
+                      widget.valueText ?? AppLocalizations.of(context).metricHistoryCardNoDataForThis,
                       style: TextStyle(
                         fontSize: 12,
                         color: widget.valueText != null
@@ -231,7 +232,7 @@ class _MetricChart extends ConsumerWidget {
       error: (_, __) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Text(
-          'Trend unavailable.',
+          AppLocalizations.of(context).sleepDetailTrendUnavailable,
           style: TextStyle(fontSize: 12, color: textMuted),
         ),
       ),
@@ -240,7 +241,7 @@ class _MetricChart extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
-              'Two or more synced days are needed to chart a trend.',
+              AppLocalizations.of(context).metricHistoryCardTwoOrMoreSynced,
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
           );

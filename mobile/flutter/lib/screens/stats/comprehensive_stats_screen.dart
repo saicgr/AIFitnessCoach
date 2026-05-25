@@ -21,6 +21,7 @@ import 'widgets/measurements_tab.dart';
 import 'widgets/nutrition_tab.dart';
 import 'widgets/mood_tab.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Comprehensive Stats Screen
 /// Combines: Workout stats, achievements, body measurements, progress graphs, nutrition
 class ComprehensiveStatsScreen extends ConsumerStatefulWidget {
@@ -260,7 +261,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Stats & Scores',
+        title: AppLocalizations.of(context).youHubStatsScores,
         actions: [
           // Time Range Selector (hide on Photos tab)
           PillAppBarAction(

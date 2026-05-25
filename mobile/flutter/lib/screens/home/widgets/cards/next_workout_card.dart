@@ -14,6 +14,7 @@ import '../../../../widgets/app_dialog.dart';
 import '../regenerate_workout_sheet.dart';
 import 'exercise_image_thumbnail.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// The main workout card showing the next scheduled workout
 /// Displays workout details with start, customize, and skip actions
 class NextWorkoutCard extends ConsumerStatefulWidget {
@@ -127,8 +128,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
     if (newWorkout != null && mounted) {
       // Provider refresh already handled by showRegenerateWorkoutSheet
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Workout regenerated!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutRegenerated),
           backgroundColor: AppColors.success,
         ),
       );
@@ -139,8 +140,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
     // Show confirmation dialog
     final confirm = await AppDialog.destructive(
       context,
-      title: 'Skip Workout?',
-      message: 'This workout will be marked as skipped and won\'t count towards your weekly goal.',
+      title: AppLocalizations.of(context).workoutOptionsSkipWorkout,
+      message: AppLocalizations.of(context).nextWorkoutCardThisWorkoutWillBe,
       confirmText: 'Skip',
       icon: Icons.skip_next_rounded,
     );
@@ -159,8 +160,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
         await ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Workout skipped'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
               backgroundColor: AppColors.textMuted,
             ),
           );
@@ -169,8 +170,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not skip workout. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).nextWorkoutCardCouldNotSkipWorkout),
             backgroundColor: AppColors.error,
           ),
         );
@@ -295,7 +296,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    'Quick',
+                                    AppLocalizations.of(context).quickActionsRowQuick,
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -339,7 +340,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Upcoming',
+                                AppLocalizations.of(context).workoutsUpcoming,
                                 style: TextStyle(
                                   color: ref.colors(context).accent,
                                   fontSize: 12,
@@ -365,7 +366,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                       context.push('/workout/${workout.id}', extra: workout);
                     },
                     child: Text(
-                      workout.name ?? 'Workout',
+                      workout.name ?? AppLocalizations.of(context).navWorkout,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -407,7 +408,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                             context.push('/active-workout', extra: workout);
                           },
                           icon: const Icon(Icons.play_arrow),
-                          label: const Text('Start'),
+                          label: Text(AppLocalizations.of(context).buttonStart),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
@@ -429,7 +430,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                           },
                           icon: const Icon(Icons.refresh, size: 20),
                           color: accentColor,
-                          tooltip: 'Regenerate',
+                          tooltip: AppLocalizations.of(context).workoutActionsRegenerate,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -458,7 +459,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                 )
                               : const Icon(Icons.skip_next, size: 20),
                           color: AppColors.textMuted,
-                          tooltip: 'Skip',
+                          tooltip: AppLocalizations.of(context).onboardingSkip,
                         ),
                       ),
                     ],

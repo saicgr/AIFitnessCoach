@@ -99,7 +99,7 @@ class _ExerciseDetailsSheetContentState
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Exercise Info',
+                        AppLocalizations.of(context).exerciseDetailsSheetExerciseInfo,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: textPrimary,
@@ -141,7 +141,7 @@ class _ExerciseDetailsSheetContentState
                           _buildActionPill(
                             context: context,
                             icon: Icons.play_circle_outline,
-                            label: 'Video',
+                            label: AppLocalizations.of(context).workoutShowcaseVideo,
                             onTap: () {
                               Navigator.pop(context);
                               showExerciseInfoSheet(
@@ -158,7 +158,7 @@ class _ExerciseDetailsSheetContentState
                           _buildActionPill(
                             context: context,
                             icon: Icons.air,
-                            label: 'Breathing',
+                            label: AppLocalizations.of(context).workoutUiBuildersBreathing,
                             onTap: () {
                               Navigator.pop(context);
                               showBreathingGuide(
@@ -194,7 +194,7 @@ class _ExerciseDetailsSheetContentState
                             // Primary Muscle
                             _buildDetailRow(
                               icon: Icons.fitness_center,
-                              label: 'Primary Muscle',
+                              label: AppLocalizations.of(context).exerciseDetailsSheetPrimaryMuscle,
                               value: exercise.primaryMuscle ?? exercise.muscleGroup ?? 'Not specified',
                               color: accentColor,
                               isDark: isDark,
@@ -217,7 +217,7 @@ class _ExerciseDetailsSheetContentState
                                   }
                                   return _buildDetailRow(
                                     icon: Icons.accessibility_new,
-                                    label: 'Secondary Muscles',
+                                    label: AppLocalizations.of(context).exerciseDetailsSheetSecondaryMuscles,
                                     value: value,
                                     color: accentColor,
                                     isDark: isDark,
@@ -230,8 +230,8 @@ class _ExerciseDetailsSheetContentState
                             // Equipment
                             _buildDetailRow(
                               icon: Icons.hardware,
-                              label: 'Equipment',
-                              value: exercise.equipment ?? 'Bodyweight',
+                              label: AppLocalizations.of(context).trainingSetupCardEquipment,
+                              value: exercise.equipment ?? AppLocalizations.of(context).exerciseDetailsSheetBodyweight,
                               color: accentColor,
                               isDark: isDark,
                               textPrimary: textPrimary,
@@ -257,7 +257,7 @@ class _ExerciseDetailsSheetContentState
                                     );
                                   },
                                   child: Text(
-                                    "Don't have this equipment?",
+                                    AppLocalizations.of(context).exerciseDetailsSheetDonTHaveThis,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: accentColor,
@@ -271,7 +271,7 @@ class _ExerciseDetailsSheetContentState
                             if (exercise.difficulty != null)
                               _buildDetailRow(
                                 icon: Icons.speed,
-                                label: 'Difficulty',
+                                label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
                                 value: exercise.difficulty!,
                                 color: accentColor,
                                 isDark: isDark,
@@ -315,7 +315,7 @@ class _ExerciseDetailsSheetContentState
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Tap "Video" to watch form demonstration',
+                                AppLocalizations.of(context).exerciseDetailsSheetTapVideoToWatch,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: textSecondary,
@@ -435,7 +435,7 @@ class _ExerciseDetailsSheetContentState
             ),
             const SizedBox(width: 12),
             Text(
-              'Loading AI coach tips...',
+              AppLocalizations.of(context).exerciseDetailsSheetLoadingAiCoachTips,
               style: TextStyle(
                 fontSize: 13,
                 color: textSecondary,
@@ -498,21 +498,21 @@ class _ExerciseDetailsSheetContentState
         if (_aiInsights!.formCues != null)
           insightSection(
             icon: Icons.check_circle_outline,
-            title: 'Form Cues',
+            title: AppLocalizations.of(context).exerciseDetailsSheetFormCues,
             content: _aiInsights!.formCues!,
             color: const Color(0xFF22C55E),
           ),
         if (_aiInsights!.commonMistakes != null)
           insightSection(
             icon: Icons.warning_amber_outlined,
-            title: 'Watch Out For',
+            title: AppLocalizations.of(context).exerciseDetailsSheetWatchOutFor,
             content: _aiInsights!.commonMistakes!,
             color: const Color(0xFFF59E0B),
           ),
         if (_aiInsights!.proTip != null)
           insightSection(
             icon: Icons.lightbulb_outline,
-            title: 'Pro Tip',
+            title: AppLocalizations.of(context).exerciseDetailsSheetProTip,
             content: _aiInsights!.proTip!,
             color: accentColor,
           ),

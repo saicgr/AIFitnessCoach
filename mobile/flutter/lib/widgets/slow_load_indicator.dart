@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Wraps a child loader (typically a CircularProgressIndicator). After
 /// [softTimeout] elapses without the parent rebuilding, fades in a small
 /// "Taking longer than usual…" hint below the loader. After [hardTimeout]
@@ -88,7 +89,7 @@ class _SlowLoadIndicatorState extends State<SlowLoadIndicator> {
             padding: const EdgeInsets.only(top: 8),
             child: TextButton(
               onPressed: widget.onRetry,
-              child: const Text('Try again'),
+              child: Text(AppLocalizations.of(context).workoutReviewTryAgain),
             ),
           ),
       ],

@@ -26,6 +26,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/services/api_client.dart';
 import 'equipment_snap_flow.dart' show SnapMode;
 
+import '../../../l10n/generated/app_localizations.dart';
 // ---------------------------------------------------------------------------
 // Model
 // ---------------------------------------------------------------------------
@@ -382,7 +383,7 @@ class _SnappedEquipmentSectionState
 
       if (resp == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Couldn't reuse that snap. Try again.")),
+          SnackBar(content: Text(AppLocalizations.of(context).snappedEquipmentCouldnTReuseThat)),
         );
         return;
       }
@@ -400,8 +401,8 @@ class _SnappedEquipmentSectionState
           .toList();
       if (matches.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("No matching exercises for this equipment."),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).snappedEquipmentNoMatchingExercisesFor),
           ),
         );
         return;
@@ -493,7 +494,7 @@ class _SnappedEquipmentSectionState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'No snapped equipment yet',
+              AppLocalizations.of(context).snappedEquipmentNoSnappedEquipmentYet,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: textPrimary,
@@ -506,7 +507,7 @@ class _SnappedEquipmentSectionState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              'Tap the camera button to identify gear in front of you.',
+              AppLocalizations.of(context).snappedEquipmentTapTheCameraButton,
               textAlign: TextAlign.center,
               style: TextStyle(color: textMuted, fontSize: 13, height: 1.4),
             ),

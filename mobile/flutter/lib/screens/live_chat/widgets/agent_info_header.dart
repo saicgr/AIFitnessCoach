@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Agent info header widget for the app bar
 /// Shows agent name, avatar, and online status
 class AgentInfoHeader extends StatelessWidget {
@@ -140,7 +141,7 @@ class _StatusText extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Typing',
+            AppLocalizations.of(context).agentInfoHeaderTyping,
             style: TextStyle(
               fontSize: 12,
               color: AppColors.cyan,
@@ -153,7 +154,7 @@ class _StatusText extends StatelessWidget {
     }
 
     return Text(
-      isOnline ? 'Online' : 'Offline',
+      isOnline ? AppLocalizations.of(context).globalChatBubbleOnline : AppLocalizations.of(context).agentInfoHeaderOffline,
       style: TextStyle(
         fontSize: 12,
         color: isOnline ? AppColors.success : AppColors.textMuted,
@@ -214,7 +215,7 @@ class ConnectedBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            'Connected to support',
+            AppLocalizations.of(context).agentInfoHeaderConnectedToSupport,
             style: TextStyle(
               fontSize: 10,
               color: AppColors.success,

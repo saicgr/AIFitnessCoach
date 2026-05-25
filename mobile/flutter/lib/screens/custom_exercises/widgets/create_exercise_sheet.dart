@@ -13,6 +13,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'create_exercise_sheet_part_dashed_border_painter.dart';
 
 part 'create_exercise_sheet_ui.dart';
@@ -197,7 +198,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Create Exercise',
+                    AppLocalizations.of(context).myExercisesCreateExercise,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -211,9 +212,9 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           SegmentedTabBar(
             controller: _tabController,
             showIcons: false,
-            tabs: const [
-              SegmentedTabItem(label: 'Simple'),
-              SegmentedTabItem(label: 'Combo'),
+            tabs: [
+              SegmentedTabItem(label: AppLocalizations.of(context).customExercisesSimple),
+              SegmentedTabItem(label: AppLocalizations.of(context).createExerciseCombo),
             ],
           ),
 
@@ -253,7 +254,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
             const SizedBox(height: 8),
             _buildTextField(
               controller: _nameController,
-              hint: 'e.g., My Custom Press',
+              hint: AppLocalizations.of(context).createExerciseEGMyCustom,
               isDark: isDark,
               validator: (v) => v?.isEmpty == true ? 'Name required' : null,
             ),
@@ -336,7 +337,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
             const SizedBox(height: 8),
             _buildTextField(
               controller: _instructionsController,
-              hint: 'Describe how to perform this exercise...',
+              hint: AppLocalizations.of(context).createExerciseDescribeHowToPerform,
               isDark: isDark,
               maxLines: 4,
             ),
@@ -368,8 +369,8 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                           color: Colors.black,
                         ),
                       )
-                    : const Text(
-                        'Create Exercise',
+                    : Text(
+                        AppLocalizations.of(context).myExercisesCreateExercise,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
@@ -398,7 +399,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           const SizedBox(height: 8),
           _buildTextField(
             controller: _comboNameController,
-            hint: 'e.g., Bench Press & Chest Fly Superset',
+            hint: AppLocalizations.of(context).createExerciseEGBenchPress,
             isDark: isDark,
           ),
           const SizedBox(height: 20),
@@ -461,7 +462,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                 TextButton.icon(
                   onPressed: () => _showAddComponentDialog(context, isDark),
                   icon: Icon(Icons.add, size: 18, color: cyan),
-                  label: Text('Add', style: TextStyle(color: cyan)),
+                  label: Text(AppLocalizations.of(context).tilePickerAdd, style: TextStyle(color: cyan)),
                 ),
             ],
           ),
@@ -484,7 +485,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                     Icon(Icons.layers_outlined, size: 40, color: textSecondary),
                     const SizedBox(height: 8),
                     Text(
-                      'Add at least 2 exercises',
+                      AppLocalizations.of(context).createExerciseAddAtLeast2,
                       style: TextStyle(color: textSecondary),
                     ),
                   ],
@@ -507,7 +508,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           const SizedBox(height: 8),
           _buildTextField(
             controller: _comboNotesController,
-            hint: 'Any special instructions...',
+            hint: AppLocalizations.of(context).createExerciseAnySpecialInstructions,
             isDark: isDark,
             maxLines: 3,
           ),
@@ -632,7 +633,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Add Photo',
+                            AppLocalizations.of(context).progressScreenUiAddPhoto,
                             style: TextStyle(
                               color: isDark
                                   ? AppColors.textMuted
@@ -674,7 +675,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                     )
                   : Icon(Icons.auto_awesome, size: 18, color: cyan),
               label: Text(
-                _isAnalyzing ? 'Analyzing...' : 'Analyze with AI',
+                _isAnalyzing ? AppLocalizations.of(context).recipeBuilderSheetAnalyzing : AppLocalizations.of(context).foodSearchResultsAnalyzeWithAi,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -699,7 +700,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
+                title: Text(AppLocalizations.of(context).progressTakePhoto),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImage(ImageSource.camera);
@@ -707,7 +708,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
+                title: Text(AppLocalizations.of(context).progressChooseFromGallery),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImage(ImageSource.gallery);
@@ -788,8 +789,8 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('AI filled exercise details — review and save'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).createExerciseAiFilledExerciseDetails),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -926,21 +927,21 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add Exercise'),
+          title: Text(AppLocalizations.of(context).workoutSummaryAddExercise),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: _componentNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Exercise Name',
-                  hintText: 'e.g., Bench Press',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context).workoutHistoryImportExerciseName,
+                  hintText: AppLocalizations.of(context).supersetAlgorithmCardEGBenchPress,
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Text('Reps: '),
+                  Text(AppLocalizations.of(context).createExerciseReps),
                   IconButton(
                     onPressed: () {
                       if (_componentReps > 1) {
@@ -965,7 +966,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context).buttonCancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -980,7 +981,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Add'),
+              child: Text(AppLocalizations.of(context).tilePickerAdd),
             ),
           ],
         ),
@@ -1061,7 +1062,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Advanced (optional)',
+                          AppLocalizations.of(context).stapleChoiceAdvancedOptional,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -1070,7 +1071,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Rest, RPE, tempo, incline, distance, duration, notes',
+                          AppLocalizations.of(context).createExerciseRestRpeTempoIncline,
                           style: TextStyle(fontSize: 12, color: textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1138,7 +1139,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                   // Band color chips
                   if (_equipmentUsesBand) ...[
                     Text(
-                      'Band',
+                      AppLocalizations.of(context).stapleChoiceBand,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -1185,7 +1186,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
 
                   // Notes
                   Text(
-                    'Notes',
+                    AppLocalizations.of(context).syncedWorkoutDetailNotes,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -1195,7 +1196,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                   const SizedBox(height: 6),
                   _buildTextField(
                     controller: _notesController,
-                    hint: 'e.g. Focus on squeeze at top, slow eccentric',
+                    hint: AppLocalizations.of(context).stapleChoiceEGFocusOn,
                     isDark: isDark,
                     maxLines: 3,
                   ),

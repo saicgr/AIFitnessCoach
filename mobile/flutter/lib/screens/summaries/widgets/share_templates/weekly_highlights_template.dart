@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Instagram-Story template: "Week Highlights".
 /// AI-narrative driven — the aiSummary quote is the hero, followed by up to
 /// three highlight bullets and an encouragement card.
@@ -56,14 +57,14 @@ class WeeklyHighlightsTemplate extends StatelessWidget {
                         color: const Color(0xFFA78BFA).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.auto_awesome_rounded,
                               size: 12, color: Color(0xFFC4B5FD)),
                           SizedBox(width: 4),
                           Text(
-                            'AI HIGHLIGHTS',
+                            AppLocalizations.of(context).weeklyHighlightsTemplateAiHighlights,
                             style: TextStyle(
                               color: Color(0xFFC4B5FD),
                               fontSize: 10,
@@ -92,8 +93,8 @@ class WeeklyHighlightsTemplate extends StatelessWidget {
                   _PlaceholderQuote(),
                 const SizedBox(height: 18),
                 if (visibleHighlights.isNotEmpty) ...[
-                  const Text(
-                    'THIS WEEK',
+                  Text(
+                    AppLocalizations.of(context).xpHeroTileThisWeek,
                     style: TextStyle(
                       color: Color(0xFFA78BFA),
                       fontSize: 10,
@@ -163,7 +164,7 @@ class _PlaceholderQuote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Another week in the books. Consistency is the real flex.',
+      AppLocalizations.of(context).weeklyHighlightsTemplateAnotherWeekInThe,
       style: TextStyle(
         color: Colors.white.withValues(alpha: 0.85),
         fontSize: 16,

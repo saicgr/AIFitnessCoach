@@ -6,6 +6,7 @@ import '../../../core/providers/tts_provider.dart';
 import '../../../data/providers/voice_set_logging_provider.dart';
 import '../widgets/section_header.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The voice announcements section for configuring TTS settings.
 ///
 /// Allows users to enable/disable voice announcements during workouts.
@@ -16,8 +17,8 @@ class VoiceAnnouncementsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'VOICE ANNOUNCEMENTS'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).voiceAnnouncementsVoiceAnnouncements),
         SizedBox(height: 12),
         _VoiceAnnouncementsCard(),
       ],
@@ -51,13 +52,13 @@ class _VoiceAnnouncementsCard extends ConsumerWidget {
               color: voiceState.isEnabled ? cyan : textSecondary,
               size: 22,
             ),
-            title: const Text(
-              'Voice Announcements',
+            title: Text(
+              AppLocalizations.of(context).voiceAnnouncementsVoiceAnnouncements2,
               style: TextStyle(fontSize: 15),
             ),
             subtitle: Text(
               voiceState.isEnabled
-                  ? 'Announcing exercise names during transitions'
+                  ? AppLocalizations.of(context).voiceAnnouncementsAnnouncingExerciseNamesDuri
                   : 'Enable to hear exercise announcements',
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
@@ -87,13 +88,13 @@ class _VoiceAnnouncementsCard extends ConsumerWidget {
                   color: enabled ? cyan : textSecondary,
                   size: 22,
                 ),
-                title: const Text(
-                  'Voice set-logging',
+                title: Text(
+                  AppLocalizations.of(context).voiceAnnouncementsVoiceSetLogging,
                   style: TextStyle(fontSize: 15),
                 ),
                 subtitle: Text(
                   enabled
-                      ? 'Mic FAB on active workout — "225 for 5"'
+                      ? AppLocalizations.of(context).voiceAnnouncementsMicFabOnActive
                       : 'Off — best with headphones; gym noise reduces accuracy',
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
@@ -125,7 +126,7 @@ class _VoiceAnnouncementsCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'When enabled, you will hear:',
+                      AppLocalizations.of(context).voiceAnnouncementsWhenEnabledYouWill,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -177,7 +178,7 @@ class _VoiceAnnouncementsCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Test Voice',
+                      AppLocalizations.of(context).voiceAnnouncementsTestVoice,
                       style: TextStyle(
                         fontSize: 15,
                         color: cyan,

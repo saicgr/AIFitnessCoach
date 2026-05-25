@@ -212,7 +212,7 @@ class _StapleExerciseTile extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        staple.section == 'warmup' ? 'Warmup' : 'Stretch',
+                        staple.section == 'warmup' ? AppLocalizations.of(context).workoutSummaryAdvancedWarmup : AppLocalizations.of(context).stapleExercisesScreenStretch,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -271,7 +271,7 @@ class _StapleExerciseTile extends ConsumerWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      staple.gymProfileName ?? 'All Profiles',
+                      staple.gymProfileName ?? AppLocalizations.of(context).stapleExercisesScreenAllProfiles,
                       style: TextStyle(
                         fontSize: 10,
                         color: textMuted.withValues(alpha: 0.7),
@@ -288,12 +288,12 @@ class _StapleExerciseTile extends ConsumerWidget {
             IconButton(
               icon: Icon(Icons.edit_outlined, color: AppColors.cyan),
               onPressed: onEdit,
-              tooltip: 'Edit',
+              tooltip: AppLocalizations.of(context).commonEdit,
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline, color: AppColors.error),
               onPressed: onRemove,
-              tooltip: 'Remove',
+              tooltip: AppLocalizations.of(context).workoutPlanDrawerRemove,
             ),
           ],
         ),

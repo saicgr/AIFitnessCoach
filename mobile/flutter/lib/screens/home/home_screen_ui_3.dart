@@ -57,8 +57,8 @@ extension _HomeScreenStateUI3 on _HomeScreenState {
       ),
 
       // Section: YOUR WEEK
-      const SliverToBoxAdapter(
-        child: SectionHeader(title: 'YOUR WEEK'),
+      SliverToBoxAdapter(
+        child: SectionHeader(title: AppLocalizations.of(context).homeScreenUiYourWeek),
       ),
 
       // Week Changes Card
@@ -86,7 +86,7 @@ extension _HomeScreenStateUI3 on _HomeScreenState {
       if (upcomingWorkouts.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: SectionHeader(
-            title: 'UPCOMING',
+            title: AppLocalizations.of(context).homeScreenUiUpcoming,
             subtitle: '${upcomingWorkouts.length} workouts',
             actionText: 'View Schedule',
             onAction: () {

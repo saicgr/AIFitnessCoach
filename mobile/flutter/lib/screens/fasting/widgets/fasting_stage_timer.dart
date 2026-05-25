@@ -4,6 +4,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import 'fasting_stage_model.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Live ticking circular fasting timer with a segmented metabolic-stage arc.
 ///
 /// - The big H:MM:SS timer ticks live (parent rebuilds it every second via
@@ -194,7 +195,7 @@ class _FastingStageTimerState extends State<FastingStageTimer>
           Icon(Icons.bedtime_outlined, size: 44, color: colors.textMuted),
           const SizedBox(height: 10),
           Text(
-            'Ready to fast',
+            AppLocalizations.of(context).fastingStageTimerReadyToFast,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -302,7 +303,7 @@ class _FastingStageTimerState extends State<FastingStageTimer>
         const SizedBox(height: 2),
         // Unambiguous: the big number above is ELAPSED time, not remaining.
         Text(
-          'ELAPSED',
+          AppLocalizations.of(context).fastingStageTimerElapsed,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w800,

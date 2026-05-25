@@ -10,6 +10,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../home/widgets/edit_gym_profile_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Unified card displaying equipment and workout preferences with edit capability.
 /// Equipment and Environment are pulled from the active gym profile.
 class TrainingSetupCard extends ConsumerWidget {
@@ -157,7 +158,7 @@ class TrainingSetupCard extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Training Setup',
+                AppLocalizations.of(context).trainingSetupCardTrainingSetup,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -196,7 +197,7 @@ class TrainingSetupCard extends ConsumerWidget {
           _SetupRow(
             icon: Icons.fitness_center,
             iconColor: AppColors.orange,
-            label: 'Equipment',
+            label: AppLocalizations.of(context).trainingSetupCardEquipment,
             value: _getEquipmentDisplay(equipment),
             textPrimary: textPrimary,
             textSecondary: textSecondary,
@@ -207,7 +208,7 @@ class TrainingSetupCard extends ConsumerWidget {
           _SetupRow(
             icon: Icons.location_on_outlined,
             iconColor: AppColors.green,
-            label: 'Environment',
+            label: AppLocalizations.of(context).workoutPreferencesCardEnvironment,
             value: environment,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
@@ -218,8 +219,8 @@ class TrainingSetupCard extends ConsumerWidget {
           _SetupRow(
             icon: Icons.timeline,
             iconColor: AppColors.purple,
-            label: 'Experience',
-            value: user?.trainingExperienceDisplay ?? 'Not set',
+            label: AppLocalizations.of(context).workoutPreferencesCardExperience,
+            value: user?.trainingExperienceDisplay ?? AppLocalizations.of(context).workoutPreferencesCardNotSet,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -230,7 +231,7 @@ class TrainingSetupCard extends ConsumerWidget {
           _SetupRow(
             icon: Icons.center_focus_strong,
             iconColor: AppColors.cyan,
-            label: 'Focus Areas',
+            label: AppLocalizations.of(context).workoutPreferencesCardFocusAreas,
             value: focusAreasValue,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
@@ -241,7 +242,7 @@ class TrainingSetupCard extends ConsumerWidget {
           _SetupRow(
             icon: Icons.calendar_today_outlined,
             iconColor: AppColors.info,
-            label: 'Workout Days',
+            label: AppLocalizations.of(context).workoutSettingsWorkoutDays,
             value: workoutDaysValue,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
@@ -271,8 +272,8 @@ class TrainingSetupCard extends ConsumerWidget {
             const SizedBox(height: 12),
             _TappableRow(
               icon: Icons.build_outlined,
-              label: 'My Custom Equipment',
-              subtitle: 'Add equipment not in the standard list',
+              label: AppLocalizations.of(context).trainingSetupCardMyCustomEquipment,
+              subtitle: AppLocalizations.of(context).trainingSetupCardAddEquipmentNotIn,
               iconColor: AppColors.yellow,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
@@ -441,7 +442,7 @@ class _TrainingSplitRow extends ConsumerWidget {
     return _SetupRow(
       icon: Icons.view_week_outlined,
       iconColor: AppColors.limeGreen,
-      label: 'Training Split',
+      label: AppLocalizations.of(context).workoutSettingsTrainingSplit,
       value: displayName,
       textPrimary: textPrimary,
       textSecondary: textSecondary,
@@ -479,7 +480,7 @@ class _VarietyRow extends ConsumerWidget {
       child: _SetupRow(
         icon: Icons.shuffle_rounded,
         iconColor: AppColors.yellow,
-        label: 'Weekly Variety',
+        label: AppLocalizations.of(context).workoutSettingsWeeklyVariety,
         value: _varietyLabel(percentage),
         textPrimary: textPrimary,
         textSecondary: textSecondary,
@@ -500,7 +501,7 @@ class _VarietyRow extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Weekly Variety',
+                AppLocalizations.of(context).workoutSettingsWeeklyVariety,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -509,7 +510,7 @@ class _VarietyRow extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'How much exercise variety each week?',
+                AppLocalizations.of(context).trainingSetupCardHowMuchExerciseVariety,
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark ? Colors.white54 : Colors.black45,

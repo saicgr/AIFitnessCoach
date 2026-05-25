@@ -11,6 +11,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/nav_bar_hider_mixin.dart';
 import 'conversation_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 class FriendProfileScreen extends ConsumerStatefulWidget {
   final String targetUserId;
 
@@ -108,7 +109,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
       debugPrint('Failed to get/create conversation: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to open conversation')),
+          SnackBar(content: Text(AppLocalizations.of(context).friendProfileFailedToOpenConversation)),
         );
       }
     }
@@ -122,7 +123,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Profile',
+        title: AppLocalizations.of(context).navProfile,
         actions: [
           PillAppBarAction(
             icon: Icons.more_vert,
@@ -131,9 +132,9 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                 context: context,
                 position: const RelativeRect.fromLTRB(100, 100, 0, 0),
                 items: [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'block',
-                    child: Text('Block User', style: TextStyle(color: Colors.red)),
+                    child: Text(AppLocalizations.of(context).friendProfileBlockUser, style: TextStyle(color: Colors.red)),
                   ),
                 ],
               );
@@ -141,19 +142,19 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Block User'),
-                    content: const Text(
-                      'This user will not be able to see your content or message you. You can unblock them later.',
+                    title: Text(AppLocalizations.of(context).friendProfileBlockUser),
+                    content: Text(
+                      AppLocalizations.of(context).friendProfileThisUserWillNot,
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+                        child: Text(AppLocalizations.of(context).buttonCancel),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
                         style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('Block'),
+                        child: Text(AppLocalizations.of(context).friendProfileBlock),
                       ),
                     ],
                   ),
@@ -163,7 +164,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                     await ref.read(socialServiceProvider).blockUser(widget.targetUserId);
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User blocked')),
+                        SnackBar(content: Text(AppLocalizations.of(context).friendProfileUserBlocked)),
                       );
                       Navigator.pop(context);
                     }
@@ -203,7 +204,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
             const SizedBox(height: 16),
             TextButton(
               onPressed: _loadProfile,
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -308,7 +309,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                 child: OutlinedButton.icon(
                   onPressed: _handleMessage,
                   icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                  label: const Text('Message'),
+                  label: Text(AppLocalizations.of(context).friendProfileMessage),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.accent,
                     side: BorderSide(color: colors.accent.withValues(alpha: 0.5)),
@@ -346,7 +347,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
             Icon(Icons.people_rounded, size: 18, color: colors.accent),
             const SizedBox(width: 6),
             Text(
-              'Friends',
+              AppLocalizations.of(context).discoverFriends,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -361,7 +362,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
     return OutlinedButton.icon(
       onPressed: () => _handleFollow(isFollowing),
       icon: Icon(isFollowing ? Icons.person_remove : Icons.person_add, size: 18),
-      label: Text(isFollowing ? 'Following' : 'Follow'),
+      label: Text(isFollowing ? AppLocalizations.of(context).friendsFollowing : AppLocalizations.of(context).friendProfileFollow),
       style: OutlinedButton.styleFrom(
         foregroundColor: isFollowing ? (AppColors.textMuted) : colors.accent,
         side: BorderSide(
@@ -404,7 +405,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
       debugPrint('Error toggling follow: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update follow status')),
+          SnackBar(content: Text(AppLocalizations.of(context).friendProfileFailedToUpdateFollow)),
         );
       }
     }
@@ -493,7 +494,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                   fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary,
                 )),
                 const SizedBox(height: 2),
-                Text('Followers', style: TextStyle(fontSize: 12, color: textMuted)),
+                Text(AppLocalizations.of(context).friendsFollowers, style: TextStyle(fontSize: 12, color: textMuted)),
               ],
             ),
           ),
@@ -505,7 +506,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                   fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary,
                 )),
                 const SizedBox(height: 2),
-                Text('Following', style: TextStyle(fontSize: 12, color: textMuted)),
+                Text(AppLocalizations.of(context).friendsFollowing, style: TextStyle(fontSize: 12, color: textMuted)),
               ],
             ),
           ),
@@ -517,7 +518,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                   fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary,
                 )),
                 const SizedBox(height: 2),
-                Text('Friends', style: TextStyle(fontSize: 12, color: textMuted)),
+                Text(AppLocalizations.of(context).discoverFriends, style: TextStyle(fontSize: 12, color: textMuted)),
               ],
             ),
           ),
@@ -535,7 +536,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 12),
           child: Text(
-            'Member Info',
+            AppLocalizations.of(context).friendProfileMemberInfo,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -559,12 +560,12 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
               Icon(Icons.person_outline_rounded, size: 40, color: textMuted),
               const SizedBox(height: 8),
               Text(
-                'More details coming soon',
+                AppLocalizations.of(context).friendProfileMoreDetailsComingSoon,
                 style: TextStyle(fontSize: 14, color: textMuted),
               ),
               const SizedBox(height: 4),
               Text(
-                'Workout history, PRs, and trophies\nwill be shown here.',
+                AppLocalizations.of(context).friendProfileWorkoutHistoryPrsAnd,
                 style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
                 textAlign: TextAlign.center,
               ),

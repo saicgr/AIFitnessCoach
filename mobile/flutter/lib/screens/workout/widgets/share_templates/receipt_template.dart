@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Receipt — monospaced "gym receipt" parody. Line items per exercise
 /// with sets × reps, subtotal row, and "thank you come again" footer.
 class ReceiptTemplate extends StatelessWidget {
@@ -79,7 +80,7 @@ class ReceiptTemplate extends StatelessWidget {
             const SizedBox(height: 6),
             Center(
               child: Text(
-                '─────────────────────────────',
+                AppLocalizations.of(context).receiptTemplate,
                 style: TextStyle(
                   fontFamily: fontFamily,
                   fontSize: 11,
@@ -105,8 +106,8 @@ class ReceiptTemplate extends StatelessWidget {
                 itemCount: exercises.isEmpty ? 1 : exercises.take(7).length,
                 itemBuilder: (context, i) {
                   if (exercises.isEmpty) {
-                    return const Text(
-                      'No exercises logged',
+                    return Text(
+                      AppLocalizations.of(context).receiptTemplateNoExercisesLogged,
                       style: TextStyle(fontFamily: fontFamily, fontSize: 11, color: darkInk),
                     );
                   }
@@ -143,7 +144,7 @@ class ReceiptTemplate extends StatelessWidget {
               ),
             ),
             Text(
-              '─────────────────────────────',
+              AppLocalizations.of(context).receiptTemplate,
               style: TextStyle(
                 fontFamily: fontFamily,
                 fontSize: 11,
@@ -162,7 +163,7 @@ class ReceiptTemplate extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '─────────────────────────────',
+              AppLocalizations.of(context).receiptTemplate,
               style: TextStyle(
                 fontFamily: fontFamily,
                 fontSize: 11,
@@ -170,9 +171,9 @@ class ReceiptTemplate extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            const Center(
+            Center(
               child: Text(
-                'THANK YOU — COME AGAIN',
+                AppLocalizations.of(context).receiptTemplateThankYouComeAgain,
                 style: TextStyle(
                   fontFamily: fontFamily,
                   fontSize: 11,

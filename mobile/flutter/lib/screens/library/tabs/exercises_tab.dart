@@ -14,6 +14,7 @@ import '../widgets/exercise_card.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_filter_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Exercises tab content with search, filters, and paginated list
 class ExercisesTab extends ConsumerStatefulWidget {
   const ExercisesTab({super.key});
@@ -144,7 +145,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
                   label: Text(
-                    'Done',
+                    AppLocalizations.of(context).commonDone,
                     style: TextStyle(
                       fontSize: 12,
                       color: performedOnly ? cyan : textMuted,
@@ -295,7 +296,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
               onPressed: () => ref
                   .read(exercisesNotifierProvider.notifier)
                   .loadExercises(refresh: true),
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -364,7 +365,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
                                 .read(exercisesNotifierProvider.notifier)
                                 .loadExercises(),
                             child: Text(
-                              'Load more',
+                              AppLocalizations.of(context).exercisesLoadMore,
                               style: TextStyle(color: cyan),
                             ),
                           ),

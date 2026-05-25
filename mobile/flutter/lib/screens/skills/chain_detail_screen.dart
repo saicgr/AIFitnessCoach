@@ -12,6 +12,7 @@ import '../../widgets/glass_sheet.dart';
 import 'widgets/progression_step_card.dart';
 import 'widgets/practice_attempt_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Detailed view of a progression chain with skill tree visualization
 class ChainDetailScreen extends ConsumerStatefulWidget {
   final String chainId;
@@ -152,7 +153,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
                       child: FilledButton.icon(
                         onPressed: () => _startChain(chain.id),
                         icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('Start This Progression'),
+                        label: Text(AppLocalizations.of(context).chainDetailStartThisProgression),
                         style: FilledButton.styleFrom(
                           backgroundColor: cyan,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -175,7 +176,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Progression Path',
+                          AppLocalizations.of(context).chainDetailProgressionPath,
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
@@ -275,7 +276,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              chain?.name ?? 'Loading...',
+              chain?.name ?? AppLocalizations.of(context).weekProgressStripLoading,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -370,7 +371,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Your Progress',
+                        AppLocalizations.of(context).skillProgressSummaryYourProgress,
                         style: TextStyle(
                           color: textSecondary,
                           fontSize: 13,
@@ -600,8 +601,8 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
 
     if (result != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Progression started! Good luck!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).chainDetailProgressionStartedGoodLuck),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -757,7 +758,7 @@ class _StepDetailSheet extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: BorderSide(color: cardBorder),
                     ),
-                    child: const Text('Close'),
+                    child: Text(AppLocalizations.of(context).commonClose),
                   ),
                 ),
               ],

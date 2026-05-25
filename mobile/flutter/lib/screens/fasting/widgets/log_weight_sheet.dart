@@ -23,6 +23,7 @@ import '../../../shareables/shareable_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/components/sheet_theme_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the log weight bottom sheet
 Future<WeightLogResult?> showLogWeightSheet(
   BuildContext context,
@@ -518,7 +519,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           debugPrint('[LogWeight] body fat record failed: $e');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Body fat didn't save — weight logged")),
+              SnackBar(content: Text(AppLocalizations.of(context).logWeightBodyFatDidnT)),
             );
           }
         }
@@ -612,7 +613,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
 
     final highlights = <ShareableMetric>[
       ShareableMetric(
-        label: 'CURRENT',
+        label: AppLocalizations.of(context).workoutActionsCurrent,
         value: '${currentDisplay.toStringAsFixed(1)} ${unit.label}',
         icon: Icons.monitor_weight_outlined,
       ),
@@ -633,7 +634,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
 
     final shareable = Shareable(
       kind: ShareableKind.bodyMeasurements,
-      title: 'Weight Update',
+      title: AppLocalizations.of(context).logWeightWeightUpdate,
       periodLabel: DateFormat('MMM d').format(DateTime.now()).toUpperCase(),
       heroValue: currentDisplay,
       heroUnitSingular: unit.label,
@@ -850,7 +851,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'If this was a mistake, log again with the correct weight.',
+                  AppLocalizations.of(context).logWeightIfThisWasA,
                   style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
@@ -870,7 +871,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                   const SizedBox(width: 6),
                   Text(
                     Platform.isIOS
-                        ? 'Synced to Apple Health'
+                        ? AppLocalizations.of(context).logWeightSyncedToAppleHealth
                         : 'Synced to Health Connect',
                     style: TextStyle(
                       fontSize: 11,
@@ -903,7 +904,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                     message: 'Weight logged successfully',
                   )),
                   child: Text(
-                    'Done',
+                    AppLocalizations.of(context).commonDone,
                     style: TextStyle(
                       color: colors.textSecondary,
                       fontWeight: FontWeight.w500,
@@ -919,7 +920,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                       context.push('/measurements/weight');
                     },
                     icon: const Icon(Icons.show_chart_rounded, size: 18),
-                    label: const Text('View Chart'),
+                    label: Text(AppLocalizations.of(context).logWeightViewChart),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.cyan,
                       side: BorderSide(color: colors.cyan),
@@ -932,7 +933,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                   FilledButton.icon(
                     onPressed: _shareNewLow,
                     icon: const Icon(Icons.ios_share, size: 18),
-                    label: const Text('Share'),
+                    label: Text(AppLocalizations.of(context).commonShare),
                     style: FilledButton.styleFrom(
                       backgroundColor: successColor,
                       foregroundColor: Colors.white,
@@ -948,7 +949,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                     context.push('/measurements/weight');
                   },
                   icon: const Icon(Icons.show_chart_rounded, size: 18),
-                  label: const Text('Weight Chart'),
+                  label: Text(AppLocalizations.of(context).logWeightWeightChart),
                   style: FilledButton.styleFrom(
                     backgroundColor: colors.cyan,
                     foregroundColor: Colors.white,
@@ -1023,7 +1024,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Log Weight',
+              AppLocalizations.of(context).logWeightLogWeight,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -1037,7 +1038,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
               context.push('/measurements/weight');
             },
             icon: Icon(Icons.history_rounded, color: colors.textSecondary, size: 22),
-            tooltip: 'Weight History',
+            tooltip: AppLocalizations.of(context).logWeightWeightHistory,
           ),
           IconButton(
             onPressed: _isSubmitting ? null : () => Navigator.pop(context),
@@ -1241,7 +1242,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Tap to edit',
+                      AppLocalizations.of(context).recipeCreateTapToEdit,
                       style: TextStyle(
                         fontSize: 10,
                         color: colors.textMuted.withValues(alpha: 0.5),
@@ -1322,7 +1323,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
         backgroundColor: colors.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Enter Weight',
+          AppLocalizations.of(context).logWeightEnterWeight,
           style: TextStyle(color: colors.textPrimary),
         ),
         content: Column(
@@ -1379,7 +1380,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: colors.textMuted)),
+            child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: colors.textMuted)),
           ),
           TextButton(
             onPressed: () {
@@ -1393,7 +1394,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
               }
               Navigator.pop(ctx);
             },
-            child: Text('Save', style: TextStyle(color: colors.cyan, fontWeight: FontWeight.bold)),
+            child: Text(AppLocalizations.of(context).buttonSave, style: TextStyle(color: colors.cyan, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1419,7 +1420,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           maxLines: 1,
           maxLength: 200,
           decoration: InputDecoration(
-            hintText: 'Add a note (optional)',
+            hintText: AppLocalizations.of(context).wellnessCheckinCardAddANoteOptional,
             hintStyle: TextStyle(color: colors.textMuted.withValues(alpha: 0.5), fontSize: 13),
             counterText: '',
             prefixIcon: Icon(Icons.note_outlined, color: colors.textMuted.withValues(alpha: 0.4), size: 18),
@@ -1496,8 +1497,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
-                      'Saving...',
+                    Text(
+                      AppLocalizations.of(context).workoutReviewSaving,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1505,8 +1506,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                     ),
                   ],
                 )
-              : const Text(
-                  'Log Weight',
+              : Text(
+                  AppLocalizations.of(context).logWeightLogWeight,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1544,7 +1545,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
               ),
               const SizedBox(width: 4),
               Text(
-                _moreDetailsExpanded ? 'Hide details' : 'More details',
+                _moreDetailsExpanded ? AppLocalizations.of(context).workoutSummaryAdvancedHideDetails : AppLocalizations.of(context).workoutSummaryAdvancedMoreDetails,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1565,7 +1566,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'CONTEXT',
+            AppLocalizations.of(context).logWeightContext,
             style: TextStyle(
               fontSize: 10,
               letterSpacing: 1.6,
@@ -1586,7 +1587,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           ),
           const SizedBox(height: 14),
           Text(
-            'BODY FAT % (OPTIONAL)',
+            AppLocalizations.of(context).logWeightBodyFatOptional,
             style: TextStyle(
               fontSize: 10,
               letterSpacing: 1.6,
@@ -1603,7 +1604,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
               FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}\.?\d{0,1}')),
             ],
             decoration: InputDecoration(
-              hintText: 'e.g. 18.5',
+              hintText: AppLocalizations.of(context).logWeightEG185,
               hintStyle: TextStyle(color: colors.textMuted, fontSize: 13),
               suffixText: '%',
               suffixStyle: TextStyle(color: colors.textMuted),
@@ -1716,7 +1717,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
       if (_healthSeeded) {
         return Text(
           Platform.isIOS
-              ? 'Synced from Apple Health'
+              ? AppLocalizations.of(context).logWeightSyncedFromAppleHealth
               : 'Synced from Health Connect',
           style: TextStyle(
             fontSize: 11,

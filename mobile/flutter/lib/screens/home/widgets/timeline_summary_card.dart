@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/timeline_entry.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class TimelineSummaryCard extends StatelessWidget {
   final TimelineSummary summary;
   final Color accent;
@@ -84,7 +85,7 @@ class TimelineSummaryCard extends StatelessWidget {
               _HeroStat(
                 icon: Icons.local_fire_department_outlined,
                 value: _fmtCalories(summary.caloriesNet),
-                label: 'net kcal',
+                label: AppLocalizations.of(context).timelineSummaryCardNetKcal,
                 accent: _calorieColor(summary.caloriesNet, accent),
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,

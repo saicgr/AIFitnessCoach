@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/set_progression.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Inline rest row that appears between sets during rest period
 class InlineRestRow extends StatefulWidget {
   /// Initial rest duration in seconds
@@ -225,7 +226,7 @@ class _InlineRestRowState extends State<InlineRestRow>
 
           // -15s button
           _buildTimeAdjustButton(
-            label: '-15s',
+            label: AppLocalizations.of(context).inlineRestRow15s,
             onTap: () => _adjustTime(-15),
             isDark: isDark,
             textMuted: textMuted,
@@ -234,7 +235,7 @@ class _InlineRestRowState extends State<InlineRestRow>
 
           // +15s button
           _buildTimeAdjustButton(
-            label: '+15s',
+            label: AppLocalizations.of(context).inlineRestRow15s2,
             onTap: () => _adjustTime(15),
             isDark: isDark,
             textMuted: textMuted,
@@ -257,7 +258,7 @@ class _InlineRestRowState extends State<InlineRestRow>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Skip',
+                    AppLocalizations.of(context).onboardingSkip,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -460,7 +461,7 @@ class _InlineRestRowState extends State<InlineRestRow>
           Row(
             children: [
               Text(
-                'How did that feel?',
+                AppLocalizations.of(context).inlineRestRowHowDidThatFeel,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -469,7 +470,7 @@ class _InlineRestRowState extends State<InlineRestRow>
               ),
               const SizedBox(width: 4),
               Text(
-                '(RPE)',
+                AppLocalizations.of(context).inlineRestRowRpe,
                 style: TextStyle(
                   fontSize: 11,
                   color: textMuted,
@@ -510,7 +511,7 @@ class _InlineRestRowState extends State<InlineRestRow>
                       ),
                       const SizedBox(width: 3),
                       Text(
-                        'Note',
+                        AppLocalizations.of(context).workoutUiBuildersNote,
                         style: TextStyle(
                           fontSize: 11,
                           color: textMuted,
@@ -623,7 +624,7 @@ class _InlineRestRowState extends State<InlineRestRow>
               controller: _noteController,
               style: TextStyle(fontSize: 14, color: textPrimary),
               decoration: InputDecoration(
-                hintText: 'Add a note about this set...',
+                hintText: AppLocalizations.of(context).inlineRestRowAddANoteAbout,
                 hintStyle: TextStyle(fontSize: 14, color: textMuted),
                 filled: true,
                 fillColor: isDark
@@ -697,7 +698,7 @@ class _InlineRestRowState extends State<InlineRestRow>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Getting tip...',
+                        AppLocalizations.of(context).inlineRestRowGettingTip,
                         style: TextStyle(
                           fontSize: 13,
                           fontStyle: FontStyle.italic,

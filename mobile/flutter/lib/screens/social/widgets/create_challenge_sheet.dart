@@ -7,6 +7,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for creating a new fitness challenge (F8)
 class CreateChallengeSheet extends ConsumerStatefulWidget {
   final VoidCallback? onCreated;
@@ -176,7 +177,7 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
             child: Row(
               children: [
                 Text(
-                  'Create Challenge',
+                  AppLocalizations.of(context).createChallengeCreateChallenge,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -204,7 +205,7 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
                       maxLength: 200,
                       decoration: InputDecoration(
                         labelText: 'Challenge Title *',
-                        hintText: 'e.g., 30-Day Workout Streak',
+                        hintText: AppLocalizations.of(context).createChallengeEG30Day,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -223,8 +224,8 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
                       controller: _descriptionController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        labelText: 'Description (optional)',
-                        hintText: 'Describe the challenge...',
+                        labelText: AppLocalizations.of(context).createHabitDescriptionOptional,
+                        hintText: AppLocalizations.of(context).createChallengeDescribeTheChallenge,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -236,7 +237,7 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
                     DropdownButtonFormField<String>(
                       value: _challengeType,
                       decoration: InputDecoration(
-                        labelText: 'Challenge Type',
+                        labelText: AppLocalizations.of(context).createChallengeChallengeType,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -268,7 +269,7 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             decoration: InputDecoration(
                               labelText: 'Goal Value *',
-                              hintText: 'e.g., 30',
+                              hintText: AppLocalizations.of(context).createChallengeEG30,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -291,8 +292,8 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
                           child: TextFormField(
                             controller: _goalUnitController,
                             decoration: InputDecoration(
-                              labelText: 'Unit',
-                              hintText: 'e.g., workouts',
+                              labelText: AppLocalizations.of(context).createGoalUnit,
+                              hintText: AppLocalizations.of(context).createChallengeEGWorkouts,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -308,7 +309,7 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
                       children: [
                         Expanded(
                           child: _buildDateButton(
-                            label: 'Start Date',
+                            label: AppLocalizations.of(context).createChallengeStartDate,
                             date: dateFormat.format(_startDate),
                             onTap: () => _pickDate(isStart: true),
                             colors: colors,
@@ -318,7 +319,7 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildDateButton(
-                            label: 'End Date',
+                            label: AppLocalizations.of(context).createChallengeEndDate,
                             date: dateFormat.format(_endDate),
                             onTap: () => _pickDate(isStart: false),
                             colors: colors,
@@ -331,10 +332,10 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
 
                     // Public/Private toggle
                     SwitchListTile(
-                      title: const Text('Public Challenge'),
+                      title: Text(AppLocalizations.of(context).createChallengePublicChallenge),
                       subtitle: Text(
                         _isPublic
-                            ? 'Anyone can discover and join'
+                            ? AppLocalizations.of(context).createChallengeAnyoneCanDiscoverAnd
                             : 'Only invited users can join',
                         style: TextStyle(fontSize: 12, color: textMuted),
                       ),
@@ -369,8 +370,8 @@ class _CreateChallengeSheetState extends ConsumerState<CreateChallengeSheet> {
                                   color: colors.accentContrast,
                                 ),
                               )
-                            : const Text(
-                                'Create Challenge',
+                            : Text(
+                                AppLocalizations.of(context).createChallengeCreateChallenge,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,

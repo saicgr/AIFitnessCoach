@@ -25,6 +25,7 @@ import 'timeline_summary_card.dart';
 import 'timeline_entry_tile.dart';
 import 'timeline_entry_detail_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class TimelineSection extends ConsumerStatefulWidget {
   const TimelineSection({super.key});
 
@@ -62,7 +63,7 @@ class _TimelineSectionState extends ConsumerState<TimelineSection> {
               Icon(Icons.timeline, color: accent, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Today\'s Journal',
+                AppLocalizations.of(context).timelineTodaySJournal,
                 style: TextStyle(
                   color: textPrimary,
                   fontSize: 18,
@@ -75,7 +76,7 @@ class _TimelineSectionState extends ConsumerState<TimelineSection> {
                   _searchExpanded ? Icons.close : Icons.search,
                   color: textSecondary,
                 ),
-                tooltip: _searchExpanded ? 'Close search' : 'Search Timeline',
+                tooltip: _searchExpanded ? AppLocalizations.of(context).timelineCloseSearch : AppLocalizations.of(context).timelineSearchTimeline,
                 onPressed: () {
                   setState(() {
                     _searchExpanded = !_searchExpanded;
@@ -88,7 +89,7 @@ class _TimelineSectionState extends ConsumerState<TimelineSection> {
               ),
               IconButton(
                 icon: Icon(Icons.refresh, color: textSecondary),
-                tooltip: 'Refresh',
+                tooltip: AppLocalizations.of(context).timelineRefresh,
                 onPressed: notifier.refresh,
               ),
             ],
@@ -100,7 +101,7 @@ class _TimelineSectionState extends ConsumerState<TimelineSection> {
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
-                hintText: 'Search title or notes…',
+                hintText: AppLocalizations.of(context).timelineSearchTitleOrNotes,
                 prefixIcon: const Icon(Icons.search, size: 20),
                 isDense: true,
                 contentPadding:
@@ -240,7 +241,7 @@ class _TimelineDays extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Text(
-              'Nothing logged.',
+              AppLocalizations.of(context).timelineNothingLogged,
               style: TextStyle(color: textSecondary, fontSize: 13),
             ),
           ),
@@ -263,7 +264,7 @@ class _TimelineDays extends StatelessWidget {
           child: TextButton.icon(
             onPressed: onLoadMore,
             icon: const Icon(Icons.history, size: 16),
-            label: const Text('Load earlier days'),
+            label: Text(AppLocalizations.of(context).timelineLoadEarlierDays),
             style: TextButton.styleFrom(foregroundColor: accent),
           ),
         ),
@@ -321,7 +322,7 @@ class _EmptyState extends StatelessWidget {
             Icon(Icons.book_outlined, size: 36, color: textSecondary),
             const SizedBox(height: 8),
             Text(
-              'Your day starts here',
+              AppLocalizations.of(context).timelineYourDayStartsHere,
               style: TextStyle(
                 color: textPrimary,
                 fontSize: 15,
@@ -330,7 +331,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Log your first workout, meal, or water in chat or with the + button — it lands here.',
+              AppLocalizations.of(context).timelineLogYourFirstWorkout,
               textAlign: TextAlign.center,
               style: TextStyle(color: textSecondary, fontSize: 13, height: 1.4),
             ),
@@ -388,11 +389,11 @@ class _ErrorBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Couldn\'t load Timeline.',
+              AppLocalizations.of(context).timelineCouldnTLoadTimeline,
               style: TextStyle(color: textSecondary, fontSize: 13),
             ),
           ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(onPressed: onRetry, child: Text(AppLocalizations.of(context).buttonRetry)),
         ],
       ),
     );

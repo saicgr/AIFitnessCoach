@@ -3,6 +3,7 @@ import 'sheet_theme_colors.dart';
 import 'selectable_chip.dart';
 import 'section_title.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Default list of focus area options.
 ///
 /// Focus Areas = body REGIONS / muscles. "Full Body", "Upper Body" and
@@ -92,7 +93,7 @@ class FocusAreasSelector extends StatelessWidget {
             children: [
               SectionTitle(
                 icon: Icons.track_changes,
-                title: 'Target Areas',
+                title: AppLocalizations.of(context).focusAreasSelectorTargetAreas,
                 iconColor: colors.purple,
               ),
               const Spacer(),
@@ -105,7 +106,7 @@ class FocusAreasSelector extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Which body regions to hit. Combine with a Training Style above.',
+            AppLocalizations.of(context).focusAreasSelectorWhichBodyRegionsTo,
             style: TextStyle(color: colors.textMuted, fontSize: 12),
           ),
           const SizedBox(height: 12),
@@ -139,7 +140,7 @@ class FocusAreasSelector extends StatelessWidget {
             TextField(
               controller: customInputController,
               decoration: InputDecoration(
-                hintText: 'Enter custom focus area (e.g., "Rotator cuff")',
+                hintText: AppLocalizations.of(context).focusAreasSelectorEnterCustomFocusArea,
                 hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: colors.glassSurface,

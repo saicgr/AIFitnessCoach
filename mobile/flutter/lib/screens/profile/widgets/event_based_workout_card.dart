@@ -6,6 +6,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'event_workout_coming_soon_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Profile card previewing the upcoming Event-Based Workout feature.
 /// Shows a hardcoded example event.
 class EventBasedWorkoutCard extends StatelessWidget {
@@ -87,7 +88,7 @@ class EventBasedWorkoutCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Event-Based Workout',
+                          AppLocalizations.of(context).eventBasedWorkoutEventBasedWorkout,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -95,7 +96,7 @@ class EventBasedWorkoutCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Train for your big day',
+                          AppLocalizations.of(context).eventBasedWorkoutTrainForYourBig,
                           style: TextStyle(fontSize: 12, color: textMuted),
                         ),
                       ],
@@ -127,7 +128,7 @@ class EventBasedWorkoutCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Wedding Prep',
+                            AppLocalizations.of(context).eventWorkoutComingWeddingPrep,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -136,7 +137,7 @@ class EventBasedWorkoutCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '183 days left',
+                            AppLocalizations.of(context).eventBasedWorkout183DaysLeft,
                             style: TextStyle(
                               fontSize: 12,
                               color: textSecondary,
@@ -154,7 +155,7 @@ class EventBasedWorkoutCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'High',
+                        AppLocalizations.of(context).scoreExplainHigh,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -186,7 +187,7 @@ class EventBasedWorkoutCard extends StatelessWidget {
               // Tap hint
               Center(
                 child: Text(
-                  'Tap to learn more',
+                  AppLocalizations.of(context).eventBasedWorkoutTapToLearnMore,
                   style: TextStyle(
                     fontSize: 11,
                     color: textMuted,

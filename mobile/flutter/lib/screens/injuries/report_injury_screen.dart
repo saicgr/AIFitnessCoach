@@ -11,6 +11,7 @@ import '../../data/services/api_client.dart';
 import 'injuries_list_screen.dart';
 import 'widgets/body_part_selector.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Screen for reporting a new injury
 class ReportInjuryScreen extends ConsumerStatefulWidget {
   const ReportInjuryScreen({super.key});
@@ -81,8 +82,8 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
   Future<void> _submitInjury() async {
     if (_selectedBodyPart == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a body part'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).reportInjuryPleaseSelectABody),
           backgroundColor: AppColors.error,
         ),
       );
@@ -128,8 +129,8 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Injury reported successfully'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).reportInjuryInjuryReportedSuccessfully),
             backgroundColor: AppColors.success,
           ),
         );
@@ -165,7 +166,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Report Injury'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).reportInjuryReportInjury),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -187,7 +188,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
               // Injury type dropdown
               Text(
-                'Injury Type (Optional)',
+                AppLocalizations.of(context).reportInjuryInjuryTypeOptional,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -205,7 +206,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedInjuryType,
-                    hint: Text('Select injury type', style: TextStyle(color: textMuted)),
+                    hint: Text(AppLocalizations.of(context).reportInjurySelectInjuryType, style: TextStyle(color: textMuted)),
                     isExpanded: true,
                     dropdownColor: elevated,
                     style: TextStyle(color: textPrimary, fontSize: 16),
@@ -213,7 +214,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
                     items: [
                       DropdownMenuItem<String>(
                         value: null,
-                        child: Text('Not sure', style: TextStyle(color: textMuted)),
+                        child: Text(AppLocalizations.of(context).reportInjuryNotSure, style: TextStyle(color: textMuted)),
                       ),
                       ..._injuryTypes.map((type) => DropdownMenuItem<String>(
                             value: type,
@@ -233,7 +234,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
               // Severity selector
               Text(
-                'Severity',
+                AppLocalizations.of(context).reportInjurySeverity,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -247,7 +248,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
               // Pain level slider
               Text(
-                'Current Pain Level',
+                AppLocalizations.of(context).reportInjuryCurrentPainLevel,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -261,7 +262,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
               // Date picker
               Text(
-                'When did it occur?',
+                AppLocalizations.of(context).reportInjuryWhenDidItOccur,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -297,7 +298,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
               // Notes field
               Text(
-                'Additional Notes (Optional)',
+                AppLocalizations.of(context).reportInjuryAdditionalNotesOptional,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -310,7 +311,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
                 maxLines: 4,
                 style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Describe how the injury occurred, symptoms, etc.',
+                  hintText: AppLocalizations.of(context).reportInjuryDescribeHowTheInjury,
                   hintStyle: TextStyle(color: textMuted),
                   filled: true,
                   fillColor: elevated,
@@ -345,7 +346,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'This is for tracking purposes only. Please consult a healthcare professional for proper diagnosis and treatment.',
+                        AppLocalizations.of(context).reportInjuryThisIsForTracking,
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -381,8 +382,8 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Report Injury',
+                      : Text(
+                          AppLocalizations.of(context).reportInjuryReportInjury,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -553,7 +554,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('No pain', style: TextStyle(fontSize: 12, color: textMuted)),
+                Text(AppLocalizations.of(context).reportInjuryNoPain, style: TextStyle(fontSize: 12, color: textMuted)),
                 Text('Worst pain', style: TextStyle(fontSize: 12, color: textMuted)),
               ],
             ),

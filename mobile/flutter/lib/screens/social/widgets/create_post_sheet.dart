@@ -16,6 +16,7 @@ import '../../../core/services/posthog_service.dart';
 import '../../../widgets/app_snackbar.dart';
 
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'create_post_sheet_part_post_visibility_option.dart';
 part 'create_post_sheet_part_stat_pill_data.dart';
 
@@ -433,7 +434,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        'Cancel',
+                        AppLocalizations.of(context).buttonCancel,
                         style: TextStyle(
                           color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                         ),
@@ -441,7 +442,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     ),
                     Text(
                       _isEditMode
-                          ? 'Edit Post'
+                          ? AppLocalizations.of(context).createPostEditPost
                           : _isWorkoutShare
                               ? 'Share Workout'
                               : 'Create Post',
@@ -466,7 +467,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(_isEditMode ? 'Save' : 'Post'),
+                          : Text(_isEditMode ? AppLocalizations.of(context).buttonSave : AppLocalizations.of(context).createPostPost),
                     ),
                   ],
                 ),
@@ -593,7 +594,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Workout Stats',
+          AppLocalizations.of(context).createPostWorkoutStats,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -636,7 +637,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _exercisesExpanded ? 'Hide exercises' : 'Show exercises',
+                  _exercisesExpanded ? AppLocalizations.of(context).createPostHideExercises : AppLocalizations.of(context).createPostShowExercises,
                   style: TextStyle(
                     fontSize: 12,
                     color: textMuted,
@@ -776,7 +777,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tags',
+          AppLocalizations.of(context).createPostTags,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -848,7 +849,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Who can see this?',
+          AppLocalizations.of(context).createPostWhoCanSeeThis,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,

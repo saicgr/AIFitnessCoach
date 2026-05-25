@@ -6,6 +6,7 @@ import '../../../data/models/fasting.dart';
 import '../../../data/services/haptic_service.dart';
 import 'fasting_plan_cards.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for starting a new fast
 class StartFastSheet extends StatefulWidget {
   final String userId;
@@ -117,7 +118,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Start a Fast',
+                        AppLocalizations.of(context).startFastStartAFast,
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -126,7 +127,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Choose protocol & start time',
+                        AppLocalizations.of(context).startFastChooseProtocolStartTime,
                         style: TextStyle(fontSize: 13, color: textMuted),
                       ),
                     ],
@@ -154,7 +155,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 0),
               child: FastingPlanCards(
-                title: 'Choose a Plan',
+                title: AppLocalizations.of(context).startFastChooseAPlan,
                 selectedProtocol: _selectedProtocol,
                 onSelect: (plan) {
                   _selectProtocol(plan.protocol);
@@ -168,7 +169,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
 
             // === PROTOCOL SELECTION ===
             Text(
-              'Or pick a protocol',
+              AppLocalizations.of(context).startFastOrPickAProtocol,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -212,7 +213,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Extended Fasts (24h+)',
+                      AppLocalizations.of(context).startFastExtendedFasts24h,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -227,7 +228,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'Advanced',
+                        AppLocalizations.of(context).workoutUiModeAdvanced,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -280,7 +281,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Duration', style: TextStyle(fontSize: 13, color: textPrimary)),
+                        Text(AppLocalizations.of(context).workoutSummaryGeneralDuration, style: TextStyle(fontSize: 13, color: textPrimary)),
                         Text(
                           '$_customHours hours',
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: accentColor),
@@ -308,7 +309,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('12h', style: TextStyle(color: textMuted, fontSize: 11)),
+                        Text(AppLocalizations.of(context).startFast12h, style: TextStyle(color: textMuted, fontSize: 11)),
                         Text('72h', style: TextStyle(color: textMuted, fontSize: 11)),
                       ],
                     ),
@@ -320,7 +321,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
 
             // === START TIME SELECTION ===
             Text(
-              'Start Time',
+              AppLocalizations.of(context).startFastStartTime,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -354,7 +355,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                           Icon(Icons.play_arrow, color: _startNow ? accentColor : textMuted, size: 24),
                           const SizedBox(height: 4),
                           Text(
-                            'Start Now',
+                            AppLocalizations.of(context).transitionCountdownOverlayStartNow,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: _startNow ? FontWeight.bold : FontWeight.w500,
@@ -460,7 +461,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
                           const Icon(Icons.play_arrow, size: 22),
                           const SizedBox(width: 8),
                           Text(
-                            _startNow ? 'Start Fast Now' : 'Start Fast at ${DateFormat('h:mm a').format(_customStartTime)}',
+                            _startNow ? AppLocalizations.of(context).startFastStartFastNow : 'Start Fast at ${DateFormat('h:mm a').format(_customStartTime)}',
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ],

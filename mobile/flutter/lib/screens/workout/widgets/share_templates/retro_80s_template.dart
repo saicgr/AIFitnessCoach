@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Retro 80s — synthwave aesthetic. Magenta/cyan chrome sun horizon
 /// with a receding grid floor. Hero stats in big retro-caps type.
 class Retro80sTemplate extends StatelessWidget {
@@ -72,7 +73,7 @@ class Retro80sTemplate extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _NeonBox(
-                      label: 'VOLUME',
+                      label: AppLocalizations.of(context).wrappedTemplateVolume,
                       value: totalVolumeKg == null
                           ? '—'
                           : formatShareWeightCompact(totalVolumeKg, useKg: useKg),
@@ -102,7 +103,7 @@ class Retro80sTemplate extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _NeonBox(
-                      label: 'CALORIES',
+                      label: AppLocalizations.of(context).retro80sTemplateCalories,
                       value: calories == null ? '—' : '$calories',
                       color: const Color(0xFFFF71CE),
                     ),

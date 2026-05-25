@@ -12,6 +12,7 @@ import '../../../core/constants/app_colors.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Warmup phase screen displayed before the main workout
 class WarmupPhaseScreen extends StatefulWidget {
   /// Total workout time in seconds (continues counting during warmup)
@@ -334,8 +335,8 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             }
             widget.onSkipWarmup();
           },
-          child: const Text(
-            'Skip Warmup',
+          child: Text(
+            AppLocalizations.of(context).warmupPhaseSkipWarmup,
             style: TextStyle(
               color: AppColors.orange,
               fontWeight: FontWeight.w600,
@@ -368,8 +369,8 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'WARM UP',
+            Text(
+              AppLocalizations.of(context).workoutDetailWarmUp,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -506,7 +507,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           if (_speedController.text.isNotEmpty || widget.exercises[_currentExerciseIndex].speedMph != null)
             Expanded(
               child: _buildCardioInput(
-                label: 'Speed',
+                label: AppLocalizations.of(context).warmupPhaseSpeed,
                 suffix: 'mph',
                 controller: _speedController,
                 textPrimary: textPrimary,
@@ -519,7 +520,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           if (_inclineController.text.isNotEmpty || widget.exercises[_currentExerciseIndex].inclinePercent != null)
             Expanded(
               child: _buildCardioInput(
-                label: 'Incline',
+                label: AppLocalizations.of(context).warmupPhaseIncline,
                 suffix: '',
                 controller: _inclineController,
                 textPrimary: textPrimary,
@@ -569,7 +570,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           Row(
             children: [
               Text(
-                'INTERVALS',
+                AppLocalizations.of(context).warmupPhaseIntervals,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -685,7 +686,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'UP NEXT',
+          AppLocalizations.of(context).warmupPhaseUpNext,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,
@@ -779,7 +780,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             ),
             label: Text(
               isTimerRunning
-                  ? 'Pause'
+                  ? AppLocalizations.of(context).warmupPhasePause
                   : (hasTimeRemaining ? 'Resume' : 'Start Timer'),
               style: const TextStyle(
                 fontSize: 16,
@@ -805,7 +806,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             ),
             icon: Icon(isLastExercise ? Icons.check : Icons.skip_next),
             label: Text(
-              isLastExercise ? 'Start Workout' : 'Next',
+              isLastExercise ? AppLocalizations.of(context).warmupPhaseStartWorkout : AppLocalizations.of(context).commonNext,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

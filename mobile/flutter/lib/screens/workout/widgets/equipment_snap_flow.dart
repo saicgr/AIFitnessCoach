@@ -29,6 +29,7 @@ import '../../exercises/import_exercise_screen.dart';
 import 'snapped_equipment_section.dart' show invalidateSnappedEquipmentCache;
 import '../../../services/equipment_snap_offline_queue.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Mode the snap flow is invoked in. Drives copy + post-confirm action.
 enum SnapMode { swap, add, identify }
 
@@ -373,8 +374,8 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
         .contains(canonical);
     if (isCardio && widget.mode == SnapMode.swap) {
       final ok = await _confirmDialog(
-        title: 'Replace with cardio?',
-        body: 'This will swap sets/reps for a duration target. Continue?',
+        title: AppLocalizations.of(context).equipmentSnapFlowReplaceWithCardio,
+        body: AppLocalizations.of(context).equipmentSnapFlowThisWillSwapSets,
       );
       if (ok != true) return;
     }
@@ -429,11 +430,11 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Continue'),
+            child: Text(AppLocalizations.of(context).onboardingContinueButton),
           ),
         ],
       ),
@@ -544,8 +545,8 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
           const SizedBox(height: 18),
           const Icon(Icons.blur_on, size: 40),
           const SizedBox(height: 12),
-          const Text(
-            'Looks a bit blurry',
+          Text(
+            AppLocalizations.of(context).equipmentSnapFlowLooksABitBlurry,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
@@ -569,7 +570,7 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
               OutlinedButton.icon(
                 icon: const Icon(Icons.camera_alt),
                 onPressed: _pickFromCamera,
-                label: const Text('Retake'),
+                label: Text(AppLocalizations.of(context).equipmentSnapFlowRetake),
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.cloud_upload),
@@ -578,7 +579,7 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
                     _uploadAndClassify(_capturedBytes!);
                   }
                 },
-                label: const Text('Use anyway'),
+                label: Text(AppLocalizations.of(context).equipmentSnapFlowUseAnyway),
               ),
             ],
           ),
@@ -596,7 +597,7 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
           const Icon(Icons.error_outline, size: 56),
           const SizedBox(height: 16),
           Text(
-            _errorMessage ?? 'Something went wrong.',
+            _errorMessage ?? AppLocalizations.of(context).equipmentSnapFlowSomethingWentWrong,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -605,12 +606,12 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
             children: [
               OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context).buttonCancel),
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.camera_alt),
                 onPressed: _pickFromCamera,
-                label: const Text('Try again'),
+                label: Text(AppLocalizations.of(context).workoutReviewTryAgain),
               ),
             ],
           ),
@@ -648,14 +649,14 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
       children: [
         Text(
           disambiguate
-              ? 'Which one is it?'
+              ? AppLocalizations.of(context).equipmentSnapFlowWhichOneIsIt
               : 'Found ${_humanCanonical(canonical)}',
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
           disambiguate
-              ? "We're not 100% sure — pick the closest match."
+              ? AppLocalizations.of(context).equipmentSnapFlowWeReNot100
               : 'Tap an exercise to ${_actionVerb()}.',
           style: const TextStyle(fontSize: 14, color: Colors.grey),
         ),
@@ -670,7 +671,7 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
         TextButton.icon(
           onPressed: _fallbackToImport,
           icon: const Icon(Icons.edit),
-          label: const Text("Not these — describe instead"),
+          label: Text(AppLocalizations.of(context).equipmentSnapFlowNotTheseDescribeInstead),
         ),
       ],
     );
@@ -701,12 +702,12 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
               OutlinedButton.icon(
                 icon: const Icon(Icons.camera_alt),
                 onPressed: _pickFromCamera,
-                label: const Text('Retake'),
+                label: Text(AppLocalizations.of(context).equipmentSnapFlowRetake),
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.edit),
                 onPressed: _fallbackToImport,
-                label: const Text('Describe instead'),
+                label: Text(AppLocalizations.of(context).equipmentSnapFlowDescribeInstead),
               ),
             ],
           ),

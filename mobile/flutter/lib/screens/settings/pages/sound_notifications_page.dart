@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Sub-page for Sound & Notifications: audio + notifications.
 class SoundNotificationsPage extends ConsumerWidget {
   const SoundNotificationsPage({super.key});
@@ -16,7 +17,7 @@ class SoundNotificationsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Sound & Notifications'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).soundNotificationsSoundNotifications),
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(

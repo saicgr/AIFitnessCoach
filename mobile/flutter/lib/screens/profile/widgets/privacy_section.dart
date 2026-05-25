@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact Profile-screen entry point for privacy settings.
 ///
 /// Renders as a single row matching the sibling "Reports & Insights" / "View
@@ -45,7 +46,7 @@ class PrivacySection extends ConsumerWidget {
             Icon(Icons.lock_outline, color: accent, size: 20),
             const SizedBox(width: 10),
             Text(
-              'Privacy',
+              AppLocalizations.of(context).settingsPrivacySection,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

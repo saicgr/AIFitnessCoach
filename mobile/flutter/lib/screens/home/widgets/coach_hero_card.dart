@@ -22,6 +22,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
 import 'home/unified_home_widgets.dart' show kHomeHPad;
 
+import '../../../l10n/generated/app_localizations.dart';
 class CoachHeroCard extends ConsumerStatefulWidget {
   const CoachHeroCard({super.key});
 
@@ -167,7 +168,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         const SizedBox(height: 6),
         Text(
           insight.headline.isEmpty
-              ? 'Your coach is here.'
+              ? AppLocalizations.of(context).coachHeroCardYourCoachIsHere
               : insight.headline,
           style: TextStyle(
             fontSize: 18,
@@ -229,7 +230,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Rethinking…',
+                  AppLocalizations.of(context).coachHeroCardRethinking,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -268,7 +269,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         ),
         const SizedBox(width: 8),
         Text(
-          'YOUR COACH',
+          AppLocalizations.of(context).coachHeroCardYourCoach,
           style: TextStyle(
             fontSize: 9,
             fontWeight: FontWeight.w800,
@@ -413,7 +414,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         _eyebrow(c, true),
         const SizedBox(height: 6),
         Text(
-          'Your coach is gathering thoughts.',
+          AppLocalizations.of(context).coachHeroCardYourCoachIsGathering,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -422,7 +423,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Tap to open chat.',
+          AppLocalizations.of(context).coachHeroCardTapToOpenChat,
           style: TextStyle(fontSize: 12, color: c.textSecondary),
         ),
       ],
@@ -464,9 +465,9 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     if (_lastRegenAt != null &&
         now.difference(_lastRegenAt!) < const Duration(minutes: 30)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           duration: Duration(seconds: 2),
-          content: Text('Already refreshed in the last 30 minutes.'),
+          content: Text(AppLocalizations.of(context).coachHeroCardAlreadyRefreshedInThe),
         ),
       );
       return;

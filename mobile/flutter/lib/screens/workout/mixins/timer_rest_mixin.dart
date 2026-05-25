@@ -23,6 +23,7 @@ import '../../ai_settings/ai_settings_screen.dart';
 import '../../../services/intra_workout_autoregulator.dart';
 import 'package:dio/dio.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Mixin providing timer/rest functionality for the active workout screen.
 mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
   // ── State access (implemented by main class) ──
@@ -396,7 +397,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: suggestion.action != AutoregAction.swapExercise
             ? SnackBarAction(
-                label: 'Accept',
+                label: AppLocalizations.of(context).timerRestMixinAccept,
                 textColor: Colors.white,
                 onPressed: () => acceptAutoregSuggestion(suggestion),
               )
@@ -510,7 +511,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
             Text(
-              'What is RPE?',
+              AppLocalizations.of(context).timerRestMixinWhatIsRpe,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -520,7 +521,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
             const SizedBox(height: 16),
 
             Text(
-              'Rate of Perceived Exertion measures how hard a set felt:',
+              AppLocalizations.of(context).timerRestMixinRateOfPerceivedExertion,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -548,8 +549,8 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Got it',
+                child: Text(
+                  AppLocalizations.of(context).weightIncrementsGotIt,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),

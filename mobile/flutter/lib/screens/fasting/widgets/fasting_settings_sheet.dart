@@ -10,6 +10,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import 'fasting_schedule_editor_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for editing fasting settings/preferences
 class FastingSettingsSheet extends ConsumerStatefulWidget {
   final FastingPreferences preferences;
@@ -77,8 +78,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Fasting settings saved'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).fastingSettingsFastingSettingsSaved),
             duration: Duration(seconds: 2),
           ),
         );
@@ -194,7 +195,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                     Icon(Icons.settings, color: accentColor, size: 24),
                     const SizedBox(width: 12),
                     Text(
-                      'Fasting Settings',
+                      AppLocalizations.of(context).fastingSettingsFastingSettings,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -291,8 +292,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              'Save Settings',
+                          : Text(
+                              AppLocalizations.of(context).seniorFitnessSaveSettings,
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
@@ -417,7 +418,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Custom',
+                      AppLocalizations.of(context).workoutsCustom,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -446,7 +447,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
             Row(
               children: [
                 Text(
-                  'Fasting hours:',
+                  AppLocalizations.of(context).fastingSettingsFastingHours,
                   style: TextStyle(fontSize: 14, color: textSecondary),
                 ),
                 Expanded(
@@ -500,7 +501,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
           // Fast Start Time
           _buildTimeRow(
             icon: Icons.nights_stay,
-            label: 'Start fasting at',
+            label: AppLocalizations.of(context).fastingSettingsStartFastingAt,
             time: _formatHour(_fastStartHour),
             onTap: () => _selectTime(true),
             accentColor: accentColor,
@@ -516,7 +517,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
           // Eating Start Time
           _buildTimeRow(
             icon: Icons.restaurant,
-            label: 'Start eating at',
+            label: AppLocalizations.of(context).fastingSettingsStartEatingAt,
             time: _formatHour(_eatingStartHour),
             onTap: () => _selectTime(false),
             accentColor: accentColor,
@@ -620,7 +621,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Custom weekly schedule',
+                    AppLocalizations.of(context).fastingSettingsCustomWeeklySchedule,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -659,8 +660,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
         children: [
           _buildNotificationToggle(
             icon: Icons.swap_horiz,
-            label: 'Zone transitions',
-            subtitle: 'Notify when entering new fasting zones',
+            label: AppLocalizations.of(context).fastingSettingsZoneTransitions,
+            subtitle: AppLocalizations.of(context).fastingSettingsNotifyWhenEnteringNew,
             value: _notifyZoneTransitions,
             onChanged: (v) => setState(() => _notifyZoneTransitions = v),
             accentColor: accentColor,
@@ -669,8 +670,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
           ),
           _buildNotificationToggle(
             icon: Icons.flag,
-            label: 'Goal reached',
-            subtitle: 'Notify when you reach your fasting goal',
+            label: AppLocalizations.of(context).stepGoalCardGoalReached,
+            subtitle: AppLocalizations.of(context).fastingSettingsNotifyWhenYouReach,
             value: _notifyGoalReached,
             onChanged: (v) => setState(() => _notifyGoalReached = v),
             accentColor: accentColor,
@@ -679,8 +680,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
           ),
           _buildNotificationToggle(
             icon: Icons.restaurant_menu,
-            label: 'Eating window end',
-            subtitle: 'Remind before eating window closes',
+            label: AppLocalizations.of(context).fastingSettingsEatingWindowEnd,
+            subtitle: AppLocalizations.of(context).fastingSettingsRemindBeforeEatingWindow,
             value: _notifyEatingWindowEnd,
             onChanged: (v) => setState(() => _notifyEatingWindowEnd = v),
             accentColor: accentColor,
@@ -689,8 +690,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
           ),
           _buildNotificationToggle(
             icon: Icons.alarm,
-            label: 'Fast start reminder',
-            subtitle: 'Remind when it\'s time to start fasting',
+            label: AppLocalizations.of(context).fastingSettingsFastStartReminder,
+            subtitle: AppLocalizations.of(context).fastingSettingsRemindWhenItS,
             value: _notifyFastStartReminder,
             onChanged: (v) => setState(() => _notifyFastStartReminder = v),
             accentColor: accentColor,

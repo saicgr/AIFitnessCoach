@@ -23,6 +23,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Rich detail view for a Health Connect / Apple Health synced workout.
 ///
 /// Reads exhaustive metadata persisted by `PendingWorkoutImport.toMetadata`
@@ -717,7 +718,7 @@ class _EnrichingBanner extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            'Pulling richer data from Health Connect…',
+            AppLocalizations.of(context).syncedWorkoutDetailPullingRicherDataFrom,
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
         ],
@@ -751,17 +752,17 @@ class _HeartRateSection extends StatelessWidget {
         return const SizedBox.shrink();
       }
       return _SectionCard(
-        title: 'Heart Rate',
+        title: AppLocalizations.of(context).workoutSummaryGeneralHeartRate,
         child: Wrap(
           spacing: 16,
           runSpacing: 8,
           children: [
             if (avg != null)
-              _HrStatTile(label: 'Avg', value: avg, color: const Color(0xFFEF4444)),
+              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailAvg, value: avg, color: const Color(0xFFEF4444)),
             if (max != null)
-              _HrStatTile(label: 'Peak', value: max, color: const Color(0xFFDC2626)),
+              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailPeak, value: max, color: const Color(0xFFDC2626)),
             if (min != null)
-              _HrStatTile(label: 'Min', value: min, color: const Color(0xFF22C55E)),
+              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailMin, value: min, color: const Color(0xFF22C55E)),
           ],
         ),
       );
@@ -782,7 +783,7 @@ class _HeartRateSection extends StatelessWidget {
     ];
 
     return _SectionCard(
-      title: 'Heart Rate',
+      title: AppLocalizations.of(context).workoutSummaryGeneralHeartRate,
       child: WorkoutMetricChart(
         samples: samples,
         label: 'bpm',
@@ -866,7 +867,7 @@ class _HeartRateZonesStrip extends StatelessWidget {
     final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
 
     return _SectionCard(
-      title: 'Zones',
+      title: AppLocalizations.of(context).syncedWorkoutDetailZones,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -961,7 +962,7 @@ class _PaceSpeedSection extends StatelessWidget {
     ];
 
     return _SectionCard(
-      title: 'Speed',
+      title: AppLocalizations.of(context).warmupPhaseSpeed,
       child: WorkoutMetricChart(
         samples: samples,
         label: 'mph',
@@ -1002,7 +1003,7 @@ class _CadenceSection extends StatelessWidget {
     ];
 
     return _SectionCard(
-      title: 'Cadence',
+      title: AppLocalizations.of(context).syncedWorkoutDetailCadence,
       child: WorkoutMetricChart(
         samples: samples,
         label: 'spm',
@@ -1041,7 +1042,7 @@ class _SplitsSection extends StatelessWidget {
     }
 
     return _SectionCard(
-      title: 'Splits',
+      title: AppLocalizations.of(context).syncedWorkoutDetailSplits,
       child: Column(
         children: [
           Row(
@@ -1183,7 +1184,7 @@ class _MetricsGrid extends StatelessWidget {
     if (workout.durationMinutes != null) {
       tiles.add(_MetricTileData(
         icon: Icons.timer_outlined,
-        label: 'Duration',
+        label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
         value: _formatDuration(workout.durationMinutes!),
         color: MetricColors.duration,
       ));
@@ -1192,7 +1193,7 @@ class _MetricsGrid extends StatelessWidget {
     if (dist != null && dist > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.straighten_outlined,
-        label: 'Distance',
+        label: AppLocalizations.of(context).workoutImportDistance,
         value: _formatDistance(dist.toDouble()),
         color: MetricColors.distance,
       ));
@@ -1201,7 +1202,7 @@ class _MetricsGrid extends StatelessWidget {
     if (paceSecPerKm != null && paceSecPerKm > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.speed_rounded,
-        label: 'Pace',
+        label: AppLocalizations.of(context).syncedWorkoutDetailPace,
         value: '${_formatPacePerMile(paceSecPerKm.toDouble())} /mi',
         color: MetricColors.pace,
       ));
@@ -1210,7 +1211,7 @@ class _MetricsGrid extends StatelessWidget {
     if (steps != null && steps > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.directions_walk_rounded,
-        label: 'Steps',
+        label: AppLocalizations.of(context).syncedWorkoutDetailSteps,
         value: _formatInt(steps),
         color: MetricColors.steps,
       ));
@@ -1219,7 +1220,7 @@ class _MetricsGrid extends StatelessWidget {
     if (cadence != null && cadence > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.graphic_eq_rounded,
-        label: 'Cadence',
+        label: AppLocalizations.of(context).syncedWorkoutDetailCadence,
         value: '${cadence.round()} spm',
         color: MetricColors.cadence,
       ));
@@ -1228,7 +1229,7 @@ class _MetricsGrid extends StatelessWidget {
     if (stride != null && stride > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.swap_horiz_rounded,
-        label: 'Stride',
+        label: AppLocalizations.of(context).syncedWorkoutDetailStride,
         value: '${stride.round()} in',
         color: MetricColors.cadence,
       ));
@@ -1237,7 +1238,7 @@ class _MetricsGrid extends StatelessWidget {
     if (active != null && active > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.local_fire_department_outlined,
-        label: 'Active cal',
+        label: AppLocalizations.of(context).syncedWorkoutDetailActiveCal,
         value: '${_formatInt(active)} kcal',
         color: MetricColors.calories,
       ));
@@ -1246,7 +1247,7 @@ class _MetricsGrid extends StatelessWidget {
     if (totalKcal != null && totalKcal > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.whatshot_outlined,
-        label: 'Total cal',
+        label: AppLocalizations.of(context).syncedWorkoutDetailTotalCal,
         value: '${_formatInt(totalKcal)} kcal',
         color: MetricColors.calories,
       ));
@@ -1255,7 +1256,7 @@ class _MetricsGrid extends StatelessWidget {
     if (elev != null && elev > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.terrain_rounded,
-        label: 'Elev. gain',
+        label: AppLocalizations.of(context).syncedWorkoutDetailElevGain,
         value: '${elev.round()} m',
         color: MetricColors.elevation,
       ));
@@ -1264,7 +1265,7 @@ class _MetricsGrid extends StatelessWidget {
     if (flights != null && flights > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.stairs_rounded,
-        label: 'Flights',
+        label: AppLocalizations.of(context).syncedWorkoutDetailFlights,
         value: '${flights.round()}',
         color: MetricColors.elevation,
       ));
@@ -1273,7 +1274,7 @@ class _MetricsGrid extends StatelessWidget {
     if (tiles.isEmpty) return const SizedBox.shrink();
 
     return _SectionCard(
-      title: 'Metrics',
+      title: AppLocalizations.of(context).syncedWorkoutDetailMetrics,
       child: Wrap(
         spacing: 12,
         runSpacing: 12,
@@ -1391,7 +1392,7 @@ class _VitalsGrid extends StatelessWidget {
     if (spo2 != null && spo2 > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.bloodtype_outlined,
-        label: 'SpO₂ avg',
+        label: AppLocalizations.of(context).syncedWorkoutDetailSpoAvg,
         value: '${spo2.toStringAsFixed(1)}%',
         color: MetricColors.spo2,
       ));
@@ -1400,7 +1401,7 @@ class _VitalsGrid extends StatelessWidget {
     if (resp != null && resp > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.air_rounded,
-        label: 'Breathing',
+        label: AppLocalizations.of(context).workoutUiBuildersBreathing,
         value: '${resp.round()} br/min',
         color: MetricColors.respRate,
       ));
@@ -1409,7 +1410,7 @@ class _VitalsGrid extends StatelessWidget {
     if (temp != null && temp > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.device_thermostat_rounded,
-        label: 'Body temp',
+        label: AppLocalizations.of(context).syncedWorkoutDetailBodyTemp,
         value: '${temp.toStringAsFixed(1)}°C',
         color: MetricColors.temperature,
       ));
@@ -1418,7 +1419,7 @@ class _VitalsGrid extends StatelessWidget {
     if (hrvPre != null && hrvPre > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.monitor_heart_outlined,
-        label: 'HRV (pre)',
+        label: AppLocalizations.of(context).syncedWorkoutDetailHrvPre,
         value: '${hrvPre.round()} ms',
         color: MetricColors.hrv,
       ));
@@ -1427,7 +1428,7 @@ class _VitalsGrid extends StatelessWidget {
     if (hrvPost != null && hrvPost > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.monitor_heart_rounded,
-        label: 'HRV (post)',
+        label: AppLocalizations.of(context).syncedWorkoutDetailHrvPost,
         value: '${hrvPost.round()} ms',
         color: MetricColors.hrv,
       ));
@@ -1436,7 +1437,7 @@ class _VitalsGrid extends StatelessWidget {
     if (rhr != null && rhr > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.favorite_border_rounded,
-        label: 'Resting HR',
+        label: AppLocalizations.of(context).todaysHealthCardRestingHr,
         value: '${rhr.round()} bpm',
         color: MetricColors.heartRate,
       ));
@@ -1445,7 +1446,7 @@ class _VitalsGrid extends StatelessWidget {
     if (bodyKg != null && bodyKg > 0) {
       tiles.add(_MetricTileData(
         icon: Icons.monitor_weight_outlined,
-        label: 'Body wt',
+        label: AppLocalizations.of(context).syncedWorkoutDetailBodyWt,
         value: '${bodyKg.toStringAsFixed(1)} kg',
         color: MetricColors.hrv,
       ));
@@ -1454,8 +1455,8 @@ class _VitalsGrid extends StatelessWidget {
     if (tiles.isEmpty) return const SizedBox.shrink();
 
     return _SectionCard(
-      title: 'Body Signals',
-      subtitle: 'Captured around your session',
+      title: AppLocalizations.of(context).syncedWorkoutDetailBodySignals,
+      subtitle: AppLocalizations.of(context).syncedWorkoutDetailCapturedAroundYourSession,
       child: Wrap(
         spacing: 12,
         runSpacing: 12,
@@ -1493,7 +1494,7 @@ class _TrainingLoadCard extends StatelessWidget {
     final band = _band(effort.toDouble());
 
     return _SectionCard(
-      title: 'Training Effect',
+      title: AppLocalizations.of(context).syncedWorkoutDetailTrainingEffect,
       child: Row(
         children: [
           SizedBox(
@@ -1615,12 +1616,12 @@ class _RpeNotesCardState extends State<_RpeNotesCard> {
     final notes = widget.metadata['user_notes'] as String? ?? '';
 
     return _SectionCard(
-      title: 'How did it feel?',
+      title: AppLocalizations.of(context).syncedWorkoutDetailHowDidItFeel,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'RPE · Rate of Perceived Exertion',
+            AppLocalizations.of(context).syncedWorkoutDetailRpeRateOfPerceived,
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
           const SizedBox(height: 8),
@@ -1642,7 +1643,7 @@ class _RpeNotesCardState extends State<_RpeNotesCard> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Notes',
+            AppLocalizations.of(context).syncedWorkoutDetailNotes,
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
           const SizedBox(height: 6),
@@ -1659,7 +1660,7 @@ class _RpeNotesCardState extends State<_RpeNotesCard> {
                   border: Border.all(color: cardBorder),
                 ),
                 child: Text(
-                  notes.isEmpty ? 'Tap to add notes' : notes,
+                  notes.isEmpty ? AppLocalizations.of(context).syncedWorkoutDetailTapToAddNotes : notes,
                   style: TextStyle(
                     fontSize: 13,
                     color: notes.isEmpty ? textMuted : textPrimary,
@@ -1675,7 +1676,7 @@ class _RpeNotesCardState extends State<_RpeNotesCard> {
                   maxLines: 4,
                   autofocus: true,
                   decoration: InputDecoration(
-                    hintText: 'How did this session go?',
+                    hintText: AppLocalizations.of(context).syncedWorkoutDetailHowDidThisSession,
                     hintStyle: TextStyle(color: textMuted, fontSize: 13),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -1701,7 +1702,7 @@ class _RpeNotesCardState extends State<_RpeNotesCard> {
                           _editingNotes = false;
                         });
                       },
-                      child: Text('Cancel', style: TextStyle(color: textMuted)),
+                      child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted)),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
@@ -1714,7 +1715,7 @@ class _RpeNotesCardState extends State<_RpeNotesCard> {
                         if (!mounted) return;
                         setState(() => _editingNotes = false);
                       },
-                      child: const Text('Save'),
+                      child: Text(AppLocalizations.of(context).buttonSave),
                     ),
                   ],
                 ),
@@ -1794,10 +1795,10 @@ class _ActivityInfoCard extends StatelessWidget {
     final endStr = end != null ? _formatClock(end) : '—';
 
     return _SectionCard(
-      title: 'Session info',
+      title: AppLocalizations.of(context).syncedWorkoutDetailSessionInfo,
       child: Column(
         children: [
-          _row('Date', dateStr, textPrimary, textMuted),
+          _row(AppLocalizations.of(context).syncedWorkoutDetailDate, dateStr, textPrimary, textMuted),
           Divider(height: 18, color: border),
           _row('Start', startStr, textPrimary, textMuted),
           Divider(height: 18, color: border),
@@ -1938,7 +1939,7 @@ class _DeleteSheet extends StatelessWidget {
               color: const Color(0xFFEF4444)),
           const SizedBox(height: 12),
           Text(
-            'Delete this synced workout?',
+            AppLocalizations.of(context).syncedWorkoutDetailDeleteThisSyncedWorkout,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
@@ -1947,7 +1948,7 @@ class _DeleteSheet extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'It will re-appear the next time you sync with Health Connect.',
+            AppLocalizations.of(context).syncedWorkoutDetailItWillReAppear,
             style: TextStyle(fontSize: 12, color: textMuted),
             textAlign: TextAlign.center,
           ),
@@ -1960,7 +1961,7 @@ class _DeleteSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
+              child: Text(AppLocalizations.of(context).buttonDelete),
             ),
           ),
           const SizedBox(height: 8),
@@ -1968,7 +1969,7 @@ class _DeleteSheet extends StatelessWidget {
             width: double.infinity,
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel', style: TextStyle(color: textMuted)),
+              child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted)),
             ),
           ),
         ],
@@ -2097,16 +2098,16 @@ class _DedupHiddenBanner extends StatelessWidget {
                 .withValues(alpha: 0.7),
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Duplicate of another import — primary source preferred.',
+              AppLocalizations.of(context).syncedWorkoutDetailDuplicateOfAnotherImport,
               style: TextStyle(fontSize: 13, height: 1.3),
             ),
           ),
           TextButton(
             onPressed: () => GoRouter.of(context)
                 .push('/settings/manage-duplicate-imports'),
-            child: const Text('Manage'),
+            child: Text(AppLocalizations.of(context).syncedWorkoutDetailManage),
           ),
         ],
       ),

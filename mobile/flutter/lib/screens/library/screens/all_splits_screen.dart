@@ -10,6 +10,7 @@ import '../../../widgets/pill_app_bar.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
 import '../widgets/compact_split_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Full-screen route showing all training split presets in a 2-column grid
 /// with category filter chips.
 class AllSplitsScreen extends ConsumerStatefulWidget {
@@ -74,7 +75,7 @@ class _AllSplitsScreenState extends ConsumerState<AllSplitsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(title: 'Training Splits'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).netflixExercisesTabTrainingSplits),
       body: Column(
         children: [
           // Filter chips

@@ -226,8 +226,8 @@ extension __ChatScreenStateExt on _ChatScreenState {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to log food items'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).chatScreenExtFailedToLogFood),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -343,7 +343,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Today's Usage",
+                    AppLocalizations.of(context).chatScreenExtTodaySUsage,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -360,7 +360,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Text(
-                        'Unlimited access with Premium',
+                        AppLocalizations.of(context).chatScreenExtUnlimitedAccessWithPremium,
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.success,
@@ -437,7 +437,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                     }),
                     const SizedBox(height: 8),
                     Text(
-                      'Resets at midnight',
+                      AppLocalizations.of(context).chatScreenExtResetsAtMidnight,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.white38 : Colors.grey.shade500,
@@ -457,8 +457,8 @@ extension __ChatScreenStateExt on _ChatScreenState {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                        child: const Text(
-                          'Upgrade for Unlimited',
+                        child: Text(
+                          AppLocalizations.of(context).chatScreenExtUpgradeForUnlimited,
                           style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -494,9 +494,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
             children: [
               ListTile(
                 leading: const Icon(Icons.headset_mic, color: AppColors.cyan),
-                title: const Text('Talk to Human'),
+                title: Text(AppLocalizations.of(context).chatScreenExtTalkToHuman),
                 subtitle: Text(
-                  'Connect with a real support agent',
+                  AppLocalizations.of(context).chatScreenExtConnectWithAReal,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
                 onTap: () {
@@ -507,9 +507,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
               ),
               ListTile(
                 leading: const Icon(Icons.bug_report, color: AppColors.orange),
-                title: const Text('Report a Problem'),
+                title: Text(AppLocalizations.of(context).chatScreenExtReportAProblem),
                 subtitle: Text(
-                  'Email our support team',
+                  AppLocalizations.of(context).chatScreenExtEmailOurSupportTeam,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
                 onTap: () {
@@ -520,9 +520,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
               ),
               ListTile(
                 leading: const Icon(Icons.lightbulb_outline, color: AppColors.purple),
-                title: const Text('Chat Tips'),
+                title: Text(AppLocalizations.of(context).chatScreenExtChatTips),
                 subtitle: Text(
-                  'See what your AI coach can do',
+                  AppLocalizations.of(context).chatScreenExtSeeWhatYourAi,
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
                 onTap: () {
@@ -583,7 +583,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                 _buildMiniPickerOption(
                   ctx: ctx,
                   icon: isVideo ? Icons.videocam_outlined : Icons.camera_alt_outlined,
-                  label: isVideo ? 'Record Video' : 'Take Photo',
+                  label: isVideo ? AppLocalizations.of(context).mediaPickerHelperRecordVideo : AppLocalizations.of(context).progressTakePhoto,
                   color: action.color,
                   onTap: () {
                     Navigator.pop(ctx);
@@ -598,7 +598,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                 _buildMiniPickerOption(
                   ctx: ctx,
                   icon: isVideo ? Icons.video_library_outlined : Icons.photo_library_outlined,
-                  label: isVideo ? 'Choose Video' : 'Choose Photo',
+                  label: isVideo ? AppLocalizations.of(context).mediaPickerHelperChooseVideo : AppLocalizations.of(context).mediaPickerHelperChoosePhoto,
                   color: action.color,
                   onTap: () {
                     Navigator.pop(ctx);
@@ -614,7 +614,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                   _buildMiniPickerOption(
                     ctx: ctx,
                     icon: Icons.collections_outlined,
-                    label: 'Choose Multiple Photos',
+                    label: AppLocalizations.of(context).mediaPickerHelperChooseMultiplePhotos,
                     color: action.color,
                     onTap: () {
                       Navigator.pop(ctx);
@@ -709,9 +709,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
             children: [
             ListTile(
               leading: const Icon(Icons.bug_report_outlined, color: AppColors.orange),
-              title: const Text('Report a Problem'),
-              subtitle: const Text(
-                'Email our support team',
+              title: Text(AppLocalizations.of(context).chatScreenExtReportAProblem),
+              subtitle: Text(
+                AppLocalizations.of(context).chatScreenExtEmailOurSupportTeam,
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
               onTap: () {
@@ -723,9 +723,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
             const Divider(height: 1, indent: 16, endIndent: 16),
             ListTile(
               leading: const Icon(Icons.swap_horiz, color: AppColors.purple),
-              title: const Text('Change Coach'),
-              subtitle: const Text(
-                'Switch to a different AI coach',
+              title: Text(AppLocalizations.of(context).coachSelectionScreenChangeCoach),
+              subtitle: Text(
+                AppLocalizations.of(context).chatScreenExtSwitchToADifferent,
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
               onTap: () {
@@ -737,7 +737,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
             const Divider(height: 1, indent: 16, endIndent: 16),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: AppColors.error),
-              title: const Text('Clear Chat History'),
+              title: Text(AppLocalizations.of(context).chatScreenExtClearChatHistory),
               onTap: () {
                 Navigator.pop(context);
                 _showClearConfirmation();
@@ -745,7 +745,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
             ),
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: const Text('About AI Coach'),
+              title: Text(AppLocalizations.of(context).chatScreenExtAboutAiCoach),
               onTap: () {
                 Navigator.pop(context);
                 _showAboutDialog();

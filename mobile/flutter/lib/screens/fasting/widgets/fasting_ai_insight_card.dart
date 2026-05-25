@@ -5,6 +5,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// AI-generated fasting insight card (Section D).
 ///
 /// Watches [fastingInsightProvider] — a Gemini-backed, server-cached analysis
@@ -98,7 +99,7 @@ class _InsightShell extends StatelessWidget {
               Icon(Icons.auto_awesome_rounded, size: 18, color: accent),
               const SizedBox(width: 8),
               Text(
-                'AI Insight',
+                AppLocalizations.of(context).trendAiInsightAiInsight,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
@@ -177,7 +178,7 @@ class _ErrorState extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            "Couldn't load your insight. Check your connection.",
+            AppLocalizations.of(context).fastingAiInsightCouldnTLoadYour,
             style: TextStyle(
               fontSize: 13,
               height: 1.4,
@@ -194,7 +195,7 @@ class _ErrorState extends StatelessWidget {
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: Text(
-            'Retry',
+            AppLocalizations.of(context).buttonRetry,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,

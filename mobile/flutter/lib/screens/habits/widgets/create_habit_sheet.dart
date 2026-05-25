@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/habit.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for creating or editing a habit
 class CreateHabitSheet extends StatefulWidget {
   final HabitWithStatus? existingHabit;
@@ -135,7 +136,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             ),
           ),
           Text(
-            isEditing ? 'Edit Habit' : 'Create Habit',
+            isEditing ? AppLocalizations.of(context).createHabitEditHabit : AppLocalizations.of(context).habitsScreenUiCreateHabit,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
@@ -143,9 +144,9 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
           // Name input
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Habit Name',
-              hintText: 'e.g., Drink 8 glasses of water',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).habitsScreenUiHabitName,
+              hintText: AppLocalizations.of(context).createHabitEGDrink8,
               border: OutlineInputBorder(),
             ),
             textCapitalization: TextCapitalization.sentences,
@@ -156,8 +157,8 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
           // Description input
           TextField(
             controller: _descriptionController,
-            decoration: const InputDecoration(
-              labelText: 'Description (optional)',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).createHabitDescriptionOptional,
               border: OutlineInputBorder(),
             ),
             maxLines: 2,
@@ -165,7 +166,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
           const SizedBox(height: 16),
 
           // Category selector
-          Text('Category', style: Theme.of(context).textTheme.titleMedium),
+          Text(AppLocalizations.of(context).suggestFeatureCategory, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -184,18 +185,18 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
           const SizedBox(height: 16),
 
           // Habit type toggle
-          Text('Habit Type', style: Theme.of(context).textTheme.titleMedium),
+          Text(AppLocalizations.of(context).createHabitHabitType, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           SegmentedButton<HabitType>(
             segments: [
               ButtonSegment(
                 value: HabitType.positive,
-                label: const Text('Build'),
+                label: Text(AppLocalizations.of(context).recipesBuild),
                 icon: const Icon(Icons.add_circle_outline),
               ),
               ButtonSegment(
                 value: HabitType.negative,
-                label: const Text('Break'),
+                label: Text(AppLocalizations.of(context).supersetIndicatorBreak),
                 icon: const Icon(Icons.remove_circle_outline),
               ),
             ],
@@ -207,7 +208,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
           const SizedBox(height: 16),
 
           // Frequency selector
-          Text('Frequency', style: Theme.of(context).textTheme.titleMedium),
+          Text(AppLocalizations.of(context).muscleAnalyticsFrequency, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -260,9 +261,9 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
               Expanded(
                 child: TextField(
                   controller: _targetCountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Target (optional)',
-                    hintText: 'e.g., 8',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).createHabitTargetOptional,
+                    hintText: AppLocalizations.of(context).createHabitEG8,
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
@@ -272,9 +273,9 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
               Expanded(
                 child: TextField(
                   controller: _unitController,
-                  decoration: const InputDecoration(
-                    labelText: 'Unit (optional)',
-                    hintText: 'e.g., glasses',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).createHabitUnitOptional,
+                    hintText: AppLocalizations.of(context).createHabitEGGlasses,
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -284,7 +285,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
           const SizedBox(height: 16),
 
           // Color picker
-          Text('Color', style: Theme.of(context).textTheme.titleMedium),
+          Text(AppLocalizations.of(context).editGymProfileColor, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -314,7 +315,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             width: double.infinity,
             child: FilledButton(
               onPressed: _nameController.text.trim().isEmpty ? null : _save,
-              child: Text(isEditing ? 'Save Changes' : 'Create Habit'),
+              child: Text(isEditing ? AppLocalizations.of(context).vacationModeSaveChanges : AppLocalizations.of(context).habitsScreenUiCreateHabit),
             ),
           ),
           const SizedBox(height: 16),

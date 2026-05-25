@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A bottom sheet widget for editing the daily step goal.
 ///
 /// Features:
@@ -120,11 +121,11 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
                 Icons.flag_rounded,
                 color: electricBlue,
                 size: 24,
-                semanticLabel: 'Goal',
+                semanticLabel: AppLocalizations.of(context).challengeCreateFieldGoal,
               ),
               const SizedBox(width: 12),
               Text(
-                'Set Step Goal',
+                AppLocalizations.of(context).stepGoalEditorSetStepGoal,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -152,7 +153,7 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
                     ),
                   ),
                   Text(
-                    'steps per day',
+                    AppLocalizations.of(context).stepGoalEditorStepsPerDay,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -218,7 +219,7 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
 
           // Preset buttons
           Text(
-            'QUICK SELECT',
+            AppLocalizations.of(context).stepGoalEditorQuickSelect,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -289,8 +290,8 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
               children: [
                 Semantics(
                   toggled: _useProgressiveGoal,
-                  label: 'Use Progressive Goal',
-                  hint: 'Automatically increases your goal as you improve',
+                  label: AppLocalizations.of(context).stepGoalEditorUseProgressiveGoal,
+                  hint: AppLocalizations.of(context).stepGoalEditorAutomaticallyIncreasesYourG,
                   child: Row(
                     children: [
                       Expanded(
@@ -306,7 +307,7 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Use Progressive Goal',
+                                  AppLocalizations.of(context).stepGoalEditorUseProgressiveGoal,
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -317,7 +318,7 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Automatically increases your goal as you improve',
+                              AppLocalizations.of(context).stepGoalEditorAutomaticallyIncreasesYourG,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: textSecondary,
@@ -356,7 +357,7 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'When you hit your goal 5 days in a row, we\'ll increase it by 500 steps. Missing 3 days will reset to your base goal.',
+                            AppLocalizations.of(context).stepGoalEditorWhenYouHitYour,
                             style: TextStyle(
                               fontSize: 12,
                               color: success,
@@ -380,7 +381,7 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
               Expanded(
                 child: Semantics(
                   button: true,
-                  label: 'Cancel',
+                  label: AppLocalizations.of(context).buttonCancel,
                   child: OutlinedButton(
                     onPressed: _cancel,
                     style: OutlinedButton.styleFrom(
@@ -391,8 +392,8 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Cancel',
+                    child: Text(
+                      AppLocalizations.of(context).buttonCancel,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -417,8 +418,8 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Save Goal',
+                    child: Text(
+                      AppLocalizations.of(context).stepGoalEditorSaveGoal,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

@@ -17,6 +17,7 @@ import 'widgets/share_insights_sheet.dart';
 import 'widgets/share_weekly_summary_sheet.dart';
 import 'widgets/weekly_percentile_hero.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'insights_screen_part_period_selector.dart';
 part 'insights_screen_part_body_card.dart';
 
@@ -101,7 +102,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Reports & Insights',
+        title: AppLocalizations.of(context).weeklyReportCardReportsInsights,
         actions: [
           PillAppBarAction(
             icon: Icons.ios_share_rounded,
@@ -208,7 +209,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
 
                             // Past Reports section
                             _SectionHeader(
-                              title: 'Past Reports',
+                              title: AppLocalizations.of(context).insightsPastReports,
                               isDark: isDark,
                             ),
                             const SizedBox(height: 12),

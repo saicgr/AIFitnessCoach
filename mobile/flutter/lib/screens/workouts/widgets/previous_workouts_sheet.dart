@@ -10,6 +10,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows the previous workouts bottom sheet
 Future<void> showPreviousWorkoutsSheet(
   BuildContext context,
@@ -76,7 +77,7 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Previous Workouts',
+                        AppLocalizations.of(context).previousWorkoutsPreviousWorkouts,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -123,7 +124,7 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No completed workouts yet',
+                            AppLocalizations.of(context).workoutsNoCompletedWorkoutsYet,
                             style: TextStyle(
                               fontSize: 16,
                               color: textSecondary,
@@ -131,7 +132,7 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Complete your first workout to see it here',
+                            AppLocalizations.of(context).workoutsCompleteYourFirstWorkout,
                             style: TextStyle(
                               fontSize: 13,
                               color: textSecondary.withValues(alpha: 0.7),
@@ -262,7 +263,7 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              workout.name ?? 'Workout',
+                              workout.name ?? AppLocalizations.of(context).navWorkout,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,

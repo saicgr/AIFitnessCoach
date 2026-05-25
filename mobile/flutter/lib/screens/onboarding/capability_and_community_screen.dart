@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../core/services/posthog_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Capability + Community Screen — Onboarding v5
 ///
 /// REPLACES the old `feature_showcase` screen which the video specifically
@@ -40,7 +41,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
             children: [
               const SizedBox(height: 28),
               Text(
-                'Built right.',
+                AppLocalizations.of(context).capabilityAndCommunityBuiltRight,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -50,7 +51,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
               ).animate().fadeIn().slideY(begin: -0.1),
               const SizedBox(height: 6),
               Text(
-                "Real numbers. Real people behind it.",
+                AppLocalizations.of(context).capabilityAndCommunityRealNumbersRealPeople,
                 style: TextStyle(fontSize: 15, color: textSecondary),
               ).animate().fadeIn(delay: 200.ms),
 
@@ -66,7 +67,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                       icon: Icons.movie_rounded,
                       iconColor: const Color(0xFF00BCD4),
                       number: '1,700+',
-                      title: 'Exercises with HD video',
+                      title: AppLocalizations.of(context).capabilityAndCommunityExercisesWithHdVideo,
                       detail:
                           "Every exercise has form cues + a full demonstration.",
                     ),
@@ -77,7 +78,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                       icon: Icons.restaurant_menu_rounded,
                       iconColor: const Color(0xFF2ECC71),
                       number: '1M+',
-                      title: 'Foods in our database',
+                      title: AppLocalizations.of(context).capabilityAndCommunityFoodsInOurDatabase,
                       detail:
                           "Restaurant menus, packaged goods, custom recipes.",
                     ),
@@ -88,7 +89,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                       icon: Icons.bolt_rounded,
                       iconColor: AppColors.onboardingAccent,
                       number: 'Latest',
-                      title: 'AI, updated continuously',
+                      title: AppLocalizations.of(context).capabilityAndCommunityAiUpdatedContinuously,
                       detail:
                           "Not last year's model. Always on the newest available.",
                     ),
@@ -99,7 +100,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                       icon: Icons.support_agent_rounded,
                       iconColor: const Color(0xFF9B59B6),
                       number: '24/7',
-                      title: 'AI coach availability',
+                      title: AppLocalizations.of(context).capabilityAndCommunityAiCoachAvailability,
                       detail:
                           "Plus a real human team behind it — message us anytime.",
                     ),
@@ -123,7 +124,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Reach us anytime',
+                            AppLocalizations.of(context).capabilityAndCommunityReachUsAnytime,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -137,7 +138,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                               Expanded(
                                 child: _SocialChip(
                                   icon: FontAwesomeIcons.discord,
-                                  label: 'Discord',
+                                  label: AppLocalizations.of(context).founderNoteDiscord,
                                   color: const Color(0xFF5865F2),
                                   onTap: () => _open(AppLinks.discord),
                                 ),
@@ -146,7 +147,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                               Expanded(
                                 child: _SocialChip(
                                   icon: FontAwesomeIcons.instagram,
-                                  label: 'Instagram',
+                                  label: AppLocalizations.of(context).wrappedShareInstagram,
                                   color: const Color(0xFFE1306C),
                                   onTap: () => _open(AppLinks.instagram),
                                 ),
@@ -192,9 +193,9 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'Continue',
+                      AppLocalizations.of(context).onboardingContinueButton,
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,

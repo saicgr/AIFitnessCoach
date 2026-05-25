@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class BarcodeScannerOverlay extends StatefulWidget {
   final void Function(String) onBarcodeDetected;
   final bool isDark;
@@ -51,7 +52,7 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
               children: [
                 Icon(Icons.qr_code_scanner, color: teal, size: 22),
                 const SizedBox(width: 10),
-                Text('Scan a Barcode', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(AppLocalizations.of(context).barcodeScannerOverlayScanABarcode, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary)),
                 const Spacer(),
                 IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close, color: textMuted)),
               ],
@@ -95,7 +96,7 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
           ),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text('Point your camera at a product barcode', style: TextStyle(fontSize: 14, color: textMuted)),
+            child: Text(AppLocalizations.of(context).barcodeScannerOverlayPointYourCameraAt, style: TextStyle(fontSize: 14, color: textMuted)),
           ),
         ],
       ),

@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/recipe_providers.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class RecipeSearchBar extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -96,7 +97,7 @@ class _RecipeSearchBarState extends ConsumerState<RecipeSearchBar> {
                 isCollapsed: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 border: InputBorder.none,
-                hintText: 'Search your recipes, ingredients, tags…',
+                hintText: AppLocalizations.of(context).recipeSearchBarSearchYourRecipesIngredien,
                 hintStyle: TextStyle(color: muted, fontSize: 14),
               ),
             ),
@@ -111,7 +112,7 @@ class _RecipeSearchBarState extends ConsumerState<RecipeSearchBar> {
             ),
           if (showRecents)
             PopupMenuButton<String>(
-              tooltip: 'Recent searches',
+              tooltip: AppLocalizations.of(context).recipeSearchBarRecentSearches,
               icon: Icon(Icons.history_rounded, size: 20, color: muted),
               onSelected: (v) {
                 _controller.text = v;

@@ -72,7 +72,7 @@ class _WeekSelector extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        'This Week',
+                        AppLocalizations.of(context).workoutCompleteThisWeek,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -94,7 +94,7 @@ class _WeekSelector extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        weekStartDay == 1 ? 'Mon' : 'Sun',
+                        weekStartDay == 1 ? AppLocalizations.of(context).workoutPlannerMon : AppLocalizations.of(context).workoutPlannerSun,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -243,7 +243,7 @@ class _DraggableWorkoutCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                workout.name ?? 'Workout',
+                workout.name ?? AppLocalizations.of(context).navWorkout,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -260,7 +260,7 @@ class _DraggableWorkoutCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  workout.type?.toUpperCase() ?? 'STRENGTH',
+                  workout.type?.toUpperCase() ?? AppLocalizations.of(context).workoutsStrength,
                   style: TextStyle(
                     fontSize: 8,
                     fontWeight: FontWeight.w600,
@@ -323,7 +323,7 @@ class _WorkoutCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  workout.name ?? 'Workout',
+                  workout.name ?? AppLocalizations.of(context).navWorkout,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -351,7 +351,7 @@ class _WorkoutCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              workout.type?.toUpperCase() ?? 'STRENGTH',
+              workout.type?.toUpperCase() ?? AppLocalizations.of(context).workoutsStrength,
               style: TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.w600,
@@ -436,7 +436,7 @@ class _AgendaWorkoutCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    workout.name ?? 'Workout',
+                    workout.name ?? AppLocalizations.of(context).navWorkout,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -460,7 +460,7 @@ class _AgendaWorkoutCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          workout.type?.toUpperCase() ?? 'STRENGTH',
+                          workout.type?.toUpperCase() ?? AppLocalizations.of(context).workoutsStrength,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,

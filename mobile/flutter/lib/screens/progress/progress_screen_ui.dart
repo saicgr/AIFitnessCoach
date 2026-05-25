@@ -13,7 +13,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
           ? _showAddPhotoSheet()
           : _showAddMeasurementSheet(),
       icon: Icon(isPhotosTab ? Icons.camera_alt : Icons.add),
-      label: Text(isPhotosTab ? 'Add Photo' : 'Log Measurement'),
+      label: Text(isPhotosTab ? AppLocalizations.of(context).progressScreenUiAddPhoto : AppLocalizations.of(context).progressScreenUiLogMeasurement),
       backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Theme.of(context).colorScheme.onPrimary,
     );
@@ -79,7 +79,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Detailed Analytics',
+          AppLocalizations.of(context).progressScreenUiDetailedAnalytics,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -90,8 +90,8 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
             Expanded(
               child: _AnalyticsNavCard(
                 icon: Icons.history,
-                title: 'Exercise History',
-                subtitle: 'Per-exercise progress & PRs',
+                title: AppLocalizations.of(context).setTrackingSheetsExerciseHistory,
+                subtitle: AppLocalizations.of(context).progressScreenUiPerExerciseProgressPrs,
                 color: colorScheme.primary,
                 onTap: () => context.push('/stats/exercise-history'),
               ),
@@ -100,8 +100,8 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
             Expanded(
               child: _AnalyticsNavCard(
                 icon: Icons.fitness_center,
-                title: 'Muscle Analytics',
-                subtitle: 'Training volume & balance',
+                title: AppLocalizations.of(context).strengthMuscleAnalytics,
+                subtitle: AppLocalizations.of(context).progressScreenUiTrainingVolumeBalance,
                 color: colorScheme.secondary,
                 onTap: () => context.push('/stats/muscle-analytics'),
               ),
@@ -113,8 +113,8 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
         // Row above would be too narrow on small phones (iPhone SE).
         _AnalyticsNavCard(
           icon: Icons.trending_up,
-          title: 'Exercise Progressions',
-          subtitle: 'Master easier variants, then advance to harder ones',
+          title: AppLocalizations.of(context).progressScreenUiExerciseProgressions,
+          subtitle: AppLocalizations.of(context).progressScreenUiMasterEasierVariantsThen,
           color: accent,
           onTap: () => context.push('/workout/exercise-progressions'),
         ),
@@ -277,12 +277,12 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
               child: const Icon(Icons.analytics_rounded, color: Colors.white),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Body Analyzer',
+                    AppLocalizations.of(context).progressScreenUiBodyAnalyzer,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -291,7 +291,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'AI /100 rating, body-fat rings & posture feedback',
+                    AppLocalizations.of(context).progressScreenUiAi100RatingBody,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -331,7 +331,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
               Icon(Icons.insights, size: 18, color: colorScheme.onPrimaryContainer),
               const SizedBox(width: 6),
               Text(
-                'Photo Progress',
+                AppLocalizations.of(context).progressScreenUiPhotoProgress,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -401,7 +401,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Latest by View',
+            AppLocalizations.of(context).progressScreenUiLatestByView,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -589,7 +589,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
             ),
             const SizedBox(height: 16),
             Text(
-              'No Progress Photos Yet',
+              AppLocalizations.of(context).progressScreenUiNoProgressPhotosYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -598,7 +598,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
             ),
             const SizedBox(height: 8),
             Text(
-              'Take photos from different angles to track your visual progress over time.',
+              AppLocalizations.of(context).progressScreenUiTakePhotosFromDifferent,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -609,7 +609,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
             ElevatedButton.icon(
               onPressed: _showAddPhotoSheet,
               icon: const Icon(Icons.camera_alt),
-              label: const Text('Take First Photo'),
+              label: Text(AppLocalizations.of(context).progressScreenUiTakeFirstPhoto),
             ),
           ],
         ),
@@ -653,10 +653,10 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
             children: [
               Icon(Icons.cloud_off_rounded, size: 64, color: colorScheme.outline),
               const SizedBox(height: 16),
-              Text('Failed to load measurements',
+              Text(AppLocalizations.of(context).progressScreenUiFailedToLoadMeasurements,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
               const SizedBox(height: 8),
-              Text('Please try again.',
+              Text(AppLocalizations.of(context).progressScreenUiPleaseTryAgain,
                 style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -666,7 +666,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
                   }
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(AppLocalizations.of(context).buttonRetry),
               ),
             ],
           ),
@@ -687,17 +687,17 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
             children: [
               Icon(Icons.straighten_outlined, size: 80, color: colorScheme.outline),
               const SizedBox(height: 16),
-              Text('Body Measurements',
+              Text(AppLocalizations.of(context).reportsHubBodyMeasurements,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
               const SizedBox(height: 8),
-              Text('Track your body measurements to see detailed progress beyond the scale.',
+              Text(AppLocalizations.of(context).progressScreenUiTrackYourBodyMeasurements,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: _showAddMeasurementSheet,
                 icon: const Icon(Icons.add),
-                label: const Text('Log Measurements'),
+                label: Text(AppLocalizations.of(context).quickLogMeasurementsLogMeasurements),
               ),
             ],
           ),

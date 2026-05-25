@@ -4,6 +4,7 @@ import '../data/models/xp_event.dart';
 import '../data/providers/xp_provider.dart';
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// A banner widget that shows when Double XP is active
 class DoubleXPBanner extends ConsumerWidget {
   final bool compact;
@@ -388,7 +389,7 @@ class LoginStreakBadge extends ConsumerWidget {
           if (showDetails) ...[
             const SizedBox(width: 4),
             Text(
-              'day streak',
+              AppLocalizations.of(context).newTilesPartDayStreak,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: Colors.white.withValues(alpha: 0.9),
               ),

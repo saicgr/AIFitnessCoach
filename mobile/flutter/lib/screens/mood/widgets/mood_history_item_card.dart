@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/mood.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card displaying a single mood check-in in the history
 class MoodHistoryItemCard extends StatelessWidget {
   final MoodHistoryItem item;
@@ -113,7 +114,7 @@ class MoodHistoryItemCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              item.workout!.name ?? 'Mood Workout',
+                              item.workout!.name ?? AppLocalizations.of(context).moodHistoryItemMoodWorkout,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: textPrimary,

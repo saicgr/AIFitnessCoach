@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows a brief accuracy feedback snackbar after food logging.
 /// Displays the food name, calorie count, and thumbs up/down buttons.
 ///
@@ -44,7 +45,7 @@ void showAccuracyFeedbackSnackbar(
           ),
           const SizedBox(width: 8),
           Text(
-            'Accurate?',
+            AppLocalizations.of(context).accuracyFeedbackSnackbarAccurate,
             style: TextStyle(color: mutedColor, fontSize: 12),
           ),
           const SizedBox(width: 4),

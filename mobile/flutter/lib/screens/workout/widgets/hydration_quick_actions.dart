@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Quick action buttons for the active workout screen (instructions + video + hydration + note)
 class HydrationQuickActions extends StatelessWidget {
   /// Callback when the hydration button is tapped
@@ -56,7 +57,7 @@ class HydrationQuickActions extends StatelessWidget {
             if (onInstructionsTap != null) ...[
               _buildActionButton(
                 icon: Icons.menu_book_rounded,
-                label: 'Instructions',
+                label: AppLocalizations.of(context).workoutShowcaseInstructions,
                 color: const Color(0xFF10B981), // Vibrant emerald
                 onTap: onInstructionsTap!,
               ),
@@ -67,7 +68,7 @@ class HydrationQuickActions extends StatelessWidget {
             if (onVideoTap != null) ...[
               _buildActionButton(
                 icon: Icons.play_circle_outline,
-                label: 'Video',
+                label: AppLocalizations.of(context).workoutShowcaseVideo,
                 color: const Color(0xFF8B5CF6), // Vibrant purple
                 onTap: onVideoTap!,
               ),
@@ -77,7 +78,7 @@ class HydrationQuickActions extends StatelessWidget {
             // Hydration button - vibrant blue
             _buildActionButton(
               icon: Icons.water_drop,
-              label: 'Log Drink',
+              label: AppLocalizations.of(context).workoutShowcaseLogDrink,
               color: AppColors.quickActionWater, // Vibrant blue
               onTap: onTap,
             ),
@@ -87,7 +88,7 @@ class HydrationQuickActions extends StatelessWidget {
               const SizedBox(width: 10),
               _buildActionButton(
                 icon: Icons.sticky_note_2_outlined,
-                label: 'Note',
+                label: AppLocalizations.of(context).workoutUiBuildersNote,
                 color: const Color(0xFFF59E0B), // Vibrant amber
                 onTap: onNoteTap!,
               ),

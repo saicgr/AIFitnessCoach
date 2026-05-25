@@ -58,7 +58,7 @@ class _BodyCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Body',
+                  AppLocalizations.of(context).insightsScreenPartBody,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -69,7 +69,7 @@ class _BodyCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Log your measurements to track body composition changes',
+              AppLocalizations.of(context).insightsScreenPartLogYourMeasurementsTo,
               style: TextStyle(fontSize: 14, color: textMuted),
             ),
           ],
@@ -108,7 +108,7 @@ class _BodyCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Body',
+                AppLocalizations.of(context).insightsScreenPartBody,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -124,7 +124,7 @@ class _BodyCard extends StatelessWidget {
               if (hasWeight)
                 Expanded(
                   child: _BodyMetric(
-                    label: 'Weight',
+                    label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                     value: totals.weightChangeKg!,
                     unit: 'kg',
                     isDark: isDark,
@@ -134,7 +134,7 @@ class _BodyCard extends StatelessWidget {
               if (hasBodyFat)
                 Expanded(
                   child: _BodyMetric(
-                    label: 'Body Fat',
+                    label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
                     value: totals.bodyFatChange!,
                     unit: '%',
                     isDark: isDark,
@@ -282,7 +282,7 @@ class _AiNarrativeSection extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'AI Analysis',
+                AppLocalizations.of(context).insightsScreenPartAiAnalysis,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -387,7 +387,7 @@ class _AiNarrativeSection extends StatelessWidget {
             if (narrative!.tips.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Tips',
+                AppLocalizations.of(context).recordAssessmentTips,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -443,7 +443,7 @@ class _AiNarrativeSection extends StatelessWidget {
             // Generate button
             Text(
               hasReport
-                  ? 'Get personalized AI analysis of your training data for this period.'
+                  ? AppLocalizations.of(context).insightsScreenPartGetPersonalizedAiAnalysis
                   : 'Load your report data first, then generate AI insights.',
               style: TextStyle(fontSize: 14, color: textMuted),
             ),
@@ -453,7 +453,7 @@ class _AiNarrativeSection extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: hasReport ? onGenerate : null,
                 icon: const Icon(Icons.auto_awesome, size: 18),
-                label: const Text('Generate AI Insight'),
+                label: Text(AppLocalizations.of(context).insightsScreenPartGenerateAiInsight),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: cyan,
                   foregroundColor: Colors.white,
@@ -628,7 +628,7 @@ class _PastReportCard extends StatelessWidget {
                 size: 18,
                 color: textMuted,
               ),
-              tooltip: 'Share this report',
+              tooltip: AppLocalizations.of(context).insightsScreenPartShareThisReport,
               padding: const EdgeInsets.all(6),
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               visualDensity: VisualDensity.compact,
@@ -715,7 +715,7 @@ class _EmptyPastReports extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'No past reports yet',
+            AppLocalizations.of(context).insightsScreenPartNoPastReportsYet,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -725,7 +725,7 @@ class _EmptyPastReports extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Weekly reports will appear here as they are generated.',
+            AppLocalizations.of(context).insightsScreenPartWeeklyReportsWillAppear,
             style: TextStyle(fontSize: 13, color: textMuted),
             textAlign: TextAlign.center,
           ),

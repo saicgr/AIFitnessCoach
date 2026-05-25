@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card that displays a structured form check result from the AI.
 class FormCheckResultCard extends StatefulWidget {
   final Map<String, dynamic> result;
@@ -127,7 +128,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               Icon(Icons.videocam_outlined, size: 18, color: colors.textMuted),
               const SizedBox(width: 8),
               Text(
-                'Form Check',
+                AppLocalizations.of(context).formCheckResultFormCheck,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -164,7 +165,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Send a video of your exercise and I\'ll check your form, count reps, and give corrections.',
+            AppLocalizations.of(context).formCheckResultSendAVideoOf,
             style: TextStyle(
               fontSize: 11,
               fontStyle: FontStyle.italic,
@@ -297,7 +298,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               const Icon(Icons.check_circle, size: 14, color: AppColors.success),
               const SizedBox(width: 6),
               Text(
-                'Doing Well',
+                AppLocalizations.of(context).formCheckResultDoingWell,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -351,7 +352,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               const Icon(Icons.trending_up, size: 14, color: AppColors.warning),
               const SizedBox(width: 6),
               Text(
-                'Areas to Improve',
+                AppLocalizations.of(context).formCheckResultAreasToImprove,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -443,7 +444,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               Icon(Icons.air, size: 14, color: color),
               const SizedBox(width: 6),
               Text(
-                'Breathing',
+                AppLocalizations.of(context).workoutUiBuildersBreathing,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -458,7 +459,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  isCorrect ? 'Good' : 'Needs Work',
+                  isCorrect ? AppLocalizations.of(context).scoreExplainGood : AppLocalizations.of(context).formCheckResultNeedsWork,
                   style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: color),
                 ),
               ),
@@ -514,7 +515,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               Icon(Icons.speed, size: 14, color: color),
               const SizedBox(width: 6),
               Text(
-                'Tempo',
+                AppLocalizations.of(context).stapleChoiceTempo,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -588,7 +589,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
       child: Text(
-        'AI form analysis is for educational purposes only. Consult a qualified trainer for personalized guidance.',
+        AppLocalizations.of(context).formComparisonResultAiFormAnalysisIs,
         style: TextStyle(
           fontSize: 10,
           fontStyle: FontStyle.italic,

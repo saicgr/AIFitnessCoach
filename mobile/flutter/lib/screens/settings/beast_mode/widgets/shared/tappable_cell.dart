@@ -7,6 +7,7 @@ import '../../../../../widgets/glass_sheet.dart';
 import '../../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../beast_mode_constants.dart';
 
+import '../../../../../l10n/generated/app_localizations.dart';
 /// Tappable monospace cell for editable table values.
 class TappableCell extends StatelessWidget {
   final String text;
@@ -107,7 +108,7 @@ class TappableBiasCell extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Select Bias',
+                Text(AppLocalizations.of(context).tappableCellSelectBias,
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

@@ -11,6 +11,7 @@ import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
 import '../../../widgets/pill_app_bar.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Detail screen showing analytics for a specific muscle group
 class MuscleDetailScreen extends ConsumerStatefulWidget {
   final String muscleGroup;
@@ -107,7 +108,7 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
 
               // Exercises Section
               Text(
-                'Exercises',
+                AppLocalizations.of(context).authIntroExercises,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -133,19 +134,19 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
                             children: [
                               Expanded(
                                 child: _StatItem(
-                                  label: 'Exercises',
+                                  label: AppLocalizations.of(context).authIntroExercises,
                                   value: '${exerciseData.totalExercises ?? exerciseData.exercises.length}',
                                 ),
                               ),
                               Expanded(
                                 child: _StatItem(
-                                  label: 'Total Volume',
+                                  label: AppLocalizations.of(context).volumeHistoryTotalVolume,
                                   value: exerciseData.formattedTotalVolume,
                                 ),
                               ),
                               Expanded(
                                 child: _StatItem(
-                                  label: 'Total Sets',
+                                  label: AppLocalizations.of(context).muscleDetailTotalSets,
                                   value: '${exerciseData.totalSets ?? 0}',
                                 ),
                               ),
@@ -196,7 +197,7 @@ class _VolumeHistorySection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Volume Trend',
+              AppLocalizations.of(context).progressChartsVolumeTrend,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -219,19 +220,19 @@ class _VolumeHistorySection extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _StatItem(
-                      label: 'Workouts',
+                      label: AppLocalizations.of(context).workoutListTitle,
                       value: '${history.summary!.totalWorkouts}',
                     ),
                   ),
                   Expanded(
                     child: _StatItem(
-                      label: 'Total Volume',
+                      label: AppLocalizations.of(context).volumeHistoryTotalVolume,
                       value: history.summary!.formattedTotalVolume,
                     ),
                   ),
                   Expanded(
                     child: _StatItem(
-                      label: 'Max Weight',
+                      label: AppLocalizations.of(context).muscleDetailMaxWeight,
                       value: history.summary!.formattedMaxWeight,
                     ),
                   ),
@@ -315,7 +316,7 @@ class _VolumeChart extends StatelessWidget {
     if (dataPoints.length < 2) {
       return Center(
         child: Text(
-          'Need more data for chart',
+          AppLocalizations.of(context).muscleDetailNeedMoreDataFor,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -460,17 +461,17 @@ class _ExerciseCard extends StatelessWidget {
               Row(
                 children: [
                   _MiniStat(
-                    label: 'Times',
+                    label: AppLocalizations.of(context).muscleDetailTimes,
                     value: '${exercise.timesPerformed}',
                   ),
                   const SizedBox(width: 16),
                   _MiniStat(
-                    label: 'Volume',
+                    label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
                     value: exercise.formattedVolume,
                   ),
                   const SizedBox(width: 16),
                   _MiniStat(
-                    label: 'Max',
+                    label: AppLocalizations.of(context).strengthOverviewCardMax,
                     value: exercise.formattedMaxWeight,
                   ),
                 ],
@@ -690,7 +691,7 @@ class _InsightsCardState extends State<_InsightsCard> {
                   Icon(Icons.lightbulb_outline, size: 20, color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
                   Text(
-                    'Insights',
+                    AppLocalizations.of(context).muscleDetailInsights,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -720,7 +721,7 @@ class _InsightsCardState extends State<_InsightsCard> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('•  ', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                      Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
                       Expanded(
                         child: Text(
                           insight,

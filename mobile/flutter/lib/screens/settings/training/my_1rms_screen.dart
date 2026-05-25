@@ -11,6 +11,7 @@ import '../../../utils/share_report_helper.dart';
 import '../../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 // Import linked exercises types
 export '../../../data/models/training_intensity.dart' show LinkedExercise, ExerciseLinkSuggestion;
 
@@ -50,7 +51,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
       appBar: PillAppBar(
-        title: 'My 1RMs',
+        title: AppLocalizations.of(context).workoutSettingsMy1rms,
         actions: [
           if (!oneRMsState.isLoading && oneRMsState.oneRMs.isNotEmpty)
             PillAppBarAction(
@@ -98,7 +99,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
               backgroundColor: AppColors.cyan,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
-              label: const Text('Add 1RM'),
+              label: Text(AppLocalizations.of(context).my1rmsScreenAdd1rm),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
@@ -143,7 +144,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
               ),
               SizedBox(height: headerGap),
               Text(
-                'No 1RMs Recorded',
+                AppLocalizations.of(context).my1rmsNo1rmsRecorded,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
@@ -153,7 +154,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Add your max lifts to get personalized weight recommendations based on your training intensity.',
+                AppLocalizations.of(context).my1rmsAddYourMaxLifts,
                 style: TextStyle(
                   fontSize: 14,
                   color: textMuted,
@@ -169,7 +170,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
                 child: FilledButton.icon(
                   onPressed: _isAutoPopulating ? null : _autoPopulate,
                   icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Auto-populate from workout history'),
+                  label: Text(AppLocalizations.of(context).my1rmsAutoPopulateFromWorkout),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.cyan,
                     foregroundColor: Colors.white,
@@ -190,7 +191,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
                     ? null
                     : () => _showAddOneRMSheet(context),
                 icon: const Icon(Icons.add),
-                label: const Text('Add manually'),
+                label: Text(AppLocalizations.of(context).my1rmsAddManually),
                 style: TextButton.styleFrom(
                   foregroundColor: textMuted,
                 ),
@@ -303,17 +304,17 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete 1RM?'),
+        title: Text(AppLocalizations.of(context).my1rmsDelete1rm),
         content: Text('Remove ${oneRM.exerciseName} from your saved 1RMs?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),

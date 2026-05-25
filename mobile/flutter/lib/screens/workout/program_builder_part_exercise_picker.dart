@@ -10,6 +10,7 @@ import '../../data/repositories/library_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/lottie_animations.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Exercise picker for the program-template builder (plan B.3).
 ///
 /// A draggable bottom sheet that searches the shared exercise library
@@ -230,7 +231,7 @@ class _ProgramBuilderExercisePickerState
                   },
                   onSubmitted: (_) => _runSearch(),
                   decoration: InputDecoration(
-                    hintText: 'Search exercises...',
+                    hintText: AppLocalizations.of(context).supersetExercisePickerSearchExercises,
                     hintStyle:
                         TextStyle(fontSize: 14, color: textSecondary),
                     prefixIcon:
@@ -329,7 +330,7 @@ class _ProgramBuilderExercisePickerState
         color: textSecondary,
         action: TextButton(
           onPressed: _runSearch,
-          child: Text('Retry', style: TextStyle(color: accent)),
+          child: Text(AppLocalizations.of(context).buttonRetry, style: TextStyle(color: accent)),
         ),
       );
     }

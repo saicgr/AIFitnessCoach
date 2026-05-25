@@ -6,6 +6,7 @@ import '../../../data/models/micronutrients.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
 import '../../cycle/cycle_visuals.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class PinnedNutrientsCard extends ConsumerStatefulWidget {
   final List<NutrientProgress> pinned;
   final bool isDark;
@@ -71,7 +72,7 @@ class _PinnedNutrientsCardState extends ConsumerState<PinnedNutrientsCard> {
               child: Row(
                 children: [
                   Text(
-                    'Pinned nutrients',
+                    AppLocalizations.of(context).pinnedNutrientsCardPinnedNutrients,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -273,7 +274,7 @@ class _PhaseFocusStrip extends StatelessWidget {
             Icon(Icons.auto_awesome, size: 12, color: phaseColor),
             const SizedBox(width: 6),
             Text(
-              'Focus this phase:',
+              AppLocalizations.of(context).pinnedNutrientsCardFocusThisPhase,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,

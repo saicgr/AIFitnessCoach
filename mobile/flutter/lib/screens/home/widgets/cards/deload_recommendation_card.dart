@@ -25,6 +25,7 @@ import '../../../../data/providers/deload_status_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../services/mesocycle_planner.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Title variant pool — 4 options per `feedback_dynamic_copy_not_robotic.md`.
 /// Seeded deterministically per-day so the title is stable within a day but
 /// rotates across days.
@@ -211,8 +212,8 @@ class _DeloadCardBodyState extends ConsumerState<_DeloadCardBody> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
-                      'Plan deload week',
+                  : Text(
+                      AppLocalizations.of(context).deloadRecommendationCardPlanDeloadWeek,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,

@@ -117,7 +117,7 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
                       border: Border.all(color: cardBorder),
                     ),
                     child: Text(
-                      _isMetric ? 'Metric' : 'Imperial',
+                      _isMetric ? AppLocalizations.of(context).measurementsScreenPartMetric : AppLocalizations.of(context).measurementsScreenPartImperial,
                       style: TextStyle(
                         fontSize: 12,
                         color: cyan,
@@ -134,7 +134,7 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
             // from a tile or body-view pill already knows the target).
             if (widget.lockedType == null) ...[
               Text(
-                'MEASUREMENT TYPE',
+                AppLocalizations.of(context).measurementsScreenPartMeasurementType,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -300,7 +300,7 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
 
             // Notes input
             Text(
-              'NOTES (OPTIONAL)',
+              AppLocalizations.of(context).measurementsScreenPartNotesOptional,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -313,7 +313,7 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
               controller: _notesController,
               maxLines: 2,
               decoration: InputDecoration(
-                hintText: 'Add any notes...',
+                hintText: AppLocalizations.of(context).measurementsScreenPartAddAnyNotes,
                 filled: true,
                 fillColor: elevated,
                 border: OutlineInputBorder(
@@ -347,8 +347,8 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
                           color: isDark ? AppColors.pureBlack : Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Save',
+                    : Text(
+                        AppLocalizations.of(context).buttonSave,
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
               ),
@@ -364,8 +364,8 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
     final valueText = _valueController.text.trim();
     if (valueText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a value'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).measurementsScreenPartPleaseEnterAValue),
           backgroundColor: AppColors.error,
         ),
       );
@@ -375,8 +375,8 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
     final value = double.tryParse(valueText);
     if (value == null || value <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid number'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).recordAttemptPleaseEnterAValid),
           backgroundColor: AppColors.error,
         ),
       );
@@ -479,7 +479,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
                 Icon(Icons.upload_outlined, color: cyan, size: 22),
               const SizedBox(width: 10),
               Text(
-                'Export Measurements',
+                AppLocalizations.of(context).measurementsScreenPartExportMeasurements,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -494,7 +494,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
           Row(
             children: [
               Text(
-                'Format',
+                AppLocalizations.of(context).quickWorkoutSheetFormat,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -540,7 +540,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
           Row(
             children: [
               Text(
-                'Date Range',
+                AppLocalizations.of(context).measurementsScreenPartDateRange,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -551,7 +551,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
               if (_startDate != null || _endDate != null)
                 GestureDetector(
                   onTap: () => setState(() { _startDate = null; _endDate = null; }),
-                  child: Text('Clear', style: TextStyle(fontSize: 12, color: cyan)),
+                  child: Text(AppLocalizations.of(context).vacationModeClear, style: TextStyle(fontSize: 12, color: cyan)),
                 ),
             ],
           ),
@@ -620,7 +620,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
           Row(
             children: [
               Text(
-                'Measurements',
+                AppLocalizations.of(context).quickLogMeasurementsMeasurements,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -639,7 +639,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
                   });
                 },
                 child: Text(
-                  _allSelected ? 'Deselect All' : 'Select All',
+                  _allSelected ? AppLocalizations.of(context).measurementsScreenPartDeselectAll : AppLocalizations.of(context).openAllCratesSelectAll,
                   style: TextStyle(fontSize: 12, color: cyan),
                 ),
               ),
@@ -686,7 +686,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
           // Option 1: Measurements Only
           _ExportOptionTile(
             icon: Icons.straighten,
-            title: 'Measurements Only',
+            title: AppLocalizations.of(context).measurementsScreenPartMeasurementsOnly,
             subtitle: _selectedTypes.isEmpty
                 ? 'Select at least one measurement type'
                 : 'Export ${_allSelected ? "all" : "${_selectedTypes.length}"} measurement types as .$_selectedFormat',
@@ -702,8 +702,8 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
           // Option 2: Export All Data
           _ExportOptionTile(
             icon: Icons.cloud_download_outlined,
-            title: 'Export All Data',
-            subtitle: 'Workouts, nutrition, measurements & more',
+            title: AppLocalizations.of(context).measurementsScreenPartExportAllData,
+            subtitle: AppLocalizations.of(context).measurementsScreenPartWorkoutsNutritionMeasureme,
             iconColor: cyan,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
@@ -731,14 +731,14 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.pureWhite,
-        title: Text('Export Info', style: TextStyle(color: textPrimary)),
+        title: Text(AppLocalizations.of(context).measurementsScreenPartExportInfo, style: TextStyle(color: textPrimary)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Columns section
-              Text('Exported Columns', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
+              Text(AppLocalizations.of(context).measurementsScreenPartExportedColumns, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
               const SizedBox(height: 6),
               _columnInfoRow('date', 'When the measurement was recorded', textPrimary, textSecondary),
               _columnInfoRow('type', 'Measurement type (weight, waist, etc.)', textPrimary, textSecondary),
@@ -748,16 +748,16 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
               const SizedBox(height: 14),
 
               // Available types
-              Text('Available Measurement Types', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
+              Text(AppLocalizations.of(context).measurementsScreenPartAvailableMeasurementTypes, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
               const SizedBox(height: 6),
               Text(
-                'weight, body_fat, chest, waist, hips, neck, shoulders, biceps_left, biceps_right, forearm_left, forearm_right, thigh_left, thigh_right, calf_left, calf_right',
+                AppLocalizations.of(context).measurementsScreenPartWeightBodyFatChest,
                 style: TextStyle(fontSize: 11, color: textMuted, height: 1.5),
               ),
               const SizedBox(height: 14),
 
               // Formats section
-              Text('Formats', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
+              Text(AppLocalizations.of(context).measurementsScreenPartFormats, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cyan)),
               const SizedBox(height: 6),
               _formatInfoRow('CSV', 'Opens in Excel, Google Sheets, any spreadsheet app', textPrimary, textSecondary),
               const SizedBox(height: 8),
@@ -772,7 +772,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Got it', style: TextStyle(color: cyan)),
+            child: Text(AppLocalizations.of(context).weightIncrementsGotIt, style: TextStyle(color: cyan)),
           ),
         ],
       ),

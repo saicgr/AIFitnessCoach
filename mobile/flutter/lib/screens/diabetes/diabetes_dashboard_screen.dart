@@ -12,6 +12,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 
+import '../../l10n/generated/app_localizations.dart';
 part 'diabetes_dashboard_screen_part_glucose_status.dart';
 part 'diabetes_dashboard_screen_part_a1_c_card.dart';
 part 'diabetes_dashboard_screen_part_current_glucose_card.dart';
@@ -101,7 +102,7 @@ class _DiabetesDashboardScreenState
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: 'Diabetes',
+        title: AppLocalizations.of(context).diabetesDashboardDiabetes,
         actions: [
           PillAppBarAction(
             customIcon: LineIcon(
@@ -179,7 +180,7 @@ class _DiabetesDashboardScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'Unable to Load Data',
+              AppLocalizations.of(context).neatDashboardUnableToLoadData,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -196,7 +197,7 @@ class _DiabetesDashboardScreenState
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cyan,
                 foregroundColor: Colors.white,
@@ -374,7 +375,7 @@ class _DiabetesDashboardScreenState
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Log Glucose',
+                  AppLocalizations.of(context).diabetesDashboardScreenLogGlucose,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -390,7 +391,7 @@ class _DiabetesDashboardScreenState
                   const TextInputType.numberWithOptions(decimal: true),
               style: TextStyle(color: textPrimary),
               decoration: InputDecoration(
-                labelText: 'Glucose Level',
+                labelText: AppLocalizations.of(context).diabetesDashboardGlucoseLevel,
                 labelStyle: TextStyle(color: textMuted),
                 suffixText: 'mg/dL',
                 suffixStyle: TextStyle(color: textMuted),
@@ -407,7 +408,7 @@ class _DiabetesDashboardScreenState
               controller: notesController,
               style: TextStyle(color: textPrimary),
               decoration: InputDecoration(
-                labelText: 'Notes (optional)',
+                labelText: AppLocalizations.of(context).recordAttemptNotesOptional,
                 labelStyle: TextStyle(color: textMuted),
                 hintText: 'e.g., Before breakfast',
                 hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
@@ -453,8 +454,8 @@ class _DiabetesDashboardScreenState
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Log Glucose',
+                child: Text(
+                  AppLocalizations.of(context).diabetesDashboardScreenLogGlucose,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -512,7 +513,7 @@ class _DiabetesDashboardScreenState
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Log Insulin',
+                    AppLocalizations.of(context).diabetesDashboardScreenLogInsulin,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -525,7 +526,7 @@ class _DiabetesDashboardScreenState
 
               // Insulin type selector
               Text(
-                'Insulin Type',
+                AppLocalizations.of(context).diabetesDashboardInsulinType,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -536,7 +537,7 @@ class _DiabetesDashboardScreenState
               Row(
                 children: [
                   _InsulinTypeChip(
-                    label: 'Rapid',
+                    label: AppLocalizations.of(context).diabetesDashboardScreenRapid,
                     isSelected: selectedType == 'rapid',
                     color: AppColors.cyan,
                     onTap: () => setSheetState(() => selectedType = 'rapid'),
@@ -544,7 +545,7 @@ class _DiabetesDashboardScreenState
                   ),
                   const SizedBox(width: 8),
                   _InsulinTypeChip(
-                    label: 'Long',
+                    label: AppLocalizations.of(context).diabetesDashboardScreenLong,
                     isSelected: selectedType == 'long',
                     color: AppColors.purple,
                     onTap: () => setSheetState(() => selectedType = 'long'),
@@ -552,7 +553,7 @@ class _DiabetesDashboardScreenState
                   ),
                   const SizedBox(width: 8),
                   _InsulinTypeChip(
-                    label: 'Mixed',
+                    label: AppLocalizations.of(context).diabetesDashboardMixed,
                     isSelected: selectedType == 'mixed',
                     color: AppColors.orange,
                     onTap: () => setSheetState(() => selectedType = 'mixed'),
@@ -568,7 +569,7 @@ class _DiabetesDashboardScreenState
                     const TextInputType.numberWithOptions(decimal: true),
                 style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
-                  labelText: 'Units',
+                  labelText: AppLocalizations.of(context).settingsCardUiUnits,
                   labelStyle: TextStyle(color: textMuted),
                   suffixText: 'U',
                   suffixStyle: TextStyle(color: textMuted),
@@ -585,7 +586,7 @@ class _DiabetesDashboardScreenState
                 controller: notesController,
                 style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
-                  labelText: 'Notes (optional)',
+                  labelText: AppLocalizations.of(context).recordAttemptNotesOptional,
                   labelStyle: TextStyle(color: textMuted),
                   hintText: 'e.g., Before lunch',
                   hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
@@ -633,8 +634,8 @@ class _DiabetesDashboardScreenState
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Log Insulin',
+                  child: Text(
+                    AppLocalizations.of(context).diabetesDashboardScreenLogInsulin,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

@@ -19,6 +19,7 @@ import '../onboarding/widgets/onboarding_theme.dart';
 import 'widgets/pre_auth_referral_chip.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
   /// When true, renders in returning-user mode regardless of any lingering
@@ -403,7 +404,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                       Icon(Icons.arrow_back_rounded, color: t.textPrimary, size: 18),
                       const SizedBox(width: 6),
                       Text(
-                        'Back',
+                        AppLocalizations.of(context).commonBack,
                         style: TextStyle(
                           color: t.textPrimary,
                           fontSize: 14,
@@ -642,8 +643,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppColors.success.withOpacity(0.4)),
                     ),
-                    child: const Text(
-                      'Ready',
+                    child: Text(
+                      AppLocalizations.of(context).signInReady,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -683,11 +684,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(Icons.apple, color: Colors.white, size: 22),
                       SizedBox(width: 10),
                       Text(
-                        'Continue with Apple',
+                        AppLocalizations.of(context).authContinueWithApple,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -735,7 +736,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            _loadingMessage ?? 'Signing in...',
+                            _loadingMessage ?? AppLocalizations.of(context).signInSigningIn,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
@@ -759,7 +760,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            'Continue with Google',
+                            AppLocalizations.of(context).authContinueWithGoogle,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A horizontal scrollable bar chart showing hourly step activity.
 ///
 /// Features:
@@ -142,7 +143,7 @@ class _HourlyActivityChartState extends State<HourlyActivityChart>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Activity Trends',
+                    AppLocalizations.of(context).hourlyActivityChartActivityTrends,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -154,9 +155,9 @@ class _HourlyActivityChartState extends State<HourlyActivityChart>
               // Legend
               Row(
                 children: [
-                  _LegendDot(color: success, label: 'Active'),
+                  _LegendDot(color: success, label: AppLocalizations.of(context).syncedWorkoutsHistoryActive),
                   const SizedBox(width: 12),
-                  _LegendDot(color: error, label: 'Sedentary'),
+                  _LegendDot(color: error, label: AppLocalizations.of(context).hourlyActivityChartSedentary),
                 ],
               ),
             ],
@@ -280,7 +281,7 @@ class _HourlyActivityChartState extends State<HourlyActivityChart>
                     icon: Icons.directions_walk,
                     iconColor: success,
                     value: '$_activeHours',
-                    label: 'Active Hours',
+                    label: AppLocalizations.of(context).neatDashboardScreenActiveHours,
                     isDark: isDark,
                   ),
                 ),
@@ -295,7 +296,7 @@ class _HourlyActivityChartState extends State<HourlyActivityChart>
                     icon: Icons.weekend_outlined,
                     iconColor: error,
                     value: '$_sedentaryHours',
-                    label: 'Sedentary Hours',
+                    label: AppLocalizations.of(context).hourlyActivityChartSedentaryHours,
                     isDark: isDark,
                   ),
                 ),
@@ -418,7 +419,7 @@ class _SelectedHourInfo extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              isActive ? 'ACTIVE' : 'SEDENTARY',
+              isActive ? AppLocalizations.of(context).managedGymCardActive : AppLocalizations.of(context).hourlyActivityChartSedentary2,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,

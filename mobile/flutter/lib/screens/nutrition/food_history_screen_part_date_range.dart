@@ -141,7 +141,7 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
                 children: [
                   // Date range chips
                   Text(
-                    'DATE RANGE',
+                    AppLocalizations.of(context).foodHistoryScreenDateRange,
                     style: TextStyle(
                       color: textMuted,
                       fontSize: 10,
@@ -170,7 +170,7 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
                   const SizedBox(height: 10),
                   // Meal type chips
                   Text(
-                    'MEAL TYPE',
+                    AppLocalizations.of(context).foodHistoryScreenMealType,
                     style: TextStyle(
                       color: textMuted,
                       fontSize: 10,
@@ -205,7 +205,7 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
                   const SizedBox(height: 10),
                   // Database source chips
                   Text(
-                    'DATABASE',
+                    AppLocalizations.of(context).foodHistoryScreenDatabase,
                     style: TextStyle(
                       color: textMuted,
                       fontSize: 10,
@@ -354,7 +354,7 @@ class _QuickStatsCard extends StatelessWidget {
           _StatItem(
             icon: Icons.restaurant,
             value: '${stats.totalMeals}',
-            label: 'Meals',
+            label: AppLocalizations.of(context).foodHistoryScreenMeals,
             color: teal,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -363,7 +363,7 @@ class _QuickStatsCard extends StatelessWidget {
           _StatItem(
             icon: Icons.local_fire_department,
             value: '${stats.avgDailyCals}',
-            label: 'Avg/day',
+            label: AppLocalizations.of(context).foodHistoryScreenAvgDay,
             color: cyan,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -372,7 +372,7 @@ class _QuickStatsCard extends StatelessWidget {
           _StatItem(
             icon: Icons.fitness_center,
             value: '${stats.totalProteinG.round()}g',
-            label: 'Protein',
+            label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
             color: purple,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -381,7 +381,7 @@ class _QuickStatsCard extends StatelessWidget {
           _StatItem(
             icon: Icons.calendar_today,
             value: '${stats.daysTracked}',
-            label: 'Days',
+            label: AppLocalizations.of(context).scheduleMealDays,
             color: yellow,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -536,7 +536,7 @@ class _SearchResultsView extends ConsumerWidget {
       loading: () => Center(child: CircularProgressIndicator(color: teal)),
       error: (e, _) => Center(
         child: Text(
-          'Search error',
+          AppLocalizations.of(context).foodHistoryScreenSearchError,
           style: TextStyle(color: textMuted),
         ),
       ),
@@ -691,7 +691,7 @@ class _HistoryListView extends StatelessWidget {
             Icon(Icons.restaurant_outlined, color: textMuted, size: 56),
             const SizedBox(height: 16),
             Text(
-              'No food history yet',
+              AppLocalizations.of(context).foodHistoryScreenNoFoodHistoryYet,
               style: TextStyle(
                 color: textPrimary,
                 fontSize: 18,
@@ -700,7 +700,7 @@ class _HistoryListView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Start logging meals to see your history here!',
+              AppLocalizations.of(context).foodHistoryScreenStartLoggingMealsTo,
               style: TextStyle(color: textMuted, fontSize: 14),
             ),
           ],
@@ -729,7 +729,7 @@ class _HistoryListView extends StatelessWidget {
         if (frequentFoods.isNotEmpty) ...[
           _SectionHeader(
             icon: Icons.bolt,
-            title: 'Frequently Eaten',
+            title: AppLocalizations.of(context).foodHistoryScreenFrequentlyEaten,
             textPrimary: textPrimary,
             teal: teal,
           ),
@@ -763,7 +763,7 @@ class _HistoryListView extends StatelessWidget {
         if (logs.isNotEmpty) ...[
           _SectionHeader(
             icon: Icons.schedule,
-            title: 'Recent',
+            title: AppLocalizations.of(context).nutritionShowcaseRecent,
             textPrimary: textPrimary,
             teal: teal,
           ),
@@ -843,7 +843,7 @@ class _HistoryListView extends StatelessWidget {
                     : TextButton(
                         onPressed: onLoadMore,
                         child: Text(
-                          'Load More',
+                          AppLocalizations.of(context).foodHistoryScreenLoadMore,
                           style: TextStyle(
                             color: teal,
                             fontWeight: FontWeight.w600,

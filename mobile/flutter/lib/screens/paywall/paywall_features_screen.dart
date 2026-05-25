@@ -8,6 +8,7 @@ import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import 'paywall_experiments.dart';
 import 'widgets/credibility_strip.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Paywall Screen 1: Feature Highlights
 /// Shows the key features users get with premium
 class PaywallFeaturesScreen extends ConsumerStatefulWidget {
@@ -82,7 +83,7 @@ class _PaywallFeaturesScreenState
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Unlock the full',
+                    AppLocalizations.of(context).paywallFeaturesUnlockTheFull,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w600,
@@ -90,7 +91,7 @@ class _PaywallFeaturesScreenState
                     ),
                   ),
                   Text(
-                    'AI Coach experience',
+                    AppLocalizations.of(context).paywallFeaturesAiCoachExperience,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -103,15 +104,15 @@ class _PaywallFeaturesScreenState
                 if (isFoldable) const SizedBox(height: 8),
 
                 // Feature list
-                _FeatureItem(icon: Icons.auto_fix_high, iconColor: colors.purple, title: 'Unlimited AI workouts', subtitle: 'Personalized plans for any equipment & goal', colors: colors),
+                _FeatureItem(icon: Icons.auto_fix_high, iconColor: colors.purple, title: AppLocalizations.of(context).paywallFeaturesUnlimitedAiWorkouts, subtitle: AppLocalizations.of(context).paywallFeaturesPersonalizedPlansForAny, colors: colors),
                 const SizedBox(height: 14),
-                _FeatureItem(icon: Icons.chat_bubble_outline, iconColor: colors.electricBlue, title: 'AI coach chat', subtitle: 'Nutrition, form, recovery — ask anything', colors: colors),
+                _FeatureItem(icon: Icons.chat_bubble_outline, iconColor: colors.electricBlue, title: AppLocalizations.of(context).paywallFeaturesAiCoachChat, subtitle: AppLocalizations.of(context).paywallFeaturesNutritionFormRecoveryAs, colors: colors),
                 const SizedBox(height: 14),
-                _FeatureItem(icon: Icons.camera_alt_outlined, iconColor: colors.orange, title: 'Food photo scanning', subtitle: 'Snap a photo, get instant calories & macros', colors: colors),
+                _FeatureItem(icon: Icons.camera_alt_outlined, iconColor: colors.orange, title: AppLocalizations.of(context).paywallFeaturesFoodPhotoScanning, subtitle: AppLocalizations.of(context).paywallFeaturesSnapAPhotoGet, colors: colors),
                 const SizedBox(height: 14),
-                _FeatureItem(icon: Icons.healing_outlined, iconColor: colors.coral, title: 'Injury-aware training', subtitle: 'Auto-adapt workouts around your injuries', colors: colors),
+                _FeatureItem(icon: Icons.healing_outlined, iconColor: colors.coral, title: AppLocalizations.of(context).paywallFeaturesInjuryAwareTraining, subtitle: AppLocalizations.of(context).paywallFeaturesAutoAdaptWorkoutsAround, colors: colors),
                 const SizedBox(height: 14),
-                _FeatureItem(icon: Icons.bar_chart_rounded, iconColor: Colors.greenAccent, title: 'Progress tracking & analytics', subtitle: 'Charts, heatmaps, and detailed trends', colors: colors),
+                _FeatureItem(icon: Icons.bar_chart_rounded, iconColor: Colors.greenAccent, title: AppLocalizations.of(context).paywallFeaturesProgressTrackingAnalytics, subtitle: AppLocalizations.of(context).paywallFeaturesChartsHeatmapsAndDetailed, colors: colors),
                 const SizedBox(height: 14),
                 _FeatureItem(icon: Icons.local_fire_department, iconColor: const Color(0xFFE74C3C), title: 'Hell Mode & skill progressions', subtitle: 'Push past every plateau', colors: colors),
 
@@ -145,8 +146,8 @@ class _PaywallFeaturesScreenState
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Learn More',
+                child: Text(
+                  AppLocalizations.of(context).paywallFeaturesLearnMore,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -162,10 +163,10 @@ class _PaywallFeaturesScreenState
 
   Widget _buildPremiumSummary(ThemeColors colors) {
     final categories = [
-      (icon: Icons.fitness_center, label: 'AI Workouts', count: '14+ features'),
-      (icon: Icons.restaurant_rounded, label: 'Nutrition', count: '3 tools'),
-      (icon: Icons.healing_outlined, label: 'Safety', count: 'Injury-aware'),
-      (icon: Icons.trending_up, label: 'Progress', count: '52 skills'),
+      (icon: Icons.fitness_center, label: AppLocalizations.of(context).paywallFeaturesAiWorkouts, count: AppLocalizations.of(context).paywallFeatures14Features),
+      (icon: Icons.restaurant_rounded, label: AppLocalizations.of(context).settingsNutritionSection, count: AppLocalizations.of(context).paywallFeatures3Tools),
+      (icon: Icons.healing_outlined, label: AppLocalizations.of(context).paywallFeaturesSafety, count: AppLocalizations.of(context).paywallFeaturesInjuryAware),
+      (icon: Icons.trending_up, label: AppLocalizations.of(context).navProgress, count: AppLocalizations.of(context).paywallFeatures52Skills),
     ];
 
     return Column(
@@ -199,7 +200,7 @@ class _PaywallFeaturesScreenState
 
         // Title
         Text(
-          'Unlock the full',
+          AppLocalizations.of(context).paywallFeaturesUnlockTheFull,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w600,
@@ -207,7 +208,7 @@ class _PaywallFeaturesScreenState
           ),
         ),
         Text(
-          'AI Coach experience',
+          AppLocalizations.of(context).paywallFeaturesAiCoachExperience,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -277,7 +278,7 @@ class _PaywallFeaturesScreenState
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '7-day free trial\nCancel anytime, no questions asked',
+                  AppLocalizations.of(context).paywallPricing7DayFreeTrial2,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

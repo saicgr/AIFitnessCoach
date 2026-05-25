@@ -8,6 +8,7 @@ import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 import 'template_editor_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class TemplateSection extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -26,7 +27,7 @@ class TemplateSection extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text('My Templates', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary))),
+              Expanded(child: Text(AppLocalizations.of(context).templateMyTemplates, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textPrimary))),
               GestureDetector(
                 onTap: () => TemplateEditorSheet.show(context, null, notifier),
                 child: Container(
@@ -40,7 +41,7 @@ class TemplateSection extends ConsumerWidget {
                     children: [
                       Icon(Icons.add, size: 14, color: AppColors.orange),
                       const SizedBox(width: 4),
-                      Text('New', style: TextStyle(fontSize: 12, color: AppColors.orange, fontWeight: FontWeight.w600)),
+                      Text(AppLocalizations.of(context).templateNew, style: TextStyle(fontSize: 12, color: AppColors.orange, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -54,9 +55,9 @@ class TemplateSection extends ConsumerWidget {
                 children: [
                   Icon(Icons.fitness_center_outlined, size: 32, color: theme.textMuted.withValues(alpha: 0.4)),
                   const SizedBox(height: 8),
-                  Text('No custom templates yet', style: TextStyle(fontSize: 12, color: theme.textMuted)),
+                  Text(AppLocalizations.of(context).templateNoCustomTemplatesYet, style: TextStyle(fontSize: 12, color: theme.textMuted)),
                   const SizedBox(height: 4),
-                  Text('Add one or use a pre-built template below', style: TextStyle(fontSize: 11, color: theme.textMuted.withValues(alpha: 0.7))),
+                  Text(AppLocalizations.of(context).templateAddOneOrUse, style: TextStyle(fontSize: 11, color: theme.textMuted.withValues(alpha: 0.7))),
                 ],
               ),
             ),
@@ -65,7 +66,7 @@ class TemplateSection extends ConsumerWidget {
             ...templates.map((t) => _buildTemplateRow(context, t, notifier)),
           ],
           const SizedBox(height: 16),
-          Text('Pre-built Templates', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textMuted)),
+          Text(AppLocalizations.of(context).templatePreBuiltTemplates, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textMuted)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

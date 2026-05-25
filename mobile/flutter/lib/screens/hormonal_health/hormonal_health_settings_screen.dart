@@ -8,6 +8,7 @@ import '../settings/sections/kegel_settings_section.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Settings screen for hormonal health configuration
 class HormonalHealthSettingsScreen extends ConsumerStatefulWidget {
   const HormonalHealthSettingsScreen({super.key});
@@ -29,7 +30,7 @@ class _HormonalHealthSettingsScreenState
 
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Hormonal Health Settings',
+        title: AppLocalizations.of(context).hormonalHealthSettingsHormonalHealthSettings,
       ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -102,14 +103,14 @@ class _HormonalHealthSettingsScreenState
     return Column(
       children: [
         ListTile(
-          title: const Text('Gender Identity'),
-          subtitle: Text(profile?.gender?.displayName ?? 'Not set'),
+          title: Text(AppLocalizations.of(context).hormonalHealthSettingsGenderIdentity),
+          subtitle: Text(profile?.gender?.displayName ?? AppLocalizations.of(context).workoutPreferencesCardNotSet),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _showGenderPicker(context, user.id, profile),
         ),
         ListTile(
-          title: const Text('Birth Sex'),
-          subtitle: Text(profile?.birthSex?.displayName ?? 'Not set'),
+          title: Text(AppLocalizations.of(context).hormonalHealthSettingsBirthSex),
+          subtitle: Text(profile?.birthSex?.displayName ?? AppLocalizations.of(context).workoutPreferencesCardNotSet),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _showBirthSexPicker(context, user.id, profile),
         ),
@@ -145,7 +146,7 @@ class _HormonalHealthSettingsScreenState
           ),
         ListTile(
           leading: const Icon(Icons.add_circle_outline),
-          title: const Text('Add Hormone Goal'),
+          title: Text(AppLocalizations.of(context).hormonalHealthSettingsAddHormoneGoal),
           onTap: () => _showHormoneGoalsPicker(context, user.id, goals),
         ),
       ],
@@ -160,8 +161,8 @@ class _HormonalHealthSettingsScreenState
     return Column(
       children: [
         SwitchListTile(
-          title: const Text('Enable Cycle Tracking'),
-          subtitle: const Text('Track your menstrual cycle for optimized workouts'),
+          title: Text(AppLocalizations.of(context).hormonalHealthSettingsEnableCycleTracking),
+          subtitle: Text(AppLocalizations.of(context).hormonalHealthSettingsTrackYourMenstrualCycle),
           value: profile?.menstrualTrackingEnabled ?? false,
           onChanged: (value) async {
             await _updateProfile(user.id, {'menstrual_tracking_enabled': value});
@@ -169,19 +170,19 @@ class _HormonalHealthSettingsScreenState
         ),
         if (profile?.menstrualTrackingEnabled ?? false) ...[
           ListTile(
-            title: const Text('Cycle Length'),
+            title: Text(AppLocalizations.of(context).hormonalHealthSettingsCycleLength),
             subtitle: Text('${profile?.cycleLengthDays ?? 28} days'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showCycleLengthPicker(context, user.id, profile),
           ),
           ListTile(
-            title: const Text('Period Duration'),
+            title: Text(AppLocalizations.of(context).hormonalHealthSettingsPeriodDuration),
             subtitle: Text('${profile?.typicalPeriodDurationDays ?? 5} days'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showPeriodDurationPicker(context, user.id, profile),
           ),
           ListTile(
-            title: const Text('Last Period Start'),
+            title: Text(AppLocalizations.of(context).hormonalHealthSettingsLastPeriodStart),
             subtitle: Text(profile?.lastPeriodStartDate != null
                 ? _formatDate(profile!.lastPeriodStartDate!)
                 : 'Not set'),
@@ -200,9 +201,9 @@ class _HormonalHealthSettingsScreenState
     return Column(
       children: [
         SwitchListTile(
-          title: const Text('Cycle-Sync Workouts'),
-          subtitle: const Text(
-              'Adjust workout intensity based on your cycle phase'),
+          title: Text(AppLocalizations.of(context).hormonalHealthSettingsCycleSyncWorkouts),
+          subtitle: Text(
+              AppLocalizations.of(context).hormonalHealthSettingsAdjustWorkoutIntensityBased),
           value: profile?.cycleSyncWorkouts ?? false,
           onChanged: profile?.menstrualTrackingEnabled == true
               ? (value) async {
@@ -211,9 +212,9 @@ class _HormonalHealthSettingsScreenState
               : null,
         ),
         SwitchListTile(
-          title: const Text('Cycle-Sync Nutrition'),
+          title: Text(AppLocalizations.of(context).hormonalHealthSettingsCycleSyncNutrition),
           subtitle:
-              const Text('Get nutrition tips based on your cycle phase'),
+              Text(AppLocalizations.of(context).hormonalHealthSettingsGetNutritionTipsBased),
           value: profile?.cycleSyncNutrition ?? false,
           onChanged: profile?.menstrualTrackingEnabled == true
               ? (value) async {
@@ -222,8 +223,8 @@ class _HormonalHealthSettingsScreenState
               : null,
         ),
         SwitchListTile(
-          title: const Text('Hormone-Supportive Foods'),
-          subtitle: const Text('Include hormone-friendly food suggestions'),
+          title: Text(AppLocalizations.of(context).hormonalHealthSettingsHormoneSupportiveFoods),
+          subtitle: Text(AppLocalizations.of(context).hormonalHealthSettingsIncludeHormoneFriendlyFood),
           value: profile?.includeHormoneSupportiveFoods ?? true,
           onChanged: (value) async {
             await _updateProfile(
@@ -231,8 +232,8 @@ class _HormonalHealthSettingsScreenState
           },
         ),
         SwitchListTile(
-          title: const Text('Hormone-Supportive Exercises'),
-          subtitle: const Text('Prioritize exercises that support your goals'),
+          title: Text(AppLocalizations.of(context).hormonalHealthSettingsHormoneSupportiveExercises),
+          subtitle: Text(AppLocalizations.of(context).hormonalHealthSettingsPrioritizeExercisesThatSupp),
           value: profile?.includeHormoneSupportiveExercises ?? true,
           onChanged: (value) async {
             await _updateProfile(
@@ -274,7 +275,7 @@ class _HormonalHealthSettingsScreenState
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text('Gender Identity',
+                  child: Text(AppLocalizations.of(context).hormonalHealthSettingsGenderIdentity,
                       style: Theme.of(context).textTheme.titleMedium),
                 ),
                 ...Gender.values.map((gender) {
@@ -316,7 +317,7 @@ class _HormonalHealthSettingsScreenState
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text('Birth Sex',
+                  child: Text(AppLocalizations.of(context).hormonalHealthSettingsBirthSex,
                       style: Theme.of(context).textTheme.titleMedium),
                 ),
                 ...BirthSex.values.map((sex) {
@@ -366,7 +367,7 @@ class _HormonalHealthSettingsScreenState
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text('Select Hormone Goals',
+                    child: Text(AppLocalizations.of(context).hormonalHealthSettingsSelectHormoneGoals,
                         style: Theme.of(context).textTheme.titleMedium),
                   ),
                   Expanded(
@@ -398,7 +399,7 @@ class _HormonalHealthSettingsScreenState
                     padding: const EdgeInsets.all(16),
                     child: FilledButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Done'),
+                      child: Text(AppLocalizations.of(context).commonDone),
                     ),
                   ),
                 ],
@@ -433,7 +434,7 @@ class _HormonalHealthSettingsScreenState
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text('Cycle Length',
+                      child: Text(AppLocalizations.of(context).hormonalHealthSettingsCycleLength,
                           style: Theme.of(context).textTheme.titleMedium),
                     ),
                     Slider(
@@ -455,7 +456,7 @@ class _HormonalHealthSettingsScreenState
                             userId, {'cycle_length_days': selected});
                         if (context.mounted) Navigator.pop(context);
                       },
-                      child: const Text('Save'),
+                      child: Text(AppLocalizations.of(context).buttonSave),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -484,7 +485,7 @@ class _HormonalHealthSettingsScreenState
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text('Period Duration',
+                      child: Text(AppLocalizations.of(context).hormonalHealthSettingsPeriodDuration,
                           style: Theme.of(context).textTheme.titleMedium),
                     ),
                     Slider(
@@ -506,7 +507,7 @@ class _HormonalHealthSettingsScreenState
                             userId, {'typical_period_duration_days': selected});
                         if (context.mounted) Navigator.pop(context);
                       },
-                      child: const Text('Save'),
+                      child: Text(AppLocalizations.of(context).buttonSave),
                     ),
                     const SizedBox(height: 16),
                   ],

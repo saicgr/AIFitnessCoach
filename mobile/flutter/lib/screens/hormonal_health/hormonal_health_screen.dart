@@ -12,6 +12,7 @@ import 'widgets/quick_stats_card.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Main screen for hormonal health tracking and insights
 class HormonalHealthScreen extends ConsumerStatefulWidget {
   const HormonalHealthScreen({super.key});
@@ -30,7 +31,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
 
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Hormonal Health',
+        title: AppLocalizations.of(context).hormonalHealthHormonalHealth,
         actions: [
           PillAppBarAction(icon: Icons.settings_outlined, onTap: () => _navigateToSettings(context)),
         ],
@@ -48,7 +49,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showLogSheet(context),
         icon: const Icon(Icons.add),
-        label: const Text('Log Today'),
+        label: Text(AppLocalizations.of(context).hormonalHealthLogToday),
       ),
     );
   }
@@ -84,7 +85,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to load hormonal health data',
+              AppLocalizations.of(context).hormonalHealthFailedToLoadHormonal,
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -98,7 +99,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
             FilledButton.icon(
               onPressed: () => ref.invalidate(hormonalProfileProvider),
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -128,7 +129,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Hormonal Health Tracking',
+              AppLocalizations.of(context).hormonalHealthHormonalHealthTracking,
               style: theme.textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
@@ -145,7 +146,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
             FilledButton.icon(
               onPressed: () => _navigateToSettings(context),
               icon: const Icon(Icons.arrow_forward),
-              label: const Text('Get Started'),
+              label: Text(AppLocalizations.of(context).workoutStateCardsGetStarted),
             ),
           ],
         ),
@@ -221,7 +222,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  "Today's Check-in",
+                  AppLocalizations.of(context).hormonalHealthTodaySCheckIn,
                   style: theme.textTheme.titleMedium,
                 ),
               ],
@@ -229,7 +230,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
             const SizedBox(height: 12),
             todayLogAsync.when(
               loading: () => const LinearProgressIndicator(),
-              error: (_, __) => const Text('Unable to load today\'s log'),
+              error: (_, __) => Text(AppLocalizations.of(context).hormonalHealthUnableToLoadToday),
               data: (log) {
                 if (log == null) {
                   return ListTile(
@@ -245,11 +246,11 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
                         color: theme.colorScheme.secondary,
                       ),
                     ),
-                    title: const Text('No check-in yet today'),
-                    subtitle: const Text('Log how you\'re feeling'),
+                    title: Text(AppLocalizations.of(context).hormonalHealthNoCheckInYet),
+                    subtitle: Text(AppLocalizations.of(context).hormonalHealthLogHowYouRe),
                     trailing: FilledButton.tonal(
                       onPressed: () => _showLogSheet(context),
-                      child: const Text('Log Now'),
+                      child: Text(AppLocalizations.of(context).hormonalHealthLogNow),
                     ),
                   );
                 }
@@ -313,7 +314,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
             const SizedBox(width: 8),
             Text('$value/10', style: theme.textTheme.labelSmall),
           ] else
-            Text('Not logged', style: theme.textTheme.bodySmall),
+            Text(AppLocalizations.of(context).hormonalHealthNotLogged, style: theme.textTheme.bodySmall),
         ],
       ),
     );
@@ -374,7 +375,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Recommendations',
+                  AppLocalizations.of(context).muscleAnalyticsRecommendations,
                   style: theme.textTheme.titleMedium,
                 ),
               ],
@@ -436,7 +437,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Period start logged')),
+            SnackBar(content: Text(AppLocalizations.of(context).hormonalHealthPeriodStartLogged)),
           );
         }
       } catch (e) {

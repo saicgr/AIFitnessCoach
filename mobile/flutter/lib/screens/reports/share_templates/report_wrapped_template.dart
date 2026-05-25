@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../workout/widgets/share_templates/_share_common.dart';
 import '_report_common.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Wrapped — Spotify-Wrapped styled vertical poster: accent-gradient canvas,
 /// a slanted tape strip of highlights, and a giant hero number anchored low.
 /// Reads as a year-end recap moment rather than a dashboard.
@@ -79,7 +80,7 @@ class ReportWrappedTemplate extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'WRAPPED',
+                  AppLocalizations.of(context).wrappedTemplateWrapped,
                   style: const TextStyle(
                     fontSize: 56,
                     fontWeight: FontWeight.w900,
@@ -164,7 +165,7 @@ class ReportWrappedTemplate extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  (data.userDisplayName ?? 'Lifter').toUpperCase(),
+                  (data.userDisplayName ?? AppLocalizations.of(context).reportWrappedTemplateLifter).toUpperCase(),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,

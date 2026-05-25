@@ -17,7 +17,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Available Equipment',
+          AppLocalizations.of(context).addGymProfileAvailableEquipment,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -26,7 +26,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
         ),
         const SizedBox(height: 8),
         Text(
-          'Customize the equipment available at this gym, including weight ranges',
+          AppLocalizations.of(context).addGymProfileCustomizeTheEquipmentAvaila,
           style: TextStyle(
             fontSize: 14,
             color: textSecondary,
@@ -40,7 +40,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
         FilledButton.tonalIcon(
           onPressed: _isLoading ? null : _openImportSheet,
           icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-          label: const Text('Import from PDF, photo, or URL'),
+          label: Text(AppLocalizations.of(context).addGymProfileImportFromPdfPhoto),
           style: FilledButton.styleFrom(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -97,7 +97,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Tap to add, remove, or edit weights',
+                        AppLocalizations.of(context).editGymProfileTapToAddRemove,
                         style: TextStyle(
                           fontSize: 13,
                           color: accentColor,
@@ -140,7 +140,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                   HapticService.light();
                 },
                 child: Text(
-                  'Reset All',
+                  AppLocalizations.of(context).moodCardResetAll,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.red.shade400,
@@ -319,7 +319,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Workout Schedule',
+          AppLocalizations.of(context).addGymProfileWorkoutSchedule,
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
         ),
         const SizedBox(height: 8),
@@ -346,7 +346,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
               ),
             if (accountDays.isNotEmpty && !_listEquals(accountDays, activeDays))
               _scheduleQuickFillChip(
-                label: 'Account default',
+                label: AppLocalizations.of(context).addGymProfileAccountDefault,
                 icon: Icons.person_rounded,
                 accent: accentColor,
                 isDark: isDark,
@@ -354,7 +354,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                 onTap: () => applyPreset(accountDays),
               ),
             _scheduleQuickFillChip(
-              label: 'Clear',
+              label: AppLocalizations.of(context).vacationModeClear,
               icon: Icons.refresh_rounded,
               accent: accentColor,
               isDark: isDark,
@@ -488,10 +488,10 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
 
         // Training split picker (optional). Mirrors the EditGymProfileSheet
         // selector so toggling between create + edit is familiar.
-        Text('Training Split', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+        Text(AppLocalizations.of(context).workoutSettingsTrainingSplit, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
         const SizedBox(height: 4),
         Text(
-          'Optional — leave on "Let AI Decide" if unsure.',
+          AppLocalizations.of(context).addGymProfileOptionalLeaveOnLet,
           style: TextStyle(fontSize: 12, color: textSecondary),
         ),
         const SizedBox(height: 10),
@@ -657,7 +657,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  _name.isEmpty ? 'Gym Name' : _name,
+                  _name.isEmpty ? AppLocalizations.of(context).addGymProfileGymName : _name,
                   // Accent flows through the icon tile + border below, not
                   // the headline text. Painting the name in
                   // `selectedColorObj` made it invisible whenever the
@@ -682,7 +682,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
 
         // Icon selection
         Text(
-          'Icon',
+          AppLocalizations.of(context).editGymProfileIcon,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -729,7 +729,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
 
         // Color selection
         Text(
-          'Color',
+          AppLocalizations.of(context).editGymProfileColor,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -783,7 +783,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Match app theme',
+                    AppLocalizations.of(context).addGymProfileMatchAppTheme,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: _usingAppTheme ? FontWeight.w600 : FontWeight.w400,

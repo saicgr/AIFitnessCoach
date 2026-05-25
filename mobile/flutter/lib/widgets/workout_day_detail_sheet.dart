@@ -8,6 +8,7 @@ import '../data/providers/consistency_provider.dart';
 import '../data/services/api_client.dart';
 import 'glass_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Bottom sheet showing detailed workout information for a specific day
 class WorkoutDayDetailSheet extends ConsumerWidget {
   final String date;
@@ -175,25 +176,25 @@ class _DetailContent extends StatelessWidget {
           _QuickStat(
             icon: Icons.timer_outlined,
             value: detail.formattedDuration,
-            label: 'Duration',
+            label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
           ),
         if (detail.totalVolume != null)
           _QuickStat(
             icon: Icons.fitness_center,
             value: detail.formattedVolume,
-            label: 'Volume',
+            label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
           ),
         if (detail.caloriesBurned != null)
           _QuickStat(
             icon: Icons.local_fire_department_outlined,
             value: '${detail.caloriesBurned}',
-            label: 'Calories',
+            label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
           ),
         if (detail.averageRpe != null)
           _QuickStat(
             icon: Icons.speed,
             value: detail.averageRpe!.toStringAsFixed(1),
-            label: 'Avg RPE',
+            label: AppLocalizations.of(context).workoutSummaryAdvancedAvgRpe,
           ),
       ],
     );
@@ -225,7 +226,7 @@ class _DetailContent extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Synced from Health',
+              AppLocalizations.of(context).workoutDayDetailSyncedFromHealth,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -251,31 +252,31 @@ class _DetailContent extends StatelessWidget {
                   _ImportStat(
                     icon: Icons.timer_outlined,
                     value: detail.formattedDuration,
-                    label: 'Duration',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                   ),
                 if (calories != null)
                   _ImportStat(
                     icon: Icons.local_fire_department_outlined,
                     value: '${(calories is num ? calories.toInt() : calories)}',
-                    label: 'Calories',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                   ),
                 if (distance != null && (distance as num) > 0)
                   _ImportStat(
                     icon: Icons.straighten,
                     value: '${(distance / 1000).toStringAsFixed(1)} km',
-                    label: 'Distance',
+                    label: AppLocalizations.of(context).workoutImportDistance,
                   ),
                 if (avgHR != null)
                   _ImportStat(
                     icon: Icons.favorite_outline,
                     value: '$avgHR',
-                    label: 'Avg HR',
+                    label: AppLocalizations.of(context).workoutDayDetailAvgHr,
                   ),
                 if (maxHR != null)
                   _ImportStat(
                     icon: Icons.favorite,
                     value: '$maxHR',
-                    label: 'Max HR',
+                    label: AppLocalizations.of(context).workoutDayDetailMaxHr,
                   ),
               ],
             ),
@@ -292,7 +293,7 @@ class _DetailContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _SectionHeader(title: 'Exercises'),
+            child: _SectionHeader(title: AppLocalizations.of(context).authIntroExercises),
           ),
         ),
         SliverList(
@@ -311,7 +312,7 @@ class _DetailContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(title: 'Muscles Worked'),
+                _SectionHeader(title: AppLocalizations.of(context).workoutDayDetailMusclesWorked),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
@@ -333,7 +334,7 @@ class _DetailContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(title: 'Coach Feedback'),
+                _SectionHeader(title: AppLocalizations.of(context).workoutDayDetailCoachFeedback),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -393,7 +394,7 @@ class _DetailContent extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Workout Missed',
+              AppLocalizations.of(context).workoutDayDetailWorkoutMissed,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -432,14 +433,14 @@ class _DetailContent extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Rest Day',
+              AppLocalizations.of(context).workoutDayDetailRestDay,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Recovery is just as important as training. Your muscles grow during rest!',
+              AppLocalizations.of(context).workoutDayDetailRecoveryIsJustAs,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -624,7 +625,7 @@ class _ExerciseCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        exercise.prType ?? 'PR',
+                        exercise.prType ?? AppLocalizations.of(context).aiCoachReportPr,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.yellow,
                               fontWeight: FontWeight.w600,
@@ -654,7 +655,7 @@ class _ExerciseCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Best Set',
+                  AppLocalizations.of(context).workoutDayDetailBestSet,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textMuted,
                       ),
@@ -836,7 +837,7 @@ class _ErrorContent extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Failed to load details',
+              AppLocalizations.of(context).workoutDayDetailFailedToLoadDetails,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),

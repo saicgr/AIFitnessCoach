@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Glassmorphic continue button for quiz screens.
 class QuizContinueButton extends StatelessWidget {
   final bool canProceed;
@@ -37,7 +38,7 @@ class QuizContinueButton extends StatelessWidget {
                   height: 56,
                   alignment: Alignment.center,
                   child: Text(
-                    skipText ?? 'Skip',
+                    skipText ?? AppLocalizations.of(context).onboardingSkip,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: t.textMuted),
                   ),
                 ),
@@ -74,7 +75,7 @@ class QuizContinueButton extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          isLastQuestion ? 'See My Plan' : 'Continue',
+                          isLastQuestion ? AppLocalizations.of(context).quizContinueButtonSeeMyPlan : AppLocalizations.of(context).onboardingContinueButton,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

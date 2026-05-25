@@ -12,6 +12,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Enhanced Exercise Notes Sheet with audio, photo, and expandable text input
 class EnhancedNotesSheet extends StatefulWidget {
   final String? initialNotes;
@@ -133,7 +134,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
       if (!await _audioRecorder.hasPermission()) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Microphone permission required')),
+            SnackBar(content: Text(AppLocalizations.of(context).enhancedNotesMicrophonePermissionRequired)),
           );
         }
         return;
@@ -259,7 +260,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
     if (!_speechAvailable) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Speech recognition not available')),
+          SnackBar(content: Text(AppLocalizations.of(context).logMealSheetSpeechRecognitionNotAvailab)),
         );
       }
       return;
@@ -338,7 +339,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
                         Icon(Icons.sticky_note_2_outlined, color: accentColor, size: 22),
                         const SizedBox(width: 8),
                         Text(
-                          'Exercise Notes',
+                          AppLocalizations.of(context).enhancedNotesExerciseNotes,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -356,7 +357,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
                               setState(() => _notesController.clear());
                             },
                             child: Text(
-                              'Clear',
+                              AppLocalizations.of(context).vacationModeClear,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -414,7 +415,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
                       color: textColor,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Add notes about form, cues, or modifications...',
+                      hintText: AppLocalizations.of(context).enhancedNotesAddNotesAboutForm,
                       hintStyle: TextStyle(color: textMuted),
                       filled: true,
                       fillColor: isDark
@@ -462,8 +463,8 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Done',
+                    child: Text(
+                      AppLocalizations.of(context).commonDone,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -488,7 +489,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
           // Voice-to-text button (transcription)
           _buildToolbarButton(
             icon: _isListening ? Icons.hearing : Icons.keyboard_voice,
-            label: _isListening ? 'Listening...' : 'Dictate',
+            label: _isListening ? AppLocalizations.of(context).quickLogFabListening : AppLocalizations.of(context).enhancedNotesDictate,
             onTap: _toggleListening,
             isActive: _isListening,
             activeColor: AppColors.cyan,
@@ -500,7 +501,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
           // Audio recording button (voice memo)
           _buildToolbarButton(
             icon: _isRecording ? Icons.stop : Icons.mic,
-            label: _isRecording ? 'Stop' : 'Record',
+            label: _isRecording ? AppLocalizations.of(context).hearInsightButtonStop : AppLocalizations.of(context).enhancedNotesRecord,
             onTap: _toggleRecording,
             isActive: _isRecording,
             activeColor: AppColors.error,
@@ -512,7 +513,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
           // Camera button
           _buildToolbarButton(
             icon: Icons.camera_alt,
-            label: 'Camera',
+            label: AppLocalizations.of(context).storyCreateCamera,
             onTap: _openCamera,
             isDark: isDark,
             textMuted: textMuted,
@@ -522,7 +523,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
           // Gallery button
           _buildToolbarButton(
             icon: Icons.photo_library,
-            label: 'Gallery',
+            label: AppLocalizations.of(context).storyCreateGallery,
             onTap: _openGallery,
             isDark: isDark,
             textMuted: textMuted,
@@ -607,7 +608,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
           ),
           const SizedBox(width: 12),
           Text(
-            'Listening... speak now',
+            AppLocalizations.of(context).exerciseSwapSheetListeningSpeakNow,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -657,7 +658,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
           ),
           const SizedBox(width: 12),
           Text(
-            'Recording...',
+            AppLocalizations.of(context).enhancedNotesRecording,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -715,7 +716,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Voice Note',
+                  AppLocalizations.of(context).enhancedNotesVoiceNote,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

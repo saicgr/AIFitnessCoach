@@ -18,6 +18,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'food_source_indicator.dart';
 import 'score_explain_sheet.dart';
 import '../../../data/models/companion_suggestion.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 
 part 'food_browser_panel_part_food_browser_filter.dart';

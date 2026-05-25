@@ -8,6 +8,7 @@ import '../../data/repositories/race_predictor_repository.dart';
 import '../../screens/cardio/race_predictor_detail_screen.dart';
 import '../../screens/pillar/widgets/ask_coach_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Race-time predictor card for the cardio profile.
 ///
 /// Renders 4 chips (5K / 10K / Half / Marathon) showing predicted finish
@@ -73,7 +74,7 @@ class _RacePredictorShell extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Race predictor',
+                  AppLocalizations.of(context).racePredictorDetailRacePredictor,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: onSurface,
@@ -142,7 +143,7 @@ class _EmptyBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Run a measured km or two for your first prediction',
+          AppLocalizations.of(context).racePredictorCardRunAMeasuredKm,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: onSurface.withValues(alpha: 0.75),
             height: 1.35,
@@ -157,7 +158,7 @@ class _EmptyBody extends StatelessWidget {
               GoRouter.of(context).push('/cardio/log');
             },
             icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Log run'),
+            label: Text(AppLocalizations.of(context).racePredictorCardLogRun),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             ),

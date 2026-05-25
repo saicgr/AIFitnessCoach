@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/hormonal_health.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card displaying user's hormone optimization goals
 class HormoneGoalsCard extends StatelessWidget {
   final List<HormoneGoal> goals;
@@ -29,7 +30,7 @@ class HormoneGoalsCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'No hormone goals set',
+                AppLocalizations.of(context).hormoneGoalsCardNoHormoneGoalsSet,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -37,7 +38,7 @@ class HormoneGoalsCard extends StatelessWidget {
               const SizedBox(height: 8),
               FilledButton.tonal(
                 onPressed: onEditGoals,
-                child: const Text('Set Goals'),
+                child: Text(AppLocalizations.of(context).hormoneGoalsCardSetGoals),
               ),
             ],
           ),
@@ -60,14 +61,14 @@ class HormoneGoalsCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Your Goals',
+                  AppLocalizations.of(context).nutritionSettingsScreenYourGoals,
                   style: theme.textTheme.titleMedium,
                 ),
                 const Spacer(),
                 if (onEditGoals != null)
                   TextButton(
                     onPressed: onEditGoals,
-                    child: const Text('Edit'),
+                    child: Text(AppLocalizations.of(context).commonEdit),
                   ),
               ],
             ),

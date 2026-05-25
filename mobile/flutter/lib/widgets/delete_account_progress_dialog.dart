@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Modal progress dialog for the Delete Account flow.
 /// Shows a spinner + a phase label so the user doesn't see a frozen screen.
 /// The label is driven by a [ValueListenable<String>] so callers can update
@@ -54,7 +55,7 @@ class DeleteAccountProgressDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Deleting your account',
+                    AppLocalizations.of(context).deleteAccountProgressDeletingYourAccount,
                     style: TextStyle(
                       color: textColor,
                       fontSize: 16,

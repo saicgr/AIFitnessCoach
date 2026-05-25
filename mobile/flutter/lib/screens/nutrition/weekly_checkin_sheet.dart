@@ -12,6 +12,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/nav_bar_hider_mixin.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'weekly_checkin_sheet_part_weekly_summary_card.dart';
 part 'weekly_checkin_sheet_part_recommendation_option_card.dart';
 
@@ -207,7 +208,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
           backgroundColor: bgColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
-            'Disable Weekly Check-In?',
+            AppLocalizations.of(context).weeklyCheckinDisableWeeklyCheckIn,
             style: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
           ),
           content: Column(
@@ -215,7 +216,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'You\'ll miss out on:',
+                AppLocalizations.of(context).weeklyCheckinYouLlMissOut,
                 style: TextStyle(color: textMuted, fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
@@ -228,7 +229,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
               _buildAdvantageRow(Icons.speed_rounded, 'TDEE recalculation from actual weight trends', textPrimary),
               const SizedBox(height: 16),
               Text(
-                'You can re-enable this anytime in Nutrition Settings.',
+                AppLocalizations.of(context).weeklyCheckinYouCanReEnable,
                 style: TextStyle(color: textMuted.withValues(alpha: 0.7), fontSize: 12),
               ),
             ],
@@ -236,11 +237,11 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Keep It', style: TextStyle(color: teal, fontWeight: FontWeight.w600)),
+              child: Text(AppLocalizations.of(context).weeklyCheckinKeepIt, style: TextStyle(color: teal, fontWeight: FontWeight.w600)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text('Disable', style: TextStyle(color: Colors.red.shade400)),
+              child: Text(AppLocalizations.of(context).weeklyCheckinDisable, style: TextStyle(color: Colors.red.shade400)),
             ),
           ],
         );
@@ -401,7 +402,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Weekly Check-In',
+                        AppLocalizations.of(context).weeklyCheckinWeeklyCheckIn,
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -409,7 +410,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                         ),
                       ),
                       Text(
-                        'Appears once a week',
+                        AppLocalizations.of(context).weeklyCheckinAppearsOnceAWeek,
                         style: TextStyle(fontSize: 14, color: textMuted),
                       ),
                     ],
@@ -451,7 +452,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                   const SizedBox(height: 24),
 
                   Text(
-                    'What happens each week',
+                    AppLocalizations.of(context).weeklyCheckinWhatHappensEachWeek,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -462,8 +463,8 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
 
                   _buildIntroStep(
                     number: '1',
-                    title: 'We analyse your week',
-                    description: 'Your logged meals and weight data are used to calculate your real TDEE — more accurate than any formula.',
+                    title: AppLocalizations.of(context).weeklyCheckinWeAnalyseYourWeek,
+                    description: AppLocalizations.of(context).weeklyCheckinYourLoggedMealsAnd,
                     color: teal,
                     textPrimary: textPrimary,
                     textMuted: textMuted,
@@ -473,8 +474,8 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                   const SizedBox(height: 12),
                   _buildIntroStep(
                     number: '2',
-                    title: 'You see 2–3 plan options',
-                    description: 'Conservative, Moderate, or Aggressive — each with different calorie targets and expected weekly change.',
+                    title: AppLocalizations.of(context).weeklyCheckinYouSee23,
+                    description: AppLocalizations.of(context).weeklyCheckinConservativeModerateOrAgg,
                     color: teal,
                     textPrimary: textPrimary,
                     textMuted: textMuted,
@@ -484,8 +485,8 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                   const SizedBox(height: 12),
                   _buildIntroStep(
                     number: '3',
-                    title: 'You choose — or skip',
-                    description: 'Pick a plan to update your targets, or skip to keep things as they are. Nothing changes automatically.',
+                    title: AppLocalizations.of(context).weeklyCheckinYouChooseOrSkip,
+                    description: AppLocalizations.of(context).weeklyCheckinPickAPlanTo,
                     color: teal,
                     textPrimary: textPrimary,
                     textMuted: textMuted,
@@ -509,7 +510,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'You can turn this off anytime in Nutrition Settings → Weekly Check-in Reminders.',
+                            AppLocalizations.of(context).weeklyCheckinYouCanTurnThis,
                             style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
                           ),
                         ),
@@ -541,8 +542,8 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Got it — Show My Check-In',
+                child: Text(
+                  AppLocalizations.of(context).weeklyCheckinGotItShowMy,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -629,7 +630,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             Icon(Icons.insights, color: teal, size: 22),
             const SizedBox(width: 10),
             Text(
-              'What is Weekly Check-In?',
+              AppLocalizations.of(context).weeklyCheckinWhatIsWeeklyCheck,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
@@ -674,7 +675,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Got it', style: TextStyle(color: teal, fontWeight: FontWeight.w600)),
+            child: Text(AppLocalizations.of(context).weightIncrementsGotIt, style: TextStyle(color: teal, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -723,7 +724,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Weekly Check-In',
+                        AppLocalizations.of(context).weeklyCheckinWeeklyCheckIn,
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -731,7 +732,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                         ),
                       ),
                       Text(
-                        'Review progress & choose your path',
+                        AppLocalizations.of(context).weeklyCheckinReviewProgressChooseYour,
                         style: TextStyle(fontSize: 14, color: textMuted),
                       ),
                     ],
@@ -740,7 +741,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                 IconButton(
                   onPressed: () => _showInfoDialog(context, textPrimary, textMuted, teal),
                   icon: Icon(Icons.help_outline_rounded, color: textMuted, size: 22),
-                  tooltip: 'What is this?',
+                  tooltip: AppLocalizations.of(context).weeklyCheckinWhatIsThis,
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
@@ -760,7 +761,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                         CircularProgressIndicator(color: teal),
                         const SizedBox(height: 16),
                         Text(
-                          'Analyzing your progress...',
+                          AppLocalizations.of(context).weeklyCheckinAnalyzingYourProgress,
                           style: TextStyle(color: textSecondary),
                         ),
                       ],
@@ -892,7 +893,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: Text('Keep Current',
+                            child: Text(AppLocalizations.of(context).weeklyCheckinKeepCurrent,
                                 style: TextStyle(color: textMuted)),
                           ),
                         ),
@@ -908,7 +909,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text('Apply Changes'),
+                            child: Text(AppLocalizations.of(context).weeklyCheckinApplyChanges),
                           ),
                         ),
                       ],
@@ -918,14 +919,14 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
                     child: Text(
-                      'Skip this week',
+                      AppLocalizations.of(context).weeklyCheckinSkipThisWeek,
                       style: TextStyle(color: textMuted, fontSize: 14),
                     ),
                   ),
                   TextButton(
                     onPressed: () => _showDisableConfirmation(textPrimary, textMuted, teal),
                     child: Text(
-                      'Don\'t show this again',
+                      AppLocalizations.of(context).weeklyCheckinDonTShowThis,
                       style: TextStyle(
                         color: textMuted.withValues(alpha: 0.6),
                         fontSize: 13,
@@ -964,7 +965,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             Icon(Icons.error_outline, size: 64, color: textMuted),
             const SizedBox(height: 16),
             Text(
-              'Unable to load data',
+              AppLocalizations.of(context).weeklyCheckinUnableToLoadData,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -973,7 +974,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Please try again later',
+              _error ?? AppLocalizations.of(context).weeklyCheckinPleaseTryAgainLater,
               style: TextStyle(fontSize: 14, color: textMuted),
               textAlign: TextAlign.center,
             ),
@@ -981,7 +982,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             ElevatedButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
               style: ElevatedButton.styleFrom(
                 backgroundColor: teal,
                 foregroundColor: Colors.white,

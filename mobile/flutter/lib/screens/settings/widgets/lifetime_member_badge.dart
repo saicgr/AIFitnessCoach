@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A badge widget that displays lifetime member status.
 ///
 /// Shows:
@@ -106,7 +107,7 @@ class _CompactBadge extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              tier?.displayName ?? 'Lifetime',
+              tier?.displayName ?? AppLocalizations.of(context).lifetimeMemberBadgeLifetime,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -115,7 +116,7 @@ class _CompactBadge extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              'Member',
+              AppLocalizations.of(context).lifetimeMemberBadgeMember,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -231,7 +232,7 @@ class _ExpandedBadge extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            tier?.displayName ?? 'Lifetime',
+                            tier?.displayName ?? AppLocalizations.of(context).lifetimeMemberBadgeLifetime,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -249,7 +250,7 @@ class _ExpandedBadge extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              'LIFETIME',
+                              AppLocalizations.of(context).subscriptionManagementScreenLifetime,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
@@ -304,7 +305,7 @@ class _ExpandedBadge extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Estimated Value Received',
+                            AppLocalizations.of(context).lifetimeMemberBadgeEstimatedValueReceived,
                             style: TextStyle(
                               fontSize: 12,
                               color: textMuted,

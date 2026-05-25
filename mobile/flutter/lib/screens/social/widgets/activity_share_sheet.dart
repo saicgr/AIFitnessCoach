@@ -9,6 +9,7 @@ import '../../../utils/image_capture_utils.dart';
 import 'activity_share_card.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Activity Share Sheet - Bottom sheet for sharing social feed posts as branded card images
 ///
 /// Features:
@@ -426,8 +427,8 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.close_rounded),
                       ),
-                      const Text(
-                        'Share Post',
+                      Text(
+                        AppLocalizations.of(context).activityShareSharePost,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -472,7 +473,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Show Watermark',
+                        AppLocalizations.of(context).wrappedShareShowWatermark,
                         style: TextStyle(
                           fontSize: 14,
                           color: _showWatermark ? null : Colors.grey,
@@ -512,7 +513,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                             child: _buildShareButton(
                               onPressed: _shareToInstagram,
                               icon: Icons.camera_alt_rounded,
-                              label: 'Instagram',
+                              label: AppLocalizations.of(context).wrappedShareInstagram,
                               isPrimary: true,
                               isLoading: _isSharing,
                             ),
@@ -522,7 +523,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                             child: _buildShareButton(
                               onPressed: _shareGeneric,
                               icon: Icons.share_rounded,
-                              label: 'More',
+                              label: AppLocalizations.of(context).homeMore,
                               isPrimary: false,
                               isLoading: _isSharing,
                             ),
@@ -537,7 +538,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                             child: _buildShareButton(
                               onPressed: _saveToGallery,
                               icon: Icons.save_alt_rounded,
-                              label: 'Save Image',
+                              label: AppLocalizations.of(context).wrappedShareSaveImage,
                               isPrimary: false,
                               isLoading: _isSaving,
                             ),
@@ -547,7 +548,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                             child: _buildShareButton(
                               onPressed: _copyText,
                               icon: Icons.copy_rounded,
-                              label: 'Copy Text',
+                              label: AppLocalizations.of(context).wrappedShareCopyText,
                               isPrimary: false,
                               isLoading: false,
                             ),
@@ -783,7 +784,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                     color: isDark ? Colors.white : Colors.black,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Add a caption...',
+                    hintText: AppLocalizations.of(context).storyCreateAddACaption,
                     hintStyle: TextStyle(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.4)
@@ -820,7 +821,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        hasCaption ? _editedCaption! : 'Tap to add a caption...',
+                        hasCaption ? _editedCaption! : AppLocalizations.of(context).activityShareTapToAddA,
                         style: TextStyle(
                           fontSize: 14,
                           color: hasCaption

@@ -53,7 +53,7 @@ class _AccomplishmentCarousel extends StatelessWidget {
             Icon(Icons.military_tech_rounded, size: 14, color: Colors.white.withValues(alpha: 0.5)),
             const SizedBox(width: 6),
             Text(
-              'ACCOMPLISHMENTS',
+              AppLocalizations.of(context).levelUpDialogAccomplishments,
               style: TextStyle(
                 fontSize: compact ? 10 : 11,
                 fontWeight: FontWeight.w800,
@@ -243,8 +243,8 @@ class _AccomplishmentCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onOpenCrate,
                 icon: const Icon(Icons.lock_open_rounded, size: 14),
-                label: const Text(
-                  'OPEN CRATE',
+                label: Text(
+                  AppLocalizations.of(context).levelUpDialogOpenCrate,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -699,8 +699,8 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
                         duration: const Duration(milliseconds: 300),
                         scale: _showLevelUpFlash ? 1.0 : 0.7,
                         curve: Curves.elasticOut,
-                        child: const Text(
-                          'LEVEL UP!',
+                        child: Text(
+                          AppLocalizations.of(context).neatGamificationWidgetsLevelUp,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,

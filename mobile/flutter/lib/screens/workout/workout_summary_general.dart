@@ -20,6 +20,7 @@ import '../library/providers/muscle_group_images_provider.dart';
 import 'widgets/summary_exercise_table.dart';
 import '../../widgets/glass_sheet.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN WIDGET
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -817,7 +818,7 @@ class _HeroStatsGrid extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.timer_outlined,
                   value: _formatDuration(currentDurationSeconds),
-                  label: 'Duration',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
                   delta: durationDelta,
                   isDark: isDark,
                 ),
@@ -827,7 +828,7 @@ class _HeroStatsGrid extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.fitness_center,
                   value: '$currentExercises',
-                  label: 'Exercises',
+                  label: AppLocalizations.of(context).authIntroExercises,
                   isDark: isDark,
                 ),
               ),
@@ -836,7 +837,7 @@ class _HeroStatsGrid extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.local_fire_department_outlined,
                   value: currentCalories > 0 ? '$currentCalories' : '--',
-                  label: 'Calories',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                   isDark: isDark,
                 ),
               ),
@@ -850,7 +851,7 @@ class _HeroStatsGrid extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.show_chart,
                   value: _formatVolume(currentVolumeKg),
-                  label: 'Volume (lb)',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralVolumeLb,
                   delta: volumeDelta,
                   isDark: isDark,
                 ),
@@ -860,7 +861,7 @@ class _HeroStatsGrid extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.layers_outlined,
                   value: '$currentSets',
-                  label: 'Sets',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralSets,
                   isDark: isDark,
                 ),
               ),
@@ -869,7 +870,7 @@ class _HeroStatsGrid extends StatelessWidget {
                 child: _StatTile(
                   icon: Icons.repeat,
                   value: '$currentReps',
-                  label: 'Reps',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralReps,
                   isDark: isDark,
                 ),
               ),
@@ -992,7 +993,7 @@ class _HeartRateSection extends StatelessWidget {
               const Icon(Icons.favorite, size: 16, color: Color(0xFFF44336)),
               const SizedBox(width: 6),
               Text(
-                'Heart Rate',
+                AppLocalizations.of(context).workoutSummaryGeneralHeartRate,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -1032,7 +1033,7 @@ class _HeartRateSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Connect a heart rate monitor\nto track your zones',
+                    AppLocalizations.of(context).workoutSummaryGeneralConnectAHeartRate,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -1084,7 +1085,7 @@ class _MusclesWorkedSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'MUSCLES WORKED',
+            AppLocalizations.of(context).workoutSummaryGeneralMusclesWorked,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -1312,7 +1313,7 @@ class _ExerciseTableSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
-              'EXERCISES',
+              AppLocalizations.of(context).workoutSummaryGeneralExercises,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -1427,7 +1428,7 @@ class _PersonalRecordsSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Personal Records',
+                AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -1599,7 +1600,7 @@ class _CoachReviewSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'AI Coach Review',
+                AppLocalizations.of(context).workoutSummaryGeneralAiCoachReview,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
@@ -1767,7 +1768,7 @@ class _PostWorkoutFeedbackSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'POST-WORKOUT FEEDBACK',
+            AppLocalizations.of(context).workoutSummaryGeneralPostWorkoutFeedback,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -1782,7 +1783,7 @@ class _PostWorkoutFeedbackSection extends StatelessWidget {
               if (rating != null) ...[
                 Expanded(
                   child: _FeedbackTile(
-                    label: 'Rating',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralRating,
                     isDark: isDark,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1806,7 +1807,7 @@ class _PostWorkoutFeedbackSection extends StatelessWidget {
                 if (rating != null) const SizedBox(width: 8),
                 Expanded(
                   child: _FeedbackTile(
-                    label: 'Difficulty',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
                     isDark: isDark,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -1834,7 +1835,7 @@ class _PostWorkoutFeedbackSection extends StatelessWidget {
                   const SizedBox(width: 8),
                 Expanded(
                   child: _FeedbackTile(
-                    label: 'Energy',
+                    label: AppLocalizations.of(context).workoutSummaryGeneralEnergy,
                     isDark: isDark,
                     child: Text(
                       _titleCase(energyLevel),

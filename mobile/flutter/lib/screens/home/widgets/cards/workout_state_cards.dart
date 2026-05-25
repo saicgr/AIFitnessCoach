@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../widgets/empty_state.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Card shown when there are no workouts scheduled
 class EmptyWorkoutCard extends StatelessWidget {
   /// Callback when the generate button is pressed
@@ -64,7 +65,7 @@ class EmptyWorkoutCard extends StatelessWidget {
               const SizedBox(height: 16),
               // Heading
               Text(
-                'Ready to Start?',
+                AppLocalizations.of(context).workoutStateCardsReadyToStart,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -75,7 +76,7 @@ class EmptyWorkoutCard extends StatelessWidget {
               const SizedBox(height: 6),
               // Subtitle
               Text(
-                'Get your personalized workout plan',
+                AppLocalizations.of(context).workoutStateCardsGetYourPersonalizedWorkout,
                 style: TextStyle(
                   fontSize: 13,
                   color: textMuted,
@@ -103,7 +104,7 @@ class EmptyWorkoutCard extends StatelessWidget {
                       Icon(Icons.play_arrow_rounded, size: 22),
                       const SizedBox(width: 8),
                       Text(
-                        'Get Started',
+                        AppLocalizations.of(context).workoutStateCardsGetStarted,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -200,12 +201,12 @@ class GeneratingWorkoutsCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              message ?? 'Generating your workouts...',
+              message ?? AppLocalizations.of(context).workoutStateCardsGeneratingYourWorkouts,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              subtitle ?? 'Your personalized workout plan is being created',
+              subtitle ?? AppLocalizations.of(context).workoutStateCardsYourPersonalizedWorkoutPlan,
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
@@ -276,7 +277,7 @@ class ErrorCard extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
             ),
           ],
         ),
@@ -454,7 +455,7 @@ class StreamingWorkoutGenerationCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Creating Your Workouts',
+                        AppLocalizations.of(context).workoutStateCardsCreatingYourWorkouts,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -463,7 +464,7 @@ class StreamingWorkoutGenerationCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'AI-powered personalized program',
+                        AppLocalizations.of(context).workoutStateCardsAiPoweredPersonalizedProgra,
                         style: TextStyle(
                           fontSize: 12,
                           color: textSecondary,

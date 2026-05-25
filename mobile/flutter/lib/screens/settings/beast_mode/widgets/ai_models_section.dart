@@ -10,6 +10,7 @@ import '../../../../services/model_download_service.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// On-device AI models management — device capability, model library,
 /// download/delete, and HuggingFace token input.
 class AiModelsSection extends ConsumerStatefulWidget {
@@ -79,13 +80,13 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('On-Device AI Models',
+          Text(AppLocalizations.of(context).aiModelsOnDeviceAiModels,
               style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: t.textPrimary)),
           const SizedBox(height: 4),
-          Text('Manage Gemma models for offline workout generation',
+          Text(AppLocalizations.of(context).aiModelsManageGemmaModelsFor,
               style: TextStyle(fontSize: 11, color: t.textMuted)),
           const SizedBox(height: 16),
 
@@ -97,7 +98,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
           const SizedBox(height: 16),
 
           // ── Model List ──
-          Text('Model Library',
+          Text(AppLocalizations.of(context).aiModelsModelLibrary,
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -138,7 +139,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                   onTap: () => ref
                       .read(modelDownloadProvider.notifier)
                       .cancelDownload(),
-                  child: Text('Cancel',
+                  child: Text(AppLocalizations.of(context).buttonCancel,
                       style: TextStyle(
                           fontSize: 11,
                           color: Colors.red,
@@ -293,7 +294,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
             const SizedBox(width: 10),
-            Text('Checking device capabilities...',
+            Text(AppLocalizations.of(context).aiModelsCheckingDeviceCapabilities,
                 style: TextStyle(fontSize: 12, color: t.textMuted)),
           ],
         ),
@@ -308,7 +309,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 18),
             const SizedBox(width: 10),
-            Text('Could not detect device capability',
+            Text(AppLocalizations.of(context).aiModelsCouldNotDetectDevice,
                 style: TextStyle(fontSize: 12, color: t.textMuted)),
           ],
         ),
@@ -417,7 +418,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                     if (!isSupported)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
-                        child: Text('Not supported on this device',
+                        child: Text(AppLocalizations.of(context).aiModelsNotSupportedOnThis,
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -439,7 +440,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
       children: [
         Row(
           children: [
-            Text('HuggingFace Token',
+            Text(AppLocalizations.of(context).aiModelsHuggingfaceToken,
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -458,7 +459,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Required to download gated models from HuggingFace.',
+          AppLocalizations.of(context).aiModelsRequiredToDownloadGated,
           style: TextStyle(fontSize: 11, color: t.textMuted),
         ),
         const SizedBox(height: 10),
@@ -467,7 +468,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
             children: [
               const Icon(Icons.vpn_key_rounded, color: Colors.green, size: 14),
               const SizedBox(width: 6),
-              Text('Token saved securely',
+              Text(AppLocalizations.of(context).aiModelsTokenSavedSecurely,
                   style: TextStyle(
                       fontSize: 12,
                       color: t.textPrimary,
@@ -475,7 +476,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
               const Spacer(),
               GestureDetector(
                 onTap: _clearToken,
-                child: Text('Remove',
+                child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove,
                     style: TextStyle(
                         color: Colors.red,
                         fontSize: 12,
@@ -489,7 +490,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
             obscureText: _tokenObscured,
             style: TextStyle(fontSize: 12, color: t.textPrimary),
             decoration: InputDecoration(
-              hintText: 'hf_...',
+              hintText: AppLocalizations.of(context).aiModelsHf,
               hintStyle: TextStyle(color: t.textMuted, fontSize: 12),
               filled: true,
               fillColor: t.isDark
@@ -527,7 +528,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                     borderRadius: BorderRadius.circular(8)),
               ),
               child:
-                  const Text('Save Token', style: TextStyle(fontSize: 12)),
+                  Text(AppLocalizations.of(context).aiModelsSaveToken, style: TextStyle(fontSize: 12)),
             ),
           ),
         ],
@@ -538,7 +539,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
             mode: LaunchMode.externalApplication,
           ),
           child: Text(
-            'Get token at huggingface.co/settings/tokens',
+            AppLocalizations.of(context).aiModelsGetTokenAtHuggingface,
             style: TextStyle(
               fontSize: 11,
               color: Colors.blue.shade400,

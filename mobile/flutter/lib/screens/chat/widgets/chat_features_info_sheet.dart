@@ -5,6 +5,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class ChatFeaturesInfoSheet extends StatelessWidget {
   final void Function(ChatQuickAction action) onAction;
 
@@ -47,7 +48,7 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'What can I do?',
+                      AppLocalizations.of(context).chatFeaturesInfoWhatCanIDo,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -63,7 +64,7 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Your AI coach can analyze media, generate workouts, give nutrition advice, and more.',
+                AppLocalizations.of(context).chatFeaturesInfoYourAiCoachCan,
                 style: TextStyle(
                   fontSize: 14,
                   color: colors.textSecondary,
@@ -124,7 +125,7 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Long-press action pills to customize your shortcuts',
+                        AppLocalizations.of(context).chatFeaturesInfoLongPressActionPills,
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.textMuted,
@@ -151,7 +152,7 @@ class ChatFeaturesInfoSheet extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Try asking: "What can you do?" for a full list of capabilities',
+                        AppLocalizations.of(context).chatFeaturesInfoTryAskingWhatCan,
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.textMuted,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/skill_progression.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card displaying a single progression step
 class ProgressionStepCard extends StatelessWidget {
   final ProgressionStep step;
@@ -114,7 +115,7 @@ class ProgressionStepCard extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'Completed',
+                                    AppLocalizations.of(context).progressionStepCardCompleted,
                                     style: TextStyle(
                                       color: green,
                                       fontSize: 11,
@@ -149,7 +150,7 @@ class ProgressionStepCard extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: onPractice,
                     icon: const Icon(Icons.fitness_center_rounded, size: 18),
-                    label: const Text('Practice'),
+                    label: Text(AppLocalizations.of(context).progressionStepCardPractice),
                     style: FilledButton.styleFrom(
                       backgroundColor: cyan,
                       padding: const EdgeInsets.symmetric(
@@ -228,7 +229,7 @@ class ProgressionStepCard extends StatelessWidget {
             if (!isUnlocked) ...[
               const SizedBox(height: 12),
               Text(
-                'Complete previous step to unlock',
+                AppLocalizations.of(context).progressionStepCardCompletePreviousStepTo,
                 style: TextStyle(
                   color: textMuted,
                   fontSize: 12,

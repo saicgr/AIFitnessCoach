@@ -5,6 +5,7 @@ import '../core/theme/accent_color_provider.dart';
 import '../data/services/haptic_service.dart';
 import 'glass_sheet.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Shows a bottom sheet asking the user whether they want comeback mode (reduced workout)
 /// or a full workout after returning from a break.
 ///
@@ -63,7 +64,7 @@ class _ComebackModeSheet extends ConsumerWidget {
               const SizedBox(height: 16),
               // Title
               Text(
-                'Welcome Back!',
+                AppLocalizations.of(context).comebackModeWelcomeBack,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -105,7 +106,7 @@ class _ComebackModeSheet extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Comeback mode reduces sets and intensity to help prevent injury after a break.',
+                        AppLocalizations.of(context).comebackModeComebackModeReducesSets,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -126,8 +127,8 @@ class _ComebackModeSheet extends ConsumerWidget {
                     Navigator.pop(context, false); // false = don't skip comeback
                   },
                   icon: const Icon(Icons.trending_up, size: 20),
-                  label: const Text(
-                    'Ease me back in',
+                  label: Text(
+                    AppLocalizations.of(context).comebackModeEaseMeBackIn,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
@@ -155,7 +156,7 @@ class _ComebackModeSheet extends ConsumerWidget {
                   },
                   icon: Icon(Icons.bolt, size: 20, color: accentColor),
                   label: Text(
-                    "I'm ready for a full workout",
+                    AppLocalizations.of(context).comebackModeIMReadyFor,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 15,

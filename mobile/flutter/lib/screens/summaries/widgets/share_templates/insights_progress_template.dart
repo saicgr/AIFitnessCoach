@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Instagram-Story template: body + readiness + nutrition snapshot for the
 /// selected insights period. Values are optional — empty rows are skipped
 /// rather than showing "--" placeholders.
@@ -40,7 +41,7 @@ class InsightsProgressTemplate extends StatelessWidget {
           : weightChangeKg!;
       rows.add(_MetricRow(
         icon: Icons.monitor_weight_rounded,
-        label: 'WEIGHT',
+        label: AppLocalizations.of(context).insightsProgressTemplateWeight,
         value: '${displayValue >= 0 ? '+' : ''}'
             '${displayValue.toStringAsFixed(1)} $weightUnit',
         color: const Color(0xFFE879F9),
@@ -51,7 +52,7 @@ class InsightsProgressTemplate extends StatelessWidget {
     if (bodyFatChange != null) {
       rows.add(_MetricRow(
         icon: Icons.percent_rounded,
-        label: 'BODY FAT',
+        label: AppLocalizations.of(context).insightsProgressTemplateBodyFat,
         value: '${bodyFatChange! >= 0 ? '+' : ''}'
             '${bodyFatChange!.toStringAsFixed(1)}%',
         color: const Color(0xFFFB7185),
@@ -62,7 +63,7 @@ class InsightsProgressTemplate extends StatelessWidget {
     if (avgReadiness != null) {
       rows.add(_MetricRow(
         icon: Icons.bolt_rounded,
-        label: 'READINESS',
+        label: AppLocalizations.of(context).insightsProgressTemplateReadiness,
         value: '${avgReadiness!.round()} / 100',
         color: const Color(0xFF60A5FA),
         showDirection: false,
@@ -71,7 +72,7 @@ class InsightsProgressTemplate extends StatelessWidget {
     if (avgNutritionAdherence != null) {
       rows.add(_MetricRow(
         icon: Icons.restaurant_rounded,
-        label: 'NUTRITION',
+        label: AppLocalizations.of(context).unifiedHomeWidgetsNutrition,
         value: '${avgNutritionAdherence!.round()}%',
         color: const Color(0xFF34D399),
         showDirection: false,
@@ -79,7 +80,7 @@ class InsightsProgressTemplate extends StatelessWidget {
     }
     rows.add(_MetricRow(
       icon: Icons.local_fire_department_rounded,
-      label: 'MAX STREAK',
+      label: AppLocalizations.of(context).insightsReportCardMaxStreak,
       value: '$maxStreak days',
       color: const Color(0xFFF97316),
       showDirection: false,
@@ -147,8 +148,8 @@ class InsightsProgressTemplate extends StatelessWidget {
                     letterSpacing: 6,
                   ),
                 ),
-                const Text(
-                  'BODY & RECOVERY',
+                Text(
+                  AppLocalizations.of(context).reportsHubBodyRecovery,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,

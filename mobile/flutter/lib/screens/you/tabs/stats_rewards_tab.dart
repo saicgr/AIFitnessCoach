@@ -25,6 +25,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../widgets/xp_hero_tile.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class YouStatsRewardsTab extends ConsumerStatefulWidget {
   const YouStatsRewardsTab({super.key});
 
@@ -149,7 +150,7 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
         padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset),
         children: [
           // PROGRESS — the "where am I on the journey" group
-          _SectionLabel(label: 'PROGRESS', fg: fg),
+          _SectionLabel(label: AppLocalizations.of(context).statsRewardsProgress, fg: fg),
           const SizedBox(height: 10),
           // Hero XP tile takes over the primary-tile slot. Skills +
           // Achievements continue to render below as secondary metrics.
@@ -165,13 +166,13 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           const SizedBox(height: 20),
 
           // INSIGHTS — interactive trends + correlations
-          _SectionLabel(label: 'INSIGHTS', fg: fg),
+          _SectionLabel(label: AppLocalizations.of(context).statsRewardsInsights, fg: fg),
           const SizedBox(height: 10),
           _MetricTile(
             icon: Icons.auto_graph_rounded,
-            title: 'Custom Trends',
-            headline: 'Build a trend',
-            sub: 'Overlay any two metrics & see the correlation',
+            title: AppLocalizations.of(context).statsRewardsCustomTrends,
+            headline: AppLocalizations.of(context).statsRewardsBuildATrend,
+            sub: AppLocalizations.of(context).statsRewardsOverlayAnyTwoMetrics,
             fg: fg,
             accent: accent,
             isDark: isDark,
@@ -181,7 +182,7 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           const SizedBox(height: 20),
 
           // RECOGNITION — earned badges
-          _SectionLabel(label: 'RECOGNITION', fg: fg),
+          _SectionLabel(label: AppLocalizations.of(context).statsRewardsRecognition, fg: fg),
           const SizedBox(height: 10),
           _RecognitionGroup(
             trophySummary: _trophySummary,
@@ -193,7 +194,7 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           const SizedBox(height: 20),
 
           // RECAPS & PERKS — optional, lower priority
-          _SectionLabel(label: 'RECAPS & PERKS', fg: fg),
+          _SectionLabel(label: AppLocalizations.of(context).statsRewardsRecapsPerks, fg: fg),
           const SizedBox(height: 10),
           _RecapsPerksGroup(
             latestSummary: _latestSummary,
@@ -204,7 +205,7 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           const SizedBox(height: 20),
 
           // SOCIAL — external / peer comparison
-          _SectionLabel(label: 'SOCIAL', fg: fg),
+          _SectionLabel(label: AppLocalizations.of(context).statsRewardsSocial, fg: fg),
           const SizedBox(height: 10),
           _SocialGroup(
             unlocked: _leaderboardUnlocked,
@@ -291,7 +292,7 @@ class _ProgressSecondaryRow extends StatelessWidget {
         Expanded(
           child: _MetricTile(
             icon: Icons.timeline_rounded,
-            title: 'Skills',
+            title: AppLocalizations.of(context).youSkills,
             headline: skills == null ? '—' : '$activeChains active',
             sub: activeSkillName ??
                 (completedChains > 0 ? '$completedChains done' : 'Start a chain'),
@@ -305,7 +306,7 @@ class _ProgressSecondaryRow extends StatelessWidget {
         Expanded(
           child: _MetricTile(
             icon: Icons.verified_rounded,
-            title: 'Achievements',
+            title: AppLocalizations.of(context).youAchievements,
             headline: achievementsEarned != null
                 ? '$achievementsEarned earned'
                 : '—',
@@ -353,7 +354,7 @@ class _RecognitionGroup extends StatelessWidget {
 
     return _PrimaryTile(
       icon: Icons.emoji_events_rounded,
-      title: 'Trophies',
+      title: AppLocalizations.of(context).youTrophies,
       subtitle: (earned != null && total != null)
           ? '$earned of $total earned${points != null ? ' · $points pts' : ''}'
           : 'View your badges',
@@ -407,7 +408,7 @@ class _RecapsPerksGroup extends ConsumerWidget {
       children: [
         _MetricTile(
           icon: Icons.auto_awesome_rounded,
-          title: 'Wrapped',
+          title: AppLocalizations.of(context).youWrapped,
           headline: latestSummary == null
               ? '—'
               : '$workouts workouts',
@@ -426,7 +427,7 @@ class _RecapsPerksGroup extends ConsumerWidget {
             Expanded(
               child: _MetricTile(
                 icon: Icons.card_giftcard_rounded,
-                title: 'Rewards',
+                title: AppLocalizations.of(context).statsRewardsRewards,
                 headline: unclaimedRewards > 0
                     ? '$unclaimedRewards ready'
                     : 'View perks',
@@ -444,9 +445,9 @@ class _RecapsPerksGroup extends ConsumerWidget {
             Expanded(
               child: _MetricTile(
                 icon: Icons.inventory_2_rounded,
-                title: 'Inventory',
-                headline: 'Items',
-                sub: 'Collectibles',
+                title: AppLocalizations.of(context).xpGoalsScreenInventory,
+                headline: AppLocalizations.of(context).statsRewardsItems,
+                sub: AppLocalizations.of(context).statsRewardsCollectibles,
                 fg: fg,
                 accent: accent,
                 isDark: isDark,
@@ -510,7 +511,7 @@ class _SocialGroup extends StatelessWidget {
 
     return _MetricTile(
       icon: Icons.leaderboard_rounded,
-      title: 'Leaderboard',
+      title: AppLocalizations.of(context).statsRewardsLeaderboard,
       headline: headline,
       sub: sub,
       fg: fg,

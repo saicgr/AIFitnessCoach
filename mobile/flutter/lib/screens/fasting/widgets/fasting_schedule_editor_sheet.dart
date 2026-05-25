@@ -9,6 +9,7 @@ import '../../../data/providers/fasting_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Weekly fasting-schedule editor (Section G).
 ///
 /// Seven day rows (Mon → Sun); each row is either a protocol or a rest /
@@ -76,8 +77,8 @@ class _FastingScheduleEditorSheetState
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Weekly fasting schedule saved'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).fastingScheduleEditorWeeklyFastingScheduleSaved),
             duration: Duration(seconds: 2),
           ),
         );
@@ -119,7 +120,7 @@ class _FastingScheduleEditorSheetState
                   const SizedBox(height: 14),
                   // Rest / eating day option.
                   _OptionTile(
-                    label: 'Rest / eating day',
+                    label: AppLocalizations.of(context).fastingScheduleEditorRestEatingDay,
                     icon: Icons.restaurant_rounded,
                     selected: !_schedule.containsKey(weekday),
                     colors: colors,
@@ -211,7 +212,7 @@ class _FastingScheduleEditorSheetState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Weekly Schedule',
+                                AppLocalizations.of(context).fastingScheduleEditorWeeklySchedule,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -219,7 +220,7 @@ class _FastingScheduleEditorSheetState
                                 ),
                               ),
                               Text(
-                                'Pick a protocol for each day',
+                                AppLocalizations.of(context).fastingScheduleEditorPickAProtocolFor,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: colors.textMuted,
@@ -288,8 +289,8 @@ class _FastingScheduleEditorSheetState
                                     color: colors.accentContrast,
                                   ),
                                 )
-                              : const Text(
-                                  'Save Schedule',
+                              : Text(
+                                  AppLocalizations.of(context).fastingScheduleEditorSaveSchedule,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -371,7 +372,7 @@ class _DayRow extends StatelessWidget {
                   Flexible(
                     child: Text(
                       isRest
-                          ? 'Rest / eating day'
+                          ? AppLocalizations.of(context).fastingScheduleEditorRestEatingDay
                           : entry!.fastingProtocol.displayName,
                       style: TextStyle(
                         fontSize: 13,

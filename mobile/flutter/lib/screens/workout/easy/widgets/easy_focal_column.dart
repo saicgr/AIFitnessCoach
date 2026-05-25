@@ -10,6 +10,7 @@ import '../../shared/focal_stepper.dart';
 import '../../shared/unit_chip.dart';
 import '../easy_active_workout_state_models.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class EasyFocalColumn extends StatelessWidget {
   final EasyExerciseState state;
   final bool useKg;
@@ -69,7 +70,7 @@ class EasyFocalColumn extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Hold',
+                    AppLocalizations.of(context).easyFocalColumnHold,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -107,7 +108,7 @@ class EasyFocalColumn extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    'Weight',
+                    AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -134,7 +135,7 @@ class EasyFocalColumn extends StatelessWidget {
             ),
             SizedBox(height: gapBetweenSteppers),
             FocalStepper(
-              label: 'Reps',
+              label: AppLocalizations.of(context).workoutSummaryGeneralReps,
               value: state.reps.toDouble(),
               step: 1,
               unit: 'reps',

@@ -13,6 +13,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/pr_detection_service.dart';
 import 'pr_details_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Shows inline PR celebration banner
 ///
 /// Returns when the banner is dismissed
@@ -337,8 +338,8 @@ class _MultiPRInlineCelebrationState extends State<MultiPRInlineCelebration> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'ON FIRE! 🔥',
+                      Text(
+                        AppLocalizations.of(context).prInlineCelebrationOnFire,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

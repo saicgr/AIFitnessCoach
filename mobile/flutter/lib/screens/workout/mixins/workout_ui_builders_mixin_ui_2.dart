@@ -299,7 +299,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Breathing',
+                                        AppLocalizations.of(context).workoutUiBuildersBreathing,
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
@@ -938,7 +938,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
         SnackBar(
           content: Text(
             parsed.weightKg == null
-                ? 'Heard reps but not weight. Try "225 for 5".'
+                ? AppLocalizations.of(context).workoutUiBuildersHeardRepsButNot
                 : 'Heard weight but not reps. Try "225 for 5".',
           ),
           duration: const Duration(seconds: 3),
@@ -979,7 +979,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
           ),
           duration: const Duration(seconds: 5),
           action: SnackBarAction(
-            label: 'Confirm',
+            label: AppLocalizations.of(context).workoutUiBuildersConfirm,
             onPressed: () => _commitParsedSet(parsed),
           ),
         ),
@@ -1035,7 +1035,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
         duration: const Duration(seconds: 4),
         action: withUndo
             ? SnackBarAction(
-                label: 'Undo',
+                label: AppLocalizations.of(context).workoutUiBuildersUndo,
                 onPressed: () {
                   // Pop the last entry we just added. Defensive: only
                   // remove if it's still our voice-logged set.

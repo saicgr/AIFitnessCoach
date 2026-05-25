@@ -20,6 +20,7 @@ import '../../../widgets/activity_heatmap.dart';
 import '../../../widgets/exercise_search_results.dart';
 import '../../../widgets/workout_day_detail_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Disk-cached snapshots for the Overview tab.
 ///
 /// The Overview-tab providers (`milestonesProvider`, `consistencyProvider`)
@@ -293,28 +294,28 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
                 _CompactStat(
                   icon: Icons.fitness_center,
                   value: '$completedCount',
-                  label: 'Total',
+                  label: AppLocalizations.of(context).statsStreakFireTotal,
                   color: AppColors.cyan,
                 ),
                 _StatDivider(),
                 _CompactStat(
                   icon: Icons.local_fire_department,
                   value: '$thisWeekCompleted/$thisWeekTotal',
-                  label: 'Week',
+                  label: AppLocalizations.of(context).overviewWeek,
                   color: AppColors.orange,
                 ),
                 _StatDivider(),
                 _CompactStat(
                   icon: Icons.trending_up,
                   value: currentStreak > 0 ? '$currentStreak' : '0',
-                  label: 'Streak',
+                  label: AppLocalizations.of(context).xpProgressCardStreak,
                   color: AppColors.success,
                 ),
                 _StatDivider(),
                 _CompactStat(
                   icon: Icons.timer_outlined,
                   value: totalDurationStr,
-                  label: 'Time',
+                  label: AppLocalizations.of(context).workoutShowcaseTime,
                   color: AppColors.purple,
                 ),
               ],
@@ -325,7 +326,7 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
 
           // Achievements Preview
           SectionHeader(
-            title: 'Recent Achievements',
+            title: AppLocalizations.of(context).overviewRecentAchievements,
             onViewAll: () => context.push('/achievements'),
           ),
           const SizedBox(height: 12),
@@ -334,41 +335,41 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
           const SizedBox(height: 24),
 
           // Quick Actions
-          SectionHeader(title: 'Quick Access'),
+          SectionHeader(title: AppLocalizations.of(context).overviewQuickAccess),
           const SizedBox(height: 12),
           QuickActionButton(
             icon: Icons.monitor_weight_outlined,
-            label: 'Body Measurements',
+            label: AppLocalizations.of(context).reportsHubBodyMeasurements,
             onTap: () => context.push('/measurements'),
           ),
           const SizedBox(height: 8),
           QuickActionButton(
             icon: Icons.calendar_month,
-            label: 'Reports & Insights',
+            label: AppLocalizations.of(context).weeklyReportCardReportsInsights,
             onTap: () => context.push('/reports'),
           ),
           const SizedBox(height: 8),
           QuickActionButton(
             icon: Icons.fitness_center,
-            label: 'My 1RMs',
+            label: AppLocalizations.of(context).workoutSettingsMy1rms,
             onTap: () => context.push('/settings/my-1rms'),
           ),
           const SizedBox(height: 8),
           QuickActionButton(
             icon: Icons.emoji_events,
-            label: 'Personal Records',
+            label: AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
             onTap: () => context.push('/stats/personal-records'),
           ),
           const SizedBox(height: 8),
           QuickActionButton(
             icon: Icons.history,
-            label: 'Exercise History',
+            label: AppLocalizations.of(context).setTrackingSheetsExerciseHistory,
             onTap: () => context.push('/stats/exercise-history'),
           ),
           const SizedBox(height: 8),
           QuickActionButton(
             icon: Icons.pie_chart_outline,
-            label: 'Muscle Analytics',
+            label: AppLocalizations.of(context).strengthMuscleAnalytics,
             onTap: () => context.push('/stats/muscle-analytics'),
           ),
 
@@ -442,7 +443,7 @@ class SectionHeader extends StatelessWidget {
         if (onViewAll != null)
           TextButton(
             onPressed: onViewAll,
-            child: const Text('View All'),
+            child: Text(AppLocalizations.of(context).workoutHistoryImportViewAll),
           ),
       ],
     );
@@ -589,7 +590,7 @@ class _AchievementsPreview extends ConsumerWidget {
                   color: AppColors.textMuted, size: 32),
               const SizedBox(height: 8),
               Text(
-                'No achievements yet',
+                AppLocalizations.of(context).overviewNoAchievementsYet,
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textMuted,
@@ -799,7 +800,7 @@ class PRListWidget extends ConsumerWidget {
               Icon(Icons.emoji_events_outlined, size: 48, color: textMuted),
               const SizedBox(height: 12),
               Text(
-                'No Personal Records Yet',
+                AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
                 style: TextStyle(
                   color: textPrimary,
                   fontSize: 16,
@@ -808,7 +809,7 @@ class PRListWidget extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Personal records are tracked as you complete workouts. Start training to see your progress here!',
+                AppLocalizations.of(context).overviewPersonalRecordsAreTracked,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: textMuted, fontSize: 13),
               ),

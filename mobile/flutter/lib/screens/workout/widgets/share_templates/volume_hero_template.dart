@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Volume Hero — giant number + Hevy-style comparison copy + orbital
 /// mini stats. Works when the user has any training volume at all.
 class VolumeHeroTemplate extends StatelessWidget {
@@ -94,7 +95,7 @@ class VolumeHeroTemplate extends StatelessWidget {
               ShareStatPill(
                 icon: Icons.fitness_center,
                 value: '$exercisesCount',
-                label: 'EXERCISES',
+                label: AppLocalizations.of(context).workoutSummaryGeneralExercises,
               ),
               ShareStatPill(
                 icon: Icons.repeat,

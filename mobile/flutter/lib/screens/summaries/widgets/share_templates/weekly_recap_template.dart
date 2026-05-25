@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Instagram-Story template: "Week Recap"
 /// Dominant circular completion ring + 3-up supporting stats + optional
 /// AI summary teaser. Designed to fit a 320x440 card that the base sheet
@@ -124,7 +125,7 @@ class WeeklyRecapTemplate extends StatelessWidget {
                       child: _StatChip(
                         icon: Icons.emoji_events_rounded,
                         value: '$prsAchieved',
-                        label: 'PRs',
+                        label: AppLocalizations.of(context).weeklyWrappedPrs,
                         color: const Color(0xFFFBBF24),
                       ),
                     ),
@@ -133,7 +134,7 @@ class WeeklyRecapTemplate extends StatelessWidget {
                       child: _StatChip(
                         icon: Icons.local_fire_department_rounded,
                         value: '$currentStreak',
-                        label: 'STREAK',
+                        label: AppLocalizations.of(context).weeklyRecapTemplateStreak,
                         color: const Color(0xFFF97316),
                       ),
                     ),
@@ -211,7 +212,7 @@ class _CompletionRing extends StatelessWidget {
                 ),
               ),
               Text(
-                'WORKOUTS',
+                AppLocalizations.of(context).weeklyRecapTemplateWorkouts,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.4),
                   fontSize: 9,

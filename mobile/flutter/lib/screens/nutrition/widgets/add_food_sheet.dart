@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Small glassmorphic bottom sheet with a single TextField + Cancel/Add used
 /// for "Add food" flows (a manually-typed item appended to a meal preview, or
 /// pre-selected onto a menu-analysis sheet). Returns the trimmed description
@@ -30,13 +31,13 @@ Future<String?> showAddFoodSheet(BuildContext context) {
 Future<String?> showRefineFoodSheet(BuildContext context) {
   return showGlassSheet<String>(
     context: context,
-    builder: (_) => const GlassSheet(
+    builder: (_) => GlassSheet(
       showHandle: true,
       child: _AddFoodSheetBody(
-        title: 'Refine with AI',
+        title: AppLocalizations.of(context).addFoodRefineWithAi,
         icon: Icons.auto_fix_high,
         hintText:
-            "e.g. 'made with olive oil, no whole grain' or 'I only ate half'",
+            AppLocalizations.of(context).addFoodEGMadeWith,
         actionLabel: 'Refine',
         actionIcon: Icons.auto_awesome,
       ),
@@ -135,7 +136,7 @@ class _AddFoodSheetBodyState extends State<_AddFoodSheetBody> {
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context).buttonCancel),
               ),
               const SizedBox(width: 8),
               FilledButton.icon(

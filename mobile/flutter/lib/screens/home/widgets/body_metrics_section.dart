@@ -7,6 +7,7 @@ import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Body Metrics & Score section for home screen
 /// Shows fitness score, strength score, and key body metrics
 class BodyMetricsSection extends ConsumerStatefulWidget {
@@ -62,7 +63,7 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Body Metrics & Score',
+                  AppLocalizations.of(context).bodyMetricsBodyMetricsScore,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -95,7 +96,7 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
                   flex: 2,
                   child: _buildScoreCard(
                     context,
-                    title: 'Fitness Score',
+                    title: AppLocalizations.of(context).strengthFitnessScore,
                     score: overallScore,
                     subtitle: fitnessLevel.displayName,
                     icon: Icons.fitness_center,
@@ -117,7 +118,7 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
                   child: Column(
                     children: [
                       _buildMiniScoreCard(
-                        title: 'Strength',
+                        title: AppLocalizations.of(context).scoreBreakdownStrength,
                         score: strengthScore,
                         icon: Icons.bolt,
                         accentColor: accentColor,
@@ -128,7 +129,7 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
                       ),
                       const SizedBox(height: 8),
                       _buildMiniScoreCard(
-                        title: 'Consistency',
+                        title: AppLocalizations.of(context).scoreBreakdownConsistency,
                         score: consistencyScore,
                         icon: Icons.trending_up,
                         accentColor: accentColor,

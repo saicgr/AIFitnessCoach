@@ -21,9 +21,9 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
-        _buildLayoutGroup(title: '2-Photo Layouts', layouts: twoPhotoLayouts, colorScheme: colorScheme),
+        _buildLayoutGroup(title: AppLocalizations.of(context).comparisonViewUi2PhotoLayouts, layouts: twoPhotoLayouts, colorScheme: colorScheme),
         const SizedBox(height: 24),
-        _buildLayoutGroup(title: 'Multi-Photo Layouts', layouts: multiPhotoLayouts, colorScheme: colorScheme),
+        _buildLayoutGroup(title: AppLocalizations.of(context).comparisonViewUiMultiPhotoLayouts, layouts: multiPhotoLayouts, colorScheme: colorScheme),
       ],
     );
   }
@@ -38,7 +38,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
           children: [
             Icon(Icons.photo_library_outlined, size: 64, color: colorScheme.outline),
             const SizedBox(height: 16),
-            Text('No Photos Found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+            Text(AppLocalizations.of(context).comparisonViewUiNoPhotosFound, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
             const SizedBox(height: 8),
             Text(
               _filterViewType != null
@@ -60,7 +60,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
 
   Widget _buildCanvasLayout(Color bgColor) {
     if (_selectedPhotos.isEmpty) {
-      return const Center(child: Text('No photos selected', style: TextStyle(color: Colors.white54)));
+      return Center(child: Text(AppLocalizations.of(context).comparisonViewUiNoPhotosSelected, style: TextStyle(color: Colors.white54)));
     }
     switch (_selectedLayout) {
       case ComparisonLayout.sideBySide: return _buildSideBySideLayout();
@@ -97,7 +97,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
     final photos = _selectedPhotos.take(2).toList();
     final textColor = bgColor.computeLuminance() < 0.5 ? Colors.white : Colors.black;
     return Column(children: [
-      Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text('MY PROGRESS', style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 2))),
+      Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(AppLocalizations.of(context).comparisonViewUiMyProgress, style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 2))),
       Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: photos.length >= 2
           ? Row(children: [Expanded(child: _buildPhotoWidget(photos[0], 0)), SizedBox(width: _photoSpacing), Expanded(child: _buildPhotoWidget(photos[1], 1))])
           : _buildPhotoWidget(photos.first, 0))),
@@ -198,7 +198,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
 
 
   Widget _buildGhostOverlayLayout() {
-    if (_selectedPhotos.length < 2) return const Center(child: Text('Select 2 photos', style: TextStyle(color: Colors.white54)));
+    if (_selectedPhotos.length < 2) return Center(child: Text(AppLocalizations.of(context).comparisonViewUiSelect2Photos, style: TextStyle(color: Colors.white54)));
     return Stack(fit: StackFit.expand, children: [
       CachedNetworkImage(imageUrl: _selectedPhotos[1].photoUrl, fit: BoxFit.contain, placeholder: (_, __) => const Center(child: CircularProgressIndicator(strokeWidth: 2)), errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white38))),
       GhostOverlayWidget(beforeImageUrl: _selectedPhotos[0].photoUrl, opacity: _ghostOpacity, showGuides: _ghostOverlayEnabled),
@@ -319,7 +319,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Column(mainAxisSize: MainAxisSize.min, children: data.entries.map((entry) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 1),
-        child: Text(entry.value.join('  \u00B7  '), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: textColor.withOpacity(0.9), fontSize: 10.5, fontWeight: FontWeight.w500, height: 1.4)),
+        child: Text(entry.value.join(AppLocalizations.of(context).comparisonViewUiU00b7), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: textColor.withOpacity(0.9), fontSize: 10.5, fontWeight: FontWeight.w500, height: 1.4)),
       )).toList()),
     );
   }
@@ -367,8 +367,8 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Progress Summary',
+              Text(
+                AppLocalizations.of(context).comparisonViewUiProgressSummary,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,

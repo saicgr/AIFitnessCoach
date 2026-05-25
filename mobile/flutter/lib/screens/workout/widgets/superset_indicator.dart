@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A reusable widget for displaying superset indicators and connectors.
 ///
 /// This widget provides visual elements for:
@@ -181,7 +182,7 @@ class SupersetConnector extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'No rest between',
+                  AppLocalizations.of(context).supersetReorderNoRestBetween,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -355,7 +356,7 @@ class SupersetGroupCard extends ConsumerWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Swap',
+                                AppLocalizations.of(context).workoutUiBuildersSwap,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -389,7 +390,7 @@ class SupersetGroupCard extends ConsumerWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Edit',
+                                AppLocalizations.of(context).commonEdit,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -425,7 +426,7 @@ class SupersetGroupCard extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Break',
+                              AppLocalizations.of(context).supersetIndicatorBreak,
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -485,8 +486,8 @@ class CreateSupersetFab extends StatelessWidget {
       onPressed: onPressed,
       backgroundColor: AppColors.purple,
       icon: const Icon(Icons.link, color: Colors.white),
-      label: const Text(
-        'Create Superset',
+      label: Text(
+        AppLocalizations.of(context).workoutSheetsMixinCreateSuperset,
         style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w600,
@@ -568,12 +569,12 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Create Superset',
+                      AppLocalizations.of(context).workoutSheetsMixinCreateSuperset,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -581,7 +582,7 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                       ),
                     ),
                     Text(
-                      'Select two exercises to pair',
+                      AppLocalizations.of(context).supersetIndicatorSelectTwoExercisesTo,
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textMuted,
@@ -616,7 +617,7 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                 Expanded(
                   child: Text(
                     _firstSelection == null
-                        ? 'Tap the first exercise'
+                        ? AppLocalizations.of(context).supersetIndicatorTapTheFirstExercise
                         : _secondSelection == null
                             ? 'Now tap the second exercise'
                             : 'Tap "Create" to confirm',

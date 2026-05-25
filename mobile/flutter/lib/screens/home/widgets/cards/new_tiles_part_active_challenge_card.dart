@@ -117,7 +117,7 @@ class ActiveChallengeCard extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('Start', style: TextStyle(fontSize: 12)),
+                  child: Text(AppLocalizations.of(context).buttonStart, style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -180,7 +180,7 @@ class RestDayTipCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Rest Day Recovery',
+                AppLocalizations.of(context).newTilesPartRestDayRecovery,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -259,7 +259,7 @@ class WorkoutHistoryMiniCard extends ConsumerWidget {
               Icon(Icons.history, color: cyanColor, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Recent Workouts',
+                AppLocalizations.of(context).newTilesPartRecentWorkouts,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -273,7 +273,7 @@ class WorkoutHistoryMiniCard extends ConsumerWidget {
                   context.push('/stats');
                 },
                 child: Text(
-                  'View All',
+                  AppLocalizations.of(context).workoutHistoryImportViewAll,
                   style: TextStyle(fontSize: 12, color: cyanColor),
                 ),
               ),
@@ -369,7 +369,7 @@ class StepsCounterCard extends ConsumerWidget {
               Icon(Icons.directions_walk, color: greenColor, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Steps',
+                AppLocalizations.of(context).syncedWorkoutDetailSteps,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -456,7 +456,7 @@ class HeartRateCard extends ConsumerWidget {
               Icon(Icons.favorite, color: redColor, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Heart Rate',
+                AppLocalizations.of(context).workoutSummaryGeneralHeartRate,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -486,7 +486,7 @@ class HeartRateCard extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            restingBPM != null ? 'Resting: $restingBPM BPM' : 'Connect Health to track',
+            restingBPM != null ? 'Resting: $restingBPM BPM' : AppLocalizations.of(context).newTilesPartConnectHealthToTrack,
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
         ],

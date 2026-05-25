@@ -15,6 +15,7 @@ import '../subscription/request_refund_screen.dart';
 import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The data management section for import/export functionality.
 class DataManagementSection extends ConsumerWidget {
   const DataManagementSection({super.key});
@@ -30,7 +31,7 @@ class DataManagementSection extends ConsumerWidget {
       children: [
         // Subscription section (if subscribed)
         if (isSubscribed) ...[
-          const SectionHeader(title: 'SUBSCRIPTION'),
+          SectionHeader(title: AppLocalizations.of(context).dataManagementSubscription),
           const SizedBox(height: 12),
           // Upcoming renewal card
           _UpcomingRenewalCard(
@@ -43,8 +44,8 @@ class DataManagementSection extends ConsumerWidget {
               items: [
                 SettingItemData(
                   icon: Icons.receipt_long_outlined,
-                  title: 'Request Refund',
-                  subtitle: 'Submit a refund request',
+                  title: AppLocalizations.of(context).subscriptionManagementRequestRefund,
+                  subtitle: AppLocalizations.of(context).subscriptionManagementSubmitARefundRequest,
                   onTap: () => _navigateToRequestRefund(context),
                 ),
               ],
@@ -53,32 +54,32 @@ class DataManagementSection extends ConsumerWidget {
           const SizedBox(height: 24),
         ],
 
-        const SectionHeader(title: 'DATA MANAGEMENT'),
+        SectionHeader(title: AppLocalizations.of(context).dataManagementDataManagement),
         const SizedBox(height: 12),
         SettingsCard(
           items: [
             SettingItemData(
               icon: Icons.cloud_download_outlined,
-              title: 'Downloaded Videos',
-              subtitle: 'Manage offline exercise videos',
+              title: AppLocalizations.of(context).downloadedVideosDownloadedVideos,
+              subtitle: AppLocalizations.of(context).dataManagementManageOfflineExerciseVideos,
               isDownloadedVideosManager: true,
             ),
             SettingItemData(
               icon: Icons.download_for_offline_outlined,
-              title: "Download this week's videos",
-              subtitle: 'Pre-cache all exercises in your plan for offline use',
+              title: AppLocalizations.of(context).dataManagementDownloadThisWeekS,
+              subtitle: AppLocalizations.of(context).dataManagementPreCacheAllExercises,
               onTap: () => _downloadWeeklyVideos(context, ref),
             ),
             SettingItemData(
               icon: Icons.file_download_outlined,
               title: 'Export ${Branding.appName} Data',
-              subtitle: 'Download your workout + nutrition data',
+              subtitle: AppLocalizations.of(context).dataManagementDownloadYourWorkoutNutrit,
               onTap: () => showExportDialog(context, ref),
             ),
             SettingItemData(
               icon: Icons.ios_share,
-              title: 'Export My Workouts',
-              subtitle: 'Hevy / Strong / Fitbod / PDF / GPX — take it anywhere',
+              title: AppLocalizations.of(context).dataManagementExportMyWorkouts,
+              subtitle: AppLocalizations.of(context).dataManagementHevyStrongFitbodPdf,
               onTap: () => _navigateToWorkoutExport(context),
             ),
             SettingItemData(
@@ -93,9 +94,9 @@ class DataManagementSection extends ConsumerWidget {
             // imports.
             SettingItemData(
               icon: Icons.merge_type,
-              title: 'Manage duplicate imports',
+              title: AppLocalizations.of(context).dataManagementManageDuplicateImports,
               subtitle:
-                  'Re-pick the primary source when the same workout was synced twice',
+                  AppLocalizations.of(context).dataManagementRePickThePrimary,
               onTap: () => GoRouter.of(context)
                   .push('/settings/manage-duplicate-imports'),
             ),
@@ -124,8 +125,8 @@ class DataManagementSection extends ConsumerWidget {
     final planState = ref.read(weeklyPlanProvider);
     final userId = planState.currentPlan?.userId;
     if (userId == null) {
-      scaffold.showSnackBar(const SnackBar(
-        content: Text('Sign in to download your weekly plan.'),
+      scaffold.showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(context).dataManagementSignInToDownload),
         behavior: SnackBarBehavior.floating,
       ));
       return;
@@ -160,8 +161,8 @@ class DataManagementSection extends ConsumerWidget {
     }
 
     if (names.isEmpty) {
-      scaffold.showSnackBar(const SnackBar(
-        content: Text('No exercises found in your plan.'),
+      scaffold.showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(context).dataManagementNoExercisesFoundIn),
         behavior: SnackBarBehavior.floating,
       ));
       return;
@@ -195,8 +196,8 @@ class DataManagementSection extends ConsumerWidget {
     }));
 
     if (items.isEmpty) {
-      scaffold.showSnackBar(const SnackBar(
-        content: Text('No video URLs available for your plan.'),
+      scaffold.showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(context).dataManagementNoVideoUrlsAvailable),
         behavior: SnackBarBehavior.floating,
       ));
       return;
@@ -311,7 +312,7 @@ class _UpcomingRenewalCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isLifetime ? 'Lifetime Access' : 'Upcoming Renewal',
+                      isLifetime ? AppLocalizations.of(context).dataManagementLifetimeAccess : AppLocalizations.of(context).dataManagementUpcomingRenewal,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -389,7 +390,7 @@ class _UpcomingRenewalCard extends StatelessWidget {
                   else
                     Expanded(
                       child: Text(
-                        'Auto-renewal active',
+                        AppLocalizations.of(context).dataManagementAutoRenewalActive,
                         style: TextStyle(
                           fontSize: 13,
                           color: textSecondary,
@@ -410,7 +411,7 @@ class _UpcomingRenewalCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'No upcoming charges - you have lifetime access',
+                  AppLocalizations.of(context).dataManagementNoUpcomingChargesYou,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.green,

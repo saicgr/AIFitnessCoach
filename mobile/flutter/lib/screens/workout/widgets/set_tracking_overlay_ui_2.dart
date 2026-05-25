@@ -559,12 +559,12 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.only(left: 24),
                 color: AppColors.electricBlue.withOpacity(0.15),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.edit, color: AppColors.electricBlue, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Edit',
+                      AppLocalizations.of(context).commonEdit,
                       style: TextStyle(
                         color: AppColors.electricBlue,
                         fontWeight: FontWeight.w600,
@@ -579,11 +579,11 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 24),
           color: AppColors.error.withOpacity(0.15),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                'Delete',
+                AppLocalizations.of(context).buttonDelete,
                 style: TextStyle(
                   color: AppColors.error,
                   fontWeight: FontWeight.w600,

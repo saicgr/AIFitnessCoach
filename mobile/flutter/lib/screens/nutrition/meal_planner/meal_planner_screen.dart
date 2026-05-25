@@ -21,6 +21,7 @@ import '../grocery/grocery_list_screen.dart';
 import '../recipes/widgets/coach_review_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class MealPlannerScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -102,16 +103,16 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                 GlassBackButton(onTap: () => Navigator.of(context).pop()),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text('Plan day',
+                  child: Text(AppLocalizations.of(context).recipesPlanDay,
                     style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
                 ),
                 IconButton(
-                  tooltip: 'Save as template',
+                  tooltip: AppLocalizations.of(context).mealPlannerSaveAsTemplate,
                   icon: Icon(Icons.bookmark_add_outlined, color: muted),
                   onPressed: _plan == null ? null : () async {
                     await ref.read(recipeRepositoryProvider).updateMealPlan(_plan!.id, {'is_template': true});
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Saved as template')));
+                        SnackBar(content: Text(AppLocalizations.of(context).mealPlannerSavedAsTemplate)));
                   },
                 ),
               ],
@@ -157,8 +158,8 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                   );
                 },
                 icon: const Icon(Icons.psychology_outlined, size: 18),
-                label: const Text(
-                  'Coach review',
+                label: Text(
+                  AppLocalizations.of(context).recipeDetailCoachReview,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   softWrap: false,
@@ -179,8 +180,8 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                   }
                 },
                 icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                label: const Text(
-                  'Grocery',
+                label: Text(
+                  AppLocalizations.of(context).mealPlannerGrocery,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   softWrap: false,
@@ -201,8 +202,8 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                   }
                 },
                 icon: const Icon(Icons.check, size: 18),
-                label: const Text(
-                  'Apply',
+                label: Text(
+                  AppLocalizations.of(context).setAdjustmentSheetApply,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   softWrap: false,
@@ -353,13 +354,13 @@ class _MealSlotCard extends StatelessWidget {
           if (items.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: Text('(empty — tap + to add)', style: TextStyle(color: muted, fontSize: 12)),
+              child: Text(AppLocalizations.of(context).mealPlannerEmptyTapToAdd, style: TextStyle(color: muted, fontSize: 12)),
             )
           else
             ...items.map((i) => ListTile(
               dense: true, contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.restaurant_menu, color: accent, size: 18),
-              title: Text(i.recipeId != null ? 'Recipe' : 'Custom items',
+              title: Text(i.recipeId != null ? AppLocalizations.of(context).mealPlannerRecipe : AppLocalizations.of(context).mealPlannerCustomItems,
                   style: TextStyle(color: text)),
               subtitle: Text('×${i.servings.toStringAsFixed(1)} servings',
                   style: TextStyle(color: muted, fontSize: 11)),
@@ -427,7 +428,7 @@ class _MacroRingsHeader extends StatelessWidget {
               Icon(Icons.pie_chart_rounded, color: accent, size: 16),
               const SizedBox(width: 6),
               Text(
-                'Macro projection',
+                AppLocalizations.of(context).mealPlannerMacroProjection,
                 style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
               ),
             ],
@@ -486,7 +487,7 @@ class _MacroRingsHeader extends StatelessWidget {
                 child: Column(
                   children: [
                     _MacroMiniRing(
-                      label: 'Protein',
+                      label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                       current: protein,
                       target: proteinTarget,
                       color: AppColors.macroProtein,
@@ -496,7 +497,7 @@ class _MacroRingsHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     _MacroMiniRing(
-                      label: 'Carbs',
+                      label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                       current: carbs,
                       target: carbsTarget,
                       color: AppColors.macroCarbs,
@@ -506,7 +507,7 @@ class _MacroRingsHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     _MacroMiniRing(
-                      label: 'Fat',
+                      label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                       current: fat,
                       target: fatTarget,
                       color: AppColors.macroFat,
@@ -669,7 +670,7 @@ class _AddRecipeDialogState extends ConsumerState<_AddRecipeDialog> {
   Widget build(BuildContext context) {
     final accent = AccentColorScope.of(context).getColor(widget.isDark);
     return AlertDialog(
-      title: const Text('Add a recipe'),
+      title: Text(AppLocalizations.of(context).mealPlannerAddARecipe),
       content: SizedBox(
         width: 320,
         height: 360,
@@ -677,13 +678,13 @@ class _AddRecipeDialogState extends ConsumerState<_AddRecipeDialog> {
           children: [
             TextField(
               autofocus: true,
-              decoration: const InputDecoration(hintText: 'Search your recipes…'),
+              decoration: InputDecoration(hintText: AppLocalizations.of(context).mealPlannerSearchYourRecipes),
               onChanged: (v) => setState(() => _q = v),
             ),
             const SizedBox(height: 8),
             Expanded(
               child: _q.length < 2
-                  ? Center(child: Text('Type 2+ chars', style: TextStyle(color: accent)))
+                  ? Center(child: Text(AppLocalizations.of(context).mealPlannerType2Chars, style: TextStyle(color: accent)))
                   : Consumer(builder: (_, ref, __) {
                       return FutureBuilder(
                         future: ref.read(recipeRepositoryProvider).search(widget.userId, query: _q),
@@ -711,7 +712,7 @@ class _AddRecipeDialogState extends ConsumerState<_AddRecipeDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, null), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context, null), child: Text(AppLocalizations.of(context).buttonCancel)),
       ],
     );
   }

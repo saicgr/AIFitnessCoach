@@ -14,6 +14,7 @@ import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import 'unified_home_widgets.dart' show kHomeHPad;
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// "Today's Timeline" — a glanceable, time-ordered feed of EVERYTHING the
 /// user logged or has planned for the selected day.
 ///
@@ -72,7 +73,7 @@ class HomeTimeline extends ConsumerWidget {
           key: const ValueKey('tl-empty'),
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Text(
-            isFuture ? 'Nothing planned for this day' : 'Nothing logged or planned yet',
+            isFuture ? AppLocalizations.of(context).homeTimelineNothingPlannedForThis : AppLocalizations.of(context).homeTimelineNothingLoggedOrPlanned,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -239,8 +240,8 @@ class HomeTimeline extends ConsumerWidget {
         if (!hasFoodEntry) {
           events.add(_TimelineEvent(
             iconName: 'nutrition',
-            title: 'Log your meals',
-            subtitle: 'Nothing logged yet today',
+            title: AppLocalizations.of(context).homeTimelineLogYourMeals,
+            subtitle: AppLocalizations.of(context).homeTimelineNothingLoggedYetToday,
             status: _Status.upcoming,
             tint: c.success,
             sortKey: _sortUpcoming,
@@ -344,8 +345,8 @@ class HomeTimeline extends ConsumerWidget {
     if (resp.isGenerating) {
       events.add(_TimelineEvent(
         iconName: 'refresh',
-        title: 'Generating your workout…',
-        subtitle: resp.generationMessage ?? 'Hang tight, almost ready',
+        title: AppLocalizations.of(context).homeTimelineGeneratingYourWorkout,
+        subtitle: resp.generationMessage ?? AppLocalizations.of(context).homeTimelineHangTightAlmostReady,
         status: _Status.now,
         tint: c.accent,
         sortKey: _sortNow,
@@ -385,7 +386,7 @@ class HomeTimeline extends ConsumerWidget {
       // it just after the last logged event (see `_sortPlannedWorkout`).
       events.add(_TimelineEvent(
         iconName: 'workout',
-        title: w.name ?? 'Workout',
+        title: w.name ?? AppLocalizations.of(context).navWorkout,
         subtitle: _workoutSubtitle(w),
         status: _Status.upcoming,
         tint: c.accent,
@@ -423,7 +424,7 @@ class HomeTimeline extends ConsumerWidget {
     if (fast != null) {
       events.add(_TimelineEvent(
         iconName: 'fasting',
-        title: 'Fasting window',
+        title: AppLocalizations.of(context).homeTimelineFastingWindow,
         subtitle: '${fast.remainingTimeString} left · '
             '${fast.elapsedTimeString} elapsed',
         status: _Status.now,
@@ -439,7 +440,7 @@ class HomeTimeline extends ConsumerWidget {
     if (prefs != null && fasting.onboardingCompleted) {
       events.add(_TimelineEvent(
         iconName: 'fasting',
-        title: 'Fasting window',
+        title: AppLocalizations.of(context).homeTimelineFastingWindow,
         subtitle: '${prefs.defaultProtocol} protocol · not started',
         status: _Status.upcoming,
         tint: c.cyan,
@@ -815,7 +816,7 @@ class _ErrorTile extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            "Couldn't load your timeline",
+            AppLocalizations.of(context).homeTimelineCouldnTLoadYour,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -837,7 +838,7 @@ class _ErrorTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(9),
             ),
             child: Text(
-              'Retry',
+              AppLocalizations.of(context).buttonRetry,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,

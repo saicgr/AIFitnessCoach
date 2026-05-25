@@ -8,6 +8,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../data/services/last_used_service.dart';
 import '../../../widgets/common/last_used_badge.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 const String _kFastingProtocolKey = 'fasting_protocol';
 
 /// Bottom sheet for selecting a fasting protocol (only protocol selection, no time options)
@@ -155,7 +156,7 @@ class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    'Select Protocol',
+                    AppLocalizations.of(context).protocolSelectorSelectProtocol,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -181,7 +182,7 @@ class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
 
             // TRE Protocols - Grid
             Text(
-              'TIME-RESTRICTED EATING',
+              AppLocalizations.of(context).protocolSelectorTimeRestrictedEating,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -224,7 +225,7 @@ class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Extended Fasts (24h+)',
+                      AppLocalizations.of(context).startFastExtendedFasts24h,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -239,7 +240,7 @@ class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'Advanced',
+                        AppLocalizations.of(context).workoutUiModeAdvanced,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -295,7 +296,7 @@ class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Duration', style: TextStyle(fontSize: 13, color: textPrimary)),
+                        Text(AppLocalizations.of(context).workoutSummaryGeneralDuration, style: TextStyle(fontSize: 13, color: textPrimary)),
                         Text(
                           '$_customHours hours',
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: accentColor),
@@ -323,7 +324,7 @@ class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('12h', style: TextStyle(color: textMuted, fontSize: 11)),
+                        Text(AppLocalizations.of(context).startFast12h, style: TextStyle(color: textMuted, fontSize: 11)),
                         Text('72h', style: TextStyle(color: textMuted, fontSize: 11)),
                       ],
                     ),

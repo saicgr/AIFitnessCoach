@@ -7,6 +7,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'mark_fasting_day_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Calendar widget showing fasting days with tap-to-mark functionality
 class FastingCalendarWidget extends ConsumerStatefulWidget {
   /// Daily data to display (from fasting impact analysis)
@@ -139,7 +140,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
             if (data.isFastingDay) ...[
               _buildInfoRow(
                 icon: Icons.timer_outlined,
-                label: 'Fasting',
+                label: AppLocalizations.of(context).unifiedHomeWidgetsFasting,
                 value: data.fastingHours != null
                     ? '${data.fastingHours!.round()}h fast'
                     : 'Completed',
@@ -151,7 +152,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
               const SizedBox(height: 12),
               _buildInfoRow(
                 icon: Icons.fitness_center,
-                label: 'Workout',
+                label: AppLocalizations.of(context).navWorkout,
                 value: data.workoutPerformanceScore != null
                     ? '${(data.workoutPerformanceScore! * 100).round()}% completion'
                     : 'Completed',
@@ -163,7 +164,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
               const SizedBox(height: 12),
               _buildInfoRow(
                 icon: Icons.flag_outlined,
-                label: 'Goals',
+                label: AppLocalizations.of(context).fastingCalendarGoals,
                 value: '${data.goalsCompleted}/${data.goalsTotal} completed',
                 color: AppColors.success,
                 isDark: isDark,
@@ -173,7 +174,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
               const SizedBox(height: 12),
               _buildInfoRow(
                 icon: Icons.monitor_weight_outlined,
-                label: 'Weight',
+                label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                 value: '${data.weight!.toStringAsFixed(1)} kg',
                 color: AppColors.orange,
                 isDark: isDark,
@@ -183,7 +184,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
               const SizedBox(height: 12),
               _buildInfoRow(
                 icon: Icons.bolt,
-                label: 'Energy',
+                label: AppLocalizations.of(context).workoutSummaryGeneralEnergy,
                 value: '${data.energyLevel}/10',
                 color: AppColors.yellow,
                 isDark: isDark,
@@ -390,20 +391,20 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
             children: [
               _buildLegendItem(
                 color: accentColor,
-                label: 'Fasting',
+                label: AppLocalizations.of(context).unifiedHomeWidgetsFasting,
                 isDark: isDark,
               ),
               const SizedBox(width: 16),
               _buildLegendItem(
                 color: accentColor,
-                label: 'Workout',
+                label: AppLocalizations.of(context).navWorkout,
                 isDark: isDark,
               ),
               if (widget.allowMarking && widget.userId != null) ...[
                 const SizedBox(width: 16),
                 _buildLegendItem(
                   color: textMuted,
-                  label: 'Tap to mark',
+                  label: AppLocalizations.of(context).fastingCalendarTapToMark,
                   isDark: isDark,
                   isOutline: true,
                 ),

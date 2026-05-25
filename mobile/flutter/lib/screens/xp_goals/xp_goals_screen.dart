@@ -16,6 +16,7 @@ import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/level_up_catch_up_banner.dart';
 import '../../widgets/segmented_tab_bar.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 part 'xp_goals_screen_part_first_time_bonus.dart';
 

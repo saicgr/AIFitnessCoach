@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'onboarding_theme.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Physical limitations selection widget (moved from QuizProgressionConstraints).
 ///
 /// Now shown as its own screen after Equipment selection (Phase 1).
@@ -61,7 +62,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
         children: [
           if (widget.showHeader) ...[
             Text(
-              'Any injuries or limitations?',
+              AppLocalizations.of(context).quizLimitationsAnyInjuriesOrLimitations,
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -70,7 +71,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 6),
             Text(
-              "We'll avoid exercises that stress these areas",
+              AppLocalizations.of(context).quizLimitationsWeLlAvoidExercises,
               style: TextStyle(
                 fontSize: 15,
                 color: t.textSecondary,
@@ -134,7 +135,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Describe your limitation',
+                                  AppLocalizations.of(context).quizLimitationsDescribeYourLimitation,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -152,7 +153,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                                 color: t.textPrimary,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'e.g., Carpal tunnel, herniated disc, etc.',
+                                hintText: AppLocalizations.of(context).quizLimitationsEGCarpalTunnel,
                                 hintStyle: TextStyle(
                                   fontSize: 14,
                                   color: t.textDisabled,

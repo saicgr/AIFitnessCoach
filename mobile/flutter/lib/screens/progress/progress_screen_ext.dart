@@ -57,14 +57,14 @@ extension __ProgressScreenStateExt on _ProgressScreenState {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No data for this muscle group yet',
+                                AppLocalizations.of(context).progressScreenExtNoDataForThis,
                                 style: TextStyle(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Complete workouts targeting this muscle\nto see your strength progress.',
+                                AppLocalizations.of(context).progressScreenExtCompleteWorkoutsTargetingTh,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 12,
@@ -141,7 +141,7 @@ extension __ProgressScreenStateExt on _ProgressScreenState {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Progress to next level',
+                                        AppLocalizations.of(context).progressScreenExtProgressToNextLevel,
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: colorScheme.onSurfaceVariant,
@@ -202,7 +202,7 @@ extension __ProgressScreenStateExt on _ProgressScreenState {
 
                           // Stats
                           Text(
-                            'Details',
+                            AppLocalizations.of(context).progressScreenExtDetails,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

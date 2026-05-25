@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card widget for displaying a custom exercise
 class CustomExerciseCard extends StatelessWidget {
   final CustomExercise exercise;
@@ -265,7 +266,7 @@ class CustomExerciseCard extends StatelessWidget {
                       ),
                     ),
                     if (exercise.lastUsedFormatted != null) ...[
-                      const Text(' • '),
+                      Text(AppLocalizations.of(context).programLibrary),
                       Text(
                         exercise.lastUsedFormatted!,
                         style: TextStyle(

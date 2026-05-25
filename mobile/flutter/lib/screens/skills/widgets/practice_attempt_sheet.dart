@@ -9,6 +9,7 @@ import '../../../data/providers/skill_progression_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for logging a practice attempt
 class PracticeAttemptSheet extends ConsumerStatefulWidget {
   final ProgressionStep step;
@@ -129,7 +130,7 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Log Practice',
+                              AppLocalizations.of(context).practiceAttemptLogPractice,
                               style: Theme.of(context)
                                   .textTheme
                                   .titleLarge
@@ -193,7 +194,7 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                       Expanded(
                         child: _buildNumberInput(
                           controller: _repsController,
-                          label: 'Reps',
+                          label: AppLocalizations.of(context).workoutSummaryGeneralReps,
                           hint: '0',
                           isDark: isDark,
                         ),
@@ -202,7 +203,7 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                       Expanded(
                         child: _buildNumberInput(
                           controller: _setsController,
-                          label: 'Sets',
+                          label: AppLocalizations.of(context).workoutSummaryGeneralSets,
                           hint: '1',
                           isDark: isDark,
                         ),
@@ -214,7 +215,7 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                     const SizedBox(height: 16),
                     _buildNumberInput(
                       controller: _holdController,
-                      label: 'Hold Time (seconds)',
+                      label: AppLocalizations.of(context).practiceAttemptHoldTimeSeconds,
                       hint: '0',
                       isDark: isDark,
                       fullWidth: true,
@@ -228,8 +229,8 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                     controller: _notesController,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      labelText: 'Notes (optional)',
-                      hintText: 'How did it feel? Any observations?',
+                      labelText: AppLocalizations.of(context).recordAttemptNotesOptional,
+                      hintText: AppLocalizations.of(context).practiceAttemptHowDidItFeel,
                       alignLabelWithHint: true,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -250,7 +251,7 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
 
                   // Quick select buttons for reps
                   Text(
-                    'Quick Select Reps',
+                    AppLocalizations.of(context).practiceAttemptQuickSelectReps,
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 13,
@@ -296,8 +297,8 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Log Attempt',
+                          : Text(
+                              AppLocalizations.of(context).practiceAttemptLogAttempt,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -314,7 +315,7 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        'Cancel',
+                        AppLocalizations.of(context).buttonCancel,
                         style: TextStyle(color: textSecondary),
                       ),
                     ),
@@ -381,8 +382,8 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
     // Validate at least one metric is provided
     if (reps == null && hold == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter reps or hold time'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).practiceAttemptPleaseEnterRepsOr),
           behavior: SnackBarBehavior.floating,
         ),
       );

@@ -20,8 +20,8 @@ class _CustomContentCard extends ConsumerWidget {
           // My Equipment
           _CustomContentTile(
             icon: Icons.fitness_center,
-            title: 'My Equipment',
-            subtitle: 'Add equipment not in the standard list',
+            title: AppLocalizations.of(context).trainingPreferencesMyEquipment,
+            subtitle: AppLocalizations.of(context).trainingSetupCardAddEquipmentNotIn,
             iconColor: AppColors.cyan,
             onTap: () => _showEquipmentSheet(context, ref),
           ),
@@ -30,8 +30,8 @@ class _CustomContentCard extends ConsumerWidget {
           // My Exercises - navigate to full screen
           _CustomContentTile(
             icon: Icons.sports_gymnastics,
-            title: 'My Exercises',
-            subtitle: 'Create custom & combo exercises',
+            title: AppLocalizations.of(context).workoutSettingsMyExercises,
+            subtitle: AppLocalizations.of(context).customContentSectionCreateCustomComboExercise,
             iconColor: AppColors.purple,
             onTap: () => context.push('/custom-exercises'),
           ),
@@ -66,7 +66,7 @@ class _CustomContentCard extends ConsumerWidget {
                       const Icon(Icons.fitness_center, color: AppColors.cyan),
                       const SizedBox(width: 12),
                       Text(
-                        'My Custom Equipment',
+                        AppLocalizations.of(context).trainingSetupCardMyCustomEquipment,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -81,7 +81,7 @@ class _CustomContentCard extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Add equipment that will be used when generating your workouts.',
+                    AppLocalizations.of(context).profileAddEquipmentThatWill,
                     style: TextStyle(
                       fontSize: 14,
                       color:
@@ -129,7 +129,7 @@ class _CustomContentCard extends ConsumerWidget {
                           color: AppColors.purple),
                       const SizedBox(width: 12),
                       Text(
-                        'My Custom Exercises',
+                        AppLocalizations.of(context).netflixExercisesTabMyCustomExercises,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -144,7 +144,7 @@ class _CustomContentCard extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Create exercises that can be included in your AI-generated workouts.',
+                    AppLocalizations.of(context).customContentSectionCreateExercisesThatCan,
                     style: TextStyle(
                       fontSize: 14,
                       color:
@@ -439,7 +439,7 @@ class _CustomEquipmentManagerState
                 child: TextField(
                   controller: _textController,
                   decoration: InputDecoration(
-                    hintText: 'Enter equipment name...',
+                    hintText: AppLocalizations.of(context).profileScreenPartEnterEquipmentName,
                     hintStyle: TextStyle(color: textMuted),
                     filled: true,
                     fillColor:
@@ -478,8 +478,8 @@ class _CustomEquipmentManagerState
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Add',
+                child: Text(
+                  AppLocalizations.of(context).tilePickerAdd,
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -502,7 +502,7 @@ class _CustomEquipmentManagerState
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'No custom equipment yet',
+                        AppLocalizations.of(context).profileScreenPartNoCustomEquipmentYet,
                         style: TextStyle(
                           fontSize: 16,
                           color: textMuted,
@@ -510,7 +510,7 @@ class _CustomEquipmentManagerState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Add equipment above to get started',
+                        AppLocalizations.of(context).profileScreenPartAddEquipmentAboveTo,
                         style: TextStyle(
                           fontSize: 14,
                           color: textMuted,
@@ -697,17 +697,17 @@ class _CustomExercisesManagerState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Exercise?'),
+        title: Text(AppLocalizations.of(context).customContentSectionDeleteExercise),
         content: Text('Are you sure you want to delete "${exercise.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.red),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -779,13 +779,13 @@ class _CustomExercisesManagerState
             Icon(Icons.error_outline, size: 48, color: AppColors.red),
             const SizedBox(height: 12),
             Text(
-              'Failed to load exercises',
+              AppLocalizations.of(context).netflixExercisesFailedToLoadExercises,
               style: TextStyle(fontSize: 16, color: textMuted),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
               onPressed: _loadCustomExercises,
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -802,7 +802,7 @@ class _CustomExercisesManagerState
             child: ElevatedButton.icon(
               onPressed: _showAddExerciseDialog,
               icon: const Icon(Icons.add),
-              label: const Text('Add Custom Exercise'),
+              label: Text(AppLocalizations.of(context).customContentSectionAddCustomExercise),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.purple,
                 foregroundColor: Colors.white,
@@ -830,7 +830,7 @@ class _CustomExercisesManagerState
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'No custom exercises yet',
+                        AppLocalizations.of(context).netflixExercisesTabNoCustomExercisesYet,
                         style: TextStyle(
                           fontSize: 16,
                           color: textMuted,
@@ -838,7 +838,7 @@ class _CustomExercisesManagerState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Tap the button above to create one',
+                        AppLocalizations.of(context).customContentSectionTapTheButtonAbove,
                         style: TextStyle(
                           fontSize: 14,
                           color: textMuted,

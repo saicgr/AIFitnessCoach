@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card 7: AI Personality card - fitness personality title + description + fun fact
 class WrappedPersonalityCard extends StatelessWidget {
   final WrappedData data;
@@ -65,7 +66,7 @@ class WrappedPersonalityCard extends StatelessWidget {
 
                   // Header - dramatic build-up
                   Text(
-                    'Your gym personality is...',
+                    AppLocalizations.of(context).personalityCardYourGymPersonalityIs,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 16,
@@ -143,7 +144,7 @@ class WrappedPersonalityCard extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            'FUN FACT',
+                            AppLocalizations.of(context).personalityCardFunFact,
                             style: TextStyle(
                               color: const Color(0xFFF472B6)
                                   .withValues(alpha: 0.7),

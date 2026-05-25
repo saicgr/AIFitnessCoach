@@ -7,6 +7,7 @@ import '../../../data/models/nutrition.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'food_source_indicator.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Result of the picker sheet — everything the caller needs to build the
 /// next POST /nutrition/log-direct payload.
 class CompanionPickerResult {
@@ -237,7 +238,7 @@ class _CompanionPickerSheetState extends State<CompanionPickerSheet> {
             children: [
               Text(
                 widget.sameLogSiblings.isNotEmpty
-                    ? 'Pick what you had'
+                    ? AppLocalizations.of(context).companionPickerPickWhatYouHad
                     : 'Add sides?',
                 style: TextStyle(
                   fontSize: 17,
@@ -248,7 +249,7 @@ class _CompanionPickerSheetState extends State<CompanionPickerSheet> {
               const SizedBox(height: 2),
               Text(
                 widget.sameLogSiblings.isNotEmpty
-                    ? 'Last time you logged these together — pick only what applies today.'
+                    ? AppLocalizations.of(context).companionPickerLastTimeYouLogged
                     : 'Typical companions for ${widget.primaryName}.',
                 style: TextStyle(
                   fontSize: 12,
@@ -533,7 +534,7 @@ class _CompanionPickerSheetState extends State<CompanionPickerSheet> {
             ),
             child: Text(
               hasAnyOptions && _hasAnySelection
-                  ? 'Log selected'
+                  ? AppLocalizations.of(context).companionPickerLogSelected
                   : 'Only primary',
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
@@ -552,8 +553,8 @@ class _CompanionPickerSheetState extends State<CompanionPickerSheet> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Add all',
+              child: Text(
+                AppLocalizations.of(context).companionPickerAddAll,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
             ),

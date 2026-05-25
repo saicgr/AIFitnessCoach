@@ -8,6 +8,7 @@ import '../data/providers/root_messenger.dart';
 import '../data/providers/schedule_save_jobs_provider.dart';
 import '../screens/nutrition/recipes/recipe_detail_screen.dart';
 
+import '../l10n/generated/app_localizations.dart';
 /// Watches the global recipeSaveJobsProvider and surfaces a toast when a
 /// background Save-as-Recipe job flips off `pending`. Mounted high in the
 /// widget tree (in app.dart's builder) so the toast appears regardless of
@@ -78,7 +79,7 @@ class _RecipeSaveJobsListenerState extends ConsumerState<RecipeSaveJobsListener>
           action: job.result == null
               ? null
               : SnackBarAction(
-                  label: 'View',
+                  label: AppLocalizations.of(context).setTrackingOverlayView,
                   onPressed: () => _openRecipe(job.result!.recipeId),
                 ),
         ));
@@ -91,7 +92,7 @@ class _RecipeSaveJobsListenerState extends ConsumerState<RecipeSaveJobsListener>
           action: job.result == null
               ? null
               : SnackBarAction(
-                  label: 'View',
+                  label: AppLocalizations.of(context).setTrackingOverlayView,
                   onPressed: () => _openRecipe(job.result!.recipeId),
                 ),
         ));
@@ -102,7 +103,7 @@ class _RecipeSaveJobsListenerState extends ConsumerState<RecipeSaveJobsListener>
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 6),
           action: SnackBarAction(
-            label: 'Retry',
+            label: AppLocalizations.of(context).buttonRetry,
             onPressed: () {
               // Re-enqueue with the same params. createCookEvent isn't carried
               // through — rare edge case for retry; user can retry manually

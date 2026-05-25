@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/theme_colors.dart';
 import 'trend_correlation.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// =========================================================================
 /// TrendChart — graph-first multi-metric trend chart (rebuilt G8)
 /// =========================================================================
@@ -237,7 +238,7 @@ class _TrendChartState extends State<TrendChart> {
                 _viewStart = 0.0;
                 _viewEnd = 1.0;
               }),
-              child: Text('Pinch to zoom · tap to reset',
+              child: Text(AppLocalizations.of(context).trendChartPinchToZoomTap,
                   style:
                       TextStyle(fontSize: 11, color: colors.textMuted)),
             ),
@@ -651,10 +652,10 @@ class _TrendChartState extends State<TrendChart> {
           children: [
             Icon(Icons.show_chart, size: 40, color: colors.textMuted),
             const SizedBox(height: 8),
-            Text('No data in this range',
+            Text(AppLocalizations.of(context).trendChartNoDataInThis,
                 style: TextStyle(color: colors.textMuted)),
             const SizedBox(height: 4),
-            Text('Try a wider time range or log a new entry',
+            Text(AppLocalizations.of(context).trendChartTryAWiderTime,
                 style: TextStyle(
                     color: colors.textMuted.withValues(alpha: 0.6),
                     fontSize: 12),

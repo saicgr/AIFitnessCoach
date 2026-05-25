@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Card 6: Time card - total hours, most active day, most active hour
 class WrappedTimeCard extends StatelessWidget {
   final WrappedData data;
@@ -88,7 +89,7 @@ class WrappedTimeCard extends StatelessWidget {
 
                   // Header
                   Text(
-                    'YOUR TIME',
+                    AppLocalizations.of(context).timeCardYourTime,
                     style: TextStyle(
                       color: const Color(0xFF818CF8).withValues(alpha: 0.9),
                       fontSize: 16,
@@ -129,7 +130,7 @@ class WrappedTimeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'spent working out',
+                    AppLocalizations.of(context).timeCardSpentWorkingOut,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.4),
                       fontSize: 14,
@@ -145,7 +146,7 @@ class WrappedTimeCard extends StatelessWidget {
                       Expanded(
                         child: _buildInfoTile(
                           icon: Icons.calendar_today,
-                          label: 'MOST ACTIVE DAY',
+                          label: AppLocalizations.of(context).timeCardMostActiveDay,
                           value: data.mostActiveDayOfWeek,
                         ),
                       ),
@@ -153,7 +154,7 @@ class WrappedTimeCard extends StatelessWidget {
                       Expanded(
                         child: _buildInfoTile(
                           icon: Icons.access_time,
-                          label: 'PEAK HOUR',
+                          label: AppLocalizations.of(context).timeCardPeakHour,
                           value: _formattedHour,
                         ),
                       ),

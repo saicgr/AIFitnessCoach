@@ -80,6 +80,7 @@ import 'widgets/breathing_guide_sheet.dart';
 import 'shared/exercise_instruction_copy.dart';
 import '../../core/services/exercise_info_service.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 part 'exercise_details_sheet_content.dart';
 part 'progression_selector_sheet.dart';
 
@@ -1936,10 +1937,10 @@ class _ActiveWorkoutScreenState
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(result.coachMessage.isNotEmpty
           ? result.coachMessage
-          : 'Workout adapted.'),
+          : AppLocalizations.of(context).activeWorkoutScreenWorkoutAdapted),
       duration: const Duration(seconds: 5),
       action: SnackBarAction(
-        label: 'Undo',
+        label: AppLocalizations.of(context).workoutUiBuildersUndo,
         onPressed: () {
           if (!mounted) return;
           setState(() {
@@ -2190,8 +2191,8 @@ class _ActiveWorkoutScreenState
       // Show success feedback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Exercise swapped successfully'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).activeWorkoutScreenExerciseSwappedSuccessfully),
             duration: Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/branded_program.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// A widget for selecting program duration (weeks) and sessions per week.
 ///
 /// Shows a slider with tick marks at anchor durations and a chip row
@@ -41,7 +42,7 @@ class WeekDurationSelector extends StatelessWidget {
         children: [
           // Section header
           Text(
-            'CUSTOMIZE DURATION',
+            AppLocalizations.of(context).weekDurationSelectorCustomizeDuration,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -57,7 +58,7 @@ class WeekDurationSelector extends StatelessWidget {
               Icon(Icons.calendar_today, size: 18, color: cyan),
               const SizedBox(width: 8),
               Text(
-                'Duration',
+                AppLocalizations.of(context).workoutSummaryGeneralDuration,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
@@ -120,7 +121,7 @@ class WeekDurationSelector extends StatelessWidget {
               Icon(Icons.repeat, size: 18, color: cyan),
               const SizedBox(width: 8),
               Text(
-                'Sessions / week',
+                AppLocalizations.of(context).weekDurationSelectorSessionsWeek,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 15,

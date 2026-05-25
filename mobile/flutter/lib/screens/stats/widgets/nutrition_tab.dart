@@ -11,6 +11,7 @@ import '../../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../../../widgets/nutrition/health_metrics_card.dart';
 import '../../../widgets/nutrition/food_mood_analytics_card.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'nutrition_tab_part_weekly_overview_card.dart';
 part 'nutrition_tab_part_adherence_card.dart';
 
@@ -34,7 +35,7 @@ class NutritionTab extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     if (userId == null || userId!.isEmpty) {
-      return const Center(child: Text('Sign in to view nutrition stats'));
+      return Center(child: Text(AppLocalizations.of(context).nutritionSignInToView));
     }
 
     final weeklySummary = ref.watch(weeklySummaryProvider(userId!));
@@ -197,7 +198,7 @@ class _CycleCalorieOverlayCard extends StatelessWidget {
         error: (_, __) => SizedBox(
           height: 60,
           child: Center(
-            child: Text('Could not load cycle overlay',
+            child: Text(AppLocalizations.of(context).nutritionCouldNotLoadCycle,
                 style: TextStyle(color: textMuted)),
           ),
         ),
@@ -229,7 +230,7 @@ class _CycleCalorieOverlayCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Calories by Cycle Phase',
+                      AppLocalizations.of(context).nutritionCaloriesByCyclePhase,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -268,7 +269,7 @@ class _CycleCalorieOverlayCard extends StatelessWidget {
                 SizedBox(
                   height: 60,
                   child: Center(
-                    child: Text('Log a few days to see the cycle overlay',
+                    child: Text(AppLocalizations.of(context).nutritionLogAFewDays,
                         style: TextStyle(color: textMuted, fontSize: 13)),
                   ),
                 )

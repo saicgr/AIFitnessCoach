@@ -9,6 +9,7 @@ import '../../core/services/posthog_service.dart';
 import '../nutrition/widgets/log_meal_helpers.dart';
 import 'demo_tasks_screen.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Nutrition Showcase — Onboarding v5
 ///
 /// 4-frame user-paced tap-through. Mockups visually match the production
@@ -128,8 +129,8 @@ class _NutritionShowcaseScreenState
                   ),
                   TextButton(
                     onPressed: _skip,
-                    child: const Text(
-                      'Skip',
+                    child: Text(
+                      AppLocalizations.of(context).onboardingSkip,
                       style: TextStyle(
                         color: Color(0xFF2ECC71),
                         fontWeight: FontWeight.w600,
@@ -286,7 +287,7 @@ class _Frame1Sheet extends StatelessWidget {
                     Icon(Icons.calendar_today_rounded,
                         color: textPrimary, size: 14),
                     const SizedBox(width: 6),
-                    Text('Today',
+                    Text(AppLocalizations.of(context).todayScoreCardToday,
                         style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -344,7 +345,7 @@ class _Frame1Sheet extends StatelessWidget {
               const SizedBox(width: 8),
               _pickerPill(
                 emoji: '🌙',
-                label: 'Dinner',
+                label: AppLocalizations.of(context).quickLogOverlayDinner,
                 bg: cardBg,
                 fg: textPrimary,
               ),
@@ -363,7 +364,7 @@ class _Frame1Sheet extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'What did you eat?',
+                    AppLocalizations.of(context).nutritionShowcaseWhatDidYouEat,
                     style: TextStyle(
                       fontSize: 15,
                       color: textSecondary.withValues(alpha: 0.7),
@@ -383,20 +384,20 @@ class _Frame1Sheet extends StatelessWidget {
             children: [
               _filterPill(
                 icon: Icons.access_time_rounded,
-                label: 'Recent',
+                label: AppLocalizations.of(context).nutritionShowcaseRecent,
                 selected: true,
               ),
               const SizedBox(width: 8),
               _filterPill(
                 icon: Icons.bookmark_border_rounded,
-                label: 'Saved',
+                label: AppLocalizations.of(context).savedHubSaved,
                 selected: false,
                 isDark: isDark,
               ),
               const SizedBox(width: 8),
               _filterPill(
                 icon: Icons.storage_rounded,
-                label: 'Food DB',
+                label: AppLocalizations.of(context).nutritionShowcaseFoodDb,
                 selected: false,
                 isDark: isDark,
               ),
@@ -489,12 +490,12 @@ class _Frame1Sheet extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     Icon(Icons.auto_awesome_rounded,
                         color: Colors.white, size: 14),
                     SizedBox(width: 4),
                     Text(
-                      'Analyze',
+                      AppLocalizations.of(context).nutritionShowcaseAnalyze,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
@@ -713,7 +714,7 @@ class _Frame2Scanning extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
           Text(
-            'Scanning menu…',
+            AppLocalizations.of(context).nutritionShowcaseScanningMenu,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -722,7 +723,7 @@ class _Frame2Scanning extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Multiple pages? Snap them all.',
+            AppLocalizations.of(context).nutritionShowcaseMultiplePagesSnapThem,
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,
@@ -759,7 +760,7 @@ class _Frame2Scanning extends StatelessWidget {
                           children: [
                             Center(
                               child: Text(
-                                'THE BISTRO',
+                                AppLocalizations.of(context).nutritionShowcaseTheBistro,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
@@ -770,7 +771,7 @@ class _Frame2Scanning extends StatelessWidget {
                             ),
                             Center(
                               child: Text(
-                                '— Lunch & Dinner —',
+                                AppLocalizations.of(context).nutritionShowcaseLunchDinner,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontStyle: FontStyle.italic,
@@ -779,14 +780,14 @@ class _Frame2Scanning extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            _MenuSectionHeader(title: 'STARTERS'),
+                            _MenuSectionHeader(title: AppLocalizations.of(context).nutritionShowcaseStarters),
                             _MenuItemMock(
                                 'Burrata & Heirloom Tomato', '\$13'),
                             _MenuItemMock('Crispy Calamari', '\$15'),
                             _MenuItemMock('Caesar Salad', '\$14'),
                             const SizedBox(height: 10),
                             _MenuSectionHeader(title: 'MAINS'),
-                            _MenuItemMock('Grilled Salmon Bowl', '\$22'),
+                            _MenuItemMock(AppLocalizations.of(context).nutritionShowcaseGrilledSalmonBowl, '\$22'),
                             _MenuItemMock('Margherita Pizza', '\$16'),
                             _MenuItemMock('Garden Risotto', '\$18'),
                             _MenuItemMock('Beef Burger · Truffle Fries',
@@ -795,11 +796,11 @@ class _Frame2Scanning extends StatelessWidget {
                                 'Roasted Half Chicken', '\$21'),
                             const SizedBox(height: 10),
                             _MenuSectionHeader(title: 'PASTA'),
-                            _MenuItemMock('Cacio e Pepe', '\$17'),
+                            _MenuItemMock(AppLocalizations.of(context).nutritionShowcaseCacioEPepe, '\$17'),
                             _MenuItemMock('Lobster Tagliatelle', '\$28'),
                             const SizedBox(height: 10),
-                            _MenuSectionHeader(title: 'DESSERTS'),
-                            _MenuItemMock('Tiramisu', '\$10'),
+                            _MenuSectionHeader(title: AppLocalizations.of(context).nutritionShowcaseDesserts),
+                            _MenuItemMock(AppLocalizations.of(context).nutritionShowcaseTiramisu, '\$10'),
                           ],
                         ),
                       ),
@@ -1183,7 +1184,7 @@ class _Frame3ResultState extends State<_Frame3Result> {
         children: [
           const SizedBox(height: 8),
           Text(
-            'Menu analyzed',
+            AppLocalizations.of(context).nutritionShowcaseMenuAnalyzed,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -1197,14 +1198,14 @@ class _Frame3ResultState extends State<_Frame3Result> {
               color: const Color(0xFF2ECC71).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.check_circle_rounded,
                     color: Color(0xFF2ECC71), size: 12),
                 SizedBox(width: 4),
                 Text(
-                  '11 dishes · 4 sections',
+                  AppLocalizations.of(context).nutritionShowcase11Dishes4Sections,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -1229,7 +1230,7 @@ class _Frame3ResultState extends State<_Frame3Result> {
                         size: 14, color: textSecondary),
                     const SizedBox(width: 4),
                     Text(
-                      'Sort:',
+                      AppLocalizations.of(context).nutritionShowcaseSort,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1352,7 +1353,7 @@ class _Frame3ResultState extends State<_Frame3Result> {
                   )
                 else
                   Text(
-                    'Tap a dish to select',
+                    AppLocalizations.of(context).nutritionShowcaseTapADishTo,
                     style:
                         TextStyle(fontSize: 11, color: textSecondary),
                   ),
@@ -1642,7 +1643,7 @@ class _FilterButton extends StatelessWidget {
                   : AppColorsLight.textPrimary),
           const SizedBox(width: 4),
           Text(
-            'Filter',
+            AppLocalizations.of(context).nutritionShowcaseFilter,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -1761,7 +1762,7 @@ class _Frame4Logged extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                'No dishes selected — go back and pick a few.',
+                AppLocalizations.of(context).nutritionShowcaseNoDishesSelectedGo,
                 style: TextStyle(fontSize: 13, color: textSecondary),
                 textAlign: TextAlign.center,
               ),
@@ -2444,8 +2445,8 @@ class _PulsingMenuTile extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Text(
-                    'Tap below to scan menu',
+                  child: Text(
+                    AppLocalizations.of(context).nutritionShowcaseTapBelowToScan,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,

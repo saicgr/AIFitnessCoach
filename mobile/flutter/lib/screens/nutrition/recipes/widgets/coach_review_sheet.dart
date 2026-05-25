@@ -9,6 +9,7 @@ import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/coach_review.dart';
 import '../../../../data/repositories/recipe_repository.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 class CoachReviewSheet extends ConsumerStatefulWidget {
   final CoachReviewSubject subjectType;
   final String subjectId;
@@ -75,7 +76,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
             Row(children: [
               Icon(Icons.psychology_outlined, color: accent),
               const SizedBox(width: 8),
-              Text('Coach review', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(AppLocalizations.of(context).recipeDetailCoachReview, style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
               const Spacer(),
               IconButton(icon: const Icon(Icons.refresh), onPressed: () => _load(fresh: true)),
             ]),
@@ -86,7 +87,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
                   : _error != null
                       ? Center(child: Text(_error!, style: TextStyle(color: muted)))
                       : _review == null
-                          ? Center(child: Text('No review yet — tap refresh to generate', style: TextStyle(color: muted)))
+                          ? Center(child: Text(AppLocalizations.of(context).coachReviewNoReviewYetTap, style: TextStyle(color: muted)))
                           : ListView(controller: controller, children: _buildReview(_review!, accent, text, muted)),
             ),
             OutlinedButton(
@@ -95,12 +96,12 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
                   await ref.read(recipeRepositoryProvider).requestHumanProReview(_review!.id);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('We\'ll notify you when human reviewers launch')),
+                      SnackBar(content: Text(AppLocalizations.of(context).coachReviewWeLlNotifyYou)),
                     );
                   }
                 } catch (_) {}
               },
-              child: const Text('Request human pro review'),
+              child: Text(AppLocalizations.of(context).coachReviewRequestHumanProReview),
             ),
           ],
         ),
@@ -130,14 +131,14 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Overall score', style: TextStyle(color: muted, fontSize: 11)),
+              Text(AppLocalizations.of(context).coachReviewOverallScore, style: TextStyle(color: muted, fontSize: 11)),
               if (r.isStale)
                 Container(
                   margin: const EdgeInsets.only(top: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6)),
-                  child: Text('Out of date', style: TextStyle(color: AppColors.yellow, fontSize: 10, fontWeight: FontWeight.w700)),
+                  child: Text(AppLocalizations.of(context).coachReviewOutOfDate, style: TextStyle(color: AppColors.yellow, fontSize: 10, fontWeight: FontWeight.w700)),
                 ),
             ]),
           ),
@@ -162,13 +163,13 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         ),
       const SizedBox(height: 16),
       if (r.macroBalanceNotes != null) ...[
-        Text('Macro balance', style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).coachReviewMacroBalance, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
         Text(r.macroBalanceNotes!, style: TextStyle(color: muted, height: 1.4)),
         const SizedBox(height: 16),
       ],
       if (r.micronutrientGaps.isNotEmpty) ...[
-        Text('Micronutrient gaps', style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).coachReviewMicronutrientGaps, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
         ...r.micronutrientGaps.map((g) => ListTile(
           dense: true,
@@ -182,7 +183,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         const SizedBox(height: 16),
       ],
       if (r.swapSuggestions.isNotEmpty) ...[
-        Text('Suggested swaps', style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).coachReviewSuggestedSwaps, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         ...r.swapSuggestions.map((s) => Card(
           child: ListTile(
@@ -191,16 +192,16 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
             trailing: TextButton(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Apply swap — coming with planner integration')));
+                    SnackBar(content: Text(AppLocalizations.of(context).coachReviewApplySwapComingWith)));
               },
-              child: const Text('Apply'),
+              child: Text(AppLocalizations.of(context).setAdjustmentSheetApply),
             ),
           ),
         )),
         const SizedBox(height: 16),
       ],
       if (r.fullFeedback != null) ...[
-        Text('Full feedback', style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).coachReviewFullFeedback, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
         Text(r.fullFeedback!, style: TextStyle(color: muted, height: 1.5)),
       ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../glass_back_button.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Simplified bottom navigation for Senior Mode
 /// 4 items: Home, Workouts, Food, Settings
 class SeniorBottomNav extends StatelessWidget {
@@ -42,25 +43,25 @@ class SeniorBottomNav extends StatelessWidget {
           children: [
             _SeniorNavItem(
               icon: Icons.home_rounded,
-              label: 'Home',
+              label: AppLocalizations.of(context).navHome,
               isSelected: currentIndex == 0,
               onTap: () => onTap(0),
             ),
             _SeniorNavItem(
               icon: Icons.insights_rounded,
-              label: 'Workouts',
+              label: AppLocalizations.of(context).workoutListTitle,
               isSelected: currentIndex == 1,
               onTap: () => onTap(1),
             ),
             _SeniorNavItem(
               icon: Icons.restaurant_rounded,
-              label: 'Food',
+              label: AppLocalizations.of(context).seniorNavFood,
               isSelected: currentIndex == 2,
               onTap: () => onTap(2),
             ),
             _SeniorNavItem(
               icon: Icons.settings_rounded,
-              label: 'Settings',
+              label: AppLocalizations.of(context).settingsTitle,
               isSelected: currentIndex == 3,
               onTap: () => onTap(3),
             ),

@@ -29,12 +29,12 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
                   Icon(Icons.timeline_outlined, size: 48, color: textMuted),
                   const SizedBox(height: 12),
                   Text(
-                    'No stats for this exercise yet',
+                    AppLocalizations.of(context).exerciseDetailScreenNoStatsForThis,
                     style: TextStyle(color: textMuted, fontSize: 14),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Complete a workout to start tracking',
+                    AppLocalizations.of(context).exerciseDetailScreenCompleteAWorkoutTo,
                     style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
                   ),
                 ],
@@ -155,7 +155,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
           actionButton(
             icon: Icons.favorite_border,
             activeIcon: Icons.favorite,
-            label: 'Favorite',
+            label: AppLocalizations.of(context).recipeDetailFavorite,
             active: isFav,
             activeColor: red,
             onTap: () {
@@ -166,7 +166,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
           actionButton(
             icon: Icons.push_pin_outlined,
             activeIcon: Icons.push_pin,
-            label: 'Staple',
+            label: AppLocalizations.of(context).expandedExerciseCardStaple,
             active: isStaple,
             activeColor: cyan,
             onTap: () {
@@ -181,7 +181,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
           actionButton(
             icon: Icons.queue_outlined,
             activeIcon: Icons.queue,
-            label: 'Queue',
+            label: AppLocalizations.of(context).myExercisesQueue,
             active: isQueued,
             activeColor: orange,
             onTap: () {
@@ -196,7 +196,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
           actionButton(
             icon: Icons.block_outlined,
             activeIcon: Icons.block,
-            label: 'Avoid',
+            label: AppLocalizations.of(context).menuFilterAvoid,
             active: isAvoided,
             activeColor: textMuted,
             onTap: () {
@@ -214,16 +214,16 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
     final cues = <_CueItem>[];
 
     if (exercise.formCue != null && exercise.formCue!.isNotEmpty) {
-      cues.add(_CueItem(icon: Icons.sports_gymnastics, label: 'Form', text: exercise.formCue!));
+      cues.add(_CueItem(icon: Icons.sports_gymnastics, label: AppLocalizations.of(context).workoutAiCoachForm, text: exercise.formCue!));
     }
     if (exercise.breathingCue != null && exercise.breathingCue!.isNotEmpty) {
-      cues.add(_CueItem(icon: Icons.air, label: 'Breathing', text: exercise.breathingCue!));
+      cues.add(_CueItem(icon: Icons.air, label: AppLocalizations.of(context).workoutUiBuildersBreathing, text: exercise.breathingCue!));
     }
     if (exercise.setup != null && exercise.setup!.isNotEmpty) {
-      cues.add(_CueItem(icon: Icons.tune, label: 'Setup', text: exercise.setup!));
+      cues.add(_CueItem(icon: Icons.tune, label: AppLocalizations.of(context).inlineExerciseInfoSetup, text: exercise.setup!));
     }
     if (exercise.tempo != null && exercise.tempo!.isNotEmpty) {
-      cues.add(_CueItem(icon: Icons.speed, label: 'Tempo', text: exercise.tempo!));
+      cues.add(_CueItem(icon: Icons.speed, label: AppLocalizations.of(context).stapleChoiceTempo, text: exercise.tempo!));
     }
 
     if (cues.isEmpty) return const SizedBox.shrink();
@@ -232,7 +232,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'COACHING CUES',
+          AppLocalizations.of(context).exerciseDetailScreenCoachingCues,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -300,7 +300,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
     final items = <_CueItem>[];
 
     if (exercise.difficulty != null && exercise.difficulty!.isNotEmpty) {
-      items.add(_CueItem(icon: Icons.signal_cellular_alt, label: 'Difficulty', text: exercise.difficulty!));
+      items.add(_CueItem(icon: Icons.signal_cellular_alt, label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty, text: exercise.difficulty!));
     }
 
     // Secondary muscles
@@ -312,14 +312,14 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       musclesText = secondaryMuscles;
     }
     if (musclesText != null) {
-      items.add(_CueItem(icon: Icons.accessibility_new, label: 'Secondary Muscles', text: musclesText));
+      items.add(_CueItem(icon: Icons.accessibility_new, label: AppLocalizations.of(context).exerciseDetailsSheetSecondaryMuscles, text: musclesText));
     }
 
     if (exercise.substitution != null && exercise.substitution!.isNotEmpty) {
-      items.add(_CueItem(icon: Icons.swap_horiz, label: 'Alternative', text: exercise.substitution!));
+      items.add(_CueItem(icon: Icons.swap_horiz, label: AppLocalizations.of(context).exerciseDetailScreenAlternative, text: exercise.substitution!));
     }
     if (exercise.notes != null && exercise.notes!.isNotEmpty) {
-      items.add(_CueItem(icon: Icons.sticky_note_2_outlined, label: 'Notes', text: exercise.notes!));
+      items.add(_CueItem(icon: Icons.sticky_note_2_outlined, label: AppLocalizations.of(context).syncedWorkoutDetailNotes, text: exercise.notes!));
     }
 
     if (items.isEmpty) return const SizedBox.shrink();
@@ -328,7 +328,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'EXERCISE INFO',
+          AppLocalizations.of(context).exerciseDetailScreenExerciseInfo,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,

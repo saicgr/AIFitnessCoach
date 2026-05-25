@@ -8,6 +8,7 @@ import '../../../data/services/api_client.dart';
 import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'custom_content_section_part_custom_content_card.dart';
 part 'custom_content_section_part_add_exercise_dialog.dart';
 
@@ -46,8 +47,8 @@ class CustomContentSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'MY CUSTOM CONTENT',
-          subtitle: 'Add your own equipment and exercises',
+          title: AppLocalizations.of(context).customContentMyCustomContent,
+          subtitle: AppLocalizations.of(context).customContentAddYourOwnEquipment,
           helpTitle: 'Custom Content Explained',
           helpItems: _customContentHelpItems,
         ),

@@ -8,6 +8,7 @@ import '../../data/services/challenges_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Full-screen side-by-side comparison of challenge results.
 ///
 /// Shows overall stats (time, volume, sets) and per-exercise breakdown
@@ -73,8 +74,8 @@ class _ChallengeCompareScreenState
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: const PillAppBar(
-        title: 'Challenge Results',
+      appBar: PillAppBar(
+        title: AppLocalizations.of(context).challengeCompareChallengeResults,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -94,7 +95,7 @@ class _ChallengeCompareScreenState
             Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
-              'Failed to load challenge',
+              AppLocalizations.of(context).challengeCompareFailedToLoadChallenge,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -115,7 +116,7 @@ class _ChallengeCompareScreenState
             ElevatedButton.icon(
               onPressed: _loadChallenge,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange,
                 foregroundColor: Colors.white,
@@ -205,7 +206,7 @@ class _ChallengeCompareScreenState
               children: [
                 _buildComparisonRow(
                   emoji: '⏱️',
-                  label: 'Time',
+                  label: AppLocalizations.of(context).workoutShowcaseTime,
                   valueA: challengerStats['duration_minutes'],
                   valueB: challengedStats['duration_minutes'],
                   formatFn: (v) => '${v} min',
@@ -216,7 +217,7 @@ class _ChallengeCompareScreenState
                 const SizedBox(height: 16),
                 _buildComparisonRow(
                   emoji: '💪',
-                  label: 'Volume',
+                  label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
                   valueA: challengerStats['total_volume'],
                   valueB: challengedStats['total_volume'],
                   formatFn: (v) => _formatVolume(v),
@@ -227,7 +228,7 @@ class _ChallengeCompareScreenState
                 const SizedBox(height: 16),
                 _buildComparisonRow(
                   emoji: '📊',
-                  label: 'Sets',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralSets,
                   valueA: challengerStats['total_sets'],
                   valueB: challengedStats['total_sets'],
                   formatFn: (v) => '$v',
@@ -238,7 +239,7 @@ class _ChallengeCompareScreenState
                 const SizedBox(height: 16),
                 _buildComparisonRow(
                   emoji: '🔄',
-                  label: 'Reps',
+                  label: AppLocalizations.of(context).workoutSummaryGeneralReps,
                   valueA: challengerStats['total_reps'],
                   valueB: challengedStats['total_reps'],
                   formatFn: (v) => '$v',
@@ -411,8 +412,8 @@ class _ChallengeCompareScreenState
           ),
         ),
         if (isWinner)
-          const Text(
-            'WINNER',
+          Text(
+            AppLocalizations.of(context).challengeCompareWinner,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
@@ -676,8 +677,8 @@ class _ChallengeCompareScreenState
           child: ElevatedButton.icon(
             onPressed: () => _sendRematch(data),
             icon: const Icon(Icons.replay_rounded, size: 20),
-            label: const Text(
-              'REMATCH',
+            label: Text(
+              AppLocalizations.of(context).challengeCompareRematch,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
@@ -704,7 +705,7 @@ class _ChallengeCompareScreenState
               color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
             ),
             label: Text(
-              'View Feed',
+              AppLocalizations.of(context).challengeCompareViewFeed,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
@@ -753,8 +754,8 @@ class _ChallengeCompareScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rematch sent!'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).challengeCompareRematchSent),
             backgroundColor: Colors.green,
           ),
         );

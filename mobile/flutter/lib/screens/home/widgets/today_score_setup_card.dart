@@ -18,6 +18,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/health_service.dart' show healthSyncProvider;
 import '../../../widgets/health_connect_sheet.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class TodayScoreSetupCard extends ConsumerWidget {
   const TodayScoreSetupCard({super.key});
 
@@ -41,7 +42,7 @@ class TodayScoreSetupCard extends ConsumerWidget {
 
     final steps = <_SetupStep>[
       _SetupStep(
-        label: 'Add a workout plan',
+        label: AppLocalizations.of(context).todayScoreSetupAddAWorkoutPlan,
         done: hasPlan,
         onTap: () => context.push('/workout/build'),
       ),
@@ -56,7 +57,7 @@ class TodayScoreSetupCard extends ConsumerWidget {
         onTap: () => showHealthConnectSheet(context, ref),
       ),
       _SetupStep(
-        label: 'Track your first sleep',
+        label: AppLocalizations.of(context).todayScoreSetupTrackYourFirstSleep,
         done: hasFirstSleep,
         // Auto-completes once a night syncs. Tapping just nudges health-connect
         // if not yet linked; otherwise a no-op friendly tooltip would be
@@ -92,7 +93,7 @@ class TodayScoreSetupCard extends ConsumerWidget {
           const SizedBox(height: 6),
           Text(
             firstIncomplete == -1
-                ? "You're all set"
+                ? AppLocalizations.of(context).todayScoreSetupYouReAllSet
                 : 'Unlock your day score',
             style: TextStyle(
               fontSize: 16,

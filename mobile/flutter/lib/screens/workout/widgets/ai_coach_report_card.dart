@@ -6,6 +6,7 @@ import '../../../data/models/workout.dart';
 import '../../../widgets/lottie_animations.dart';
 import '../../library/providers/muscle_group_images_provider.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Compact AI Coach report card for the workout complete screen.
 /// Shows AI insight, muscles worked with images, and quick performance stats.
 class AiCoachReportCard extends StatelessWidget {
@@ -279,7 +280,7 @@ class _AiInsightSection extends StatelessWidget {
                   ),
                 )
               : Text(
-                  aiSummary ?? 'Great workout! Keep up the momentum.',
+                  aiSummary ?? AppLocalizations.of(context).aiCoachReportGreatWorkoutKeepUp,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     height: 1.4,
                   ),
@@ -318,7 +319,7 @@ class _MusclesWorkedStrip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Muscles Worked',
+          AppLocalizations.of(context).workoutDayDetailMusclesWorked,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,
@@ -450,7 +451,7 @@ class _QuickStatsRow extends StatelessWidget {
             value: volumePercent != null
                 ? '${volumePercent >= 0 ? '+' : ''}${volumePercent.toStringAsFixed(0)}%'
                 : '${displayVolume.toStringAsFixed(0)}$unit',
-            label: volumePercent != null ? 'vs Last' : 'Volume',
+            label: volumePercent != null ? AppLocalizations.of(context).aiCoachReportVsLast : AppLocalizations.of(context).workoutSummaryAdvancedVolume,
             color: volumePercent != null
                 ? (volumePercent >= 0 ? AppColors.green : Colors.redAccent)
                 : AppColors.green,
@@ -473,7 +474,7 @@ class _QuickStatsRow extends StatelessWidget {
               ? _MiniStat(
                   icon: Icons.emoji_events,
                   value: '$prCount',
-                  label: prCount == 1 ? 'PR' : 'PRs',
+                  label: prCount == 1 ? AppLocalizations.of(context).aiCoachReportPr : AppLocalizations.of(context).weeklyWrappedPrs,
                   color: AppColors.orange,
                 )
               : _MiniStat(

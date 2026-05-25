@@ -11,6 +11,7 @@ import '../../core/services/posthog_service.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Fitness Assessment Screen
 /// Single scrollable screen with 6 questions (~2 min)
 /// Appears after coach selection, before paywall
@@ -188,7 +189,7 @@ class _FitnessAssessmentScreenState
                   Icon(Icons.auto_awesome, size: 16, color: accentColor),
                   const SizedBox(width: 6),
                   Text(
-                    'Why this matters',
+                    AppLocalizations.of(context).fitnessAssessmentWhyThisMatters,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -199,7 +200,7 @@ class _FitnessAssessmentScreenState
               ),
               const SizedBox(height: 8),
               Text(
-                'Your answers help the AI calibrate workouts to your exact fitness level — no guessing.',
+                AppLocalizations.of(context).fitnessAssessmentYourAnswersHelpThe,
                 style: TextStyle(
                   fontSize: 12,
                   color: textSecondary,
@@ -213,7 +214,7 @@ class _FitnessAssessmentScreenState
 
         // What gets customized
         Text(
-          'What gets personalized',
+          AppLocalizations.of(context).fitnessAssessmentWhatGetsPersonalized,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -251,7 +252,7 @@ class _FitnessAssessmentScreenState
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                'No wrong answers — just be honest!',
+                AppLocalizations.of(context).fitnessAssessmentNoWrongAnswersJust,
                 style: TextStyle(
                   fontSize: 11,
                   color: textSecondary.withValues(alpha: 0.7),
@@ -294,7 +295,7 @@ class _FitnessAssessmentScreenState
                 ),
               ),
               child: Text(
-                'Skip',
+                AppLocalizations.of(context).onboardingSkip,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -354,8 +355,8 @@ class _FitnessAssessmentScreenState
                   icon: Icons.fitness_center,
                   iconColor: accentColor,
                   accentColor: accentColor,
-                  title: 'Push-ups',
-                  subtitle: 'How many consecutive push-ups with good form?',
+                  title: AppLocalizations.of(context).fitnessAssessmentPushUps,
+                  subtitle: AppLocalizations.of(context).fitnessAssessmentHowManyConsecutivePush,
                   options: _pushupOptions,
                   selectedValue: _pushupCapacity,
                   onChanged: (value) =>
@@ -372,8 +373,8 @@ class _FitnessAssessmentScreenState
                   icon: Icons.sports_gymnastics,
                   iconColor: AppColors.cyan,
                   accentColor: accentColor,
-                  title: 'Pull-ups',
-                  subtitle: 'How many pull-ups can you do?',
+                  title: AppLocalizations.of(context).fitnessAssessmentPullUps,
+                  subtitle: AppLocalizations.of(context).fitnessAssessmentHowManyPullUps,
                   options: _pullupOptions,
                   selectedValue: _pullupCapacity,
                   onChanged: (value) =>
@@ -390,8 +391,8 @@ class _FitnessAssessmentScreenState
                   icon: Icons.accessibility_new,
                   iconColor: AppColors.purple,
                   accentColor: accentColor,
-                  title: 'Plank Hold',
-                  subtitle: 'How long can you hold a plank?',
+                  title: AppLocalizations.of(context).fitnessAssessmentPlankHold,
+                  subtitle: AppLocalizations.of(context).fitnessAssessmentHowLongCanYou,
                   options: _plankOptions,
                   selectedValue: _plankCapacity,
                   onChanged: (value) =>
@@ -408,8 +409,8 @@ class _FitnessAssessmentScreenState
                   icon: Icons.airline_seat_legroom_extra,
                   iconColor: AppColors.success,
                   accentColor: accentColor,
-                  title: 'Bodyweight Squats',
-                  subtitle: 'How many can you do continuously?',
+                  title: AppLocalizations.of(context).fitnessAssessmentBodyweightSquats,
+                  subtitle: AppLocalizations.of(context).fitnessAssessmentHowManyCanYou,
                   options: _squatOptions,
                   selectedValue: _squatCapacity,
                   onChanged: (value) =>
@@ -426,8 +427,8 @@ class _FitnessAssessmentScreenState
                   icon: Icons.history,
                   iconColor: AppColors.warning,
                   accentColor: accentColor,
-                  title: 'Training Experience',
-                  subtitle: 'How long have you been lifting weights?',
+                  title: AppLocalizations.of(context).fitnessAssessmentTrainingExperience,
+                  subtitle: AppLocalizations.of(context).quizFitnessLevelHowLongHaveYou,
                   options: _experienceOptions,
                   selectedValue: _trainingExperience,
                   onChanged: (value) =>
@@ -444,8 +445,8 @@ class _FitnessAssessmentScreenState
                   icon: Icons.directions_run,
                   iconColor: AppColors.error,
                   accentColor: accentColor,
-                  title: 'Cardio Capacity',
-                  subtitle: 'How long can you do continuous cardio?',
+                  title: AppLocalizations.of(context).fitnessAssessmentCardioCapacity,
+                  subtitle: AppLocalizations.of(context).fitnessAssessmentHowLongCanYou2,
                   options: _cardioOptions,
                   selectedValue: _cardioCapacity,
                   onChanged: (value) =>
@@ -486,7 +487,7 @@ class _FitnessAssessmentScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Quick Fitness Check',
+                    AppLocalizations.of(context).fitnessAssessmentQuickFitnessCheck,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -495,7 +496,7 @@ class _FitnessAssessmentScreenState
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Help us personalize your workouts (~2 min)',
+                    AppLocalizations.of(context).fitnessAssessmentHelpUsPersonalizeYour,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,
@@ -694,7 +695,7 @@ class _FitnessAssessmentScreenState
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Continue',
+                          AppLocalizations.of(context).onboardingContinueButton,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

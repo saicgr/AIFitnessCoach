@@ -23,6 +23,7 @@ import 'inline_rest_row.dart';
 import 'number_input_widgets.dart';
 import 'set_tracking_sheets.dart' as sheets;
 
+import '../../../l10n/generated/app_localizations.dart';
 part 'set_tracking_overlay_ui_1.dart';
 part 'set_tracking_overlay_ui_2.dart';
 
@@ -401,7 +402,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
 
                   // Warmup section header with collapse toggle
                   _buildSectionHeader(
-                    title: 'Warmup sets',
+                    title: AppLocalizations.of(context).setTrackingOverlayWarmupSets,
                     isCollapsed: _isWarmupCollapsed,
                     onToggle: () {
                       setState(() => _isWarmupCollapsed = !_isWarmupCollapsed);
@@ -417,7 +418,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
 
                   // Effective sets section header
                   _buildSectionHeader(
-                    title: 'Effective sets',
+                    title: AppLocalizations.of(context).setTrackingOverlayEffectiveSets,
                     isDark: isDark,
                     textMuted: textMuted,
                   ),
@@ -513,8 +514,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
           Expanded(
             child: _buildQuickStatButton(
               icon: Icons.analytics_outlined,
-              label: 'Analytics',
-              value: widget.prData != null ? 'View PR' : 'View',
+              label: AppLocalizations.of(context).setTrackingOverlayAnalytics,
+              value: widget.prData != null ? AppLocalizations.of(context).setTrackingOverlayViewPr : AppLocalizations.of(context).setTrackingOverlayView,
               color: AppColors.success,
               isDark: isDark,
               textMuted: textMuted,
@@ -532,7 +533,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
           Expanded(
             child: _buildQuickStatButton(
               icon: Icons.tune_rounded,
-              label: 'Increment',
+              label: AppLocalizations.of(context).setTrackingOverlayIncrement,
               value: '${_selectedIncrement.toStringAsFixed(_selectedIncrement % 1 == 0 ? 0 : 1)} $_unit',
               color: AppColors.orange,
               isDark: isDark,
@@ -558,8 +559,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
             Expanded(
               child: _buildQuickStatButton(
                 icon: Icons.trending_up_rounded,
-                label: 'Progression',
-                value: widget.currentProgressionType ?? 'Straight',
+                label: AppLocalizations.of(context).setTrackingOverlayProgression,
+                value: widget.currentProgressionType ?? AppLocalizations.of(context).setTrackingOverlayStraight,
                 color: AppColors.purple,
                 isDark: isDark,
                 textMuted: textMuted,
@@ -844,7 +845,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
           // Add Set button only - swipe left on any set to delete
           _buildSetModifierButton(
             icon: Icons.add_circle_outline,
-            label: '+ Set',
+            label: AppLocalizations.of(context).setTrackingOverlaySet,
             color: AppColors.electricBlue,
             isDark: isDark,
             onTap: () {
@@ -884,7 +885,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
                   size: 20, color: AppColors.electricBlue),
               const SizedBox(width: 10),
               Text(
-                'Back to Current Exercise',
+                AppLocalizations.of(context).setTrackingOverlayBackToCurrentExercise,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,

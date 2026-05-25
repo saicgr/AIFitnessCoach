@@ -48,7 +48,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          "Tip: Add brand & portion for better accuracy (e.g., 'Chipotle chicken bowl' or '2 slices Domino\u2019s')",
+                          AppLocalizations.of(context).logMealSheetTipAddBrandPortion,
                           style: TextStyle(
                             fontSize: 12,
                             height: 1.35,
@@ -159,7 +159,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               Expanded(
                 child: _CaptureChip(
                   icon: Icons.photo_camera_outlined,
-                  label: 'Photo',
+                  label: AppLocalizations.of(context).recipeImportPhoto,
                   color: const Color(0xFF3B82F6), // blue
                   isDark: isDark,
                   onTap: _openPhotoChooser,
@@ -172,7 +172,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               Expanded(
                 child: _CaptureChip(
                   icon: CupertinoIcons.barcode,
-                  label: 'Barcode',
+                  label: AppLocalizations.of(context).quickActionsRowBarcode,
                   color: const Color(0xFF10B981), // green
                   isDark: isDark,
                   onTap: _openBarcodeScanner,
@@ -184,7 +184,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               Expanded(
                 child: _CaptureChip(
                   icon: Icons.menu_book_outlined,
-                  label: 'Menu',
+                  label: AppLocalizations.of(context).quickActionsRowMenu,
                   color: const Color(0xFFF59E0B), // amber
                   isDark: isDark,
                   onTap: _scanMenu,
@@ -197,7 +197,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               Expanded(
                 child: _CaptureChip(
                   icon: Icons.document_scanner_outlined,
-                  label: 'Scan',
+                  label: AppLocalizations.of(context).quickLogFabScan,
                   color: const Color(0xFF8B5CF6), // violet
                   isDark: isDark,
                   onTap: _openScanChooser,
@@ -211,7 +211,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               Expanded(
                 child: _CaptureChip(
                   icon: Icons.auto_awesome_outlined,
-                  label: 'Coach',
+                  label: AppLocalizations.of(context).quickActionsRowCoach,
                   color: const Color(0xFFEC4899), // rose
                   isDark: isDark,
                   onTap: _openAiCoachSheet,
@@ -229,7 +229,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
             child: ElevatedButton.icon(
               onPressed: hasText ? _handleAnalyze : null,
               icon: const Icon(Icons.auto_awesome, size: 18),
-              label: const Text('Analyze',
+              label: Text(AppLocalizations.of(context).nutritionShowcaseAnalyze,
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: orange,
@@ -278,8 +278,8 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       colors, blue, Icons.photo_camera_outlined, 'Add Food Photo'),
                   _GlassMenuOption(
                     icon: Icons.camera_alt_outlined,
-                    label: 'Take photo',
-                    subtitle: 'Up to 5 shots — add another between photos',
+                    label: AppLocalizations.of(context).recipesTakePhoto,
+                    subtitle: AppLocalizations.of(context).logMealSheetUpTo5Shots,
                     color: blue,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.camera),
@@ -287,8 +287,8 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   const SizedBox(height: 10),
                   _GlassMenuOption(
                     icon: Icons.collections_outlined,
-                    label: 'Choose from library',
-                    subtitle: 'Pick up to 5 from your photos',
+                    label: AppLocalizations.of(context).logMealSheetChooseFromLibrary,
+                    subtitle: AppLocalizations.of(context).logMealSheetPickUpTo5,
                     color: blue,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.gallery),
@@ -327,8 +327,8 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       Icons.document_scanner_outlined, 'Scan & Import'),
                   _GlassMenuOption(
                     icon: Icons.qr_code_2_outlined,
-                    label: 'Nutrition label',
-                    subtitle: 'Read macros off a packaged food label',
+                    label: AppLocalizations.of(context).logMealSheetNutritionLabel,
+                    subtitle: AppLocalizations.of(context).logMealSheetReadMacrosOffA,
                     color: violet,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, 'label'),
@@ -336,8 +336,8 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   const SizedBox(height: 10),
                   _GlassMenuOption(
                     icon: Icons.screenshot_outlined,
-                    label: 'Screenshot',
-                    subtitle: 'Import a log from MyFitnessPal, Cronometer…',
+                    label: AppLocalizations.of(context).logMealSheetScreenshot,
+                    subtitle: AppLocalizations.of(context).logMealSheetImportALogFrom,
                     color: violet,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, 'screenshot'),
@@ -458,7 +458,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Calories
-            Text('\u{1F525}', style: const TextStyle(fontSize: 13)),
+            Text(AppLocalizations.of(context).habitsCardU1f525, style: const TextStyle(fontSize: 13)),
             const SizedBox(width: 2),
             Text('$cal', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary)),
             Text('/$calTarget', style: TextStyle(fontSize: 13, color: textMuted)),
@@ -515,7 +515,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              'Portions adjusted — review weights below',
+                              AppLocalizations.of(context).logMealSheetPortionsAdjustedReviewWei,
                               style: TextStyle(fontSize: 11, color: orange, fontWeight: FontWeight.w500),
                             ),
                           ),
@@ -647,7 +647,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   children: [
                     Icon(Icons.auto_awesome, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary, size: 20),
                     const SizedBox(width: 8),
-                    Text('Estimated Nutrition', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
+                    Text(AppLocalizations.of(context).logMealSheetEstimatedNutrition, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
                     if (response.overallMealScore != null) ...[
                       const SizedBox(width: 8),
                       CompactGoalScore(score: response.overallMealScore!, isDark: isDark),
@@ -655,7 +655,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     if (_analysisElapsedMs != null) ...[
                       const SizedBox(width: 6),
                       Text(
-                        _analysisElapsedMs! < 500 ? '(Cached)' : '(${(_analysisElapsedMs! / 1000).toStringAsFixed(1)}s)',
+                        _analysisElapsedMs! < 500 ? AppLocalizations.of(context).logMealSheetCached : '(${(_analysisElapsedMs! / 1000).toStringAsFixed(1)}s)',
                         style: TextStyle(fontSize: 12, color: textMuted),
                       ),
                     ],
@@ -800,7 +800,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                               else
                                 Icon(Icons.add, size: 14, color: teal),
                               const SizedBox(width: 4),
-                              Text('Add',
+                              Text(AppLocalizations.of(context).tilePickerAdd,
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: teal,
@@ -830,7 +830,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                             else
                               Icon(Icons.auto_fix_high, size: 14, color: purple),
                             const SizedBox(width: 4),
-                            Text('Refine',
+                            Text(AppLocalizations.of(context).logMealSheetRefine,
                                 style: TextStyle(
                                     fontSize: 12,
                                     color: purple,
@@ -847,7 +847,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                         children: [
                           Icon(Icons.edit, size: 14, color: textMuted),
                           const SizedBox(width: 4),
-                          Text('Edit', style: TextStyle(fontSize: 12, color: textMuted)),
+                          Text(AppLocalizations.of(context).commonEdit, style: TextStyle(fontSize: 12, color: textMuted)),
                         ],
                       ),
                     ),
@@ -882,7 +882,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                         children: [
                           Icon(Icons.flag_outlined, size: 14, color: textMuted),
                           const SizedBox(width: 4),
-                          Text('Report', style: TextStyle(fontSize: 12, color: textMuted)),
+                          Text(AppLocalizations.of(context).logMealSheetReport, style: TextStyle(fontSize: 12, color: textMuted)),
                         ],
                       ),
                     ),
@@ -1038,7 +1038,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 ],
 
                 const SizedBox(height: 8),
-                Text('Estimates based on your photo/description', style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
+                Text(AppLocalizations.of(context).logMealSheetEstimatesBasedOnYour, style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
               ],
             ),
           ),
@@ -1055,7 +1055,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               icon: _isSaving
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
                   : const Icon(Icons.check, size: 18),
-              label: Text(_isSaving ? 'Saving...' : 'Log This Meal', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              label: Text(_isSaving ? AppLocalizations.of(context).workoutReviewSaving : AppLocalizations.of(context).logMealSheetLogThisMeal, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: orange,
                 foregroundColor: Colors.white,
@@ -1199,7 +1199,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               if (fits.isPlannedHighDay && overBudget) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Planned high-output day — this is by design.',
+                  AppLocalizations.of(context).logMealSheetPlannedHighOutputDay,
                   style: TextStyle(
                       fontSize: 11.5,
                       fontStyle: FontStyle.italic,
@@ -1240,7 +1240,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
             if (showFork) ...[
               const SizedBox(height: 12),
               Text(
-                'Over budget — pick one:',
+                AppLocalizations.of(context).logMealSheetOverBudgetPickOne,
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -1341,7 +1341,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
             Expanded(
               child: Text(
                 verifiedCount == items.length
-                    ? 'All items matched verified nutrition data'
+                    ? AppLocalizations.of(context).logMealSheetAllItemsMatchedVerified
                     : '$verifiedCount of ${items.length} items matched verified nutrition data',
                 style: TextStyle(
                     fontSize: 11.5,
@@ -1381,7 +1381,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 Expanded(
                   child: Text(
                     allLow
-                        ? 'This photo was hard to read'
+                        ? AppLocalizations.of(context).logMealSheetThisPhotoWasHard
                         : 'Quick check — ${lowIdx.length == 1 ? 'one item is' : '${lowIdx.length} items are'} a rough estimate',
                     style: TextStyle(
                         fontSize: 13,
@@ -1407,7 +1407,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       ? null
                       : () => _pickImage(ImageSource.camera),
                   icon: const Icon(Icons.camera_alt_rounded, size: 16),
-                  label: const Text('Re-take photo',
+                  label: Text(AppLocalizations.of(context).logMealSheetReTakePhoto,
                       style: TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w600)),
                   style: OutlinedButton.styleFrom(
@@ -1421,7 +1421,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               ),
             ] else ...[
               Text(
-                'Tap to confirm each — or edit the values in the list below.',
+                AppLocalizations.of(context).logMealSheetTapToConfirmEach,
                 style: TextStyle(
                     fontSize: 12, height: 1.35, color: textMuted),
               ),
@@ -1492,12 +1492,12 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 color: amber,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.check_rounded, size: 14, color: Colors.white),
                   SizedBox(width: 4),
-                  Text('Looks right',
+                  Text(AppLocalizations.of(context).logMealSheetLooksRight,
                       style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,

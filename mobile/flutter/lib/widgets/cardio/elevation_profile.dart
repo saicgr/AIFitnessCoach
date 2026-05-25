@@ -5,6 +5,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import 'pace_chart.dart' show CardioChartCard;
 
+import '../../l10n/generated/app_localizations.dart';
 /// One altitude sample referenced to the route's cumulative distance.
 typedef AltitudeSample = ({double meters, double cumulativeDistanceM});
 
@@ -63,7 +64,7 @@ class ElevationProfile extends StatelessWidget {
     final ascent = totalAscentMeters(altitudeSeries);
 
     return CardioChartCard(
-      title: 'Elevation',
+      title: AppLocalizations.of(context).elevationProfileElevation,
       onExpand: onExpand,
       height: 140,
       trailing: Padding(

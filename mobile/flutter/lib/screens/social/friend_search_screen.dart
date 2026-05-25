@@ -11,6 +11,7 @@ import '../../widgets/pill_app_bar.dart';
 import 'friend_profile_screen.dart';
 import 'widgets/user_search_result_card.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// Friend Search Screen - Search for users and send friend requests
 class FriendSearchScreen extends ConsumerStatefulWidget {
   const FriendSearchScreen({super.key});
@@ -280,7 +281,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Find Friends'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).socialFindFriends),
       body: Column(
         children: [
           // Search field
@@ -306,7 +307,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
                 }
               },
               decoration: InputDecoration(
-                hintText: 'Search by name or username...',
+                hintText: AppLocalizations.of(context).friendSearchSearchByNameOr,
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -367,14 +368,14 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
                 _buildTabButton(
                   index: 0,
                   icon: Icons.search_rounded,
-                  label: 'Search',
+                  label: AppLocalizations.of(context).programsSearch,
                   isDark: isDark,
                 ),
                 const SizedBox(width: 4),
                 _buildTabButton(
                   index: 1,
                   icon: Icons.auto_awesome_rounded,
-                  label: 'Suggestions',
+                  label: AppLocalizations.of(context).unresolvedExercisesSuggestions,
                   isDark: isDark,
                 ),
               ],
@@ -470,7 +471,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'Search for friends',
+              AppLocalizations.of(context).friendSearchSearchForFriends,
               style: TextStyle(
                 fontSize: 16,
                 color: AppColors.textMuted,
@@ -478,7 +479,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Type a name or username to find users',
+              AppLocalizations.of(context).friendSearchTypeANameOr,
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textMuted.withValues(alpha: 0.7),
@@ -507,7 +508,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: () => _performSearch(_searchController.text),
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -526,7 +527,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'No users found',
+              AppLocalizations.of(context).friendSearchNoUsersFound,
               style: TextStyle(
                 fontSize: 16,
                 color: AppColors.textMuted,
@@ -534,7 +535,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Try a different search term',
+              AppLocalizations.of(context).friendSearchTryADifferentSearch,
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textMuted.withValues(alpha: 0.7),
@@ -609,7 +610,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: _loadSuggestions,
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -628,7 +629,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'No suggestions yet',
+              AppLocalizations.of(context).regenerateWorkoutSheetNoSuggestionsYet,
               style: TextStyle(
                 fontSize: 16,
                 color: AppColors.textMuted,
@@ -636,7 +637,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Follow friends to get better suggestions',
+              AppLocalizations.of(context).friendSearchFollowFriendsToGet,
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textMuted.withValues(alpha: 0.7),

@@ -218,7 +218,7 @@ class _ProgressionStyleOptionTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Recommended',
+                            AppLocalizations.of(context).settingsCardPartRecommended,
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -323,7 +323,7 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Rep Range Preference',
+              AppLocalizations.of(context).repPreferencesSectionRepRangePreference,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -332,7 +332,7 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Set your preferred reps per set',
+              AppLocalizations.of(context).repPreferencesSectionSetYourPreferredReps,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -344,7 +344,7 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _RepBadge(value: min, label: 'Min'),
+                _RepBadge(value: min, label: AppLocalizations.of(context).syncedWorkoutDetailMin),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
@@ -355,7 +355,7 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
                     ),
                   ),
                 ),
-                _RepBadge(value: max, label: 'Max'),
+                _RepBadge(value: max, label: AppLocalizations.of(context).strengthOverviewCardMax),
               ],
             ),
             const SizedBox(height: 16),
@@ -413,19 +413,19 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
               child: Row(
                 children: [
                   _PresetChip(
-                    label: 'Strength (1-5)',
+                    label: AppLocalizations.of(context).repPreferencesSectionStrength15,
                     isSelected: min == 1 && max == 5,
                     onTap: () => setState(() => _values = const RangeValues(1, 5)),
                   ),
                   const SizedBox(width: 8),
                   _PresetChip(
-                    label: 'Hypertrophy (8-12)',
+                    label: AppLocalizations.of(context).repPreferencesSectionHypertrophy812,
                     isSelected: min == 8 && max == 12,
                     onTap: () => setState(() => _values = const RangeValues(8, 12)),
                   ),
                   const SizedBox(width: 8),
                   _PresetChip(
-                    label: 'Endurance (15-20)',
+                    label: AppLocalizations.of(context).repPreferencesSectionEndurance1520,
                     isSelected: min == 15 && max == 20,
                     onTap: () => setState(() => _values = const RangeValues(15, 20)),
                   ),
@@ -454,7 +454,7 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'The AI will try to keep exercises in this range by adjusting weight or suggesting progressions.',
+                      AppLocalizations.of(context).repPreferencesSectionTheAiWillTry,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.white : AppColorsLight.textPrimary,
@@ -482,8 +482,8 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Save',
+                child: Text(
+                  AppLocalizations.of(context).buttonSave,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -663,7 +663,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Sets Per Exercise',
+              AppLocalizations.of(context).repPreferencesSetsPerExercise,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -672,7 +672,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Configure your set volume for each exercise',
+              AppLocalizations.of(context).repPreferencesSectionConfigureYourSetVolume,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -684,7 +684,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _SetsBadge(value: minSets, label: 'Min Sets'),
+                _SetsBadge(value: minSets, label: AppLocalizations.of(context).repPreferencesSectionMinSets),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
@@ -695,7 +695,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                     ),
                   ),
                 ),
-                _SetsBadge(value: maxSets, label: 'Max Sets'),
+                _SetsBadge(value: maxSets, label: AppLocalizations.of(context).repPreferencesSectionMaxSets),
               ],
             ),
             const SizedBox(height: 16),
@@ -729,7 +729,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Minimum sets to ensure adequate volume',
+                    AppLocalizations.of(context).repPreferencesSectionMinimumSetsToEnsure,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,
@@ -777,7 +777,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'Maximum number of sets for each exercise',
+                    AppLocalizations.of(context).repPreferencesSectionMaximumNumberOfSets,
                     style: TextStyle(
                       fontSize: 12,
                       color: textMuted,
@@ -812,7 +812,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
               child: Row(
                 children: [
                   _PresetChip(
-                    label: 'Minimal (1-2)',
+                    label: AppLocalizations.of(context).repPreferencesSectionMinimal12,
                     isSelected: minSets == 1 && maxSets == 2,
                     onTap: () => setState(() {
                       _minSets = 1;
@@ -821,7 +821,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                   ),
                   const SizedBox(width: 8),
                   _PresetChip(
-                    label: 'Standard (2-4)',
+                    label: AppLocalizations.of(context).repPreferencesSectionStandard24,
                     isSelected: minSets == 2 && maxSets == 4,
                     onTap: () => setState(() {
                       _minSets = 2;
@@ -830,7 +830,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                   ),
                   const SizedBox(width: 8),
                   _PresetChip(
-                    label: 'High Volume (3-6)',
+                    label: AppLocalizations.of(context).repPreferencesSectionHighVolume36,
                     isSelected: minSets == 3 && maxSets == 6,
                     onTap: () => setState(() {
                       _minSets = 3;
@@ -862,7 +862,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'The AI will generate workouts with this set range. More sets = more volume = more muscle stimulus.',
+                      AppLocalizations.of(context).repPreferencesSectionTheAiWillGenerate,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? Colors.white : AppColorsLight.textPrimary,
@@ -890,8 +890,8 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Save',
+                child: Text(
+                  AppLocalizations.of(context).buttonSave,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

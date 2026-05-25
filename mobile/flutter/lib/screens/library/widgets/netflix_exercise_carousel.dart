@@ -13,6 +13,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
 import '../screens/category_exercises_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Netflix-style horizontal carousel for a category of exercises
 /// Shows multiple small cards per row that scroll horizontally
 class NetflixExerciseCarousel extends StatelessWidget {
@@ -112,7 +113,7 @@ class NetflixExerciseCarousel extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'See All',
+                        AppLocalizations.of(context).weightTrackingCardSeeAll,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -595,7 +596,7 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
         ),
         const SizedBox(height: 12),
         Text(
-          'Loading...',
+          AppLocalizations.of(context).weekProgressStripLoading,
           style: TextStyle(
             fontSize: 12,
             color: Colors.white.withValues(alpha: 0.7),

@@ -11,6 +11,7 @@ import '../../../widgets/app_snackbar.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Comments Sheet - Bottom sheet showing comments for an activity
 class CommentsSheet extends ConsumerStatefulWidget {
   final String activityId;
@@ -146,12 +147,12 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Comment'),
-        content: const Text('Are you sure you want to delete this comment?'),
+        title: Text(AppLocalizations.of(context).commentsDeleteComment),
+        content: Text(AppLocalizations.of(context).commentsAreYouSureYou),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
             onPressed: () {
@@ -159,7 +160,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
               _deleteComment(commentId, index);
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.red),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
       ),
@@ -248,7 +249,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'No comments yet',
+                                  AppLocalizations.of(context).commentsNoCommentsYet,
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -257,7 +258,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Be the first to comment!',
+                                  AppLocalizations.of(context).commentsBeTheFirstTo,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: AppColors.textMuted.withValues(alpha: 0.7),
@@ -306,7 +307,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                         maxLines: 3,
                         minLines: 1,
                         decoration: InputDecoration(
-                          hintText: 'Add a comment...',
+                          hintText: AppLocalizations.of(context).commentsAddAComment,
                           hintStyle: TextStyle(
                             color: AppColors.textMuted.withValues(alpha: 0.5),
                           ),
@@ -468,7 +469,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
           children: [
             ListTile(
               leading: const Icon(Icons.copy_rounded),
-              title: const Text('Copy Text'),
+              title: Text(AppLocalizations.of(context).wrappedShareCopyText),
               onTap: () {
                 Navigator.pop(context);
                 Clipboard.setData(ClipboardData(text: text));
@@ -479,7 +480,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
               ListTile(
                 leading: const Icon(Icons.delete_outline_rounded,
                     color: AppColors.red),
-                title: const Text('Delete',
+                title: Text(AppLocalizations.of(context).buttonDelete,
                     style: TextStyle(color: AppColors.red)),
                 onTap: () {
                   Navigator.pop(context);

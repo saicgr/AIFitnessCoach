@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/training_load_repository.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// =========================================================================
 /// TrainingLoadChart — combined acute / chronic / ACWR chart for cardio
 /// =========================================================================
@@ -73,9 +74,9 @@ class _ChartBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No cardio activity yet — log a run, ride, or row to start building your baseline.',
+          AppLocalizations.of(context).trainingLoadChartNoCardioActivityYet,
           textAlign: TextAlign.center,
         ),
       );
@@ -308,8 +309,8 @@ class _ChartBody extends StatelessWidget {
                       color: accent.withValues(alpha: 0.5),
                     ),
                   ),
-                  child: const Text(
-                    'Building baseline',
+                  child: Text(
+                    AppLocalizations.of(context).trainingLoadChartBuildingBaseline,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,

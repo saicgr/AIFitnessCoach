@@ -65,7 +65,7 @@ class _CurrentGlucoseCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Current Glucose',
+                AppLocalizations.of(context).diabetesDashboardScreenCurrentGlucose,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -140,7 +140,7 @@ class _CurrentGlucoseCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'mg/dL',
+                        AppLocalizations.of(context).healthMetricsCardMgDl,
                         style: TextStyle(
                           fontSize: 14,
                           color: textSecondary,
@@ -182,7 +182,7 @@ class _CurrentGlucoseCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    reading.source == 'cgm' ? 'CGM' : 'Manual',
+                    reading.source == 'cgm' ? 'CGM' : AppLocalizations.of(context).diabetesDashboardScreenManual,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -235,7 +235,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _QuickActionButton(
             icon: Icons.bloodtype,
-            label: 'Log Glucose',
+            label: AppLocalizations.of(context).diabetesDashboardScreenLogGlucose,
             color: AppColors.cyan,
             onTap: onLogGlucose,
             elevatedColor: elevatedColor,
@@ -247,7 +247,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _QuickActionButton(
             icon: Icons.medication,
-            label: 'Log Insulin',
+            label: AppLocalizations.of(context).diabetesDashboardScreenLogInsulin,
             color: AppColors.purple,
             onTap: onLogInsulin,
             elevatedColor: elevatedColor,
@@ -375,7 +375,7 @@ class _TimeInRangeCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Time in Range',
+                AppLocalizations.of(context).healthMetricsCardTimeInRange,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -432,7 +432,7 @@ class _TimeInRangeCard extends StatelessWidget {
             children: [
               _RangeLegendItem(
                 color: AppColors.error,
-                label: 'Below',
+                label: AppLocalizations.of(context).diabetesDashboardScreenBelow,
                 percentage: data.percentBelow,
                 range: '<70',
                 textPrimary: textPrimary,
@@ -440,7 +440,7 @@ class _TimeInRangeCard extends StatelessWidget {
               ),
               _RangeLegendItem(
                 color: AppColors.success,
-                label: 'In Range',
+                label: AppLocalizations.of(context).diabetesDashboardScreenInRange,
                 percentage: data.percentInRange,
                 range: '70-140',
                 textPrimary: textPrimary,
@@ -448,7 +448,7 @@ class _TimeInRangeCard extends StatelessWidget {
               ),
               _RangeLegendItem(
                 color: AppColors.warning,
-                label: 'Above',
+                label: AppLocalizations.of(context).diabetesDashboardScreenAbove,
                 percentage: data.percentAbove,
                 range: '>140',
                 textPrimary: textPrimary,
@@ -484,7 +484,7 @@ class _TimeInRangeCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     data.percentInRange >= 70
-                        ? 'Great! You\'re meeting the target of 70%+ in range.'
+                        ? AppLocalizations.of(context).diabetesDashboardScreenGreatYouReMeeting
                         : 'Target: 70%+ time in range (70-140 mg/dL)',
                     style: TextStyle(
                       fontSize: 12,
@@ -613,7 +613,7 @@ class _InsulinSummaryCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Today\'s Insulin',
+                AppLocalizations.of(context).diabetesDashboardScreenTodaySInsulin,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -638,7 +638,7 @@ class _InsulinSummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _InsulinStat(
-                  label: 'Total',
+                  label: AppLocalizations.of(context).statsStreakFireTotal,
                   value: '${summary.totalUnits.toStringAsFixed(1)}U',
                   color: AppColors.purple,
                   textPrimary: textPrimary,
@@ -652,7 +652,7 @@ class _InsulinSummaryCard extends StatelessWidget {
               ),
               Expanded(
                 child: _InsulinStat(
-                  label: 'Rapid',
+                  label: AppLocalizations.of(context).diabetesDashboardScreenRapid,
                   value: '${summary.totalRapidUnits.toStringAsFixed(1)}U',
                   color: AppColors.cyan,
                   textPrimary: textPrimary,
@@ -666,7 +666,7 @@ class _InsulinSummaryCard extends StatelessWidget {
               ),
               Expanded(
                 child: _InsulinStat(
-                  label: 'Long',
+                  label: AppLocalizations.of(context).diabetesDashboardScreenLong,
                   value: '${summary.totalLongUnits.toStringAsFixed(1)}U',
                   color: AppColors.purple,
                   textPrimary: textPrimary,
@@ -683,7 +683,7 @@ class _InsulinSummaryCard extends StatelessWidget {
 
             // Recent doses
             Text(
-              'Recent Doses',
+              AppLocalizations.of(context).diabetesDashboardScreenRecentDoses,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

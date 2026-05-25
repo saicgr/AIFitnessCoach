@@ -112,7 +112,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
 
                       // Title
                       Text(
-                        "You're at Your Ideal Weight!",
+                        AppLocalizations.of(context).weightProjectionScreenYouReAtYour,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 28,
@@ -159,7 +159,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
 
                       // Subtitle
                       Text(
-                        "Let's keep you there! We'll focus on maintaining your current physique while improving your overall fitness, strength, and energy levels.",
+                        AppLocalizations.of(context).weightProjectionScreenLetSKeepYou,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
@@ -247,13 +247,13 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                         ),
                       ],
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.rocket_launch, color: Colors.white, size: 20),
                         SizedBox(width: 10),
                         Text(
-                          'Continue to Your Plan',
+                          AppLocalizations.of(context).weightProjectionScreenContinueToYourPlan,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,

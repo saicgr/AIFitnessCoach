@@ -20,6 +20,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/exercise_image.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// Show the exercise instructions as a full screen page
 Future<void> showExerciseInfoSheet({
   required BuildContext context,
@@ -388,7 +389,7 @@ class _ExerciseInstructionsScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              'Loading video...',
+              AppLocalizations.of(context).exerciseInfoLoadingVideo,
               style: TextStyle(
                 fontSize: 14,
                 color: textMuted,
@@ -581,7 +582,7 @@ class _ExerciseInstructionsScreenState
                                 size: 14, color: accentColor),
                           const SizedBox(width: 4),
                           Text(
-                            _isRetrying ? 'Retrying' : 'Retry',
+                            _isRetrying ? AppLocalizations.of(context).exerciseInfoRetrying : AppLocalizations.of(context).buttonRetry,
                             style: TextStyle(
                               fontSize: 12,
                               color: accentColor,

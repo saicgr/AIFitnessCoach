@@ -15,6 +15,7 @@ import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'grocery_list_screen.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 class GroceryListsIndexScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -84,18 +85,18 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('New grocery list'),
+        title: Text(AppLocalizations.of(context).groceryListsIndexNewGroceryList),
         content: TextField(
           controller: nameController,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'List name (optional)'),
+          decoration: InputDecoration(hintText: AppLocalizations.of(context).groceryListsIndexListNameOptional),
           onSubmitted: (v) => Navigator.of(ctx).pop(v),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(AppLocalizations.of(context).buttonCancel)),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(nameController.text),
-            child: const Text('Create'),
+            child: Text(AppLocalizations.of(context).netflixExercisesTabCreate),
           ),
         ],
       ),
@@ -155,7 +156,7 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
                 GlassBackButton(onTap: () => Navigator.of(context).pop()),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text('Grocery lists',
+                  child: Text(AppLocalizations.of(context).groceryListsIndexGroceryLists,
                     style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
                 ),
               ],
@@ -213,13 +214,13 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
               Icon(Icons.shopping_cart_outlined,
                   size: 64, color: accent.withValues(alpha: 0.4)),
               const SizedBox(height: 12),
-              Text('No lists yet',
+              Text(AppLocalizations.of(context).groceryListsIndexNoListsYet,
                   style: TextStyle(
                       color: text,
                       fontSize: 18,
                       fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
-              Text('Tap + to create a list, or add one from a recipe.',
+              Text(AppLocalizations.of(context).groceryListsIndexTapToCreateA,
                   textAlign: TextAlign.center, style: TextStyle(color: muted)),
             ],
           ),
@@ -240,7 +241,7 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
               backgroundColor: accent.withValues(alpha: 0.18),
               child: Icon(Icons.shopping_cart, color: accent, size: 18),
             ),
-            title: Text(l.name ?? 'Untitled',
+            title: Text(l.name ?? AppLocalizations.of(context).groceryListsIndexUntitled,
                 style: TextStyle(color: text, fontWeight: FontWeight.w700)),
             subtitle: Text('${l.checkedCount} of ${l.itemCount} checked',
                 style: TextStyle(color: muted, fontSize: 11)),

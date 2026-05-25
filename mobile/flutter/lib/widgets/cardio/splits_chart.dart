@@ -5,6 +5,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import 'pace_chart.dart' show CardioChartCard, PaceChart;
 
+import '../../l10n/generated/app_localizations.dart';
 /// One completed lap/split (per km or per mi).
 typedef SplitSample = ({int kmOrMiIndex, int durationSec, double distanceM});
 
@@ -96,7 +97,7 @@ class SplitsChart extends StatelessWidget {
     }
 
     return CardioChartCard(
-      title: 'Splits',
+      title: AppLocalizations.of(context).syncedWorkoutDetailSplits,
       onExpand: onExpand,
       height: 200,
       child: BarChart(

@@ -6,6 +6,7 @@ import '../../../../data/models/menu_item.dart';
 import '../health_breakdown_sheet.dart';
 import '../score_explain_sheet.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Single dish row in the Menu Analysis sheet. Shows:
 ///  • Checkbox + name + portion weight
 ///  • Macro row (decimal-precise, rounded only when value IS a clean
@@ -247,7 +248,7 @@ class _AdjustPill extends StatelessWidget {
                       size: 13, color: accent),
                   const SizedBox(width: 5),
                   Text(
-                    adjusted ? 'Adjusted' : 'Adjust what you ate',
+                    adjusted ? AppLocalizations.of(context).menuAnalysisItemAdjusted : AppLocalizations.of(context).menuAnalysisItemAdjustWhatYouAte,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -358,7 +359,7 @@ class _HealthStrip extends StatelessWidget {
         severity: sev,
         widget: _HealthPill(
           emoji: '🔥',
-          label: 'Inflammation',
+          label: AppLocalizations.of(context).menuFilterInflammation,
           value: '$s/10',
           severity: sev,
           onTap: () => ScoreExplainSheet.show(
@@ -383,7 +384,7 @@ class _HealthStrip extends StatelessWidget {
         severity: sev,
         widget: _HealthPill(
           emoji: '🩸',
-          label: 'Blood sugar',
+          label: AppLocalizations.of(context).menuFilterBloodSugar,
           value: '$gl',
           severity: sev,
           onTap: () => ScoreExplainSheet.show(
@@ -407,7 +408,7 @@ class _HealthStrip extends StatelessWidget {
         severity: sev,
         widget: _HealthPill(
           emoji: '🧡',
-          label: 'FODMAP',
+          label: AppLocalizations.of(context).menuAnalysisItemFodmap,
           value: _titleCase(r),
           severity: sev,
           onTap: () => ScoreExplainSheet.show(
@@ -432,7 +433,7 @@ class _HealthStrip extends StatelessWidget {
         severity: sev,
         widget: _HealthPill(
           emoji: '🍬',
-          label: 'Added sugar',
+          label: AppLocalizations.of(context).menuAnalysisItemAddedSugar,
           value: _fmtSugar(g),
           severity: sev,
           onTap: () => ScoreExplainSheet.show(
@@ -450,8 +451,8 @@ class _HealthStrip extends StatelessWidget {
         severity: _PillSeverity.bad,
         widget: _HealthPill(
           emoji: '🏭',
-          label: 'Ultra-processed',
-          value: 'Yes',
+          label: AppLocalizations.of(context).scoreExplainUltraProcessed,
+          value: AppLocalizations.of(context).commonYes,
           severity: _PillSeverity.bad,
           onTap: () => ScoreExplainSheet.show(
             context,
@@ -591,7 +592,7 @@ class _BreakdownPill extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Full breakdown',
+                AppLocalizations.of(context).menuAnalysisItemFullBreakdown,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -635,7 +636,7 @@ class _AllCleanBadge extends StatelessWidget {
               const Text('✨', style: TextStyle(fontSize: 12)),
               const SizedBox(width: 5),
               Text(
-                'All scores green',
+                AppLocalizations.of(context).menuAnalysisItemAllScoresGreen,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -878,7 +879,7 @@ class _PortionStepperState extends State<_PortionStepper> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Portion',
+          AppLocalizations.of(context).menuAnalysisItemPortion,
           style: TextStyle(
             fontSize: 10, fontWeight: FontWeight.w600,
             color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

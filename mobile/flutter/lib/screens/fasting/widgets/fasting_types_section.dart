@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// "Types of Fasting" section for the Fasting Guide.
 ///
 /// Unlike the TRE hour-ratio explainer ("Common protocols"), this covers the
@@ -141,7 +142,7 @@ class FastingTypesSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Types of fasting',
+          AppLocalizations.of(context).fastingTypesTypesOfFasting,
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -474,7 +475,7 @@ class _FastingTypeCardState extends State<_FastingTypeCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'IN-APP PROTOCOLS',
+          AppLocalizations.of(context).fastingTypesInAppProtocols,
           style: TextStyle(
             fontSize: 10.5,
             fontWeight: FontWeight.w800,

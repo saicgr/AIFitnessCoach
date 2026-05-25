@@ -12,8 +12,8 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
   void removeExerciseFromWorkout(int index) {
     if (exercises.length <= 1) {
       ScaffoldMessenger.of(_ctx).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot remove the last exercise'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).workoutDetailScreenCannotRemoveTheLast),
           duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -96,7 +96,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
-          label: 'Undo',
+          label: AppLocalizations.of(context).workoutUiBuildersUndo,
           onPressed: () {
             _setState(() {
               exercises.insert(index, removedExercise);
@@ -134,7 +134,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
             children: [
               Icon(Icons.swap_horiz, size: 20, color: Colors.orange.shade600),
               const SizedBox(width: 12),
-              Text('Swap Exercise', style: TextStyle(
+              Text(AppLocalizations.of(context).expandedExerciseCardSwapExercise, style: TextStyle(
                 color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
                 fontWeight: FontWeight.w500,
               )),
@@ -147,7 +147,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
             children: [
               Icon(Icons.warehouse_outlined, size: 20, color: Colors.blue.shade600),
               const SizedBox(width: 12),
-              Text('My Gym', style: TextStyle(
+              Text(AppLocalizations.of(context).exerciseNavigationMixinMyGym, style: TextStyle(
                 color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
                 fontWeight: FontWeight.w500,
               )),
@@ -160,7 +160,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
             children: [
               Icon(Icons.history, size: 20, color: Colors.purple.shade400),
               const SizedBox(width: 12),
-              Text('History', style: TextStyle(
+              Text(AppLocalizations.of(context).workoutHistory, style: TextStyle(
                 color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
                 fontWeight: FontWeight.w500,
               )),
@@ -180,7 +180,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
                     : (isDark ? WorkoutDesign.textSecondary.withValues(alpha: 0.3) : Colors.grey.shade400),
               ),
               const SizedBox(width: 12),
-              Text('Bar Type', style: TextStyle(
+              Text(AppLocalizations.of(context).workoutSheetsMixinBarType, style: TextStyle(
                 color: isBarbell(exercise.equipment, exerciseName: exercise.name)
                     ? (isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900)
                     : (isDark ? WorkoutDesign.textSecondary.withValues(alpha: 0.3) : Colors.grey.shade400),
@@ -196,7 +196,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
             children: [
               Icon(Icons.stop_circle_outlined, size: 20, color: Colors.red.shade600),
               const SizedBox(width: 12),
-              Text('End Workout', style: TextStyle(
+              Text(AppLocalizations.of(context).workoutMiniPlayerEndWorkout2, style: TextStyle(
                 color: Colors.red.shade600,
                 fontWeight: FontWeight.w500,
               )),
@@ -340,7 +340,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
           showCloseIcon: true,
           closeIconColor: Colors.white70,
           action: SnackBarAction(
-            label: 'Undo',
+            label: AppLocalizations.of(context).workoutUiBuildersUndo,
             textColor: Colors.white,
             onPressed: () => breakSuperset(groupId),
           ),

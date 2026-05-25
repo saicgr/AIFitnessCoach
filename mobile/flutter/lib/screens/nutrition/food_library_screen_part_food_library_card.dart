@@ -54,7 +54,7 @@ class _FoodLibraryCard extends StatelessWidget {
         return await AppDialog.destructive(
           context,
           title: 'Delete ${item.name}?',
-          message: 'This action cannot be undone.',
+          message: AppLocalizations.of(context).workoutActionsThisActionCannotBe,
           icon: Icons.delete_rounded,
         );
       },
@@ -208,7 +208,7 @@ class _FoodLibraryCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Log',
+                              AppLocalizations.of(context).recipeDetailLog,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -278,7 +278,7 @@ class _SortOptionsSheet extends StatelessWidget {
                   Icon(Icons.sort_rounded, color: textPrimary, size: 22),
                   const SizedBox(width: 12),
                   Text(
-                    'Sort By',
+                    AppLocalizations.of(context).foodLibraryScreenSortBy,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -365,7 +365,7 @@ class _MealTypeSelector extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                'Log to which meal?',
+                AppLocalizations.of(context).foodLibraryScreenLogToWhichMeal,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -540,7 +540,7 @@ class _FoodDetailSheet extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                isRecipe ? 'Recipe' : 'Saved Food',
+                                isRecipe ? AppLocalizations.of(context).mealPlannerRecipe : AppLocalizations.of(context).foodLibraryScreenSavedFood,
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -598,14 +598,14 @@ class _FoodDetailSheet extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _NutrientStat(
-                          label: 'Calories',
+                          label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                           value: item.calories?.toString() ?? '-',
                           unit: 'kcal',
                           color: AppColors.textPrimary,
                           isDark: isDark,
                         ),
                         _NutrientStat(
-                          label: 'Protein',
+                          label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                           value: item.protein?.round().toString() ?? '-',
                           unit: 'g',
                           color: AppColors.textPrimary,
@@ -613,14 +613,14 @@ class _FoodDetailSheet extends StatelessWidget {
                         ),
                         if (savedFood != null) ...[
                           _NutrientStat(
-                            label: 'Carbs',
+                            label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                             value: savedFood.totalCarbsG?.round().toString() ?? '-',
                             unit: 'g',
                             color: AppColors.textPrimary,
                             isDark: isDark,
                           ),
                           _NutrientStat(
-                            label: 'Fat',
+                            label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                             value: savedFood.totalFatG?.round().toString() ?? '-',
                             unit: 'g',
                             color: AppColors.textMuted,
@@ -629,14 +629,14 @@ class _FoodDetailSheet extends StatelessWidget {
                         ],
                         if (recipe != null) ...[
                           _NutrientStat(
-                            label: 'Servings',
+                            label: AppLocalizations.of(context).recipeBuilderServings,
                             value: recipe.servings.toString(),
                             unit: '',
                             color: AppColors.textSecondary,
                             isDark: isDark,
                           ),
                           _NutrientStat(
-                            label: 'Ingredients',
+                            label: AppLocalizations.of(context).recipeSuggestionCardIngredients,
                             value: recipe.ingredientCount.toString(),
                             unit: '',
                             color: AppColors.textSecondary,
@@ -670,7 +670,7 @@ class _FoodDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Description',
+                        AppLocalizations.of(context).suggestFeatureDescription,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -713,8 +713,8 @@ class _FoodDetailSheet extends StatelessWidget {
                         elevation: 0,
                       ),
                       icon: const Icon(Icons.add_rounded),
-                      label: const Text(
-                        'Log This Food',
+                      label: Text(
+                        AppLocalizations.of(context).foodLibraryScreenLogThisFood,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -743,7 +743,7 @@ class _FoodDetailSheet extends StatelessWidget {
                                 ),
                               ),
                               icon: Icon(Icons.edit_rounded, size: 18),
-                              label: const Text('Edit'),
+                              label: Text(AppLocalizations.of(context).commonEdit),
                             ),
                           ),
                         ),
@@ -764,7 +764,7 @@ class _FoodDetailSheet extends StatelessWidget {
                               ),
                             ),
                             icon: Icon(Icons.delete_outline_rounded, size: 18),
-                            label: const Text('Delete'),
+                            label: Text(AppLocalizations.of(context).buttonDelete),
                           ),
                         ),
                       ),

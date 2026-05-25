@@ -22,6 +22,7 @@ import '../../widgets/glass_sheet.dart';
 import '../home/widgets/habit_card.dart';
 
 
+import '../../l10n/generated/app_localizations.dart';
 part 'habits_screen_part_unified_habit_item.dart';
 part 'habits_screen_part_add_habit_sheet_content.dart';
 
@@ -138,7 +139,7 @@ class HabitsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Hold to reorder • Swipe to delete',
+                              AppLocalizations.of(context).habitsHoldToReorderSwipe,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: textSecondary.withValues(alpha: 0.6),
@@ -229,7 +230,7 @@ class HabitsScreen extends ConsumerWidget {
                 ),
                 Expanded(
                   child: Text(
-                    'Your Habits',
+                    AppLocalizations.of(context).habitsYourHabits,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
@@ -252,7 +253,7 @@ class HabitsScreen extends ConsumerWidget {
                       context.push('/trends/custom',
                           extra: TrendMetric.habitCompletion);
                     },
-                    tooltip: 'View trends',
+                    tooltip: AppLocalizations.of(context).measurementDetailViewTrends,
                   ),
                 ),
               ],
@@ -353,17 +354,17 @@ class HabitsScreen extends ConsumerWidget {
           return await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Delete Habit?'),
+              title: Text(AppLocalizations.of(context).habitsDeleteHabit),
               content: Text(message),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context).buttonCancel),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
                   style: TextButton.styleFrom(foregroundColor: AppColors.error),
-                  child: const Text('Delete'),
+                  child: Text(AppLocalizations.of(context).buttonDelete),
                 ),
               ],
             ),
@@ -446,7 +447,7 @@ class HabitsScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  habit.isAutoTracked ? '+ Log' : 'Log',
+                                  habit.isAutoTracked ? AppLocalizations.of(context).habitsLog : AppLocalizations.of(context).recipeDetailLog,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -621,7 +622,7 @@ class HabitsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Today\'s Progress',
+            AppLocalizations.of(context).habitsTodaySProgress,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -633,7 +634,7 @@ class HabitsScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _buildStatItem(
-                  label: 'Completed',
+                  label: AppLocalizations.of(context).progressionStepCardCompleted,
                   value: '$combinedTodayCompleted/$combinedTodayTotal',
                   icon: Icons.check_circle_outline,
                   accentColor: accentColor,
@@ -643,7 +644,7 @@ class HabitsScreen extends ConsumerWidget {
               ),
               Expanded(
                 child: _buildStatItem(
-                  label: '30-Day Rate',
+                  label: AppLocalizations.of(context).habits30DayRate,
                   value: '$autoPercentage%',
                   icon: Icons.calendar_today,
                   accentColor: accentColor,
@@ -653,7 +654,7 @@ class HabitsScreen extends ConsumerWidget {
               ),
               Expanded(
                 child: _buildStatItem(
-                  label: 'Best Streak',
+                  label: AppLocalizations.of(context).summaryCardBestStreak,
                   value: '$longestStreak',
                   icon: Icons.local_fire_department,
                   accentColor: accentColor,

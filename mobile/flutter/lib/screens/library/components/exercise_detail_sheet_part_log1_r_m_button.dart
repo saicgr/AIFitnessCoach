@@ -126,7 +126,7 @@ class _Log1RMButtonState extends ConsumerState<_Log1RMButton> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Log 1RM',
+                        AppLocalizations.of(context).restTimerOverlayLog1rm,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -136,7 +136,7 @@ class _Log1RMButtonState extends ConsumerState<_Log1RMButton> {
                       const SizedBox(height: 2),
                       if (_isLoading)
                         Text(
-                          'Loading...',
+                          AppLocalizations.of(context).weekProgressStripLoading,
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -163,7 +163,7 @@ class _Log1RMButtonState extends ConsumerState<_Log1RMButton> {
                         )
                       else
                         Text(
-                          'Track your max strength',
+                          AppLocalizations.of(context).exerciseDetailSheetTrackYourMaxStrength,
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -356,7 +356,7 @@ class _DownloadVideoButton extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 12),
-            const Text('Downloading video...'),
+            Text(AppLocalizations.of(context).exerciseDetailSheetDownloadingVideo),
           ],
         ),
         backgroundColor: AppColors.cyan,
@@ -369,8 +369,8 @@ class _DownloadVideoButton extends ConsumerWidget {
     HapticFeedback.lightImpact();
     ref.read(videoCacheProvider.notifier).cancelDownload(exerciseId);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Download cancelled'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).exerciseDetailSheetDownloadCancelled),
         backgroundColor: AppColors.textMuted,
       ),
     );
@@ -384,7 +384,7 @@ class _DownloadVideoButton extends ConsumerWidget {
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Text(
-          'Delete Download?',
+          AppLocalizations.of(context).exerciseDetailSheetDeleteDownload,
           style: TextStyle(
             color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
           ),
@@ -399,7 +399,7 @@ class _DownloadVideoButton extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context).buttonCancel,
               style: TextStyle(
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
@@ -410,14 +410,14 @@ class _DownloadVideoButton extends ConsumerWidget {
               Navigator.pop(context);
               ref.read(videoCacheProvider.notifier).deleteVideo(exerciseId);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Download removed'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).exerciseDetailSheetDownloadRemoved),
                   backgroundColor: AppColors.success,
                 ),
               );
             },
             child: Text(
-              'Delete',
+              AppLocalizations.of(context).buttonDelete,
               style: TextStyle(color: AppColors.error),
             ),
           ),

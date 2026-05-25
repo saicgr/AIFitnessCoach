@@ -23,6 +23,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'widgets/leaderboard_row_adornments.dart';
+import '../../l10n/generated/app_localizations.dart';
 // Gym-finder map (GymBeat-style). Disabled until Maps API key is provisioned.
 // See `widgets/gym_map_section.dart` for the full impl + re-enable steps.
 // import 'widgets/gym_map_section.dart';
@@ -686,7 +687,7 @@ class _RankHeroCard extends ConsumerWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              'this week',
+              AppLocalizations.of(context).newTilesPartThisWeek,
               style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w500),
             ),
           ] else ...[
@@ -700,7 +701,7 @@ class _RankHeroCard extends ConsumerWidget {
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   Text(
-                    'You · ',
+                    AppLocalizations.of(context).discoverYou,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -718,7 +719,7 @@ class _RankHeroCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'XP this week',
+                    AppLocalizations.of(context).discoverXpThisWeek,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -729,17 +730,17 @@ class _RankHeroCard extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Complete a workout to climb the board',
+                AppLocalizations.of(context).discoverCompleteAWorkoutTo,
                 style: TextStyle(fontSize: 13, color: textMuted, height: 1.3),
               ),
             ] else ...[
               Text(
-                'Complete a workout this week',
+                AppLocalizations.of(context).discoverCompleteAWorkoutThis,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
               ),
               const SizedBox(height: 4),
               Text(
-                'Your rank + percentile appears once you\'re on the board',
+                AppLocalizations.of(context).discoverYourRankPercentileAppears,
                 style: TextStyle(fontSize: 13, color: textMuted, height: 1.3),
               ),
             ],
@@ -1173,7 +1174,7 @@ class _NearYouList extends ConsumerWidget {
             children: [
               Flexible(
                 child: Text(
-                  e.isCurrentUser ? 'You' : e.bestName,
+                  e.isCurrentUser ? AppLocalizations.of(context).navYou : e.bestName,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13,
@@ -1187,7 +1188,7 @@ class _NearYouList extends ConsumerWidget {
                 Icon(Icons.lock_outline, size: 12, color: textMuted),
                 const SizedBox(width: 2),
                 Text(
-                  'Hidden',
+                  AppLocalizations.of(context).manageDuplicateImportsHidden,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -1292,7 +1293,7 @@ class _Top10CollapsibleState extends ConsumerState<_Top10Collapsible> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Top of the week',
+                      AppLocalizations.of(context).discoverTopOfTheWeek,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -1331,7 +1332,7 @@ class _Top10CollapsibleState extends ConsumerState<_Top10Collapsible> {
                   children: [
                     Flexible(
                       child: Text(
-                        widget.entries[i].isCurrentUser ? 'You' : widget.entries[i].bestName,
+                        widget.entries[i].isCurrentUser ? AppLocalizations.of(context).navYou : widget.entries[i].bestName,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: widget.textColor, fontWeight: FontWeight.w600),
                       ),
@@ -1895,7 +1896,7 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Not enough data yet',
+                                AppLocalizations.of(context).habitDetailScreenNotEnoughDataYet,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: widget.textColor,
@@ -1905,7 +1906,7 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Complete 3 workouts to unlock your fitness profile.',
+                                AppLocalizations.of(context).discoverComplete3WorkoutsTo,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: widget.textMuted,
@@ -1940,14 +1941,14 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _LegendDot(color: targetColor, label: 'Them', textColor: widget.textMuted),
+              _LegendDot(color: targetColor, label: AppLocalizations.of(context).discoverThem, textColor: widget.textMuted),
               if (showViewerOverlay) ...[
                 const SizedBox(width: 16),
-                _LegendDot(color: viewerColor, label: 'You', textColor: widget.textMuted),
+                _LegendDot(color: viewerColor, label: AppLocalizations.of(context).navYou, textColor: widget.textMuted),
               ],
               const SizedBox(width: 16),
               Text(
-                'Tap an axis',
+                AppLocalizations.of(context).discoverTapAnAxis,
                 style: TextStyle(fontSize: 11, color: widget.textMuted.withValues(alpha: 0.7)),
               ),
             ],

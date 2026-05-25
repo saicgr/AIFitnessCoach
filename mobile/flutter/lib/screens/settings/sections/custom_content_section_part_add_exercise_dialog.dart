@@ -88,7 +88,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add Custom Exercise'),
+      title: Text(AppLocalizations.of(context).customContentSectionAddCustomExercise),
       content: SizedBox(
         width: double.maxFinite,
         child: Form(
@@ -101,9 +101,9 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
                 // Exercise Name
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Exercise Name *',
-                    hintText: 'e.g., Pike Push-ups',
+                    hintText: AppLocalizations.of(context).customContentSectionEGPikePush,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -161,7 +161,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Sets',
+                          Text(AppLocalizations.of(context).workoutSummaryGeneralSets,
                               style: TextStyle(fontSize: 12)),
                           const SizedBox(height: 4),
                           Row(
@@ -191,7 +191,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Reps', style: TextStyle(fontSize: 12)),
+                          Text(AppLocalizations.of(context).workoutSummaryGeneralReps, style: TextStyle(fontSize: 12)),
                           const SizedBox(height: 4),
                           Row(
                             children: [
@@ -222,8 +222,8 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
 
                 // Compound toggle
                 SwitchListTile(
-                  title: const Text('Compound Exercise'),
-                  subtitle: const Text('Targets multiple muscle groups'),
+                  title: Text(AppLocalizations.of(context).customContentSectionCompoundExercise),
+                  subtitle: Text(AppLocalizations.of(context).customContentSectionTargetsMultipleMuscleGroups),
                   value: _isCompound,
                   onChanged: (value) => setState(() => _isCompound = value),
                   contentPadding: EdgeInsets.zero,
@@ -233,9 +233,9 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
                 // Instructions (optional)
                 TextFormField(
                   controller: _instructionsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Instructions (optional)',
-                    hintText: 'Describe how to perform...',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).logMealSheetInstructionsOptional,
+                    hintText: AppLocalizations.of(context).customContentSectionDescribeHowToPerform,
                   ),
                   maxLines: 3,
                 ),
@@ -247,7 +247,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context).buttonCancel),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _submit,
@@ -264,7 +264,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
                     color: Colors.white,
                   ),
                 )
-              : const Text('Add Exercise'),
+              : Text(AppLocalizations.of(context).workoutSummaryAddExercise),
         ),
       ],
     );

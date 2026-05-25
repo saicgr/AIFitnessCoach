@@ -8,6 +8,7 @@ import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 /// The email preferences section for managing email subscription settings.
 ///
 /// Allows users to control what emails they receive from Zealova.
@@ -19,8 +20,8 @@ class EmailPreferencesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'EMAIL PREFERENCES'),
+      children: [
+        SectionHeader(title: AppLocalizations.of(context).emailPreferencesEmailPreferences),
         SizedBox(height: 12),
         _EmailPreferencesCard(),
       ],
@@ -87,7 +88,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
             SnackBar(
               content: Text(
                 success
-                    ? 'Unsubscribed from marketing emails'
+                    ? AppLocalizations.of(context).emailPreferencesUnsubscribedFromMarketingEm
                     : 'Failed to unsubscribe. Please try again.',
               ),
               backgroundColor: success ? AppColors.success : AppColors.error,
@@ -144,13 +145,13 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
             Icon(Icons.error_outline, color: AppColors.error, size: 32),
             const SizedBox(height: 8),
             Text(
-              'Failed to load email preferences',
+              AppLocalizations.of(context).emailPreferencesFailedToLoadEmail,
               style: TextStyle(color: textMuted),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: _retryLoad,
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).buttonRetry),
             ),
           ],
         ),
@@ -193,8 +194,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.fitness_center,
             iconColor: AppColors.cyan,
-            title: 'Workout reminders',
-            subtitle: 'Daily reminders about your scheduled workouts',
+            title: AppLocalizations.of(context).notificationPrimeWorkoutReminders,
+            subtitle: AppLocalizations.of(context).emailPreferencesDailyRemindersAboutYour,
             value: prefs?.workoutReminders ?? true,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.workoutReminders,
@@ -207,8 +208,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.running_with_errors_outlined,
             iconColor: AppColors.orange,
-            title: 'Missed workout nudges',
-            subtitle: 'A follow-up if your scheduled time passes unlogged',
+            title: AppLocalizations.of(context).emailPreferencesMissedWorkoutNudges,
+            subtitle: AppLocalizations.of(context).emailPreferencesAFollowUpIf,
             value: prefs?.missedWorkoutAlerts ?? true,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.missedWorkoutAlerts,
@@ -221,8 +222,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.local_fire_department_outlined,
             iconColor: Colors.deepOrange,
-            title: 'Streak alerts',
-            subtitle: "When your streak is at risk of breaking",
+            title: AppLocalizations.of(context).emailPreferencesStreakAlerts,
+            subtitle: AppLocalizations.of(context).emailPreferencesWhenYourStreakIs,
             value: prefs?.streakAlerts ?? true,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.streakAlerts,
@@ -235,8 +236,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.favorite_outline,
             iconColor: AppColors.orange,
-            title: 'Motivational nudges',
-            subtitle: 'Check-ins from your coach — activation, comebacks, gentle guilt',
+            title: AppLocalizations.of(context).emailPreferencesMotivationalNudges,
+            subtitle: AppLocalizations.of(context).emailPreferencesCheckInsFromYour,
             value: prefs?.coachTips ?? true,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.coachTips,
@@ -249,8 +250,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.emoji_events_outlined,
             iconColor: Colors.amber,
-            title: 'Achievement unlocks',
-            subtitle: 'Trophies + first-workout celebrations',
+            title: AppLocalizations.of(context).emailPreferencesAchievementUnlocks,
+            subtitle: AppLocalizations.of(context).emailPreferencesTrophiesFirstWorkoutCeleb,
             value: prefs?.achievementAlerts ?? true,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.achievementAlerts,
@@ -263,8 +264,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.bar_chart,
             iconColor: AppColors.purple,
-            title: 'Weekly summary',
-            subtitle: 'Sunday recap with workouts, nutrition, streak, XP',
+            title: AppLocalizations.of(context).emailPreferencesWeeklySummary,
+            subtitle: AppLocalizations.of(context).emailPreferencesSundayRecapWithWorkouts,
             value: prefs?.weeklySummary ?? true,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.weeklySummary,
@@ -277,8 +278,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.new_releases_outlined,
             iconColor: AppColors.success,
-            title: 'Product updates',
-            subtitle: 'New features and app improvements',
+            title: AppLocalizations.of(context).emailPreferencesProductUpdates,
+            subtitle: AppLocalizations.of(context).emailPreferencesNewFeaturesAndApp,
             value: prefs?.productUpdates ?? true,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.productUpdates,
@@ -291,8 +292,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.local_offer_outlined,
             iconColor: Colors.pink,
-            title: 'Offers & discounts',
-            subtitle: 'Special offers and re-engagement discounts',
+            title: AppLocalizations.of(context).emailPreferencesOffersDiscounts,
+            subtitle: AppLocalizations.of(context).emailPreferencesSpecialOffersAndRe,
             value: prefs?.promotional ?? false,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.promotional,
@@ -308,8 +309,8 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
               child: SettingSwitchTile(
                 icon: Icons.credit_card_outlined,
                 iconColor: AppColors.cyan,
-                title: 'Billing & account',
-                subtitle: 'Purchase, billing, cancellation (required)',
+                title: AppLocalizations.of(context).emailPreferencesBillingAccount,
+                subtitle: AppLocalizations.of(context).emailPreferencesPurchaseBillingCancellatio,
                 value: true,
                 onChanged: (_) {},
               ),
@@ -338,14 +339,14 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Unsubscribe from All Marketing',
+                          AppLocalizations.of(context).emailPreferencesUnsubscribeFromAllMarketing,
                           style: TextStyle(
                             fontSize: 15,
                             color: AppColors.error.withOpacity(0.9),
                           ),
                         ),
                         Text(
-                          'Keep only essential workout reminders',
+                          AppLocalizations.of(context).emailPreferencesKeepOnlyEssentialWorkout,
                           style: TextStyle(
                             fontSize: 12,
                             color: textMuted,
@@ -389,7 +390,7 @@ class _UnsubscribeConfirmDialog extends StatelessWidget {
           Icon(Icons.unsubscribe_outlined, color: AppColors.error, size: 24),
           const SizedBox(width: 12),
           Text(
-            'Unsubscribe',
+            AppLocalizations.of(context).emailPreferencesUnsubscribe,
             style: TextStyle(color: textPrimary, fontSize: 18),
           ),
         ],
@@ -399,7 +400,7 @@ class _UnsubscribeConfirmDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'This will turn off all marketing emails:',
+            AppLocalizations.of(context).emailPreferencesThisWillTurnOff,
             style: TextStyle(color: textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 12),
@@ -410,7 +411,7 @@ class _UnsubscribeConfirmDialog extends StatelessWidget {
           _buildBulletPoint('Achievement unlocks', textSecondary),
           const SizedBox(height: 12),
           Text(
-            'You will still receive essential workout reminders.',
+            AppLocalizations.of(context).emailPreferencesYouWillStillReceive,
             style: TextStyle(
               color: textPrimary,
               fontSize: 13,
@@ -423,14 +424,14 @@ class _UnsubscribeConfirmDialog extends StatelessWidget {
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
           child: Text(
-            'Cancel',
+            AppLocalizations.of(context).buttonCancel,
             style: TextStyle(color: textSecondary),
           ),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(
-            'Unsubscribe',
+            AppLocalizations.of(context).emailPreferencesUnsubscribe,
             style: TextStyle(color: AppColors.error),
           ),
         ),

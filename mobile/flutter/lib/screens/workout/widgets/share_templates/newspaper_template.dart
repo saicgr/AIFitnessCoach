@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
 
+import '../../../../l10n/generated/app_localizations.dart';
 /// Newspaper — broadsheet front-page parody. Serif bold headline
 /// plus fake sub-article with workout stats. Grayscale newsprint.
 class NewspaperTemplate extends StatelessWidget {
@@ -59,7 +60,7 @@ class NewspaperTemplate extends StatelessWidget {
             // Masthead
             Center(
               child: Text(
-                'THE ZEALOVA TIMES',
+                AppLocalizations.of(context).reportNewspaperTemplateTheZealovaTimes,
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 22,
@@ -136,8 +137,8 @@ class NewspaperTemplate extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'THE NUMBERS',
+                        Text(
+                          AppLocalizations.of(context).newspaperTemplateTheNumbers,
                           style: TextStyle(
                             fontFamily: 'serif',
                             fontSize: 11,

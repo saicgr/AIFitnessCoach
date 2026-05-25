@@ -16,6 +16,7 @@ import '../../data/services/haptic_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 /// XP Leaderboard screen showing top users by level and XP
 class XPLeaderboardScreen extends ConsumerStatefulWidget {
   const XPLeaderboardScreen({super.key});
@@ -148,7 +149,7 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: const PillAppBar(title: 'XP Leaderboard'),
+      appBar: PillAppBar(title: AppLocalizations.of(context).xpLeaderboardXpLeaderboard),
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: CustomScrollView(
@@ -290,7 +291,7 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your Rank',
+                  AppLocalizations.of(context).xpLeaderboardYourRank,
                   style: TextStyle(
                     fontSize: 12,
                     color: textMuted,
@@ -345,7 +346,7 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
                 ),
               ),
               Text(
-                'Total XP',
+                AppLocalizations.of(context).xpLeaderboardTotalXp,
                 style: TextStyle(
                   fontSize: 11,
                   color: textMuted,
@@ -517,7 +518,7 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No leaderboard data yet.\nStart earning XP to climb the ranks!',
+            AppLocalizations.of(context).xpLeaderboardNoLeaderboardDataYet,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
