@@ -104,6 +104,34 @@ from .cycle_tools import (
 
 from .base import get_vision_service, get_form_analysis_service
 
+# === Phase 2-6 workouts overhaul tools ===
+# Equipment calibration, user_state read, regenerate today, force deload,
+# progression-style set, bonus-workout eligibility, recovery recommendation,
+# why-this-workout explain, per-muscle score breakdown.
+from .coach_phase2_tools import (
+    calibrate_equipment,
+    get_user_state,
+    regenerate_today,
+    start_deload_week,
+    set_progression_style,
+    bonus_workout_eligibility,
+    apply_recovery_recommendation,
+    explain_today_workout,
+    score_breakdown,
+)
+
+PHASE2_TOOLS = [
+    calibrate_equipment,
+    get_user_state,
+    regenerate_today,
+    start_deload_week,
+    set_progression_style,
+    bonus_workout_eligibility,
+    apply_recovery_recommendation,
+    explain_today_workout,
+    score_breakdown,
+]
+
 # Registry of all available tools
 ALL_TOOLS = [
     # Workout tools
@@ -144,6 +172,8 @@ ALL_TOOLS = [
     *HEALTH_TOOLS,
     # === Phase F: menstrual-cycle agent tools ===
     *CYCLE_TOOLS,
+    # === Phase 2-6 workouts overhaul ===
+    *PHASE2_TOOLS,
 ]
 
 # Tool name to function mapping
@@ -201,6 +231,17 @@ __all__ = [
     "suggest_phase_workout",
     "suggest_phase_meals",
     "CYCLE_TOOLS",
+    # Phase 2-6 workouts overhaul
+    "calibrate_equipment",
+    "get_user_state",
+    "regenerate_today",
+    "start_deload_week",
+    "set_progression_style",
+    "bonus_workout_eligibility",
+    "apply_recovery_recommendation",
+    "explain_today_workout",
+    "score_breakdown",
+    "PHASE2_TOOLS",
     # Utilities
     "get_vision_service",
     "get_form_analysis_service",
