@@ -38,6 +38,7 @@ import Metrics from './pages/Metrics';
 import Nutrition from './pages/Nutrition';
 import Library from './pages/Library';
 import Achievements from './pages/Achievements';
+import Share from './pages/Share';
 import PublicWorkout from './pages/PublicWorkout';
 import GoogleHealthVs from './pages/vs/GoogleHealth';
 import GoogleHealthHallucination from './pages/blog/GoogleHealthHallucination';
@@ -191,6 +192,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/architecture" element={<Architecture />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/share" element={<Share />} />
         <Route path="/changelog" element={<Changelog />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/waitlist" element={<Waitlist />} />

@@ -1,0 +1,399 @@
+/Users/saichetangrandhe/AIFitnessCoach/backend/.venv/lib/python3.9/site-packages/google/auth/__init__.py:54: FutureWarning: 
+    
+/Users/saichetangrandhe/AIFitnessCoach/backend/.venv/lib/python3.9/site-packages/google/oauth2/__init__.py:40: FutureWarning: 
+    
+
+🟢 Imports feature — full pipeline output dump
+   Repo: /Users/saichetangrandhe/AIFitnessCoach
+   Fixtures: /Users/saichetangrandhe/AIFitnessCoach/backend/tests/share/fixtures
+
+==========================================================================================
+  1. POST /share/classify  —  REAL IMAGE FIXTURES (Gemini Vision)
+==========================================================================================
+
+📷 food_plate.jpg  (222,672 bytes, 1.54s)
+   content_type: food_plate
+
+📷 restaurant_menu.jpg  (117,435 bytes, 1.27s)
+   content_type: food_menu
+
+📷 gym_equipment.jpg  (89,088 bytes, 1.13s)
+   content_type: gym_equipment
+
+📷 exercise_form.jpg  (65,622 bytes, 1.0s)
+   content_type: exercise_form
+
+📷 progress_photo.jpg  (57,190 bytes, 1.13s)
+   content_type: exercise_form
+
+==========================================================================================
+  2. POST /share/import-audio  —  REAL VOICE MEMOS (Gemini audio + intent)
+==========================================================================================
+
+🎙️ voice_workout_log.m4a  (102,043 bytes, 1.85s)
+   audio_hint: workout_log
+   intent:     workout_extract  (confidence=high)
+   why:        The user provides a structured list of exercises, sets, and reps performed during a specific workout session.
+   FULL transcript:
+     │ Hey, just finished my push day workout. Did four sets of bench press at 185 lbs for 6 to 8 reps, then three sets of overhead press at 115 lbs for 8 reps, finished with three sets of dips.
+
+🎙️ voice_food_log.m4a  (73,601 bytes, 1.96s)
+   audio_hint: food_log
+   intent:     food_log_extract  (confidence=high)
+   why:        The user is describing a single meal they just consumed for the purpose of logging it.
+   FULL transcript:
+     │ I just had lunch, a grilled chicken sandwich on whole wheat bread with lettuce, tomato, and a little mayo, plus a small side salad and an apple.
+
+🎙️ voice_trainer_tip.m4a  (71,523 bytes, 1.95s)
+   audio_hint: tip
+   intent:     tip_save  (confidence=high)
+   why:        The content provides a specific educational tip regarding exercise technique without providing a full workout routine.
+   FULL transcript:
+     │ Quick tip, when you bench press, focus on a controlled three-second descent. The eccentric phase is where most of the muscle growth happens.
+
+==========================================================================================
+  3. POST /share/import-pdf  —  REAL PDF FIXTURES (Gemini PDF + intent + workout extract)
+==========================================================================================
+
+📄 recipe_cookbook.pdf  (2,399 bytes, 2.73s, 965 chars extracted)
+   intent: recipe_extract  (confidence=high)
+   why:    The content provides a list of ingredients and step-by-step cooking instructions for a single dish.
+   FULL extracted text:
+     │ # Roasted Garlic Chicken Thighs
+     │ Serves 4 · 35 minutes · Easy
+     │ 
+     │ ### Ingredients
+     │ * 8 bone-in, skin-on chicken thighs (about 3 lbs)
+     │ * 1 head garlic, cloves separated and peeled
+     │ * 2 tablespoons olive oil
+     │ * 1 teaspoon kosher salt
+     │ * 1 teaspoon freshly cracked black pepper
+     │ * 2 sprigs fresh rosemary
+     │ * 1 lemon, cut into wedges
+     │ * 1/2 cup low-sodium chicken broth
+     │ 
+     │ ### Instructions
+     │ 1. Preheat oven to 425°F (220°C). Pat chicken thighs dry with paper towels.
+     │ 2. Season chicken generously with salt and pepper on all sides.
+     │ 3. Heat olive oil in a large oven-safe skillet over medium-high heat. Add chicken skin-side down and sear until golden brown, about 6 minutes.
+     │ 4. Flip chicken, add garlic cloves and rosemary around the pan. Pour in chicken broth.
+     │ 5. Transfer skillet to the oven and roast for 20 minutes, until chicken reaches an internal temperature of 165°F (75°C).
+     │ 6. Squeeze lemon wedges over the chicken and serve immediately with the pan juices and roasted garlic.
+
+📄 workout_program.pdf  (2,197 bytes, 2.55s, 801 chars extracted)
+   intent: workout_extract  (confidence=high)
+   why:    The content provides a structured 4-day exercise routine with specific sets, reps, and rest intervals.
+   FULL extracted text:
+     │ # Upper / Lower 4-Day Split
+     │ Intermediate · 60 min per session · 4 days/week
+     │ 
+     │ ## Day 1 — Upper (Heavy)
+     │ 1. Barbell Bench Press — 4 sets x 5 reps, rest 2-3 min
+     │ 2. Weighted Pull-Ups — 4 sets x 5 reps, rest 2 min
+     │ 3. Seated Dumbbell Shoulder Press — 3 sets x 8 reps, rest 90s
+     │ 4. Barbell Row — 3 sets x 8 reps, rest 90s
+     │ 5. Triceps Dips — 3 sets x 8-10 reps
+     │ 6. Barbell Curl — 3 sets x 8-10 reps
+     │ 
+     │ ## Day 2 — Lower (Heavy)
+     │ 1. Back Squat — 4 sets x 5 reps, rest 3 min
+     │ 2. Romanian Deadlift — 3 sets x 6 reps, rest 2 min
+     │ 3. Walking Lunges — 3 sets x 10 reps each leg
+     │ 4. Standing Calf Raise — 4 sets x 12 reps
+     │ 5. Hanging Leg Raise — 3 sets x 10 reps
+     │ 
+     │ ## Notes
+     │ Aim to add weight when you hit the top of every rep range with good form. Sleep 7-9 hours per night and eat at maintenance + 200 kcal for a slow lean bulk.
+
+   → running workout extractor over the PDF text…
+   parsed workout title: 'Day 1 — Upper (Heavy) / Day 2 — Lower (Heavy)'
+   duration_min:         120
+   difficulty:           intermediate
+   equipment_needed:     ['barbell', 'bench', 'dip station', 'dumbbells', 'pull-up bar', 'rack']
+   11 exercises extracted:
+     • Barbell Bench Press               sets=4  reps=5  rest=150s  equip=['barbell', 'bench']
+         notes: Day: Day 1 — Upper (Heavy)
+     • Weighted Pull-Ups                 sets=4  reps=5  rest=120s  equip=['pull-up bar']
+         notes: Day: Day 1 — Upper (Heavy)
+     • Seated Dumbbell Shoulder Press    sets=3  reps=8  rest=90s  equip=['dumbbells', 'bench']
+         notes: Day: Day 1 — Upper (Heavy)
+     • Barbell Row                       sets=3  reps=8  rest=90s  equip=['barbell']
+         notes: Day: Day 1 — Upper (Heavy)
+     • Triceps Dips                      sets=3  reps=8-10  equip=['dip station']
+         notes: Day: Day 1 — Upper (Heavy)
+     • Barbell Curl                      sets=3  reps=8-10  equip=['barbell']
+         notes: Day: Day 1 — Upper (Heavy)
+     • Back Squat                        sets=4  reps=5  rest=180s  equip=['barbell', 'rack']
+         notes: Day: Day 2 — Lower (Heavy)
+     • Romanian Deadlift                 sets=3  reps=6  rest=120s  equip=['barbell']
+         notes: Day: Day 2 — Lower (Heavy)
+     • Walking Lunges                    sets=3  reps=10  equip=['dumbbells']
+         notes: 10 reps each leg
+     • Standing Calf Raise               sets=4  reps=12  equip=['barbell']
+         notes: Day: Day 2 — Lower (Heavy)
+     • Hanging Leg Raise                 sets=3  reps=10  equip=['pull-up bar']
+         notes: Day: Day 2 — Lower (Heavy)
+
+==========================================================================================
+  4. POST /share/import-text  —  REAL CHATGPT / CLAUDE / PERPLEXITY FIXTURES
+==========================================================================================
+
+📝 chatgpt_workout.txt  (1,413 chars, 0.71s, source_hint='chatgpt')
+   intent: workout_extract  (confidence=high)
+   why:    The content provides a structured 4-day exercise routine including specific exercises, sets, reps, and rest intervals.
+   FULL input text:
+     │ Sure! Here's a 4-day Upper/Lower workout split designed for intermediate lifters focused on hypertrophy:
+     │ 
+     │ **Day 1 — Upper Body (Push focus)**
+     │ 1. Barbell Bench Press — 4 sets of 6-8 reps, rest 2 minutes
+     │ 2. Seated Overhead Press — 4 sets of 8 reps, rest 90 seconds
+     │ 3. Incline Dumbbell Press — 3 sets of 10 reps
+     │ 4. Cable Lateral Raises — 3 sets of 12-15 reps
+     │ 5. Triceps Rope Pushdowns — 3 sets of 12 reps
+     │ 6. Overhead Triceps Extensions — 3 sets of 10 reps
+     │ 
+     │ **Day 2 — Lower Body (Quad focus)**
+     │ 1. Back Squat — 4 sets of 6 reps, rest 3 minutes
+     │ 2. Bulgarian Split Squats — 3 sets of 10 reps per leg
+     │ 3. Leg Press — 3 sets of 12 reps
+     │ 4. Leg Extensions — 3 sets of 15 reps
+     │ 5. Standing Calf Raises — 4 sets of 15 reps
+     │ 
+     │ **Day 3 — Upper Body (Pull focus)**
+     │ 1. Weighted Pull-Ups — 4 sets of 6-8 reps, rest 2 minutes
+     │ 2. Barbell Row — 4 sets of 8 reps, rest 90 seconds
+     │ 3. Lat Pulldowns — 3 sets of 10 reps
+     │ 4. Cable Rows — 3 sets of 12 reps
+     │ 5. Barbell Curls — 3 sets of 10 reps
+     │ 6. Hammer Curls — 3 sets of 12 reps
+     │ 
+     │ **Day 4 — Lower Body (Posterior chain)**
+     │ 1. Romanian Deadlifts — 4 sets of 6 reps, rest 3 minutes
+     │ 2. Hip Thrusts — 3 sets of 10 reps
+     │ 3. Walking Lunges — 3 sets of 12 reps per leg
+     │ 4. Seated Leg Curls — 3 sets of 12 reps
+     │ 5. Standing Calf Raises — 4 sets of 15 reps
+     │ 
+     │ Aim for progressive overload week over week. Track your reps and weights, and add 2.5-5 lbs whenever you hit the top of the rep range with good form.
+
+📝 chatgpt_recipe.txt  (1,578 chars, 0.74s, source_hint='chatgpt')
+   intent: recipe_extract  (confidence=high)
+   why:    The content provides a clear list of ingredients and step-by-step cooking instructions for a single dish.
+   FULL input text:
+     │ **One-Pan Chicken Tikka Masala (Serves 4)**
+     │ 
+     │ A weeknight-friendly version of the takeout classic. Skip the long marinate; the spices still deliver.
+     │ 
+     │ **Ingredients**
+     │ - 1.5 lbs boneless skinless chicken thighs, cut into 1-inch pieces
+     │ - 1 cup plain Greek yogurt
+     │ - 3 tablespoons garam masala
+     │ - 1 tablespoon ground turmeric
+     │ - 2 teaspoons ground cumin
+     │ - 1 teaspoon paprika
+     │ - 1 teaspoon kosher salt
+     │ - 2 tablespoons ghee or vegetable oil
+     │ - 1 large yellow onion, diced
+     │ - 4 cloves garlic, minced
+     │ - 1 tablespoon fresh ginger, grated
+     │ - 1 (15 oz) can crushed tomatoes
+     │ - 1 cup heavy cream (or full-fat coconut milk)
+     │ - Fresh cilantro, chopped
+     │ - Cooked basmati rice or naan, for serving
+     │ 
+     │ **Instructions**
+     │ 1. In a large bowl, whisk yogurt with 2 tablespoons garam masala, turmeric, cumin, paprika, and salt. Toss chicken to coat. Marinate at least 15 minutes (or up to 24 hours).
+     │ 2. Heat ghee in a large skillet over medium-high heat. Sear chicken in two batches, about 3 minutes per side, until lightly browned. Transfer to a plate.
+     │ 3. Reduce heat to medium. Add onion to the same pan and cook until softened, about 5 minutes. Stir in garlic and ginger; cook 1 minute.
+     │ 4. Add remaining 1 tablespoon garam masala and cook 30 seconds until fragrant. Pour in crushed tomatoes; simmer 8 minutes.
+     │ 5. Stir in heavy cream and return chicken to the pan. Simmer 5 more minutes, until chicken is cooked through (165°F internal).
+     │ 6. Taste and adjust salt. Garnish with cilantro and serve over rice or with warm naan.
+     │ 
+     │ **Macros per serving (recipe makes 4)**
+     │ - 480 kcal · 35g protein · 18g carbs · 30g fat
+
+📝 claude_meal_plan.txt  (1,949 chars, 0.77s, source_hint='claude')
+   intent: meal_plan_extract  (confidence=high)
+   why:    The content provides a structured 7-day meal plan with specific meals listed for each day.
+   FULL input text:
+     │ Here's a 7-day high-protein meal plan targeting 2,200 calories and 180g of protein per day.
+     │ 
+     │ **Day 1**
+     │ - Breakfast: 4 scrambled eggs, 2 slices whole-wheat toast, 1 cup blueberries
+     │ - Lunch: Grilled chicken salad with mixed greens, quinoa, chickpeas, olive oil + lemon
+     │ - Snack: Greek yogurt with honey and almonds
+     │ - Dinner: 6 oz baked salmon, 1 cup brown rice, roasted broccoli
+     │ 
+     │ **Day 2**
+     │ - Breakfast: Protein oatmeal (1 scoop whey + oats + banana)
+     │ - Lunch: Turkey and avocado wrap on a whole-wheat tortilla
+     │ - Snack: Cottage cheese with pineapple
+     │ - Dinner: Lean beef stir-fry with bell peppers, snap peas, and brown rice
+     │ 
+     │ **Day 3**
+     │ - Breakfast: Greek yogurt parfait with granola and strawberries
+     │ - Lunch: Quinoa power bowl with grilled chicken, kale, sweet potato, tahini dressing
+     │ - Snack: Protein shake with banana
+     │ - Dinner: Whole-grain spaghetti with turkey meat sauce, side salad
+     │ 
+     │ **Day 4**
+     │ - Breakfast: 3-egg veggie omelet with feta, side of fruit
+     │ - Lunch: Tuna salad on whole-grain crackers, apple
+     │ - Snack: Hard-boiled eggs and almonds
+     │ - Dinner: Grilled chicken thighs, mashed cauliflower, roasted asparagus
+     │ 
+     │ **Day 5**
+     │ - Breakfast: Whey protein smoothie with spinach, banana, peanut butter
+     │ - Lunch: Chicken Caesar wrap (light dressing)
+     │ - Snack: String cheese and grapes
+     │ - Dinner: Baked cod, lentil pilaf, sautéed zucchini
+     │ 
+     │ **Day 6**
+     │ - Breakfast: Cottage cheese with mixed berries and walnuts
+     │ - Lunch: Turkey chili (lean ground turkey + beans + tomatoes)
+     │ - Snack: Protein bar
+     │ - Dinner: Sirloin steak, baked sweet potato, green beans
+     │ 
+     │ **Day 7**
+     │ - Breakfast: Veggie scramble (3 eggs, spinach, mushrooms), toast
+     │ - Lunch: Buddha bowl with chickpeas, brown rice, roasted veggies, tahini
+     │ - Snack: Greek yogurt with chia seeds
+     │ - Dinner: Grilled shrimp tacos on corn tortillas, slaw, avocado
+     │ 
+     │ **Hydration**: Aim for 3-4 liters of water per day. Adjust portions up or down by 10% based on whether your weight is moving as expected after the first 2 weeks.
+
+📝 perplexity_tip.txt  (1,453 chars, 0.75s, source_hint='perplexity')
+   intent: tip_save  (confidence=high)
+   why:    The content is an educational summary of scientific research regarding creatine supplementation, providing tips and facts rather than a structured plan or specific request.
+   FULL input text:
+     │ Research on creatine monohydrate for resistance training:
+     │ 
+     │ Creatine monohydrate is the most studied ergogenic aid in sports science. A 2017 ISSN position stand reviewed over 700 peer-reviewed studies and concluded that 3-5g per day produces consistent improvements in maximal strength (5-15%) and high-intensity work capacity (10-15%) across resistance-trained individuals.
+     │ 
+     │ Key practical points:
+     │ 
+     │ 1. **No loading phase needed**: While a 20g/day loading week saturates muscle creatine faster (about 6 days vs. 4 weeks), the end-state benefit is identical. Most coaches now skip the load to avoid GI side effects.
+     │ 
+     │ 2. **Timing is largely irrelevant**: Studies comparing pre- vs. post-workout dosing find no meaningful difference. Daily consistency matters more than time of day.
+     │ 
+     │ 3. **Water retention is real but small**: Expect a 1-2 lb intramuscular water gain in the first month. This is not subcutaneous and does not affect body composition meaningfully.
+     │ 
+     │ 4. **Hair loss claim is overblown**: The single often-cited study (van der Merwe et al., 2009) measured DHT in rugby players for 3 weeks; no follow-up study has replicated the result, and population-scale evidence is absent.
+     │ 
+     │ 5. **Kidney safety**: Meta-analyses of healthy individuals using creatine for up to 5 years show no renal impact. Pre-existing kidney disease is the only contraindication worth flagging.
+     │ 
+     │ Sources: Kreider et al., JISSN 2017; Antonio et al., 2021; Forbes et al., 2022.
+
+==========================================================================================
+  5. POST /share/fetch-url  —  REAL PUBLIC URLs (live network)
+==========================================================================================
+
+🔗 NYT Cooking recipe blog
+   https://cooking.nytimes.com/recipes/1019047-creamy-roasted-tomato-soup
+   source:        web
+   title:         'Thanksgiving Leftovers Enchilada Pie Recipe'
+   author:        None
+   intent:        recipe_extract  (high)
+   fetched chars: 15,727
+   elapsed:       3.17s
+
+   First 800 chars of BODY:
+     │ Thanksgiving Leftovers Enchilada Pie Recipe What to Cook Recipes Ingredients Occasions Articles About What to Cook Recipes Ingredients Occasions Articles About Staff Picks Most Popular Soups and Stews Easy Side Dishes Healthy Weeknight Dinners Sheet-Pan Vegetarian Recipes From Our Newsletters The Cooking Newsletter Five Weeknight Dishes The Veggie Bake Time Perfect For One-Pot Dinners Weeknight Chicken Quick Pastas 30 Minute Vegetarian Easy Baking Everyday Recipes Easy Healthy Weeknight Pasta Quick By Meal Dinner Breakfast Lunch Desserts Appetizers Side Dishes Drinks By Diet Vegetarian Vegan Gluten-Free Dairy-Free By Method Air Fryer Instant Pot Slow Cooker BBQ & Grilling Sheet Pan Baking Meat & Seafood Chicken Beef Pork Salmon Shrimp Vegetables & Fruits Zucchini Sweet Potato Eggplant Cabb
+
+🔗 Wikipedia recipe page
+   https://en.wikipedia.org/wiki/Chicken_tikka_masala
+   source:        web
+   title:         'Chicken tikka masala - Wikipedia'
+   author:        None
+   intent:        discuss  (high)
+   fetched chars: 40,100
+   elapsed:       1.02s
+
+   First 800 chars of BODY:
+     │ Chicken tikka masala - Wikipedia Jump to content Main menu Main menu move to sidebar hide Navigation Main page Contents Current events Random article About Wikipedia Contact us Contribute Help Learn to edit Community portal Recent changes Upload file Special pages Search Search Appearance Donate Create account Log in Personal tools Donate Create account Log in Contents move to sidebar hide (Top) 1 Composition 2 Origins Toggle Origins subsection 2.1 Mughal ancestry 2.2 Created in Glasgow 2.3 Invented in Britain 2.4 Adapted from an Indian dish 3 Impact Toggle Impact subsection 3.1 Popularity 3.2 Symbol of a multicultural society 3.3 Authenticity 4 See also 5 Notes 6 References Toggle the table of contents Chicken tikka masala 38 languages العربية অসমীয়া বাংলা Català Cebuano Čeština Dansk De
+
+🔗 Reddit r/Fitness post
+   https://www.reddit.com/r/Fitness/comments/1tn1bsc/moronic_monday_your_weekly_stupid_questions_thread/
+   source:        reddit
+   title:         'Moronic Monday - Your weekly stupid questions thread'
+   author:        'cdingo'
+   intent:        discuss  (high)
+   fetched chars: 1,423
+   elapsed:       1.29s
+
+   First 800 chars of BODY:
+     │ Get your dunce hats out, Fittit, it's time for your weekly Stupid Questions Thread.
+     │ 
+     │ Post your question - stupid or otherwise - here to get an answer. Anyone can post a question and the community as a whole is invited and encouraged to provide an answer. Many questions get submitted late each week that don't get a lot of action, so if your question didn't get answered before, feel free to post it again.
+     │ 
+     │ ###**As always, be sure to read the [FAQ](https://thefitness.wiki/faq/) first**.
+     │ 
+     │ Also, there's a handy-dandy **search bar to your right**, and if you didn't know, you can also use [Google](https://www.google.com/) to search fittit by using the limiter "site:reddit.com\/r/fitness".
+     │ 
+     │ Be sure to check back often as questions get posted throughout the day.  Lastly, it may be a good idea to so
+
+🔗 YouTube workout video (AthleanX)
+   https://www.youtube.com/watch?v=vc1E5CfRfos
+   source:        youtube
+   title:         'The PERFECT Home Workout (Sets and Reps Included)'
+   author:        'ATHLEAN-X™'
+   intent:        workout_extract  (high)
+   fetched chars: 24,686
+   elapsed:       2.09s
+
+   First 800 chars of BODY:
+     │ Home workouts can be a lifesaver, especially in times when you cannot get to the gym. In this video, I’m going to give you a complete home workout routine with all sets and reps included to help you to build muscle regardless of whether or not you ever step foot in a gym. The key to the effectiveness of this perfect home workout is that it pairs exercises together in a way that allows you to train to greater overload than would be possible if you stuck with one single exercise, and it will keep the workouts brief at the same time.
+     │ 
+     │ 60% off all AX programs - http://athleanx.com/x/137-workouts
+     │ Subscribe to this channel here - http://youtube.com/user/jdcav24
+     │ 
+     │ This perfect home workout consists of not one but two complete total body workouts. The first, workout A, is to be performed on Monday 
+
+   First 800 chars of TRANSCRIPT:
+     │ what's up guys chef kevin here
+     │ athletenext.com we continue our perfect
+     │ workout series here today this time the
+     │ perfect home workout and this one i have
+     │ to say is definitely by popular demand
+     │ actually it's out of necessity you see a
+     │ lot of us have been affected by the
+     │ recent coronavirus pandemic and we're
+     │ restricted to home workouts we're not
+     │ even allowed out of our own houses we're
+     │ certainly not allowed in the gym what
+     │ can we do well we don't have to let the
+     │ gains go by the wayside as a matter of
+     │ fact guys i wanted to make sure i put
+     │ something together for you that you can
+     │ use to continue to keep the gains coming
+     │ and i put together this homework out
+     │ that's actually going to require zero
+     │ equipment you're gonna be able to do
+     │ this no matter what level of ability
+     │ you're at i'm actually includi
+
+   → running workout extractor…
+   parsed workout title: 'The PERFECT Home Workout'
+   duration_min:         50
+   difficulty:           None
+   equipment_needed:     ['box', 'pull-up bar', 'broomstick', 'chair', 'couch']
+   16 exercises extracted:
+     • Alternating Single Leg Box Squat      reps=1 minute  rest=0s
+     • 1 1/2 Bottomed Out Squat              reps=1 minute  rest=0s
+     • Jump Squat                            reps=1 minute  rest=0s
+     • Handstand Pushup                      reps=1 minute  rest=0s
+     • Rotational Pushup                     reps=1 minute  rest=0s
+     • Cobra Pushup                          reps=1 minute  rest=0s
+     • Alternating Single Leg Heel Touch Squat  reps=1 minute  rest=0s
+     • Alternating Sprinter Lunge            reps=1 minute  rest=0s
+     • Plyo Sprinter Lunge                   reps=1 minute  rest=0s
+     • Pullup                                reps=1 minute  rest=0s
+     • Human Pullover                        reps=1 minute  rest=0s
+     • Inverted Chin Curl                    reps=1 minute  rest=0s
+     • Reverse Corkscrew                     reps=1 minute  rest=0s
+     • Black Widow Knee Slide                reps=1 minute  rest=0s
+     • Levitation Crunch                     reps=1 minute  rest=0s
+     • Angels and Devils                     reps=1 minute  rest=0s
+
+✅ Done — total wall time 35.7s
+
