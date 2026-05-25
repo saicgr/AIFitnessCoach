@@ -163,6 +163,18 @@ class LogMealSheet extends ConsumerStatefulWidget {
   final bool autoOpenMenuScan;
   final DateTime? selectedDate;
 
+  /// Imports feature — when the share router routes a food photo here
+  /// (content_type=food_plate/food_buffet/app_screenshot), the S3 key of
+  /// the already-uploaded photo is passed in. The sheet picks it up on
+  /// first build and feeds it into the existing photo-log flow instead
+  /// of opening the camera.
+  final String? initialPhotoS3Key;
+
+  /// Imports feature — for app_screenshot route, the OCR text result is
+  /// supplied so the sheet can run the analyze-text streaming path
+  /// without re-OCRing. Mutually exclusive with [initialPhotoS3Key].
+  final String? initialTextLog;
+
   const LogMealSheet({
     super.key,
     required this.userId,
@@ -173,6 +185,8 @@ class LogMealSheet extends ConsumerStatefulWidget {
     this.autoOpenMultiImage = false,
     this.autoOpenMenuScan = false,
     this.selectedDate,
+    this.initialPhotoS3Key,
+    this.initialTextLog,
   });
 
   @override
@@ -1317,10 +1331,14 @@ class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSec
       rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealIron, value: AppLocalizations.of(context)!.logMealSheetMg3(p.iron100g.toStringAsFixed(2)), isDark: widget.isDark));
     }
     if (p.potassium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: AppLocalizations.of(context)!.logMealSheetMg4(p.potassium100g.toStringAsFixed(1)), isDark: widget.isDark));
+      // i18n: logMealSheetMg4/Mg5 were generated with a second positional arg
+      // their impl ignores (codegen drift from commit 70a61819). The ARB
+      // declares one placeholder; the second arg is dead. Pass '' until
+      // flutter gen-l10n is re-run and the abstract signature matches.
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: AppLocalizations.of(context)!.logMealSheetMg4(p.potassium100g.toStringAsFixed(1), ''), isDark: widget.isDark));
     }
     if (p.magnesium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: AppLocalizations.of(context)!.logMealSheetMg5(p.magnesium100g.toStringAsFixed(1)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: AppLocalizations.of(context)!.logMealSheetMg5(p.magnesium100g.toStringAsFixed(1), ''), isDark: widget.isDark));
     }
     if (p.zinc100g > 0) {
       rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealZinc, value: AppLocalizations.of(context)!.logMealSheetMg6(p.zinc100g.toStringAsFixed(2)), isDark: widget.isDark));

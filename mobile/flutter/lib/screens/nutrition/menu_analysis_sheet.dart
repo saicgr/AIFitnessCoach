@@ -145,6 +145,47 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     this.savedTitle,
   });
 
+  /// Imports feature — open the menu sheet directly from a single shared
+  /// photo S3 key. The wrapper runs the menu-scan SSE flow (kicked off in
+  /// the parent screen that pushes this sheet) and then bridges into the
+  /// regular sheet once `foodItems` are available. The wrapper takes a
+  /// pre-built [MenuAnalysisStreamingController] so the sheet shows the
+  /// usual streaming UI while items arrive.
+  ///
+  /// Callers should:
+  ///   1. Kick off the menu scan against the shared photo via the same
+  ///      `_runMenuAnalysis` helper used elsewhere.
+  ///   2. Build the streaming controller it produces.
+  ///   3. Open the sheet via this factory passing `streamingController`.
+  ///
+  /// The factory itself does not own the network call — it just
+  /// constructs an empty-items sheet wired to the streaming controller
+  /// the share-funnel orchestrator supplies.
+  factory MenuAnalysisSheet.fromSharedPhoto({
+    Key? key,
+    required String s3Key,
+    required String analysisType,
+    required bool isDark,
+    required void Function(List<Map<String, dynamic>>) onLogItems,
+    required MenuAnalysisStreamingController streamingController,
+    String? userId,
+    String? mealType,
+    String? restaurantName,
+  }) {
+    return MenuAnalysisSheet(
+      key: key,
+      foodItems: const <Map<String, dynamic>>[],
+      analysisType: analysisType,
+      isDark: isDark,
+      onLogItems: onLogItems,
+      streamingController: streamingController,
+      menuPhotoUrls: <String>[s3Key],
+      userId: userId,
+      mealType: mealType,
+      restaurantName: restaurantName,
+    );
+  }
+
   /// Preserve the v1 call pattern — used by log-meal + chat flows.
   static Future<void> show(
     BuildContext context, {

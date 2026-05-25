@@ -77,11 +77,22 @@ class ImportExerciseScreen extends ConsumerStatefulWidget {
   /// Optional: name hint pre-filled into the Photo tab's name field.
   final String? prefilledNameHint;
 
+  /// Optional: S3 key of an already-uploaded video (e.g. clip pulled from
+  /// an Instagram / TikTok share via the share funnel). Routes the user
+  /// straight to the Video tab.
+  final String? prefilledVideoS3Key;
+
+  /// Optional: which tab to open with. 0 = Photo, 1 = Video, 2 = Describe.
+  /// Defaults to 0 unless [prefilledVideoS3Key] is set (then Video).
+  final int? initialTab;
+
   const ImportExerciseScreen({
     super.key,
     this.prefilledImageBytes,
     this.prefilledImageS3Key,
     this.prefilledNameHint,
+    this.prefilledVideoS3Key,
+    this.initialTab,
   });
 
   @override

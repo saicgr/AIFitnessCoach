@@ -9,6 +9,14 @@ List<RouteBase> _settingsRoutes() => [
         builder: (context, state) => const SettingsScreen(),
       ),
 
+      // Profile → Imports — universal history of everything shared into
+      // Zealova via the system share sheet. Reachable both directly and
+      // from a row in the settings/profile screen.
+      GoRoute(
+        path: '/imports',
+        builder: (context, state) => const ImportsScreen(),
+      ),
+
       // Settings sub-pages (flat navigation)
       GoRoute(
         path: '/settings/workout-settings',

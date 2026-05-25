@@ -43,7 +43,21 @@ part 'progress_screen_ext.dart';
 
 
 class ProgressScreen extends ConsumerStatefulWidget {
-  const ProgressScreen({super.key});
+  const ProgressScreen({
+    super.key,
+    this.initialTab,
+    this.preuploadedPhotoS3Keys,
+  });
+
+  /// Open with a specific tab selected. Used by the Imports feature
+  /// (`progress?tab=photos`) and by deep links.
+  final int? initialTab;
+
+  /// Imports feature — when the share funnel routes a progress photo (or
+  /// a multi-photo batch) here, the keys are pre-uploaded to S3 by the
+  /// `/share/classify` pipeline. The Photos tab picks these up on first
+  /// build and runs through the normal "create progress photo" flow.
+  final List<String>? preuploadedPhotoS3Keys;
 
   @override
   ConsumerState<ProgressScreen> createState() => _ProgressScreenState();

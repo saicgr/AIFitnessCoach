@@ -649,6 +649,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             route: '/settings/equipment',
             sectionKeys: const ['custom_content', 'warmup_settings', 'superset'],
           ),
+          _SettingsRow(
+            icon: Icons.ios_share,
+            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            title: 'Imports',
+            value: "Everything you've shared into Zealova",
+            route: '/imports',
+            sectionKeys: const ['imports', 'shared', 'share', 'history'],
+          ),
         ],
       ),
       _SettingsSection(

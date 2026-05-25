@@ -29,6 +29,8 @@ class PrivacyDataPage extends ConsumerWidget {
               // SizedBox(height: 16),
               EmailPreferencesSection(),
               SizedBox(height: 16),
+              ImportsPrivacySection(),
+              SizedBox(height: 16),
               ContributeFoodDataSection(),
               SizedBox(height: 16),
               DataManagementSection(),

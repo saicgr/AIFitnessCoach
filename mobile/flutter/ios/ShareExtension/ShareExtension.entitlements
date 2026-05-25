@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- MUST match the App Group declared in Runner.entitlements so the
+	     host app can read the payload manifest the extension writes. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.zealova.app.share</string>
+	</array>
+</dict>
+</plist>

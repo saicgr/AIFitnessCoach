@@ -163,6 +163,29 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
+            <!-- Imports feature — system share-sheet ingress.
+                 Receives photos, videos, audio, text, URLs, PDFs shared
+                 from any app (Photos, Gallery, Chrome, YouTube, Instagram,
+                 TikTok, Reddit, X, ChatGPT, Notes, Voice Memos, Files,
+                 WhatsApp, etc.) via Android's ACTION_SEND. Routed by
+                 IncomingShareService → ShareRouterScreen.
+                 ACTION_SEND_MULTIPLE supports gallery multi-select. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+                <data android:mimeType="video/*"/>
+                <data android:mimeType="audio/*"/>
+                <data android:mimeType="text/plain"/>
+                <data android:mimeType="application/pdf"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+                <data android:mimeType="video/*"/>
+            </intent-filter>
+
             <!-- Deep link handling for widget actions.
                  fitwiz:// is the LOCKED widget URL scheme (must match widget
                  infra). zealova:// is the rebrand-aligned scheme for new

@@ -14,6 +14,7 @@ export 'danger_zone_section.dart';
 export 'data_management_section.dart';
 export 'email_preferences_section.dart';
 export 'haptics_section.dart';
+export 'imports_privacy_section.dart';
 export 'health_sync_section.dart';
 export 'location_settings_section.dart';
 export 'logout_section.dart';

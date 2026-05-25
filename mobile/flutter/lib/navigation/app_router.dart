@@ -80,6 +80,7 @@ import '../screens/auth/intro_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/pages/pages.dart';
 import '../screens/settings/ai_data_usage_screen.dart';
+import '../screens/profile/imports_screen.dart';
 import '../screens/settings/ai_integrations_screen.dart';
 import '../screens/settings/medical_disclaimer_screen.dart';
 import '../screens/settings/exercise_preferences/my_exercises_screen.dart';

@@ -28,6 +28,11 @@
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.zealova.liveactivity</string>
+		<!-- Imports feature share-extension container. The Zealova share
+		     extension writes inbound payload metadata + file references
+		     here; the host app reads on launch via receive_sharing_intent.
+		     The SAME identifier MUST be added to ShareExtension.entitlements. -->
+		<string>group.com.zealova.app.share</string>
 	</array>
 	<key>aps-environment</key>
 	<string>production</string>

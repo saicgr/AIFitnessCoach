@@ -110,6 +110,23 @@ class ChatScreen extends ConsumerStatefulWidget {
   final String? workoutId;
   final String? contextLabel;
 
+  /// Imports feature — when the share funnel lands the user in chat
+  /// (intent=discuss / tip_save / nutrition_question, or "Just chat about
+  /// this" escape hatch), these carry the original payload through so
+  /// chat can preload the attachment list and prime the first turn.
+  /// `initialAttachmentS3Keys` lists S3 keys already uploaded by the share
+  /// pipeline (e.g. shared documents, PDFs).
+  final List<String>? initialAttachmentS3Keys;
+
+  /// Hint about what the user expects from the chat — surfaced as a
+  /// pre-filled prompt the user can edit before sending. Values:
+  ///   "analyze_form" · "explain_document" · "discuss"
+  final String? initialIntent;
+
+  /// Optional source URL — surfaced as context ("From: <url>") in the
+  /// first turn when chat was reached via an X / Reddit / web share.
+  final String? sourceUrl;
+
   const ChatScreen({
     super.key,
     this.initialMessage,
@@ -118,6 +135,9 @@ class ChatScreen extends ConsumerStatefulWidget {
     this.cardMode,
     this.workoutId,
     this.contextLabel,
+    this.initialAttachmentS3Keys,
+    this.initialIntent,
+    this.sourceUrl,
   });
 
   @override

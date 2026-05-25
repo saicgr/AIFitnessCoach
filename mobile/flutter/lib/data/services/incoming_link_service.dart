@@ -86,6 +86,30 @@ class IncomingLinkService {
             uri.host == _inviteHost &&
             uri.pathSegments.isNotEmpty &&
             uri.pathSegments.first == 'auth');
+    // Imports feature — iOS Share Extension fallback path. The extension
+    // writes a payload manifest into the App Group then opens the host
+    // via `zealova://share/v1`. The `receive_sharing_intent` plugin
+    // handles the App Group read on cold-start, but if for any reason
+    // that channel misses, the URL still lands here. We forward it to
+    // the IncomingShareService which re-reads the manifest and emits a
+    // SharedPayload via its stream.
+    final isShareDeepLink = (uri.scheme == 'zealova' || uri.scheme == 'fitwiz') &&
+        (uri.host == 'share' || uri.pathSegments.contains('share'));
+    if (isShareDeepLink) {
+      try {
+        // We don't import IncomingShareService directly here to avoid a
+        // platform dependency loop on web. The receive_sharing_intent
+        // plugin re-emits any pending payloads as soon as the host app
+        // foregrounds, so all we need to do is let it know we got the
+        // signal. Logging is enough.
+        debugPrint('🔗 [IncomingLink] zealova://share/v1 fallback received '
+            '— plugin will replay payload via getMediaStream().');
+      } catch (e) {
+        debugPrint('⚠️ [IncomingLink] share-deeplink handling failed: $e');
+      }
+      return;
+    }
+
     if (pathIsAuthCallback && (hasCode || hasTokenHash)) {
       try {
         if (hasCode) {

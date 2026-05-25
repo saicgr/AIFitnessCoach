@@ -23,7 +23,29 @@ import '../../../l10n/generated/app_localizations.dart';
 class RecipeImportScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
-  const RecipeImportScreen({super.key, required this.userId, required this.isDark});
+
+  /// Initial tab to open with — 0 = URL, 1 = Photo, 2 = Paste. Used by the
+  /// share router to land users on the right tab with a prefilled value.
+  final int initialTab;
+
+  /// Prefill for the URL tab (e.g. recipe URL shared from Safari).
+  final String? initialUrl;
+
+  /// Prefill for the Paste tab (e.g. ChatGPT recipe text).
+  final String? initialText;
+
+  /// S3 key of an already-uploaded recipe photo (Photo tab handoff).
+  final String? initialPhotoS3Key;
+
+  const RecipeImportScreen({
+    super.key,
+    required this.userId,
+    required this.isDark,
+    this.initialTab = 0,
+    this.initialUrl,
+    this.initialText,
+    this.initialPhotoS3Key,
+  });
   @override
   ConsumerState<RecipeImportScreen> createState() => _RecipeImportScreenState();
 }
@@ -40,8 +62,18 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 3, vsync: this);
+    _tab = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 2),
+    );
     _tab.addListener(_onTabChanged);
+    if (widget.initialUrl != null) {
+      _urlCtrl.text = widget.initialUrl!;
+    }
+    if (widget.initialText != null) {
+      _textCtrl.text = widget.initialText!;
+    }
   }
 
   void _onTabChanged() {

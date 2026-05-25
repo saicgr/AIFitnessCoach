@@ -111,6 +111,11 @@ dependencies:
   # capture across cold-start and background → foreground transitions.
   app_links: ^6.3.2
 
+  # Inbound system share-sheet ingress. Wraps the iOS Share Extension + the
+  # Android ACTION_SEND / ACTION_SEND_MULTIPLE intent-filters into a single
+  # Dart stream. Powers the Imports feature (Profile → Imports).
+  receive_sharing_intent: ^1.8.0
+
   # In-App Purchases
   purchases_flutter: ^8.1.0
 
