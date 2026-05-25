@@ -18045,7 +18045,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml dari (label)';
   }
 
@@ -20289,12 +20289,12 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -25915,7 +25915,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return ')(tdee) kal';
   }
 
   @override
@@ -44283,4 +44283,23 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach sekarang merespons dalam $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Bahasa AI Coach diatur ulang — menggunakan bahasa aplikasi';
+
+  @override
+  String get settingsChatLanguageTitle => 'Bahasa AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Bahasa untuk respons AI Coach (terpisah dari UI aplikasi)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Sama dengan bahasa aplikasi';
 }

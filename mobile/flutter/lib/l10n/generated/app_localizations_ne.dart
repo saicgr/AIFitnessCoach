@@ -337,7 +337,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') को लागि ($name)';
   }
 
   @override
@@ -3657,7 +3657,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String chatScreenExtAs(Object mealType) {
-    return ') as (mealType)';
+    return ') को रूपमा ($mealType)';
   }
 
   @override
@@ -12357,21 +12357,21 @@ class AppLocalizationsNe extends AppLocalizations {
       'पेटले आराम पाउँदा र प्रतिरक्षा कोषहरू पुनर्जीवित हुँदा इन्फ्लेमेटरी मार्करहरू घट्छन्।';
 
   @override
-  String get fastingStage_inflammation_drop_name => 'Inflammation Drop';
+  String get fastingStage_inflammation_drop_name => 'इन्फ्लेमेसन ड्रप';
 
   @override
   String get fastingStage_insulin_low_desc =>
       'इन्सुलिन बेसलाइनको नजिक रहन्छ, जसले फ्याट स्टोरहरू खोल्छ र इन्सुलिन संवेदनशीलता सुधार गर्छ।';
 
   @override
-  String get fastingStage_insulin_low_name => 'Low Insulin';
+  String get fastingStage_insulin_low_name => 'लो इन्सुलिन';
 
   @override
   String get fastingStage_ketosis_desc =>
       'कलेजोले फ्याटी एसिडलाई केटोन बडीहरूमा रूपान्तरण गर्छ — मस्तिष्कका लागि सफा र प्रभावकारी इन्धन।';
 
   @override
-  String get fastingStage_ketosis_name => 'Ketosis';
+  String get fastingStage_ketosis_name => 'केटोसिस';
 
   @override
   String get fastingStartFast => 'उपवास सुरु गर्नुहोस्';
@@ -18129,7 +18129,7 @@ class AppLocalizationsNe extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -20382,12 +20382,12 @@ class AppLocalizationsNe extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -27577,7 +27577,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get planPreviewScreenPeakPerformanceWeek => 'उत्कृष्ट प्रदर्शन हप्ता';
 
   @override
-  String get planPreviewScreenSetsreps => 'setsReps';
+  String get planPreviewScreenSetsreps => 'सेट/रेप्स';
 
   @override
   String get planPreviewScreenSubscribeForFullAccess =>
@@ -44455,4 +44455,23 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach अब $nativeName मा जवाफ दिन्छ';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach को भाषा रिसेट गरियो — एपको भाषा प्रयोग गर्दै';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach को भाषा';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach को जवाफका लागि भाषा (एपको UI भन्दा फरक)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'एपको भाषा जस्तै';
 }

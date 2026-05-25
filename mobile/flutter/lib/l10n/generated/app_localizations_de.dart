@@ -18186,7 +18186,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml von (label)';
   }
 
@@ -19122,7 +19122,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
+    return '$pct%';
   }
 
   @override
@@ -20442,13 +20442,13 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
-    return '$potassium100g mg';
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+    return '$magnesium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
-    return '$magnesium100g mg';
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+    return '$zinc100g mg';
   }
 
   @override
@@ -20854,7 +20854,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String logWeightSheetValue(Object changeInUnit) {
-    return ')(changeInUnit)';
+    return '$changeInUnit';
   }
 
   @override
@@ -29163,7 +29163,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nWORKOUTS';
+    return '+$totalWorkouts\nWORKOUTS';
   }
 
   @override
@@ -44580,4 +44580,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach antwortet jetzt auf $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Sprache des AI Coach zurückgesetzt — App-Sprache wird verwendet';
+
+  @override
+  String get settingsChatLanguageTitle => 'Sprache des AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Sprache für die Antworten des AI Coach (unabhängig von der App-Oberfläche)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Wie App-Sprache';
 }

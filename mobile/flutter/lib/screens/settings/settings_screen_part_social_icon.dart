@@ -1,5 +1,23 @@
 part of 'settings_screen.dart';
 
+/// Ordered locale list shared between the app-language and chat-language
+/// pickers in the settings screen. Null key = "System default" or "Same as
+/// app language" depending on the picker. Mirrors LanguageSection ordering.
+const _kSettingsLocaleNames = <String?, String>{
+  null: 'System default',
+  'en': 'English', 'es': 'Español', 'de': 'Deutsch', 'fr': 'Français',
+  'it': 'Italiano', 'pt': 'Português', 'cs': 'Čeština', 'pl': 'Polski',
+  'zh': '中文 (简体)', 'ja': '日本語', 'ko': '한국어',
+  'hi': 'हिन्दी', 'mr': 'मराठी', 'ne': 'नेपाली', 'bn': 'বাংলা',
+  'ta': 'தமிழ்', 'te': 'తెలుగు', 'kn': 'ಕನ್ನಡ', 'ml': 'മലയാളം',
+  'pa': 'ਪੰਜਾਬੀ', 'or': 'ଓଡ଼ିଆ',
+  'vi': 'Tiếng Việt', 'id': 'Bahasa Indonesia', 'jv': 'Basa Jawa',
+  'th': 'ไทย', 'ms': 'Bahasa Melayu', 'tl': 'Tagalog',
+  'ar': 'العربية', 'ur': 'اردو',
+  'ru': 'Русский', 'tr': 'Türkçe', 'sv': 'Svenska',
+  'nl': 'Nederlands', 'fi': 'Suomi',
+  'sw': 'Kiswahili', 'ha': 'Hausa',
+};
 
 /// A single row in the settings screen
 class _SocialIcon {

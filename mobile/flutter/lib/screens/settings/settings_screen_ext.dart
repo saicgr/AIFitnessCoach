@@ -545,4 +545,116 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
     }
   }
 
+  // ── Language pickers (opened from settings rows) ─────────────────────────
+
+
+  /// Opens the app UI language picker bottom sheet.
+  Future<void> _showAppLanguagePicker() async {
+    final picked = await showModalBottomSheet<Object?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _LanguagePickerSheet(
+        items: _kSettingsLocaleNames,
+        selectedCode: ref.read(localeProvider).locale?.languageCode,
+      ),
+    );
+    if (!mounted) return;
+    if (picked == null) return;
+    if (picked is String) {
+      await ref.read(localeProvider.notifier).setLocale(Locale(picked));
+    } else {
+      await ref.read(localeProvider.notifier).setLocale(null);
+    }
+  }
+
+  /// Opens the AI Coach chat language picker bottom sheet.
+  Future<void> _showChatLanguagePicker() async {
+    final picked = await showModalBottomSheet<Object?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _LanguagePickerSheet(
+        items: {null: 'Same as app language', ..._kSettingsLocaleNames.entries
+            .where((e) => e.key != null)
+            .fold<Map<String?, String>>({}, (m, e) {
+              m[e.key] = e.value;
+              return m;
+            })},
+        selectedCode: ref.read(chatLocaleProvider).locale?.languageCode,
+      ),
+    );
+    if (!mounted) return;
+    if (picked == null) return;
+    if (picked is String) {
+      await ref
+          .read(chatLocaleProvider.notifier)
+          .setLocale(Locale(picked));
+    } else {
+      await ref.read(chatLocaleProvider.notifier).clear();
+    }
+  }
+
+}
+
+/// Reusable bottom-sheet widget for language picker (app UI or chat locale).
+class _LanguagePickerSheet extends StatelessWidget {
+  final Map<String?, String> items;
+  final String? selectedCode;
+
+  const _LanguagePickerSheet({
+    required this.items,
+    required this.selectedCode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (ctx, scrollCtl) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
+          decoration: BoxDecoration(
+            color: Theme.of(ctx).colorScheme.surface,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollCtl,
+                  children: items.entries.map((e) {
+                    final isSelected = selectedCode == e.key;
+                    return ListTile(
+                      title: Text(
+                        e.value,
+                        textDirection: TextDirection.ltr,
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_rounded)
+                          : null,
+                      onTap: () => Navigator.pop(ctx, e.key ?? const Object()),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

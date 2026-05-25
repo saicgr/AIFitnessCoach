@@ -338,7 +338,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') $name-এর জন্য';
   }
 
   @override
@@ -18088,7 +18088,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])মিলি (label) এর';
   }
 
@@ -20335,12 +20335,12 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -44352,4 +44352,23 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get youWrapped => 'বর্ষপঞ্জি';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach এখন $nativeName ভাষায় উত্তর দেবে';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach-এর ভাষা রিসেট করা হয়েছে — অ্যাপের ভাষা ব্যবহার করা হচ্ছে';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach-এর ভাষা';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach-এর উত্তরের ভাষা (অ্যাপের UI থেকে আলাদা)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'অ্যাপের ভাষার মতোই';
 }

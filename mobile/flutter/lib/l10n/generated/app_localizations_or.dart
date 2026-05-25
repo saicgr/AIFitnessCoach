@@ -337,7 +337,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') $name ପାଇଁ';
   }
 
   @override
@@ -3664,7 +3664,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String chatScreenExtAs(Object mealType) {
-    return ') as (mealType)';
+    return ') (mealType) ଭାବରେ';
   }
 
   @override
@@ -18132,7 +18132,7 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -20387,12 +20387,12 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -37463,7 +37463,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String summaryEst1RM(Object value) {
-    return 'Est. 1RM: $value lb';
+    return 'ଅନୁମାନିତ 1RM: $value lb';
   }
 
   @override
@@ -42932,7 +42932,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get workoutSheetsMixinUndo => 'ପୂର୍ବ ଅବସ୍ଥାକୁ ଫେରନ୍ତୁ';
 
   @override
-  String get workoutSheetsMixinWarmUp => 'Warm Up';
+  String get workoutSheetsMixinWarmUp => 'ୱାର୍ମ ଅପ';
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
@@ -44527,4 +44527,23 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI କୋଚ୍ ଏବେ $nativeName ରେ ଉତ୍ତର ଦେବ';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI କୋଚ୍ ଭାଷା ରିସେଟ୍ ହୋଇଛି — ଆପ୍ ଭାଷା ବ୍ୟବହାର କରାଯାଉଛି';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI କୋଚ୍ ଭାଷା';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI କୋଚ୍ ଉତ୍ତର ପାଇଁ ଭାଷା (ଆପ୍ UI ଠାରୁ ଅଲଗା)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'ଆପ୍ ଭାଷା ସହିତ ସମାନ';
 }

@@ -339,7 +339,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') $name కోసం';
   }
 
   @override
@@ -3673,7 +3673,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String chatScreenExtAs(Object mealType) {
-    return ') as (mealType)';
+    return ') (mealType) గా';
   }
 
   @override
@@ -18205,7 +18205,7 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -20465,12 +20465,12 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -22344,7 +22344,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get menuAnalysisTourFilterByDietAllergens =>
-      'Filter by diet & allergens';
+      'ఆహారం & అలర్జీల ఆధారంగా ఫిల్టర్ చేయండి';
 
   @override
   String get menuAnalysisTourHideDishesThatDon =>
@@ -44634,4 +44634,23 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get youWrapped => 'ర్యాప్డ్';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach ఇప్పుడు $nativeName భాషలో సమాధానమిస్తుంది';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach భాష రీసెట్ చేయబడింది — యాప్ భాషనే ఉపయోగిస్తోంది';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach భాష';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach సమాధానాల కోసం భాష (యాప్ UI నుండి వేరుగా)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'యాప్ భాష వలె';
 }

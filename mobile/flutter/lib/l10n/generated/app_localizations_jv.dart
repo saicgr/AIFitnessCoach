@@ -12052,7 +12052,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
+    return '$scoreChange';
   }
 
   @override
@@ -13041,7 +13041,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
+    return '$improvementAbsolute';
   }
 
   @override
@@ -18036,7 +18036,7 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml saka (label)';
   }
 
@@ -20279,12 +20279,12 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -44244,4 +44244,23 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get youWrapped => 'Rangkuman';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach saiki nanggapi nganggo $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Basa AI Coach wis disetel maneh — nggunakake basa aplikasi';
+
+  @override
+  String get settingsChatLanguageTitle => 'Basa AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Basa kanggo wangsulan AI Coach (beda karo UI aplikasi)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Padha karo basa aplikasi';
 }

@@ -18076,7 +18076,7 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml daripada (label)';
   }
 
@@ -20323,12 +20323,12 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -24386,12 +24386,12 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
+    return '$weightDelta kg';
   }
 
   @override
   String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
+    return '$weightDelta';
   }
 
   @override
@@ -24973,7 +24973,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
+    return '$unit';
   }
 
   @override
@@ -25954,7 +25954,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return '$tdee cal';
   }
 
   @override
@@ -25974,7 +25974,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
+    return '$data kg';
   }
 
   @override
@@ -27084,7 +27084,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-confidence estimate\" : \"\")';
+    return '$confidence-confidence estimate';
   }
 
   @override
@@ -29053,7 +29053,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTUESDAY';
+      '#TRANSFORMATION\\nSELASA';
 
   @override
   String get progressShareTemplatesTransformed => 'TRANSFORMED';
@@ -41313,7 +41313,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get workoutCompleteScreenReadyToLevelUp => 'SEDIA UNTUK NAIK TAHAP!';
 
   @override
-  String get workoutCompleteScreenReps => 'Reps';
+  String get workoutCompleteScreenReps => 'Ulangan';
 
   @override
   String get workoutCompleteScreenSets => 'Set';
@@ -42850,7 +42850,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get workoutShowcaseEasy => 'Pameran senaman mudah';
 
   @override
-  String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 reps';
+  String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 ulangan';
 
   @override
   String get workoutShowcaseEverySetYouLog =>
@@ -42978,7 +42978,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get workoutShowcaseRare => '★ JARANG';
 
   @override
-  String get workoutShowcaseReps => 'Reps';
+  String get workoutShowcaseReps => 'Ulangan';
 
   @override
   String workoutShowcaseScreenDay(Object day) {
@@ -44359,4 +44359,23 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 Jurulatih AI kini membalas dalam $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Bahasa Jurulatih AI ditetapkan semula — menggunakan bahasa aplikasi';
+
+  @override
+  String get settingsChatLanguageTitle => 'Bahasa Jurulatih AI';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Bahasa untuk respons Jurulatih AI (berasingan daripada UI aplikasi)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Sama seperti bahasa aplikasi';
 }

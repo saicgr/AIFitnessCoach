@@ -3,6 +3,12 @@
 i18n_add_feature.py — REUSABLE i18n tooling for shipping any new feature
 across all 36 locales.
 
+  📚 Full docs: docs/i18n/README.md (index)
+  📖 Tool usage: docs/i18n/TOOL_USAGE.md
+  🏗  Build from scratch: docs/i18n/BUILD_FROM_SCRATCH.md
+  🔧 Zealova architecture: docs/i18n/ZEALOVA_ARCHITECTURE.md
+
+
 USE THIS WHEN: You (or a Claude session) just shipped a new feature in English
 and need it translated to all 35 non-English locales. This script handles the
 common scenarios end-to-end: add keys → translate → verify → regen.

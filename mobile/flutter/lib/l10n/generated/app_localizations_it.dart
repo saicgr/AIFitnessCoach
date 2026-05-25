@@ -18187,7 +18187,7 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml di (label)';
   }
 
@@ -20441,12 +20441,12 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -23680,7 +23680,7 @@ class AppLocalizationsIt extends AppLocalizations {
     Object food2,
     Object food3,
   ) {
-    return '$food kcal \\u00B7 P:${food1}g \\u00B7 C:${food2}g \\u00B7 F:${food3}g';
+    return '$food kcal · P:${food1}g · C:${food2}g · F:${food3}g';
   }
 
   @override
@@ -25331,7 +25331,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCm(Object height) {
-    return '6.25 × $height cm';
+    return '6,25 × $height cm';
   }
 
   @override
@@ -41252,7 +41252,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -44423,12 +44423,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String xpHeroTileLv(Object level) {
-    return 'Lv $level';
+    return 'Liv $level';
   }
 
   @override
   String xpHeroTileLv2(Object label, Object nextLevel) {
-    return 'Lv $nextLevel → $label';
+    return 'Liv $nextLevel → $label';
   }
 
   @override
@@ -44595,4 +44595,23 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 L\'AI Coach ora risponde in $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Lingua dell\'AI Coach ripristinata: utilizzo la lingua dell\'app';
+
+  @override
+  String get settingsChatLanguageTitle => 'Lingua dell\'AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Lingua per le risposte dell\'AI Coach (separata dall\'interfaccia dell\'app)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Come la lingua dell\'app';
 }

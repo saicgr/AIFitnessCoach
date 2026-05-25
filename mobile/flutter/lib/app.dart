@@ -175,6 +175,11 @@ class _AppRootState extends ConsumerState<AppRoot> {
     // localeProvider internally and updates ApiClient via a side-effect.
     ref.watch(acceptLanguageSyncProvider);
 
+    // Keep X-Chat-Locale header in sync with the user's AI Coach chat language.
+    // Separate from acceptLanguageSyncProvider — the chat locale is stored in
+    // chatLocaleProvider and can differ from the app UI locale.
+    ref.watch(chatLocaleSyncProvider);
+
     return MaterialApp.router(
       // Use a key that changes with theme/accent/gym-profile to force a clean rebuild
       // This prevents GlobalKey conflicts when theme changes

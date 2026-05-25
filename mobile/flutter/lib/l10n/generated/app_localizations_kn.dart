@@ -339,7 +339,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') $name ಗಾಗಿ';
   }
 
   @override
@@ -18192,7 +18192,7 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -20444,12 +20444,12 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -33069,7 +33069,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get reportsHubExerciseHistory => 'ವ್ಯಾಯಾಮದ ಇತಿಹಾಸ';
 
   @override
-  String get reportsHubLifestyle => 'LIFESTYLE';
+  String get reportsHubLifestyle => 'ಜೀವನಶೈಲಿ';
 
   @override
   String get reportsHubMacrosCaloriesAdherence =>
@@ -33123,7 +33123,7 @@ class AppLocalizationsKn extends AppLocalizations {
       'ನಿದ್ರೆ, ಆಯಾಸ, ಒತ್ತಡ, ಸಿದ್ಧತೆಯ ಸ್ಕೋರ್';
 
   @override
-  String get reportsHubTraining => 'TRAINING';
+  String get reportsHubTraining => 'ತರಬೇತಿ';
 
   @override
   String get reportsHubViewReport => 'ವರದಿಯನ್ನು ವೀಕ್ಷಿಸಿ';
@@ -33299,7 +33299,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get restTimerCardMultiplier => 'ಮಲ್ಟಿಪ್ಲೈಯರ್';
 
   @override
-  String get restTimerCardRestBaserestRpe7 => 'Rest = BaseRest * (RPE / 7)';
+  String get restTimerCardRestBaserestRpe7 => 'ವಿರಾಮ = BaseRest * (RPE / 7)';
 
   @override
   String restTimerCardS(Object value) {
@@ -33318,7 +33318,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get restTimerCardVariablesBaseRpeMultipli =>
-      'Variables: base, rpe, multiplier, tier';
+      'ಚರಾಂಶಗಳು: base, rpe, multiplier, tier';
 
   @override
   String restTimerCardX(Object restTimerMultiplier) {
@@ -33829,7 +33829,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get scheduleScreenPartMon => 'ಸೋಮ';
 
   @override
-  String get scheduleScreenPartStrength => 'STRENGTH';
+  String get scheduleScreenPartStrength => 'ಶಕ್ತಿ';
 
   @override
   String get scheduleScreenPartSun => 'ಭಾನು';
@@ -33946,7 +33946,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get scoreExplain710GoodExcellent => '7 – 10 ಉತ್ತಮ / ಅತ್ಯುತ್ತಮ';
 
   @override
-  String get scoreExplain710HighlyInflammatory => '7 – 10  Highly inflammatory';
+  String get scoreExplain710HighlyInflammatory => '7 – 10  ಅತ್ಯಧಿಕ ಉರಿಯೂತಕಾರಕ';
 
   @override
   String get scoreExplainAddedSugar => 'ಸೇರಿಸಿದ ಸಕ್ಕರೆ';
@@ -33970,7 +33970,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainCertainPortionsOfAvocado =>
-      'Certain portions of avocado, sweet potato, almonds — OK in small servings, rough in large.';
+      'ಅವಕಾಡೊ, ಸಿಹಿ ಗೆಣಸು, ಬಾದಾಮಿಯ ಕೆಲವು ಭಾಗಗಳು — ಸಣ್ಣ ಪ್ರಮಾಣದಲ್ಲಿ ಸರಿ, ಹೆಚ್ಚು ಸೇವಿಸಿದರೆ ಕಷ್ಟ.';
 
   @override
   String get scoreExplainChronicLowGradeInflammation =>
@@ -34018,7 +34018,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainDessertsSugaryDrinksCandy =>
-      'Desserts, sugary drinks, candy, many breakfast cereals. Spikes insulin, crashes energy.';
+      'ಸಿಹಿತಿಂಡಿಗಳು, ಸಕ್ಕರೆ ಪಾನೀಯಗಳು, ಕ್ಯಾಂಡಿ, ಅನೇಕ ಉಪಹಾರ ಧಾನ್ಯಗಳು. ಇನ್ಸುಲಿನ್ ಹೆಚ್ಚಿಸುತ್ತದೆ, ಶಕ್ತಿಯನ್ನು ಕುಸಿಯುವಂತೆ ಮಾಡುತ್ತದೆ.';
 
   @override
   String get scoreExplainEachMealGets =>
@@ -34026,10 +34026,10 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainEngineeredFoodProductsChip =>
-      'Engineered food products: chips, sodas, instant noodles, packaged sweets, most fast food.';
+      'ತಯಾರಿಸಿದ ಆಹಾರ ಉತ್ಪನ್ನಗಳು: ಚಿಪ್ಸ್, ಸೋಡಾಗಳು, ಇನ್ಸ್ಟಂಟ್ ನೂಡಲ್ಸ್, ಪ್ಯಾಕ್ ಮಾಡಿದ ಸಿಹಿತಿಂಡಿಗಳು, ಹೆಚ್ಚಿನ ಫಾಸ್ಟ್ ಫುಡ್.';
 
   @override
-  String get scoreExplainFodmapRating => 'FODMAP rating';
+  String get scoreExplainFodmapRating => 'FODMAP ರೇಟಿಂಗ್';
 
   @override
   String get scoreExplainFodmapsAreShortChain =>
@@ -34037,7 +34037,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainFriedFoodsProcessedMeats =>
-      'Fried foods, processed meats, sugary drinks, refined seed oils, packaged snacks.';
+      'ಕರಿದ ಆಹಾರಗಳು, ಸಂಸ್ಕರಿಸಿದ ಮಾಂಸ, ಸಕ್ಕರೆ ಪಾನೀಯಗಳು, ಸಂಸ್ಕರಿಸಿದ ಬೀಜದ ಎಣ್ಣೆಗಳು, ಪ್ಯಾಕ್ ಮಾಡಿದ ತಿಂಡಿಗಳು.';
 
   @override
   String get scoreExplainGlycemicLoadCombines =>
@@ -34049,10 +34049,10 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainGood => 'Good';
+  String get scoreExplainGood => 'ಉತ್ತಮ';
 
   @override
-  String get scoreExplainHealthScore => 'Health score';
+  String get scoreExplainHealthScore => 'ಆರೋಗ್ಯ ಸ್ಕೋರ್';
 
   @override
   String scoreExplainHealthScoreValue(Object v) {
@@ -34060,28 +34060,29 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainHigh => 'High';
+  String get scoreExplainHigh => 'ಹೆಚ್ಚು';
 
   @override
-  String get scoreExplainHigh15G => 'High  (15 g+)';
+  String get scoreExplainHigh15G => 'ಹೆಚ್ಚು (15 g+)';
 
   @override
-  String get scoreExplainHigh20 => 'High  (20+)';
+  String get scoreExplainHigh20 => 'ಹೆಚ್ಚು (20+)';
 
   @override
   String get scoreExplainHighInflammationUltraProce =>
-      'High inflammation, ultra-processed, or way off your macros. Swap to a Good option if possible.';
+      'ಅತ್ಯಧಿಕ ಉರಿಯೂತ, ಅಲ್ಟ್ರಾ-ಪ್ರೊಸೆಸ್ಡ್, ಅಥವಾ ನಿಮ್ಮ ಮ್ಯಾಕ್ರೋಗಳಿಂದ ದೂರ. ಸಾಧ್ಯವಾದರೆ ಉತ್ತಮ ಆಯ್ಕೆಗೆ ಬದಲಾಯಿಸಿ.';
 
   @override
   String get scoreExplainHighProteinOrFiber =>
-      'High protein or fiber, whole foods, low added sugar, anti-inflammatory ingredients.';
+      'ಹೆಚ್ಚಿನ ಪ್ರೋಟೀನ್ ಅಥವಾ ಫೈಬರ್, ಸಂಪೂರ್ಣ ಆಹಾರಗಳು, ಕಡಿಮೆ ಸಕ್ಕರೆ, ಉರಿಯೂತ ವಿರೋಧಿ ಪದಾರ್ಥಗಳು.';
 
   @override
   String get scoreExplainHitsYourGoalMacros =>
-      'Hits your goal macros, mostly whole foods, low-to-moderate inflammation. Pick freely.';
+      'ನಿಮ್ಮ ಗುರಿಯ ಮ್ಯಾಕ್ರೋಗಳನ್ನು ತಲುಪುತ್ತದೆ, ಹೆಚ್ಚಾಗಿ ಸಂಪೂರ್ಣ ಆಹಾರಗಳು, ಕಡಿಮೆ-ಮಧ್ಯಮ ಉರಿಯೂತ. ಮುಕ್ತವಾಗಿ ಆಯ್ಕೆಮಾಡಿ.';
 
   @override
-  String get scoreExplainHowThisDishRates => 'How this dish rates for you';
+  String get scoreExplainHowThisDishRates =>
+      'ಈ ಭಕ್ಷ್ಯವು ನಿಮಗೆ ಹೇಗೆ ರೇಟ್ ಮಾಡುತ್ತದೆ';
 
   @override
   String get scoreExplainImportantIfYouHaveDiabetes =>
@@ -34098,48 +34099,48 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainLeafyGreensBerriesWild =>
-      'Leafy greens, berries, wild salmon, turmeric, extra-virgin olive oil, nuts, legumes.';
+      'ಹಸಿರು ಎಲೆಗಳು, ಬೆರ್ರಿಗಳು, ವೈಲ್ಡ್ ಸಾಲ್ಮನ್, ಅರಿಶಿನ, ಎಣ್ಣೆ, ಆಲಿವ್ ಎಣ್ಣೆ, ಬೀಜಗಳು, ದ್ವಿದಳ ಧಾನ್ಯಗಳು.';
 
   @override
-  String get scoreExplainLow => 'Low';
+  String get scoreExplainLow => 'ಕಡಿಮೆ';
 
   @override
-  String get scoreExplainLowUnder10 => 'Low  (under 10)';
+  String get scoreExplainLowUnder10 => 'ಕಡಿಮೆ (10 ಕ್ಕಿಂತ ಕಡಿಮೆ)';
 
   @override
-  String get scoreExplainLowUnder5G => 'Low  (under 5 g)';
+  String get scoreExplainLowUnder5G => 'ಕಡಿಮೆ (5 g ಗಿಂತ ಕಡಿಮೆ)';
 
   @override
   String get scoreExplainMeatEggsRiceOats =>
-      'Meat, eggs, rice, oats, lactose-free dairy, carrots, zucchini, spinach, berries, oranges.';
+      'ಮಾಂಸ, ಮೊಟ್ಟೆ, ಅಕ್ಕಿ, ಓಟ್ಸ್, ಲ್ಯಾಕ್ಟೋಸ್-ಮುಕ್ತ ಡೈರಿ, ಕ್ಯಾರೆಟ್, ಸೌತೆಕಾಯಿ, ಪಾಲಕ್, ಬೆರ್ರಿಗಳು, ಕಿತ್ತಳೆ.';
 
   @override
-  String get scoreExplainMedium => 'Medium';
+  String get scoreExplainMedium => 'ಮಧ್ಯಮ';
 
   @override
-  String get scoreExplainMedium1019 => 'Medium  (10 – 19)';
+  String get scoreExplainMedium1019 => 'ಮಧ್ಯಮ (10 – 19)';
 
   @override
   String get scoreExplainMinimalBloodSugarSpike =>
-      'Minimal blood-sugar spike. Non-starchy vegetables, eggs, meat, berries, most dairy.';
+      'ಕನಿಷ್ಠ ರಕ್ತದ ಸಕ್ಕರೆ ಏರಿಕೆ. ಪಿಷ್ಟವಲ್ಲದ ತರಕಾರಿಗಳು, ಮೊಟ್ಟೆ, ಮಾಂಸ, ಬೆರ್ರಿಗಳು, ಹೆಚ್ಚಿನ ಡೈರಿ.';
 
   @override
-  String get scoreExplainModerate => 'Moderate';
+  String get scoreExplainModerate => 'ಮಧ್ಯಮ';
 
   @override
-  String get scoreExplainModerate514G => 'Moderate  (5 – 14 g)';
+  String get scoreExplainModerate514G => 'ಮಧ್ಯಮ (5 – 14 g)';
 
   @override
   String get scoreExplainModerateSpikeOatsWhole =>
-      'Moderate spike. Oats, whole-wheat bread, banana, sweet potato, basmati rice.';
+      'ಮಧ್ಯಮ ಏರಿಕೆ. ಓಟ್ಸ್, ಗೋಧಿ ಬ್ರೆಡ್, ಬಾಳೆಹಣ್ಣು, ಸಿಹಿ ಗೆಣಸು, ಬಾಸುಮತಿ ಅಕ್ಕಿ.';
 
   @override
   String get scoreExplainMostSavouryDishesPlain =>
-      'Most savoury dishes, plain dairy, whole fruit. No meaningful blood-sugar impact.';
+      'ಹೆಚ್ಚಿನ ಖಾರದ ಭಕ್ಷ್ಯಗಳು, ಸರಳ ಡೈರಿ, ಸಂಪೂರ್ಣ ಹಣ್ಣು. ರಕ್ತದ ಸಕ್ಕರೆಯ ಮೇಲೆ ಯಾವುದೇ ಗಮನಾರ್ಹ ಪರಿಣಾಮವಿಲ್ಲ.';
 
   @override
   String get scoreExplainOnionGarlicWheatRye =>
-      'Onion, garlic, wheat, rye, milk/ice cream, apples, pears, honey, beans, cauliflower.';
+      'ಈರುಳ್ಳಿ, ಬೆಳ್ಳುಳ್ಳಿ, ಗೋಧಿ, ರೈ, ಹಾಲು/ಐಸ್ ಕ್ರೀಮ್, ಸೇಬು, ಪೇರಳೆ, ಜೇನುತುಪ್ಪ, ಬೀನ್ಸ್, ಹೂಕೋಸು.';
 
   @override
   String get scoreExplainOnlyRelevantIfYouHaveIbs =>
@@ -34151,15 +34152,15 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainRawOrBasicCooked =>
-      'Raw or basic-cooked foods: meat, eggs, vegetables, plain yoghurt, cheese, whole grains.';
+      'ಹಸಿ ಅಥವಾ ಮೂಲಭೂತವಾಗಿ ಬೇಯಿಸಿದ ಆಹಾರಗಳು: ಮಾಂಸ, ಮೊಟ್ಟೆ, ತರಕಾರಿಗಳು, ಸರಳ ಮೊಸರು, ಚೀಸ್, ಸಂಪೂರ್ಣ ಧಾನ್ಯಗಳು.';
 
   @override
   String get scoreExplainReasonableChoiceCouldBe =>
-      'Reasonable choice — could be improved on one or two axes (more fiber, less processing).';
+      'ಸಮಂಜಸವಾದ ಆಯ್ಕೆ — ಒಂದೆರಡು ಅಂಶಗಳಲ್ಲಿ ಸುಧಾರಿಸಬಹುದು (ಹೆಚ್ಚು ಫೈಬರ್, ಕಡಿಮೆ ಸಂಸ್ಕರಣೆ).';
 
   @override
   String get scoreExplainReasonableChoiceWithA =>
-      'Reasonable choice with a trade-off — watch portion or pair with a cleaner side.';
+      'ಒಂದು ರಾಜಿ ಮಾಡಿಕೊಳ್ಳುವ ಸಮಂಜಸವಾದ ಆಯ್ಕೆ — ಪ್ರಮಾಣವನ್ನು ಗಮನಿಸಿ ಅಥವಾ ಆರೋಗ್ಯಕರ ಸೈಡ್ ಡಿಶ್ ಜೊತೆಗೆ ಸೇವಿಸಿ.';
 
   @override
   String get scoreExplainScoreDetailUnavailable =>
@@ -34170,11 +34171,11 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainSteepSpikeCrashWhite =>
-      'Steep spike + crash. White rice bowls, sugary drinks, pastries, large pasta plates.';
+      'ತೀವ್ರ ಏರಿಕೆ + ಕುಸಿತ. ಬಿಳಿ ಅಕ್ಕಿ ಬೌಲ್‌ಗಳು, ಸಕ್ಕರೆ ಪಾನೀಯಗಳು, ಪೇಸ್ಟ್ರಿಗಳು, ದೊಡ್ಡ ಪಾಸ್ಟಾ ಪ್ಲೇಟ್‌ಗಳು.';
 
   @override
   String get scoreExplainSweetenedYogurtASmall =>
-      'Sweetened yogurt, a small pastry, half a sports drink. A reasonable treat — not daily.';
+      'ಸಿಹಿಗೊಳಿಸಿದ ಮೊಸರು, ಸಣ್ಣ ಪೇಸ್ಟ್ರಿ, ಅರ್ಧ ಸ್ಪೋರ್ಟ್ಸ್ ಡ್ರಿಂಕ್. ಸಮಂಜಸವಾದ ಟ್ರೀಟ್ — ಪ್ರತಿದಿನವಲ್ಲ.';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -34182,14 +34183,14 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainUltraProcessed => 'Ultra-processed';
+  String get scoreExplainUltraProcessed => 'ಅಲ್ಟ್ರಾ-ಪ್ರೊಸೆಸ್ಡ್';
 
   @override
   String get scoreExplainUltraProcessedDeepFried =>
-      'Ultra-processed, deep-fried, low fiber, or very high added sugar / sodium.';
+      'ಅಲ್ಟ್ರಾ-ಪ್ರೊಸೆಸ್ಡ್, ಡೀಪ್ ಫ್ರೈಡ್, ಕಡಿಮೆ ಫೈಬರ್, ಅಥವಾ ಸಕ್ಕರೆ / ಸೋಡಿಯಂ ಪ್ರಮಾಣ ತುಂಬಾ ಹೆಚ್ಚು.';
 
   @override
-  String get scoreExplainUltraProcessedNova4 => 'Ultra-processed (NOVA 4)';
+  String get scoreExplainUltraProcessedNova4 => 'ಅಲ್ಟ್ರಾ-ಪ್ರೊಸೆಸ್ಡ್ (NOVA 4)';
 
   @override
   String get scoreExplainWeUseTheNovaClassification =>
@@ -34197,7 +34198,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainWhiteRicePlainEggs =>
-      'White rice, plain eggs, hard cheese, lean red meat in small portions.';
+      'ಬಿಳಿ ಅಕ್ಕಿ, ಸರಳ ಮೊಟ್ಟೆಗಳು, ಹಾರ್ಡ್ ಚೀಸ್, ಸಣ್ಣ ಪ್ರಮಾಣದಲ್ಲಿ ಕೆಂಪು ಮಾಂಸ.';
 
   @override
   String get scoreExplainWhoRecommendsAdults =>
@@ -34205,27 +34206,26 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scoreExplainWholeMinimallyProcessed =>
-      'Whole / minimally processed';
+      'ಸಂಪೂರ್ಣ / ಕನಿಷ್ಠ ಸಂಸ್ಕರಿಸಿದ';
 
   @override
-  String get scoreExplainWhyThisScore => 'Why this score';
+  String get scoreExplainWhyThisScore => 'ಈ ಸ್ಕೋರ್ ಏಕೆ';
 
   @override
   String get scoringCard6FactorWeightedSelection =>
-      '6-factor weighted selection algorithm';
+      '6-ಅಂಶದ ತೂಕದ ಆಯ್ಕೆ ಅಲ್ಗಾರಿದಮ್';
 
   @override
-  String get scoringCardExerciseScoringBreakdown =>
-      'Exercise Scoring Breakdown';
+  String get scoringCardExerciseScoringBreakdown => 'ವ್ಯಾಯಾಮ ಸ್ಕೋರಿಂಗ್ ವಿಭಜನೆ';
 
   @override
-  String get scoringCardNormalize => 'Normalize';
+  String get scoringCardNormalize => 'ಸಾಮಾನ್ಯೀಕರಿಸಿ';
 
   @override
-  String get scoringCardOver100 => 'Over 100%';
+  String get scoringCardOver100 => '100% ಕ್ಕಿಂತ ಹೆಚ್ಚು';
 
   @override
-  String get scoringCardReset => 'Reset';
+  String get scoringCardReset => 'ಮರುಹೊಂದಿಸಿ';
 
   @override
   String scoringCardTotal(Object totalPct) {
@@ -34233,7 +34233,7 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get scoringCardUnder90 => 'Under 90%';
+  String get scoringCardUnder90 => '90% ಕ್ಕಿಂತ ಕಡಿಮೆ';
 
   @override
   String scoringCardValue(Object key, Object pct) {
@@ -34246,42 +34246,46 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get scoringFitnessScore => 'Fitness Score';
+  String get scoringFitnessScore => 'ಫಿಟ್‌ನೆಸ್ ಸ್ಕೋರ್';
 
   @override
-  String get scoringHowScoresAreCalculated => 'How Scores Are Calculated';
+  String get scoringHowScoresAreCalculated =>
+      'ಸ್ಕೋರ್‌ಗಳನ್ನು ಹೇಗೆ ಲೆಕ್ಕಹಾಕಲಾಗುತ್ತದೆ';
 
   @override
   String get scoringYourOverallFitnessScore =>
-      'Your overall fitness score combines these factors to give you a comprehensive view of your fitness journey.';
+      'ನಿಮ್ಮ ಒಟ್ಟಾರೆ ಫಿಟ್‌ನೆಸ್ ಸ್ಕೋರ್ ಈ ಅಂಶಗಳನ್ನು ಸಂಯೋಜಿಸಿ ನಿಮ್ಮ ಫಿಟ್‌ನೆಸ್ ಪ್ರಯಾಣದ ಸಮಗ್ರ ನೋಟವನ್ನು ನೀಡುತ್ತದೆ.';
 
   @override
-  String get sectionHeaderWhatSThis => 'What\'s this?';
+  String get sectionHeaderWhatSThis => 'ಇದು ಏನು?';
 
   @override
   String get sectionedHeroAreaCalendarDisplayOptions =>
-      'Calendar display options';
+      'ಕ್ಯಾಲೆಂಡರ್ ಪ್ರದರ್ಶನ ಆಯ್ಕೆಗಳು';
 
   @override
-  String get sectionedHeroAreaMon => 'Mon';
+  String get sectionedHeroAreaMon => 'ಸೋಮ';
 
   @override
-  String get sectionedHeroAreaShowSyncedWorkouts => 'Show synced workouts';
+  String get sectionedHeroAreaShowSyncedWorkouts =>
+      'ಸಿಂಕ್ ಮಾಡಿದ ವರ್ಕೌಟ್‌ಗಳನ್ನು ತೋರಿಸಿ';
 
   @override
-  String get sectionedHeroAreaStartWeekOnMonday => 'Start week on Monday';
+  String get sectionedHeroAreaStartWeekOnMonday =>
+      'ವಾರವನ್ನು ಸೋಮವಾರದಿಂದ ಪ್ರಾರಂಭಿಸಿ';
 
   @override
-  String get sectionedHeroAreaStartWeekOnSunday => 'Start week on Sunday';
+  String get sectionedHeroAreaStartWeekOnSunday =>
+      'ವಾರವನ್ನು ಭಾನುವಾರದಿಂದ ಪ್ರಾರಂಭಿಸಿ';
 
   @override
-  String get sectionedHeroAreaSun => 'Sun';
+  String get sectionedHeroAreaSun => 'ಭಾನು';
 
   @override
-  String get selectableChipOther => 'Other';
+  String get selectableChipOther => 'ಇತರೆ';
 
   @override
-  String get seniorButtonRecommended => 'Recommended';
+  String get seniorButtonRecommended => 'ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ';
 
   @override
   String seniorCardExercisesMin(Object durationMinutes, Object exerciseCount) {
@@ -34289,10 +34293,10 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get seniorCardLoading => 'Loading...';
+  String get seniorCardLoading => 'ಲೋಡ್ ಆಗುತ್ತಿದೆ...';
 
   @override
-  String get seniorCardStartWorkout => 'START WORKOUT';
+  String get seniorCardStartWorkout => 'ವರ್ಕೌಟ್ ಪ್ರಾರಂಭಿಸಿ';
 
   @override
   String get seniorCardTodaySWorkout => 'ಇಂದಿನ ವ್ಯಾಯಾಮ';
@@ -34411,7 +34415,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') of (exerciseName)';
+    return ') ಆಫ್ (exerciseName)';
   }
 
   @override
@@ -34500,10 +34504,11 @@ class AppLocalizationsKn extends AppLocalizations {
   String get setRowPartHowHardWasThat => 'ಆ ಸೆಟ್ ಎಷ್ಟು ಕಷ್ಟವಾಗಿತ್ತು?';
 
   @override
-  String get setRowPartRateOfPerceivedExertion => 'Rate of Perceived Exertion';
+  String get setRowPartRateOfPerceivedExertion =>
+      'RPE (Rate of Perceived Exertion)';
 
   @override
-  String get setRowPartRepsInReserve => 'Reps in Reserve';
+  String get setRowPartRepsInReserve => 'Reps in Reserve (RIR)';
 
   @override
   String get setRowPartRirHowManyMore =>
@@ -34737,7 +34742,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get setTrackingTableALowerRir0 =>
-      'A lower RIR (0–1) means you pushed to your limit. A higher RIR (like 4–6+) means the set felt easier and you had plenty left in the tank.';
+      'ಕಡಿಮೆ RIR (0–1) ಎಂದರೆ ನೀವು ನಿಮ್ಮ ಮಿತಿಯವರೆಗೆ ಪ್ರಯತ್ನಿಸಿದ್ದೀರಿ ಎಂದರ್ಥ. ಹೆಚ್ಚಿನ RIR (ಉದಾಹರಣೆಗೆ 4–6+) ಎಂದರೆ ವ್ಯಾಯಾಮ ಸುಲಭವಾಗಿತ್ತು ಮತ್ತು ನಿಮ್ಮಲ್ಲಿ ಇನ್ನೂ ಸಾಕಷ್ಟು ಶಕ್ತಿ ಉಳಿದಿತ್ತು ಎಂದರ್ಥ.';
 
   @override
   String get setTrackingTableALowerRir02 =>
@@ -44487,7 +44492,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String xpLeaderboardScreenLvl(Object currentLevel) {
-    return 'Lvl $currentLevel';
+    return 'ಮಟ್ಟ $currentLevel';
   }
 
   @override
@@ -44510,7 +44515,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get xpLeaderboardYourRank => 'ನಿಮ್ಮ ಶ್ರೇಯಾಂಕ';
 
   @override
-  String get xpLevelBarLvl => 'Lvl';
+  String get xpLevelBarLvl => 'ಮಟ್ಟ';
 
   @override
   String xpLevelBarValue(Object progressPercent) {
@@ -44538,7 +44543,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String xpProgressCardLevelN(Object level) {
-    return 'Level $level';
+    return 'ಮಟ್ಟ $level';
   }
 
   @override
@@ -44551,7 +44556,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String xpProgressCardLvlN(Object level) {
-    return 'Lvl $level';
+    return 'ಮಟ್ಟ $level';
   }
 
   @override
@@ -44624,4 +44629,23 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get youWrapped => 'ರ್ಯಾಪ್ಡ್';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach ಈಗ $nativeName ಭಾಷೆಯಲ್ಲಿ ಉತ್ತರಿಸುತ್ತದೆ';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach ಭಾಷೆಯನ್ನು ಮರುಹೊಂದಿಸಲಾಗಿದೆ — ಆ್ಯಪ್ ಭಾಷೆಯನ್ನು ಬಳಸಲಾಗುತ್ತಿದೆ';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach ಭಾಷೆ';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach ಪ್ರತಿಕ್ರಿಯೆಗಳಿಗಾಗಿ ಭಾಷೆ (ಆ್ಯಪ್ UI ನಿಂದ ಪ್ರತ್ಯೇಕ)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'ಆ್ಯಪ್ ಭಾಷೆಯಂತೆಯೇ';
 }

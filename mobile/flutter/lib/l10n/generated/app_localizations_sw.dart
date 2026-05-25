@@ -4810,7 +4810,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get comparisonViewUiSelect2Photos => 'Chagua picha 2';
 
   @override
-  String get comparisonViewUiU00b7 => '  \\u00B7  ';
+  String get comparisonViewUiU00b7 => '  ·  ';
 
   @override
   String comparisonViewUiValue(Object username) {
@@ -11029,7 +11029,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get exerciseSetTrackerBarbell => ') barbell';
 
   @override
-  String get exerciseSetTrackerReps => 'Reps';
+  String get exerciseSetTrackerReps => 'Marudio';
 
   @override
   String get exerciseSetTrackerRestTarget => 'Lengo la kupumzika';
@@ -11334,7 +11334,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get expandableSummaryExerciseReps => 'Reps';
+  String get expandableSummaryExerciseReps => 'Marudio';
 
   @override
   String get expandableSummaryExerciseSet => 'Seti';
@@ -18104,7 +18104,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml ya (label)';
   }
 
@@ -19319,7 +19319,7 @@ class AppLocalizationsSw extends AppLocalizations {
     Object defaultHoldSeconds,
     Object defaultReps,
   ) {
-    return '$defaultReps reps x ${defaultHoldSeconds}s hold';
+    return '$defaultReps marudio x ${defaultHoldSeconds}s shikilia';
   }
 
   @override
@@ -20354,12 +20354,12 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -32050,7 +32050,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Mhariri wa Kanuni za Urejeshaji';
 
   @override
-  String get recoveryReps => 'Reps';
+  String get recoveryReps => 'Marudio';
 
   @override
   String get recoveryReset => 'Weka upya';
@@ -41070,7 +41070,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -44392,4 +44392,23 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get youWrapped => 'Muhtasari';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 Kocha wa AI sasa anajibu kwa $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Lugha ya Kocha wa AI imewekwa upya — inatumia lugha ya programu';
+
+  @override
+  String get settingsChatLanguageTitle => 'Lugha ya Kocha wa AI';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Lugha ya majibu ya Kocha wa AI (tofauti na UI ya programu)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Sawa na lugha ya programu';
 }

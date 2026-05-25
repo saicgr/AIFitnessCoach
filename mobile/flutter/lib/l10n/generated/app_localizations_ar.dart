@@ -7994,7 +7994,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get editPersonalInfoWeight => 'الوزن';
 
   @override
-  String get editPersonalInfoYourEmailCom => 'your@email.com';
+  String get editPersonalInfoYourEmailCom => 'your@example.com';
 
   @override
   String get editPersonalInfoYourName => 'اسمك';
@@ -17841,7 +17841,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])مل من (label)';
   }
 
@@ -20069,12 +20069,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g مجم';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g مجم';
   }
 
@@ -36800,7 +36800,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get summaryCardioSession => 'جلسة كارديو';
 
   @override
-  String get summaryCardsPrs => 'PRs';
+  String get summaryCardsPrs => 'الأرقام القياسية (PRs)';
 
   @override
   String get summaryCardsStreak => 'السلسلة';
@@ -37184,7 +37184,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String supersetIndicatorSuperset(Object groupNumber) {
-    return 'SUPERSET $groupNumber';
+    return 'مجموعة فائقة (SUPERSET) $groupNumber';
   }
 
   @override
@@ -37771,7 +37771,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get templateEditorSaveChanges => 'حفظ التغييرات';
 
   @override
-  String get templateEditorSupersets => 'Supersets';
+  String get templateEditorSupersets => 'مجموعات فائقة (Supersets)';
 
   @override
   String get templateListAMondayInThe =>
@@ -40070,7 +40070,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get weeklyRecapStartThisWeek => 'ابدأ هذا الأسبوع →';
 
   @override
-  String get weeklyRecapTemplatePrs => 'PRs';
+  String get weeklyRecapTemplatePrs => 'الأرقام القياسية (PRs)';
 
   @override
   String get weeklyRecapTemplateStreak => 'السلسلة';
@@ -40195,7 +40195,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get weightFastingChartWeightTrends => 'اتجاهات الوزن';
 
   @override
-  String get weightIncrementsBarbell => 'Barbell';
+  String get weightIncrementsBarbell => 'باربل (Barbell)';
 
   @override
   String get weightIncrementsBasedOnStandardCommercial =>
@@ -40522,7 +40522,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (Zealova)\\n(url)';
   }
 
   @override
@@ -43804,4 +43804,23 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get youWrapped => 'ملخص السنة';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 أصبح مدرب الذكاء الاصطناعي الآن يستجيب بـ $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 إعادة تعيين لغة مدرب الذكاء الاصطناعي — استخدام لغة التطبيق';
+
+  @override
+  String get settingsChatLanguageTitle => 'لغة مدرب الذكاء الاصطناعي';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'لغة ردود مدرب الذكاء الاصطناعي (منفصلة عن واجهة التطبيق)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'نفس لغة التطبيق';
 }

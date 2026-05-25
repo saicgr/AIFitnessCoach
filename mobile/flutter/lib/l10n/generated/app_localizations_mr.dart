@@ -336,7 +336,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') $name साठी';
   }
 
   @override
@@ -7501,12 +7501,12 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String discoverScreenLvl(Object level) {
-    return 'Lvl $level';
+    return 'पातळी $level';
   }
 
   @override
   String discoverScreenLvl2(Object level) {
-    return 'Lvl $level';
+    return 'पातळी $level';
   }
 
   @override
@@ -10577,7 +10577,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String exercisePreviewOverlayTarget(Object muscles) {
-    return 'Target: $muscles';
+    return 'लक्ष्य: $muscles';
   }
 
   @override
@@ -18033,7 +18033,7 @@ class AppLocalizationsMr extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -18969,7 +18969,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
+    return '$pct%';
   }
 
   @override
@@ -20276,12 +20276,12 @@ class AppLocalizationsMr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -20683,7 +20683,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String logWeightSheetValue(Object changeInUnit) {
-    return ')(changeInUnit)';
+    return '$changeInUnit';
   }
 
   @override
@@ -21178,7 +21178,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '$row';
   }
 
   @override
@@ -21577,7 +21577,7 @@ class AppLocalizationsMr extends AppLocalizations {
     Object _selectedFormat,
     Object length,
   ) {
-    return 'Export (length)\") measurement types as .(_selectedFormat)';
+    return 'Export $length measurement types as .$_selectedFormat';
   }
 
   @override
@@ -22079,7 +22079,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String menuAnalysisSheetCalGP(Object cal, Object protein) {
-    return '$cal cal  ${protein}g P  ';
+    return '$cal कॅलरी ${protein}g P';
   }
 
   @override
@@ -22089,7 +22089,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String menuAnalysisSheetGCGF(Object carbs, Object fat) {
-    return '${carbs}g C  ${fat}g F';
+    return '${carbs}g C ${fat}g F';
   }
 
   @override
@@ -23693,7 +23693,7 @@ class AppLocalizationsMr extends AppLocalizations {
     Object goal,
     Object workoutDays,
   ) {
-    return '$workoutDays  •  $experience  •  $goal';
+    return '$workoutDays • $experience • $goal';
   }
 
   @override
@@ -25145,7 +25145,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String nutritionGoalsCardPartCalculationInfoSheetCal(Object bmr) {
-    return '= $bmr cal';
+    return '= $bmr कॅलरी';
   }
 
   @override
@@ -25895,7 +25895,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return ')(tdee) कॅलरी';
   }
 
   @override
@@ -40944,7 +40944,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (Zealova)\\n(url)';
   }
 
   @override
@@ -44254,4 +44254,23 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get youWrapped => 'रॅप्ड';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach आता $nativeName मध्ये प्रतिसाद देईल';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach ची भाषा रीसेट केली आहे — ॲपची भाषा वापरत आहे';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach ची भाषा';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach च्या प्रतिसादांसाठी भाषा (ॲप UI पेक्षा वेगळी)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'ॲपच्या भाषेप्रमाणेच';
 }

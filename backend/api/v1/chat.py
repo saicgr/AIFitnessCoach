@@ -51,7 +51,12 @@ from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.config import get_settings
-from core.locale import get_user_locale_from_request, persist_user_locale
+from core.locale import (
+    get_user_locale_from_request,
+    get_chat_locale_from_request,
+    persist_user_locale,
+    persist_user_chat_locale,
+)
 from core.db import get_supabase_db as _get_supabase_db_for_locale
 
 router = APIRouter()
@@ -533,10 +538,17 @@ async def send_message(
             _chat_gate_feature = "text_to_calories"
 
     # ── Locale resolution ────────────────────────────────────────────────────
-    # Extract from Accept-Language header; falls back to 'en' if absent or
-    # unrecognised. Persisted to users.preferred_locale as a background task
-    # so subsequent cron notifications can use the correct language.
-    _chat_locale = get_user_locale_from_request(request)
+    # Two independent locale tracks:
+    #   preferred_locale — app UI language (Accept-Language header)
+    #   chat_locale      — AI Coach reply language (X-Chat-Locale header)
+    # When X-Chat-Locale is absent, chat_locale falls back to preferred_locale
+    # so existing behaviour is unchanged (backwards-compatible).
+    _ui_locale = get_user_locale_from_request(request)
+    _chat_locale_override = get_chat_locale_from_request(request)
+    # The locale actually passed to Gemini is the chat override when present,
+    # otherwise the UI locale. This lets the user have the app in English while
+    # the AI replies in Telugu.
+    _chat_locale = _chat_locale_override if _chat_locale_override is not None else _ui_locale
 
     # Track response time for analytics
     start_time = time.time()
@@ -551,17 +563,32 @@ async def send_message(
         assistant_message_id = str(uuid.uuid4())
         logger.info(f"✅ Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms, message_id={assistant_message_id}")
 
-        # Persist locale in the background (non-blocking). Only writes when
-        # the locale differs from the DB default ('en') or when the user
-        # changed language — persist_user_locale skips invalid codes.
-        if _chat_locale and _chat_locale != "en":
-            _locale_db = _get_supabase_db_for_locale()
+        # Persist locales in the background (non-blocking).
+        # preferred_locale (UI locale) persisted from Accept-Language.
+        # chat_locale (AI reply locale) persisted from X-Chat-Locale (or None to clear).
+        _locale_db = _get_supabase_db_for_locale()
+        if _ui_locale and _ui_locale != "en":
             background_tasks.add_task(
                 persist_user_locale,
                 str(chat_request.user_id),
-                _chat_locale,
+                _ui_locale,
                 _locale_db,
             )
+        # Always persist the chat_locale override (including None to clear it).
+        # persist_user_chat_locale skips writes for unsupported codes.
+        if _chat_locale_override is not None or True:
+            # Write whenever the header was explicitly sent (override present) or
+            # explicitly absent (None = user reset to follow UI locale). We only
+            # skip if X-Chat-Locale was never sent at all — detect via the
+            # override being None AND the header being absent.
+            _raw_chat_locale_header = request.headers.get("X-Chat-Locale", "")
+            if _raw_chat_locale_header or _chat_locale_override is not None:
+                background_tasks.add_task(
+                    persist_user_chat_locale,
+                    str(chat_request.user_id),
+                    _chat_locale_override,  # may be None → clears the override
+                    _locale_db,
+                )
 
         # Track premium gate usage after successful processing
         background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _chat_tz)
@@ -970,7 +997,11 @@ async def send_message_stream(
             _stream_gate_feature = "text_to_calories"
 
     # ── Locale resolution (stream path) ─────────────────────────────────────
-    _stream_locale = get_user_locale_from_request(request)
+    # Two independent locale tracks — same logic as /send endpoint.
+    _stream_ui_locale = get_user_locale_from_request(request)
+    _stream_chat_locale_override = get_chat_locale_from_request(request)
+    # The locale passed to Gemini: chat override when present, else UI locale.
+    _stream_locale = _stream_chat_locale_override if _stream_chat_locale_override is not None else _stream_ui_locale
 
     from starlette.responses import StreamingResponse
 
@@ -1056,13 +1087,21 @@ async def send_message_stream(
             if _stream_gate_feature:
                 background_tasks.add_task(track_premium_usage, chat_request.user_id, _stream_gate_feature, _stream_tz)
 
-            # Persist locale preference (non-blocking; skip for 'en' default).
-            if _stream_locale and _stream_locale != "en":
-                _locale_db_s = _get_supabase_db_for_locale()
+            # Persist locales — same two-track logic as /send endpoint.
+            _locale_db_s = _get_supabase_db_for_locale()
+            if _stream_ui_locale and _stream_ui_locale != "en":
                 background_tasks.add_task(
                     persist_user_locale,
                     str(chat_request.user_id),
-                    _stream_locale,
+                    _stream_ui_locale,
+                    _locale_db_s,
+                )
+            _raw_stream_chat_locale_header = request.headers.get("X-Chat-Locale", "")
+            if _raw_stream_chat_locale_header or _stream_chat_locale_override is not None:
+                background_tasks.add_task(
+                    persist_user_chat_locale,
+                    str(chat_request.user_id),
+                    _stream_chat_locale_override,
                     _locale_db_s,
                 )
 

@@ -18188,7 +18188,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml de (label)';
   }
 
@@ -19127,7 +19127,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
+    return '$pct%';
   }
 
   @override
@@ -20445,12 +20445,12 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -20856,7 +20856,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String logWeightSheetValue(Object changeInUnit) {
-    return ')(changeInUnit)';
+    return '$changeInUnit';
   }
 
   @override
@@ -41257,7 +41257,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -43626,7 +43626,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workoutSummaryAdvancedTotalVolume => 'Volumen total: ';
 
   @override
-  String get workoutSummaryAdvancedUd83dUdca7 => '\\uD83D\\uDCA7 ';
+  String get workoutSummaryAdvancedUd83dUdca7 => '💧 ';
 
   @override
   String workoutSummaryAdvancedValue(Object confidence) {
@@ -43815,7 +43815,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get workoutSummaryScreenU2022 => '  \\u2022  ';
+  String get workoutSummaryScreenU2022 => '  •  ';
 
   @override
   String workoutSummaryScreenUiImprovement(Object pr) {
@@ -44595,4 +44595,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 El AI Coach ahora responde en $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Idioma del AI Coach restablecido: usando el idioma de la aplicación';
+
+  @override
+  String get settingsChatLanguageTitle => 'Idioma del AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Idioma para las respuestas del AI Coach (independiente de la interfaz de la aplicación)';
+
+  @override
+  String get settingsChatLanguageSameAsApp =>
+      'Igual que el idioma de la aplicación';
 }

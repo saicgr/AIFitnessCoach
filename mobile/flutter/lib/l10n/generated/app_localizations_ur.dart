@@ -18038,7 +18038,7 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ملی لیٹر (label)';
   }
 
@@ -20287,12 +20287,12 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -41946,7 +41946,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String workoutHistoryImportScreenKg(Object lastWeightKg) {
-    return '$lastWeightKg kg';
+    return '$lastWeightKg کلوگرام';
   }
 
   @override
@@ -42261,7 +42261,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String workoutMiniPlayerS(Object restSecondsRemaining) {
-    return '${restSecondsRemaining}s';
+    return '$restSecondsRemaining سیکنڈ';
   }
 
   @override
@@ -42690,7 +42690,7 @@ class AppLocalizationsUr extends AppLocalizations {
       'Warm up چوٹ سے بچنے اور کارکردگی کو بہتر بنانے میں مدد کرتا ہے۔\n\nتجویز کردہ: ورکنگ سیٹس سے پہلے 1-2 ہلکے سیٹس۔';
 
   @override
-  String get workoutShowcase12450Lbs => '12,450 lbs';
+  String get workoutShowcase12450Lbs => '12,450 پاؤنڈ';
 
   @override
   String get workoutShowcase15ViralFormatsTap =>
@@ -42700,7 +42700,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get workoutShowcase1rmEstimate => '1RM کا تخمینہ';
 
   @override
-  String get workoutShowcase252Lb => '252 lb';
+  String get workoutShowcase252Lb => '252 پاؤنڈ';
 
   @override
   String get workoutShowcase3Prs14Day => '3 PRs · 14 دن کا اسٹریک';
@@ -42761,7 +42761,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get workoutShowcaseEasy => 'ورک آؤٹ شوکیس آسان';
 
   @override
-  String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 reps';
+  String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 ریپس';
 
   @override
   String get workoutShowcaseEverySetYouLog =>
@@ -43148,12 +43148,12 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedLb(Object totalVol) {
-    return '$totalVol lb';
+    return '$totalVol پاؤنڈ';
   }
 
   @override
   String workoutSummaryAdvancedLb2(Object value) {
-    return '$value lb';
+    return '$value پاؤنڈ';
   }
 
   @override
@@ -44262,4 +44262,23 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI کوچ اب $nativeName میں جواب دے رہا ہے';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI کوچ کی زبان ری سیٹ کر دی گئی ہے — ایپ کی زبان استعمال ہو رہی ہے';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI کوچ کی زبان';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI کوچ کے جوابات کے لیے زبان (ایپ UI سے الگ)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'ایپ کی زبان کے مطابق';
 }

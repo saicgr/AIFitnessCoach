@@ -11449,7 +11449,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
+    return '$scoreChange';
   }
 
   @override
@@ -12382,7 +12382,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
+    return '$improvementAbsolute';
   }
 
   @override
@@ -13763,12 +13763,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
+    return '$targetReps';
   }
 
   @override
   String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
+    return '$reps';
   }
 
   @override
@@ -17040,8 +17040,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
-    return '])ml of (label)';
+  String hydrationTabMlOf(Object label, Object ml) {
+    return '${ml}ml / $label';
   }
 
   @override
@@ -17938,7 +17938,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
+    return '$pct%';
   }
 
   @override
@@ -19182,12 +19182,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -19572,7 +19572,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String logWeightSheetValue(Object changeInUnit) {
-    return ')(changeInUnit)';
+    return '$changeInUnit';
   }
 
   @override
@@ -20056,7 +20056,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String manageDuplicateImportsScreenValue2(Object row) {
-    return '(row)\" : \"\")';
+    return '$row';
   }
 
   @override
@@ -20956,7 +20956,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String menuAnalysisSheetValue(Object elapsed) {
-    return ')(elapsed)';
+    return '$elapsed';
   }
 
   @override
@@ -41999,4 +41999,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get youWrapped => '年度回顾';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach 现在使用 $nativeName 回复';
+  }
+
+  @override
+  String get chatLanguageResetSystem => '🌐 AI Coach 语言已重置 — 使用应用语言';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach 语言';
+
+  @override
+  String get settingsChatLanguageDescription => 'AI Coach 回复所使用的语言（与应用界面语言分开）';
+
+  @override
+  String get settingsChatLanguageSameAsApp => '与应用语言相同';
 }

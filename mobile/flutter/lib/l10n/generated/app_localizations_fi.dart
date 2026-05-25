@@ -18072,7 +18072,7 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml / (label)';
   }
 
@@ -20317,12 +20317,12 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -25951,7 +25951,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return '$tdee cal';
   }
 
   @override
@@ -25971,7 +25971,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
+    return '$data kg';
   }
 
   @override
@@ -44325,4 +44325,23 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get youWrapped => 'Vuosikooste';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI-valmentaja vastaa nyt kielellä $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI-valmentajan kieli palautettu — käytetään sovelluksen kieltä';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI-valmentajan kieli';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI-valmentajan vastauskieli (eri kuin sovelluksen käyttöliittymän kieli)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Sama kuin sovelluksen kieli';
 }

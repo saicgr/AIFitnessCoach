@@ -6418,17 +6418,17 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String dailyPlanDetailSheetG(Object proteinTargetG) {
-    return '${proteinTargetG}g';
+    return '$proteinTargetG g';
   }
 
   @override
   String dailyPlanDetailSheetG2(Object carbsTargetG) {
-    return '${carbsTargetG}g';
+    return '$carbsTargetG g';
   }
 
   @override
   String dailyPlanDetailSheetG3(Object fatTargetG) {
-    return '${fatTargetG}g';
+    return '$fatTargetG g';
   }
 
   @override
@@ -7239,21 +7239,21 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String diabetesDashboardScreenPartCurrentGlucoseCardU(Object totalUnits) {
-    return '${totalUnits}U';
+    return '$totalUnits U';
   }
 
   @override
   String diabetesDashboardScreenPartCurrentGlucoseCardU2(
     Object totalRapidUnits,
   ) {
-    return '${totalRapidUnits}U';
+    return '$totalRapidUnits U';
   }
 
   @override
   String diabetesDashboardScreenPartCurrentGlucoseCardU3(
     Object totalLongUnits,
   ) {
-    return '${totalLongUnits}U';
+    return '$totalLongUnits U';
   }
 
   @override
@@ -7263,7 +7263,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String diabetesDashboardScreenPartCurrentGlucoseCardValue(Object percentage) {
-    return '$percentage%';
+    return '$percentage %';
   }
 
   @override
@@ -8317,7 +8317,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String editTargetsSheetKg(Object fmt) {
-    return '${fmt}kg';
+    return '$fmt kg';
   }
 
   @override
@@ -8347,7 +8347,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String editTargetsSheetValue(Object label, Object pct) {
-    return '$label $pct%';
+    return '$label $pct %';
   }
 
   @override
@@ -9985,7 +9985,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String exerciseHistoryScreenValue2(Object pr) {
-    return '+$pr%';
+    return '+$pr %';
   }
 
   @override
@@ -10871,7 +10871,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Vložte své vlastní výzkumné práce, databáze cviků a tréninkové metodiky do našeho systému RAG (Retrieval-Augmented Generation). To umožňuje AI kouči čerpat z ještě kvalitnějších zdrojů při generování vašich personalizovaných tréninkových plánů, díky čemuž jsou návrhy chytřejší a lépe přizpůsobené nejnovějším vědeckým poznatkům.';
 
   @override
-  String get exerciseScienceResearchFonsecaRMEt => 'Fonseca, R. M. et al.';
+  String get exerciseScienceResearchFonsecaRMEt => 'Fonseca, R. M. a kol.';
 
   @override
   String get exerciseScienceResearchGoldsteinANLeung =>
@@ -10924,7 +10924,7 @@ class AppLocalizationsCs extends AppLocalizations {
       'Nahrajte PDF, články nebo textové soubory obsahující výzkum v oblasti sportovní vědy. Náš systém obsah zpracuje a zaindexuje, čímž jej zpřístupní jako kontext pro AI při generování vašich tréninků.';
 
   @override
-  String get exerciseScienceResearchZourdosMCEt => 'Zourdos, M. C. et al.';
+  String get exerciseScienceResearchZourdosMCEt => 'Zourdos, M. C. a kol.';
 
   @override
   String get exerciseSearchBarSearchExercisesOrEquipment =>
@@ -18028,7 +18028,7 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml z (label)';
   }
 
@@ -20268,12 +20268,12 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -41138,7 +41138,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutCompleteScreenMin(Object _saunaMinutes) {
-    return '${_saunaMinutes}min';
+    return '$_saunaMinutes min';
   }
 
   @override
@@ -44041,12 +44041,12 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String xpHeroTileLv(Object level) {
-    return 'Lv $level';
+    return 'Úroveň $level';
   }
 
   @override
   String xpHeroTileLv2(Object label, Object nextLevel) {
-    return 'Lv $nextLevel → $label';
+    return 'Úroveň $nextLevel → $label';
   }
 
   @override
@@ -44213,4 +44213,23 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get youWrapped => 'Shrnutí';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach nyní odpovídá v jazyce $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Jazyk AI Coach byl resetován — používá se jazyk aplikace';
+
+  @override
+  String get settingsChatLanguageTitle => 'Jazyk AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Jazyk odpovědí AI Coach (nezávislý na UI aplikace)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Stejný jako jazyk aplikace';
 }

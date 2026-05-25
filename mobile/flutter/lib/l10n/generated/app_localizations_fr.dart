@@ -4121,7 +4121,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String coachSelectionScreenUse(Object _customName) {
-    return 'Use $_customName';
+    return 'Utiliser $_customName';
   }
 
   @override
@@ -12234,7 +12234,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
+    return '$scoreChange';
   }
 
   @override
@@ -13232,7 +13232,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
+    return '$improvementAbsolute';
   }
 
   @override
@@ -14688,12 +14688,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
+    return '$targetReps';
   }
 
   @override
   String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
+    return '$reps';
   }
 
   @override
@@ -18287,7 +18287,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml de (label)';
   }
 
@@ -20555,12 +20555,12 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -41474,7 +41474,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -44264,7 +44264,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune séance terminée pour le moment';
 
   @override
-  String get workoutsPlan => 'Plan';
+  String get workoutsPlan => 'Programme';
 
   @override
   String get workoutsPrograms => 'Programmes';
@@ -44849,4 +44849,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 Le coach IA répond désormais en $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Langue du coach IA réinitialisée — utilisation de la langue de l\'application';
+
+  @override
+  String get settingsChatLanguageTitle => 'Langue du coach IA';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Langue des réponses du coach IA (indépendante de l\'interface de l\'application)';
+
+  @override
+  String get settingsChatLanguageSameAsApp =>
+      'Identique à la langue de l\'application';
 }

@@ -332,7 +332,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredExerciseSAdded(Object _exercises) {
-    return '$_exercises exercise(s) added';
+    return 'Dodano $_exercises ćwiczenie(a)';
   }
 
   @override
@@ -4592,7 +4592,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '(daysPerWeek)d/tydz.) · (duration)';
   }
 
   @override
@@ -12103,7 +12103,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
+    return '$scoreChange';
   }
 
   @override
@@ -13098,7 +13098,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
+    return '$improvementAbsolute';
   }
 
   @override
@@ -14547,12 +14547,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
+    return '$targetReps';
   }
 
   @override
   String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
+    return '$reps';
   }
 
   @override
@@ -18120,7 +18120,7 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml z (label)';
   }
 
@@ -20368,12 +20368,12 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -25999,7 +25999,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return ')(tdee) kcal';
   }
 
   @override
@@ -44444,4 +44444,23 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get youWrapped => 'Podsumowanie';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 Trener AI odpowiada teraz w języku $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Zresetowano język trenera AI — używany jest język aplikacji';
+
+  @override
+  String get settingsChatLanguageTitle => 'Język trenera AI';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Język odpowiedzi trenera AI (niezależny od interfejsu aplikacji)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Taki sam jak język aplikacji';
 }

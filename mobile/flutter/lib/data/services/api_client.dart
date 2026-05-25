@@ -14,6 +14,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 import '../../core/providers/locale_provider.dart';
+import '../providers/chat_locale_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart' show SentryLevel;
 import '../../core/constants/api_constants.dart';
 import '../../core/services/sentry_service.dart';
@@ -173,6 +174,17 @@ final acceptLanguageSyncProvider = Provider<void>((ref) {
   client.updateAcceptLanguage(localeState.locale?.toLanguageTag());
 });
 
+/// Wires the AI Coach chat locale into [ApiClient] so the X-Chat-Locale header
+/// stays in sync whenever the user changes their chat language in Settings.
+///
+/// Consume this provider once near the app root alongside [acceptLanguageSyncProvider].
+/// Null chat locale → header omitted → backend falls back to preferred_locale.
+final chatLocaleSyncProvider = Provider<void>((ref) {
+  final chatLocaleState = ref.watch(chatLocaleProvider);
+  final client = ref.read(apiClientProvider);
+  client.updateChatLocale(chatLocaleState.locale?.languageCode);
+});
+
 /// HTTP API client with auth interceptor
 class ApiClient with WidgetsBindingObserver {
   final FlutterSecureStorage _storage;
@@ -187,6 +199,15 @@ class ApiClient with WidgetsBindingObserver {
   /// Called by [acceptLanguageSyncProvider] whenever the user's locale changes.
   void updateAcceptLanguage(String? languageTag) {
     _currentAcceptLanguage = languageTag;
+  }
+
+  /// The ISO 639-1 code to send as `X-Chat-Locale`, e.g. `"te"`, `"hi"`.
+  /// `null` = no override (header omitted; server falls back to preferred_locale).
+  String? _currentChatLocale;
+
+  /// Called by [chatLocaleSyncProvider] whenever the user's chat locale changes.
+  void updateChatLocale(String? languageCode) {
+    _currentChatLocale = languageCode;
   }
 
   static const _tokenKey = 'auth_token';
@@ -728,6 +749,23 @@ class ApiClient with WidgetsBindingObserver {
           final lang = _currentAcceptLanguage;
           if (lang != null && lang.isNotEmpty) {
             options.headers['Accept-Language'] = lang;
+          }
+          return handler.next(options);
+        },
+      ),
+    );
+
+    // X-Chat-Locale interceptor — tells the backend which language the AI Coach
+    // should reply in (independent of the UI locale). Null = header omitted →
+    // backend falls back to preferred_locale. Updated reactively via
+    // [updateChatLocale] whenever the user changes AI Chat Language in Settings
+    // (driven by [chatLocaleSyncProvider]).
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final chatLang = _currentChatLocale;
+          if (chatLang != null && chatLang.isNotEmpty) {
+            options.headers['X-Chat-Locale'] = chatLang;
           }
           return handler.next(options);
         },

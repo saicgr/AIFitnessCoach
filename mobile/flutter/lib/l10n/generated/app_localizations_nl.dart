@@ -4570,7 +4570,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '${daysPerWeek}d/wk · $duration';
   }
 
   @override
@@ -5707,7 +5707,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String customExercisesScreenValue(Object name, Object targetDisplay) {
-    return '(name) (targetDisplay))\" : \"\")';
+    return '$name $targetDisplay';
   }
 
   @override
@@ -5861,7 +5861,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String customTrendScreenValue(Object strengthLabel, Object value) {
-    return ')(value) · (strengthLabel)';
+    return '$value · $strengthLabel';
   }
 
   @override
@@ -13088,7 +13088,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
+    return '$improvementAbsolute';
   }
 
   @override
@@ -13754,7 +13754,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get foodItemRankingAddFood => 'Voedsel toevoegen';
 
   @override
-  String get foodItemRankingDetails => ') details';
+  String get foodItemRankingDetails => 'details';
 
   @override
   String foodItemRankingNFoodItems(Object count) {
@@ -14530,12 +14530,12 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String futuristicSetCardValue(Object targetReps) {
-    return ') × (targetReps)';
+    return '$targetReps';
   }
 
   @override
   String futuristicSetCardValue2(Object reps) {
-    return ')×(reps)';
+    return '$reps';
   }
 
   @override
@@ -18092,7 +18092,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml van (label)';
   }
 
@@ -20341,12 +20341,12 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -43380,7 +43380,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get workoutSummaryAdvancedTotalVolume => 'Totaal volume: ';
 
   @override
-  String get workoutSummaryAdvancedUd83dUdca7 => '\\uD83D\\uDCA7 ';
+  String get workoutSummaryAdvancedUd83dUdca7 => '💧 ';
 
   @override
   String workoutSummaryAdvancedValue(Object confidence) {
@@ -44341,4 +44341,23 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach reageert nu in het $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Taal van AI Coach gereset — app-taal wordt gebruikt';
+
+  @override
+  String get settingsChatLanguageTitle => 'Taal van AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Taal voor antwoorden van de AI Coach (los van de app-interface)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Zelfde als app-taal';
 }

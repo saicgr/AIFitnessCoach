@@ -18230,7 +18230,7 @@ class AppLocalizationsTl extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml ng (label)';
   }
 
@@ -20491,12 +20491,12 @@ class AppLocalizationsTl extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -35909,7 +35909,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String sleepDetailScreenNaps(Object length) {
-    return '$length naps';
+    return '$length na naps';
   }
 
   @override
@@ -44701,4 +44701,23 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get youWrapped => 'Buod';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 Ang AI Coach ay sumasagot na sa $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Na-reset ang wika ng AI Coach — ginagamit ang wika ng app';
+
+  @override
+  String get settingsChatLanguageTitle => 'Wika ng AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Wika para sa mga sagot ng AI Coach (hiwalay sa UI ng app)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Katulad ng wika ng app';
 }

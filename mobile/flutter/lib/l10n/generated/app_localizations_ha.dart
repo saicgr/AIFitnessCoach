@@ -18105,7 +18105,7 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml na (label)';
   }
 
@@ -20353,12 +20353,12 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -20793,10 +20793,10 @@ class AppLocalizationsHa extends AppLocalizations {
   String get loggedMeals => '⚠️';
 
   @override
-  String get loggedMeals1U00bc => '1\\u00BC';
+  String get loggedMeals1U00bc => '1¼';
 
   @override
-  String get loggedMeals1U00bd => '1\\u00BD';
+  String get loggedMeals1U00bd => '1½';
 
   @override
   String get loggedMeals1x => '1x';
@@ -22165,7 +22165,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String menuAnalysisSheetCalGP(Object cal, Object protein) {
-    return '$cal cal  ${protein}g P  ';
+    return '$cal cal ${protein}g P';
   }
 
   @override
@@ -22175,7 +22175,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String menuAnalysisSheetGCGF(Object carbs, Object fat) {
-    return '${carbs}g C  ${fat}g F';
+    return '${carbs}g C ${fat}g F';
   }
 
   @override
@@ -23786,7 +23786,7 @@ class AppLocalizationsHa extends AppLocalizations {
     Object goal,
     Object workoutDays,
   ) {
-    return '$workoutDays  •  $experience  •  $goal';
+    return '$workoutDays • $experience • $goal';
   }
 
   @override
@@ -37880,7 +37880,7 @@ class AppLocalizationsHa extends AppLocalizations {
   String get syncedSummaryAvgHr => 'Matsakaicin HR';
 
   @override
-  String get syncedSummaryCalories => 'Calories';
+  String get syncedSummaryCalories => 'Adadin kuzari';
 
   @override
   String get syncedSummaryDistance => 'Nisa';
@@ -37934,7 +37934,7 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
-  String get syncedWorkoutDetailActiveCal => 'Active cal';
+  String get syncedWorkoutDetailActiveCal => 'Adadin kuzarin da aka kashe';
 
   @override
   String get syncedWorkoutDetailAvg => 'Matsakaici';
@@ -41064,7 +41064,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -44377,4 +44377,23 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get youWrapped => 'Takaitawa';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 Kocin AI yanzu yana amsa tambayoyi da $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 An mayar da harshen Kocin AI zuwa yadda yake — ana amfani da harshen manhajar';
+
+  @override
+  String get settingsChatLanguageTitle => 'Harshen Kocin AI';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Harshen da Kocin AI zai rika amfani da shi wajen ba da amsa (ya sha bamban da na manhajar)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Kamar harshen manhajar';
 }

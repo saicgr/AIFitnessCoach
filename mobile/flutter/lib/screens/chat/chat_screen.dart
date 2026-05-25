@@ -58,6 +58,8 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/upgrade_prompt_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../data/providers/chat_locale_provider.dart';
+import '../../core/providers/locale_provider.dart';
 
 part 'chat_screen_part_media_send_status.dart';
 
@@ -65,6 +67,21 @@ part 'chat_screen_ui.dart';
 
 part 'chat_screen_ext.dart';
 
+
+/// ISO 639-1 code → native-script name for the chat system message.
+/// Mirrors LOCALE_NATIVE_NAMES in backend/core/locale.py.
+const _kChatLocaleNativeNames = <String, String>{
+  'en': 'English', 'ar': 'العربية', 'bn': 'বাংলা', 'cs': 'Čeština',
+  'de': 'Deutsch', 'es': 'Español', 'fi': 'Suomi', 'fr': 'Français',
+  'ha': 'Hausa', 'hi': 'हिन्दी', 'id': 'Bahasa Indonesia',
+  'it': 'Italiano', 'ja': '日本語', 'jv': 'Basa Jawa', 'kn': 'ಕನ್ನಡ',
+  'ko': '한국어', 'ml': 'മലയാളം', 'mr': 'मराठी', 'ms': 'Bahasa Melayu',
+  'ne': 'नेपाली', 'nl': 'Nederlands', 'or': 'ଓଡ଼ିଆ', 'pa': 'ਪੰਜਾਬੀ',
+  'pl': 'Polski', 'pt': 'Português', 'ru': 'Русский', 'sv': 'Svenska',
+  'sw': 'Kiswahili', 'ta': 'தமிழ்', 'te': 'తెలుగు', 'th': 'ภาษาไทย',
+  'tl': 'Filipino', 'tr': 'Türkçe', 'ur': 'اردو', 'vi': 'Tiếng Việt',
+  'zh': '中文',
+};
 
 /// Feature keys for premium gating
 const _kFoodScanning = 'food_scanning';
@@ -435,6 +452,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final l10n = AppLocalizations.of(context)!;
     final messagesState = ref.watch(chatMessagesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Listen for AI Coach chat-language changes and insert a WhatsApp-style
+    // system message into the chat history when the user switches languages.
+    // Uses ref.listen so it only fires on CHANGES (not on the initial build).
+    ref.listen<ChatLocaleState>(chatLocaleProvider, (previous, next) {
+      if (!mounted) return;
+      final notifier = ref.read(chatMessagesProvider.notifier);
+      final nextCode = next.locale?.languageCode;
+      final prevCode = previous?.locale?.languageCode;
+      if (nextCode == prevCode) return; // no actual change
+
+      if (nextCode == null) {
+        // User cleared the chat-language override — back to app language.
+        notifier.addSystemNotification(l10n.chatLanguageResetSystem);
+      } else {
+        final nativeName = _kChatLocaleNativeNames[nextCode] ?? nextCode;
+        notifier.addSystemNotification(
+          l10n.chatLanguageChangedSystem(nativeName),
+        );
+      }
+    });
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final offlineChatState = ref.watch(offlineChatStateProvider);
 

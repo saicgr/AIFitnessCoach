@@ -17921,7 +17921,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -20155,12 +20155,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -44023,4 +44023,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach now responds in $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach language reset — using app language';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach Language';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Language for AI Coach responses (separate from app UI)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Same as app language';
 }

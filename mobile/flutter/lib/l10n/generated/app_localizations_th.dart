@@ -18000,7 +18000,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])มล. ของ (label)';
   }
 
@@ -20240,12 +20240,12 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g มก.';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g มก.';
   }
 
@@ -35789,7 +35789,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String stackedBannerPanelLbs(Object exerciseName, Object weightLbs) {
-    return '$exerciseName: $weightLbs lbs';
+    return '$exerciseName: $weightLbs ปอนด์';
   }
 
   @override
@@ -37813,7 +37813,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get syncedWorkoutDetailRpeRateOfPerceived =>
-      'RPE · Rate of Perceived Exertion';
+      'RPE · อัตราการรับรู้ความเหนื่อย';
 
   @override
   String syncedWorkoutDetailScreenAppDetailedSamplesMay(Object sourceApp) {
@@ -40839,7 +40839,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (Zealova)\\n(url)';
   }
 
   @override
@@ -41033,7 +41033,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String workoutCompleteScreenExt2PrKg(Object maxWeight) {
-    return 'PR: $maxWeight kg';
+    return 'PR: $maxWeight กก.';
   }
 
   @override
@@ -41167,7 +41167,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String workoutCompleteScreenUi1RmKg(Object estimated1rm) {
-    return '1RM: $estimated1rm kg';
+    return '1RM: $estimated1rm กก.';
   }
 
   @override
@@ -44144,4 +44144,23 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach ตอบกลับเป็น $nativeName แล้ว';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 รีเซ็ตภาษา AI Coach แล้ว — ใช้ภาษาเดียวกับแอป';
+
+  @override
+  String get settingsChatLanguageTitle => 'ภาษาของ AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'ภาษาที่ AI Coach ใช้ตอบกลับ (แยกจากภาษาของ UI แอป)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'ภาษาเดียวกับแอป';
 }

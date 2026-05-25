@@ -91,7 +91,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String achievementsCardBadges(Object totalAchieved) {
-    return '$totalAchieved badges';
+    return '$totalAchieved ਬੈਜ';
   }
 
   @override
@@ -338,7 +338,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') $name ਲਈ';
   }
 
   @override
@@ -641,162 +641,162 @@ class AppLocalizationsPa extends AppLocalizations {
   String get addGymProfileYesAddIt => 'ਹਾਂ, ਇਸਨੂੰ ਸ਼ਾਮਲ ਕਰੋ';
 
   @override
-  String get addGymSheetAddNewGym => 'Add New Gym';
+  String get addGymSheetAddNewGym => 'ਨਵੀਂ ਜਿਮ ਜੋੜੋ';
 
   @override
   String addGymSheetAlsoAt(Object names) {
-    return 'Also at: $names';
+    return 'ਇੱਥੇ ਵੀ: $names';
   }
 
   @override
-  String get addGymSheetBack => 'Back';
+  String get addGymSheetBack => 'ਪਿੱਛੇ';
 
   @override
-  String get addGymSheetCommercialGym => 'Commercial Gym';
+  String get addGymSheetCommercialGym => 'ਕਮਰਸ਼ੀਅਲ ਜਿਮ';
 
   @override
   String get addGymSheetCommercialGymDesc =>
-      'Full access to all machines and equipment';
+      'ਸਾਰੀਆਂ ਮਸ਼ੀਨਾਂ ਅਤੇ ਉਪਕਰਣਾਂ ਤੱਕ ਪੂਰੀ ਪਹੁੰਚ';
 
   @override
   String addGymSheetConflictDay(Object day, Object names) {
-    return '$day also at \"$names\"';
+    return '$day ਇੱਥੇ ਵੀ \"$names\"';
   }
 
   @override
   String addGymSheetConflictMessage(Object details) {
-    return 'Schedule overlap: $details. Whichever profile is active that day will own the workout.';
+    return 'ਸ਼ਡਿਊਲ ਓਵਰਲੈਪ: $details. ਉਸ ਦਿਨ ਜੋ ਵੀ ਪ੍ਰੋਫਾਈਲ ਐਕਟਿਵ ਹੋਵੇਗੀ, ਉਹੀ ਵਰਕਆਊਟ ਦੀ ਮਾਲਕ ਹੋਵੇਗੀ।';
   }
 
   @override
-  String get addGymSheetCreateGym => 'Create Gym';
+  String get addGymSheetCreateGym => 'ਜਿਮ ਬਣਾਓ';
 
   @override
   String addGymSheetCreatedProfile(Object name) {
-    return '✓ Created \"$name\" gym profile';
+    return '✓ \"$name\" ਜਿਮ ਪ੍ਰੋਫਾਈਲ ਬਣਾਈ ਗਈ';
   }
 
   @override
-  String get addGymSheetCurrent => 'current';
+  String get addGymSheetCurrent => 'ਮੌਜੂਦਾ';
 
   @override
-  String get addGymSheetEnterGymName => 'Please enter a name for your gym';
+  String get addGymSheetEnterGymName =>
+      'ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਜਿਮ ਲਈ ਇੱਕ ਨਾਮ ਦਰਜ ਕਰੋ';
 
   @override
-  String get addGymSheetEnterNameFirst => 'Please enter a gym name first';
+  String get addGymSheetEnterNameFirst =>
+      'ਕਿਰਪਾ ਕਰਕੇ ਪਹਿਲਾਂ ਜਿਮ ਦਾ ਨਾਮ ਦਰਜ ਕਰੋ';
 
   @override
-  String get addGymSheetEquipment => 'Equipment';
+  String get addGymSheetEquipment => 'ਉਪਕਰਣ';
 
   @override
   String addGymSheetEquipmentCount(Object count) {
-    return '$count equipment';
+    return '$count ਉਪਕਰਣ';
   }
 
   @override
   String addGymSheetEquipmentSelected(Object count) {
-    return '$count Equipment Selected';
+    return '$count ਉਪਕਰਣ ਚੁਣੇ ਗਏ';
   }
 
   @override
   String addGymSheetFailedToCreate(Object error) {
-    return 'Failed to create profile: $error';
+    return 'ਪ੍ਰੋਫਾਈਲ ਬਣਾਉਣ ਵਿੱਚ ਅਸਫਲ: $error';
   }
 
   @override
   String get addGymSheetFollowUpBenchSubtitle =>
-      'Unlocks: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
+      'ਅਨਲੌਕ ਕਰਦਾ ਹੈ: Bench Press, Incline Press, Pullover, Chest-Supported Rows';
 
   @override
-  String get addGymSheetFollowUpBenchTitle => 'Do you have a weight bench?';
+  String get addGymSheetFollowUpBenchTitle => 'ਕੀ ਤੁਹਾਡੇ ਕੋਲ ਵੇਟ ਬੈਂਚ ਹੈ?';
 
   @override
   String get addGymSheetFollowUpSquatRackSubtitle =>
-      'Required for: Barbell Squat, Overhead Press, Barbell Bench Press';
+      'ਇਨ੍ਹਾਂ ਲਈ ਲੋੜੀਂਦਾ: Barbell Squat, Overhead Press, Barbell Bench Press';
 
   @override
-  String get addGymSheetFollowUpSquatRackTitle => 'Do you have a squat rack?';
+  String get addGymSheetFollowUpSquatRackTitle => 'ਕੀ ਤੁਹਾਡੇ ਕੋਲ ਸਕੁਐਟ ਰੈਕ ਹੈ?';
 
   @override
-  String get addGymSheetGymNameHint => 'e.g., Home Gym, Planet Fitness, Hotel';
+  String get addGymSheetGymNameHint => 'ਜਿਵੇਂ: Home Gym, Planet Fitness, Hotel';
 
   @override
   String get addGymSheetHelpsUsSuggest =>
-      'This helps us suggest the right equipment';
+      'ਇਹ ਸਾਨੂੰ ਸਹੀ ਉਪਕਰਣ ਸੁਝਾਉਣ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ';
 
   @override
-  String get addGymSheetHomeGym => 'Home Gym';
+  String get addGymSheetHomeGym => 'ਹੋਮ ਜਿਮ';
 
   @override
-  String get addGymSheetHomeGymDesc =>
-      'Dedicated workout space with your equipment';
+  String get addGymSheetHomeGymDesc => 'ਤੁਹਾਡੇ ਉਪਕਰਣਾਂ ਨਾਲ ਸਮਰਪਿਤ ਵਰਕਆਊਟ ਸਪੇਸ';
 
   @override
-  String get addGymSheetHomeMinimal => 'Home (Minimal)';
+  String get addGymSheetHomeMinimal => 'ਹੋਮ (ਘੱਟੋ-ਘੱਟ)';
 
   @override
-  String get addGymSheetHomeMinimalDesc => 'Bodyweight exercises only';
+  String get addGymSheetHomeMinimalDesc => 'ਸਿਰਫ਼ ਬਾਡੀਵੇਟ ਕਸਰਤਾਂ';
 
   @override
-  String get addGymSheetHotelTravel => 'Hotel / Travel';
+  String get addGymSheetHotelTravel => 'ਹੋਟਲ / ਯਾਤਰਾ';
 
   @override
-  String get addGymSheetHotelTravelDesc =>
-      'Limited space and equipment while traveling';
+  String get addGymSheetHotelTravelDesc => 'ਯਾਤਰਾ ਦੌਰਾਨ ਸੀਮਤ ਜਗ੍ਹਾ ਅਤੇ ਉਪਕਰਣ';
 
   @override
   String addGymSheetItems(Object count) {
-    return '$count items';
+    return '$count ਆਈਟਮਾਂ';
   }
 
   @override
-  String get addGymSheetNext => 'Next';
+  String get addGymSheetNext => 'ਅੱਗੇ';
 
   @override
-  String get addGymSheetOutdoors => 'Outdoors';
+  String get addGymSheetOutdoors => 'ਬਾਹਰ';
 
   @override
-  String get addGymSheetOutdoorsDesc => 'Parks, outdoor gyms, and open spaces';
+  String get addGymSheetOutdoorsDesc => 'ਪਾਰਕ, ਆਊਟਡੋਰ ਜਿਮ, ਅਤੇ ਖੁੱਲ੍ਹੀਆਂ ਥਾਵਾਂ';
 
   @override
   String get addGymSheetPickAtLeastOneDay =>
-      'Please pick at least one workout day';
+      'ਕਿਰਪਾ ਕਰਕੇ ਘੱਟੋ-ਘੱਟ ਇੱਕ ਵਰਕਆਊਟ ਦਿਨ ਚੁਣੋ';
 
   @override
   String get addGymSheetPickDaysDesc =>
-      'Pick the days you\'ll train at this gym. We\'ll pre-generate 14 days of workouts for these days the moment you switch to this profile.';
+      'ਉਹ ਦਿਨ ਚੁਣੋ ਜਦੋਂ ਤੁਸੀਂ ਇਸ ਜਿਮ ਵਿੱਚ ਟ੍ਰੇਨਿੰਗ ਕਰੋਗੇ। ਜਿਵੇਂ ਹੀ ਤੁਸੀਂ ਇਸ ਪ੍ਰੋਫਾਈਲ \'ਤੇ ਸਵਿੱਚ ਕਰੋਗੇ, ਅਸੀਂ ਇਹਨਾਂ ਦਿਨਾਂ ਲਈ 14 ਦਿਨਾਂ ਦੇ ਵਰਕਆਊਟ ਪਹਿਲਾਂ ਤੋਂ ਤਿਆਰ ਕਰ ਲਵਾਂਗੇ।';
 
   @override
   String addGymSheetSameAs(Object name) {
-    return 'Same as $name';
+    return '$name ਵਾਂਗ ਹੀ';
   }
 
   @override
-  String get addGymSheetSkip => 'Skip';
+  String get addGymSheetSkip => 'ਛੱਡੋ';
 
   @override
-  String get addGymSheetSplitBodyPart => 'Body Part';
+  String get addGymSheetSplitBodyPart => 'ਬਾਡੀ ਪਾਰਟ';
 
   @override
-  String get addGymSheetSplitDesc3Days => '3 days';
+  String get addGymSheetSplitDesc3Days => '3 ਦਿਨ';
 
   @override
-  String get addGymSheetSplitDesc4Days => '4 days';
+  String get addGymSheetSplitDesc4Days => '4 ਦਿਨ';
 
   @override
-  String get addGymSheetSplitDesc56Days => '5-6 days';
+  String get addGymSheetSplitDesc56Days => '5-6 ਦਿਨ';
 
   @override
-  String get addGymSheetSplitDesc6Days => '6 days';
+  String get addGymSheetSplitDesc6Days => '6 ਦਿਨ';
 
   @override
-  String get addGymSheetSplitDescFlexible => 'Flexible';
+  String get addGymSheetSplitDescFlexible => 'ਲਚਕਦਾਰ';
 
   @override
-  String get addGymSheetSplitFullBody => 'Full Body';
+  String get addGymSheetSplitFullBody => 'ਫੁੱਲ ਬਾਡੀ';
 
   @override
-  String get addGymSheetSplitLetAiDecide => 'Let AI Decide';
+  String get addGymSheetSplitLetAiDecide => 'AI ਨੂੰ ਫੈਸਲਾ ਕਰਨ ਦਿਓ';
 
   @override
   String get addGymSheetSplitPhul => 'PHUL';
@@ -809,14 +809,14 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String addGymSheetStepOf(Object step, Object total) {
-    return 'Step $step of $total';
+    return 'ਕਦਮ $step $total ਵਿੱਚੋਂ';
   }
 
   @override
-  String get addGymSheetWorkoutEnvironment => 'Workout Environment';
+  String get addGymSheetWorkoutEnvironment => 'ਵਰਕਆਊਟ ਵਾਤਾਵਰਣ';
 
   @override
-  String get addGymSheetYesAddIt => 'Yes, Add It';
+  String get addGymSheetYesAddIt => 'ਹਾਂ, ਇਸਨੂੰ ਜੋੜੋ';
 
   @override
   String get addScheduleItemAddToGoogleCalendar =>
@@ -1812,16 +1812,16 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get aiPrivacyYourCoachPersonalizesWorkou =>
-      'Your coach personalizes workouts and chat';
+      'ਤੁਹਾਡਾ ਕੋਚ ਵਰਕਆਊਟ ਅਤੇ ਚੈਟ ਨੂੰ ਨਿੱਜੀ ਬਣਾਉਂਦਾ ਹੈ';
 
   @override
-  String get aiSettingsAdvancedSettings => 'Advanced settings';
+  String get aiSettingsAdvancedSettings => 'ਐਡਵਾਂਸਡ ਸੈਟਿੰਗਾਂ';
 
   @override
   String get aiSettingsAiAgents => 'AI AGENTS';
 
   @override
-  String get aiSettingsAiSettings => 'AI Settings';
+  String get aiSettingsAiSettings => 'AI ਸੈਟਿੰਗਾਂ';
 
   @override
   String get aiSettingsFitnessCoaching => 'FITNESS COACHING';
@@ -11726,17 +11726,17 @@ class AppLocalizationsPa extends AppLocalizations {
   String get fastingGuideFastingGuide => 'ਵਰਤ ਗਾਈਡ';
 
   @override
-  String get fastingGuideHowItWorks => 'How it works';
+  String get fastingGuideHowItWorks => 'ਇਹ ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ';
 
   @override
-  String get fastingGuideIsItSafeFor => 'Is it safe for me?';
+  String get fastingGuideIsItSafeFor => 'ਕੀ ਇਹ ਮੇਰੇ ਲਈ ਸੁਰੱਖਿਅਤ ਹੈ?';
 
   @override
   String get fastingGuideSafetyBody =>
       'ਜੇਕਰ ਤੁਸੀਂ ਚੱਕਰ ਮਹਿਸੂਸ ਕਰਦੇ ਹੋ, ਬੇਹੋਸ਼ੀ, ਕੰਬਣੀ ਜਾਂ ਬਿਮਾਰ ਮਹਿਸੂਸ ਕਰਦੇ ਹੋ, ਤਾਂ ਵਰਤ ਰੱਖਣਾ ਬੰਦ ਕਰੋ ਅਤੇ ਕੁਝ ਖਾ ਲਓ। 24 ਘੰਟਿਆਂ ਤੋਂ ਵੱਧ ਦੇ ਵਰਤ ਲਈ ਇਲੈਕਟ੍ਰੋਲਾਈਟਸ ਵੱਲ ਵਧੇਰੇ ਧਿਆਨ ਦੇਣ ਦੀ ਲੋੜ ਹੁੰਦੀ ਹੈ, ਅਤੇ 72 ਘੰਟਿਆਂ ਤੋਂ ਵੱਧ ਦੇ ਵਰਤ ਸਿਰਫ ਡਾਕਟਰੀ ਨਿਗਰਾਨੀ ਹੇਠ ਹੀ ਕੀਤੇ ਜਾਣੇ ਚਾਹੀਦੇ ਹਨ। ਵਰਤ ਰੱਖਣਾ ਡਾਕਟਰੀ ਦੇਖਭਾਲ ਦਾ ਬਦਲ ਨਹੀਂ ਹੈ — ਇਹ ਗਾਈਡ ਵਿਦਿਅਕ ਹੈ ਅਤੇ ਡਾਕਟਰੀ ਸਲਾਹ ਨਹੀਂ ਹੈ।';
 
   @override
-  String get fastingGuideStaySafe => 'Stay safe';
+  String get fastingGuideStaySafe => 'ਸੁਰੱਖਿਅਤ ਰਹੋ';
 
   @override
   String get fastingGuideSubtitle =>
@@ -11747,16 +11747,16 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਘੰਟੇ-ਦਰ-ਘੰਟੇ ਕੀ ਹੁੰਦਾ ਹੈ, ਇਸ ਨੂੰ ਸਵਾਈਪ ਕਰਕੇ ਦੇਖੋ — ਤੁਹਾਡੇ ਆਖਰੀ ਭੋਜਨ ਤੋਂ ਲੈ ਕੇ 30-ਦਿਨਾਂ ਦੇ ਵਰਤ ਤੱਕ।';
 
   @override
-  String get fastingGuideTheFastingTimeline => 'The fasting timeline';
+  String get fastingGuideTheFastingTimeline => 'ਵਰਤ ਰੱਖਣ ਦੀ ਸਮਾਂ-ਰੇਖਾ';
 
   @override
-  String get fastingGuideWhatIsFasting => 'What is fasting?';
+  String get fastingGuideWhatIsFasting => 'ਵਰਤ ਕੀ ਹੈ?';
 
   @override
-  String get fastingHistoryListCompleted => 'Completed';
+  String get fastingHistoryListCompleted => 'ਪੂਰਾ ਹੋਇਆ';
 
   @override
-  String get fastingHistoryListLoadMore => 'Load More';
+  String get fastingHistoryListLoadMore => 'ਹੋਰ ਲੋਡ ਕਰੋ';
 
   @override
   String fastingHistoryListValue(Object completionPercent) {
@@ -11770,13 +11770,13 @@ class AppLocalizationsPa extends AppLocalizations {
   String get fastingHydrationRow500Ml => '+500 ml';
 
   @override
-  String get fastingHydrationRowBottle => 'Bottle';
+  String get fastingHydrationRowBottle => 'ਬੋਤਲ';
 
   @override
-  String get fastingHydrationRowGlass => 'Glass';
+  String get fastingHydrationRowGlass => 'ਗਲਾਸ';
 
   @override
-  String get fastingHydrationRowHydration => 'Hydration';
+  String get fastingHydrationRowHydration => 'ਹਾਈਡਰੇਸ਼ਨ';
 
   @override
   String fastingHydrationRowMl(Object goalMl) {
@@ -11785,17 +11785,17 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get fastingHydrationRowSyncedVisibleOnHome =>
-      'Synced — visible on Home and Nutrition too.';
+      'ਸਿੰਕ ਕੀਤਾ ਗਿਆ — ਹੋਮ ਅਤੇ ਨਿਊਟ੍ਰੀਸ਼ਨ \'ਤੇ ਵੀ ਦਿਖਾਈ ਦਿੰਦਾ ਹੈ।';
 
   @override
   String get fastingHydrationRowWaterKeepsYouEnergized =>
-      'Water keeps you energized while fasting';
+      'ਵਰਤ ਦੌਰਾਨ ਪਾਣੀ ਤੁਹਾਨੂੰ ਊਰਜਾਵਾਨ ਰੱਖਦਾ ਹੈ';
 
   @override
-  String get fastingImpactActivityCalendar => 'Activity Calendar';
+  String get fastingImpactActivityCalendar => 'ਗਤੀਵਿਧੀ ਕੈਲੰਡਰ';
 
   @override
-  String get fastingImpactAiInsights => 'AI Insights';
+  String get fastingImpactAiInsights => 'AI ਇਨਸਾਈਟਸ';
 
   @override
   String fastingImpactCardCorrelation(Object displayName) {
@@ -11804,11 +11804,11 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get fastingImpactCompleteMoreFastsTo =>
-      'Complete more fasts to get accurate impact analysis. We recommend at least 7 fasting days.';
+      'ਸਹੀ ਪ੍ਰਭਾਵ ਵਿਸ਼ਲੇਸ਼ਣ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ ਹੋਰ ਵਰਤ ਪੂਰੇ ਕਰੋ। ਅਸੀਂ ਘੱਟੋ-ਘੱਟ 7 ਵਰਤ ਦੇ ਦਿਨਾਂ ਦੀ ਸਿਫ਼ਾਰਸ਼ ਕਰਦੇ ਹਾਂ।';
 
   @override
   String get fastingImpactCompleteSomeFastsAnd =>
-      'Complete some fasts and log your weight to see how fasting impacts your goals.';
+      'ਕੁਝ ਵਰਤ ਪੂਰੇ ਕਰੋ ਅਤੇ ਆਪਣਾ ਭਾਰ ਲੌਗ ਕਰੋ ਤਾਂ ਜੋ ਇਹ ਦੇਖ ਸਕੋ ਕਿ ਵਰਤ ਤੁਹਾਡੇ ਟੀਚਿਆਂ ਨੂੰ ਕਿਵੇਂ ਪ੍ਰਭਾਵਿਤ ਕਰਦਾ ਹੈ।';
 
   @override
   String get fastingImpactFailedToLoadData => 'ਡਾਟਾ ਲੋਡ ਕਰਨ ਵਿੱਚ ਅਸਫਲ';
@@ -11909,7 +11909,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String fastingPanelLeft(Object remainingTimeString) {
-    return '$remainingTimeString left';
+    return '$remainingTimeString ਬਾਕੀ';
   }
 
   @override
@@ -12002,7 +12002,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String fastingScheduleEditorSheetFailedToSaveSchedule(Object e) {
-    return 'Failed to save schedule: $e';
+    return 'ਸ਼ਡਿਊਲ ਸੇਵ ਕਰਨ ਵਿੱਚ ਅਸਫਲ: $e';
   }
 
   @override
@@ -12468,7 +12468,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String fastingTrainingWarningHFasted(Object hoursFasted) {
-    return '${hoursFasted}h fasted';
+    return '${hoursFasted}h ਵਰਤ ਰੱਖਿਆ';
   }
 
   @override
@@ -13162,7 +13162,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String focalStepperInternalsEditValueCurrently(Object _display, Object unit) {
-    return 'Edit $unit value, currently $_display';
+    return '$unit ਮੁੱਲ ਸੰਪਾਦਿਤ ਕਰੋ, ਵਰਤਮਾਨ ਵਿੱਚ $_display';
   }
 
   @override
@@ -13279,7 +13279,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String foodAnalysisLoadingSElapsed(Object _elapsedSeconds) {
-    return '${_elapsedSeconds}s elapsed';
+    return '${_elapsedSeconds}s ਬੀਤ ਗਏ';
   }
 
   @override
@@ -13573,7 +13573,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String foodHistoryScreenDeleted(Object foodName) {
-    return 'Deleted $foodName';
+    return '$foodName ਡਿਲੀਟ ਕੀਤਾ ਗਿਆ';
   }
 
   @override
@@ -13581,7 +13581,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String foodHistoryScreenFailedToReLog(Object name) {
-    return 'Failed to re-log $name';
+    return '$name ਨੂੰ ਦੁਬਾਰਾ ਲੌਗ ਕਰਨ ਵਿੱਚ ਅਸਫਲ';
   }
 
   @override
@@ -18015,7 +18015,7 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -20021,7 +20021,8 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਸਾਰੀਆਂ ਆਈਟਮਾਂ ਤਸਦੀਕਸ਼ੁਦਾ ਪੋਸ਼ਣ ਡੇਟਾ ਨਾਲ ਮੇਲ ਖਾਂਦੀਆਂ ਹਨ';
 
   @override
-  String get logMealSheetAnalysisFailed => 'Analysis failed. Please try again.';
+  String get logMealSheetAnalysisFailed =>
+      'ਵਿਸ਼ਲੇਸ਼ਣ ਅਸਫਲ ਰਿਹਾ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 
   @override
   String get logMealSheetAnalyze => 'ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ';
@@ -20068,7 +20069,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String logMealSheetCouldnTAddFood(Object message) {
-    return 'Couldn\'t add food: $message';
+    return 'ਭੋਜਨ ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ: $message';
   }
 
   @override
@@ -20116,7 +20117,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String logMealSheetFailedToSaveError(Object error) {
-    return 'Failed to save: $error';
+    return 'ਸੇਵ ਕਰਨ ਵਿੱਚ ਅਸਫਲ: $error';
   }
 
   @override
@@ -20187,17 +20188,17 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String logMealSheetL2Logged(Object timesLogged) {
-    return 'logged $timesLogged×';
+    return '$timesLogged× ਲੌਗ ਕੀਤਾ ਗਿਆ';
   }
 
   @override
   String logMealSheetL2SetToForThe(Object label) {
-    return 'Set to $label for the time of day — tap the meal pill to change.';
+    return 'ਦਿਨ ਦੇ ਇਸ ਸਮੇਂ ਲਈ $label \'ਤੇ ਸੈੱਟ ਕੀਤਾ ਗਿਆ ਹੈ — ਬਦਲਣ ਲਈ ਮੀਲ ਪਿਲ (meal pill) \'ਤੇ ਟੈਪ ਕਰੋ।';
   }
 
   @override
   String logMealSheetL2YourUsual(Object label) {
-    return 'Your usual $label';
+    return 'ਤੁਹਾਡਾ ਆਮ $label';
   }
 
   @override
@@ -20214,8 +20215,8 @@ class AppLocalizationsPa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count items',
-      one: 'Logged 1 item',
+      other: '$count ਆਈਟਮਾਂ ਲੌਗ ਕੀਤੀਆਂ ਗਈਆਂ',
+      one: '1 ਆਈਟਮ ਲੌਗ ਕੀਤੀ ਗਈ',
     );
     return '$_temp0';
   }
@@ -20225,8 +20226,8 @@ class AppLocalizationsPa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Logged $count photos ($kcal kcal)',
-      one: 'Logged 1 photo ($kcal kcal)',
+      other: '$count ਫੋਟੋਆਂ ਲੌਗ ਕੀਤੀਆਂ ਗਈਆਂ ($kcal kcal)',
+      one: '1 ਫੋਟੋ ਲੌਗ ਕੀਤੀ ਗਈ ($kcal kcal)',
     );
     return '$_temp0';
   }
@@ -20259,12 +20260,12 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -20369,7 +20370,7 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਸਪੀਚ ਰਿਕੋਗਨੀਸ਼ਨ ਉਪਲਬਧ ਨਹੀਂ ਹੈ';
 
   @override
-  String get logMealSheetStartingAnalysis => 'Starting analysis...';
+  String get logMealSheetStartingAnalysis => 'ਵਿਸ਼ਲੇਸ਼ਣ ਸ਼ੁਰੂ ਹੋ ਰਿਹਾ ਹੈ...';
 
   @override
   String get logMealSheetStopListening => 'ਸੁਣਨਾ ਬੰਦ ਕਰੋ';
@@ -20560,7 +20561,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String logMeasurementSheetFailedToSave(Object e) {
-    return 'Failed to save: $e';
+    return 'ਸੇਵ ਕਰਨ ਵਿੱਚ ਅਸਫਲ: $e';
   }
 
   @override
@@ -20592,7 +20593,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String logPeriodSheetCouldNotSave(Object e) {
-    return 'Could not save: $e';
+    return 'ਸੇਵ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ: $e';
   }
 
   @override
@@ -20602,7 +20603,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String logPeriodSheetWithNoEnd(Object cycleDates) {
-    return '$cycleDates with no end ';
+    return 'ਬਿਨਾਂ ਅੰਤ ਦੇ $cycleDates';
   }
 
   @override
@@ -21040,7 +21041,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String loggedMealsSectionVia(Object label) {
-    return 'via $label';
+    return '$label ਰਾਹੀਂ';
   }
 
   @override
@@ -21224,7 +21225,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String managedGymCardGymProfilesTapTo(Object profileCount) {
-    return '$profileCount gym profiles · tap to switch';
+    return '$profileCount ਜਿਮ ਪ੍ਰੋਫਾਈਲ · ਬਦਲਣ ਲਈ ਟੈਪ ਕਰੋ';
   }
 
   @override
@@ -21371,12 +21372,12 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String mealRemindersSettingsScreenCouldnTLoadSchedules(Object e) {
-    return 'Couldn\\\'t load schedules: $e';
+    return 'ਸ਼ਡਿਊਲ ਲੋਡ ਨਹੀਂ ਕੀਤੇ ਜਾ ਸਕੇ: $e';
   }
 
   @override
   String mealRemindersSettingsScreenReminder(Object value) {
-    return '$value reminder';
+    return '$value ਰੀਮਾਈਂਡਰ';
   }
 
   @override
@@ -21564,7 +21565,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String measurementsScreenPartAddMeasurementSheetLog(Object displayName) {
-    return 'Log $displayName';
+    return '$displayName ਲੌਗ ਕਰੋ';
   }
 
   @override
@@ -24623,88 +24624,89 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get notificationsHeadsUpWhenResting =>
-      'Heads-up when resting heart rate runs high';
+      'ਜਦੋਂ ਆਰਾਮ ਕਰਨ ਵੇਲੇ ਦਿਲ ਦੀ ਧੜਕਣ ਤੇਜ਼ ਹੋਵੇ ਤਾਂ ਸੁਚੇਤ ਕਰੋ';
 
   @override
-  String get notificationsHourlyDuringWorkHours => 'Hourly during work hours';
+  String get notificationsHourlyDuringWorkHours =>
+      'ਕੰਮ ਦੇ ਘੰਟਿਆਂ ਦੌਰਾਨ ਹਰ ਘੰਟੇ';
 
   @override
-  String get notificationsIncludeEmoji => 'Include Emoji';
+  String get notificationsIncludeEmoji => 'ਇਮੋਜੀ ਸ਼ਾਮਲ ਕਰੋ';
 
   @override
-  String get notificationsLunch => 'Lunch';
+  String get notificationsLunch => 'ਦੁਪਹਿਰ ਦਾ ਖਾਣਾ';
 
   @override
-  String get notificationsMarkAllAsRead => 'Mark all as read';
+  String get notificationsMarkAllAsRead => 'ਸਭ ਨੂੰ ਪੜ੍ਹਿਆ ਹੋਇਆ ਚਿੰਨ੍ਹਿਤ ਕਰੋ';
 
   @override
-  String get notificationsMealReminders => 'Meal Reminders';
+  String get notificationsMealReminders => 'ਭੋਜਨ ਰੀਮਾਈਂਡਰ';
 
   @override
-  String get notificationsMidday => 'Midday';
+  String get notificationsMidday => 'ਦੁਪਹਿਰ';
 
   @override
-  String get notificationsMinimal => 'Minimal';
+  String get notificationsMinimal => 'ਘੱਟੋ-ਘੱਟ';
 
   @override
-  String get notificationsMorning => 'Morning';
+  String get notificationsMorning => 'ਸਵੇਰ';
 
   @override
-  String get notificationsMorningReadinessCheckIn =>
-      'Morning readiness check-in';
+  String get notificationsMorningReadinessCheckIn => 'ਸਵੇਰ ਦੀ ਤਿਆਰੀ ਦੀ ਜਾਂਚ';
 
   @override
-  String get notificationsMovementHydration => 'Movement + Hydration';
+  String get notificationsMovementHydration => 'ਗਤੀਵਿਧੀ + ਪਾਣੀ ਪੀਣਾ';
 
   @override
   String get notificationsNoNotificationsInThis =>
-      'No notifications in this category';
+      'ਇਸ ਸ਼੍ਰੇਣੀ ਵਿੱਚ ਕੋਈ ਸੂਚਨਾ ਨਹੀਂ ਹੈ';
 
   @override
-  String get notificationsNotificationFrequency => 'Notification Frequency';
+  String get notificationsNotificationFrequency => 'ਸੂਚਨਾ ਦੀ ਬਾਰੰਬਾਰਤਾ';
 
   @override
-  String get notificationsNotifications => 'NOTIFICATIONS';
+  String get notificationsNotifications => 'ਸੂਚਨਾਵਾਂ';
 
   @override
-  String get notificationsNudgeTime => 'Nudge time';
+  String get notificationsNudgeTime => 'ਯਾਦ ਦਿਵਾਉਣ ਦਾ ਸਮਾਂ';
 
   @override
   String get notificationsPeriodFertilityAndLogging =>
-      'Period, fertility, and logging reminders';
+      'ਪੀਰੀਅਡ, ਉਪਜਾਊ ਸ਼ਕਤੀ, ਅਤੇ ਲੌਗਿੰਗ ਰੀਮਾਈਂਡਰ';
 
   @override
-  String get notificationsRecommended => 'Recommended';
+  String get notificationsRecommended => 'ਸਿਫਾਰਸ਼ੀ';
 
   @override
-  String get notificationsRemindEvery => 'Remind every';
+  String get notificationsRemindEvery => 'ਹਰ ਵਾਰ ਯਾਦ ਦਿਵਾਓ';
 
   @override
-  String get notificationsRemindOnWorkoutDays => 'Remind on workout days';
+  String get notificationsRemindOnWorkoutDays =>
+      'ਵਰਕਆਊਟ ਵਾਲੇ ਦਿਨਾਂ \'ਤੇ ਯਾਦ ਦਿਵਾਓ';
 
   @override
-  String get notificationsReminderTime => 'Reminder time';
+  String get notificationsReminderTime => 'ਰੀਮਾਈਂਡਰ ਦਾ ਸਮਾਂ';
 
   @override
   String get notificationsReminderWhenYouRe =>
-      'Reminder when you\\\'re behind your step goal';
+      'ਜਦੋਂ ਤੁਸੀਂ ਆਪਣੇ ਕਦਮਾਂ ਦੇ ਟੀਚੇ ਤੋਂ ਪਿੱਛੇ ਹੋਵੋ ਤਾਂ ਰੀਮਾਈਂਡਰ';
 
   @override
-  String get notificationsScreenPartAccept => 'Accept';
+  String get notificationsScreenPartAccept => 'ਸਵੀਕਾਰ ਕਰੋ';
 
   @override
-  String get notificationsScreenPartIgnore => 'Ignore';
+  String get notificationsScreenPartIgnore => 'ਨਜ਼ਰਅੰਦਾਜ਼ ਕਰੋ';
 
   @override
   String get notificationsScreenPartNoNotificationsYet =>
-      'No notifications yet';
+      'ਅਜੇ ਤੱਕ ਕੋਈ ਸੂਚਨਾ ਨਹੀਂ';
 
   @override
-  String get notificationsScreenPartWhatToExpect => 'What to expect';
+  String get notificationsScreenPartWhatToExpect => 'ਕੀ ਉਮੀਦ ਰੱਖਣੀ ਹੈ';
 
   @override
   String get notificationsScreenPartYourAiCoachWill =>
-      'Your AI Coach will send you workout reminders, motivation, and progress updates here.';
+      'ਤੁਹਾਡਾ AI Coach ਇੱਥੇ ਤੁਹਾਨੂੰ ਵਰਕਆਊਟ ਰੀਮਾਈਂਡਰ, ਪ੍ਰੇਰਣਾ, ਅਤੇ ਪ੍ਰਗਤੀ ਦੇ ਅਪਡੇਟਸ ਭੇਜੇਗਾ।';
 
   @override
   String notificationsScreenYouAndAreNow(Object fromUserName) {
@@ -24713,26 +24715,25 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get notificationsShowEmojiInNotification =>
-      'Show emoji in notification text';
+      'ਸੂਚਨਾ ਟੈਕਸਟ ਵਿੱਚ ਇਮੋਜੀ ਦਿਖਾਓ';
 
   @override
-  String get notificationsStayHydratedThroughoutThe =>
-      'Stay hydrated throughout the day';
+  String get notificationsStayHydratedThroughoutThe => 'ਦਿਨ ਭਰ ਪਾਣੀ ਪੀਂਦੇ ਰਹੋ';
 
   @override
-  String get notificationsTime => 'Time';
+  String get notificationsTime => 'ਸਮਾਂ';
 
   @override
-  String get notificationsWaterReminders => 'Water Reminders';
+  String get notificationsWaterReminders => 'ਪਾਣੀ ਦੇ ਰੀਮਾਈਂਡਰ';
 
   @override
-  String get notificationsWeekendTimes => 'Weekend times';
+  String get notificationsWeekendTimes => 'ਵੀਕੈਂਡ ਦਾ ਸਮਾਂ';
 
   @override
-  String get notificationsWeeklyReport => 'Weekly Report';
+  String get notificationsWeeklyReport => 'ਹਫਤਾਵਾਰੀ ਰਿਪੋਰਟ';
 
   @override
-  String get notificationsWorkoutBreakfast => 'Workout + Breakfast';
+  String get notificationsWorkoutBreakfast => 'ਵਰਕਆਊਟ + ਨਾਸ਼ਤਾ';
 
   @override
   String get notificationsWorkoutReminders => 'ਕਸਰਤ ਰੀਮਾਈਂਡਰ';
@@ -24774,7 +24775,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String nutrientExplorerAddedToPinnedNutrients(Object displayName) {
-    return '$displayName added to pinned nutrients';
+    return '$displayName ਪਿੰਨ ਕੀਤੇ ਪੌਸ਼ਟਿਕ ਤੱਤਾਂ ਵਿੱਚ ਸ਼ਾਮਲ ਕੀਤਾ ਗਿਆ';
   }
 
   @override
@@ -31580,21 +31581,21 @@ class AppLocalizationsPa extends AppLocalizations {
   String get recipeShareCopiedToClipboard => 'ਕਲਿੱਪਬੋਰਡ ਵਿੱਚ ਕਾਪੀ ਕੀਤਾ ਗਿਆ';
 
   @override
-  String get recipeShareGenerateShareLink => 'Generate share link';
+  String get recipeShareGenerateShareLink => 'ਸ਼ੇਅਰ ਲਿੰਕ ਤਿਆਰ ਕਰੋ';
 
   @override
-  String get recipeShareRecipeIsPublic => 'Recipe is public';
+  String get recipeShareRecipeIsPublic => 'ਰੇਸਿਪੀ ਜਨਤਕ ਹੈ';
 
   @override
-  String get recipeShareSharePublicly => 'Share publicly';
+  String get recipeShareSharePublicly => 'ਜਨਤਕ ਤੌਰ \'ਤੇ ਸ਼ੇਅਰ ਕਰੋ';
 
   @override
   String recipeShareSheetAnyoneWithTheLink(Object saveCount, Object viewCount) {
-    return 'Anyone with the link can view. Saves to libraries: $saveCount · Views: $viewCount';
+    return 'ਲਿੰਕ ਵਾਲਾ ਕੋਈ ਵੀ ਵਿਅਕਤੀ ਦੇਖ ਸਕਦਾ ਹੈ। ਲਾਇਬ੍ਰੇਰੀਆਂ ਵਿੱਚ ਸੇਵ ਕੀਤਾ ਗਿਆ: $saveCount · ਵਿਊਜ਼: $viewCount';
   }
 
   @override
-  String get recipeShareStopSharing => 'Stop sharing';
+  String get recipeShareStopSharing => 'ਸ਼ੇਅਰ ਕਰਨਾ ਬੰਦ ਕਰੋ';
 
   @override
   String recipeSuggestionCardCal(Object calories) {
@@ -31602,13 +31603,13 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get recipeSuggestionCardCookAgain => 'Cook Again';
+  String get recipeSuggestionCardCookAgain => 'ਦੁਬਾਰਾ ਬਣਾਓ';
 
   @override
-  String get recipeSuggestionCardIMadeThis => 'I Made This';
+  String get recipeSuggestionCardIMadeThis => 'ਮੈਂ ਇਹ ਬਣਾਇਆ';
 
   @override
-  String get recipeSuggestionCardIngredients => 'Ingredients';
+  String get recipeSuggestionCardIngredients => 'ਸਮੱਗਰੀ';
 
   @override
   String get recipeSuggestionCardInstructions => 'ਨਿਰਦੇਸ਼';
@@ -31816,7 +31817,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String recordAssessmentSheetTop(Object assessment) {
-    return 'Top $assessment%';
+    return 'ਚੋਟੀ ਦੇ $assessment%';
   }
 
   @override
@@ -32418,7 +32419,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String renewalReminderBannerRenewsOn(Object formattedRenewalDate) {
-    return 'Renews on $formattedRenewalDate';
+    return '$formattedRenewalDate ਨੂੰ ਰੀਨਿਊ ਹੋਵੇਗਾ';
   }
 
   @override
@@ -32689,7 +32690,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String reportShareSheetShare(Object title) {
-    return 'Share $title';
+    return '$title ਸ਼ੇਅਰ ਕਰੋ';
   }
 
   @override
@@ -32722,7 +32723,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String get reportWrappedTemplateWrapped => 'WRAPPED';
 
   @override
-  String get reportsHub1RepMaxes => '1-Rep Maxes';
+  String get reportsHub1RepMaxes => '1RM';
 
   @override
   String get reportsHubBadgesUnlockedAlongYour =>
@@ -32866,12 +32867,12 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String requestRefundScreenPer(Object _billingPeriod) {
-    return 'Per $_billingPeriod';
+    return 'ਪ੍ਰਤੀ $_billingPeriod';
   }
 
   @override
   String requestRefundScreenWeHaveReceivedYour(Object planName) {
-    return 'We have received your refund request for $planName';
+    return 'ਅਸੀਂ $planName ਲਈ ਤੁਹਾਡੀ ਰਿਫੰਡ ਬੇਨਤੀ ਪ੍ਰਾਪਤ ਕਰ ਲਈ ਹੈ';
   }
 
   @override
@@ -33180,37 +33181,37 @@ class AppLocalizationsPa extends AppLocalizations {
   String get ringCatalogWeight => 'ਭਾਰ';
 
   @override
-  String get ringLabelCycleDay => 'Cycle day';
+  String get ringLabelCycleDay => 'ਸਾਈਕਲ ਦਿਨ';
 
   @override
-  String get ringLabelHeartRate => 'Heart rate';
+  String get ringLabelHeartRate => 'ਦਿਲ ਦੀ ਧੜਕਣ';
 
   @override
   String get ringLabelHrv => 'HRV';
 
   @override
-  String get ringLabelHydration => 'Hydration';
+  String get ringLabelHydration => 'ਹਾਈਡਰੇਸ਼ਨ';
 
   @override
-  String get ringLabelMove => 'Move';
+  String get ringLabelMove => 'ਮੂਵ';
 
   @override
-  String get ringLabelNourish => 'Nourish';
+  String get ringLabelNourish => 'ਨੌਰਿਸ਼';
 
   @override
-  String get ringLabelRecovery => 'Recovery';
+  String get ringLabelRecovery => 'ਰਿਕਵਰੀ';
 
   @override
-  String get ringLabelSleep => 'Sleep';
+  String get ringLabelSleep => 'ਨੀਂਦ';
 
   @override
-  String get ringLabelStress => 'Stress';
+  String get ringLabelStress => 'ਤਣਾਅ';
 
   @override
-  String get ringLabelTrain => 'Train';
+  String get ringLabelTrain => 'ਟ੍ਰੇਨ';
 
   @override
-  String get ringLabelWeight => 'Weight';
+  String get ringLabelWeight => 'ਭਾਰ';
 
   @override
   String get roiSummaryCardCalories => 'ਕੈਲੋਰੀ';
@@ -33321,7 +33322,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerMore(Object overflow) {
-    return '+$overflow more';
+    return '+$overflow ਹੋਰ';
   }
 
   @override
@@ -33385,7 +33386,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String get savedHubTryAgain => 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ';
 
   @override
-  String get scheduleGenerateThisWeek => 'Generate This Week';
+  String get scheduleGenerateThisWeek => 'ਇਸ ਹਫ਼ਤੇ ਲਈ ਤਿਆਰ ਕਰੋ';
 
   @override
   String scheduleItemCardMin(Object durationMinutes) {
@@ -33393,32 +33394,32 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get scheduleMealDays => 'Days';
+  String get scheduleMealDays => 'ਦਿਨ';
 
   @override
-  String get scheduleMealEndDate => 'End date';
+  String get scheduleMealEndDate => 'ਅੰਤਮ ਮਿਤੀ';
 
   @override
-  String get scheduleMealInterval => 'Interval';
+  String get scheduleMealInterval => 'ਅੰਤਰਾਲ';
 
   @override
   String get scheduleMealPickACadenceWe =>
-      'Pick a cadence; we’ll handle the AI recipe save for you.';
+      'ਇੱਕ ਕੈਡੈਂਸ ਚੁਣੋ; ਅਸੀਂ ਤੁਹਾਡੇ ਲਈ AI ਰੇਸਿਪੀ ਸੇਵ ਦਾ ਪ੍ਰਬੰਧ ਕਰਾਂਗੇ।';
 
   @override
-  String get scheduleMealPickADate => 'Pick a date';
+  String get scheduleMealPickADate => 'ਇੱਕ ਮਿਤੀ ਚੁਣੋ';
 
   @override
-  String get scheduleMealPickAnEndDate => 'Pick an end date';
+  String get scheduleMealPickAnEndDate => 'ਇੱਕ ਅੰਤਮ ਮਿਤੀ ਚੁਣੋ';
 
   @override
-  String get scheduleMealPickAtLeastOne => 'Pick at least one day';
+  String get scheduleMealPickAtLeastOne => 'ਘੱਟੋ-ਘੱਟ ਇੱਕ ਦਿਨ ਚੁਣੋ';
 
   @override
-  String get scheduleMealSchedule => 'Schedule';
+  String get scheduleMealSchedule => 'ਸ਼ਡਿਊਲ';
 
   @override
-  String get scheduleMealScheduleThisMeal => 'Schedule this meal';
+  String get scheduleMealScheduleThisMeal => 'ਇਸ ਮੀਲ ਨੂੰ ਸ਼ਡਿਊਲ ਕਰੋ';
 
   @override
   String scheduleMealSheetDays(Object i) {
@@ -33431,14 +33432,14 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get scheduleMealTime => 'Time';
+  String get scheduleMealTime => 'ਸਮਾਂ';
 
   @override
-  String get scheduleMismatchConfirm => 'Confirm';
+  String get scheduleMismatchConfirm => 'ਪੁਸ਼ਟੀ ਕਰੋ';
 
   @override
   String scheduleMismatchDialogAiWillSwitchTo(Object compatibleSplitName) {
-    return 'AI will switch to $compatibleSplitName instead';
+    return 'AI ਇਸ ਦੀ ਬਜਾਏ $compatibleSplitName \'ਤੇ ਸਵਿੱਚ ਕਰੇਗਾ';
   }
 
   @override
@@ -33447,36 +33448,36 @@ class AppLocalizationsPa extends AppLocalizations {
     Object requiredDays,
     Object splitName,
   ) {
-    return '$splitName requires $requiredDays days per week, but you currently have $currentDayCount days selected.';
+    return '$splitName ਲਈ ਪ੍ਰਤੀ ਹਫ਼ਤੇ $requiredDays ਦਿਨਾਂ ਦੀ ਲੋੜ ਹੈ, ਪਰ ਤੁਸੀਂ ਵਰਤਮਾਨ ਵਿੱਚ $currentDayCount ਦਿਨ ਚੁਣੇ ਹਨ।';
   }
 
   @override
   String scheduleMismatchDialogUpdateToSchedule(Object splitName) {
-    return 'Update to $splitName schedule';
+    return '$splitName ਸ਼ਡਿਊਲ \'ਤੇ ਅਪਡੇਟ ਕਰੋ';
   }
 
   @override
   String scheduleMismatchDialogUseTheFullDay(Object requiredDays) {
-    return 'Use the full $requiredDays-day program';
+    return 'ਪੂਰਾ $requiredDays-ਦਿਨਾਂ ਦਾ ਪ੍ਰੋਗਰਾਮ ਵਰਤੋ';
   }
 
   @override
-  String get scheduleMismatchKeepMyCurrentDays => 'Keep my current days';
+  String get scheduleMismatchKeepMyCurrentDays => 'ਮੇਰੇ ਮੌਜੂਦਾ ਦਿਨ ਰੱਖੋ';
 
   @override
-  String get scheduleMismatchRecommended => 'Recommended';
+  String get scheduleMismatchRecommended => 'ਸਿਫਾਰਸ਼ੀ';
 
   @override
-  String get scheduleMismatchScheduleMismatch => 'Schedule Mismatch';
+  String get scheduleMismatchScheduleMismatch => 'ਸ਼ਡਿਊਲ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ';
 
   @override
-  String get scheduleNoItemsScheduled => 'No items scheduled';
+  String get scheduleNoItemsScheduled => 'ਕੋਈ ਆਈਟਮ ਸ਼ਡਿਊਲ ਨਹੀਂ ਹੈ';
 
   @override
-  String get scheduleRestDay => 'Rest day';
+  String get scheduleRestDay => 'ਆਰਾਮ ਦਾ ਦਿਨ';
 
   @override
-  String get scheduleSchedule => 'Schedule';
+  String get scheduleSchedule => 'ਸ਼ਡਿਊਲ';
 
   @override
   String scheduleScreenFailedToLoad(Object error) {
@@ -33502,80 +33503,81 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get scheduleScreenPartMon => 'Mon';
+  String get scheduleScreenPartMon => 'ਸੋਮ';
 
   @override
   String get scheduleScreenPartStrength => 'STRENGTH';
 
   @override
-  String get scheduleScreenPartSun => 'Sun';
+  String get scheduleScreenPartSun => 'ਐਤ';
 
   @override
-  String get scheduleScreenPartThisWeek => 'This Week';
+  String get scheduleScreenPartThisWeek => 'ਇਸ ਹਫ਼ਤੇ';
 
   @override
   String scheduleScreenPartWeekSelectorEx(Object exerciseCount) {
-    return '$exerciseCount ex';
+    return '$exerciseCount ਕਸਰਤਾਂ';
   }
 
   @override
   String scheduleScreenPartWeekSelectorMin(Object bestDurationMinutes) {
-    return '$bestDurationMinutes min';
+    return '$bestDurationMinutes ਮਿੰਟ';
   }
 
   @override
-  String get scheduleToday => 'Today';
+  String get scheduleToday => 'ਅੱਜ';
 
   @override
-  String get scheduleWorkoutCheckingSchedule => 'Checking schedule...';
+  String get scheduleWorkoutCheckingSchedule => 'ਸ਼ਡਿਊਲ ਚੈੱਕ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...';
 
   @override
   String scheduleWorkoutDialogFailedToScheduleWorkout(Object e) {
-    return 'Failed to schedule workout: $e';
+    return 'ਵਰਕਆਊਟ ਸ਼ਡਿਊਲ ਕਰਨ ਵਿੱਚ ਅਸਫਲ: $e';
   }
 
   @override
   String scheduleWorkoutDialogScheduleFor(Object workoutName) {
-    return 'Schedule \"$workoutName\" for:';
+    return '\"$workoutName\" ਲਈ ਸ਼ਡਿਊਲ:';
   }
 
   @override
   String scheduleWorkoutDialogWorkoutSAlreadyOn(Object length) {
-    return '$length workout(s) already on this date';
+    return 'ਇਸ ਮਿਤੀ \'ਤੇ $length ਵਰਕਆਊਟ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹਨ';
   }
 
   @override
   String scheduleWorkoutDialogWorkoutScheduledFor(Object day, Object month) {
-    return 'Workout scheduled for $month/$day!';
+    return '$month/$day ਲਈ ਵਰਕਆਊਟ ਸ਼ਡਿਊਲ ਕੀਤਾ ਗਿਆ!';
   }
 
   @override
-  String get scheduleWorkoutSchedule => 'Schedule';
+  String get scheduleWorkoutSchedule => 'ਸ਼ਡਿਊਲ';
 
   @override
-  String get scheduleWorkoutScheduleWorkout => 'Schedule Workout';
+  String get scheduleWorkoutScheduleWorkout => 'ਵਰਕਆਊਟ ਸ਼ਡਿਊਲ ਕਰੋ';
 
   @override
-  String get scheduleWorkoutSchedulingWorkout => 'Scheduling workout...';
+  String get scheduleWorkoutSchedulingWorkout =>
+      'ਵਰਕਆਊਟ ਸ਼ਡਿਊਲ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...';
 
   @override
   String get scheduleWorkoutThisWorkoutWillBe =>
-      'This workout will be added alongside them.';
+      'ਇਹ ਵਰਕਆਊਟ ਉਹਨਾਂ ਦੇ ਨਾਲ ਜੋੜਿਆ ਜਾਵੇਗਾ।';
 
   @override
-  String get scoreBreakdownConsistency => 'Consistency';
+  String get scoreBreakdownConsistency => 'ਨਿਰੰਤਰਤਾ';
 
   @override
-  String get scoreBreakdownReadiness => 'Readiness';
+  String get scoreBreakdownReadiness => 'ਤਿਆਰੀ';
 
   @override
-  String get scoreBreakdownScoreBreakdown => 'Score Breakdown';
+  String get scoreBreakdownScoreBreakdown => 'ਸਕੋਰ ਦਾ ਵੇਰਵਾ';
 
   @override
   String get scoreBreakdownStrength => 'Strength';
 
   @override
-  String get scoreChangeAnnouncementGotIt => 'Got it';
+  String get scoreChangeAnnouncementGotIt => 'ਸਮਝ ਗਿਆ';
 
   @override
   String get scoreChangeAnnouncementMove => 'Move';
@@ -33593,34 +33595,36 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scoreChangeAnnouncementSleepNowCountsToward =>
-      'Sleep now counts toward your daily score.';
+      'ਨੀਂਦ ਹੁਣ ਤੁਹਾਡੇ ਰੋਜ਼ਾਨਾ ਸਕੋਰ ਵਿੱਚ ਗਿਣੀ ਜਾਂਦੀ ਹੈ।';
 
   @override
   String get scoreChangeAnnouncementTrain => 'Train';
 
   @override
-  String get scoreChangeAnnouncementWhatSNew => 'WHAT\\\'S NEW';
+  String get scoreChangeAnnouncementWhatSNew => 'ਕੀ ਨਵਾਂ ਹੈ';
 
   @override
-  String get scoreColorsExcellent => 'Excellent';
+  String get scoreColorsExcellent => 'ਸ਼ਾਨਦਾਰ';
 
   @override
-  String get scoreExplain03AntiInflammatory => '0 – 3  Anti-inflammatory';
+  String get scoreExplain03AntiInflammatory =>
+      '0 – 3 ਸੋਜ-ਵਿਰੋਧੀ (Anti-inflammatory)';
 
   @override
-  String get scoreExplain13Poor => '1 – 3  Poor';
+  String get scoreExplain13Poor => '1 – 3 ਮਾੜਾ';
 
   @override
-  String get scoreExplain46Average => '4 – 6  Average';
+  String get scoreExplain46Average => '4 – 6 ਔਸਤ';
 
   @override
-  String get scoreExplain46NeutralMild => '4 – 6  Neutral / mild';
+  String get scoreExplain46NeutralMild => '4 – 6 ਨਿਰਪੱਖ / ਹਲਕਾ';
 
   @override
-  String get scoreExplain710GoodExcellent => '7 – 10  Good / Excellent';
+  String get scoreExplain710GoodExcellent => '7 – 10 ਚੰਗਾ / ਸ਼ਾਨਦਾਰ';
 
   @override
-  String get scoreExplain710HighlyInflammatory => '7 – 10  Highly inflammatory';
+  String get scoreExplain710HighlyInflammatory =>
+      '7 – 10 ਬਹੁਤ ਜ਼ਿਆਦਾ ਸੋਜ ਪੈਦਾ ਕਰਨ ਵਾਲਾ';
 
   @override
   String get scoreExplainAddedSugar => 'ਸ਼ਾਮਲ ਕੀਤੀ ਖੰਡ';
@@ -33644,7 +33648,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scoreExplainCertainPortionsOfAvocado =>
-      'Certain portions of avocado, sweet potato, almonds — OK in small servings, rough in large.';
+      'ਐਵੋਕਾਡੋ, ਸ਼ਕਰਕੰਦੀ, ਬਦਾਮ ਦੇ ਕੁਝ ਹਿੱਸੇ — ਛੋਟੀਆਂ ਪਰੋਸਾਂ ਵਿੱਚ ਠੀਕ, ਵੱਡੀਆਂ ਵਿੱਚ ਮੁਸ਼ਕਲ।';
 
   @override
   String get scoreExplainChronicLowGradeInflammation =>
@@ -33692,7 +33696,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scoreExplainDessertsSugaryDrinksCandy =>
-      'Desserts, sugary drinks, candy, many breakfast cereals. Spikes insulin, crashes energy.';
+      'ਮਿਠਾਈਆਂ, ਮਿੱਠੇ ਪੀਣ ਵਾਲੇ ਪਦਾਰਥ, ਕੈਂਡੀ, ਬਹੁਤ ਸਾਰੇ ਨਾਸ਼ਤੇ ਦੇ ਸੀਰੀਅਲ। ਇਨਸੁਲਿਨ ਵਧਾਉਂਦੇ ਹਨ, ਊਰਜਾ ਘਟਾਉਂਦੇ ਹਨ।';
 
   @override
   String get scoreExplainEachMealGets =>
@@ -33700,10 +33704,10 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scoreExplainEngineeredFoodProductsChip =>
-      'Engineered food products: chips, sodas, instant noodles, packaged sweets, most fast food.';
+      'ਇੰਜੀਨੀਅਰਡ ਫੂਡ ਉਤਪਾਦ: ਚਿਪਸ, ਸੋਡਾ, ਇੰਸਟੈਂਟ ਨੂਡਲਜ਼, ਪੈਕ ਕੀਤੇ ਮਿਠਾਈਆਂ, ਜ਼ਿਆਦਾਤਰ ਫਾਸਟ ਫੂਡ।';
 
   @override
-  String get scoreExplainFodmapRating => 'FODMAP rating';
+  String get scoreExplainFodmapRating => 'FODMAP ਰੇਟਿੰਗ';
 
   @override
   String get scoreExplainFodmapsAreShortChain =>
@@ -33711,7 +33715,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scoreExplainFriedFoodsProcessedMeats =>
-      'Fried foods, processed meats, sugary drinks, refined seed oils, packaged snacks.';
+      'ਤਲੇ ਹੋਏ ਭੋਜਨ, ਪ੍ਰੋਸੈਸਡ ਮੀਟ, ਮਿੱਠੇ ਪੀਣ ਵਾਲੇ ਪਦਾਰਥ, ਰਿਫਾਇੰਡ ਬੀਜਾਂ ਦੇ ਤੇਲ, ਪੈਕ ਕੀਤੇ ਸਨੈਕਸ।';
 
   @override
   String get scoreExplainGlycemicLoadCombines =>
@@ -33723,10 +33727,10 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainGood => 'Good';
+  String get scoreExplainGood => 'ਚੰਗਾ';
 
   @override
-  String get scoreExplainHealthScore => 'Health score';
+  String get scoreExplainHealthScore => 'ਸਿਹਤ ਸਕੋਰ';
 
   @override
   String scoreExplainHealthScoreValue(Object v) {
@@ -33734,28 +33738,29 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainHigh => 'High';
+  String get scoreExplainHigh => 'ਉੱਚ';
 
   @override
-  String get scoreExplainHigh15G => 'High  (15 g+)';
+  String get scoreExplainHigh15G => 'ਉੱਚ (15 ਗ੍ਰਾਮ+)';
 
   @override
-  String get scoreExplainHigh20 => 'High  (20+)';
+  String get scoreExplainHigh20 => 'ਉੱਚ (20+)';
 
   @override
   String get scoreExplainHighInflammationUltraProce =>
-      'High inflammation, ultra-processed, or way off your macros. Swap to a Good option if possible.';
+      'ਉੱਚ ਸੋਜ, ਅਲਟਰਾ-ਪ੍ਰੋਸੈਸਡ, ਜਾਂ ਤੁਹਾਡੇ ਮੈਕਰੋ ਤੋਂ ਬਹੁਤ ਦੂਰ। ਜੇ ਸੰਭਵ ਹੋਵੇ ਤਾਂ ਇੱਕ ਚੰਗੇ ਵਿਕਲਪ ਨਾਲ ਬਦਲੋ।';
 
   @override
   String get scoreExplainHighProteinOrFiber =>
-      'High protein or fiber, whole foods, low added sugar, anti-inflammatory ingredients.';
+      'ਉੱਚ ਪ੍ਰੋਟੀਨ ਜਾਂ ਫਾਈਬਰ, ਪੂਰੇ ਭੋਜਨ, ਘੱਟ ਵਾਧੂ ਖੰਡ, ਸੋਜ-ਵਿਰੋਧੀ ਸਮੱਗਰੀ।';
 
   @override
   String get scoreExplainHitsYourGoalMacros =>
-      'Hits your goal macros, mostly whole foods, low-to-moderate inflammation. Pick freely.';
+      'ਤੁਹਾਡੇ ਟੀਚੇ ਦੇ ਮੈਕਰੋ ਨੂੰ ਪੂਰਾ ਕਰਦਾ ਹੈ, ਜ਼ਿਆਦਾਤਰ ਪੂਰੇ ਭੋਜਨ, ਘੱਟ-ਤੋਂ-ਮੱਧਮ ਸੋਜ। ਖੁੱਲ੍ਹ ਕੇ ਚੁਣੋ।';
 
   @override
-  String get scoreExplainHowThisDishRates => 'How this dish rates for you';
+  String get scoreExplainHowThisDishRates =>
+      'ਇਹ ਡਿਸ਼ ਤੁਹਾਡੇ ਲਈ ਕਿਵੇਂ ਰੇਟ ਕਰਦੀ ਹੈ';
 
   @override
   String get scoreExplainImportantIfYouHaveDiabetes =>
@@ -33772,48 +33777,48 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scoreExplainLeafyGreensBerriesWild =>
-      'Leafy greens, berries, wild salmon, turmeric, extra-virgin olive oil, nuts, legumes.';
+      'ਪੱਤੇਦਾਰ ਸਾਗ, ਬੇਰੀਆਂ, ਜੰਗਲੀ ਸੈਲਮਨ, ਹਲਦੀ, ਐਕਸਟਰਾ-ਵਰਜਿਨ ਜੈਤੂਨ ਦਾ ਤੇਲ, ਗਿਰੀਦਾਰ, ਦਾਲਾਂ।';
 
   @override
-  String get scoreExplainLow => 'Low';
+  String get scoreExplainLow => 'ਘੱਟ';
 
   @override
-  String get scoreExplainLowUnder10 => 'Low  (under 10)';
+  String get scoreExplainLowUnder10 => 'ਘੱਟ (10 ਤੋਂ ਘੱਟ)';
 
   @override
-  String get scoreExplainLowUnder5G => 'Low  (under 5 g)';
+  String get scoreExplainLowUnder5G => 'ਘੱਟ (5 ਗ੍ਰਾਮ ਤੋਂ ਘੱਟ)';
 
   @override
   String get scoreExplainMeatEggsRiceOats =>
-      'Meat, eggs, rice, oats, lactose-free dairy, carrots, zucchini, spinach, berries, oranges.';
+      'ਮੀਟ, ਅੰਡੇ, ਚੌਲ, ਜਵੀ, ਲੈਕਟੋਜ਼-ਮੁਕਤ ਡੇਅਰੀ, ਗਾਜਰ, ਜ਼ੁਕੀਨੀ, ਪਾਲਕ, ਬੇਰੀਆਂ, ਸੰਤਰੇ।';
 
   @override
-  String get scoreExplainMedium => 'Medium';
+  String get scoreExplainMedium => 'ਮੱਧਮ';
 
   @override
-  String get scoreExplainMedium1019 => 'Medium  (10 – 19)';
+  String get scoreExplainMedium1019 => 'ਮੱਧਮ (10 – 19)';
 
   @override
   String get scoreExplainMinimalBloodSugarSpike =>
-      'Minimal blood-sugar spike. Non-starchy vegetables, eggs, meat, berries, most dairy.';
+      'ਘੱਟੋ-ਘੱਟ ਬਲੱਡ ਸ਼ੂਗਰ ਸਪਾਈਕ। ਸਟਾਰਚ-ਰਹਿਤ ਸਬਜ਼ੀਆਂ, ਅੰਡੇ, ਮੀਟ, ਬੇਰੀਆਂ, ਜ਼ਿਆਦਾਤਰ ਡੇਅਰੀ।';
 
   @override
-  String get scoreExplainModerate => 'Moderate';
+  String get scoreExplainModerate => 'ਦਰਮਿਆਨਾ';
 
   @override
-  String get scoreExplainModerate514G => 'Moderate  (5 – 14 g)';
+  String get scoreExplainModerate514G => 'ਦਰਮਿਆਨਾ (5 – 14 ਗ੍ਰਾਮ)';
 
   @override
   String get scoreExplainModerateSpikeOatsWhole =>
-      'Moderate spike. Oats, whole-wheat bread, banana, sweet potato, basmati rice.';
+      'ਦਰਮਿਆਨਾ ਸਪਾਈਕ। ਜਵੀ, ਸਾਬਤ ਕਣਕ ਦੀ ਰੋਟੀ, ਕੇਲਾ, ਸ਼ਕਰਕੰਦੀ, ਬਾਸਮਤੀ ਚੌਲ।';
 
   @override
   String get scoreExplainMostSavouryDishesPlain =>
-      'Most savoury dishes, plain dairy, whole fruit. No meaningful blood-sugar impact.';
+      'ਜ਼ਿਆਦਾਤਰ ਸੁਆਦੀ ਪਕਵਾਨ, ਸਾਦੀ ਡੇਅਰੀ, ਪੂਰੇ ਫਲ। ਬਲੱਡ ਸ਼ੂਗਰ \'ਤੇ ਕੋਈ ਮਹੱਤਵਪੂਰਨ ਪ੍ਰਭਾਵ ਨਹੀਂ।';
 
   @override
   String get scoreExplainOnionGarlicWheatRye =>
-      'Onion, garlic, wheat, rye, milk/ice cream, apples, pears, honey, beans, cauliflower.';
+      'ਪਿਆਜ਼, ਲਸਣ, ਕਣਕ, ਰਾਈ, ਦੁੱਧ/ਆਈਸਕ੍ਰੀਮ, ਸੇਬ, ਨਾਸ਼ਪਾਤੀ, ਸ਼ਹਿਦ, ਬੀਨਜ਼, ਗੋਭੀ।';
 
   @override
   String get scoreExplainOnlyRelevantIfYouHaveIbs =>
@@ -33825,15 +33830,15 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scoreExplainRawOrBasicCooked =>
-      'Raw or basic-cooked foods: meat, eggs, vegetables, plain yoghurt, cheese, whole grains.';
+      'ਕੱਚੇ ਜਾਂ ਬੁਨਿਆਦੀ ਤੌਰ \'ਤੇ ਪਕਾਏ ਗਏ ਭੋਜਨ: ਮੀਟ, ਅੰਡੇ, ਸਬਜ਼ੀਆਂ, ਸਾਦੀ ਦਹੀਂ, ਪਨੀਰ, ਸਾਬਤ ਅਨਾਜ।';
 
   @override
   String get scoreExplainReasonableChoiceCouldBe =>
-      'Reasonable choice — could be improved on one or two axes (more fiber, less processing).';
+      'ਵਾਜਬ ਵਿਕਲਪ — ਇੱਕ ਜਾਂ ਦੋ ਪਹਿਲੂਆਂ \'ਤੇ ਸੁਧਾਰ ਕੀਤਾ ਜਾ ਸਕਦਾ ਹੈ (ਵਧੇਰੇ ਫਾਈਬਰ, ਘੱਟ ਪ੍ਰੋਸੈਸਿੰਗ)।';
 
   @override
   String get scoreExplainReasonableChoiceWithA =>
-      'Reasonable choice with a trade-off — watch portion or pair with a cleaner side.';
+      'ਸਮਝੌਤੇ ਦੇ ਨਾਲ ਵਾਜਬ ਵਿਕਲਪ — ਹਿੱਸੇ ਨੂੰ ਦੇਖੋ ਜਾਂ ਸਾਫ਼ ਪਾਸੇ ਨਾਲ ਜੋੜੋ।';
 
   @override
   String get scoreExplainScoreDetailUnavailable =>
@@ -33844,11 +33849,11 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scoreExplainSteepSpikeCrashWhite =>
-      'Steep spike + crash. White rice bowls, sugary drinks, pastries, large pasta plates.';
+      'ਤੇਜ਼ ਸਪਾਈਕ + ਕਰੈਸ਼। ਚਿੱਟੇ ਚੌਲਾਂ ਦੇ ਬਾਊਲ, ਮਿੱਠੇ ਪੀਣ ਵਾਲੇ ਪਦਾਰਥ, ਪੇਸਟਰੀਆਂ, ਪਾਸਤਾ ਦੀਆਂ ਵੱਡੀਆਂ ਪਲੇਟਾਂ।';
 
   @override
   String get scoreExplainSweetenedYogurtASmall =>
-      'Sweetened yogurt, a small pastry, half a sports drink. A reasonable treat — not daily.';
+      'ਮਿੱਠੀ ਦਹੀਂ, ਇੱਕ ਛੋਟੀ ਪੇਸਟਰੀ, ਅੱਧਾ ਸਪੋਰਟਸ ਡਰਿੰਕ। ਇੱਕ ਵਾਜਬ ਟ੍ਰੀਟ — ਰੋਜ਼ਾਨਾ ਨਹੀਂ।';
 
   @override
   String scoreExplainThatIsAboutPctDay(Object pctDay) {
@@ -33856,11 +33861,11 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get scoreExplainUltraProcessed => 'Ultra-processed';
+  String get scoreExplainUltraProcessed => 'ਅਲਟਰਾ-ਪ੍ਰੋਸੈਸਡ';
 
   @override
   String get scoreExplainUltraProcessedDeepFried =>
-      'Ultra-processed, deep-fried, low fiber, or very high added sugar / sodium.';
+      'ਅਲਟਰਾ-ਪ੍ਰੋਸੈਸਡ, ਡੂੰਘੇ ਤਲੇ ਹੋਏ, ਘੱਟ ਫਾਈਬਰ, ਜਾਂ ਬਹੁਤ ਜ਼ਿਆਦਾ ਵਾਧੂ ਖੰਡ / ਸੋਡੀਅਮ।';
 
   @override
   String get scoreExplainUltraProcessedNova4 => 'ਅਲਟਰਾ-ਪ੍ਰੋਸੈਸਡ (NOVA 4)';
@@ -33901,7 +33906,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String scoringCardTotal(Object totalPct) {
-    return 'Total: $totalPct%';
+    return 'ਕੁੱਲ: $totalPct%';
   }
 
   @override
@@ -33958,7 +33963,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String seniorCardExercisesMin(Object durationMinutes, Object exerciseCount) {
-    return '$exerciseCount exercises  •  $durationMinutes min';
+    return '$exerciseCount ਕਸਰਤਾਂ • $durationMinutes ਮਿੰਟ';
   }
 
   @override
@@ -33981,7 +33986,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String seniorFitnessScreenS(Object restBetweenSets) {
-    return '${restBetweenSets}s';
+    return '$restBetweenSetsਸੈਕਿੰਡ';
   }
 
   @override
@@ -33998,7 +34003,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String get seniorNavFood => 'ਭੋਜਨ';
 
   @override
-  String get sessionDetailReps => 'Reps';
+  String get sessionDetailReps => 'ਰੈਪਸ';
 
   @override
   String get sessionDetailSet => 'ਸੈੱਟ';
@@ -34084,7 +34089,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String setAdjustmentSheetPartSetAdjustmentReasonOf(Object exerciseName) {
-    return ') of (exerciseName)';
+    return ') ਦਾ (exerciseName)';
   }
 
   @override
@@ -34146,12 +34151,12 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String setRailOverflowRowSet(Object displayIndex) {
-    return 'Set $displayIndex';
+    return 'ਸੈੱਟ $displayIndex';
   }
 
   @override
   String setRailOverflowSheetTotal(Object length) {
-    return '$length total';
+    return 'ਕੁੱਲ $length';
   }
 
   @override
@@ -44210,4 +44215,23 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach ਹੁਣ $nativeName ਵਿੱਚ ਜਵਾਬ ਦੇਵੇਗਾ';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach ਭਾਸ਼ਾ ਰੀਸੈੱਟ ਕੀਤੀ ਗਈ — ਐਪ ਦੀ ਭਾਸ਼ਾ ਵਰਤੀ ਜਾ ਰਹੀ ਹੈ';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach ਭਾਸ਼ਾ';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach ਦੇ ਜਵਾਬਾਂ ਲਈ ਭਾਸ਼ਾ (ਐਪ UI ਤੋਂ ਵੱਖਰੀ)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'ਐਪ ਭਾਸ਼ਾ ਵਾਂਗ ਹੀ';
 }

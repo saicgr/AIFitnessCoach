@@ -8396,7 +8396,7 @@ class AppLocalizationsMl extends AppLocalizations {
   String get editTargetsMaintainingWeight => 'ഭാരം നിലനിർത്തുന്നു';
 
   @override
-  String get editTargetsRec => 'Rec';
+  String get editTargetsRec => 'നിർദ്ദേശിച്ചത്';
 
   @override
   String get editTargetsRecalculateFromProfile =>
@@ -12704,7 +12704,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String fastingZoneTimelineH(Object startHour) {
-    return '${startHour}h';
+    return '$startHourമണിക്കൂർ';
   }
 
   @override
@@ -18339,8 +18339,8 @@ class AppLocalizationsMl extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
-    return '])ml of (label)';
+  String hydrationTabMlOf(Object label, Object ml) {
+    return '${ml}ml, ആകെ $label';
   }
 
   @override
@@ -18592,7 +18592,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String importExerciseScreenS(Object inSeconds) {
-    return '${inSeconds}s';
+    return '$inSecondsസെ';
   }
 
   @override
@@ -18937,7 +18937,7 @@ class AppLocalizationsMl extends AppLocalizations {
   String get inlineRestRow15s => '-15s';
 
   @override
-  String get inlineRestRow15s2 => '+15s';
+  String get inlineRestRow15s2 => '+15സെ';
 
   @override
   String get inlineRestRowAddANoteAbout =>
@@ -19283,7 +19283,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
+    return '$pct%';
   }
 
   @override
@@ -19660,12 +19660,12 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String lastNightSleepCardH(Object hours) {
-    return '${hours}h';
+    return '$hoursമ';
   }
 
   @override
   String lastNightSleepCardM(Object minutes) {
-    return '${minutes}m';
+    return '$minutesമി';
   }
 
   @override
@@ -20609,12 +20609,12 @@ class AppLocalizationsMl extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -21022,7 +21022,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String logWeightSheetValue(Object changeInUnit) {
-    return ')(changeInUnit)';
+    return '$changeInUnit';
   }
 
   @override
@@ -37874,7 +37874,7 @@ class AppLocalizationsMl extends AppLocalizations {
   String get summaryExerciseTableSkipped => 'ഒഴിവാക്കി';
 
   @override
-  String get summaryExerciseTableTarget => 'TARGET';
+  String get summaryExerciseTableTarget => 'ലക്ഷ്യം';
 
   @override
   String get summaryExitExercisesDone => 'ചെയ്ത വ്യായാമങ്ങൾ';
@@ -38140,7 +38140,7 @@ class AppLocalizationsMl extends AppLocalizations {
   String get supersetExercisePickerSearchExercises => 'വ്യായാമങ്ങൾ തിരയുക...';
 
   @override
-  String get supersetIndicatorBreak => 'Break';
+  String get supersetIndicatorBreak => 'ഇടവേള';
 
   @override
   String get supersetIndicatorCreateSuperset => 'Superset സൃഷ്ടിക്കുക';
@@ -44942,4 +44942,23 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get youWrapped => 'റാപ്പ്ഡ്';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI കോച്ച് ഇപ്പോൾ $nativeName ഭാഷയിൽ മറുപടി നൽകുന്നു';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI കോച്ചിന്റെ ഭാഷ പുനഃസജ്ജമാക്കി — ആപ്പ് ഭാഷ ഉപയോഗിക്കുന്നു';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI കോച്ചിന്റെ ഭാഷ';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI കോച്ചിന്റെ മറുപടിക്കുള്ള ഭാഷ (ആപ്പ് UI-ൽ നിന്ന് വ്യത്യസ്തമായി)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'ആപ്പ് ഭാഷയ്ക്ക് സമാനമായി';
 }

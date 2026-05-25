@@ -4,8 +4,19 @@ Locale resolution utilities for Zealova backend.
 Parses Accept-Language headers, maps codes to native names, persists
 and reads back the user's preferred locale from the `users` table.
 
+Two independent locale tracks:
+  - preferred_locale  — app UI language (from Accept-Language header)
+  - chat_locale       — AI Coach reply language (from X-Chat-Locale header)
+                        Null in DB = fall back to preferred_locale.
+
 Usage:
-    from core.locale import parse_accept_language, get_user_locale_from_request
+    from core.locale import (
+        parse_accept_language,
+        get_user_locale_from_request,
+        get_chat_locale_from_request,
+        persist_user_chat_locale,
+        get_persisted_chat_locale,
+    )
 
 All functions are backend-only; they do NOT call any translation APIs.
 """
@@ -129,6 +140,26 @@ def get_user_locale_from_request(request: Request) -> str:
     return parse_accept_language(header)
 
 
+def get_chat_locale_from_request(request: Request) -> Optional[str]:
+    """Extract the AI Coach chat locale from the X-Chat-Locale header.
+
+    Returns None when the header is absent, so the caller can fall back to
+    the user's preferred_locale (app UI language).
+
+    The header value must be a bare ISO 639-1 code (e.g. "te", "hi").
+    Unsupported codes are treated as absent (returns None).
+    """
+    raw = request.headers.get("X-Chat-Locale", "").strip()
+    if not raw:
+        return None
+    # Normalise region-tagged codes like "te-IN" → "te"
+    base = raw.split("-")[0].lower()
+    if base in SUPPORTED_LOCALES:
+        return base
+    logger.debug(f"[Locale] X-Chat-Locale '{raw}' not in SUPPORTED_LOCALES — ignoring")
+    return None
+
+
 # ── Persistence helpers ───────────────────────────────────────────────────────
 
 def persist_user_locale(user_id: str, locale: str, db_client) -> None:
@@ -171,6 +202,62 @@ def get_persisted_locale(user_id: str, db_client) -> str:
             return locale if locale in SUPPORTED_LOCALES else "en"
     except Exception as exc:
         logger.warning(f"[Locale] Failed to read locale for user {user_id}: {exc}")
+    return "en"
+
+
+def persist_user_chat_locale(user_id: str, chat_locale: Optional[str], db_client) -> None:
+    """Write the user's AI Coach chat locale to users.chat_locale (sync).
+
+    Pass None to clear the override (AI will use preferred_locale as fallback).
+    Invalid locale codes are silently skipped. DB errors are logged, not raised
+    (used as background task).
+    """
+    if chat_locale is not None and chat_locale not in SUPPORTED_LOCALES:
+        logger.debug(
+            f"[Locale] Skipping chat_locale persist for unsupported '{chat_locale}' (user {user_id})"
+        )
+        return
+    try:
+        db_client.client.table("users").update(
+            {"chat_locale": chat_locale}
+        ).eq("id", user_id).execute()
+        logger.debug(
+            f"[Locale] Persisted chat_locale={chat_locale!r} for user {user_id}"
+        )
+    except Exception as exc:
+        logger.warning(f"[Locale] Failed to persist chat_locale for user {user_id}: {exc}")
+
+
+def get_persisted_chat_locale(user_id: str, db_client) -> str:
+    """Read the user's AI Coach chat locale from the DB.
+
+    Resolution order:
+      1. users.chat_locale      (explicit override)
+      2. users.preferred_locale (app UI locale)
+      3. 'en'                   (hard default)
+
+    Always returns a valid SUPPORTED_LOCALES code. Never raises.
+    """
+    try:
+        result = (
+            db_client.client.table("users")
+            .select("chat_locale, preferred_locale")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        if result.data:
+            row = result.data[0]
+            # Prefer explicit chat_locale override
+            chat_loc = row.get("chat_locale")
+            if chat_loc and chat_loc in SUPPORTED_LOCALES:
+                return chat_loc
+            # Fall back to preferred_locale (app UI language)
+            ui_loc = row.get("preferred_locale")
+            if ui_loc and ui_loc in SUPPORTED_LOCALES:
+                return ui_loc
+    except Exception as exc:
+        logger.warning(f"[Locale] Failed to read chat_locale for user {user_id}: {exc}")
     return "en"
 
 

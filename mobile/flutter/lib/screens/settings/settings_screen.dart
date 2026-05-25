@@ -40,6 +40,8 @@ import '../../core/theme/accent_color_provider.dart';
 import '../home/widgets/manage_gym_profiles_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../core/providers/locale_provider.dart';
+import '../../data/providers/chat_locale_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 part 'settings_screen_part_social_icon.dart';
@@ -318,6 +320,18 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'beast', 'beast mode', 'power user', 'debug', 'developer',
     'advanced', 'diagnostics', 'algorithm', 'hidden', 'secret', 'easter egg',
   ],
+  'app_language': [
+    'language', 'app language', 'ui language', 'locale', 'translation',
+    'english', 'spanish', 'hindi', 'telugu', 'french', 'german', 'arabic',
+    'change language', 'switch language', 'app in', 'interface language',
+  ],
+  'chat_language': [
+    'chat language', 'ai language', 'coach language', 'ai chat language',
+    'coach reply language', 'response language', 'ai response language',
+    'ai in telugu', 'ai in hindi', 'coach in hindi', 'reply in',
+    'ai speak', 'coach speak', 'language for ai', 'ai answers in',
+    'chat in', 'coach chat language',
+  ],
 };
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
@@ -545,6 +559,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Vacation mode subtitle — shows scheduled range, active state, or Off.
     final vacationModeValue = _vacationModeDisplay(authState.user);
 
+    // App UI language display name for the settings row subtitle.
+    final appLocaleCode = ref.watch(localeProvider).locale?.languageCode;
+    final appLocaleName = _kSettingsLocaleNames[appLocaleCode]
+        ?? appLocaleCode
+        ?? 'System default';
+
+    // AI Coach chat language display name for the settings row subtitle.
+    final chatLocaleCode = ref.watch(chatLocaleProvider).locale?.languageCode;
+    final chatLocaleName = chatLocaleCode != null
+        ? (_kSettingsLocaleNames[chatLocaleCode] ?? chatLocaleCode)
+        : 'Same as app language';
+
     // Workout-UI mode (Easy / Simple / Advanced) — shared with Profile,
     // Workouts tab, and the active-workout top bar via workoutUiModeProvider.
     final workoutUiMode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
@@ -661,6 +687,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             route: '/settings/appearance',
             sectionKeys: const ['preferences', 'haptics', 'app_mode', 'accessibility'],
             isThemeRow: true,
+          ),
+          _SettingsRow(
+            icon: Icons.language_rounded,
+            iconColor: isDark ? AppColors.green : AppColorsLight.green,
+            title: AppLocalizations.of(context).settingsLanguage,
+            value: appLocaleName,
+            sectionKeys: const ['app_language'],
+            onTap: _showAppLanguagePicker,
+          ),
+          _SettingsRow(
+            icon: Icons.smart_toy_rounded,
+            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            title: AppLocalizations.of(context).settingsChatLanguageTitle,
+            value: chatLocaleName,
+            sectionKeys: const ['chat_language'],
+            onTap: _showChatLanguagePicker,
           ),
           _SettingsRow(
             icon: Icons.notifications_outlined,

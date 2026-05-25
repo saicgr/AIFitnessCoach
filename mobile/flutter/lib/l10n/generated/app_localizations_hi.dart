@@ -12471,7 +12471,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String fastingTrainingWarningH(Object hoursFasted) {
-    return '${hoursFasted}h';
+    return '$hoursFastedघंटे';
   }
 
   @override
@@ -12493,7 +12493,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String fastingZoneTimelineH(Object startHour) {
-    return '${startHour}h';
+    return '$startHourघंटे';
   }
 
   @override
@@ -13197,7 +13197,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String foldableWarmupLayoutS(Object duration) {
-    return '${duration}s';
+    return '$durationसेकंड';
   }
 
   @override
@@ -13282,7 +13282,7 @@ class AppLocalizationsHi extends AppLocalizations {
     Object _elapsedSeconds,
     Object analysisLoadingCopy,
   ) {
-    return '$analysisLoadingCopy… ${_elapsedSeconds}s';
+    return '$analysisLoadingCopy… $_elapsedSecondsसेकंड';
   }
 
   @override
@@ -16021,7 +16021,7 @@ class AppLocalizationsHi extends AppLocalizations {
     Object percent,
     Object shortLabel,
   ) {
-    return '$shortLabel ${minutes}m ($percent%)';
+    return '$shortLabel $minutesमिनट ($percent%)';
   }
 
   @override
@@ -18032,7 +18032,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -18283,7 +18283,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String importExerciseScreenS(Object inSeconds) {
-    return '${inSeconds}s';
+    return '$inSecondsसेकंड';
   }
 
   @override
@@ -20273,12 +20273,12 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -36506,7 +36506,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String stepGoalEditorSheetSelectedGoalSteps(Object _selectedGoal) {
-    return 'Selected goal: $_selectedGoal steps';
+    return 'चुना गया लक्ष्य: $_selectedGoal कदम';
   }
 
   @override
@@ -36514,7 +36514,7 @@ class AppLocalizationsHi extends AppLocalizations {
     Object _maxGoal,
     Object _minGoal,
   ) {
-    return 'Step goal slider, from $_minGoal to $_maxGoal steps';
+    return 'स्टेप गोल स्लाइडर, $_minGoal से $_maxGoal कदम तक';
   }
 
   @override
@@ -40953,7 +40953,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (Zealova)\\n(url)';
   }
 
   @override
@@ -42139,7 +42139,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workoutImportScreenM(Object workout) {
-    return '$workout m';
+    return '$workout मि';
   }
 
   @override
@@ -42267,7 +42267,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workoutMiniPlayerS(Object restSecondsRemaining) {
-    return '${restSecondsRemaining}s';
+    return '$restSecondsRemainingसे';
   }
 
   @override
@@ -43175,7 +43175,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedMS(Object m, Object s) {
-    return '${m}m ${s}s';
+    return '$mमि $sसे';
   }
 
   @override
@@ -43261,7 +43261,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workoutSummaryAdvancedS(Object duration) {
-    return '${duration}s';
+    return '$durationसे';
   }
 
   @override
@@ -44276,4 +44276,23 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get youWrapped => 'रैप्ड';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach अब $nativeName में जवाब देगा';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach की भाषा रीसेट कर दी गई है — ऐप की भाषा का उपयोग किया जा रहा है';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach की भाषा';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach के जवाबों के लिए भाषा (ऐप UI से अलग)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'ऐप की भाषा के समान';
 }

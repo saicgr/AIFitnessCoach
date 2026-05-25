@@ -28070,5 +28070,31 @@
   "youHubStatsScores": "Stats & Scores",
   "youSkills": "Skills",
   "youTrophies": "Trophies",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+
+  "chatLanguageChangedSystem": "🌐 AI Coach now responds in {nativeName}",
+  "@chatLanguageChangedSystem": {
+    "description": "WhatsApp-style centered system message shown in chat when the user changes the AI Coach reply language. {nativeName} is the native-script name of the new language (e.g. 'తెలుగు').",
+    "placeholders": {
+      "nativeName": {
+        "type": "String"
+      }
+    }
+  },
+  "chatLanguageResetSystem": "🌐 AI Coach language reset — using app language",
+  "@chatLanguageResetSystem": {
+    "description": "WhatsApp-style centered system message shown in chat when the user clears the AI Coach language override (reverts to the app UI language)."
+  },
+  "settingsChatLanguageTitle": "AI Coach Language",
+  "@settingsChatLanguageTitle": {
+    "description": "Settings row title for the AI Coach chat response language picker."
+  },
+  "settingsChatLanguageDescription": "Language for AI Coach responses (separate from app UI)",
+  "@settingsChatLanguageDescription": {
+    "description": "Settings row subtitle describing the AI Coach language setting."
+  },
+  "settingsChatLanguageSameAsApp": "Same as app language",
+  "@settingsChatLanguageSameAsApp": {
+    "description": "Label shown when the AI Coach language is not overridden (follows the app UI language)."
+  }
 }

@@ -25,6 +25,7 @@ export 'training_preferences_section.dart';
 export 'voice_announcements_section.dart';
 export 'equipment_calibration_section.dart';
 export 'language_section.dart';
+export 'chat_language_section.dart';
 export 'warmup_settings_section.dart';
 export 'superset_settings_section.dart';
 export 'kegel_settings_section.dart';

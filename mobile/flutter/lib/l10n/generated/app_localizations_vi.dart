@@ -4071,7 +4071,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String coachSelectionScreenUse(Object _customName) {
-    return 'Use $_customName';
+    return 'Sử dụng $_customName';
   }
 
   @override
@@ -18062,7 +18062,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml của (label)';
   }
 
@@ -20306,12 +20306,12 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -44171,12 +44171,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String xpLeaderboardScreenValue(Object rank) {
-    return '#$rank';
+    return 'Hạng $rank';
   }
 
   @override
   String xpLeaderboardScreenValue2(Object rank) {
-    return '#$rank';
+    return 'Hạng $rank';
   }
 
   @override
@@ -44302,5 +44302,24 @@ class AppLocalizationsVi extends AppLocalizations {
   String get youTrophies => 'Cúp';
 
   @override
-  String get youWrapped => 'Wrapped';
+  String get youWrapped => 'Tổng kết';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach hiện đã phản hồi bằng $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Đã đặt lại ngôn ngữ AI Coach — sử dụng ngôn ngữ của ứng dụng';
+
+  @override
+  String get settingsChatLanguageTitle => 'Ngôn ngữ AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Ngôn ngữ cho các phản hồi của AI Coach (tách biệt với giao diện ứng dụng)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Giống ngôn ngữ ứng dụng';
 }

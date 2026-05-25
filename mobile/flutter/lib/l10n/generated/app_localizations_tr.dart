@@ -335,7 +335,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') için (name)';
   }
 
   @override
@@ -4569,7 +4569,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String compactSplitCardDWk(Object daysPerWeek, Object duration) {
-    return '(daysPerWeek)d/wk\") · (duration)';
+    return '(daysPerWeek) gün/hafta\" · (duration)';
   }
 
   @override
@@ -5694,7 +5694,7 @@ class AppLocalizationsTr extends AppLocalizations {
     Object lastUsedFormatted,
     Object usageCount,
   ) {
-    return 'Used (usageCount) times(lastUsedFormatted)\" : \"\")';
+    return 'Kullanım (usageCount) kez(lastUsedFormatted)\" : \"\")';
   }
 
   @override
@@ -13109,7 +13109,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get flexibilityTestDetailTips => 'İpuçları';
 
   @override
-  String get flexibilityTestDetailU2022 => '\\u2022 ';
+  String get flexibilityTestDetailU2022 => '• ';
 
   @override
   String get flexibilityTestDetailUpdate => 'Güncelle';
@@ -14652,7 +14652,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get goalHistoryTryAgain => 'Tekrar Dene';
 
   @override
-  String get goalHistoryU2022 => '\\u2022 ';
+  String get goalHistoryU2022 => '• ';
 
   @override
   String get goalLeaderboardCouldNotLoadLeaderboard =>
@@ -18021,7 +18021,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml / (label)';
   }
 
@@ -20264,12 +20264,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -40911,7 +40911,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -42930,7 +42930,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutShowcaseSetNOf3(Object arg0) {
-    return 'Workout showcase set n of $arg0';
+    return 'Antrenman gösterimi set $arg0 / $arg0';
   }
 
   @override
@@ -43270,7 +43270,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutSummaryAdvancedTotalVolume => 'Toplam Hacim: ';
 
   @override
-  String get workoutSummaryAdvancedUd83dUdca7 => '\\uD83D\\uDCA7 ';
+  String get workoutSummaryAdvancedUd83dUdca7 => '💧 ';
 
   @override
   String workoutSummaryAdvancedValue(Object confidence) {
@@ -44241,4 +44241,23 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get youWrapped => 'Wrapped';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach artık $nativeName dilinde yanıt veriyor';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach dili sıfırlandı — uygulama dili kullanılıyor';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach Dili';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Yapay Zeka Koçu yanıtları için dil (uygulama arayüzünden bağımsızdır)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Uygulama diliyle aynı';
 }

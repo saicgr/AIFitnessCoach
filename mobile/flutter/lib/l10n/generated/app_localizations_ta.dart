@@ -18335,7 +18335,7 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -20606,12 +20606,12 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -21052,10 +21052,10 @@ class AppLocalizationsTa extends AppLocalizations {
   String get loggedMeals => '⚠️';
 
   @override
-  String get loggedMeals1U00bc => '1\\u00BC';
+  String get loggedMeals1U00bc => '1¼';
 
   @override
-  String get loggedMeals1U00bd => '1\\u00BD';
+  String get loggedMeals1U00bd => '1½';
 
   @override
   String get loggedMeals1x => '1x';
@@ -41569,7 +41569,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -44917,4 +44917,23 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get youWrapped => 'ரேப்ட்';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach இப்போது $nativeName மொழியில் பதிலளிக்கும்';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach மொழி மீட்டமைக்கப்பட்டது — செயலியின் மொழியைப் பயன்படுத்துகிறது';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach மொழி';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach பதில்களுக்கான மொழி (செயலி UI-லிருந்து மாறுபட்டது)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'செயலியின் அதே மொழி';
 }

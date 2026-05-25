@@ -17281,7 +17281,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -19446,12 +19446,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -20715,7 +20715,7 @@ class AppLocalizationsJa extends AppLocalizations {
     Object _selectedFormat,
     Object length,
   ) {
-    return 'Export (length)\") measurement types as .(_selectedFormat)';
+    return '測定タイプを $length としてエクスポート (.(_selectedFormat))';
   }
 
   @override
@@ -23380,12 +23380,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String nextSetPreviewCardKg2(Object weightDelta) {
-    return ')(weightDelta) kg';
+    return '$weightDelta kg';
   }
 
   @override
   String nextSetPreviewCardValue(Object weightDelta) {
-    return ')(weightDelta)';
+    return '$weightDelta';
   }
 
   @override
@@ -23927,7 +23927,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String nutrientExplorerValue(Object unit) {
-    return ') (unit)';
+    return '$unit';
   }
 
   @override
@@ -24860,7 +24860,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return '$tdee cal';
   }
 
   @override
@@ -24880,7 +24880,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
+    return '$data kg';
   }
 
   @override
@@ -25932,7 +25932,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String phaseRecommendationBannerConfidenceEstimate(Object confidence) {
-    return '(confidence)-confidence estimate\" : \"\")';
+    return '$confidenceの信頼度推定';
   }
 
   @override
@@ -41249,7 +41249,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String workoutShowcaseSetNOf3(Object arg0) {
-    return 'Workout showcase set n of $arg0';
+    return 'ワークアウトショーケース セット $arg0中';
   }
 
   @override
@@ -42516,4 +42516,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get youWrapped => 'まとめ';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AIコーチの言語を$nativeNameに変更しました';
+  }
+
+  @override
+  String get chatLanguageResetSystem => '🌐 AIコーチの言語をリセットしました — アプリの言語設定を使用します';
+
+  @override
+  String get settingsChatLanguageTitle => 'AIコーチの言語';
+
+  @override
+  String get settingsChatLanguageDescription => 'AIコーチの回答言語（アプリのUI言語とは別に設定可能）';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'アプリの言語と同じ';
 }

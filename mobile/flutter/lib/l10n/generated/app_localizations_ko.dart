@@ -326,7 +326,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String activeWorkoutScreenRefactoredFor(Object name) {
-    return ') for (name)';
+    return ') $name (을)를 위해';
   }
 
   @override
@@ -17292,7 +17292,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml of (label)';
   }
 
@@ -19461,12 +19461,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -22228,19 +22228,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get muscleBalanceChartLower => '하체';
 
   @override
-  String get muscleBalanceChartPull => 'Pull';
+  String get muscleBalanceChartPull => '당기기';
 
   @override
-  String get muscleBalanceChartPush => 'Push';
+  String get muscleBalanceChartPush => '밀기';
 
   @override
-  String get muscleBalanceChartPushPull => 'Push / Pull';
+  String get muscleBalanceChartPushPull => '밀기 / 당기기';
 
   @override
   String get muscleBalanceChartUpper => '상체';
 
   @override
-  String get muscleBalanceChartUpperLower => 'Upper / Lower';
+  String get muscleBalanceChartUpperLower => '상체 / 하체';
 
   @override
   String get muscleDetail => '•  ';
@@ -31968,7 +31968,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get rpeOneRepLeft => '1회 남음';
 
   @override
-  String get rpePillRpeRateOfPerceived => 'RPE — Rate of Perceived Exertion';
+  String get rpePillRpeRateOfPerceived =>
+      'RPE — 자각도(Rate of Perceived Exertion)';
 
   @override
   String get rpeRirHelpsAdjustNextSet => 'RPE와 RIR은 다음 세트 강도를 조절하는 데 도움이 됩니다.';
@@ -42528,4 +42529,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get youWrapped => '연말 결산';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach가 이제 $nativeName(으)로 응답합니다';
+  }
+
+  @override
+  String get chatLanguageResetSystem => '🌐 AI Coach 언어가 초기화되었습니다. 앱 언어를 사용합니다';
+
+  @override
+  String get settingsChatLanguageTitle => 'AI Coach 언어';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'AI Coach 응답 언어 설정 (앱 UI 언어와 별개)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => '앱 언어와 동일';
 }

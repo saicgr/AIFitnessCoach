@@ -18173,7 +18173,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml de (label)';
   }
 
@@ -19110,7 +19110,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
+    return '$pct%';
   }
 
   @override
@@ -20421,12 +20421,12 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -26060,7 +26060,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardCal(Object tdee) {
-    return ')(tdee) cal';
+    return '$tdee cal';
   }
 
   @override
@@ -26080,7 +26080,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String nutritionTabPartWeeklyOverviewCardKg(Object data) {
-    return ')(data) kg';
+    return '$data kg';
   }
 
   @override
@@ -44490,4 +44490,23 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get youWrapped => 'Retrospectiva';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 O AI Coach agora responde em $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Idioma do AI Coach redefinido — usando o idioma do app';
+
+  @override
+  String get settingsChatLanguageTitle => 'Idioma do AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Idioma para as respostas do AI Coach (separado da interface do app)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Mesmo idioma do app';
 }

@@ -18008,7 +18008,7 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])ml av (label)';
   }
 
@@ -20250,12 +20250,12 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g mg';
   }
 
@@ -20687,10 +20687,10 @@ class AppLocalizationsSv extends AppLocalizations {
   String get loggedMeals => '⚠️';
 
   @override
-  String get loggedMeals1U00bc => '1\\u00BC';
+  String get loggedMeals1U00bc => '1¼';
 
   @override
-  String get loggedMeals1U00bd => '1\\u00BD';
+  String get loggedMeals1U00bd => '1½';
 
   @override
   String get loggedMeals1x => '1x';
@@ -44175,4 +44175,23 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get youWrapped => 'Sammanfattning';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach svarar nu på $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 AI Coach-språk återställt — använder appens språk';
+
+  @override
+  String get settingsChatLanguageTitle => 'Språk för AI-coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Språk för AI-coachs svar (separat från appens gränssnitt)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Samma som appens språk';
 }

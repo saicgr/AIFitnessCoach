@@ -12120,7 +12120,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String fastingScoreCardValue(Object scoreChange) {
-    return ')(scoreChange)';
+    return '$scoreChange';
   }
 
   @override
@@ -13115,7 +13115,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String flexibilityProgressChartValue(Object improvementAbsolute) {
-    return ')(improvementAbsolute)';
+    return '$improvementAbsolute';
   }
 
   @override
@@ -18129,7 +18129,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String hydrationTabMlOf(Object label) {
+  String hydrationTabMlOf(Object label, Object ml) {
     return '])мл из (label)';
   }
 
@@ -19064,7 +19064,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String insightsSummaryTemplateValue(Object pct) {
-    return ')(pct)%';
+    return '$pct%';
   }
 
   @override
@@ -20376,12 +20376,12 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g) {
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
     return '$potassium100g мг';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g) {
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
     return '$magnesium100g мг';
   }
 
@@ -44426,4 +44426,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get youWrapped => 'Итоги года';
+
+  @override
+  String chatLanguageChangedSystem(String nativeName) {
+    return '🌐 AI Coach теперь отвечает на $nativeName';
+  }
+
+  @override
+  String get chatLanguageResetSystem =>
+      '🌐 Язык AI Coach сброшен — используется язык приложения';
+
+  @override
+  String get settingsChatLanguageTitle => 'Язык AI Coach';
+
+  @override
+  String get settingsChatLanguageDescription =>
+      'Язык ответов AI Coach (отдельно от интерфейса приложения)';
+
+  @override
+  String get settingsChatLanguageSameAsApp => 'Как в приложении';
 }

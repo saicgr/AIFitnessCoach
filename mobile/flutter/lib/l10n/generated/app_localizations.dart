@@ -30357,7 +30357,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'])ml of (label)'**
-  String hydrationTabMlOf(Object label);
+  String hydrationTabMlOf(Object label, Object ml);
 
   /// No description provided for @hydrationTabPartAnyMl.
   ///
@@ -34030,13 +34030,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{potassium100g} mg'**
-  String logMealSheetMg4(Object potassium100g);
+  String logMealSheetMg4(Object potassium100g, Object magnesium100g);
 
   /// No description provided for @logMealSheetMg5.
   ///
   /// In en, this message translates to:
   /// **'{magnesium100g} mg'**
-  String logMealSheetMg5(Object magnesium100g);
+  String logMealSheetMg5(Object magnesium100g, Object zinc100g);
 
   /// No description provided for @logMealSheetMg6.
   ///
@@ -74388,6 +74388,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wrapped'**
   String get youWrapped;
+
+  /// WhatsApp-style centered system message shown in chat when the user changes the AI Coach reply language. {nativeName} is the native-script name of the new language (e.g. 'తెలుగు').
+  ///
+  /// In en, this message translates to:
+  /// **'🌐 AI Coach now responds in {nativeName}'**
+  String chatLanguageChangedSystem(String nativeName);
+
+  /// WhatsApp-style centered system message shown in chat when the user clears the AI Coach language override (reverts to the app UI language).
+  ///
+  /// In en, this message translates to:
+  /// **'🌐 AI Coach language reset — using app language'**
+  String get chatLanguageResetSystem;
+
+  /// Settings row title for the AI Coach chat response language picker.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Coach Language'**
+  String get settingsChatLanguageTitle;
+
+  /// Settings row subtitle describing the AI Coach language setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Language for AI Coach responses (separate from app UI)'**
+  String get settingsChatLanguageDescription;
+
+  /// Label shown when the AI Coach language is not overridden (follows the app UI language).
+  ///
+  /// In en, this message translates to:
+  /// **'Same as app language'**
+  String get settingsChatLanguageSameAsApp;
 }
 
 class _AppLocalizationsDelegate
