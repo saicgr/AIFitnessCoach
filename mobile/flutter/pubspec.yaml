@@ -54,7 +54,14 @@ dependencies:
   video_thumbnail: ^0.5.3
 
   # Utils
-  intl: ^0.19.0
+  # intl bumped 0.19 -> 0.20.2 (2026-05-24) to satisfy flutter_localizations
+  # constraint added for Phase 5 i18n. Existing intl callers compile clean
+  # against 0.20.x (formatter API unchanged).
+  intl: ^0.20.2
+  # Phase 5 i18n — pinned by Flutter version; bundles ARB-driven generated
+  # AppLocalizations for the 8 Gravl-parity locales (en/es/de/fr/it/pt/cs/pl).
+  flutter_localizations:
+    sdk: flutter
   json_annotation: ^4.9.0
   equatable: ^2.0.5
   uuid: ^4.4.2
@@ -237,6 +244,7 @@ flutter_native_splash:
 
 flutter:
   uses-material-design: true
+  generate: true   # Phase 5 — enables flutter gen-l10n from lib/l10n/*.arb (see l10n.yaml).
 
   assets:
     - assets/icon/

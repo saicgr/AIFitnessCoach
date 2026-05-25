@@ -1,0 +1,60 @@
+{
+  "@@locale": "en",
+  "@@comment": "Phase 5 i18n scaffold (Gravl's 8-language set: en, es, de, fr, it, pt, cs, pl). This file holds the canonical English strings the rest of the locales translate. New strings get added here first, then translated. Existing widget literals are migrated incrementally — each PR that touches a screen extracts that screen's strings.",
+
+  "appName": "Zealova",
+  "@appName": {"description": "Product name"},
+
+  "navHome": "Home",
+  "navWorkouts": "Workouts",
+  "navNutrition": "Nutrition",
+  "navProgress": "Progress",
+  "navProfile": "Profile",
+
+  "buttonStart": "Start",
+  "buttonSave": "Save",
+  "buttonCancel": "Cancel",
+  "buttonDelete": "Delete",
+  "buttonRetry": "Retry",
+  "buttonContinue": "Continue",
+
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "settingsLanguageSubtitle": "Choose your preferred language",
+
+  "equipmentCalibrationTitle": "Calibrate equipment",
+  "equipmentCalibrationIntroTitle": "Tell us your real gear",
+  "equipmentCalibrationIntroBody": "Plate suggestions and weight prescriptions will match what you actually own. Set your bar weights, machine sled weights, cable pin increments, and plate / dumbbell inventory.",
+
+  "recoveryLabel": "Recovery",
+  "rpeLabel": "RPE",
+  "rpeFailure": "Failure",
+  "rpeOneRepLeft": "1 rep left",
+  "rpeTwoRepsLeft": "2 reps left",
+  "rpeEasy": "Easy",
+  "rpeLight": "Light",
+
+  "strengthScoreCardTitle": "Strength score",
+  "strengthBestLift": "Best lift",
+  "strengthContributionToScore": "Contribution to score",
+
+  "journalTitle": "Training journal",
+  "journalSearchHint": "Search workouts, food, photos…",
+  "journalEmpty": "Your journal is empty. Log a workout to start your timeline.",
+
+  "challengeCreateTitle": "Create challenge",
+  "challengeCreateFieldTitle": "Title",
+  "challengeCreateFieldGoal": "Goal",
+  "challengeCreateFieldEnds": "Ends",
+  "challengeCreateInviteFriends": "Invite friends",
+  "challengePublicToggle": "Public",
+  "challengeCreateButton": "Create challenge",
+
+  "rtpTitle": "Return to play",
+  "rtpDisclaimer": "Self-guided framework. Clearance from a healthcare provider is required before progressing each phase.",
+  "rtpAdvancePhase": "I've met the milestones",
+  "rtpGraduated": "Graduated",
+
+  "morningRecoveryNudgeTitle": "Take it easy today",
+  "morningRecoveryNudgeBody": "Readiness is low. Reducing today's volume — open the app to regenerate."
+}

@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'l10n/generated/app_localizations.dart';
+import 'core/providers/locale_provider.dart';
 import 'services/post_meal_checkin_reminder.dart';
 import 'core/providers/subscription_provider.dart';
 import 'core/providers/window_mode_provider.dart';
@@ -162,6 +165,11 @@ class _AppRootState extends ConsumerState<AppRoot> {
       });
     }
 
+    // Phase 5 i18n — locale state lives in localeProvider (persisted to
+    // SharedPreferences). Null = follow system. Delegates + supportedLocales
+    // wired here so any screen can call AppLocalizations.of(context).foo.
+    final localeState = ref.watch(localeProvider);
+
     return MaterialApp.router(
       // Use a key that changes with theme/accent/gym-profile to force a clean rebuild
       // This prevents GlobalKey conflicts when theme changes
@@ -175,6 +183,14 @@ class _AppRootState extends ConsumerState<AppRoot> {
       theme: AppThemeLight.buildTheme(effectivePrimary),
       darkTheme: AppTheme.buildDarkTheme(effectivePrimary),
       themeMode: themeMode,
+      locale: localeState.locale,
+      supportedLocales: supportedAppLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       routerConfig: router,
       builder: (context, child) {
         // Wrap the entire app with:
