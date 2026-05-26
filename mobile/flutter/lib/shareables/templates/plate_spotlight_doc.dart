@@ -64,22 +64,27 @@ CardDoc plateSpotlightDoc(Shareable data, ShareableAspect aspect) {
         frameColor: Colors.white,
         frameWidth: 6,
       ),
-      // Calorie callout.
+      // Calorie callout — number right-aligned ending around x=0.55, the
+      // "kcal" suffix left-aligned starting at x=0.58 with a 0.03 gap.
+      // shrinkToFit guards 3-4 digit values from blowing past the box.
+      // Previous layout collided when calorie was 3 digits ("680") because
+      // the two boxes overlapped from x=0.68→0.82.
       textEl(
-        pos: const Offset(0.42, 0.73),
-        size: const Size(0.4, 0.06),
+        pos: const Offset(0.15, 0.73),
+        size: const Size(0.4, 0.07),
         binding: const DataBinding(BindingSource.calories),
         font: 1,
-        fontSize: 56,
+        fontSize: 52,
         color: Colors.white,
         align: TextAlign.right,
+        sizeMode: TextSizeMode.shrinkToFit,
       ),
       textEl(
-        pos: const Offset(0.68, 0.74),
+        pos: const Offset(0.58, 0.745),
         size: const Size(0.24, 0.05),
         literal: 'kcal',
         font: 2,
-        fontSize: 30,
+        fontSize: 28,
         color: accent,
         align: TextAlign.left,
         letterSpacing: 1,

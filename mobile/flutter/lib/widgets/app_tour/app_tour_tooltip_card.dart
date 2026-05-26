@@ -69,7 +69,13 @@ class AppTourTooltipCard extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.95)
         : Colors.black.withValues(alpha: 0.80);
 
-    return ClipRRect(
+    // The tour overlay is mounted via an OverlayEntry with no Material
+    // ancestor, which causes Flutter to paint Text widgets with the debug
+    // yellow underline + double-strike. Wrap the card in a transparent
+    // Material to provide the ancestor without altering visuals.
+    return Material(
+      type: MaterialType.transparency,
+      child: ClipRRect(
       borderRadius: BorderRadius.circular(22),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
@@ -132,6 +138,7 @@ class AppTourTooltipCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

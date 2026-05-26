@@ -157,19 +157,32 @@ class NutritionPreferencesState {
     );
   }
 
-  /// Get current calorie target (dynamic if available, otherwise base)
+  /// True when the user has actually configured nutrition targets — i.e.
+  /// either dynamic targets are present or stored preferences carry a
+  /// non-null target. UI should branch on this and show a "Set a target"
+  /// CTA instead of presenting the placeholder 2000-cal fallback as if it
+  /// were a real plan.
+  bool get hasConfiguredTargets =>
+      dynamicTargets?.targetCalories != null ||
+      preferences?.targetCalories != null;
+
+  /// Get current calorie target (dynamic if available, otherwise base).
+  /// Returns a SAFE non-null value for arithmetic; callers that need to
+  /// distinguish "real plan" vs. "no plan set" must check
+  /// [hasConfiguredTargets] FIRST and render a "Set a target" CTA when
+  /// false. Never present the fallback as a real plan.
   int get currentCalorieTarget =>
       dynamicTargets?.targetCalories ?? preferences?.targetCalories ?? 2000;
 
-  /// Get current protein target
+  /// Get current protein target. See note on [currentCalorieTarget].
   int get currentProteinTarget =>
       dynamicTargets?.targetProteinG ?? preferences?.targetProteinG ?? 150;
 
-  /// Get current carbs target
+  /// Get current carbs target. See note on [currentCalorieTarget].
   int get currentCarbsTarget =>
       dynamicTargets?.targetCarbsG ?? preferences?.targetCarbsG ?? 200;
 
-  /// Get current fat target
+  /// Get current fat target. See note on [currentCalorieTarget].
   int get currentFatTarget =>
       dynamicTargets?.targetFatG ?? preferences?.targetFatG ?? 65;
 

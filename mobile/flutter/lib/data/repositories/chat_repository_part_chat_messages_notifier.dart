@@ -390,13 +390,34 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   /// Build the cache key for chat history for a given user
   static String _cacheKey(String userId) => 'cache_chat_history_$userId';
 
-  /// Load cached chat messages from DataCacheService
+  /// Module-level in-memory mirror of the disk cache. Survives provider
+  /// recreation so opening /chat for the second (or fiftieth) time in a
+  /// session renders cached messages SYNCHRONOUSLY — no white-screen-with-
+  /// dot wait while we await SharedPreferences (user complaint 2026-05-25:
+  /// "previous messages take time to load"). Disk is still the source of
+  /// truth and re-hydrates this map on the FIRST load per cold start.
+  static final Map<String, List<ChatMessage>> _memCache = {};
+
+  /// Synchronous accessor for the in-memory cache. Returns null when nothing
+  /// has been hydrated yet for [userId] (first cold-start of the app or
+  /// first-ever chat view). Used by [loadHistory] to paint immediately.
+  static List<ChatMessage>? memCacheFor(String userId) => _memCache[userId];
+
+  /// Load cached chat messages from DataCacheService. Populates the in-memory
+  /// mirror so subsequent calls (within the session) can skip the disk read.
   Future<List<ChatMessage>> _loadFromCache(String userId) async {
+    // Fast path — in-memory hit, no disk awaits.
+    final mem = _memCache[userId];
+    if (mem != null && mem.isNotEmpty) {
+      debugPrint('⚡ [Chat] Loaded ${mem.length} messages from in-memory cache');
+      return mem;
+    }
     try {
       final cached = await DataCacheService.instance.getCachedList(_cacheKey(userId));
       if (cached != null && cached.isNotEmpty) {
         final messages = cached.map((json) => ChatMessage.fromJson(json)).toList();
-        debugPrint('💾 [Chat] Loaded ${messages.length} messages from cache');
+        _memCache[userId] = messages;
+        debugPrint('💾 [Chat] Loaded ${messages.length} messages from disk cache');
         return messages;
       }
     } catch (e) {
@@ -412,6 +433,9 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final trimmed = messages.length > 200
           ? messages.sublist(messages.length - 200)
           : messages;
+      // Keep the in-memory mirror in sync — every save updates the fast path
+      // so the next screen entry is instant.
+      _memCache[userId] = List<ChatMessage>.unmodifiable(trimmed);
       final jsonList = trimmed.map((m) => m.toJson()).toList();
       await DataCacheService.instance.cacheList(_cacheKey(userId), jsonList);
       debugPrint('💾 [Chat] Saved ${trimmed.length} messages to cache');
@@ -445,6 +469,16 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     try {
       final userId = await _apiClient.getUserId();
       if (userId == null || !mounted) return;
+
+      // 0. Synchronous warm-paint from the module-level in-memory mirror so
+      //    the screen never sees AsyncValue.loading when there is data we
+      //    already have. Awaiting the disk read still happens below — but
+      //    on every entry after the first cold-start hit the user sees
+      //    messages instantly.
+      final memCached = _memCache[userId];
+      if (memCached != null && memCached.isNotEmpty && mounted) {
+        state = AsyncValue.data(memCached);
+      }
 
       // 1. Load from cache first and show immediately
       final cachedMessages = await _loadFromCache(userId);

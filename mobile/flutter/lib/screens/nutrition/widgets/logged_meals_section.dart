@@ -321,6 +321,24 @@ class LoggedMealsSection extends StatelessWidget {
     );
   }
 
+  /// Format the per-row amount subtitle. Returns null when the value is
+  /// noise (empty, "1" / "1.0" — a bare single serving that confuses users
+  /// who don't realise they're looking at a count). For bare integer
+  /// counts > 1 returns "× N". Anything carrying a unit or description
+  /// ("1 cup", "200 g") is returned unchanged.
+  String? _formattedAmount(String raw) {
+    final v = raw.trim();
+    if (v.isEmpty) return null;
+    final intMatch = RegExp(r'^\s*(\d+)(?:\.0+)?\s*$').firstMatch(v);
+    if (intMatch != null) {
+      final n = int.tryParse(intMatch.group(1)!) ?? 0;
+      if (n <= 1) return null;
+      if (n > 99) return null; // huge bare numbers are also noise
+      return '× $n';
+    }
+    return v;
+  }
+
   /// Renders a single food-item row. Leading 28dp source slot +
   /// name/amount on the left + cal/protein/time stacked on the right.
   ///
@@ -488,11 +506,15 @@ class LoggedMealsSection extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (amount != null && amount.isNotEmpty)
+                    // Hide bare numeric servings — "1" alone reads as
+                    // mystery metadata. Show only when the field carries
+                    // a unit/description (e.g. "1 cup", "200g"). A bare
+                    // count > 1 renders as "× N"; "1" hides entirely.
+                    if (amount != null && _formattedAmount(amount) != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
-                          amount,
+                          _formattedAmount(amount)!,
                           style: TextStyle(fontSize: 11, color: textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

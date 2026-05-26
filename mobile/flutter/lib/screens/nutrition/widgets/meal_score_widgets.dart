@@ -21,7 +21,6 @@ class AnimatedCalorieChip extends StatefulWidget {
 class _AnimatedCalorieChipState extends State<AnimatedCalorieChip>
     with TickerProviderStateMixin {
   late AnimationController _countController;
-  late AnimationController _shimmerController;
   late Animation<int> _countAnimation;
 
   @override
@@ -36,11 +35,6 @@ class _AnimatedCalorieChipState extends State<AnimatedCalorieChip>
     _countAnimation = IntTween(begin: 0, end: widget.calories).animate(
       CurvedAnimation(parent: _countController, curve: Curves.easeOutCubic),
     );
-
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
 
     _countController.forward();
   }
@@ -64,7 +58,6 @@ class _AnimatedCalorieChipState extends State<AnimatedCalorieChip>
   @override
   void dispose() {
     _countController.dispose();
-    _shimmerController.dispose();
     super.dispose();
   }
 
@@ -76,38 +69,21 @@ class _AnimatedCalorieChipState extends State<AnimatedCalorieChip>
         children: [
           Icon(Icons.local_fire_department, size: 16, color: widget.color),
           const SizedBox(height: 4),
+          // The earlier shimmer ShaderMask blended `Colors.white` into the
+          // text gradient, which against the light-mode card background
+                // rendered the digits effectively invisible mid-shimmer (user
+          // report 2026-05-25: "calorie not displaying properly after I
+          // hit Analyze"). Plain animated text matches the macro chips and
+          // keeps the count-up motion without the visibility regression.
           AnimatedBuilder(
-            animation: Listenable.merge([_countAnimation, _shimmerController]),
+            animation: _countAnimation,
             builder: (context, child) {
-              return ShaderMask(
-                shaderCallback: (bounds) {
-                  return LinearGradient(
-                    begin: AlignmentDirectional.topStart,
-                    end: AlignmentDirectional.bottomEnd,
-                    colors: [
-                      widget.color,
-                      widget.color.withValues(alpha: 0.5),
-                      Colors.white,
-                      widget.color.withValues(alpha: 0.5),
-                      widget.color,
-                    ],
-                    stops: [
-                      0.0,
-                      _shimmerController.value - 0.3,
-                      _shimmerController.value,
-                      _shimmerController.value + 0.3,
-                      1.0,
-                    ].map((s) => s.clamp(0.0, 1.0)).toList(),
-                  ).createShader(bounds);
-                },
-                blendMode: BlendMode.srcIn,
-                child: Text(
-                  '${_countAnimation.value}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: widget.color,
-                  ),
+              return Text(
+                '${_countAnimation.value}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: widget.color,
                 ),
               );
             },

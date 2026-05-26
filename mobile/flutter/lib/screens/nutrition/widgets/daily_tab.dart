@@ -452,11 +452,23 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     isDark: widget.isDark,
                     userId: widget.userId,
                     onFoodSaved: _loadFavorites,
-                    calorieTarget: prefs.currentCalorieTarget,
+                    // Pass null when the user hasn't configured nutrition
+                    // targets so the section shows "Set a calorie target"
+                    // instead of presenting the 2000 fallback as a real
+                    // plan (the user spotted this on 2026-05-25).
+                    calorieTarget: prefs.hasConfiguredTargets
+                        ? prefs.currentCalorieTarget
+                        : null,
                     totalCaloriesEaten: widget.summary?.totalCalories ?? 0,
-                    proteinTarget: prefs.currentProteinTarget,
-                    carbsTarget: prefs.currentCarbsTarget,
-                    fatTarget: prefs.currentFatTarget,
+                    proteinTarget: prefs.hasConfiguredTargets
+                        ? prefs.currentProteinTarget
+                        : 0,
+                    carbsTarget: prefs.hasConfiguredTargets
+                        ? prefs.currentCarbsTarget
+                        : 0,
+                    fatTarget: prefs.hasConfiguredTargets
+                        ? prefs.currentFatTarget
+                        : 0,
                     consumedProtein: widget.summary?.totalProteinG ?? 0,
                     consumedCarbs: widget.summary?.totalCarbsG ?? 0,
                     consumedFat: widget.summary?.totalFatG ?? 0,

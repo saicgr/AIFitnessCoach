@@ -796,22 +796,31 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
         child: SizedBox(
           width: designSize.width,
           height: designSize.height,
-          child: MediaQuery(
-            data: mq.copyWith(textScaler: TextScaler.linear(_textScale)),
-            child: ShareSurface(
-              background: _background,
-              // TemplateView renders a migrated template via the editable
-              // CardDocRenderer (and the user's edits via `overrideDoc`),
-              // falling back to the legacy builder for un-migrated templates.
-              child: TemplateView(
-                spec: spec,
-                data: _currentData,
-                aspect: _aspect,
-                showWatermark: _showWatermark,
-                showPhoto: _showPhoto,
-                textScale: _textScale,
-                overrideDoc:
-                    spec.template == _template ? _editedDoc : null,
+          // Off-screen capture path (RepaintBoundary.toImage) renders the
+          // tree without an inherited Directionality from MaterialApp,
+          // which throws "No TextDirection found" for every Text widget in
+          // the template (Spotlight / Plate / Editorial). Explicit wrap.
+          child: Directionality(
+            textDirection:
+                Directionality.maybeOf(context) ?? TextDirection.ltr,
+            child: MediaQuery(
+              data: mq.copyWith(textScaler: TextScaler.linear(_textScale)),
+              child: ShareSurface(
+                background: _background,
+                // TemplateView renders a migrated template via the
+                // editable CardDocRenderer (and the user's edits via
+                // `overrideDoc`), falling back to the legacy builder for
+                // un-migrated templates.
+                child: TemplateView(
+                  spec: spec,
+                  data: _currentData,
+                  aspect: _aspect,
+                  showWatermark: _showWatermark,
+                  showPhoto: _showPhoto,
+                  textScale: _textScale,
+                  overrideDoc:
+                      spec.template == _template ? _editedDoc : null,
+                ),
               ),
             ),
           ),
@@ -1533,7 +1542,16 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                               child: SizedBox(
                                 width: designSize.width,
                                 height: designSize.height,
-                                child: MediaQuery(
+                                // Same Directionality guard as the main
+                                // preview card — the grid renders
+                                // TemplateView dozens of times off-route
+                                // and each one needs an explicit
+                                // TextDirection.
+                                child: Directionality(
+                                  textDirection: Directionality.maybeOf(
+                                          context) ??
+                                      TextDirection.ltr,
+                                  child: MediaQuery(
                                   data: MediaQuery.of(context).copyWith(
                                     textScaler: TextScaler.linear(_textScale),
                                   ),
@@ -1551,6 +1569,7 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                                       textScale: _textScale,
                                     ),
                                   ),
+                                ),
                                 ),
                               ),
                             ),

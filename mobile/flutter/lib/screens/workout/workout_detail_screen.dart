@@ -14,6 +14,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/warmup_duration_provider.dart';
 import '../../core/utils/difficulty_utils.dart';
+import '../../core/utils/equipment_display.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/workout_generation_params.dart';
@@ -402,7 +403,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         else
                           _buildLabeledBadge(
                             label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
-                            value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
+                            value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium', context),
                             color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
                             backgroundColor: DifficultyUtils.getColor(workout.difficulty ?? 'medium').withValues(alpha: 0.15),
                           ),
@@ -479,7 +480,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                   isExpanded: _isEquipmentExpanded,
                   onTap: () => setState(() => _isEquipmentExpanded = !_isEquipmentExpanded),
                   itemCount: workout.equipmentNeeded.length,
-                  subtitle: workout.equipmentNeeded.take(3).join(', ') + (workout.equipmentNeeded.length > 3 ? '...' : ''),
+                  subtitle: workout.equipmentNeeded
+                          .take(3)
+                          .map((e) => localizeEquipment(e, context))
+                          .join(', ') +
+                      (workout.equipmentNeeded.length > 3 ? '...' : ''),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -545,7 +550,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              equipment,
+                              localizeEquipment(equipment, context),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,

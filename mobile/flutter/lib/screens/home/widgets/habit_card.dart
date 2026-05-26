@@ -80,9 +80,11 @@ class HabitCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
+                  // Title — auto-tracked habits ('auto_workouts', 'auto_food_log',
+                  // 'auto_water') get a localized label; user-created habits keep
+                  // their original (user-typed) name unchanged.
                   Text(
-                    habit.name,
+                    _displayName(context, habit),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -205,5 +207,18 @@ class HabitCard extends ConsumerWidget {
         );
       }),
     );
+  }
+
+  /// Resolve the visible title for a habit. Auto-tracked habits use the
+  /// stable id assigned in `habitsProvider` (so non-en locales render
+  /// localized strings); custom habits fall back to the user-typed name.
+  static String _displayName(BuildContext context, HabitData habit) {
+    final l10n = AppLocalizations.of(context);
+    switch (habit.id) {
+      case 'auto_workouts': return l10n.habitWorkouts;
+      case 'auto_food_log': return l10n.habitFoodLog;
+      case 'auto_water':    return l10n.habitWater;
+    }
+    return habit.name;
   }
 }

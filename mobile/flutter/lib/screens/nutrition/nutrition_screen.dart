@@ -967,6 +967,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                   return;
                 }
                 await ShareableSheet.show(context, data: shareable);
+                if (_userId != null && mounted) {
+                  ref
+                      .read(nutritionProvider.notifier)
+                      .loadSummaryForDate(_userId!, _selectedDate);
+                }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1347,6 +1352,17 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       data: shareable,
       initialTemplate: hasPhoto ? null : ShareableTemplate.whatIAteCard,
     );
+    // Refresh the daily summary after the share sheet closes — user
+    // 2026-05-25 hit a case where logging a meal, opening Share, then
+    // dismissing returned to a daily screen that read "0 / 2000 cal"
+    // with no entries. Forcing a reload here keeps the day card in
+    // sync regardless of which background state mutated while the
+    // sheet was open.
+    if (_userId != null && mounted) {
+      ref
+          .read(nutritionProvider.notifier)
+          .loadSummaryForDate(_userId!, _selectedDate);
+    }
   }
 
   /// Share every food logged under one meal-type (all of breakfast, etc.) —
@@ -1380,6 +1396,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       return;
     }
     await ShareableSheet.show(context, data: shareable);
+    if (_userId != null && mounted) {
+      ref
+          .read(nutritionProvider.notifier)
+          .loadSummaryForDate(_userId!, _selectedDate);
+    }
   }
 
   /// Add a logged meal (or one item from it) to the user's active grocery
