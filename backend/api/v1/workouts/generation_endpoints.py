@@ -861,11 +861,13 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 # Post-gen exclude + equipment compatibility (validation
                 # harness 2026-05-09: 1 row leaked an excluded exercise via
                 # alias collapse; 33 rows had equipment-incompatible exercises).
+                _pre_exclude_count = len(exercises)
                 exercises = post_filter_excluded_exercises(
                     exercises,
                     body.exclude_exercises,
                     body.adjacent_day_exercises,
                 )
+                _exclusion_drops = _pre_exclude_count - len(exercises)
                 exercises = post_filter_equipment_violations(
                     exercises,
                     user_equipment=(equipment if isinstance(equipment, list) else None),
@@ -1078,10 +1080,24 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                         f"(removed {removed_count} excess bodyweight, ratio was {bodyweight_ratio:.0%})"
                     )
                 elif bodyweight_ratio > 0.4:
-                    logger.warning(
-                        f"⚠️ [Equipment] High bodyweight ratio ({bodyweight_ratio:.0%}) "
-                        f"despite gym equipment available: {equipment}"
-                    )
+                    # Suppress the warning when the user's exclusion list
+                    # was aggressive — heavy exclusions naturally bias what
+                    # survives toward bodyweight, and a WARN here is noise
+                    # rather than signal. _exclusion_drops is computed
+                    # earlier in this function from the pre/post-filter
+                    # length delta.
+                    if _exclusion_drops >= 3:
+                        logger.info(
+                            f"[Equipment] BW ratio {bodyweight_ratio:.0%} "
+                            f"after {_exclusion_drops} excluded drops — "
+                            f"expected, not warning."
+                        )
+                    else:
+                        logger.warning(
+                            f"⚠️ [Equipment] High bodyweight ratio "
+                            f"({bodyweight_ratio:.0%}) despite gym equipment "
+                            f"available: {equipment}"
+                        )
 
                 # Log unused equipment for monitoring
                 if exercises:

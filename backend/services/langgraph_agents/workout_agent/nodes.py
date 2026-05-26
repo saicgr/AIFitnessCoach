@@ -12,6 +12,7 @@ from datetime import datetime
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
 from core.gemini_client import get_langchain_llm, sanitize_messages_for_response
+from core.locale import locale_system_suffix as _locale_system_suffix
 from .state import WorkoutAgentState
 from ..tools import (
     add_exercise_to_workout,
@@ -620,7 +621,7 @@ IMPORTANT:
 - Respond naturally as an energetic personal trainer
 - Explain what was changed and WHY it helps
 - Be motivating and encouraging
-- NEVER mention tool names or technical details"""
+- NEVER mention tool names or technical details""" + _locale_system_suffix(state.get("locale") or "en")
 
     messages = state.get("messages", [])
     tool_messages = state.get("tool_messages", [])
@@ -716,7 +717,7 @@ You are responding to a general workout/exercise question. Provide expert advice
 - Workout structure and programming
 - Exercise alternatives and progressions
 
-Be energetic, motivating, and safety-conscious!"""
+Be energetic, motivating, and safety-conscious!""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}

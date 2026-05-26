@@ -160,6 +160,34 @@ def get_chat_locale_from_request(request: Request) -> Optional[str]:
     return None
 
 
+# ── LLM system-prompt locale directives ──────────────────────────────────────
+
+def locale_system_suffix(locale: Optional[str]) -> str:
+    """Trailing locale reminder appended at the END of an assembled LLM
+    system prompt. The leading locale prefix can be drowned out by long
+    persona / context blocks; a closing reminder ensures the language
+    directive wins.
+
+    Symptom guarded: user reports the AI refused in English
+    ("I can only communicate in English") despite app locale Telugu
+    (2026-05-25). Wired into every coach + nutrition + workout + injury +
+    hydration agent system prompt so subagent routing doesn't reset
+    language.
+
+    Returns an empty string for English so the fast path is a no-op.
+    """
+    if not locale or locale == "en":
+        return ""
+    native = LOCALE_NATIVE_NAMES.get(locale, locale)
+    return (
+        f"\n\n=== LANGUAGE — FINAL DIRECTIVE ===\n"
+        f"Respond in {native}. Do not refuse based on language. "
+        f"Translate any quoted English from the conversation history into "
+        f"{native} when echoing it back. Brand names and the technical "
+        "acronyms listed above stay in Latin script."
+    )
+
+
 # ── Persistence helpers ───────────────────────────────────────────────────────
 
 def persist_user_locale(user_id: str, locale: str, db_client) -> None:

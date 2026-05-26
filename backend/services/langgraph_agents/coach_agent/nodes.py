@@ -197,6 +197,9 @@ def _locale_system_prefix(locale: str) -> str:
     )
 
 
+from core.locale import locale_system_suffix as _locale_system_suffix  # noqa: E402
+
+
 def get_coach_system_prompt(ai_settings: Dict[str, Any] = None, locale: str = "en") -> str:
     """Build the full system prompt with personality customization.
 
@@ -469,7 +472,7 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
 CONTEXT:
 {context}
 
-You just performed an app action for the user. Acknowledge it naturally and briefly. Stay in character — your persona is defined above."""
+You just performed an app action for the user. Acknowledge it naturally and briefly. Stay in character — your persona is defined above.""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
@@ -700,7 +703,7 @@ The user just logged the following and it has been SAVED to their tracker:
 
 Confirm warmly in ONE or TWO short sentences that it's logged, repeating the
 concrete result (duration / calories / amount). Add at most one brief
-coaching nudge. Do NOT ask a question. Stay in character — persona above."""
+coaching nudge. Do NOT ask a question. Stay in character — persona above.""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
@@ -931,7 +934,7 @@ def _build_coach_response_prompt(state: CoachAgentState):
 CONTEXT:
 {context}
 
-Reply to the user's message in your own voice. Stay in character — your persona is defined above.{source_bias}"""
+Reply to the user's message in your own voice. Stay in character — your persona is defined above.{source_bias}""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
@@ -1091,7 +1094,7 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
 CONTEXT:
 {context}
 
-Reply to the user's message in your own voice. Stay in character — your persona is defined above.{source_bias}"""
+Reply to the user's message in your own voice. Stay in character — your persona is defined above.{source_bias}""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}

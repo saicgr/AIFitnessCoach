@@ -12,6 +12,7 @@ from datetime import datetime
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
 from core.gemini_client import get_langchain_llm, sanitize_messages_for_response
+from core.locale import locale_system_suffix as _locale_system_suffix
 from .state import NutritionAgentState
 from ..tools import analyze_food_image, analyze_multi_food_images, parse_app_screenshot, parse_nutrition_label, get_nutrition_summary, get_recent_meals, log_food_from_text
 from ..tools.nutrition_tools import get_calorie_remainder, get_favorite_foods, get_todays_workout_for_meal, build_grocery_list
@@ -559,7 +560,7 @@ IMPORTANT:
   * Acknowledge you received the image but couldn't identify specific items
   * Suggest the image may be unclear, too dark, or an unusual angle
   * Offer to help if the user describes what's in the image or retakes the photo
-  * Do NOT claim "the image didn't load" — it loaded fine, the AI just couldn't identify items"""
+  * Do NOT claim "the image didn't load" — it loaded fine, the AI just couldn't identify items""" + _locale_system_suffix(state.get("locale") or "en")
 
     messages = state.get("messages", [])
     tool_messages = state.get("tool_messages", [])
@@ -646,7 +647,7 @@ async def nutrition_autonomous_node(state: NutritionAgentState) -> Dict[str, Any
 CONTEXT:
 {context}
 
-You are responding to a general nutrition question. Provide helpful, personalized advice based on the user's goals and fitness level."""
+You are responding to a general nutrition question. Provide helpful, personalized advice based on the user's goals and fitness level.""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}

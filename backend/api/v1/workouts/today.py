@@ -245,8 +245,21 @@ def _extract_primary_muscles(exercises: list) -> List[str]:
     return list(muscles)[:4]  # Limit to top 4
 
 
-def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWorkoutSummary:
-    """Convert a database row to TodayWorkoutSummary."""
+def _row_to_summary(
+    row: dict,
+    user_today_str: Optional[str] = None,
+    *,
+    locale: str = "en",
+    db_client=None,
+) -> TodayWorkoutSummary:
+    """Convert a database row to TodayWorkoutSummary.
+
+    When [locale] != "en" the LLM-generated `name` is resolved through the
+    per-locale cache (`display_title_localized[locale]`). A missing cache
+    entry returns the English name AND schedules a background translation;
+    next read hits the cache. [db_client] is required for the background
+    persist — when omitted, queueing is a no-op (read-only callers).
+    """
     # Parse exercises
     raw_exercises = row.get("exercises") or row.get("exercises_json")
     logger.debug(f"[_row_to_summary] workout_id={row.get('id')}, exercises_type={type(raw_exercises)}, "
@@ -271,9 +284,26 @@ def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWor
     ref_today = user_today_str
     is_today = scheduled_date == ref_today
 
+    # Localized title — falls back to English `name` on cache miss and
+    # queues a background fill so the next read is localized. English-locale
+    # paths are zero-cost (early returns inside the translator).
+    from services.workout_title_translator import (  # local — avoids cycle
+        maybe_queue_translation,
+        resolve_display_title,
+    )
+    display_name = resolve_display_title(row, locale)
+    if db_client is not None and row.get("id") and row.get("name"):
+        maybe_queue_translation(
+            workout_id=str(row["id"]),
+            name=row["name"],
+            locale=locale,
+            existing_cache=row.get("display_title_localized"),
+            db_client=db_client,
+        )
+
     return TodayWorkoutSummary(
         id=row.get("id", ""),
-        name=row.get("name", "Workout"),
+        name=display_name or row.get("name", "Workout"),
         type=row.get("type", "strength"),
         difficulty=row.get("difficulty", "medium"),
         description=row.get("description"),
@@ -861,6 +891,11 @@ async def get_today_workout(
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id)
         today_str = get_user_today(user_tz)
+        # Resolve display locale for workout titles. Non-en users get the
+        # cached translation when present and a lazy background fill on
+        # cache miss (see workout_title_translator).
+        from core.locale import get_user_locale_from_request
+        _display_locale = get_user_locale_from_request(request)
 
         # Get user to check their workout days (with Redis cache)
         cached_user = await _user_record_cache.get(user_id)
@@ -1060,12 +1095,12 @@ async def get_today_workout(
                     f"scheduled_date={_demoted_rows[0].get('scheduled_date')!r}"
                 )
             if _safe_today_rows:
-                today_workout = _row_to_summary(_safe_today_rows[0], user_today_str=today_str)
+                today_workout = _row_to_summary(_safe_today_rows[0], user_today_str=today_str, locale=_display_locale, db_client=db)
                 has_workout_today = True
                 logger.debug(f"[TODAY DEBUG] Found today's workout: {today_workout.name}")
                 if len(_safe_today_rows) > 1:
                     extra_today_workouts = [
-                        _row_to_summary(row, user_today_str=today_str)
+                        _row_to_summary(row, user_today_str=today_str, locale=_display_locale, db_client=db)
                         for row in _safe_today_rows[1:]
                     ]
                     logger.debug(f"[TODAY DEBUG] Found {len(extra_today_workouts)} extra today workouts")
@@ -1079,7 +1114,7 @@ async def get_today_workout(
             _candidate_future.extend(_demoted_rows)
             _candidate_future.sort(key=lambda r: str(r.get("scheduled_date") or ""))
         if _candidate_future:
-            next_workout = _row_to_summary(_candidate_future[0], user_today_str=today_str)
+            next_workout = _row_to_summary(_candidate_future[0], user_today_str=today_str, locale=_display_locale, db_client=db)
             next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
             user_today_date = datetime.strptime(today_str, "%Y-%m-%d").date()
             days_until_next = (next_date - user_today_date).days
@@ -1139,7 +1174,7 @@ async def get_today_workout(
         # Build completed workout summary if user completed today's workout
         completed_workout_summary: Optional[TodayWorkoutSummary] = None
         if has_completed_workout_today:
-            completed_workout_summary = _row_to_summary(completed_today_rows[0], user_today_str=today_str)
+            completed_workout_summary = _row_to_summary(completed_today_rows[0], user_today_str=today_str, locale=_display_locale, db_client=db)
             logger.info(f"User completed today's workout: {completed_workout_summary.name}")
 
         # ================================================================

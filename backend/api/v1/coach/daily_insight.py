@@ -469,6 +469,41 @@ def _deterministic_fallback(
 # ---------------------------------------------------------------------------
 # Gemini call
 # ---------------------------------------------------------------------------
+def _robust_parse_json_object(text: str) -> Optional[Dict[str, Any]]:
+    """Parse Gemini JSON output that may carry trailing tokens, leading
+    whitespace, or markdown fences.
+
+    Handles three failure modes observed in production:
+      * Markdown fence wrapping (```json ... ```)
+      * Leading/trailing whitespace
+      * "Extra data" — trailing prose after a valid JSON object
+    Returns None on unrecoverable failure (caller logs and falls back).
+    """
+    if not text:
+        return None
+    s = text.strip()
+    # Strip ```json ... ``` fence if present.
+    if s.startswith("```"):
+        s = re.sub(r"^```(?:json)?\s*", "", s)
+        s = re.sub(r"\s*```$", "", s).strip()
+    # Fast path.
+    try:
+        return json.loads(s)
+    except json.JSONDecodeError:
+        pass
+    # Recover from trailing junk via raw_decode at the first '{'.
+    first = s.find("{")
+    if first < 0:
+        return None
+    try:
+        obj, _end = json.JSONDecoder().raw_decode(s[first:])
+        if isinstance(obj, dict):
+            return obj
+    except json.JSONDecodeError as e:
+        logger.error(f"[daily_insight] robust parse gave up: {e} — text head: {s[:200]!r}")
+    return None
+
+
 async def _call_gemini_for_insight(
     *, context: Dict[str, Any], source: str, user_id: str,
 ) -> Optional[Dict[str, Any]]:
@@ -492,7 +527,9 @@ async def _call_gemini_for_insight(
         text = getattr(response, "text", None)
         if not text:
             return None
-        parsed = json.loads(text)
+        parsed = _robust_parse_json_object(text)
+        if parsed is None:
+            return None
         # Light shape validation — drop unknown routes/pillars before persisting.
         if parsed.get("leading_pillar") not in _VALID_PILLARS:
             parsed["leading_pillar"] = None

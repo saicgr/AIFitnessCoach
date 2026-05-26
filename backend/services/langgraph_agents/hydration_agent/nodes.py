@@ -12,6 +12,7 @@ from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings, CoachIntent
 from services.gemini_service import GeminiService
 from core.logger import get_logger
+from core.locale import locale_system_suffix as _locale_system_suffix
 
 logger = get_logger(__name__)
 
@@ -205,7 +206,7 @@ The user just logged {amount} glass(es) of water. Respond with:
 2. An encouraging message
 3. Optionally, a hydration tip or fun fact
 
-Keep it short and refreshing! Don't be too long-winded."""
+Keep it short and refreshing! Don't be too long-winded.""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
@@ -266,7 +267,7 @@ CONTEXT:
 {context}
 
 You are responding to a hydration question. Provide helpful, personalized advice.
-Be refreshing, upbeat, and practical!"""
+Be refreshing, upbeat, and practical!""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}

@@ -11,6 +11,7 @@ from typing import Dict, Any, Literal
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
 from core.gemini_client import get_langchain_llm
+from core.locale import locale_system_suffix as _locale_system_suffix
 from .state import InjuryAgentState
 from ..tools import (
     report_injury,
@@ -352,7 +353,7 @@ IMPORTANT:
 - Show empathy for the user's pain
 - Provide helpful recovery guidance
 - Suggest seeing a doctor if the injury sounds serious
-- NEVER mention tool names or technical details"""
+- NEVER mention tool names or technical details""" + _locale_system_suffix(state.get("locale") or "en")
 
     messages = state.get("messages", [])
     tool_messages = state.get("tool_messages", [])
@@ -425,7 +426,7 @@ You are responding to a general injury/recovery question. Provide expert advice 
 - Safe return to training
 - When to see a medical professional
 
-Be empathetic, cautious, and caring!"""
+Be empathetic, cautious, and caring!""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
