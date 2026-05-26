@@ -493,7 +493,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       List<CardioPersonalRecord> recent = const [];
       final cutoff = DateTime.now().subtract(const Duration(minutes: 5));
       for (var attempt = 0; attempt < 3; attempt++) {
-        final all = await repo.listAll();
+        final all = await repo.listFlat();
         recent = all.where((pr) => pr.achievedAt.isAfter(cutoff)).toList();
         if (recent.isNotEmpty) break;
         await Future.delayed(Duration(milliseconds: 800 * (attempt + 1)));

@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/api_constants.dart';
 import 'api_client.dart';
 import 'health_service.dart';
-import 'health_export_service.dart' show HealthExportService;
+import '../../services/health_export_service.dart' show HealthExportService;
 
 // ---------------------------------------------------------------------------
 // PendingWorkoutImport - model for a workout discovered in Health Connect /
