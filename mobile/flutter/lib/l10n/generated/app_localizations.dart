@@ -74860,7 +74860,7 @@ abstract class AppLocalizations {
   /// No description provided for @bottomNavLeaderboard.
   ///
   /// In en, this message translates to:
-  /// **'Leaderboard'**
+  /// **'Ranks'**
   String get bottomNavLeaderboard;
 
   /// No description provided for @discoverBoardXp.

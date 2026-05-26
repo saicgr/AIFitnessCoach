@@ -44181,7 +44181,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t clear — try again later.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Ranks';
 
   @override
   String get discoverBoardXp => 'XP';
