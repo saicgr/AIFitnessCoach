@@ -44599,4 +44599,212 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Wie App-Sprache';
+
+  @override
+  String get settingsImportsTitle => 'Importe';
+
+  @override
+  String get settingsImportsSubtitle => 'Alles, was Sie in Zealova geteilt haben';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Zyklusverfolgung';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Periode, Fruchtbarkeit und Vorhersagen';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Über $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Der Urlaubsmodus ist aktiv';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Benachrichtigungen werden bis zum $endDate pausiert.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Benachrichtigungen werden pausiert. Zum Fortfahren jederzeit ausschalten.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Geplant';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Beginnt am $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Benachrichtigungen sind aktiviert';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Aktivieren Sie unten den Urlaubsmodus, um unkritische Erinnerungen zu pausieren.';
+
+  @override
+  String get difficultyEasy => 'Anfänger';
+
+  @override
+  String get difficultyMedium => 'Mäßig';
+
+  @override
+  String get difficultyHard => 'Herausfordernd';
+
+  @override
+  String get difficultyHell => 'Hölle';
+
+  @override
+  String get habitWorkouts => 'Trainingseinheiten';
+
+  @override
+  String get habitFoodLog => 'Lebensmittelprotokoll';
+
+  @override
+  String get habitWater => 'Wasser';
+
+  @override
+  String get importsAppBarTitle => 'Importe';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Unterstützte Formate und Einschränkungen';
+
+  @override
+  String get importsTooltipDone => 'Erledigt';
+
+  @override
+  String get importsTooltipSelect => 'Wählen';
+
+  @override
+  String get importsSearchHint => 'Importe suchen…';
+
+  @override
+  String get importsFilterAll => 'Alle';
+
+  @override
+  String get importsFilterAllFormats => 'Alle Formate';
+
+  @override
+  String get importsActionDelete => 'Löschen';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count ausgewählt';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Noch nichts geteilt';
+
+  @override
+  String get importsEmptyBody => 'Klicken Sie irgendwo auf „Teilen“ – Fotos, YouTube, ChatGPT, eine Sprachnotiz – und es landet automatisch hier.';
+
+  @override
+  String get importsActionOpen => 'Offen';
+
+  @override
+  String get importsActionRetry => 'Wiederholen';
+
+  @override
+  String get importsActionReclassify => 'Umklassifizieren';
+
+  @override
+  String get importsSnackRetrying => 'Import wird erneut versucht…';
+
+  @override
+  String get importsSnackRetryFailed => 'Konnte es nicht noch einmal versuchen. Versuchen Sie es später noch einmal.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'In der Warteschlange neu klassifizieren – Geben Sie das Element erneut frei, um es umzuleiten.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count Importe löschen?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Die Datensätze werden aus Ihrem Importverlauf entfernt. Importierte Trainingseinheiten/Rezepte/Ernährungsprotokolle selbst bleiben erhalten.';
+
+  @override
+  String get importsActionCancel => 'Stornieren';
+
+  @override
+  String get importsRowImportFailed => 'Der Import ist fehlgeschlagen';
+
+  @override
+  String get importsTitleImportedWorkout => 'Importiertes Training';
+
+  @override
+  String get importsTitleImportedRecipe => 'Importiertes Rezept';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Importierter Speiseplan';
+
+  @override
+  String get importsTitleLoggedMeal => 'Protokollierte Mahlzeit';
+
+  @override
+  String get importsTitleFormCheck => 'Formularprüfung';
+
+  @override
+  String get importsTitleProgressPhoto => 'Fortschrittsfoto';
+
+  @override
+  String get importsTitleSavedTip => 'Tipp gespeichert';
+
+  @override
+  String get importsTitleImportDetail => 'Details importieren';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Von: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Erkannt als: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Was Sie teilen können';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Grenzen';
+
+  @override
+  String get importsLimitsFooter => 'Die täglichen Obergrenzen sind für alle gleich. Sie halten die Importqualität hoch und schützen vor unkontrollierten Kosten.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Importe';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Fragen Sie immer vor der Weiterleitung nach';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Überspringen Sie den Countdown für die automatische Route – jede Freigabe öffnet die Auswahl.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Gemeinsamen Verlauf löschen';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Entfernt jeden Datensatz aus Ihrer Importliste. Importierte Trainings, Rezepte und Ernährungsprotokolle selbst bleiben erhalten.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Gemeinsamen Verlauf löschen?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Jede Zeile in Ihrer Importliste wird entfernt. Die von Ihnen importierten Trainingseinheiten, Rezepte und Ernährungsprotokolle bleiben dort, wo sie sind.';
+
+  @override
+  String get importsPrivacyClearAction => 'Klar';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Geteilter Verlauf gelöscht.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Fehler konnte nicht gelöscht werden. Versuchen Sie es später noch einmal.';
 }

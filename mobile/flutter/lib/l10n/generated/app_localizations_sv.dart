@@ -44194,4 +44194,212 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Samma som appens språk';
+
+  @override
+  String get settingsImportsTitle => 'Importer';
+
+  @override
+  String get settingsImportsSubtitle => 'Allt du har delat till Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Cykelspårning';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Period, fertilitet och förutsägelser';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Om $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Semesterläget är aktivt';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Aviseringar pausas till $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Aviseringar pausas. Stäng av när som helst för att fortsätta.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Schemalagt';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Startar $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Aviseringar är på';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Aktivera semesterläget nedan för att pausa icke-kritiska påminnelser.';
+
+  @override
+  String get difficultyEasy => 'Nybörjare';
+
+  @override
+  String get difficultyMedium => 'Måttlig';
+
+  @override
+  String get difficultyHard => 'Utmaning';
+
+  @override
+  String get difficultyHell => 'Helvete';
+
+  @override
+  String get habitWorkouts => 'Träningspass';
+
+  @override
+  String get habitFoodLog => 'Matlogg';
+
+  @override
+  String get habitWater => 'Vatten';
+
+  @override
+  String get importsAppBarTitle => 'Importer';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Format och begränsningar som stöds';
+
+  @override
+  String get importsTooltipDone => 'Gjort';
+
+  @override
+  String get importsTooltipSelect => 'Välja';
+
+  @override
+  String get importsSearchHint => 'Sök importer...';
+
+  @override
+  String get importsFilterAll => 'Alla';
+
+  @override
+  String get importsFilterAllFormats => 'Alla format';
+
+  @override
+  String get importsActionDelete => 'Radera';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count har valts';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Inget delat ännu';
+
+  @override
+  String get importsEmptyBody => 'Tryck på Dela var som helst — Foton, YouTube, ChatGPT, ett röstmemo — och det landar här automatiskt.';
+
+  @override
+  String get importsActionOpen => 'Öppna';
+
+  @override
+  String get importsActionRetry => 'Försöka igen';
+
+  @override
+  String get importsActionReclassify => 'Klassificera om';
+
+  @override
+  String get importsSnackRetrying => 'Försöker importera igen...';
+
+  @override
+  String get importsSnackRetryFailed => 'Det gick inte att försöka igen – försök igen senare.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Omklassificera i kö — dela objektet igen för att omdirigera.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Vill du ta bort $count importer?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Posterna tas bort från din importhistorik. Importerade träningspass/recept/matloggar stannar kvar.';
+
+  @override
+  String get importsActionCancel => 'Avboka';
+
+  @override
+  String get importsRowImportFailed => 'Importen misslyckades';
+
+  @override
+  String get importsTitleImportedWorkout => 'Importerad träning';
+
+  @override
+  String get importsTitleImportedRecipe => 'Importerat recept';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Importerad måltidsplan';
+
+  @override
+  String get importsTitleLoggedMeal => 'Loggad måltid';
+
+  @override
+  String get importsTitleFormCheck => 'Formulärkontroll';
+
+  @override
+  String get importsTitleProgressPhoto => 'Framstegsfoto';
+
+  @override
+  String get importsTitleSavedTip => 'Sparat tips';
+
+  @override
+  String get importsTitleImportDetail => 'Importera detalj';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Från: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Upptäcks som: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Vad du kan dela';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Gränser';
+
+  @override
+  String get importsLimitsFooter => 'Dagliga tak är samma för alla. De håller importkvaliteten hög och skyddar mot skenande kostnader.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Importer';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Fråga alltid innan rutt';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Hoppa över nedräkningen av automatisk rutt - varje delning öppnar väljaren.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Rensa delad historik';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Tar bort alla poster från din importlista. Importerade träningspass, recept och matloggar stannar kvar.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Rensa delad historik?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Varje rad i din importlista tas bort. Träningspassen, recepten och matloggarna du importerade stannar där de är.';
+
+  @override
+  String get importsPrivacyClearAction => 'Rensa';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Den delade historiken har rensats.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Det gick inte att rensa – försök igen senare.';
 }

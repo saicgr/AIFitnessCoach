@@ -44232,4 +44232,212 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Stejný jako jazyk aplikace';
+
+  @override
+  String get settingsImportsTitle => 'Dovoz';
+
+  @override
+  String get settingsImportsSubtitle => 'Vše, co jste sdíleli se Zealovou';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Sledování cyklů';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Období, plodnost a předpovědi';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'O aplikaci $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Režim dovolené je aktivní';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Oznámení jsou pozastavena do $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Oznámení jsou pozastavena. Pro obnovení kdykoli vypněte.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Naplánováno';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Začíná $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Oznámení jsou zapnutá';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Chcete-li pozastavit nekritická připomenutí, níže povolte režim dovolené.';
+
+  @override
+  String get difficultyEasy => 'Začátečník';
+
+  @override
+  String get difficultyMedium => 'Mírný';
+
+  @override
+  String get difficultyHard => 'Náročný';
+
+  @override
+  String get difficultyHell => 'Peklo';
+
+  @override
+  String get habitWorkouts => 'Tréninky';
+
+  @override
+  String get habitFoodLog => 'Food Log';
+
+  @override
+  String get habitWater => 'Voda';
+
+  @override
+  String get importsAppBarTitle => 'Dovoz';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Podporované formáty a limity';
+
+  @override
+  String get importsTooltipDone => 'Hotovo';
+
+  @override
+  String get importsTooltipSelect => 'Vybrat';
+
+  @override
+  String get importsSearchHint => 'Vyhledat importy…';
+
+  @override
+  String get importsFilterAll => 'Vše';
+
+  @override
+  String get importsFilterAllFormats => 'Všechny formáty';
+
+  @override
+  String get importsActionDelete => 'Vymazat';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return 'Vybráno: $count';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Zatím nic sdíleno';
+
+  @override
+  String get importsEmptyBody => 'Klikněte na Sdílet kdekoli – Fotky, YouTube, ChatGPT, hlasová poznámka – a automaticky se zobrazí zde.';
+
+  @override
+  String get importsActionOpen => 'OTEVŘENO';
+
+  @override
+  String get importsActionRetry => 'Zkuste to znovu';
+
+  @override
+  String get importsActionReclassify => 'Překlasifikovat';
+
+  @override
+  String get importsSnackRetrying => 'Opakování importu…';
+
+  @override
+  String get importsSnackRetryFailed => 'Nepodařilo se opakovat – zkuste to znovu později.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Reklasifikovat ve frontě — sdílejte položku znovu, aby byla přesměrována.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Smazat $count importy?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Záznamy budou odstraněny z vaší historie importů. Samotné importované tréninky / recepty / záznamy o jídle zůstávají.';
+
+  @override
+  String get importsActionCancel => 'Zrušit';
+
+  @override
+  String get importsRowImportFailed => 'Import se nezdařil';
+
+  @override
+  String get importsTitleImportedWorkout => 'Importované cvičení';
+
+  @override
+  String get importsTitleImportedRecipe => 'Importovaný recept';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Importovaný jídelníček';
+
+  @override
+  String get importsTitleLoggedMeal => 'Přihlášené jídlo';
+
+  @override
+  String get importsTitleFormCheck => 'Kontrola formuláře';
+
+  @override
+  String get importsTitleProgressPhoto => 'Foto pokroku';
+
+  @override
+  String get importsTitleSavedTip => 'Uložený tip';
+
+  @override
+  String get importsTitleImportDetail => 'Detail importu';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Od: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Stav: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Zjištěno jako: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Co můžete sdílet';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Limity';
+
+  @override
+  String get importsLimitsFooter => 'Denní limity jsou pro všechny stejné. Udržují vysokou kvalitu dovozu a chrání před útěky.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Dovoz';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Před směrováním se vždy zeptejte';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Přeskočte odpočítávání automatické trasy – každé sdílení otevře výběr.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Vymazat sdílenou historii';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Odebere každý záznam z vašeho seznamu importů. Importovaná cvičení, recepty a samotné záznamy o jídle zůstávají.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Vymazat sdílenou historii?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Každý řádek v seznamu importů bude odstraněn. Cvičení, recepty a záznamy o jídle, které jste importovali, zůstanou tam, kde jsou.';
+
+  @override
+  String get importsPrivacyClearAction => 'Jasný';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Sdílená historie byla vymazána.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Nelze vymazat – zkuste to znovu později.';
 }

@@ -44961,4 +44961,212 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'ആപ്പ് ഭാഷയ്ക്ക് സമാനമായി';
+
+  @override
+  String get settingsImportsTitle => 'ഇറക്കുമതി ചെയ്യുന്നു';
+
+  @override
+  String get settingsImportsSubtitle => 'നിങ്ങൾ സീലോവയിലേക്ക് പങ്കിട്ടതെല്ലാം';
+
+  @override
+  String get settingsCycleTrackingTitle => 'സൈക്കിൾ ട്രാക്കിംഗ്';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'കാലയളവ്, ഫെർട്ടിലിറ്റി & പ്രവചനങ്ങൾ';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName-നെ കുറിച്ച്';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'അവധിക്കാല മോഡ് സജീവമാണ്';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'അറിയിപ്പുകൾ $endDate വരെ താൽക്കാലികമായി നിർത്തി.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'അറിയിപ്പുകൾ താൽക്കാലികമായി നിർത്തി. പുനരാരംഭിക്കാൻ എപ്പോൾ വേണമെങ്കിലും ഓഫാക്കുക.';
+
+  @override
+  String get vacationModeBannerScheduled => 'ഷെഡ്യൂൾ ചെയ്തു';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate ആരംഭിക്കുന്നു.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'അറിയിപ്പുകൾ ഓണാണ്';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'നിർണ്ണായകമല്ലാത്ത ഓർമ്മപ്പെടുത്തലുകൾ താൽക്കാലികമായി നിർത്താൻ ചുവടെയുള്ള അവധിക്കാല മോഡ് പ്രവർത്തനക്ഷമമാക്കുക.';
+
+  @override
+  String get difficultyEasy => 'തുടക്കക്കാരൻ';
+
+  @override
+  String get difficultyMedium => 'മിതത്വം';
+
+  @override
+  String get difficultyHard => 'വെല്ലുവിളിനിറഞ്ഞ';
+
+  @override
+  String get difficultyHell => 'നരകം';
+
+  @override
+  String get habitWorkouts => 'വ്യായാമങ്ങൾ';
+
+  @override
+  String get habitFoodLog => 'ഭക്ഷണ ലോഗ്';
+
+  @override
+  String get habitWater => 'വെള്ളം';
+
+  @override
+  String get importsAppBarTitle => 'ഇറക്കുമതി ചെയ്യുന്നു';
+
+  @override
+  String get importsTooltipFormatsLimits => 'പിന്തുണയ്ക്കുന്ന ഫോർമാറ്റുകളും പരിധികളും';
+
+  @override
+  String get importsTooltipDone => 'ചെയ്തു';
+
+  @override
+  String get importsTooltipSelect => 'തിരഞ്ഞെടുക്കുക';
+
+  @override
+  String get importsSearchHint => 'ഇറക്കുമതികൾ തിരയുക...';
+
+  @override
+  String get importsFilterAll => 'എല്ലാം';
+
+  @override
+  String get importsFilterAllFormats => 'എല്ലാ ഫോർമാറ്റുകളും';
+
+  @override
+  String get importsActionDelete => 'ഇല്ലാതാക്കുക';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count തിരഞ്ഞെടുത്തു';
+  }
+
+  @override
+  String get importsEmptyTitle => 'ഇതുവരെ ഒന്നും പങ്കിട്ടിട്ടില്ല';
+
+  @override
+  String get importsEmptyBody => 'എവിടെയും പങ്കിടുക അമർത്തുക - ഫോട്ടോകൾ, YouTube, ChatGPT, ഒരു വോയ്‌സ് മെമ്മോ - അത് ഇവിടെ സ്വയമേവ ഇറങ്ങും.';
+
+  @override
+  String get importsActionOpen => 'തുറക്കുക';
+
+  @override
+  String get importsActionRetry => 'വീണ്ടും ശ്രമിക്കുക';
+
+  @override
+  String get importsActionReclassify => 'വീണ്ടും വർഗ്ഗീകരിക്കുക';
+
+  @override
+  String get importsSnackRetrying => 'വീണ്ടും ഇറക്കുമതി ചെയ്യാൻ ശ്രമിക്കുന്നു...';
+
+  @override
+  String get importsSnackRetryFailed => 'വീണ്ടും ശ്രമിക്കാനായില്ല — പിന്നീട് വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'ക്യൂവിലുള്ളത് വീണ്ടും തരംതിരിക്കുക - വഴി തിരിച്ചുവിടാൻ ഇനം വീണ്ടും പങ്കിടുക.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count ഇമ്പോർട്ടുകൾ ഇല്ലാതാക്കണോ?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'നിങ്ങളുടെ ഇറക്കുമതി ചരിത്രത്തിൽ നിന്ന് റെക്കോർഡുകൾ നീക്കം ചെയ്‌തു. ഇറക്കുമതി ചെയ്ത വർക്ക്ഔട്ടുകൾ / പാചകക്കുറിപ്പുകൾ / ഭക്ഷണ രേഖകൾ തന്നെ നിലനിൽക്കും.';
+
+  @override
+  String get importsActionCancel => 'റദ്ദാക്കുക';
+
+  @override
+  String get importsRowImportFailed => 'ഇറക്കുമതി പരാജയപ്പെട്ടു';
+
+  @override
+  String get importsTitleImportedWorkout => 'ഇറക്കുമതി ചെയ്ത വ്യായാമം';
+
+  @override
+  String get importsTitleImportedRecipe => 'ഇറക്കുമതി ചെയ്ത പാചകക്കുറിപ്പ്';
+
+  @override
+  String get importsTitleImportedMealPlan => 'ഇറക്കുമതി ചെയ്ത ഭക്ഷണ പദ്ധതി';
+
+  @override
+  String get importsTitleLoggedMeal => 'ലോഗ് ചെയ്ത ഭക്ഷണം';
+
+  @override
+  String get importsTitleFormCheck => 'ഫോം പരിശോധന';
+
+  @override
+  String get importsTitleProgressPhoto => 'പുരോഗതി ഫോട്ടോ';
+
+  @override
+  String get importsTitleSavedTip => 'സംരക്ഷിച്ച നുറുങ്ങ്';
+
+  @override
+  String get importsTitleImportDetail => 'വിശദാംശങ്ങൾ ഇറക്കുമതി ചെയ്യുക';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'നിന്ന്: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'നില: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'ഇതായി കണ്ടെത്തി: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'നിങ്ങൾക്ക് പങ്കിടാൻ കഴിയുന്നത്';
+
+  @override
+  String get importsLimitsLimitsHeader => 'പരിധികൾ';
+
+  @override
+  String get importsLimitsFooter => 'പ്രതിദിന ക്യാപ്‌സ് എല്ലാവർക്കും തുല്യമാണ്. അവർ ഇറക്കുമതി ഗുണനിലവാരം ഉയർത്തുകയും റൺവേ ചെലവിൽ നിന്ന് സംരക്ഷിക്കുകയും ചെയ്യുന്നു.';
+
+  @override
+  String get importsPrivacySectionTitle => 'ഇറക്കുമതി ചെയ്യുന്നു';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'റൂട്ടിംഗിന് മുമ്പ് എപ്പോഴും ചോദിക്കുക';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'ഓട്ടോ-റൂട്ട് കൗണ്ട്ഡൗൺ ഒഴിവാക്കുക - ഓരോ ഷെയറും തിരഞ്ഞെടുക്കുന്നയാളെ തുറക്കുന്നു.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'പങ്കിട്ട ചരിത്രം മായ്‌ക്കുക';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'നിങ്ങളുടെ ഇറക്കുമതി ലിസ്റ്റിൽ നിന്ന് എല്ലാ റെക്കോർഡുകളും നീക്കംചെയ്യുന്നു. ഇറക്കുമതി ചെയ്ത വർക്ക്ഔട്ടുകൾ, പാചകക്കുറിപ്പുകൾ, ഭക്ഷണ രേഖകൾ എന്നിവ നിലനിൽക്കും.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'പങ്കിട്ട ചരിത്രം മായ്‌ക്കണോ?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'നിങ്ങളുടെ ഇറക്കുമതി ലിസ്റ്റിലെ എല്ലാ വരികളും നീക്കംചെയ്‌തു. നിങ്ങൾ ഇറക്കുമതി ചെയ്ത വർക്കൗട്ടുകൾ, പാചകക്കുറിപ്പുകൾ, ഭക്ഷണ രേഖകൾ എന്നിവ എവിടെയാണോ അവിടെത്തന്നെ തുടരും.';
+
+  @override
+  String get importsPrivacyClearAction => 'ക്ലിയർ';
+
+  @override
+  String get importsPrivacyClearedSnack => 'പങ്കിട്ട ചരിത്രം മായ്‌ച്ചു.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'മായ്‌ക്കാനായില്ല — പിന്നീട് വീണ്ടും ശ്രമിക്കുക.';
 }

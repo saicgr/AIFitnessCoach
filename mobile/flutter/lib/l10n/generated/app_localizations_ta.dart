@@ -44936,4 +44936,212 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'செயலியின் அதே மொழி';
+
+  @override
+  String get settingsImportsTitle => 'இறக்குமதிகள்';
+
+  @override
+  String get settingsImportsSubtitle => 'Zealova இல் நீங்கள் பகிர்ந்த அனைத்தும்';
+
+  @override
+  String get settingsCycleTrackingTitle => 'சைக்கிள் கண்காணிப்பு';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'காலம், கருவுறுதல் மற்றும் கணிப்புகள்';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName பற்றி';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'விடுமுறை முறை செயலில் உள்ளது';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'அறிவிப்புகள் $endDate வரை இடைநிறுத்தப்படும்.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'அறிவிப்புகள் இடைநிறுத்தப்பட்டுள்ளன. மீண்டும் தொடங்க எந்த நேரத்திலும் அணைக்கவும்.';
+
+  @override
+  String get vacationModeBannerScheduled => 'திட்டமிடப்பட்டது';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate அன்று தொடங்குகிறது.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'அறிவிப்புகள் இயக்கத்தில் உள்ளன';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'முக்கியமான நினைவூட்டல்களை இடைநிறுத்த, கீழே விடுமுறை பயன்முறையை இயக்கவும்.';
+
+  @override
+  String get difficultyEasy => 'ஆரம்பநிலை';
+
+  @override
+  String get difficultyMedium => 'மிதமான';
+
+  @override
+  String get difficultyHard => 'சவாலான';
+
+  @override
+  String get difficultyHell => 'நரகம்';
+
+  @override
+  String get habitWorkouts => 'உடற்பயிற்சிகள்';
+
+  @override
+  String get habitFoodLog => 'உணவு பதிவு';
+
+  @override
+  String get habitWater => 'தண்ணீர்';
+
+  @override
+  String get importsAppBarTitle => 'இறக்குமதிகள்';
+
+  @override
+  String get importsTooltipFormatsLimits => 'ஆதரிக்கப்படும் வடிவங்கள் மற்றும் வரம்புகள்';
+
+  @override
+  String get importsTooltipDone => 'முடிந்தது';
+
+  @override
+  String get importsTooltipSelect => 'தேர்ந்தெடு';
+
+  @override
+  String get importsSearchHint => 'இறக்குமதிகளைத் தேடு…';
+
+  @override
+  String get importsFilterAll => 'அனைத்து';
+
+  @override
+  String get importsFilterAllFormats => 'அனைத்து வடிவங்களும்';
+
+  @override
+  String get importsActionDelete => 'நீக்கு';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count தேர்ந்தெடுக்கப்பட்டது';
+  }
+
+  @override
+  String get importsEmptyTitle => 'இதுவரை எதுவும் பகிரப்படவில்லை';
+
+  @override
+  String get importsEmptyBody => 'புகைப்படங்கள், YouTube, ChatGPT, குரல் குறிப்பு - எங்கு வேண்டுமானாலும் பகிர் என்பதை அழுத்தவும், அது தானாகவே இங்கு வந்து சேரும்.';
+
+  @override
+  String get importsActionOpen => 'திற';
+
+  @override
+  String get importsActionRetry => 'மீண்டும் முயற்சிக்கவும்';
+
+  @override
+  String get importsActionReclassify => 'மறுவகைப்படுத்து';
+
+  @override
+  String get importsSnackRetrying => 'இறக்குமதியை மீண்டும் முயற்சிக்கிறது…';
+
+  @override
+  String get importsSnackRetryFailed => 'மீண்டும் முயற்சிக்க முடியவில்லை — பிறகு முயற்சிக்கவும்.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'வரிசைப்படுத்தப்பட்டதை மீண்டும் வகைப்படுத்தவும் - வழிமாற்றுவதற்கு உருப்படியை மீண்டும் பகிரவும்.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count இறக்குமதிகளை நீக்கவா?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'உங்கள் இறக்குமதி வரலாற்றிலிருந்து பதிவுகள் அகற்றப்பட்டன. இறக்குமதி செய்யப்பட்ட உடற்பயிற்சிகள் / சமையல் வகைகள் / உணவுப் பதிவுகள் அப்படியே இருக்கும்.';
+
+  @override
+  String get importsActionCancel => 'ரத்து செய்';
+
+  @override
+  String get importsRowImportFailed => 'இறக்குமதி தோல்வியடைந்தது';
+
+  @override
+  String get importsTitleImportedWorkout => 'இறக்குமதி செய்யப்பட்ட உடற்பயிற்சி';
+
+  @override
+  String get importsTitleImportedRecipe => 'இறக்குமதி செய்யப்பட்ட செய்முறை';
+
+  @override
+  String get importsTitleImportedMealPlan => 'இறக்குமதி செய்யப்பட்ட உணவுத் திட்டம்';
+
+  @override
+  String get importsTitleLoggedMeal => 'பதிவு செய்யப்பட்ட உணவு';
+
+  @override
+  String get importsTitleFormCheck => 'படிவம் சரிபார்ப்பு';
+
+  @override
+  String get importsTitleProgressPhoto => 'முன்னேற்றம் புகைப்படம்';
+
+  @override
+  String get importsTitleSavedTip => 'சேமிக்கப்பட்ட உதவிக்குறிப்பு';
+
+  @override
+  String get importsTitleImportDetail => 'இறக்குமதி விவரம்';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'அனுப்புநர்: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'நிலை: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'இவ்வாறு கண்டறியப்பட்டது: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'நீங்கள் என்ன பகிர்ந்து கொள்ளலாம்';
+
+  @override
+  String get importsLimitsLimitsHeader => 'வரம்புகள்';
+
+  @override
+  String get importsLimitsFooter => 'தினசரி தொப்பிகள் அனைவருக்கும் ஒரே மாதிரியானவை. அவை இறக்குமதி தரத்தை உயர்வாக வைத்து, ரன்வே செலவுகளிலிருந்து பாதுகாக்கின்றன.';
+
+  @override
+  String get importsPrivacySectionTitle => 'இறக்குமதிகள்';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'ரூட்டிங் செய்வதற்கு முன் எப்போதும் கேளுங்கள்';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'ஆட்டோ-ரூட் கவுண்ட்டவுனைத் தவிர்க்கவும் - ஒவ்வொரு பங்கும் தேர்வாளரைத் திறக்கும்.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'பகிரப்பட்ட வரலாற்றை அழிக்கவும்';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'உங்கள் இறக்குமதி பட்டியலில் இருந்து ஒவ்வொரு பதிவையும் நீக்குகிறது. இறக்குமதி செய்யப்பட்ட உடற்பயிற்சிகளும், சமையல் குறிப்புகளும், உணவுப் பதிவுகளும் அப்படியே இருக்கும்.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'பகிரப்பட்ட வரலாற்றை அழிக்கவா?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'உங்கள் இறக்குமதி பட்டியலில் உள்ள ஒவ்வொரு வரிசையும் அகற்றப்படும். நீங்கள் இறக்குமதி செய்த உடற்பயிற்சிகளும், சமையல் குறிப்புகளும், உணவுப் பதிவுகளும் இருக்கும் இடத்திலேயே இருக்கும்.';
+
+  @override
+  String get importsPrivacyClearAction => 'தெளிவு';
+
+  @override
+  String get importsPrivacyClearedSnack => 'பகிரப்பட்ட வரலாறு அழிக்கப்பட்டது.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'அழிக்க முடியவில்லை — பிறகு முயற்சிக்கவும்.';
 }

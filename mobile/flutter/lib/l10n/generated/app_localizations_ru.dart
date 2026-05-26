@@ -44445,4 +44445,212 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Как в приложении';
+
+  @override
+  String get settingsImportsTitle => 'Импорт';
+
+  @override
+  String get settingsImportsSubtitle => 'Все, чем вы поделились в Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Отслеживание цикла';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Менструация, фертильность и прогнозы';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'О приложении $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Режим отпуска активен';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Уведомления приостановлены до $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Уведомления приостановлены. Выключите в любое время, чтобы возобновить работу.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Запланировано';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Начинается $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Уведомления включены';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Включите режим отпуска ниже, чтобы приостановить некритические напоминания.';
+
+  @override
+  String get difficultyEasy => 'Новичок';
+
+  @override
+  String get difficultyMedium => 'Умеренный';
+
+  @override
+  String get difficultyHard => 'Испытывающий';
+
+  @override
+  String get difficultyHell => 'Ад';
+
+  @override
+  String get habitWorkouts => 'Тренировки';
+
+  @override
+  String get habitFoodLog => 'Журнал еды';
+
+  @override
+  String get habitWater => 'Вода';
+
+  @override
+  String get importsAppBarTitle => 'Импорт';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Поддерживаемые форматы и ограничения';
+
+  @override
+  String get importsTooltipDone => 'Сделанный';
+
+  @override
+  String get importsTooltipSelect => 'Выбирать';
+
+  @override
+  String get importsSearchHint => 'Поиск импорта…';
+
+  @override
+  String get importsFilterAll => 'Все';
+
+  @override
+  String get importsFilterAllFormats => 'Все форматы';
+
+  @override
+  String get importsActionDelete => 'Удалить';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count выбрано';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Пока ничего не опубликовано';
+
+  @override
+  String get importsEmptyBody => 'Нажмите «Поделиться» в любом месте — «Фото», «YouTube», ChatGPT, голосовая заметка — и она автоматически появится здесь.';
+
+  @override
+  String get importsActionOpen => 'Открыть';
+
+  @override
+  String get importsActionRetry => 'Повторить попытку';
+
+  @override
+  String get importsActionReclassify => 'Реклассифицировать';
+
+  @override
+  String get importsSnackRetrying => 'Повторная попытка импорта…';
+
+  @override
+  String get importsSnackRetryFailed => 'Не удалось повторить попытку. Повторите попытку позже.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Переклассифицировать в очереди — снова поделиться элементом, чтобы перенаправить его.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Удалить импорт: $count?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Записи будут удалены из вашей истории импорта. Сами импортированные тренировки/рецепты/логи питания остаются.';
+
+  @override
+  String get importsActionCancel => 'Отмена';
+
+  @override
+  String get importsRowImportFailed => 'Импорт не удался';
+
+  @override
+  String get importsTitleImportedWorkout => 'Импортированная тренировка';
+
+  @override
+  String get importsTitleImportedRecipe => 'Импортированный рецепт';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Импортированный план питания';
+
+  @override
+  String get importsTitleLoggedMeal => 'Записанная еда';
+
+  @override
+  String get importsTitleFormCheck => 'Форма проверки';
+
+  @override
+  String get importsTitleProgressPhoto => 'Фото прогресса';
+
+  @override
+  String get importsTitleSavedTip => 'Сохраненный совет';
+
+  @override
+  String get importsTitleImportDetail => 'Детали импорта';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'От: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Статус: {статус}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Обнаружено как: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Чем вы можете поделиться';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Пределы';
+
+  @override
+  String get importsLimitsFooter => 'Дневные лимиты одинаковы для всех. Они поддерживают высокое качество импорта и защищают от неконтролируемых расходов.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Импорт';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Всегда спрашивайте перед маршрутизацией';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Пропустите обратный отсчет автоматического маршрута — каждая акция открывает выбор.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Очистить общую историю';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Удаляет все записи из вашего списка импорта. Импортированные тренировки, рецепты и журналы питания остаются.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Очистить общую историю?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Каждая строка в вашем списке импорта будет удалена. Импортированные вами тренировки, рецепты и журналы питания остаются там, где они есть.';
+
+  @override
+  String get importsPrivacyClearAction => 'Прозрачный';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Общая история удалена.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Не удалось очистить — повторите попытку позже.';
 }

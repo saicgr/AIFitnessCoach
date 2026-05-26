@@ -42547,4 +42547,212 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => '앱 언어와 동일';
+
+  @override
+  String get settingsImportsTitle => '수입품';
+
+  @override
+  String get settingsImportsSubtitle => '귀하가 Zealova에 공유한 모든 것';
+
+  @override
+  String get settingsCycleTrackingTitle => '주기 추적';
+
+  @override
+  String get settingsCycleTrackingSubtitle => '생리, 임신 가능성 및 예측';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName 정보';
+  }
+
+  @override
+  String get vacationModeBannerActive => '휴가 모드가 활성화되었습니다.';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return '알림은 $endDate까지 일시중지됩니다.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => '알림이 일시중지되었습니다. 재개하려면 언제든지 끄세요.';
+
+  @override
+  String get vacationModeBannerScheduled => '예정됨';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate에 시작됩니다.';
+  }
+
+  @override
+  String get vacationModeBannerOn => '알림이 켜져 있습니다';
+
+  @override
+  String get vacationModeBannerOnSubtitle => '중요하지 않은 알림을 일시중지하려면 아래에서 휴가 모드를 활성화하세요.';
+
+  @override
+  String get difficultyEasy => '초보자';
+
+  @override
+  String get difficultyMedium => '보통의';
+
+  @override
+  String get difficultyHard => '도전적이다';
+
+  @override
+  String get difficultyHell => '지옥';
+
+  @override
+  String get habitWorkouts => '운동';
+
+  @override
+  String get habitFoodLog => '음식 기록';
+
+  @override
+  String get habitWater => '물';
+
+  @override
+  String get importsAppBarTitle => '수입품';
+
+  @override
+  String get importsTooltipFormatsLimits => '지원되는 형식 및 제한';
+
+  @override
+  String get importsTooltipDone => '완료';
+
+  @override
+  String get importsTooltipSelect => '선택하다';
+
+  @override
+  String get importsSearchHint => '수입품 검색…';
+
+  @override
+  String get importsFilterAll => '모두';
+
+  @override
+  String get importsFilterAllFormats => '모든 형식';
+
+  @override
+  String get importsActionDelete => '삭제';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count개 선택됨';
+  }
+
+  @override
+  String get importsEmptyTitle => '아직 공유된 항목이 없습니다.';
+
+  @override
+  String get importsEmptyBody => '사진, YouTube, ChatGPT, 음성 메모 등 어디에서나 공유를 누르면 여기에 자동으로 전송됩니다.';
+
+  @override
+  String get importsActionOpen => '열려 있는';
+
+  @override
+  String get importsActionRetry => '다시 해 보다';
+
+  @override
+  String get importsActionReclassify => '재분류';
+
+  @override
+  String get importsSnackRetrying => '가져오기 재시도 중…';
+
+  @override
+  String get importsSnackRetryFailed => '다시 시도할 수 없습니다. 나중에 다시 시도하세요.';
+
+  @override
+  String get importsSnackReclassifyQueued => '대기 중인 재분류 - 항목을 다시 공유하여 경로를 재지정합니다.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count개의 가져오기를 삭제하시겠습니까?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => '해당 기록은 수입 내역에서 제거됩니다. 가져온 운동/레시피/음식 로그 자체가 그대로 유지됩니다.';
+
+  @override
+  String get importsActionCancel => '취소';
+
+  @override
+  String get importsRowImportFailed => '가져오기 실패';
+
+  @override
+  String get importsTitleImportedWorkout => '가져온 운동';
+
+  @override
+  String get importsTitleImportedRecipe => '가져온 레시피';
+
+  @override
+  String get importsTitleImportedMealPlan => '수입 식사 계획';
+
+  @override
+  String get importsTitleLoggedMeal => '기록된 식사';
+
+  @override
+  String get importsTitleFormCheck => '양식 확인';
+
+  @override
+  String get importsTitleProgressPhoto => '진행상황 사진';
+
+  @override
+  String get importsTitleSavedTip => '저장된 팁';
+
+  @override
+  String get importsTitleImportDetail => '가져오기 세부정보';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return '보낸 사람: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return '상태: {상태}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return '다음으로 감지됨: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => '공유할 수 있는 것';
+
+  @override
+  String get importsLimitsLimitsHeader => '제한';
+
+  @override
+  String get importsLimitsFooter => '일일 한도는 모든 사람에게 동일합니다. 수입 품질을 높게 유지하고 폭주하는 비용으로부터 보호합니다.';
+
+  @override
+  String get importsPrivacySectionTitle => '수입품';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => '라우팅하기 전에 항상 물어보세요.';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => '자동 경로 카운트다운을 건너뛰세요. 공유할 때마다 선택기가 열립니다.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => '공유 기록 지우기';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => '가져오기 목록에서 모든 기록을 제거합니다. 가져온 운동, 레시피, 음식 로그는 그대로 유지됩니다.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => '공유 기록을 삭제하시겠습니까?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => '가져오기 목록의 모든 행이 제거됩니다. 가져온 운동, 레시피, 음식 기록은 그대로 유지됩니다.';
+
+  @override
+  String get importsPrivacyClearAction => '분명한';
+
+  @override
+  String get importsPrivacyClearedSnack => '공유 기록이 삭제되었습니다.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => '삭제할 수 없습니다. 나중에 다시 시도해 주세요.';
 }

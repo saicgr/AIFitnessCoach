@@ -44614,4 +44614,212 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Come la lingua dell\'app';
+
+  @override
+  String get settingsImportsTitle => 'Importazioni';
+
+  @override
+  String get settingsImportsSubtitle => 'Tutto quello che hai condiviso su Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Monitoraggio del ciclo';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Periodo, fertilità e previsioni';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Informazioni su $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'La modalità vacanza è attiva';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Le notifiche vengono sospese fino al giorno $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Le notifiche sono in pausa. Spegni in qualsiasi momento per riprendere.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Programmato';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Inizia il giorno $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Le notifiche sono attive';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Abilita la modalità vacanza di seguito per mettere in pausa i promemoria non critici.';
+
+  @override
+  String get difficultyEasy => 'Principiante';
+
+  @override
+  String get difficultyMedium => 'Moderare';
+
+  @override
+  String get difficultyHard => 'Stimolante';
+
+  @override
+  String get difficultyHell => 'Inferno';
+
+  @override
+  String get habitWorkouts => 'Allenamenti';
+
+  @override
+  String get habitFoodLog => 'Registro degli alimenti';
+
+  @override
+  String get habitWater => 'Acqua';
+
+  @override
+  String get importsAppBarTitle => 'Importazioni';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Formati e limiti supportati';
+
+  @override
+  String get importsTooltipDone => 'Fatto';
+
+  @override
+  String get importsTooltipSelect => 'Selezionare';
+
+  @override
+  String get importsSearchHint => 'Cerca importazioni...';
+
+  @override
+  String get importsFilterAll => 'Tutto';
+
+  @override
+  String get importsFilterAllFormats => 'Tutti i formati';
+
+  @override
+  String get importsActionDelete => 'Eliminare';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count selezionato';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Niente di condiviso ancora';
+
+  @override
+  String get importsEmptyBody => 'Premi Condividi ovunque - Foto, YouTube, ChatGPT, un memo vocale - e arriverà qui automaticamente.';
+
+  @override
+  String get importsActionOpen => 'Aprire';
+
+  @override
+  String get importsActionRetry => 'Riprova';
+
+  @override
+  String get importsActionReclassify => 'Riclassificare';
+
+  @override
+  String get importsSnackRetrying => 'Nuovo tentativo di importazione…';
+
+  @override
+  String get importsSnackRetryFailed => 'Impossibile riprovare: riprova più tardi.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Riclassifica in coda: condividi nuovamente l\'elemento per reindirizzarlo.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Eliminare $count importazioni?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'I record vengono rimossi dalla cronologia delle importazioni. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono.';
+
+  @override
+  String get importsActionCancel => 'Cancellare';
+
+  @override
+  String get importsRowImportFailed => 'Importazione non riuscita';
+
+  @override
+  String get importsTitleImportedWorkout => 'Allenamento importato';
+
+  @override
+  String get importsTitleImportedRecipe => 'Ricetta importata';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Piano alimentare importato';
+
+  @override
+  String get importsTitleLoggedMeal => 'Pasto registrato';
+
+  @override
+  String get importsTitleFormCheck => 'Controllo del modulo';
+
+  @override
+  String get importsTitleProgressPhoto => 'Foto di avanzamento';
+
+  @override
+  String get importsTitleSavedTip => 'Suggerimento salvato';
+
+  @override
+  String get importsTitleImportDetail => 'Importa dettaglio';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Da: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Stato: {stato}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Rilevato come: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Cosa puoi condividere';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Limiti';
+
+  @override
+  String get importsLimitsFooter => 'I limiti giornalieri sono uguali per tutti. Mantengono elevata la qualità delle importazioni e proteggono dai costi galoppanti.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Importazioni';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Chiedi sempre prima di indirizzare';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Salta il conto alla rovescia del percorso automatico: ogni condivisione apre il selettore.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Cancella la cronologia condivisa';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Rimuove tutti i record dall\'elenco delle importazioni. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Cancellare la cronologia condivisa?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Ogni riga nell\'elenco delle importazioni viene rimossa. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono dove sono.';
+
+  @override
+  String get importsPrivacyClearAction => 'Chiaro';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Cronologia condivisa cancellata.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Impossibile cancellare: riprova più tardi.';
 }

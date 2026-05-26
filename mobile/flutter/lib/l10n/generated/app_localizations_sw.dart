@@ -44411,4 +44411,212 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Sawa na lugha ya programu';
+
+  @override
+  String get settingsImportsTitle => 'Uagizaji';
+
+  @override
+  String get settingsImportsSubtitle => 'Kila kitu ambacho umeshiriki kwenye Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Ufuatiliaji wa Mzunguko';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Kipindi, uzazi & utabiri';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Kuhusu $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Hali ya likizo inatumika';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Arifa zimesitishwa hadi $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Arifa zimesitishwa. Zima wakati wowote ili uendelee.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Imepangwa';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Inaanza $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Arifa zimewashwa';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Washa hali ya likizo hapa chini ili kusitisha vikumbusho visivyo muhimu.';
+
+  @override
+  String get difficultyEasy => 'Mwanzilishi';
+
+  @override
+  String get difficultyMedium => 'Wastani';
+
+  @override
+  String get difficultyHard => 'Changamoto';
+
+  @override
+  String get difficultyHell => 'Kuzimu';
+
+  @override
+  String get habitWorkouts => 'Mazoezi';
+
+  @override
+  String get habitFoodLog => 'Daftari la Chakula';
+
+  @override
+  String get habitWater => 'Maji';
+
+  @override
+  String get importsAppBarTitle => 'Uagizaji';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Miundo na vikomo vinavyotumika';
+
+  @override
+  String get importsTooltipDone => 'Imekamilika';
+
+  @override
+  String get importsTooltipSelect => 'Chagua';
+
+  @override
+  String get importsSearchHint => 'Tafuta zilizoingizwa...';
+
+  @override
+  String get importsFilterAll => 'Wote';
+
+  @override
+  String get importsFilterAllFormats => 'Miundo yote';
+
+  @override
+  String get importsActionDelete => 'Futa';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count imechaguliwa';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Bado hakuna kilichoshirikiwa';
+
+  @override
+  String get importsEmptyBody => 'Gonga Shiriki popote - Picha, YouTube, ChatGPT, memo ya sauti - na itatua hapa kiotomatiki.';
+
+  @override
+  String get importsActionOpen => 'Fungua';
+
+  @override
+  String get importsActionRetry => 'Jaribu tena';
+
+  @override
+  String get importsActionReclassify => 'Panga upya';
+
+  @override
+  String get importsSnackRetrying => 'Inajaribu kuleta tena...';
+
+  @override
+  String get importsSnackRetryFailed => 'Haikuweza kujaribu tena - jaribu tena baadaye.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Panga upya kwenye foleni - shiriki kipengee tena ili kubadilisha njia.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Je, ungependa kufuta uagizaji $count?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Rekodi huondolewa kwenye historia yako ya uagizaji. Mazoezi / mapishi / kumbukumbu za chakula zilizoingizwa hukaa yenyewe.';
+
+  @override
+  String get importsActionCancel => 'Ghairi';
+
+  @override
+  String get importsRowImportFailed => 'Imeshindwa kuleta';
+
+  @override
+  String get importsTitleImportedWorkout => 'Mazoezi yaliyoingizwa';
+
+  @override
+  String get importsTitleImportedRecipe => 'Kichocheo kilichoingizwa';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Mpango wa chakula kutoka nje';
+
+  @override
+  String get importsTitleLoggedMeal => 'Chakula kilichoingia';
+
+  @override
+  String get importsTitleFormCheck => 'Ukaguzi wa fomu';
+
+  @override
+  String get importsTitleProgressPhoto => 'Picha ya maendeleo';
+
+  @override
+  String get importsTitleSavedTip => 'Kidokezo kilichohifadhiwa';
+
+  @override
+  String get importsTitleImportDetail => 'Ingiza maelezo';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Kutoka: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Hali: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Imetambuliwa kama: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Unachoweza kushiriki';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Mipaka';
+
+  @override
+  String get importsLimitsFooter => 'Kofia za kila siku ni sawa kwa kila mtu. Huweka ubora wa juu na kulinda dhidi ya gharama za kukimbia.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Uagizaji';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Uliza kila wakati kabla ya kuelekeza';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Ruka kihesabu cha njia kiotomatiki - kila sehemu hufungua kichagua.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Futa historia iliyoshirikiwa';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Huondoa kila rekodi kwenye orodha yako ya Uagizaji. Mazoezi kutoka nje, mapishi, na kumbukumbu za chakula hubaki.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Je, ungependa kufuta historia iliyoshirikiwa?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Kila safu katika orodha yako ya Uagizaji huondolewa. Mazoezi, mapishi na kumbukumbu za vyakula ulizoagiza hukaa pale zilipo.';
+
+  @override
+  String get importsPrivacyClearAction => 'Wazi';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Historia iliyoshirikiwa imefutwa.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Haikuweza kufuta - jaribu tena baadaye.';
 }

@@ -44163,4 +44163,212 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'ภาษาเดียวกับแอป';
+
+  @override
+  String get settingsImportsTitle => 'นำเข้า';
+
+  @override
+  String get settingsImportsSubtitle => 'ทุกสิ่งที่คุณแบ่งปันใน Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'การติดตามรอบเดือน';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'ระยะเวลา การเจริญพันธุ์ และการพยากรณ์';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'เกี่ยวกับ $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'โหมดวันหยุดเปิดใช้งานอยู่';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'การแจ้งเตือนจะหยุดชั่วคราวจนถึง $endDate';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'การแจ้งเตือนถูกหยุดชั่วคราว ปิดได้ตลอดเวลาเพื่อดำเนินการต่อ';
+
+  @override
+  String get vacationModeBannerScheduled => 'กำหนดเวลาแล้ว';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'เริ่มวันที่ $startDate';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'การแจ้งเตือนเปิดอยู่';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'เปิดใช้งานโหมดวันหยุดด้านล่างเพื่อหยุดการแจ้งเตือนที่ไม่สำคัญชั่วคราว';
+
+  @override
+  String get difficultyEasy => 'ระดับเริ่มต้น';
+
+  @override
+  String get difficultyMedium => 'ปานกลาง';
+
+  @override
+  String get difficultyHard => 'ที่ท้าทาย';
+
+  @override
+  String get difficultyHell => 'นรก';
+
+  @override
+  String get habitWorkouts => 'การออกกำลังกาย';
+
+  @override
+  String get habitFoodLog => 'บันทึกอาหาร';
+
+  @override
+  String get habitWater => 'น้ำ';
+
+  @override
+  String get importsAppBarTitle => 'นำเข้า';
+
+  @override
+  String get importsTooltipFormatsLimits => 'รูปแบบและขีดจำกัดที่รองรับ';
+
+  @override
+  String get importsTooltipDone => 'เสร็จแล้ว';
+
+  @override
+  String get importsTooltipSelect => 'เลือก';
+
+  @override
+  String get importsSearchHint => 'ค้นหาการนำเข้า...';
+
+  @override
+  String get importsFilterAll => 'ทั้งหมด';
+
+  @override
+  String get importsFilterAllFormats => 'ทุกรูปแบบ';
+
+  @override
+  String get importsActionDelete => 'ลบ';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return 'เลือกแล้ว $count';
+  }
+
+  @override
+  String get importsEmptyTitle => 'ยังไม่มีการแชร์ใดๆ';
+
+  @override
+  String get importsEmptyBody => 'กดแชร์ได้ทุกที่ เช่น รูปภาพ, YouTube, ChatGPT, บันทึกเสียง และจะมาที่นี่โดยอัตโนมัติ';
+
+  @override
+  String get importsActionOpen => 'เปิด';
+
+  @override
+  String get importsActionRetry => 'ลองอีกครั้ง';
+
+  @override
+  String get importsActionReclassify => 'จัดประเภทใหม่';
+
+  @override
+  String get importsSnackRetrying => 'กำลังลองนำเข้าอีกครั้ง...';
+
+  @override
+  String get importsSnackRetryFailed => 'ไม่สามารถลองอีกครั้ง — ลองอีกครั้งในภายหลัง';
+
+  @override
+  String get importsSnackReclassifyQueued => 'จัดประเภทใหม่ในคิว — แบ่งปันรายการอีกครั้งเพื่อเปลี่ยนเส้นทาง';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'ลบการนำเข้า $count รายการใช่ไหม';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'บันทึกจะถูกลบออกจากประวัติการนำเข้าของคุณ การออกกำลังกาย/สูตรอาหาร/บันทึกอาหารที่นำเข้ามาเองยังคงอยู่';
+
+  @override
+  String get importsActionCancel => 'ยกเลิก';
+
+  @override
+  String get importsRowImportFailed => 'การนำเข้าล้มเหลว';
+
+  @override
+  String get importsTitleImportedWorkout => 'การออกกำลังกายที่นำเข้า';
+
+  @override
+  String get importsTitleImportedRecipe => 'สูตรนำเข้า';
+
+  @override
+  String get importsTitleImportedMealPlan => 'แผนอาหารนำเข้า';
+
+  @override
+  String get importsTitleLoggedMeal => 'อาหารที่บันทึกไว้';
+
+  @override
+  String get importsTitleFormCheck => 'เช็คฟอร์ม';
+
+  @override
+  String get importsTitleProgressPhoto => 'ภาพความคืบหน้า';
+
+  @override
+  String get importsTitleSavedTip => 'เคล็ดลับที่บันทึกไว้';
+
+  @override
+  String get importsTitleImportDetail => 'รายละเอียดการนำเข้า';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'จาก: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'สถานะ: {สถานะ}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'ตรวจพบว่าเป็น: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'สิ่งที่คุณสามารถแบ่งปันได้';
+
+  @override
+  String get importsLimitsLimitsHeader => 'ขีดจำกัด';
+
+  @override
+  String get importsLimitsFooter => 'แคปรายวันจะเหมือนกันสำหรับทุกคน พวกเขารักษาคุณภาพการนำเข้าให้อยู่ในระดับสูงและป้องกันต้นทุนที่ควบคุมไม่ได้';
+
+  @override
+  String get importsPrivacySectionTitle => 'นำเข้า';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'ควรถามก่อนกำหนดเส้นทางเสมอ';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'ข้ามการนับถอยหลังเส้นทางอัตโนมัติ — ทุกการแชร์จะเปิดตัวเลือก';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'ล้างประวัติการแชร์';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'ลบทุกบันทึกออกจากรายการนำเข้าของคุณ การออกกำลังกาย สูตรอาหาร และบันทึกอาหารที่นำเข้าจะยังคงอยู่';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'ล้างประวัติการแชร์ใช่ไหม';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'ทุกแถวในรายการนำเข้าของคุณจะถูกลบออก การออกกำลังกาย สูตรอาหาร และบันทึกอาหารที่คุณนำเข้าจะยังคงอยู่ในตำแหน่งเดิม';
+
+  @override
+  String get importsPrivacyClearAction => 'ชัดเจน';
+
+  @override
+  String get importsPrivacyClearedSnack => 'ล้างประวัติที่แชร์แล้ว';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'ไม่สามารถล้างได้ โปรดลองอีกครั้งในภายหลัง';
 }

@@ -44260,4 +44260,212 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Uygulama diliyle aynı';
+
+  @override
+  String get settingsImportsTitle => 'İthalat';
+
+  @override
+  String get settingsImportsSubtitle => 'Zealova\'da paylaştığınız her şey';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Döngü Takibi';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Adet dönemi, doğurganlık ve tahminler';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName hakkında';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Tatil modu etkin';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Bildirimler $endDate tarihine kadar duraklatıldı.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Bildirimler duraklatıldı. Devam etmek için istediğiniz zaman kapatın.';
+
+  @override
+  String get vacationModeBannerScheduled => 'planlanmış';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate tarihini başlatır.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Bildirimler açık';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Kritik olmayan hatırlatıcıları duraklatmak için aşağıda tatil modunu etkinleştirin.';
+
+  @override
+  String get difficultyEasy => 'Acemi';
+
+  @override
+  String get difficultyMedium => 'Ilıman';
+
+  @override
+  String get difficultyHard => 'Zorlu';
+
+  @override
+  String get difficultyHell => 'Cehennem';
+
+  @override
+  String get habitWorkouts => 'Antrenmanlar';
+
+  @override
+  String get habitFoodLog => 'Yemek Günlüğü';
+
+  @override
+  String get habitWater => 'su';
+
+  @override
+  String get importsAppBarTitle => 'İthalat';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Desteklenen formatlar ve sınırlar';
+
+  @override
+  String get importsTooltipDone => 'Tamamlamak';
+
+  @override
+  String get importsTooltipSelect => 'Seçme';
+
+  @override
+  String get importsSearchHint => 'İçe aktarılanları ara…';
+
+  @override
+  String get importsFilterAll => 'Tüm';
+
+  @override
+  String get importsFilterAllFormats => 'Tüm formatlar';
+
+  @override
+  String get importsActionDelete => 'Silmek';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count seçildi';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Henüz hiçbir şey paylaşılmadı';
+
+  @override
+  String get importsEmptyBody => 'İstediğiniz yerde Paylaş\'a basın (Fotoğraflar, YouTube, ChatGPT, sesli not) otomatik olarak buraya gelecektir.';
+
+  @override
+  String get importsActionOpen => 'Açık';
+
+  @override
+  String get importsActionRetry => 'Yeniden dene';
+
+  @override
+  String get importsActionReclassify => 'Yeniden sınıflandırma';
+
+  @override
+  String get importsSnackRetrying => 'İçe aktarma yeniden deneniyor…';
+
+  @override
+  String get importsSnackRetryFailed => 'Tekrar denenemedi; daha sonra tekrar deneyin.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Sıraya alınanları yeniden sınıflandır — yeniden yönlendirmek için öğeyi yeniden paylaşın.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count içe aktarma silinsin mi?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Kayıtlar, içe aktarma geçmişinizden kaldırılır. İçe aktarılan antrenmanlar/yemek tarifleri/yemek günlükleri kalır.';
+
+  @override
+  String get importsActionCancel => 'İptal etmek';
+
+  @override
+  String get importsRowImportFailed => 'İçe aktarma başarısız oldu';
+
+  @override
+  String get importsTitleImportedWorkout => 'İçe aktarılan antrenman';
+
+  @override
+  String get importsTitleImportedRecipe => 'İthal tarif';
+
+  @override
+  String get importsTitleImportedMealPlan => 'İthal yemek planı';
+
+  @override
+  String get importsTitleLoggedMeal => 'Günlüğe kaydedilen yemek';
+
+  @override
+  String get importsTitleFormCheck => 'Form kontrolü';
+
+  @override
+  String get importsTitleProgressPhoto => 'İlerleme fotoğrafı';
+
+  @override
+  String get importsTitleSavedTip => 'İpucu kaydedildi';
+
+  @override
+  String get importsTitleImportDetail => 'Ayrıntıyı içe aktar';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Gönderen: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Durum: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Şu şekilde algılandı: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Neleri paylaşabilirsiniz?';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Sınırlar';
+
+  @override
+  String get importsLimitsFooter => 'Günlük limitler herkes için aynıdır. İthalat kalitesini yüksek tutar ve kontrolden çıkan maliyetlere karşı koruma sağlar.';
+
+  @override
+  String get importsPrivacySectionTitle => 'İthalat';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Yönlendirmeden önce daima sor';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Otomatik rota geri sayımını atlayın; her paylaşım seçiciyi açar.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Paylaşılan geçmişi temizle';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'İçe Aktarılanlar listenizdeki her kaydı kaldırır. İçe aktarılan antrenmanlar, tarifler ve yemek günlükleri kalır.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Paylaşılan geçmiş temizlensin mi?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'İçe Aktarılanlar listenizdeki her satır kaldırılır. İçe aktardığınız antrenmanlar, tarifler ve yemek günlükleri oldukları yerde kalır.';
+
+  @override
+  String get importsPrivacyClearAction => 'Temizlemek';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Paylaşılan geçmiş temizlendi.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Temizlenemedi; daha sonra tekrar deneyin.';
 }

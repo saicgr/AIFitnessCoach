@@ -44463,4 +44463,212 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Taki sam jak język aplikacji';
+
+  @override
+  String get settingsImportsTitle => 'Import';
+
+  @override
+  String get settingsImportsSubtitle => 'Wszystko, co udostępniłeś Zealowej';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Śledzenie cyklu';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Okres, płodność i prognozy';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Informacje o aplikacji $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Tryb wakacyjny jest aktywny';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Powiadomienia są wstrzymane do $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Powiadomienia są wstrzymane. Wyłącz w dowolnym momencie, aby wznowić.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Zaplanowany';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Rozpoczyna się $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Powiadomienia są włączone';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Włącz poniżej tryb urlopowy, aby wstrzymać niekrytyczne przypomnienia.';
+
+  @override
+  String get difficultyEasy => 'Początkujący';
+
+  @override
+  String get difficultyMedium => 'Umiarkowany';
+
+  @override
+  String get difficultyHard => 'Wyzywający';
+
+  @override
+  String get difficultyHell => 'Piekło';
+
+  @override
+  String get habitWorkouts => 'Treningi';
+
+  @override
+  String get habitFoodLog => 'Dziennik żywności';
+
+  @override
+  String get habitWater => 'Woda';
+
+  @override
+  String get importsAppBarTitle => 'Import';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Obsługiwane formaty i limity';
+
+  @override
+  String get importsTooltipDone => 'Zrobione';
+
+  @override
+  String get importsTooltipSelect => 'Wybierać';
+
+  @override
+  String get importsSearchHint => 'Wyszukaj import…';
+
+  @override
+  String get importsFilterAll => 'Wszystko';
+
+  @override
+  String get importsFilterAllFormats => 'Wszystkie formaty';
+
+  @override
+  String get importsActionDelete => 'Usuwać';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return 'Wybrano $count';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Jeszcze nic nie zostało udostępnione';
+
+  @override
+  String get importsEmptyBody => 'Kliknij Udostępnij w dowolnym miejscu — Zdjęcia, YouTube, ChatGPT, notatka głosowa — i wyląduje tutaj automatycznie.';
+
+  @override
+  String get importsActionOpen => 'Otwarte';
+
+  @override
+  String get importsActionRetry => 'Spróbować ponownie';
+
+  @override
+  String get importsActionReclassify => 'Przeklasyfikuj';
+
+  @override
+  String get importsSnackRetrying => 'Ponawiam próbę importu…';
+
+  @override
+  String get importsSnackRetryFailed => 'Nie udało się ponowić próby. Spróbuj ponownie później.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Zmień klasyfikację w kolejce — udostępnij element ponownie, aby przekierować.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Usunąć importy ($count)?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Rekordy zostaną usunięte z historii importów. Zaimportowane treningi/przepisy/dzienniki żywności pozostają.';
+
+  @override
+  String get importsActionCancel => 'Anulować';
+
+  @override
+  String get importsRowImportFailed => 'Import nie powiódł się';
+
+  @override
+  String get importsTitleImportedWorkout => 'Importowany trening';
+
+  @override
+  String get importsTitleImportedRecipe => 'Importowany przepis';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Importowany plan posiłków';
+
+  @override
+  String get importsTitleLoggedMeal => 'Zapisany posiłek';
+
+  @override
+  String get importsTitleFormCheck => 'Kontrola formularza';
+
+  @override
+  String get importsTitleProgressPhoto => 'Zdjęcie postępu';
+
+  @override
+  String get importsTitleSavedTip => 'Zapisana wskazówka';
+
+  @override
+  String get importsTitleImportDetail => 'Importuj szczegóły';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Od: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Stan: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Wykryto jako: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Czym możesz się podzielić';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Limity';
+
+  @override
+  String get importsLimitsFooter => 'Czapki dzienne są takie same dla wszystkich. Utrzymują wysoką jakość importu i chronią przed niekontrolowanymi kosztami.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Import';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Zawsze pytaj przed trasowaniem';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Pomiń odliczanie automatycznej trasy — każde udostępnienie otwiera okno wyboru.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Wyczyść wspólną historię';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Usuwa każdy rekord z listy importów. Zaimportowane treningi, przepisy i dzienniki żywności pozostają.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Wyczyścić wspólną historię?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Każdy wiersz na liście importów zostanie usunięty. Zaimportowane treningi, przepisy i dzienniki żywności pozostają tam, gdzie są.';
+
+  @override
+  String get importsPrivacyClearAction => 'Jasne';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Udostępniona historia została wyczyszczona.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Nie udało się wyczyścić. Spróbuj ponownie później.';
 }

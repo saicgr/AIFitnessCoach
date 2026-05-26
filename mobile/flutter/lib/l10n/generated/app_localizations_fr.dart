@@ -44869,4 +44869,212 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get settingsChatLanguageSameAsApp =>
       'Identique à la langue de l\'application';
+
+  @override
+  String get settingsImportsTitle => 'Importations';
+
+  @override
+  String get settingsImportsSubtitle => 'Tout ce que vous avez partagé dans Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Suivi des cycles';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Période, fertilité et prédictions';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'À propos de $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Le mode vacances est actif';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Les notifications sont suspendues jusqu\'au $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Les notifications sont suspendues. Éteignez à tout moment pour reprendre.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Programmé';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Démarre le $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Les notifications sont activées';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Activez le mode vacances ci-dessous pour suspendre les rappels non critiques.';
+
+  @override
+  String get difficultyEasy => 'Débutant';
+
+  @override
+  String get difficultyMedium => 'Modéré';
+
+  @override
+  String get difficultyHard => 'Stimulant';
+
+  @override
+  String get difficultyHell => 'Enfer';
+
+  @override
+  String get habitWorkouts => 'Entraînements';
+
+  @override
+  String get habitFoodLog => 'Journal alimentaire';
+
+  @override
+  String get habitWater => 'Eau';
+
+  @override
+  String get importsAppBarTitle => 'Importations';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Formats et limites pris en charge';
+
+  @override
+  String get importsTooltipDone => 'Fait';
+
+  @override
+  String get importsTooltipSelect => 'Sélectionner';
+
+  @override
+  String get importsSearchHint => 'Rechercher des importations…';
+
+  @override
+  String get importsFilterAll => 'Tous';
+
+  @override
+  String get importsFilterAllFormats => 'Tous les formats';
+
+  @override
+  String get importsActionDelete => 'Supprimer';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count sélectionnés';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Rien de partagé pour l\'instant';
+
+  @override
+  String get importsEmptyBody => 'Appuyez sur Partager n\'importe où – Photos, YouTube, ChatGPT, un mémo vocal – et il atterrira automatiquement ici.';
+
+  @override
+  String get importsActionOpen => 'Ouvrir';
+
+  @override
+  String get importsActionRetry => 'Réessayer';
+
+  @override
+  String get importsActionReclassify => 'Reclasser';
+
+  @override
+  String get importsSnackRetrying => 'Nouvelle tentative d\'importation…';
+
+  @override
+  String get importsSnackRetryFailed => 'Impossible de réessayer : réessayez plus tard.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Reclassifier en file d\'attente : partagez à nouveau l\'élément pour le réacheminer.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Supprimer $count importations ?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Les enregistrements sont supprimés de votre historique d\'importations. Les entraînements/recettes/journaux alimentaires importés restent eux-mêmes conservés.';
+
+  @override
+  String get importsActionCancel => 'Annuler';
+
+  @override
+  String get importsRowImportFailed => 'Échec de l\'importation';
+
+  @override
+  String get importsTitleImportedWorkout => 'Entraînement importé';
+
+  @override
+  String get importsTitleImportedRecipe => 'Recette importée';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Plan de repas importé';
+
+  @override
+  String get importsTitleLoggedMeal => 'Repas enregistré';
+
+  @override
+  String get importsTitleFormCheck => 'Vérification du formulaire';
+
+  @override
+  String get importsTitleProgressPhoto => 'Photo de progression';
+
+  @override
+  String get importsTitleSavedTip => 'Astuce enregistrée';
+
+  @override
+  String get importsTitleImportDetail => 'Détails de l\'importation';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'De : $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Statut : {statut}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Détecté comme : {intention}';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Ce que vous pouvez partager';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Limites';
+
+  @override
+  String get importsLimitsFooter => 'Les plafonds journaliers sont les mêmes pour tout le monde. Ils maintiennent la qualité des importations à un niveau élevé et protègent contre l’emballement des coûts.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Importations';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Toujours demander avant d\'acheminer';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Ignorez le compte à rebours de l\'itinéraire automatique : chaque partage ouvre le sélecteur.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Effacer l\'historique partagé';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Supprime tous les enregistrements de votre liste d\'importations. Les entraînements, recettes et journaux alimentaires importés restent eux-mêmes conservés.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Effacer l\'historique partagé ?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Chaque ligne de votre liste d\'importations est supprimée. Les entraînements, les recettes et les journaux alimentaires que vous avez importés restent là où ils se trouvent.';
+
+  @override
+  String get importsPrivacyClearAction => 'Clair';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Historique partagé effacé.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Impossible d\'effacer — réessayez plus tard.';
 }

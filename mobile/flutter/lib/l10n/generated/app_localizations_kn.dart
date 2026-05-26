@@ -44648,4 +44648,212 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'ಆ್ಯಪ್ ಭಾಷೆಯಂತೆಯೇ';
+
+  @override
+  String get settingsImportsTitle => 'ಆಮದು ಮಾಡಿಕೊಳ್ಳುತ್ತದೆ';
+
+  @override
+  String get settingsImportsSubtitle => 'ನೀವು ಝೀಲೋವಾದಲ್ಲಿ ಹಂಚಿಕೊಂಡಿರುವ ಎಲ್ಲವೂ';
+
+  @override
+  String get settingsCycleTrackingTitle => 'ಸೈಕಲ್ ಟ್ರ್ಯಾಕಿಂಗ್';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'ಅವಧಿ, ಫಲವತ್ತತೆ ಮತ್ತು ಭವಿಷ್ಯವಾಣಿಗಳು';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName ಕುರಿತು';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'ರಜೆಯ ಮೋಡ್ ಸಕ್ರಿಯವಾಗಿದೆ';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'ಅಧಿಸೂಚನೆಗಳನ್ನು $endDate ವರೆಗೆ ವಿರಾಮಗೊಳಿಸಲಾಗಿದೆ.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'ಅಧಿಸೂಚನೆಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಲಾಗಿದೆ. ಪುನರಾರಂಭಿಸಲು ಯಾವಾಗ ಬೇಕಾದರೂ ಆಫ್ ಮಾಡಿ.';
+
+  @override
+  String get vacationModeBannerScheduled => 'ನಿಗದಿಪಡಿಸಲಾಗಿದೆ';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'ಅಧಿಸೂಚನೆಗಳು ಆನ್ ಆಗಿವೆ';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'ನಿರ್ಣಾಯಕವಲ್ಲದ ಜ್ಞಾಪನೆಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಲು ಕೆಳಗೆ ರಜೆಯ ಮೋಡ್ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.';
+
+  @override
+  String get difficultyEasy => 'ಹರಿಕಾರ';
+
+  @override
+  String get difficultyMedium => 'ಮಧ್ಯಮ';
+
+  @override
+  String get difficultyHard => 'ಚಾಲೆಂಜಿಂಗ್';
+
+  @override
+  String get difficultyHell => 'ನರಕ';
+
+  @override
+  String get habitWorkouts => 'ತಾಲೀಮುಗಳು';
+
+  @override
+  String get habitFoodLog => 'ಆಹಾರ ದಾಖಲೆ';
+
+  @override
+  String get habitWater => 'ನೀರು';
+
+  @override
+  String get importsAppBarTitle => 'ಆಮದು ಮಾಡಿಕೊಳ್ಳುತ್ತದೆ';
+
+  @override
+  String get importsTooltipFormatsLimits => 'ಬೆಂಬಲಿತ ಸ್ವರೂಪಗಳು ಮತ್ತು ಮಿತಿಗಳು';
+
+  @override
+  String get importsTooltipDone => 'ಮುಗಿದಿದೆ';
+
+  @override
+  String get importsTooltipSelect => 'ಆಯ್ಕೆ ಮಾಡಿ';
+
+  @override
+  String get importsSearchHint => 'ಆಮದುಗಳನ್ನು ಹುಡುಕಿ...';
+
+  @override
+  String get importsFilterAll => 'ಎಲ್ಲಾ';
+
+  @override
+  String get importsFilterAllFormats => 'ಎಲ್ಲಾ ಸ್ವರೂಪಗಳು';
+
+  @override
+  String get importsActionDelete => 'ಅಳಿಸಿ';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count ಆಯ್ಕೆ ಮಾಡಲಾಗಿದೆ';
+  }
+
+  @override
+  String get importsEmptyTitle => 'ಇನ್ನೂ ಏನನ್ನೂ ಹಂಚಿಕೊಂಡಿಲ್ಲ';
+
+  @override
+  String get importsEmptyBody => 'ಫೋಟೋಗಳು, ಯೂಟ್ಯೂಬ್, ಚಾಟ್‌ಜಿಪಿಟಿ, ಧ್ವನಿ ಜ್ಞಾಪಕ - ಎಲ್ಲಿಯಾದರೂ ಹಂಚಿಕೊಳ್ಳಿ ಒತ್ತಿರಿ ಮತ್ತು ಅದು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಇಲ್ಲಿ ಇಳಿಯುತ್ತದೆ.';
+
+  @override
+  String get importsActionOpen => 'ತೆರೆಯಿರಿ';
+
+  @override
+  String get importsActionRetry => 'ಮರುಪ್ರಯತ್ನಿಸಿ';
+
+  @override
+  String get importsActionReclassify => 'ಮರುವರ್ಗೀಕರಿಸಿ';
+
+  @override
+  String get importsSnackRetrying => 'ಆಮದು ಮರುಪ್ರಯತ್ನಿಸಲಾಗುತ್ತಿದೆ...';
+
+  @override
+  String get importsSnackRetryFailed => 'ಮರುಪ್ರಯತ್ನಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ — ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'ಸರದಿಯಲ್ಲಿ ಮರುವರ್ಗೀಕರಿಸಿ - ಮರುಮಾರ್ಗಕ್ಕೆ ಐಟಂ ಅನ್ನು ಮತ್ತೊಮ್ಮೆ ಹಂಚಿಕೊಳ್ಳಿ.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count ಆಮದುಗಳನ್ನು ಅಳಿಸುವುದೇ?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'ನಿಮ್ಮ ಆಮದು ಇತಿಹಾಸದಿಂದ ದಾಖಲೆಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ. ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು / ಪಾಕವಿಧಾನಗಳು / ಆಹಾರ ದಾಖಲೆಗಳು ಸ್ವತಃ ಉಳಿಯುತ್ತವೆ.';
+
+  @override
+  String get importsActionCancel => 'ರದ್ದುಮಾಡಿ';
+
+  @override
+  String get importsRowImportFailed => 'ಆಮದು ವಿಫಲವಾಗಿದೆ';
+
+  @override
+  String get importsTitleImportedWorkout => 'ಆಮದು ಮಾಡಿದ ತಾಲೀಮು';
+
+  @override
+  String get importsTitleImportedRecipe => 'ಆಮದು ಮಾಡಿದ ಪಾಕವಿಧಾನ';
+
+  @override
+  String get importsTitleImportedMealPlan => 'ಆಮದು ಮಾಡಿದ ಊಟದ ಯೋಜನೆ';
+
+  @override
+  String get importsTitleLoggedMeal => 'ಲಾಗ್ಡ್ ಊಟ';
+
+  @override
+  String get importsTitleFormCheck => 'ಫಾರ್ಮ್ ಚೆಕ್';
+
+  @override
+  String get importsTitleProgressPhoto => 'ಪ್ರಗತಿ ಫೋಟೋ';
+
+  @override
+  String get importsTitleSavedTip => 'ಉಳಿಸಿದ ಸಲಹೆ';
+
+  @override
+  String get importsTitleImportDetail => 'ಆಮದು ವಿವರ';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'ಇಂದ: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'ಸ್ಥಿತಿ: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'ಹೀಗೆ ಪತ್ತೆಹಚ್ಚಲಾಗಿದೆ: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'ನೀವು ಏನು ಹಂಚಿಕೊಳ್ಳಬಹುದು';
+
+  @override
+  String get importsLimitsLimitsHeader => 'ಮಿತಿಗಳು';
+
+  @override
+  String get importsLimitsFooter => 'ದೈನಂದಿನ ಕ್ಯಾಪ್‌ಗಳು ಎಲ್ಲರಿಗೂ ಒಂದೇ ಆಗಿರುತ್ತವೆ. ಅವರು ಆಮದು ಗುಣಮಟ್ಟವನ್ನು ಉನ್ನತ ಮಟ್ಟದಲ್ಲಿರಿಸುತ್ತಾರೆ ಮತ್ತು ಓಡಿಹೋದ ವೆಚ್ಚಗಳಿಂದ ರಕ್ಷಿಸುತ್ತಾರೆ.';
+
+  @override
+  String get importsPrivacySectionTitle => 'ಆಮದು ಮಾಡಿಕೊಳ್ಳುತ್ತದೆ';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'ರೂಟಿಂಗ್ ಮಾಡುವ ಮೊದಲು ಯಾವಾಗಲೂ ಕೇಳಿ';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'ಸ್ವಯಂ-ಮಾರ್ಗ ಕೌಂಟ್‌ಡೌನ್ ಅನ್ನು ಬಿಟ್ಟುಬಿಡಿ - ಪ್ರತಿ ಹಂಚಿಕೆಯು ಆಯ್ಕೆದಾರನನ್ನು ತೆರೆಯುತ್ತದೆ.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'ಹಂಚಿದ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸಿ';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'ನಿಮ್ಮ ಆಮದು ಪಟ್ಟಿಯಿಂದ ಪ್ರತಿ ದಾಖಲೆಯನ್ನು ತೆಗೆದುಹಾಕುತ್ತದೆ. ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು, ಪಾಕವಿಧಾನಗಳು ಮತ್ತು ಆಹಾರದ ದಾಖಲೆಗಳು ಉಳಿಯುತ್ತವೆ.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'ಹಂಚಿದ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸುವುದೇ?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'ನಿಮ್ಮ ಆಮದು ಪಟ್ಟಿಯಲ್ಲಿರುವ ಪ್ರತಿ ಸಾಲನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ. ನೀವು ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು, ಪಾಕವಿಧಾನಗಳು ಮತ್ತು ಆಹಾರದ ಲಾಗ್‌ಗಳು ಅವು ಇರುವಲ್ಲಿಯೇ ಇರುತ್ತವೆ.';
+
+  @override
+  String get importsPrivacyClearAction => 'ತೆರವುಗೊಳಿಸಿ';
+
+  @override
+  String get importsPrivacyClearedSnack => 'ಹಂಚಿದ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸಲಾಗಿದೆ.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'ತೆರವುಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ - ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
 }

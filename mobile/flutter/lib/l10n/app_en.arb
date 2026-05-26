@@ -19727,7 +19727,7 @@
   "founderNoteInstagram": "Instagram",
   "founderNoteSheetANoteFrom": "A NOTE FROM {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
-  "founderNoteSoIBuiltThe": "So I built the person, not the ledger. Snap that menu in Bangkok and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.",
+  "founderNoteSoIBuiltThe": "So I built the person, not the ledger. Snap any menu — at home or abroad — and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.",
   "founderNoteTheFriendsWhoActually": "The friends who actually got lean had a person texting them. Real accountability costs about two hundred dollars a month, which is exactly why most of us never have it, and exactly why the gap between \\\"tracking\\\" and \\\"changing\\\" stays open for years.",
   "freshnessDecayCardAgo": ") ago",
   "freshnessDecayCardControlsHowQuicklyExercise": "Controls how quickly exercise freshness decays: e^(-k * sessions)",
@@ -28071,7 +28071,6 @@
   "youSkills": "Skills",
   "youTrophies": "Trophies",
   "youWrapped": "Wrapped",
-
   "chatLanguageChangedSystem": "🌐 AI Coach now responds in {nativeName}",
   "@chatLanguageChangedSystem": {
     "description": "WhatsApp-style centered system message shown in chat when the user changes the AI Coach reply language. {nativeName} is the native-script name of the new language (e.g. 'తెలుగు').",
@@ -28096,5 +28095,127 @@
   "settingsChatLanguageSameAsApp": "Same as app language",
   "@settingsChatLanguageSameAsApp": {
     "description": "Label shown when the AI Coach language is not overridden (follows the app UI language)."
+  },
+  "commonOk": "OK",
+  "commonNo": "No",
+  "settingsImportsTitle": "Imports",
+  "settingsImportsSubtitle": "Everything you've shared into Zealova",
+  "settingsCycleTrackingTitle": "Cycle Tracking",
+  "settingsCycleTrackingSubtitle": "Period, fertility & predictions",
+  "settingsAboutBrand": "About {appName}",
+  "vacationModeBannerActive": "Vacation mode is active",
+  "vacationModeBannerPausedUntil": "Notifications are paused until {endDate}.",
+  "vacationModeBannerPausedNoEnd": "Notifications are paused. Turn off anytime to resume.",
+  "vacationModeBannerScheduled": "Scheduled",
+  "vacationModeBannerStartsOn": "Starts {startDate}.",
+  "vacationModeBannerOn": "Notifications are on",
+  "vacationModeBannerOnSubtitle": "Enable vacation mode below to pause non-critical reminders.",
+  "difficultyEasy": "Beginner",
+  "difficultyMedium": "Moderate",
+  "difficultyHard": "Challenging",
+  "difficultyHell": "Hell",
+  "habitWorkouts": "Workouts",
+  "habitFoodLog": "Food Log",
+  "habitWater": "Water",
+  "importsAppBarTitle": "Imports",
+  "importsTooltipFormatsLimits": "Supported formats & limits",
+  "importsTooltipDone": "Done",
+  "importsTooltipSelect": "Select",
+  "importsSearchHint": "Search imports…",
+  "importsFilterAll": "All",
+  "importsFilterAllFormats": "All formats",
+  "importsActionDelete": "Delete",
+  "importsSelectedCount": "{count} selected",
+  "importsEmptyTitle": "Nothing shared yet",
+  "importsEmptyBody": "Hit Share anywhere — Photos, YouTube, ChatGPT, a voice memo — and it'll land here automatically.",
+  "importsActionOpen": "Open",
+  "importsActionRetry": "Retry",
+  "importsActionReclassify": "Reclassify",
+  "importsSnackRetrying": "Retrying import…",
+  "importsSnackRetryFailed": "Couldn't retry — try again later.",
+  "importsSnackReclassifyQueued": "Reclassify queued — share the item again to reroute.",
+  "importsDeleteConfirmTitle": "Delete {count} imports?",
+  "importsDeleteConfirmBody": "The records are removed from your imports history. Imported workouts / recipes / food logs themselves stay.",
+  "importsActionCancel": "Cancel",
+  "importsRowImportFailed": "Import failed",
+  "importsTitleImportedWorkout": "Imported workout",
+  "importsTitleImportedRecipe": "Imported recipe",
+  "importsTitleImportedMealPlan": "Imported meal plan",
+  "importsTitleLoggedMeal": "Logged meal",
+  "importsTitleFormCheck": "Form check",
+  "importsTitleProgressPhoto": "Progress photo",
+  "importsTitleSavedTip": "Saved tip",
+  "importsTitleImportDetail": "Import detail",
+  "importsDetailFrom": "From: {url}",
+  "importsDetailStatus": "Status: {status}",
+  "importsDetailDetectedAs": "Detected as: {intent}",
+  "importsLimitsTitle": "What you can share",
+  "importsLimitsLimitsHeader": "Limits",
+  "importsLimitsFooter": "Daily caps are the same for everyone. They keep import quality high and protect against runaway costs.",
+  "importsPrivacySectionTitle": "Imports",
+  "importsPrivacyAlwaysAskTitle": "Always ask before routing",
+  "importsPrivacyAlwaysAskSubtitle": "Skip the auto-route countdown — every share opens the chooser.",
+  "importsPrivacyClearHistoryTitle": "Clear shared history",
+  "importsPrivacyClearHistorySubtitle": "Removes every record from your Imports list. Imported workouts, recipes, and food logs themselves stay.",
+  "importsPrivacyClearConfirmTitle": "Clear shared history?",
+  "importsPrivacyClearConfirmBody": "Every row in your Imports list is removed. The workouts, recipes, and food logs you imported stay where they are.",
+  "importsPrivacyClearAction": "Clear",
+  "importsPrivacyClearedSnack": "Shared history cleared.",
+  "importsPrivacyClearFailedSnack": "Couldn't clear — try again later.",
+  "@settingsAboutBrand": {
+    "placeholders": {
+      "appName": {
+        "type": "Object"
+      }
+    }
+  },
+  "@vacationModeBannerPausedUntil": {
+    "placeholders": {
+      "endDate": {
+        "type": "Object"
+      }
+    }
+  },
+  "@vacationModeBannerStartsOn": {
+    "placeholders": {
+      "startDate": {
+        "type": "Object"
+      }
+    }
+  },
+  "@importsSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "@importsDeleteConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "Object"
+      }
+    }
+  },
+  "@importsDetailFrom": {
+    "placeholders": {
+      "url": {
+        "type": "Object"
+      }
+    }
+  },
+  "@importsDetailStatus": {
+    "placeholders": {
+      "status": {
+        "type": "Object"
+      }
+    }
+  },
+  "@importsDetailDetectedAs": {
+    "placeholders": {
+      "intent": {
+        "type": "Object"
+      }
+    }
   }
 }

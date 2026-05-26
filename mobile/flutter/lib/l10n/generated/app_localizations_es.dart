@@ -44615,4 +44615,212 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get settingsChatLanguageSameAsApp =>
       'Igual que el idioma de la aplicación';
+
+  @override
+  String get settingsImportsTitle => 'Importaciones';
+
+  @override
+  String get settingsImportsSubtitle => 'Todo lo que has compartido en Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Seguimiento del ciclo';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Periodo, fertilidad y predicciones.';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Acerca de $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'El modo vacaciones está activo';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Las notificaciones están en pausa hasta el $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Las notificaciones están en pausa. Apaga en cualquier momento para reanudar.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Programado';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Comienza el $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Las notificaciones están activadas.';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Habilite el modo de vacaciones a continuación para pausar los recordatorios no críticos.';
+
+  @override
+  String get difficultyEasy => 'Principiante';
+
+  @override
+  String get difficultyMedium => 'Moderado';
+
+  @override
+  String get difficultyHard => 'Desafiante';
+
+  @override
+  String get difficultyHell => 'Infierno';
+
+  @override
+  String get habitWorkouts => 'Entrenamientos';
+
+  @override
+  String get habitFoodLog => 'Registro de alimentos';
+
+  @override
+  String get habitWater => 'Agua';
+
+  @override
+  String get importsAppBarTitle => 'Importaciones';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Formatos y límites admitidos';
+
+  @override
+  String get importsTooltipDone => 'Hecho';
+
+  @override
+  String get importsTooltipSelect => 'Seleccionar';
+
+  @override
+  String get importsSearchHint => 'Buscar importaciones…';
+
+  @override
+  String get importsFilterAll => 'Todo';
+
+  @override
+  String get importsFilterAllFormats => 'Todos los formatos';
+
+  @override
+  String get importsActionDelete => 'Borrar';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count seleccionado';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Nada compartido aún';
+
+  @override
+  String get importsEmptyBody => 'Presiona Compartir en cualquier lugar (Fotos, YouTube, ChatGPT, una nota de voz) y llegará aquí automáticamente.';
+
+  @override
+  String get importsActionOpen => 'Abierto';
+
+  @override
+  String get importsActionRetry => 'Rever';
+
+  @override
+  String get importsActionReclassify => 'Reclasificar';
+
+  @override
+  String get importsSnackRetrying => 'Reintentando la importación…';
+
+  @override
+  String get importsSnackRetryFailed => 'No se pudo volver a intentar. Vuelve a intentarlo más tarde.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Reclasificar en cola: comparte el elemento nuevamente para redireccionarlo.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '¿Eliminar $count importaciones?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Los registros se eliminan de su historial de importaciones. Los entrenamientos, recetas y registros de alimentos importados permanecen.';
+
+  @override
+  String get importsActionCancel => 'Cancelar';
+
+  @override
+  String get importsRowImportFailed => 'Importación fallida';
+
+  @override
+  String get importsTitleImportedWorkout => 'entrenamiento importado';
+
+  @override
+  String get importsTitleImportedRecipe => 'Receta importada';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Plan de alimentación importado';
+
+  @override
+  String get importsTitleLoggedMeal => 'comida registrada';
+
+  @override
+  String get importsTitleFormCheck => 'verificación de formulario';
+
+  @override
+  String get importsTitleProgressPhoto => 'Foto de progreso';
+
+  @override
+  String get importsTitleSavedTip => 'Consejo guardado';
+
+  @override
+  String get importsTitleImportDetail => 'Detalle de importación';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'De: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Estado: {estado}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Detectado como: {intención}';
+  }
+
+  @override
+  String get importsLimitsTitle => 'que puedes compartir';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Límites';
+
+  @override
+  String get importsLimitsFooter => 'Los límites diarios son los mismos para todos. Mantienen alta la calidad de las importaciones y protegen contra costos descontrolados.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Importaciones';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Pregunte siempre antes de realizar la ruta';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Omita la cuenta atrás de la ruta automática: cada acción abre el selector.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Borrar historial compartido';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Elimina todos los registros de su lista de Importaciones. Los entrenamientos, recetas y registros de alimentos importados permanecen.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => '¿Borrar historial compartido?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Se eliminan todas las filas de su lista de Importaciones. Los entrenamientos, recetas y registros de alimentos que importaste permanecen donde están.';
+
+  @override
+  String get importsPrivacyClearAction => 'Claro';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Historial compartido borrado.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'No se pudo borrar. Vuelve a intentarlo más tarde.';
 }

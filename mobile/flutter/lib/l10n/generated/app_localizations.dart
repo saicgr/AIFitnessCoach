@@ -74418,6 +74418,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Same as app language'**
   String get settingsChatLanguageSameAsApp;
+
+  /// No description provided for @settingsImportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Imports'**
+  String get settingsImportsTitle;
+
+  /// No description provided for @settingsImportsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you\'ve shared into Zealova'**
+  String get settingsImportsSubtitle;
+
+  /// No description provided for @settingsCycleTrackingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle Tracking'**
+  String get settingsCycleTrackingTitle;
+
+  /// No description provided for @settingsCycleTrackingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Period, fertility & predictions'**
+  String get settingsCycleTrackingSubtitle;
+
+  /// No description provided for @settingsAboutBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'About $appName'**
+  String settingsAboutBrand(Object appName);
+
+  /// No description provided for @vacationModeBannerActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Vacation mode is active'**
+  String get vacationModeBannerActive;
+
+  /// No description provided for @vacationModeBannerPausedUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are paused until $endDate.'**
+  String vacationModeBannerPausedUntil(Object endDate);
+
+  /// No description provided for @vacationModeBannerPausedNoEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are paused. Turn off anytime to resume.'**
+  String get vacationModeBannerPausedNoEnd;
+
+  /// No description provided for @vacationModeBannerScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get vacationModeBannerScheduled;
+
+  /// No description provided for @vacationModeBannerStartsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts $startDate.'**
+  String vacationModeBannerStartsOn(Object startDate);
+
+  /// No description provided for @vacationModeBannerOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are on'**
+  String get vacationModeBannerOn;
+
+  /// No description provided for @vacationModeBannerOnSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable vacation mode below to pause non-critical reminders.'**
+  String get vacationModeBannerOnSubtitle;
+
+  /// No description provided for @difficultyEasy.
+  ///
+  /// In en, this message translates to:
+  /// **'Beginner'**
+  String get difficultyEasy;
+
+  /// No description provided for @difficultyMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get difficultyMedium;
+
+  /// No description provided for @difficultyHard.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenging'**
+  String get difficultyHard;
+
+  /// No description provided for @difficultyHell.
+  ///
+  /// In en, this message translates to:
+  /// **'Hell'**
+  String get difficultyHell;
+
+  /// No description provided for @habitWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Workouts'**
+  String get habitWorkouts;
+
+  /// No description provided for @habitFoodLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Food Log'**
+  String get habitFoodLog;
+
+  /// No description provided for @habitWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get habitWater;
+
+  /// No description provided for @importsAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Imports'**
+  String get importsAppBarTitle;
+
+  /// No description provided for @importsTooltipFormatsLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Supported formats & limits'**
+  String get importsTooltipFormatsLimits;
+
+  /// No description provided for @importsTooltipDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get importsTooltipDone;
+
+  /// No description provided for @importsTooltipSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get importsTooltipSelect;
+
+  /// No description provided for @importsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search imports…'**
+  String get importsSearchHint;
+
+  /// No description provided for @importsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get importsFilterAll;
+
+  /// No description provided for @importsFilterAllFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'All formats'**
+  String get importsFilterAllFormats;
+
+  /// No description provided for @importsActionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get importsActionDelete;
+
+  /// No description provided for @importsSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'$count selected'**
+  String importsSelectedCount(Object count);
+
+  /// No description provided for @importsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing shared yet'**
+  String get importsEmptyTitle;
+
+  /// No description provided for @importsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hit Share anywhere — Photos, YouTube, ChatGPT, a voice memo — and it\'ll land here automatically.'**
+  String get importsEmptyBody;
+
+  /// No description provided for @importsActionOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get importsActionOpen;
+
+  /// No description provided for @importsActionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get importsActionRetry;
+
+  /// No description provided for @importsActionReclassify.
+  ///
+  /// In en, this message translates to:
+  /// **'Reclassify'**
+  String get importsActionReclassify;
+
+  /// No description provided for @importsSnackRetrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying import…'**
+  String get importsSnackRetrying;
+
+  /// No description provided for @importsSnackRetryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t retry — try again later.'**
+  String get importsSnackRetryFailed;
+
+  /// No description provided for @importsSnackReclassifyQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Reclassify queued — share the item again to reroute.'**
+  String get importsSnackReclassifyQueued;
+
+  /// No description provided for @importsDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete $count imports?'**
+  String importsDeleteConfirmTitle(Object count);
+
+  /// No description provided for @importsDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The records are removed from your imports history. Imported workouts / recipes / food logs themselves stay.'**
+  String get importsDeleteConfirmBody;
+
+  /// No description provided for @importsActionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get importsActionCancel;
+
+  /// No description provided for @importsRowImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed'**
+  String get importsRowImportFailed;
+
+  /// No description provided for @importsTitleImportedWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported workout'**
+  String get importsTitleImportedWorkout;
+
+  /// No description provided for @importsTitleImportedRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported recipe'**
+  String get importsTitleImportedRecipe;
+
+  /// No description provided for @importsTitleImportedMealPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported meal plan'**
+  String get importsTitleImportedMealPlan;
+
+  /// No description provided for @importsTitleLoggedMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged meal'**
+  String get importsTitleLoggedMeal;
+
+  /// No description provided for @importsTitleFormCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Form check'**
+  String get importsTitleFormCheck;
+
+  /// No description provided for @importsTitleProgressPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress photo'**
+  String get importsTitleProgressPhoto;
+
+  /// No description provided for @importsTitleSavedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved tip'**
+  String get importsTitleSavedTip;
+
+  /// No description provided for @importsTitleImportDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Import detail'**
+  String get importsTitleImportDetail;
+
+  /// No description provided for @importsDetailFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From: $url'**
+  String importsDetailFrom(Object url);
+
+  /// No description provided for @importsDetailStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: $status'**
+  String importsDetailStatus(Object status);
+
+  /// No description provided for @importsDetailDetectedAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected as: $intent'**
+  String importsDetailDetectedAs(Object intent);
+
+  /// No description provided for @importsLimitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What you can share'**
+  String get importsLimitsTitle;
+
+  /// No description provided for @importsLimitsLimitsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Limits'**
+  String get importsLimitsLimitsHeader;
+
+  /// No description provided for @importsLimitsFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily caps are the same for everyone. They keep import quality high and protect against runaway costs.'**
+  String get importsLimitsFooter;
+
+  /// No description provided for @importsPrivacySectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Imports'**
+  String get importsPrivacySectionTitle;
+
+  /// No description provided for @importsPrivacyAlwaysAskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Always ask before routing'**
+  String get importsPrivacyAlwaysAskTitle;
+
+  /// No description provided for @importsPrivacyAlwaysAskSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip the auto-route countdown — every share opens the chooser.'**
+  String get importsPrivacyAlwaysAskSubtitle;
+
+  /// No description provided for @importsPrivacyClearHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear shared history'**
+  String get importsPrivacyClearHistoryTitle;
+
+  /// No description provided for @importsPrivacyClearHistorySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes every record from your Imports list. Imported workouts, recipes, and food logs themselves stay.'**
+  String get importsPrivacyClearHistorySubtitle;
+
+  /// No description provided for @importsPrivacyClearConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear shared history?'**
+  String get importsPrivacyClearConfirmTitle;
+
+  /// No description provided for @importsPrivacyClearConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every row in your Imports list is removed. The workouts, recipes, and food logs you imported stay where they are.'**
+  String get importsPrivacyClearConfirmBody;
+
+  /// No description provided for @importsPrivacyClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get importsPrivacyClearAction;
+
+  /// No description provided for @importsPrivacyClearedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared history cleared.'**
+  String get importsPrivacyClearedSnack;
+
+  /// No description provided for @importsPrivacyClearFailedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t clear — try again later.'**
+  String get importsPrivacyClearFailedSnack;
 }
 
 class _AppLocalizationsDelegate

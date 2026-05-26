@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/generated/app_localizations.dart';
+
 /// Utility class for difficulty-related display and formatting.
 ///
 /// This class provides user-friendly display names and descriptions
@@ -30,9 +32,22 @@ class DifficultyUtils {
   /// Get the user-friendly display name for a difficulty level.
   ///
   /// [internal] - The internal difficulty value (e.g., 'easy', 'hell')
+  /// [context] - Optional BuildContext. When supplied the value is localized
+  /// via AppLocalizations; without context (logs/analytics callers) we keep
+  /// the English fallback to preserve non-UI semantics.
   /// Returns the friendly display name (e.g., 'Beginner', 'Elite')
-  static String getDisplayName(String internal) {
-    return _displayNames[internal.toLowerCase()] ??
+  static String getDisplayName(String internal, [BuildContext? context]) {
+    final key = internal.toLowerCase();
+    if (context != null) {
+      final l10n = AppLocalizations.of(context);
+      switch (key) {
+        case 'easy':   return l10n.difficultyEasy;
+        case 'medium': return l10n.difficultyMedium;
+        case 'hard':   return l10n.difficultyHard;
+        case 'hell':   return l10n.difficultyHell;
+      }
+    }
+    return _displayNames[key] ??
            internal[0].toUpperCase() + internal.substring(1);
   }
 

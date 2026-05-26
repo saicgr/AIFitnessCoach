@@ -255,24 +255,25 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
     final String title;
     final String subtitle;
 
+    final l10n = AppLocalizations.of(context);
     if (active) {
       icon = Icons.beach_access_rounded;
       accent = const Color(0xFF4FC3F7);
-      title = 'Vacation mode is active';
+      title = l10n.vacationModeBannerActive;
       final end = _currentEnd();
       subtitle = end != null
-          ? 'Notifications are paused until ${_formatDisplay(end)}.'
-          : 'Notifications are paused. Turn off anytime to resume.';
+          ? l10n.vacationModeBannerPausedUntil(_formatDisplay(end))
+          : l10n.vacationModeBannerPausedNoEnd;
     } else if (enabled) {
       icon = Icons.event_rounded;
       accent = AppColors.orange;
-      title = 'Scheduled';
-      subtitle = 'Starts ${_formatDisplay(_currentStart())}.';
+      title = l10n.vacationModeBannerScheduled;
+      subtitle = l10n.vacationModeBannerStartsOn(_formatDisplay(_currentStart()));
     } else {
       icon = Icons.notifications_active_rounded;
       accent = AppColors.success;
-      title = 'Notifications are on';
-      subtitle = 'Enable vacation mode below to pause non-critical reminders.';
+      title = l10n.vacationModeBannerOn;
+      subtitle = l10n.vacationModeBannerOnSubtitle;
     }
 
     return Container(

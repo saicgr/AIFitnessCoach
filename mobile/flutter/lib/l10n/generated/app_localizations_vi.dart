@@ -44322,4 +44322,212 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Giống ngôn ngữ ứng dụng';
+
+  @override
+  String get settingsImportsTitle => 'Nhập khẩu';
+
+  @override
+  String get settingsImportsSubtitle => 'Mọi thứ bạn đã chia sẻ với Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Theo dõi chu kỳ';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Thời kỳ, khả năng sinh sản và dự đoán';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Giới thiệu về $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Chế độ nghỉ phép đang hoạt động';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Thông báo bị tạm dừng cho đến $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Thông báo bị tạm dừng. Tắt bất cứ lúc nào để tiếp tục.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Đã lên lịch';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Bắt đầu vào $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Thông báo đang bật';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Bật chế độ nghỉ bên dưới để tạm dừng những lời nhắc không quan trọng.';
+
+  @override
+  String get difficultyEasy => 'Người mới bắt đầu';
+
+  @override
+  String get difficultyMedium => 'Vừa phải';
+
+  @override
+  String get difficultyHard => 'Thử thách';
+
+  @override
+  String get difficultyHell => 'Địa ngục';
+
+  @override
+  String get habitWorkouts => 'Bài tập';
+
+  @override
+  String get habitFoodLog => 'Nhật ký thực phẩm';
+
+  @override
+  String get habitWater => 'Nước';
+
+  @override
+  String get importsAppBarTitle => 'Nhập khẩu';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Các định dạng và giới hạn được hỗ trợ';
+
+  @override
+  String get importsTooltipDone => 'Xong';
+
+  @override
+  String get importsTooltipSelect => 'Lựa chọn';
+
+  @override
+  String get importsSearchHint => 'Tìm kiếm nhập khẩu…';
+
+  @override
+  String get importsFilterAll => 'Tất cả';
+
+  @override
+  String get importsFilterAllFormats => 'Tất cả các định dạng';
+
+  @override
+  String get importsActionDelete => 'Xóa bỏ';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return 'đã chọn $count';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Chưa có gì được chia sẻ';
+
+  @override
+  String get importsEmptyBody => 'Nhấn Chia sẻ ở mọi nơi - Ảnh, YouTube, ChatGPT, bản ghi nhớ giọng nói - và nó sẽ tự động chuyển đến đây.';
+
+  @override
+  String get importsActionOpen => 'Mở';
+
+  @override
+  String get importsActionRetry => 'Thử lại';
+
+  @override
+  String get importsActionReclassify => 'Phân loại lại';
+
+  @override
+  String get importsSnackRetrying => 'Đang thử nhập lại…';
+
+  @override
+  String get importsSnackRetryFailed => 'Không thể thử lại - hãy thử lại sau.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Phân loại lại hàng đợi - chia sẻ lại mục đó để định tuyến lại.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Xóa nội dung nhập $count?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Các bản ghi sẽ bị xóa khỏi lịch sử nhập của bạn. Các bài tập / công thức nấu ăn / nhật ký thực phẩm đã nhập sẽ được giữ lại.';
+
+  @override
+  String get importsActionCancel => 'Hủy bỏ';
+
+  @override
+  String get importsRowImportFailed => 'Nhập không thành công';
+
+  @override
+  String get importsTitleImportedWorkout => 'Tập luyện nhập khẩu';
+
+  @override
+  String get importsTitleImportedRecipe => 'Công thức nhập khẩu';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Thực đơn nhập khẩu';
+
+  @override
+  String get importsTitleLoggedMeal => 'Bữa ăn được ghi lại';
+
+  @override
+  String get importsTitleFormCheck => 'Kiểm tra biểu mẫu';
+
+  @override
+  String get importsTitleProgressPhoto => 'Ảnh tiến độ';
+
+  @override
+  String get importsTitleSavedTip => 'Mẹo đã lưu';
+
+  @override
+  String get importsTitleImportDetail => 'Nhập chi tiết';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Từ: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Trạng thái: {trạng thái}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Đã phát hiện là: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Những gì bạn có thể chia sẻ';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Giới hạn';
+
+  @override
+  String get importsLimitsFooter => 'Mũ hàng ngày là như nhau cho tất cả mọi người. Họ duy trì chất lượng nhập khẩu cao và bảo vệ khỏi chi phí tăng vọt.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Nhập khẩu';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Luôn hỏi trước khi định tuyến';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Bỏ qua việc đếm ngược tuyến đường tự động — mỗi lượt chia sẻ sẽ mở ra bộ chọn.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Xóa lịch sử chia sẻ';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Xóa mọi bản ghi khỏi danh sách Nhập của bạn. Các bài tập, công thức nấu ăn và nhật ký thực phẩm đã nhập sẽ được giữ nguyên.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Xóa lịch sử chia sẻ?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Mọi hàng trong danh sách Nhập của bạn sẽ bị xóa. Các bài tập, công thức nấu ăn và nhật ký thực phẩm bạn đã nhập vẫn giữ nguyên.';
+
+  @override
+  String get importsPrivacyClearAction => 'Thông thoáng';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Đã xóa lịch sử chia sẻ.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Không thể xóa - hãy thử lại sau.';
 }

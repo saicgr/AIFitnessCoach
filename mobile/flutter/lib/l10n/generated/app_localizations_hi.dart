@@ -44295,4 +44295,212 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'ऐप की भाषा के समान';
+
+  @override
+  String get settingsImportsTitle => 'आयात';
+
+  @override
+  String get settingsImportsSubtitle => 'वह सब कुछ जो आपने ज़ीलोवा में साझा किया है';
+
+  @override
+  String get settingsCycleTrackingTitle => 'साइकिल ट्रैकिंग';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'अवधि, प्रजनन क्षमता और भविष्यवाणियाँ';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName के बारे में';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'अवकाश मोड सक्रिय है';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'सूचनाएं $endDate तक रोक दी गई हैं.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'सूचनाएं रोक दी गई हैं. फिर से शुरू करने के लिए किसी भी समय बंद करें।';
+
+  @override
+  String get vacationModeBannerScheduled => 'अनुसूचित';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate प्रारंभ होता है.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'सूचनाएं चालू हैं';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'गैर-महत्वपूर्ण अनुस्मारक को रोकने के लिए नीचे अवकाश मोड सक्षम करें।';
+
+  @override
+  String get difficultyEasy => 'शुरुआती';
+
+  @override
+  String get difficultyMedium => 'मध्यम';
+
+  @override
+  String get difficultyHard => 'चुनौतीपूर्ण';
+
+  @override
+  String get difficultyHell => 'नरक';
+
+  @override
+  String get habitWorkouts => 'व्यायाम';
+
+  @override
+  String get habitFoodLog => 'खाद्य लॉग';
+
+  @override
+  String get habitWater => 'पानी';
+
+  @override
+  String get importsAppBarTitle => 'आयात';
+
+  @override
+  String get importsTooltipFormatsLimits => 'समर्थित प्रारूप और सीमाएँ';
+
+  @override
+  String get importsTooltipDone => 'हो गया';
+
+  @override
+  String get importsTooltipSelect => 'चुनना';
+
+  @override
+  String get importsSearchHint => 'आयात खोजें…';
+
+  @override
+  String get importsFilterAll => 'सभी';
+
+  @override
+  String get importsFilterAllFormats => 'सभी प्रारूप';
+
+  @override
+  String get importsActionDelete => 'मिटाना';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '{गिनती} चयनित';
+  }
+
+  @override
+  String get importsEmptyTitle => 'अभी तक कुछ भी साझा नहीं किया गया';
+
+  @override
+  String get importsEmptyBody => 'कहीं भी शेयर करें दबाएं - फ़ोटो, यूट्यूब, चैटजीपीटी, एक वॉयस मेमो - और यह स्वचालित रूप से यहां आ जाएगा।';
+
+  @override
+  String get importsActionOpen => 'खुला';
+
+  @override
+  String get importsActionRetry => 'पुन: प्रयास करें';
+
+  @override
+  String get importsActionReclassify => 'पुन: वर्गीकृत';
+
+  @override
+  String get importsSnackRetrying => 'आयात का पुनः प्रयास किया जा रहा है...';
+
+  @override
+  String get importsSnackRetryFailed => 'पुनः प्रयास नहीं किया जा सका - बाद में पुनः प्रयास करें।';
+
+  @override
+  String get importsSnackReclassifyQueued => 'कतारबद्ध को पुनः वर्गीकृत करें - आइटम को पुनः रूट करने के लिए फिर से साझा करें।';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '{गिनती} आयात हटाएं?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'आपके आयात इतिहास से रिकॉर्ड हटा दिए जाते हैं। आयातित वर्कआउट/रेसिपी/फूड लॉग स्वयं रहते हैं।';
+
+  @override
+  String get importsActionCancel => 'रद्द करना';
+
+  @override
+  String get importsRowImportFailed => 'आयात विफल';
+
+  @override
+  String get importsTitleImportedWorkout => 'आयातित कसरत';
+
+  @override
+  String get importsTitleImportedRecipe => 'आयातित नुस्खा';
+
+  @override
+  String get importsTitleImportedMealPlan => 'आयातित भोजन योजना';
+
+  @override
+  String get importsTitleLoggedMeal => 'लॉग भोजन';
+
+  @override
+  String get importsTitleFormCheck => 'फॉर्म की जांच';
+
+  @override
+  String get importsTitleProgressPhoto => 'प्रगति फ़ोटो';
+
+  @override
+  String get importsTitleSavedTip => 'टिप सहेजी गई';
+
+  @override
+  String get importsTitleImportDetail => 'आयात विवरण';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'प्रेषक: {यूआरएल}';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'स्थिति: {स्थिति}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'इस प्रकार पाया गया: {इरादा}';
+  }
+
+  @override
+  String get importsLimitsTitle => 'आप क्या साझा कर सकते हैं';
+
+  @override
+  String get importsLimitsLimitsHeader => 'सीमाएं';
+
+  @override
+  String get importsLimitsFooter => 'दैनिक सीमाएँ सभी के लिए समान हैं। वे आयात की गुणवत्ता को उच्च रखते हैं और अत्यधिक लागत से बचाते हैं।';
+
+  @override
+  String get importsPrivacySectionTitle => 'आयात';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'रूटिंग से पहले हमेशा पूछें';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'ऑटो-रूट उलटी गिनती छोड़ें - प्रत्येक शेयर चयनकर्ता खोलता है।';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'साझा इतिहास साफ़ करें';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'आपकी आयात सूची से प्रत्येक रिकॉर्ड हटा देता है। आयातित वर्कआउट, रेसिपी और भोजन लॉग स्वयं रहते हैं।';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'साझा इतिहास साफ़ करें?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'आपकी आयात सूची की प्रत्येक पंक्ति हटा दी गई है। आपके द्वारा आयातित वर्कआउट, रेसिपी और भोजन लॉग वहीं रहते हैं जहां वे हैं।';
+
+  @override
+  String get importsPrivacyClearAction => 'स्पष्ट';
+
+  @override
+  String get importsPrivacyClearedSnack => 'साझा इतिहास साफ़ किया गया.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'साफ़ नहीं किया जा सका - बाद में पुनः प्रयास करें।';
 }

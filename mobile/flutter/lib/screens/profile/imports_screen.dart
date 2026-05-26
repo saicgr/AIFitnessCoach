@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/services/imports_api_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../share/share_routing_table.dart';
 
 class ImportsScreen extends ConsumerStatefulWidget {
@@ -136,18 +137,22 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
     if (_selectedIds.isEmpty) return;
     final api = ref.read(importsApiServiceProvider);
     final ids = _selectedIds.toList();
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete ${ids.length} import${ids.length == 1 ? '' : 's'}?'),
-        content: const Text('The records are removed from your imports history. Imported workouts / recipes / food logs themselves stay.'),
+        // ICU plural omitted — i18n_add_keys.py uses bare {count}; renderers
+        // produce e.g. "Delete 3 imports?" / "Delete 1 imports?". Acceptable
+        // tradeoff for v1; tighten to ICU plural in a follow-up if needed.
+        title: Text(l10n.importsDeleteConfirmTitle(ids.length)),
+        content: Text(l10n.importsDeleteConfirmBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton.tonal(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.importsActionCancel)),
+          FilledButton.tonal(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.importsActionDelete)),
         ],
       ),
     );
-    if (confirmed != true) return;
+    if (confirmed != true) return; // confirmation handled in dialog above
     await api.bulkDelete(ids);
     if (!mounted) return;
     setState(() {
@@ -177,14 +182,14 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
         }
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Retrying import…'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).importsSnackRetrying),
         ));
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Couldn't retry — try again later."),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).importsSnackRetryFailed),
         ));
       }
     }
@@ -204,18 +209,19 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Imports'),
+        title: Text(l10n.importsAppBarTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            tooltip: 'Supported formats & limits',
+            tooltip: l10n.importsTooltipFormatsLimits,
             onPressed: _showLimitsSheet,
           ),
           IconButton(
             icon: Icon(_selectMode ? Icons.check : Icons.edit_outlined),
-            tooltip: _selectMode ? 'Done' : 'Select',
+            tooltip: _selectMode ? l10n.importsTooltipDone : l10n.importsTooltipSelect,
             onPressed: () => setState(() {
               _selectMode = !_selectMode;
               if (!_selectMode) _selectedIds.clear();
@@ -241,7 +247,7 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
         controller: _searchCtrl,
         decoration: InputDecoration(
           isDense: true,
-          hintText: 'Search imports…',
+          hintText: AppLocalizations.of(context).importsSearchHint,
           prefixIcon: const Icon(Icons.search, size: 20),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -266,7 +272,7 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
             child: Row(
               children: [
                 _filterChip<ImportCategory?>(
-                  label: 'All',
+                  label: AppLocalizations.of(context).importsFilterAll,
                   selected: _categoryFilter == null,
                   onSelected: () => setState(() {
                     _categoryFilter = null;
@@ -292,7 +298,7 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
             child: Row(
               children: [
                 _filterChip(
-                  label: 'All formats',
+                  label: AppLocalizations.of(context).importsFilterAllFormats,
                   selected: _formatFilter == null,
                   onSelected: () => setState(() {
                     _formatFilter = null;
@@ -338,11 +344,11 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            Text('${_selectedIds.length} selected', style: theme.textTheme.labelLarge),
+            Text(AppLocalizations.of(context).importsSelectedCount(_selectedIds.length), style: theme.textTheme.labelLarge),
             const Spacer(),
             TextButton.icon(
               icon: const Icon(Icons.delete_outline),
-              label: const Text('Delete'),
+              label: Text(AppLocalizations.of(context).importsActionDelete),
               onPressed: _bulkDelete,
             ),
           ],
@@ -407,13 +413,12 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
             const Icon(Icons.ios_share, size: 48),
             const SizedBox(height: 12),
             Text(
-              'Nothing shared yet',
+              AppLocalizations.of(context).importsEmptyTitle,
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              "Hit Share anywhere — Photos, YouTube, ChatGPT, a voice memo — "
-              "and it'll land here automatically.",
+              AppLocalizations.of(context).importsEmptyBody,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -444,23 +449,23 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.open_in_new),
-              title: const Text('Open'),
+              title: Text(AppLocalizations.of(context).importsActionOpen),
               onTap: () => Navigator.pop(ctx, 'open'),
             ),
             if (row.status != 'completed')
               ListTile(
                 leading: const Icon(Icons.refresh),
-                title: const Text('Retry'),
+                title: Text(AppLocalizations.of(context).importsActionRetry),
                 onTap: () => Navigator.pop(ctx, 'retry'),
               ),
             ListTile(
               leading: const Icon(Icons.tune),
-              title: const Text('Reclassify'),
+              title: Text(AppLocalizations.of(context).importsActionReclassify),
               onTap: () => Navigator.pop(ctx, 'reclassify'),
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline),
-              title: const Text('Delete'),
+              title: Text(AppLocalizations.of(context).importsActionDelete),
               onTap: () => Navigator.pop(ctx, 'delete'),
             ),
           ],
@@ -479,8 +484,8 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
         // ask the user to reshare. Wire actual reroute in a follow-up.
         await ref.read(importsApiServiceProvider).bulkReclassify([row.id]);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Reclassify queued — share the item again to reroute.'),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(AppLocalizations.of(context).importsSnackReclassifyQueued),
           ));
         }
         break;
@@ -564,7 +569,7 @@ class _ImportsRowCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _title(row),
+                    _title(context, row),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
@@ -587,7 +592,7 @@ class _ImportsRowCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            row.errorMessage ?? 'Import failed',
+                            row.errorMessage ?? AppLocalizations.of(context).importsRowImportFailed,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
@@ -595,7 +600,7 @@ class _ImportsRowCard extends StatelessWidget {
                         ),
                         TextButton(
                           onPressed: onRetry,
-                          child: const Text('Retry'),
+                          child: Text(AppLocalizations.of(context).importsActionRetry),
                         ),
                       ],
                     ),
@@ -609,20 +614,21 @@ class _ImportsRowCard extends StatelessWidget {
     );
   }
 
-  String _title(ImportHistoryRow row) {
+  String _title(BuildContext context, ImportHistoryRow row) {
     if (row.tags['title'] is String && (row.tags['title'] as String).isNotEmpty) {
       return row.tags['title'] as String;
     }
+    final l10n = AppLocalizations.of(context);
     final intent = row.effectiveIntent;
     if (intent != null) {
       switch (intent) {
-        case 'workout_extract':       return 'Imported workout';
-        case 'recipe_extract':        return 'Imported recipe';
-        case 'meal_plan_extract':     return 'Imported meal plan';
-        case 'food_log_extract':      return 'Logged meal';
-        case 'form_check':            return 'Form check';
-        case 'progress_log':          return 'Progress photo';
-        case 'tip_save':              return 'Saved tip';
+        case 'workout_extract':       return l10n.importsTitleImportedWorkout;
+        case 'recipe_extract':        return l10n.importsTitleImportedRecipe;
+        case 'meal_plan_extract':     return l10n.importsTitleImportedMealPlan;
+        case 'food_log_extract':      return l10n.importsTitleLoggedMeal;
+        case 'form_check':            return l10n.importsTitleFormCheck;
+        case 'progress_log':          return l10n.importsTitleProgressPhoto;
+        case 'tip_save':              return l10n.importsTitleSavedTip;
       }
     }
     if (row.sourceUrl != null && row.sourceUrl!.isNotEmpty) {
@@ -631,6 +637,9 @@ class _ImportsRowCard extends StatelessWidget {
     if (row.rawTextPreview != null && row.rawTextPreview!.isNotEmpty) {
       return row.rawTextPreview!;
     }
+    // "Imported <sourceKind>" — sourceKind is a stable enum string (photo,
+    // video, etc.); no localization for now since it appears under a localized
+    // category pill anyway.
     return 'Imported ${row.sourceKind}';
   }
 
@@ -683,6 +692,7 @@ class _RowDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -691,14 +701,14 @@ class _RowDetailSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              row.tags['title'] as String? ?? 'Import detail',
+              row.tags['title'] as String? ?? l10n.importsTitleImportDetail,
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            if (row.sourceUrl != null) Text('From: ${row.sourceUrl}'),
+            if (row.sourceUrl != null) Text(l10n.importsDetailFrom(row.sourceUrl ?? '')),
             const SizedBox(height: 8),
-            Text('Status: ${row.status}'),
-            if (row.classifierIntent != null) Text('Detected as: ${row.classifierIntent}'),
+            Text(l10n.importsDetailStatus(row.status)),
+            if (row.classifierIntent != null) Text(l10n.importsDetailDetectedAs(row.classifierIntent ?? '')),
             if (row.rawTextPreview != null) ...[
               const SizedBox(height: 12),
               Text(row.rawTextPreview!, style: theme.textTheme.bodySmall),
@@ -708,7 +718,7 @@ class _RowDetailSheet extends StatelessWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
+                child: Text(l10n.commonClose),
               ),
             ),
           ],
@@ -759,7 +769,7 @@ class _LimitsSheet extends StatelessWidget {
         controller: scrollCtrl,
         padding: const EdgeInsets.all(20),
         children: [
-          Text('What you can share', style: theme.textTheme.titleLarge),
+          Text(AppLocalizations.of(context).importsLimitsTitle, style: theme.textTheme.titleLarge),
           const SizedBox(height: 12),
           for (final f in _formats) ...[
             Text(f.format, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
@@ -769,7 +779,7 @@ class _LimitsSheet extends StatelessWidget {
           ],
           const Divider(),
           const SizedBox(height: 12),
-          Text('Limits', style: theme.textTheme.titleLarge),
+          Text(AppLocalizations.of(context).importsLimitsLimitsHeader, style: theme.textTheme.titleLarge),
           const SizedBox(height: 8),
           for (final l in _limits) Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -782,7 +792,7 @@ class _LimitsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Daily caps are the same for everyone. They keep import quality high and protect against runaway costs.',
+            AppLocalizations.of(context).importsLimitsFooter,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.6),
             ),

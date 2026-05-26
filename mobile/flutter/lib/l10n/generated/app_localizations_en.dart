@@ -44042,4 +44042,212 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Same as app language';
+
+  @override
+  String get settingsImportsTitle => 'Imports';
+
+  @override
+  String get settingsImportsSubtitle => 'Everything you\'ve shared into Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Cycle Tracking';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Period, fertility & predictions';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'About $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Vacation mode is active';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Notifications are paused until $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Notifications are paused. Turn off anytime to resume.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Scheduled';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Starts $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Notifications are on';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Enable vacation mode below to pause non-critical reminders.';
+
+  @override
+  String get difficultyEasy => 'Beginner';
+
+  @override
+  String get difficultyMedium => 'Moderate';
+
+  @override
+  String get difficultyHard => 'Challenging';
+
+  @override
+  String get difficultyHell => 'Hell';
+
+  @override
+  String get habitWorkouts => 'Workouts';
+
+  @override
+  String get habitFoodLog => 'Food Log';
+
+  @override
+  String get habitWater => 'Water';
+
+  @override
+  String get importsAppBarTitle => 'Imports';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Supported formats & limits';
+
+  @override
+  String get importsTooltipDone => 'Done';
+
+  @override
+  String get importsTooltipSelect => 'Select';
+
+  @override
+  String get importsSearchHint => 'Search imports…';
+
+  @override
+  String get importsFilterAll => 'All';
+
+  @override
+  String get importsFilterAllFormats => 'All formats';
+
+  @override
+  String get importsActionDelete => 'Delete';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count selected';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Nothing shared yet';
+
+  @override
+  String get importsEmptyBody => 'Hit Share anywhere — Photos, YouTube, ChatGPT, a voice memo — and it\'ll land here automatically.';
+
+  @override
+  String get importsActionOpen => 'Open';
+
+  @override
+  String get importsActionRetry => 'Retry';
+
+  @override
+  String get importsActionReclassify => 'Reclassify';
+
+  @override
+  String get importsSnackRetrying => 'Retrying import…';
+
+  @override
+  String get importsSnackRetryFailed => 'Couldn\'t retry — try again later.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Reclassify queued — share the item again to reroute.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Delete $count imports?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'The records are removed from your imports history. Imported workouts / recipes / food logs themselves stay.';
+
+  @override
+  String get importsActionCancel => 'Cancel';
+
+  @override
+  String get importsRowImportFailed => 'Import failed';
+
+  @override
+  String get importsTitleImportedWorkout => 'Imported workout';
+
+  @override
+  String get importsTitleImportedRecipe => 'Imported recipe';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Imported meal plan';
+
+  @override
+  String get importsTitleLoggedMeal => 'Logged meal';
+
+  @override
+  String get importsTitleFormCheck => 'Form check';
+
+  @override
+  String get importsTitleProgressPhoto => 'Progress photo';
+
+  @override
+  String get importsTitleSavedTip => 'Saved tip';
+
+  @override
+  String get importsTitleImportDetail => 'Import detail';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'From: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Detected as: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'What you can share';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Limits';
+
+  @override
+  String get importsLimitsFooter => 'Daily caps are the same for everyone. They keep import quality high and protect against runaway costs.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Imports';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Always ask before routing';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Skip the auto-route countdown — every share opens the chooser.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Clear shared history';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Removes every record from your Imports list. Imported workouts, recipes, and food logs themselves stay.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Clear shared history?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Every row in your Imports list is removed. The workouts, recipes, and food logs you imported stay where they are.';
+
+  @override
+  String get importsPrivacyClearAction => 'Clear';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Shared history cleared.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Couldn\'t clear — try again later.';
 }

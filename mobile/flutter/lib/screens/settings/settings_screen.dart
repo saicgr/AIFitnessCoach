@@ -652,8 +652,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.ios_share,
             iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-            title: 'Imports',
-            value: "Everything you've shared into Zealova",
+            title: AppLocalizations.of(context).settingsImportsTitle,
+            value: AppLocalizations.of(context).settingsImportsSubtitle,
             route: '/imports',
             sectionKeys: const ['imports', 'shared', 'share', 'history'],
           ),
@@ -744,8 +744,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.bloodtype_outlined,
             iconColor: const Color(0xFFE5567B),
-            title: 'Cycle Tracking',
-            value: 'Period, fertility & predictions',
+            title: AppLocalizations.of(context).settingsCycleTrackingTitle,
+            value: AppLocalizations.of(context).settingsCycleTrackingSubtitle,
             route: '/settings/cycle',
             sectionKeys: const [
               'cycle', 'period', 'menstrual', 'fertility', 'ovulation',
@@ -829,7 +829,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.info_outline,
             iconColor: textMuted,
-            title: 'About ${Branding.appName}',
+            title: AppLocalizations.of(context).settingsAboutBrand(Branding.appName),
             sectionKeys: const ['about_app'],
             onTap: () => _showAboutDialog(context),
           ),

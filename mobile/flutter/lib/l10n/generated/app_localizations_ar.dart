@@ -43823,4 +43823,212 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'نفس لغة التطبيق';
+
+  @override
+  String get settingsImportsTitle => 'الواردات';
+
+  @override
+  String get settingsImportsSubtitle => 'كل ما قمت بمشاركته في Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'تتبع الدورة';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'الفترة والخصوبة والتنبؤات';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'حول $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'وضع الإجازة نشط';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'تم إيقاف الإشعارات مؤقتًا حتى $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'الإخطارات متوقفة مؤقتا. قم بإيقاف التشغيل في أي وقت للاستئناف.';
+
+  @override
+  String get vacationModeBannerScheduled => 'المقرر';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'يبدأ في $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'الإخطارات قيد التشغيل';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'قم بتمكين وضع الإجازة أدناه لإيقاف التذكيرات غير المهمة مؤقتًا.';
+
+  @override
+  String get difficultyEasy => 'مبتدئ';
+
+  @override
+  String get difficultyMedium => 'معتدل';
+
+  @override
+  String get difficultyHard => 'تحدي';
+
+  @override
+  String get difficultyHell => 'جحيم';
+
+  @override
+  String get habitWorkouts => 'التدريبات';
+
+  @override
+  String get habitFoodLog => 'سجل الغذاء';
+
+  @override
+  String get habitWater => 'ماء';
+
+  @override
+  String get importsAppBarTitle => 'الواردات';
+
+  @override
+  String get importsTooltipFormatsLimits => 'التنسيقات والحدود المدعومة';
+
+  @override
+  String get importsTooltipDone => 'منتهي';
+
+  @override
+  String get importsTooltipSelect => 'يختار';
+
+  @override
+  String get importsSearchHint => 'بحث عن الواردات...';
+
+  @override
+  String get importsFilterAll => 'الجميع';
+
+  @override
+  String get importsFilterAllFormats => 'جميع الصيغ';
+
+  @override
+  String get importsActionDelete => 'يمسح';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return 'تم تحديد $count.';
+  }
+
+  @override
+  String get importsEmptyTitle => 'لم تتم مشاركة أي شيء حتى الآن';
+
+  @override
+  String get importsEmptyBody => 'اضغط على "المشاركة في أي مكان" — الصور، وYouTube، وChatGPT، والمذكرة الصوتية — وستصل هنا تلقائيًا.';
+
+  @override
+  String get importsActionOpen => 'يفتح';
+
+  @override
+  String get importsActionRetry => 'أعد المحاولة';
+
+  @override
+  String get importsActionReclassify => 'إعادة التصنيف';
+
+  @override
+  String get importsSnackRetrying => 'جارٍ إعادة محاولة الاستيراد...';
+
+  @override
+  String get importsSnackRetryFailed => 'تعذرت إعادة المحاولة — حاول مرة أخرى لاحقًا.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'إعادة تصنيف العنصر في قائمة الانتظار — قم بمشاركة العنصر مرة أخرى لإعادة توجيهه.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'هل تريد حذف $count الواردات؟';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'تتم إزالة السجلات من سجل الواردات الخاص بك. تبقى التدريبات / الوصفات / سجلات الطعام المستوردة نفسها.';
+
+  @override
+  String get importsActionCancel => 'يلغي';
+
+  @override
+  String get importsRowImportFailed => 'فشل الاستيراد';
+
+  @override
+  String get importsTitleImportedWorkout => 'تمرين مستورد';
+
+  @override
+  String get importsTitleImportedRecipe => 'وصفة مستوردة';
+
+  @override
+  String get importsTitleImportedMealPlan => 'خطة الوجبات المستوردة';
+
+  @override
+  String get importsTitleLoggedMeal => 'وجبة مسجلة';
+
+  @override
+  String get importsTitleFormCheck => 'فحص النموذج';
+
+  @override
+  String get importsTitleProgressPhoto => 'صورة التقدم';
+
+  @override
+  String get importsTitleSavedTip => 'نصيحة محفوظة';
+
+  @override
+  String get importsTitleImportDetail => 'تفاصيل الاستيراد';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'من: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'الحالة: {الحالة}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'تم اكتشافه كـ: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'ما يمكنك مشاركته';
+
+  @override
+  String get importsLimitsLimitsHeader => 'حدود';
+
+  @override
+  String get importsLimitsFooter => 'الحدود القصوى اليومية هي نفسها للجميع. إنها تحافظ على جودة الواردات عالية وتحمي من التكاليف الجامحة.';
+
+  @override
+  String get importsPrivacySectionTitle => 'الواردات';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'اسأل دائمًا قبل التوجيه';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'تخطي العد التنازلي للمسار التلقائي — كل مشاركة تفتح أداة الاختيار.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'مسح التاريخ المشترك';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'يزيل كل سجل من قائمة الواردات الخاصة بك. تبقى التدريبات والوصفات وسجلات الطعام المستوردة نفسها.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'هل تريد محو السجل المشترك؟';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'تتم إزالة كل صف في قائمة الواردات الخاصة بك. تبقى التدريبات والوصفات وسجلات الطعام التي قمت باستيرادها في مكانها.';
+
+  @override
+  String get importsPrivacyClearAction => 'واضح';
+
+  @override
+  String get importsPrivacyClearedSnack => 'تم مسح السجل المشترك.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'تعذر المسح — حاول مرة أخرى لاحقًا.';
 }

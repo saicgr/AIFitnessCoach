@@ -44720,4 +44720,212 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Katulad ng wika ng app';
+
+  @override
+  String get settingsImportsTitle => 'Mga import';
+
+  @override
+  String get settingsImportsSubtitle => 'Lahat ng ibinahagi mo sa Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Pagsubaybay sa Ikot';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Panahon, pagkamayabong at hula';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Tungkol sa $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Aktibo ang vacation mode';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Naka-pause ang mga notification hanggang $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Naka-pause ang mga notification. I-off anumang oras para ipagpatuloy.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Naka-iskedyul';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Magsisimula $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Naka-on ang mga notification';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'I-enable ang vacation mode sa ibaba para i-pause ang mga hindi kritikal na paalala.';
+
+  @override
+  String get difficultyEasy => 'Baguhan';
+
+  @override
+  String get difficultyMedium => 'Katamtaman';
+
+  @override
+  String get difficultyHard => 'Naghahamon';
+
+  @override
+  String get difficultyHell => 'Impiyerno';
+
+  @override
+  String get habitWorkouts => 'Mga ehersisyo';
+
+  @override
+  String get habitFoodLog => 'Log ng Pagkain';
+
+  @override
+  String get habitWater => 'Tubig';
+
+  @override
+  String get importsAppBarTitle => 'Mga import';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Mga sinusuportahang format at limitasyon';
+
+  @override
+  String get importsTooltipDone => 'Tapos na';
+
+  @override
+  String get importsTooltipSelect => 'Pumili';
+
+  @override
+  String get importsSearchHint => 'Maghanap ng mga import…';
+
+  @override
+  String get importsFilterAll => 'Lahat';
+
+  @override
+  String get importsFilterAllFormats => 'Lahat ng mga format';
+
+  @override
+  String get importsActionDelete => 'Tanggalin';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count ang napili';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Wala pang naibahagi';
+
+  @override
+  String get importsEmptyBody => 'Pindutin ang Ibahagi kahit saan — Mga larawan, YouTube, ChatGPT, isang voice memo — at awtomatiko itong mapupunta dito.';
+
+  @override
+  String get importsActionOpen => 'Bukas';
+
+  @override
+  String get importsActionRetry => 'Subukan muli';
+
+  @override
+  String get importsActionReclassify => 'Reclassify';
+
+  @override
+  String get importsSnackRetrying => 'Sinusubukang muli ang pag-import…';
+
+  @override
+  String get importsSnackRetryFailed => 'Hindi masubukang muli — subukang muli sa ibang pagkakataon.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Reclassify queued — ibahagi muli ang item upang i-reroute.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Tanggalin ang $count na pag-import?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Ang mga tala ay tinanggal mula sa iyong kasaysayan ng pag-import. Ang mga imported na ehersisyo / recipe / food log ay nananatili.';
+
+  @override
+  String get importsActionCancel => 'Kanselahin';
+
+  @override
+  String get importsRowImportFailed => 'Nabigo ang pag-import';
+
+  @override
+  String get importsTitleImportedWorkout => 'Imported na ehersisyo';
+
+  @override
+  String get importsTitleImportedRecipe => 'Imported na recipe';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Imported na meal plan';
+
+  @override
+  String get importsTitleLoggedMeal => 'Naka-log na pagkain';
+
+  @override
+  String get importsTitleFormCheck => 'Pagsusuri ng form';
+
+  @override
+  String get importsTitleProgressPhoto => 'Larawan ng pag-unlad';
+
+  @override
+  String get importsTitleSavedTip => 'Naka-save na tip';
+
+  @override
+  String get importsTitleImportDetail => 'I-import ang detalye';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Mula kay: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Katayuan: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Natukoy bilang: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Kung ano ang maaari mong ibahagi';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Mga limitasyon';
+
+  @override
+  String get importsLimitsFooter => 'Ang mga pang-araw-araw na takip ay pareho para sa lahat. Pinapanatili nilang mataas ang kalidad ng pag-import at pinoprotektahan laban sa mga gastos na tumatakbo.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Mga import';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Laging magtanong bago magruta';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Laktawan ang auto-route countdown — bawat pagbabahagi ay magbubukas sa tagapili.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'I-clear ang nakabahaging kasaysayan';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Inaalis ang bawat tala sa iyong listahan ng Mga Import. Ang mga imported na workout, recipe, at food log ay nananatili.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'I-clear ang nakabahaging kasaysayan?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Ang bawat row sa iyong listahan ng Mga Import ay aalisin. Ang mga ehersisyo, recipe, at food log na na-import mo ay nananatili kung nasaan sila.';
+
+  @override
+  String get importsPrivacyClearAction => 'Maaliwalas';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Na-clear ang nakabahaging kasaysayan.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Hindi ma-clear — subukang muli sa ibang pagkakataon.';
 }

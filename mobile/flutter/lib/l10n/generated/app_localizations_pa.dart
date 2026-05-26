@@ -44234,4 +44234,212 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'ਐਪ ਭਾਸ਼ਾ ਵਾਂਗ ਹੀ';
+
+  @override
+  String get settingsImportsTitle => 'ਆਯਾਤ';
+
+  @override
+  String get settingsImportsSubtitle => 'ਹਰ ਚੀਜ਼ ਜੋ ਤੁਸੀਂ Zealova ਵਿੱਚ ਸਾਂਝੀ ਕੀਤੀ ਹੈ';
+
+  @override
+  String get settingsCycleTrackingTitle => 'ਸਾਈਕਲ ਟ੍ਰੈਕਿੰਗ';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'ਮਿਆਦ, ਉਪਜਾਊ ਸ਼ਕਤੀ ਅਤੇ ਭਵਿੱਖਬਾਣੀਆਂ';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName ਬਾਰੇ';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'ਛੁੱਟੀਆਂ ਦਾ ਮੋਡ ਕਿਰਿਆਸ਼ੀਲ ਹੈ';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'ਸੂਚਨਾਵਾਂ ਨੂੰ $endDate ਤੱਕ ਰੋਕਿਆ ਗਿਆ ਹੈ।';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'ਸੂਚਨਾਵਾਂ ਰੋਕੀਆਂ ਗਈਆਂ ਹਨ। ਮੁੜ-ਚਾਲੂ ਕਰਨ ਲਈ ਕਿਸੇ ਵੀ ਸਮੇਂ ਬੰਦ ਕਰੋ।';
+
+  @override
+  String get vacationModeBannerScheduled => 'ਤਹਿ ਕੀਤਾ';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate ਤੋਂ ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ।';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'ਸੂਚਨਾਵਾਂ ਚਾਲੂ ਹਨ';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'ਗੈਰ-ਨਾਜ਼ੁਕ ਰੀਮਾਈਂਡਰਾਂ ਨੂੰ ਰੋਕਣ ਲਈ ਹੇਠਾਂ ਛੁੱਟੀ ਮੋਡ ਨੂੰ ਸਮਰੱਥ ਬਣਾਓ।';
+
+  @override
+  String get difficultyEasy => 'ਸ਼ੁਰੂਆਤ ਕਰਨ ਵਾਲਾ';
+
+  @override
+  String get difficultyMedium => 'ਮੱਧਮ';
+
+  @override
+  String get difficultyHard => 'ਚੁਣੌਤੀਪੂਰਨ';
+
+  @override
+  String get difficultyHell => 'ਨਰਕ';
+
+  @override
+  String get habitWorkouts => 'ਕਸਰਤ';
+
+  @override
+  String get habitFoodLog => 'ਭੋਜਨ ਲੌਗ';
+
+  @override
+  String get habitWater => 'ਪਾਣੀ';
+
+  @override
+  String get importsAppBarTitle => 'ਆਯਾਤ';
+
+  @override
+  String get importsTooltipFormatsLimits => 'ਸਮਰਥਿਤ ਫਾਰਮੈਟ ਅਤੇ ਸੀਮਾਵਾਂ';
+
+  @override
+  String get importsTooltipDone => 'ਹੋ ਗਿਆ';
+
+  @override
+  String get importsTooltipSelect => 'ਚੁਣੋ';
+
+  @override
+  String get importsSearchHint => 'ਆਯਾਤ ਖੋਜੋ…';
+
+  @override
+  String get importsFilterAll => 'ਸਾਰੇ';
+
+  @override
+  String get importsFilterAllFormats => 'ਸਾਰੇ ਫਾਰਮੈਟ';
+
+  @override
+  String get importsActionDelete => 'ਮਿਟਾਓ';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count ਨੂੰ ਚੁਣਿਆ ਗਿਆ';
+  }
+
+  @override
+  String get importsEmptyTitle => 'ਹਾਲੇ ਕੁਝ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਗਿਆ';
+
+  @override
+  String get importsEmptyBody => 'ਕਿਤੇ ਵੀ ਸਾਂਝਾ ਕਰੋ ਨੂੰ ਦਬਾਓ — ਫੋਟੋਆਂ, YouTube, ਚੈਟਜੀਪੀਟੀ, ਇੱਕ ਵੌਇਸ ਮੀਮੋ — ਅਤੇ ਇਹ ਆਪਣੇ ਆਪ ਇੱਥੇ ਆ ਜਾਵੇਗਾ।';
+
+  @override
+  String get importsActionOpen => 'ਖੋਲ੍ਹੋ';
+
+  @override
+  String get importsActionRetry => 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ';
+
+  @override
+  String get importsActionReclassify => 'ਮੁੜ ਵਰਗੀਕਰਨ ਕਰੋ';
+
+  @override
+  String get importsSnackRetrying => 'ਆਯਾਤ ਦੀ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ...';
+
+  @override
+  String get importsSnackRetryFailed => 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ — ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get importsSnackReclassifyQueued => 'ਕਤਾਰ ਨੂੰ ਮੁੜ ਵਰਗੀਕ੍ਰਿਤ ਕਰੋ — ਰੀਰੂਟ ਕਰਨ ਲਈ ਆਈਟਮ ਨੂੰ ਦੁਬਾਰਾ ਸਾਂਝਾ ਕਰੋ।';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'ਕੀ $count ਆਯਾਤ ਨੂੰ ਮਿਟਾਉਣਾ ਹੈ?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'ਰਿਕਾਰਡਾਂ ਨੂੰ ਤੁਹਾਡੇ ਆਯਾਤ ਇਤਿਹਾਸ ਤੋਂ ਹਟਾ ਦਿੱਤਾ ਜਾਂਦਾ ਹੈ। ਆਯਾਤ ਕੀਤੇ ਵਰਕਆਉਟ / ਪਕਵਾਨ / ਭੋਜਨ ਲੌਗ ਆਪਣੇ ਆਪ ਹੀ ਰਹਿੰਦੇ ਹਨ.';
+
+  @override
+  String get importsActionCancel => 'ਰੱਦ ਕਰੋ';
+
+  @override
+  String get importsRowImportFailed => 'ਆਯਾਤ ਅਸਫਲ ਰਿਹਾ';
+
+  @override
+  String get importsTitleImportedWorkout => 'ਆਯਾਤ ਕੀਤੀ ਕਸਰਤ';
+
+  @override
+  String get importsTitleImportedRecipe => 'ਆਯਾਤ ਵਿਅੰਜਨ';
+
+  @override
+  String get importsTitleImportedMealPlan => 'ਆਯਾਤ ਭੋਜਨ ਯੋਜਨਾ';
+
+  @override
+  String get importsTitleLoggedMeal => 'ਲੌਗ ਕੀਤਾ ਭੋਜਨ';
+
+  @override
+  String get importsTitleFormCheck => 'ਫਾਰਮ ਚੈੱਕ';
+
+  @override
+  String get importsTitleProgressPhoto => 'ਤਰੱਕੀ ਫੋਟੋ';
+
+  @override
+  String get importsTitleSavedTip => 'ਸੁਰੱਖਿਅਤ ਟਿਪ';
+
+  @override
+  String get importsTitleImportDetail => 'ਵੇਰਵੇ ਆਯਾਤ ਕਰੋ';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'ਵੱਲੋਂ: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'ਸਥਿਤੀ: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'ਇਸ ਤਰ੍ਹਾਂ ਖੋਜਿਆ ਗਿਆ: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'ਜੋ ਤੁਸੀਂ ਸਾਂਝਾ ਕਰ ਸਕਦੇ ਹੋ';
+
+  @override
+  String get importsLimitsLimitsHeader => 'ਸੀਮਾਵਾਂ';
+
+  @override
+  String get importsLimitsFooter => 'ਰੋਜ਼ਾਨਾ ਕੈਪਸ ਹਰ ਕਿਸੇ ਲਈ ਇੱਕੋ ਜਿਹੇ ਹੁੰਦੇ ਹਨ। ਉਹ ਆਯਾਤ ਗੁਣਵੱਤਾ ਨੂੰ ਉੱਚਾ ਰੱਖਦੇ ਹਨ ਅਤੇ ਭਗੌੜੇ ਖਰਚਿਆਂ ਤੋਂ ਬਚਾਉਂਦੇ ਹਨ।';
+
+  @override
+  String get importsPrivacySectionTitle => 'ਆਯਾਤ';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'ਰੂਟਿੰਗ ਤੋਂ ਪਹਿਲਾਂ ਹਮੇਸ਼ਾ ਪੁੱਛੋ';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'ਆਟੋ-ਰੂਟ ਕਾਊਂਟਡਾਊਨ ਨੂੰ ਛੱਡੋ — ਹਰੇਕ ਸ਼ੇਅਰ ਚੋਣਕਾਰ ਨੂੰ ਖੋਲ੍ਹਦਾ ਹੈ।';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'ਸਾਂਝਾ ਇਤਿਹਾਸ ਸਾਫ਼ ਕਰੋ';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'ਤੁਹਾਡੀ ਆਯਾਤ ਸੂਚੀ ਵਿੱਚੋਂ ਹਰ ਰਿਕਾਰਡ ਨੂੰ ਹਟਾਉਂਦਾ ਹੈ। ਆਯਾਤ ਕੀਤੇ ਵਰਕਆਉਟ, ਪਕਵਾਨਾਂ, ਅਤੇ ਭੋਜਨ ਲੌਗ ਆਪਣੇ ਆਪ ਹੀ ਰਹਿੰਦੇ ਹਨ।';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'ਕੀ ਸਾਂਝਾ ਇਤਿਹਾਸ ਸਾਫ਼ ਕਰਨਾ ਹੈ?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'ਤੁਹਾਡੀ ਆਯਾਤ ਸੂਚੀ ਵਿੱਚ ਹਰ ਕਤਾਰ ਨੂੰ ਹਟਾ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਤੁਹਾਡੇ ਵੱਲੋਂ ਆਯਾਤ ਕੀਤੇ ਗਏ ਵਰਕਆਉਟ, ਪਕਵਾਨਾਂ ਅਤੇ ਭੋਜਨ ਲੌਗ ਉੱਥੇ ਹੀ ਰਹਿੰਦੇ ਹਨ ਜਿੱਥੇ ਉਹ ਹਨ।';
+
+  @override
+  String get importsPrivacyClearAction => 'ਸਾਫ਼';
+
+  @override
+  String get importsPrivacyClearedSnack => 'ਸਾਂਝਾ ਇਤਿਹਾਸ ਕਲੀਅਰ ਕੀਤਾ ਗਿਆ।';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'ਸਾਫ਼ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ — ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 }

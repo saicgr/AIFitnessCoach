@@ -44396,4 +44396,212 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Kamar harshen manhajar';
+
+  @override
+  String get settingsImportsTitle => 'Ana shigo da kaya';
+
+  @override
+  String get settingsImportsSubtitle => 'Duk abin da kuka raba cikin Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Bibiyar Zagayowar';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Lokaci, haihuwa & tsinkaya';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Game da $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Yanayin hutu yana aiki';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Ana dakatar da sanarwar har zuwa {ƙarshen kwanan wata}.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'An dakatar da sanarwar. Kashe kowane lokaci don ci gaba.';
+
+  @override
+  String get vacationModeBannerScheduled => 'An tsara';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Fara $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Ana kunna sanarwar';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Kunna yanayin hutu a ƙasa don dakatar da masu tuni marasa mahimmanci.';
+
+  @override
+  String get difficultyEasy => 'Mafari';
+
+  @override
+  String get difficultyMedium => 'Matsakaici';
+
+  @override
+  String get difficultyHard => 'Kalubale';
+
+  @override
+  String get difficultyHell => 'Jahannama';
+
+  @override
+  String get habitWorkouts => 'Ayyukan motsa jiki';
+
+  @override
+  String get habitFoodLog => 'Littafin Abinci';
+
+  @override
+  String get habitWater => 'Ruwa';
+
+  @override
+  String get importsAppBarTitle => 'Ana shigo da kaya';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Tsarukan tallafi & iyakoki';
+
+  @override
+  String get importsTooltipDone => 'Anyi';
+
+  @override
+  String get importsTooltipSelect => 'Zaɓi';
+
+  @override
+  String get importsSearchHint => 'Bincika shigo da kaya…';
+
+  @override
+  String get importsFilterAll => 'Duka';
+
+  @override
+  String get importsFilterAllFormats => 'Duk tsari';
+
+  @override
+  String get importsActionDelete => 'Share';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return 'An zaɓi $count';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Babu wani abu da aka raba tukuna';
+
+  @override
+  String get importsEmptyBody => 'Danna Raba ko\'ina - Hotuna, YouTube, ChatGPT, memo na murya - kuma zai sauka anan ta atomatik.';
+
+  @override
+  String get importsActionOpen => 'Bude';
+
+  @override
+  String get importsActionRetry => 'Sake gwadawa';
+
+  @override
+  String get importsActionReclassify => 'Sake rarrabuwa';
+
+  @override
+  String get importsSnackRetrying => 'Ana sake gwada shigo da…';
+
+  @override
+  String get importsSnackRetryFailed => 'Ba za a iya sake gwadawa ba - sake gwadawa daga baya.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Sake rarraba jerin gwano - raba abun kuma don sake hanyar.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Share $count abubuwan da aka shigo da su?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'An cire bayanan daga tarihin shigo da ku. Ayyukan motsa jiki / girke-girke / rajistan ayyukan abinci da kansu suna zama.';
+
+  @override
+  String get importsActionCancel => 'Soke';
+
+  @override
+  String get importsRowImportFailed => 'An gaza shigo da shi';
+
+  @override
+  String get importsTitleImportedWorkout => 'Aikin motsa jiki da aka shigo dashi';
+
+  @override
+  String get importsTitleImportedRecipe => 'Shigo da girke-girke';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Shirin abincin da aka shigo dashi';
+
+  @override
+  String get importsTitleLoggedMeal => 'Cin abinci';
+
+  @override
+  String get importsTitleFormCheck => 'Tabbatar da tsari';
+
+  @override
+  String get importsTitleProgressPhoto => 'Hoton ci gaba';
+
+  @override
+  String get importsTitleSavedTip => 'Ajiye tip';
+
+  @override
+  String get importsTitleImportDetail => 'Shigo dalla-dalla';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Daga: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Matsayi: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'An gano shi azaman: {nufin}';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Abin da za ku iya raba';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Iyaka';
+
+  @override
+  String get importsLimitsFooter => 'Kwancen yau da kullum iri ɗaya ne ga kowa. Suna kiyaye ingancin shigo da kaya kuma suna kare farashin gudu.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Ana shigo da kaya';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Koyaushe tambaya kafin a yi hanya';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Tsallake kirgawa ta hanyar atomatik - kowane rabo yana buɗe mai zaɓi.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Share tarihin raba';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Yana cire kowane rikodin daga lissafin shigo da ku. Ayyukan motsa jiki da aka shigo da su, girke-girke, da rajistan ayyukan abinci da kansu suna tsayawa.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Share tarihin raba?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Ana cire kowane layi a cikin jerin abubuwan shigo da kaya. Ayyukan motsa jiki, girke-girke, da rajistan ayyukan abinci da kuka shigo da su suna tsayawa a inda suke.';
+
+  @override
+  String get importsPrivacyClearAction => 'Share';
+
+  @override
+  String get importsPrivacyClearedSnack => 'An share tarihin da aka raba.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'An kasa sharewa - sake gwadawa daga baya.';
 }

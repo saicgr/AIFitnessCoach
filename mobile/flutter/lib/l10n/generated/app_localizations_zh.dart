@@ -42016,4 +42016,212 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => '与应用语言相同';
+
+  @override
+  String get settingsImportsTitle => '进口';
+
+  @override
+  String get settingsImportsSubtitle => '您分享到 Zealova 的所有内容';
+
+  @override
+  String get settingsCycleTrackingTitle => '周期追踪';
+
+  @override
+  String get settingsCycleTrackingSubtitle => '经期、生育能力和预测';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '关于$appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => '假期模式已激活';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return '通知将暂停直至 $endDate。';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => '通知已暂停。随时关闭即可恢复。';
+
+  @override
+  String get vacationModeBannerScheduled => '预定';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '开始于 $startDate。';
+  }
+
+  @override
+  String get vacationModeBannerOn => '通知已开启';
+
+  @override
+  String get vacationModeBannerOnSubtitle => '启用下面的假期模式以暂停非关键提醒。';
+
+  @override
+  String get difficultyEasy => '初学者';
+
+  @override
+  String get difficultyMedium => '缓和';
+
+  @override
+  String get difficultyHard => '具有挑战性的';
+
+  @override
+  String get difficultyHell => '地狱';
+
+  @override
+  String get habitWorkouts => '锻炼';
+
+  @override
+  String get habitFoodLog => '食物记录';
+
+  @override
+  String get habitWater => '水';
+
+  @override
+  String get importsAppBarTitle => '进口';
+
+  @override
+  String get importsTooltipFormatsLimits => '支持的格式和限制';
+
+  @override
+  String get importsTooltipDone => '完毕';
+
+  @override
+  String get importsTooltipSelect => '选择';
+
+  @override
+  String get importsSearchHint => '搜索进口...';
+
+  @override
+  String get importsFilterAll => '全部';
+
+  @override
+  String get importsFilterAllFormats => '所有格式';
+
+  @override
+  String get importsActionDelete => '删除';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '已选择 $count 个';
+  }
+
+  @override
+  String get importsEmptyTitle => '尚未分享任何内容';
+
+  @override
+  String get importsEmptyBody => '点击“在任何地方共享”——照片、YouTube、ChatGPT、语音备忘录——它就会自动降落到此处。';
+
+  @override
+  String get importsActionOpen => '打开';
+
+  @override
+  String get importsActionRetry => '重试';
+
+  @override
+  String get importsActionReclassify => '重新分类';
+
+  @override
+  String get importsSnackRetrying => '正在重试导入...';
+
+  @override
+  String get importsSnackRetryFailed => '无法重试 - 请稍后再试。';
+
+  @override
+  String get importsSnackReclassifyQueued => '重新分类排队 — 再次共享项目以重新路由。';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '删除 $count 个导入？';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => '这些记录将从您的导入历史记录中删除。导入的锻炼/食谱/食物日志本身会保留。';
+
+  @override
+  String get importsActionCancel => '取消';
+
+  @override
+  String get importsRowImportFailed => '导入失败';
+
+  @override
+  String get importsTitleImportedWorkout => '进口锻炼';
+
+  @override
+  String get importsTitleImportedRecipe => '进口配方';
+
+  @override
+  String get importsTitleImportedMealPlan => '进口膳食计划';
+
+  @override
+  String get importsTitleLoggedMeal => '记录膳食';
+
+  @override
+  String get importsTitleFormCheck => '表格检查';
+
+  @override
+  String get importsTitleProgressPhoto => '进度照片';
+
+  @override
+  String get importsTitleSavedTip => '已保存小费';
+
+  @override
+  String get importsTitleImportDetail => '导入详情';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return '来自：$url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return '状态：{状态}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return '检测为：{意图}';
+  }
+
+  @override
+  String get importsLimitsTitle => '您可以分享什么';
+
+  @override
+  String get importsLimitsLimitsHeader => '限制';
+
+  @override
+  String get importsLimitsFooter => '每个人的每日上限都相同。他们保持进口的高品质并防止成本失控。';
+
+  @override
+  String get importsPrivacySectionTitle => '进口';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => '在路由之前始终询问';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => '跳过自动路由倒计时 - 每个共享都会打开选择器。';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => '清除共享历史记录';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => '从导入列表中删除每条记录。导入的锻炼、食谱和食物日志本身会保留下来。';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => '清除共享历史记录？';
+
+  @override
+  String get importsPrivacyClearConfirmBody => '导入列表中的每一行都将被删除。您导入的锻炼、食谱和饮食日志保留在原处。';
+
+  @override
+  String get importsPrivacyClearAction => '清除';
+
+  @override
+  String get importsPrivacyClearedSnack => '共享历史记录已清除。';
+
+  @override
+  String get importsPrivacyClearFailedSnack => '无法清除 - 请稍后再试。';
 }

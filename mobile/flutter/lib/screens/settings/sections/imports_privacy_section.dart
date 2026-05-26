@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../data/services/imports_api_service.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 const String kImportsAlwaysAskPrefKey = 'imports.always_ask_before_routing';
 
@@ -49,6 +50,7 @@ class ImportsPrivacySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final alwaysAsk = ref.watch(importsAlwaysAskProvider);
     return Container(
       decoration: BoxDecoration(
@@ -63,16 +65,14 @@ class ImportsPrivacySection extends ConsumerWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Imports',
+                l10n.importsPrivacySectionTitle,
                 style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           ),
           SwitchListTile(
-            title: const Text('Always ask before routing'),
-            subtitle: const Text(
-              'Skip the auto-route countdown — every share opens the chooser.',
-            ),
+            title: Text(l10n.importsPrivacyAlwaysAskTitle),
+            subtitle: Text(l10n.importsPrivacyAlwaysAskSubtitle),
             value: alwaysAsk,
             onChanged: (v) =>
                 ref.read(importsAlwaysAskProvider.notifier).set(v),
@@ -80,10 +80,8 @@ class ImportsPrivacySection extends ConsumerWidget {
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.delete_outline),
-            title: const Text('Clear shared history'),
-            subtitle: const Text(
-              "Removes every record from your Imports list. Imported workouts, recipes, and food logs themselves stay.",
-            ),
+            title: Text(l10n.importsPrivacyClearHistoryTitle),
+            subtitle: Text(l10n.importsPrivacyClearHistorySubtitle),
             onTap: () => _confirmClear(context, ref),
           ),
         ],
@@ -92,19 +90,17 @@ class ImportsPrivacySection extends ConsumerWidget {
   }
 
   Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear shared history?'),
-        content: const Text(
-          "Every row in your Imports list is removed. The workouts, recipes, "
-          "and food logs you imported stay where they are.",
-        ),
+        title: Text(l10n.importsPrivacyClearConfirmTitle),
+        content: Text(l10n.importsPrivacyClearConfirmBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.importsActionCancel)),
           FilledButton.tonal(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear'),
+            child: Text(l10n.importsPrivacyClearAction),
           ),
         ],
       ),
@@ -113,13 +109,13 @@ class ImportsPrivacySection extends ConsumerWidget {
     try {
       await ref.read(importsApiServiceProvider).clearAll();
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Shared history cleared.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(l10n.importsPrivacyClearedSnack),
       ));
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Couldn't clear — try again later."),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(l10n.importsPrivacyClearFailedSnack),
       ));
     }
   }

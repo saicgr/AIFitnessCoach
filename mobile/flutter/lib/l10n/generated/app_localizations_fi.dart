@@ -44344,4 +44344,212 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Sama kuin sovelluksen kieli';
+
+  @override
+  String get settingsImportsTitle => 'Tuonti';
+
+  @override
+  String get settingsImportsSubtitle => 'Kaikki, mitä olet jakanut Zealovassa';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Pyörän seuranta';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Kuukautiset, hedelmällisyys ja ennusteet';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Tietoja sovelluksesta $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Lomatila on aktiivinen';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Ilmoitukset on keskeytetty $endDate asti.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Ilmoitukset on keskeytetty. Sammuta milloin tahansa jatkaaksesi.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Aikataulutettu';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Alkaa $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Ilmoitukset ovat päällä';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Ota lomatila käyttöön alla keskeyttääksesi ei-kriittiset muistutukset.';
+
+  @override
+  String get difficultyEasy => 'Aloittelija';
+
+  @override
+  String get difficultyMedium => 'Kohtalainen';
+
+  @override
+  String get difficultyHard => 'Haastava';
+
+  @override
+  String get difficultyHell => 'Helvetti';
+
+  @override
+  String get habitWorkouts => 'Harjoitukset';
+
+  @override
+  String get habitFoodLog => 'Ruokapäiväkirja';
+
+  @override
+  String get habitWater => 'Vesi';
+
+  @override
+  String get importsAppBarTitle => 'Tuonti';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Tuetut muodot ja rajoitukset';
+
+  @override
+  String get importsTooltipDone => 'Tehty';
+
+  @override
+  String get importsTooltipSelect => 'Valitse';
+
+  @override
+  String get importsSearchHint => 'Hae tuontia…';
+
+  @override
+  String get importsFilterAll => 'Kaikki';
+
+  @override
+  String get importsFilterAllFormats => 'Kaikki muodot';
+
+  @override
+  String get importsActionDelete => 'Poistaa';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count valittu';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Mitään ei ole vielä jaettu';
+
+  @override
+  String get importsEmptyBody => 'Napsauta Jaa missä tahansa – valokuvat, YouTube, ChatGPT, äänimuistio – ja se laskeutuu tänne automaattisesti.';
+
+  @override
+  String get importsActionOpen => 'Avata';
+
+  @override
+  String get importsActionRetry => 'Yritä uudelleen';
+
+  @override
+  String get importsActionReclassify => 'Luokittele uudelleen';
+
+  @override
+  String get importsSnackRetrying => 'Yritetään tuontia uudelleen…';
+
+  @override
+  String get importsSnackRetryFailed => 'Ei voitu yrittää uudelleen – yritä myöhemmin uudelleen.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Luokittele uudelleen jonossa — jaa kohde uudelleen reitittääksesi uudelleen.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Poistetaanko $count tuontia?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Tietueet poistetaan tuontihistoriastasi. Tuodut treenit / reseptit / ruokalokit itse pysyvät.';
+
+  @override
+  String get importsActionCancel => 'Peruuttaa';
+
+  @override
+  String get importsRowImportFailed => 'Tuonti epäonnistui';
+
+  @override
+  String get importsTitleImportedWorkout => 'Tuotu harjoitus';
+
+  @override
+  String get importsTitleImportedRecipe => 'Tuotu resepti';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Tuotu ateriasuunnitelma';
+
+  @override
+  String get importsTitleLoggedMeal => 'Kirjattu ateria';
+
+  @override
+  String get importsTitleFormCheck => 'Lomakkeen tarkistus';
+
+  @override
+  String get importsTitleProgressPhoto => 'Kuva edistymisestä';
+
+  @override
+  String get importsTitleSavedTip => 'Vinkki tallennettu';
+
+  @override
+  String get importsTitleImportDetail => 'Tuo tiedot';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Lähettäjä: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Tila: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Havaittu nimellä: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Mitä voit jakaa';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Rajoitukset';
+
+  @override
+  String get importsLimitsFooter => 'Päivärajat ovat samat kaikille. Ne pitävät tuontilaadun korkeana ja suojaavat karkaavilta kustannuksilta.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Tuonti';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Kysy aina ennen reititystä';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Ohita automaattisen reitin lähtölaskenta – jokainen jako avaa valitsimen.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Tyhjennä jaettu historia';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Poistaa kaikki tietueet tuontiluettelostasi. Tuodut harjoitukset, reseptit ja ruokalokit säilyvät.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Poistetaanko jaettu historia?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Jokainen tuontiluettelosi rivi poistetaan. Tuomasi harjoitukset, reseptit ja ruokalokit pysyvät paikoillaan.';
+
+  @override
+  String get importsPrivacyClearAction => 'Selkeä';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Jaettu historia tyhjennetty.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Ei voitu tyhjentää – yritä myöhemmin uudelleen.';
 }

@@ -44263,4 +44263,212 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Padha karo basa aplikasi';
+
+  @override
+  String get settingsImportsTitle => 'Impor';
+
+  @override
+  String get settingsImportsSubtitle => 'Kabeh sing wis dituduhake menyang Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Nglacak siklus';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Periode, kesuburan & ramalan';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Babagan $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Mode liburan aktif';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Kabar sing ngaso nganti $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Kabar wis ngaso. Pateni kapan wae kanggo nerusake.';
+
+  @override
+  String get vacationModeBannerScheduled => 'dijadwal';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Miwiti $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Kabar aktif';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Aktifake mode liburan ing ngisor iki kanggo ngaso pangeling sing ora kritis.';
+
+  @override
+  String get difficultyEasy => 'pamula';
+
+  @override
+  String get difficultyMedium => 'Moderate';
+
+  @override
+  String get difficultyHard => 'nantang';
+
+  @override
+  String get difficultyHell => 'Neraka';
+
+  @override
+  String get habitWorkouts => 'Latian';
+
+  @override
+  String get habitFoodLog => 'Log Pangan';
+
+  @override
+  String get habitWater => 'banyu';
+
+  @override
+  String get importsAppBarTitle => 'Impor';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Format & watesan sing didhukung';
+
+  @override
+  String get importsTooltipDone => 'rampung';
+
+  @override
+  String get importsTooltipSelect => 'Pilih';
+
+  @override
+  String get importsSearchHint => 'Telusuri impor…';
+
+  @override
+  String get importsFilterAll => 'Kabeh';
+
+  @override
+  String get importsFilterAllFormats => 'Kabeh format';
+
+  @override
+  String get importsActionDelete => 'Mbusak';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count dipilih';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Ora ana sing dienggo bareng';
+
+  @override
+  String get importsEmptyBody => 'Pencet Nuduhake ing endi wae - Foto, YouTube, ChatGPT, memo swara - lan bakal teka ing kene kanthi otomatis.';
+
+  @override
+  String get importsActionOpen => 'Mbukak';
+
+  @override
+  String get importsActionRetry => 'Coba maneh';
+
+  @override
+  String get importsActionReclassify => 'Klasifikasi ulang';
+
+  @override
+  String get importsSnackRetrying => 'Nyoba maneh ngimpor…';
+
+  @override
+  String get importsSnackRetryFailed => 'Ora bisa nyoba maneh - coba maneh mengko.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Reclassify queued - nuduhake item maneh kanggo reroute.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Mbusak $count impor?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Cathetan dibusak saka riwayat impor sampeyan. Latihan / resep / log panganan sing diimpor dhewe tetep.';
+
+  @override
+  String get importsActionCancel => 'Batal';
+
+  @override
+  String get importsRowImportFailed => 'Impor gagal';
+
+  @override
+  String get importsTitleImportedWorkout => 'Latihan sing diimpor';
+
+  @override
+  String get importsTitleImportedRecipe => 'resep impor';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Paket meal import';
+
+  @override
+  String get importsTitleLoggedMeal => 'Panganan log';
+
+  @override
+  String get importsTitleFormCheck => 'Priksa formulir';
+
+  @override
+  String get importsTitleProgressPhoto => 'Foto kemajuan';
+
+  @override
+  String get importsTitleSavedTip => 'Tip sing disimpen';
+
+  @override
+  String get importsTitleImportDetail => 'Impor rincian';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Saka: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Dideteksi minangka: {maksud}';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Apa sampeyan bisa nuduhake';
+
+  @override
+  String get importsLimitsLimitsHeader => 'watesan';
+
+  @override
+  String get importsLimitsFooter => 'Tutup saben dina padha kanggo saben wong. Padha njaga kualitas impor dhuwur lan nglindhungi saka biaya runaway.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Impor';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Tansah takon sadurunge nuntun';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Skip countdown rute otomatis - saben bagean mbukak pamilih.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Mbusak riwayat sing dienggo bareng';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Mbusak saben rekaman saka dhaptar Impor. Latihan, resep, lan log panganan sing diimpor dhewe tetep.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Mbusak riwayat sing dienggo bareng?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Saben baris ing dhaptar Impor dibusak. Latihan, resep, lan log panganan sing sampeyan impor tetep ana ing papan kasebut.';
+
+  @override
+  String get importsPrivacyClearAction => 'Cetha';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Riwayat sing dienggo bareng dibusak.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Ora bisa mbusak - coba maneh mengko.';
 }

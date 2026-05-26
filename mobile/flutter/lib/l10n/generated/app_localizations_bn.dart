@@ -44371,4 +44371,212 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'অ্যাপের ভাষার মতোই';
+
+  @override
+  String get settingsImportsTitle => 'আমদানি';
+
+  @override
+  String get settingsImportsSubtitle => 'আপনি Zealova এ শেয়ার করেছেন সবকিছু';
+
+  @override
+  String get settingsCycleTrackingTitle => 'সাইকেল ট্র্যাকিং';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'সময়কাল, উর্বরতা এবং পূর্বাভাস';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName সম্পর্কে';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'অবকাশ মোড সক্রিয়';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'বিজ্ঞপ্তিগুলি $endDate পর্যন্ত থামানো হয়েছে৷';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'বিজ্ঞপ্তিগুলি বিরাম দেওয়া হয়েছে৷ আবার শুরু করতে যেকোনো সময় বন্ধ করুন।';
+
+  @override
+  String get vacationModeBannerScheduled => 'নির্ধারিত';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate থেকে শুরু হবে।';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'বিজ্ঞপ্তি চালু আছে';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'অ-গুরুত্বপূর্ণ অনুস্মারকগুলিকে বিরাম দিতে নীচের অবকাশ মোড সক্ষম করুন৷';
+
+  @override
+  String get difficultyEasy => 'শিক্ষানবিস';
+
+  @override
+  String get difficultyMedium => 'পরিমিত';
+
+  @override
+  String get difficultyHard => 'চ্যালেঞ্জিং';
+
+  @override
+  String get difficultyHell => 'জাহান্নাম';
+
+  @override
+  String get habitWorkouts => 'ওয়ার্কআউট';
+
+  @override
+  String get habitFoodLog => 'খাদ্য লগ';
+
+  @override
+  String get habitWater => 'জল';
+
+  @override
+  String get importsAppBarTitle => 'আমদানি';
+
+  @override
+  String get importsTooltipFormatsLimits => 'সমর্থিত ফরম্যাট এবং সীমা';
+
+  @override
+  String get importsTooltipDone => 'সম্পন্ন';
+
+  @override
+  String get importsTooltipSelect => 'নির্বাচন করুন';
+
+  @override
+  String get importsSearchHint => 'আমদানি অনুসন্ধান করুন...';
+
+  @override
+  String get importsFilterAll => 'সব';
+
+  @override
+  String get importsFilterAllFormats => 'সব ফরম্যাট';
+
+  @override
+  String get importsActionDelete => 'মুছুন';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$countটি বেছে নেওয়া হয়েছে';
+  }
+
+  @override
+  String get importsEmptyTitle => 'এখনো কিছুই শেয়ার করা হয়নি';
+
+  @override
+  String get importsEmptyBody => 'যে কোন জায়গায় শেয়ার করুন - ফটো, YouTube, ChatGPT, একটি ভয়েস মেমো - এবং এটি স্বয়ংক্রিয়ভাবে এখানে অবতরণ করবে।';
+
+  @override
+  String get importsActionOpen => 'খোলা';
+
+  @override
+  String get importsActionRetry => 'আবার চেষ্টা করুন';
+
+  @override
+  String get importsActionReclassify => 'পুনরায় শ্রেণীবদ্ধ করুন';
+
+  @override
+  String get importsSnackRetrying => 'আমদানির পুনরায় চেষ্টা করা হচ্ছে...';
+
+  @override
+  String get importsSnackRetryFailed => 'আবার চেষ্টা করা যায়নি — পরে আবার চেষ্টা করুন।';
+
+  @override
+  String get importsSnackReclassifyQueued => 'সারিবদ্ধ পুনরায় শ্রেণীবদ্ধ করুন — পুনরায় রুট করতে আইটেমটি আবার ভাগ করুন।';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$countটি আমদানি মুছবেন?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'রেকর্ড আপনার আমদানি ইতিহাস থেকে সরানো হয়. আমদানিকৃত ওয়ার্কআউট / রেসিপি / খাবার লগ নিজেরাই থাকে।';
+
+  @override
+  String get importsActionCancel => 'বাতিল করুন';
+
+  @override
+  String get importsRowImportFailed => 'আমদানি ব্যর্থ হয়েছে৷';
+
+  @override
+  String get importsTitleImportedWorkout => 'আমদানিকৃত ওয়ার্কআউট';
+
+  @override
+  String get importsTitleImportedRecipe => 'আমদানিকৃত রেসিপি';
+
+  @override
+  String get importsTitleImportedMealPlan => 'আমদানি করা খাবারের পরিকল্পনা';
+
+  @override
+  String get importsTitleLoggedMeal => 'লগ করা খাবার';
+
+  @override
+  String get importsTitleFormCheck => 'ফর্ম চেক';
+
+  @override
+  String get importsTitleProgressPhoto => 'অগ্রগতির ছবি';
+
+  @override
+  String get importsTitleSavedTip => 'সংরক্ষিত টিপ';
+
+  @override
+  String get importsTitleImportDetail => 'বিস্তারিত আমদানি করুন';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'থেকে: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'স্থিতি: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'এই হিসাবে সনাক্ত করা হয়েছে: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'আপনি কি শেয়ার করতে পারেন';
+
+  @override
+  String get importsLimitsLimitsHeader => 'সীমা';
+
+  @override
+  String get importsLimitsFooter => 'দৈনিক ক্যাপ সবার জন্য একই। তারা আমদানির মান উচ্চ রাখে এবং পলাতক খরচ থেকে রক্ষা করে।';
+
+  @override
+  String get importsPrivacySectionTitle => 'আমদানি';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'সর্বদা রাউটিং আগে জিজ্ঞাসা করুন';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'স্বয়ংক্রিয়-রুট কাউন্টডাউন এড়িয়ে যান — প্রতিটি শেয়ার চয়নকারীকে খোলে।';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'শেয়ার করা ইতিহাস সাফ করুন';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'আপনার আমদানি তালিকা থেকে প্রতিটি রেকর্ড সরিয়ে দেয়। আমদানিকৃত ওয়ার্কআউট, রেসিপি এবং খাবারের লগ নিজেরাই থাকে।';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'শেয়ার করা ইতিহাস সাফ করবেন?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'আপনার আমদানি তালিকার প্রতিটি সারি সরানো হয়েছে। আপনার আমদানি করা ওয়ার্কআউট, রেসিপি এবং খাবারের লগগুলি যেখানে আছে সেখানেই থাকে৷';
+
+  @override
+  String get importsPrivacyClearAction => 'পরিষ্কার';
+
+  @override
+  String get importsPrivacyClearedSnack => 'শেয়ার করা ইতিহাস সাফ করা হয়েছে৷';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'পরিষ্কার করা যায়নি — পরে আবার চেষ্টা করুন।';
 }

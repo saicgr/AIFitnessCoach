@@ -44378,4 +44378,212 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Sama seperti bahasa aplikasi';
+
+  @override
+  String get settingsImportsTitle => 'Import';
+
+  @override
+  String get settingsImportsSubtitle => 'Semua yang anda kongsikan ke Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Penjejakan Kitaran';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Tempoh, kesuburan & ramalan';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Mengenai $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'Mod percutian aktif';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Pemberitahuan dijeda sehingga $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Pemberitahuan dijeda. Matikan bila-bila masa untuk menyambung semula.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Dijadualkan';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Bermula $startDate.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Pemberitahuan dihidupkan';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Dayakan mod percutian di bawah untuk menjeda peringatan tidak kritikal.';
+
+  @override
+  String get difficultyEasy => 'pemula';
+
+  @override
+  String get difficultyMedium => 'Sederhana';
+
+  @override
+  String get difficultyHard => 'Mencabar';
+
+  @override
+  String get difficultyHell => 'Neraka';
+
+  @override
+  String get habitWorkouts => 'Senaman';
+
+  @override
+  String get habitFoodLog => 'Log Makanan';
+
+  @override
+  String get habitWater => 'air';
+
+  @override
+  String get importsAppBarTitle => 'Import';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Format & had yang disokong';
+
+  @override
+  String get importsTooltipDone => 'Selesai';
+
+  @override
+  String get importsTooltipSelect => 'Pilih';
+
+  @override
+  String get importsSearchHint => 'Cari import…';
+
+  @override
+  String get importsFilterAll => 'Semua';
+
+  @override
+  String get importsFilterAllFormats => 'Semua format';
+
+  @override
+  String get importsActionDelete => 'Padam';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count dipilih';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Tiada apa yang dikongsikan lagi';
+
+  @override
+  String get importsEmptyBody => 'Tekan Kongsi di mana-mana — Foto, YouTube, ChatGPT, memo suara — dan ia akan tiba di sini secara automatik.';
+
+  @override
+  String get importsActionOpen => 'Buka';
+
+  @override
+  String get importsActionRetry => 'Cuba semula';
+
+  @override
+  String get importsActionReclassify => 'Klasifikasi semula';
+
+  @override
+  String get importsSnackRetrying => 'Mencuba semula import…';
+
+  @override
+  String get importsSnackRetryFailed => 'Tidak dapat mencuba semula — cuba lagi kemudian.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'Klasifikasikan semula baris gilir — kongsi item sekali lagi untuk mengubah hala.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return 'Padamkan $count import?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'Rekod dialih keluar daripada sejarah import anda. Latihan / resipi / log makanan yang diimport masih kekal.';
+
+  @override
+  String get importsActionCancel => 'Batal';
+
+  @override
+  String get importsRowImportFailed => 'Import gagal';
+
+  @override
+  String get importsTitleImportedWorkout => 'Senaman yang diimport';
+
+  @override
+  String get importsTitleImportedRecipe => 'Resipi yang diimport';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Pelan makan import';
+
+  @override
+  String get importsTitleLoggedMeal => 'Makan log';
+
+  @override
+  String get importsTitleFormCheck => 'Semakan borang';
+
+  @override
+  String get importsTitleProgressPhoto => 'Foto kemajuan';
+
+  @override
+  String get importsTitleSavedTip => 'Petua disimpan';
+
+  @override
+  String get importsTitleImportDetail => 'Import butiran';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Daripada: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Dikesan sebagai: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Apa yang anda boleh kongsikan';
+
+  @override
+  String get importsLimitsLimitsHeader => 'had';
+
+  @override
+  String get importsLimitsFooter => 'Tudung harian adalah sama untuk semua orang. Mereka mengekalkan kualiti import yang tinggi dan melindungi daripada kos lari.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Import';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Sentiasa bertanya sebelum membuat laluan';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Langkau undur laluan auto — setiap bahagian membuka pemilih.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Kosongkan sejarah kongsi';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Mengalih keluar setiap rekod daripada senarai Import anda. Latihan yang diimport, resipi dan log makanan itu sendiri kekal.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Kosongkan sejarah kongsi?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Setiap baris dalam senarai Import anda dialih keluar. Latihan, resipi dan log makanan yang anda import kekal di tempatnya.';
+
+  @override
+  String get importsPrivacyClearAction => 'Jelas';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Sejarah yang dikongsi dikosongkan.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Tidak dapat mengosongkan — cuba lagi kemudian.';
 }

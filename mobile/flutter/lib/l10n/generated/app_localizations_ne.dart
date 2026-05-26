@@ -44474,4 +44474,212 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'एपको भाषा जस्तै';
+
+  @override
+  String get settingsImportsTitle => 'आयात गर्दछ';
+
+  @override
+  String get settingsImportsSubtitle => 'तपाईंले Zealova मा साझेदारी गर्नुभएको सबै कुरा';
+
+  @override
+  String get settingsCycleTrackingTitle => 'साइकल ट्रयाकिङ';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'अवधि, प्रजनन र भविष्यवाणी';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '$appName को बारेमा';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'बिदा मोड सक्रिय छ';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'सूचनाहरू $endDate सम्म रोकिएका छन्।';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'सूचनाहरू रोकिएका छन्। सुचारु गर्न जुनसुकै बेला बन्द गर्नुहोस्।';
+
+  @override
+  String get vacationModeBannerScheduled => 'अनुसूचित';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'सुरु हुन्छ $startDate।';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'सूचनाहरू सक्रिय छन्';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'गैर-महत्वपूर्ण रिमाइन्डरहरू पज गर्न तलको छुट्टी मोड सक्षम गर्नुहोस्।';
+
+  @override
+  String get difficultyEasy => 'शुरुवातकर्ता';
+
+  @override
+  String get difficultyMedium => 'मध्यम';
+
+  @override
+  String get difficultyHard => 'चुनौतीपूर्ण';
+
+  @override
+  String get difficultyHell => 'नरक';
+
+  @override
+  String get habitWorkouts => 'कसरत';
+
+  @override
+  String get habitFoodLog => 'खाना लग';
+
+  @override
+  String get habitWater => 'पानी';
+
+  @override
+  String get importsAppBarTitle => 'आयात गर्दछ';
+
+  @override
+  String get importsTooltipFormatsLimits => 'समर्थित ढाँचा र सीमाहरू';
+
+  @override
+  String get importsTooltipDone => 'सकियो';
+
+  @override
+  String get importsTooltipSelect => 'चयन गर्नुहोस्';
+
+  @override
+  String get importsSearchHint => 'खोज आयात...';
+
+  @override
+  String get importsFilterAll => 'सबै';
+
+  @override
+  String get importsFilterAllFormats => 'सबै ढाँचाहरू';
+
+  @override
+  String get importsActionDelete => 'मेट्नुहोस्';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count चयन गरियो';
+  }
+
+  @override
+  String get importsEmptyTitle => 'अझै केही साझा गरिएको छैन';
+
+  @override
+  String get importsEmptyBody => 'जहाँसुकै पनि सेयर गर्नुहोस् थिच्नुहोस् — फोटो, YouTube, ChatGPT, एउटा भ्वाइस मेमो — र यो यहाँ स्वतः अवतरण हुनेछ।';
+
+  @override
+  String get importsActionOpen => 'खोल्नुहोस्';
+
+  @override
+  String get importsActionRetry => 'पुन: प्रयास गर्नुहोस्';
+
+  @override
+  String get importsActionReclassify => 'पुन: वर्गीकरण गर्नुहोस्';
+
+  @override
+  String get importsSnackRetrying => 'आयात पुन: प्रयास गर्दै...';
+
+  @override
+  String get importsSnackRetryFailed => 'पुन: प्रयास गर्न सकिएन — पछि पुन: प्रयास गर्नुहोस्।';
+
+  @override
+  String get importsSnackReclassifyQueued => 'पङ्क्तिबद्ध पुन: वर्गीकरण गर्नुहोस् — पुनः रुट गर्न वस्तुलाई फेरि साझा गर्नुहोस्।';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count आयातहरू मेट्ने हो?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'रेकर्डहरू तपाईंको आयात इतिहासबाट हटाइएका छन्। आयातित कसरत / व्यञ्जनहरू / खाना लगहरू आफैं रहन्छन्।';
+
+  @override
+  String get importsActionCancel => 'रद्द गर्नुहोस्';
+
+  @override
+  String get importsRowImportFailed => 'आयात असफल भयो';
+
+  @override
+  String get importsTitleImportedWorkout => 'आयातित कसरत';
+
+  @override
+  String get importsTitleImportedRecipe => 'आयातित नुस्खा';
+
+  @override
+  String get importsTitleImportedMealPlan => 'आयातित भोजन योजना';
+
+  @override
+  String get importsTitleLoggedMeal => 'लगाइएको खाना';
+
+  @override
+  String get importsTitleFormCheck => 'फारम जाँच';
+
+  @override
+  String get importsTitleProgressPhoto => 'प्रगति फोटो';
+
+  @override
+  String get importsTitleSavedTip => 'सुरक्षित टिप';
+
+  @override
+  String get importsTitleImportDetail => 'आयात विवरण';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'बाट: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'स्थिति: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'यस रूपमा पत्ता लगाइयो: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'के तपाईं साझेदारी गर्न सक्नुहुन्छ';
+
+  @override
+  String get importsLimitsLimitsHeader => 'सीमाहरू';
+
+  @override
+  String get importsLimitsFooter => 'दैनिक क्याप्स सबैका लागि समान छन्। तिनीहरूले आयात गुणस्तर उच्च राख्छन् र भाग्ने लागतहरूबाट जोगाउँछन्।';
+
+  @override
+  String get importsPrivacySectionTitle => 'आयात गर्दछ';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'सधैं रुट गर्नु अघि सोध्नुहोस्';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'स्वत: मार्ग काउन्टडाउन छोड्नुहोस् — प्रत्येक साझेदारीले छनौटकर्ता खोल्छ।';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'साझा इतिहास खाली गर्नुहोस्';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'तपाईंको आयात सूचीबाट प्रत्येक रेकर्ड हटाउँछ। आयातित कसरतहरू, व्यञ्जनहरू, र खाना लगहरू आफैं रहन्छन्।';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'साझा इतिहास खाली गर्ने हो?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'तपाईंको आयात सूचीमा प्रत्येक पङ्क्ति हटाइएको छ। तपाईंले आयात गर्नुभएका कसरतहरू, रेसिपीहरू र खाना लगहरू जहाँ छन् त्यहीँ रहन्छन्।';
+
+  @override
+  String get importsPrivacyClearAction => 'खाली गर्नुहोस्';
+
+  @override
+  String get importsPrivacyClearedSnack => 'साझा इतिहास खाली गरियो।';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'खाली गर्न सकिएन — पछि पुन: प्रयास गर्नुहोस्।';
 }

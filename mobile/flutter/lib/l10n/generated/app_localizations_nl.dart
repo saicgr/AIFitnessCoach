@@ -44360,4 +44360,212 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'Zelfde als app-taal';
+
+  @override
+  String get settingsImportsTitle => 'Importeert';
+
+  @override
+  String get settingsImportsSubtitle => 'Alles wat je hebt gedeeld met Zealova';
+
+  @override
+  String get settingsCycleTrackingTitle => 'Cyclus volgen';
+
+  @override
+  String get settingsCycleTrackingSubtitle => 'Periode, vruchtbaarheid en voorspellingen';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return 'Over $appName';
+  }
+
+  @override
+  String get vacationModeBannerActive => 'De vakantiemodus is actief';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return 'Meldingen worden onderbroken tot $endDate.';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => 'Meldingen zijn onderbroken. Schakel op elk gewenst moment uit om te hervatten.';
+
+  @override
+  String get vacationModeBannerScheduled => 'Gepland';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return 'Begint op {startDatum}.';
+  }
+
+  @override
+  String get vacationModeBannerOn => 'Meldingen staan ​​aan';
+
+  @override
+  String get vacationModeBannerOnSubtitle => 'Schakel hieronder de vakantiemodus in om niet-kritieke herinneringen te onderbreken.';
+
+  @override
+  String get difficultyEasy => 'Beginner';
+
+  @override
+  String get difficultyMedium => 'Gematigd';
+
+  @override
+  String get difficultyHard => 'Uitdagend';
+
+  @override
+  String get difficultyHell => 'Hel';
+
+  @override
+  String get habitWorkouts => 'Trainingen';
+
+  @override
+  String get habitFoodLog => 'Voedsellogboek';
+
+  @override
+  String get habitWater => 'Water';
+
+  @override
+  String get importsAppBarTitle => 'Importeert';
+
+  @override
+  String get importsTooltipFormatsLimits => 'Ondersteunde formaten en limieten';
+
+  @override
+  String get importsTooltipDone => 'Klaar';
+
+  @override
+  String get importsTooltipSelect => 'Selecteer';
+
+  @override
+  String get importsSearchHint => 'Importeren zoeken...';
+
+  @override
+  String get importsFilterAll => 'Alle';
+
+  @override
+  String get importsFilterAllFormats => 'Alle formaten';
+
+  @override
+  String get importsActionDelete => 'Verwijderen';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count geselecteerd';
+  }
+
+  @override
+  String get importsEmptyTitle => 'Nog niets gedeeld';
+
+  @override
+  String get importsEmptyBody => 'Druk op \'Deel overal\' - Foto\'s, YouTube, ChatGPT, een spraakmemo - en het komt hier automatisch terecht.';
+
+  @override
+  String get importsActionOpen => 'Open';
+
+  @override
+  String get importsActionRetry => 'Opnieuw proberen';
+
+  @override
+  String get importsActionReclassify => 'Herclassificeren';
+
+  @override
+  String get importsSnackRetrying => 'Importeren opnieuw proberen…';
+
+  @override
+  String get importsSnackRetryFailed => 'Kan het niet opnieuw proberen. Probeer het later opnieuw.';
+
+  @override
+  String get importsSnackReclassifyQueued => 'In de wachtrij opnieuw classificeren: deel het item opnieuw om het om te leiden.';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count importen verwijderen?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'De records worden verwijderd uit uw importgeschiedenis. Geïmporteerde trainingen/recepten/voedsellogboeken blijven zelf behouden.';
+
+  @override
+  String get importsActionCancel => 'Annuleren';
+
+  @override
+  String get importsRowImportFailed => 'Importeren is mislukt';
+
+  @override
+  String get importsTitleImportedWorkout => 'Geïmporteerde training';
+
+  @override
+  String get importsTitleImportedRecipe => 'Geïmporteerd recept';
+
+  @override
+  String get importsTitleImportedMealPlan => 'Geïmporteerd maaltijdplan';
+
+  @override
+  String get importsTitleLoggedMeal => 'Gelogde maaltijd';
+
+  @override
+  String get importsTitleFormCheck => 'Formuliercontrole';
+
+  @override
+  String get importsTitleProgressPhoto => 'Vooruitgang foto';
+
+  @override
+  String get importsTitleSavedTip => 'Opgeslagen tip';
+
+  @override
+  String get importsTitleImportDetail => 'Details importeren';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return 'Van: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return 'Gedetecteerd als: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => 'Wat je kunt delen';
+
+  @override
+  String get importsLimitsLimitsHeader => 'Grenzen';
+
+  @override
+  String get importsLimitsFooter => 'Daglimieten zijn voor iedereen hetzelfde. Ze houden de importkwaliteit hoog en beschermen tegen op hol geslagen kosten.';
+
+  @override
+  String get importsPrivacySectionTitle => 'Importeert';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'Vraag het altijd voordat u gaat routeren';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => 'Sla het aftellen van de automatische route over: bij elk delen wordt de kiezer geopend.';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => 'Wis gedeelde geschiedenis';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'Verwijdert elke record uit uw importlijst. Geïmporteerde trainingen, recepten en voedsellogboeken zelf blijven behouden.';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => 'Gedeelde geschiedenis wissen?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Elke rij in uw importlijst wordt verwijderd. De trainingen, recepten en voedsellogboeken die u hebt geïmporteerd, blijven waar ze zijn.';
+
+  @override
+  String get importsPrivacyClearAction => 'Duidelijk';
+
+  @override
+  String get importsPrivacyClearedSnack => 'Gedeelde geschiedenis gewist.';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'Kan niet wissen. Probeer het later opnieuw.';
 }

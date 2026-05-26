@@ -246,13 +246,26 @@ class FounderNoteSheet extends ConsumerWidget {
 
                         const SizedBox(height: 16),
 
-                        // ── Four-paragraph continuous-voice rewrite.
-                        //    Greeting → struggle → realization →
-                        //    product → invitation, with $firstName
-                        //    woven mid-letter (orange accent) so it
-                        //    reads written *to* the user, not at them.
-                        //    Locked copy lives in
-                        //    /Users/saichetangrandhe/.claude/plans/1-image-17-i-logged-steady-backus.md
+                        // ─────────────────────────────────────────────────
+                        //  FOUNDER'S NOTE / FOUNDERS NOTE / FOUNDER NOTE
+                        //  English source paragraphs (edit in app_en.arb,
+                        //  then re-run the translation pipeline to refresh
+                        //  the other 34 locales):
+                        //
+                        //   1. founderNoteIUsedToLog          (struggle)
+                        //   2. founderNoteTheFriendsWhoActually (realization)
+                        //   3. founderNoteSoIBuiltThe         (product pitch)
+                        //   4. RichText below with founderNoteSaiImBuildingThis
+                        //      / founderNoteCoachIcon / founderNoteAndTellMe…
+                        //      (personal invitation, name highlight)
+                        //
+                        //  Why three paragraphs: greeting → struggle →
+                        //  realization → product → invitation, with the
+                        //  user's first name woven mid-letter so it reads
+                        //  written *to* them, not at them. Locked copy
+                        //  reference:
+                        //  /Users/saichetangrandhe/.claude/plans/1-image-17-i-logged-steady-backus.md
+                        // ─────────────────────────────────────────────────
                         Text(
                           AppLocalizations.of(context).founderNoteIUsedToLog,
                           style: TextStyle(

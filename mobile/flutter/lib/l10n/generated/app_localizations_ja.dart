@@ -42533,4 +42533,212 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsChatLanguageSameAsApp => 'アプリの言語と同じ';
+
+  @override
+  String get settingsImportsTitle => '輸入品';
+
+  @override
+  String get settingsImportsSubtitle => 'Zealova に共有したものすべて';
+
+  @override
+  String get settingsCycleTrackingTitle => '周期追跡';
+
+  @override
+  String get settingsCycleTrackingSubtitle => '生理、生殖能力、予測';
+
+  @override
+  String settingsAboutBrand(Object appName) {
+    return '{アプリ名} について';
+  }
+
+  @override
+  String get vacationModeBannerActive => '休暇モードが有効です';
+
+  @override
+  String vacationModeBannerPausedUntil(Object endDate) {
+    return '通知は $endDate まで一時停止されます。';
+  }
+
+  @override
+  String get vacationModeBannerPausedNoEnd => '通知は一時停止されています。いつでもオフにして再開できます。';
+
+  @override
+  String get vacationModeBannerScheduled => '予定されている';
+
+  @override
+  String vacationModeBannerStartsOn(Object startDate) {
+    return '$startDate を開始します。';
+  }
+
+  @override
+  String get vacationModeBannerOn => '通知がオンになっています';
+
+  @override
+  String get vacationModeBannerOnSubtitle => '重要ではないリマインダーを一時停止するには、以下の休暇モードを有効にします。';
+
+  @override
+  String get difficultyEasy => '初心者';
+
+  @override
+  String get difficultyMedium => '適度';
+
+  @override
+  String get difficultyHard => '挑戦的';
+
+  @override
+  String get difficultyHell => '地獄';
+
+  @override
+  String get habitWorkouts => 'トレーニング';
+
+  @override
+  String get habitFoodLog => '食べログ';
+
+  @override
+  String get habitWater => '水';
+
+  @override
+  String get importsAppBarTitle => '輸入品';
+
+  @override
+  String get importsTooltipFormatsLimits => 'サポートされている形式と制限';
+
+  @override
+  String get importsTooltipDone => '終わり';
+
+  @override
+  String get importsTooltipSelect => '選択';
+
+  @override
+  String get importsSearchHint => 'インポートを検索…';
+
+  @override
+  String get importsFilterAll => '全て';
+
+  @override
+  String get importsFilterAllFormats => 'すべてのフォーマット';
+
+  @override
+  String get importsActionDelete => '消去';
+
+  @override
+  String importsSelectedCount(Object count) {
+    return '$count 個が選択されました';
+  }
+
+  @override
+  String get importsEmptyTitle => 'まだ何も共有されていません';
+
+  @override
+  String get importsEmptyBody => '写真、YouTube、ChatGPT、ボイスメモなど、どこでも共有を押すと、自動的にここに表示されます。';
+
+  @override
+  String get importsActionOpen => '開ける';
+
+  @override
+  String get importsActionRetry => 'リトライ';
+
+  @override
+  String get importsActionReclassify => '再分類';
+
+  @override
+  String get importsSnackRetrying => 'インポートを再試行しています…';
+
+  @override
+  String get importsSnackRetryFailed => '再試行できませんでした - 後でもう一度お試しください。';
+
+  @override
+  String get importsSnackReclassifyQueued => 'キューに再分類 — アイテムを再度共有して再ルーティングします。';
+
+  @override
+  String importsDeleteConfirmTitle(Object count) {
+    return '$count 個のインポートを削除しますか?';
+  }
+
+  @override
+  String get importsDeleteConfirmBody => 'レコードはインポート履歴から削除されます。インポートしたワークアウト/レシピ/食事ログ自体は残ります。';
+
+  @override
+  String get importsActionCancel => 'キャンセル';
+
+  @override
+  String get importsRowImportFailed => 'インポートに失敗しました';
+
+  @override
+  String get importsTitleImportedWorkout => 'インポートされたワークアウト';
+
+  @override
+  String get importsTitleImportedRecipe => '輸入レシピ';
+
+  @override
+  String get importsTitleImportedMealPlan => '輸入ミールプラン';
+
+  @override
+  String get importsTitleLoggedMeal => '記録された食事';
+
+  @override
+  String get importsTitleFormCheck => 'フォームチェック';
+
+  @override
+  String get importsTitleProgressPhoto => '進捗写真';
+
+  @override
+  String get importsTitleSavedTip => '保存されたヒント';
+
+  @override
+  String get importsTitleImportDetail => 'インポートの詳細';
+
+  @override
+  String importsDetailFrom(Object url) {
+    return '送信者: $url';
+  }
+
+  @override
+  String importsDetailStatus(Object status) {
+    return 'ステータス: {ステータス}';
+  }
+
+  @override
+  String importsDetailDetectedAs(Object intent) {
+    return '次のように検出されました: $intent';
+  }
+
+  @override
+  String get importsLimitsTitle => '共有できるもの';
+
+  @override
+  String get importsLimitsLimitsHeader => '限界';
+
+  @override
+  String get importsLimitsFooter => '1 日の上限は誰でも同じです。輸入品質を高く保ち、暴走コストを防ぎます。';
+
+  @override
+  String get importsPrivacySectionTitle => '輸入品';
+
+  @override
+  String get importsPrivacyAlwaysAskTitle => 'ルーティングする前に必ず尋ねる';
+
+  @override
+  String get importsPrivacyAlwaysAskSubtitle => '自動ルートのカウントダウンをスキップします。すべての共有でセレクターが開きます。';
+
+  @override
+  String get importsPrivacyClearHistoryTitle => '共有履歴をクリアする';
+
+  @override
+  String get importsPrivacyClearHistorySubtitle => 'インポート リストからすべてのレコードを削除します。インポートしたワークアウト、レシピ、食事ログ自体は残ります。';
+
+  @override
+  String get importsPrivacyClearConfirmTitle => '共有履歴を消去しますか?';
+
+  @override
+  String get importsPrivacyClearConfirmBody => 'Imports リストのすべての行が削除されます。インポートしたワークアウト、レシピ、食事ログはそのまま残ります。';
+
+  @override
+  String get importsPrivacyClearAction => 'クリア';
+
+  @override
+  String get importsPrivacyClearedSnack => '共有履歴がクリアされました。';
+
+  @override
+  String get importsPrivacyClearFailedSnack => 'クリアできませんでした。後でもう一度お試しください。';
 }
