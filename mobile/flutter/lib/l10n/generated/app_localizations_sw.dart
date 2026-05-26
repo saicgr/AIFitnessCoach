@@ -87,7 +87,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get achievementsByCategory => 'KWA KATEGORIA';
 
   @override
-  String get achievementsCardAchievements => 'Kadi ya mafanikio';
+  String get achievementsCardAchievements => 'Mafanikio';
 
   @override
   String achievementsCardBadges(Object totalAchieved) {
@@ -1583,14 +1583,14 @@ class AppLocalizationsSw extends AppLocalizations {
       'Ondoa uteuzi wa chochote unachotaka kuzuia kutoka kwa muunganisho huu.';
 
   @override
-  String get aiModelDownloadBasic => 'Pakua modeli ya AI ya msingi';
+  String get aiModelDownloadBasic => 'Msingi';
 
   @override
   String get aiModelDownloadBatteryWarning =>
       'Miundo ya AI kwenye kifaa hutumia nguvu nyingi za kompyuta kwenye simu yako. Hii inaweza kuongeza matumizi ya betri na kusababisha kifaa kupata joto wakati wa kutengeneza mazoezi. Miundo mikubwa hutumia rasilimali zaidi.';
 
   @override
-  String get aiModelDownloadBestQuality => 'Pakua modeli ya AI ya ubora wa juu';
+  String get aiModelDownloadBestQuality => 'Ubora wa juu';
 
   @override
   String get aiModelDownloadCancel => 'Ghairi';
@@ -1644,10 +1644,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get aiModelDownloadModelOptions => 'Chaguzi za Mfumo';
 
   @override
-  String get aiModelDownloadMultimodal => 'Pakua modeli ya AI ya multimodal';
+  String get aiModelDownloadMultimodal => 'Multimodal';
 
   @override
-  String get aiModelDownloadNotCompatible => 'Modeli ya AI haioani';
+  String get aiModelDownloadNotCompatible => 'Haiendani';
 
   @override
   String get aiModelDownloadNotSupportedOnThis => 'Haiauniwi kwenye kifaa hiki';
@@ -1656,13 +1656,13 @@ class AppLocalizationsSw extends AppLocalizations {
   String get aiModelDownloadOnDeviceAiModel => 'Mfumo wa AI Kwenye Kifaa';
 
   @override
-  String get aiModelDownloadOptimal => 'Pakua modeli ya AI bora';
+  String get aiModelDownloadOptimal => 'Inayofaa zaidi';
 
   @override
   String get aiModelDownloadRam => 'RAM';
 
   @override
-  String get aiModelDownloadRecommended => 'Pakua modeli ya AI inayopendekezwa';
+  String get aiModelDownloadRecommended => 'Inayopendekezwa';
 
   @override
   String get aiModelDownloadRemove => 'Ondoa';
@@ -1685,7 +1685,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadSearch => 'Tafuta upakuaji wa modeli ya AI';
+  String get aiModelDownloadSearch => 'Tafuta';
 
   @override
   String get aiModelDownloadSelectAModel => 'Chagua muundo';
@@ -1696,7 +1696,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadStandard => 'Pakua modeli ya AI ya kawaida';
+  String get aiModelDownloadStandard => 'Kawaida';
 
   @override
   String get aiModelDownloadTokenSavedSecurely =>
@@ -7834,7 +7834,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get easyHelpLogASet => 'Rekodi seti';
 
   @override
-  String get easyHelpLogASetBody => 'Rekodi seti';
+  String get easyHelpLogASetBody => 'Rekodi seti ya mwili';
 
   @override
   String get easyHelpSkipToNextExercise => 'Ruka hadi zoezi linalofuata';
@@ -7857,7 +7857,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get easyHelpTodaysExercise => 'Zoezi la leo';
 
   @override
-  String get easyHelpTodaysExerciseBody => 'Zoezi la leo mwili';
+  String get easyHelpTodaysExerciseBody => 'Maelezo ya zoezi la leo';
 
   @override
   String get easyHelpWeightAndReps => 'Uzito na reps';
@@ -8179,17 +8179,16 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'Imeshindwa kupakia historia $arg0';
+    return 'Pakia historia $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'Imeshindwa kurejesha $arg0';
+    return 'Rejesha $arg0';
   }
 
   @override
-  String get editProgramSheetFailedToUpdateProgram =>
-      'Imeshindwa kusasisha programu';
+  String get editProgramSheetFailedToUpdateProgram => 'Sasisha programu';
 
   @override
   String get editProgramSheetFocus => 'Lengo';
@@ -8884,7 +8883,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Unda Mazoezi Yako Mwenyewe';
 
   @override
-  String get emptyStateClearFilters => 'Futa vichujio';
+  String get emptyStateClearFilters => 'Ondoa vichujio';
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
@@ -9469,7 +9468,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Imepigwa picha';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Ongeza zoezi';
+  String get exerciseAddSheetSubtitle => 'Kichwa kidogo';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Mapendekezo ya AI';
@@ -9877,7 +9876,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get exerciseDetailsExerciseInfo => 'Taarifa za zoezi';
 
   @override
-  String get exerciseDetailsFormCues => 'Miongozo ya umbo';
+  String get exerciseDetailsFormCues => 'Vidokezo vya mkao';
 
   @override
   String get exerciseDetailsNotSpecified => 'Haijabainishwa';
@@ -9892,7 +9891,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get exerciseDetailsSecondaryMuscles => 'Misuli ya ziada';
 
   @override
-  String get exerciseDetailsSetup => 'Maandalizi';
+  String get exerciseDetailsSetup => 'Usanidi';
 
   @override
   String get exerciseDetailsSheetBodyweight => 'Uzito wa mwili';
@@ -9939,13 +9938,13 @@ class AppLocalizationsSw extends AppLocalizations {
   String get exerciseDetailsSheetWatchOutFor => 'Jihadharini na';
 
   @override
-  String get exerciseDetailsTapVideoHint => 'Gusa video kwa maelekezo';
+  String get exerciseDetailsTapVideoHint => 'Gusa kidokezo cha video';
 
   @override
   String get exerciseDetailsVideo => 'Video';
 
   @override
-  String get exerciseDetailsWatchOutFor => 'Jihadharini na';
+  String get exerciseDetailsWatchOutFor => 'Angalia kwa makini';
 
   @override
   String get exerciseFilterApplyFilters => 'Tumia vichujio';
@@ -11159,7 +11158,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get exerciseSwapNoAlternatives => 'Hakuna njia mbadala zilizopatikana';
 
   @override
-  String get exerciseSwapOptionSwap => 'Badilisha';
+  String get exerciseSwapOptionSwap => 'Badilisha chaguo';
 
   @override
   String get exerciseSwapSheetAiPicks => 'Mapendekezo ya AI';
@@ -11278,13 +11277,13 @@ class AppLocalizationsSw extends AppLocalizations {
   String get exerciseSwapSheetTabRecent => 'Hivi karibuni';
 
   @override
-  String get exerciseSwapSheetTabSimilar => 'Zinazofanana';
+  String get exerciseSwapSheetTabSimilar => 'Vinavyofanana';
 
   @override
-  String get exerciseSwapSheetTabSnapped => 'Zilizopigwa picha';
+  String get exerciseSwapSheetTabSnapped => 'Zilizopigwa';
 
   @override
-  String get exerciseSwapSheetTitle => 'Badilisha zoezi';
+  String get exerciseSwapSheetTitle => 'Kichwa';
 
   @override
   String get exerciseSwapSheetTryAgain => 'Jaribu tena';
@@ -12551,8 +12550,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get fatigueAlertAcceptSuggestion =>
-      'Kubali pendekezo la tahadhari ya uchovu';
+  String get fatigueAlertAcceptSuggestion => 'Kubali pendekezo';
 
   @override
   String get fatigueAlertContinueAsPlanned => 'Endelea kama ilivyopangwa';
@@ -14503,12 +14501,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get fullScreenChartCompareWith => 'Linganisha na…';
 
   @override
-  String get fullScreenChartCouldNotLoad =>
-      'Chati ya skrini nzima imeshindwa kupakia';
+  String get fullScreenChartCouldNotLoad => 'Imeshindwa kupakia';
 
   @override
-  String get fullScreenChartNotEnoughHistory =>
-      'Hakuna historia ya kutosha kwa chati ya skrini nzima';
+  String get fullScreenChartNotEnoughHistory => 'Hakuna historia ya kutosha';
 
   @override
   String get fullscreenImageViewerCouldNotLoadImage =>
@@ -15445,12 +15441,12 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'Kadi ya mazoea imekamilisha $arg0 $arg1';
+    return 'Idadi iliyokamilika $arg0 $arg1';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return 'Kadi ya mazoea mfululizo wa siku $arg0';
+    return 'Mfululizo wa siku $arg0';
   }
 
   @override
@@ -15478,7 +15474,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return 'Kadi ya mazoea tazama mazoea yote $arg0';
+    return 'Tazama tabia zote $arg0';
   }
 
   @override
@@ -15595,7 +15591,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get habitsTileCardNoHabits => 'Kadi ya mazoea hakuna mazoea';
+  String get habitsTileCardNoHabits => 'Hakuna tabia';
 
   @override
   String get habitsTileCardSignInToTrack => 'Ingia ili kufuatilia mazoea';
@@ -22614,17 +22610,16 @@ class AppLocalizationsSw extends AppLocalizations {
   String get metricsDashboardAddMetric => 'Ongeza Kipimo';
 
   @override
-  String get metricsDashboardBmi => 'Dashibodi ya vipimo BMI';
+  String get metricsDashboardBmi => 'BMI';
 
   @override
   String get metricsDashboardBodyFat => 'Mafuta ya Mwili';
 
   @override
-  String get metricsDashboardBodyFatPct =>
-      'Dashibodi ya vipimo asilimia ya mafuta mwilini';
+  String get metricsDashboardBodyFatPct => 'Asilimia ya mafuta mwilini';
 
   @override
-  String get metricsDashboardCalories => 'Dashibodi ya vipimo kalori';
+  String get metricsDashboardCalories => 'Kalori';
 
   @override
   String get metricsDashboardCaloriesBurned => 'Kalori Zilizochomwa';
@@ -22636,24 +22631,23 @@ class AppLocalizationsSw extends AppLocalizations {
   String get metricsDashboardHealthMetrics => 'Vipimo vya Afya';
 
   @override
-  String get metricsDashboardHeartRate => 'Dashibodi ya vipimo mapigo ya moyo';
+  String get metricsDashboardHeartRate => 'Mapigo ya moyo';
 
   @override
-  String get metricsDashboardHip => 'Dashibodi ya vipimo nyonga';
+  String get metricsDashboardHip => 'Nyonga';
 
   @override
   String get metricsDashboardMetricType => 'AINA YA KIPIMO';
 
   @override
-  String get metricsDashboardMuscleMass =>
-      'Dashibodi ya vipimo uzito wa misuli';
+  String get metricsDashboardMuscleMass => 'Misa ya misuli';
 
   @override
   String get metricsDashboardNoDataAvailable => 'Hakuna data inayopatikana';
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return 'Dashibodi ya vipimo hakuna data ya vipimo bado $arg0';
+    return 'Hakuna data ya vipimo bado $arg0';
   }
 
   @override
@@ -22661,7 +22655,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get metricsDashboardRestingHeartRate =>
-      'Dashibodi ya vipimo mapigo ya moyo wakati wa kupumzika';
+      'Mapigo ya moyo wakati wa kupumzika';
 
   @override
   String get metricsDashboardRestingHr => 'Mapigo ya Moyo ya Mapumziko';
@@ -22680,7 +22674,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get metricsDashboardValue => 'Thamani';
 
   @override
-  String get metricsDashboardWaist => 'Dashibodi ya vipimo kiuno';
+  String get metricsDashboardWaist => 'Kiuno';
 
   @override
   String get metricsDashboardWeight => 'Uzito';
@@ -23323,7 +23317,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'Ramani ya joto ya misuli iliyofunzwa zaidi $arg0';
+    return 'Zilizofanyiwa mazoezi zaidi $arg0';
   }
 
   @override
@@ -24062,7 +24056,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return 'Imesalia saa $arg0 na dakika $arg1';
+    return 'Saa na dakika zilizobaki $arg0 $arg1';
   }
 
   @override
@@ -24078,17 +24072,17 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return 'Imesalia dakika $arg0';
+    return 'Dakika zilizobaki $arg0';
   }
 
   @override
   String get neatGamificationWidgetsNeat => 'NEAT';
 
   @override
-  String get neatGamificationWidgetsNeatChampion => 'Bingwa wa NEAT';
+  String get neatGamificationWidgetsNeatChampion => 'Bingwa';
 
   @override
-  String get neatGamificationWidgetsNeatEnthusiast => 'Mpenzi wa NEAT';
+  String get neatGamificationWidgetsNeatEnthusiast => 'Mshabiki';
 
   @override
   String get neatGamificationWidgetsNeatPts => 'Pointi za NEAT';
@@ -26192,7 +26186,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get openAllCratesDone => 'Imekamilika';
 
   @override
-  String get openAllCratesDoubleXpToken => 'Tokeni ya 2x XP';
+  String get openAllCratesDoubleXpToken => 'Tokeni ya XP maradufu';
 
   @override
   String get openAllCratesFailedToOpenCrates =>
@@ -26250,7 +26244,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return 'Jumla ya XP kiwango $arg0 $arg1';
+    return 'Jumla ya kiwango cha XP $arg0 $arg1';
   }
 
   @override
@@ -27289,7 +27283,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get pillarDetailComponents => 'Vipengele';
 
   @override
-  String get pillarDetailCouldNotLoad => 'Maelezo ya nguzo hayakuweza kupakia';
+  String get pillarDetailCouldNotLoad => 'Imeshindwa kupakia';
 
   @override
   String get pillarDetailCustomTrends => 'Mienendo maalum';
@@ -27314,7 +27308,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get pillarDetailHourlyActivityRibbonBody =>
-      'Fuatilia shughuli zako kila saa ili kupata riboni hii.';
+      'Mwili wa riboni ya shughuli ya kila saa';
 
   @override
   String get pillarDetailIntensity => 'Ukali';
@@ -27329,25 +27323,25 @@ class AppLocalizationsSw extends AppLocalizations {
   String get pillarDetailMacroStream => 'Mtiririko wa Macro';
 
   @override
-  String get pillarDetailMacroStreamBody => 'Angalia mtiririko wako wa lishe.';
+  String get pillarDetailMacroStreamBody => 'Mwili wa mtiririko wa Macro';
 
   @override
   String get pillarDetailNoHistoryYet => 'Hakuna historia bado';
 
   @override
-  String get pillarDetailOpenActivity => 'Fungua shughuli';
+  String get pillarDetailOpenActivity => 'Shughuli';
 
   @override
   String get pillarDetailOpenFullScreen => 'Fungua skrini nzima';
 
   @override
-  String get pillarDetailOpenNutrition => 'Fungua lishe';
+  String get pillarDetailOpenNutrition => 'Lishe';
 
   @override
   String get pillarDetailOpenSleep => 'Fungua Usingizi →';
 
   @override
-  String get pillarDetailOpenWorkouts => 'Fungua mazoezi';
+  String get pillarDetailOpenWorkouts => 'Mazoezi';
 
   @override
   String get pillarDetailPending => 'Inasubiri';
@@ -27392,7 +27386,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get pillarDetailSleepStages => 'Hatua za usingizi';
 
   @override
-  String get pillarDetailSleepStagesBody => 'Changanua hatua zako za usingizi.';
+  String get pillarDetailSleepStagesBody => 'Mwili wa hatua za usingizi';
 
   @override
   String get pillarDetailSparkline7d => 'mstari-7s';
@@ -27424,8 +27418,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get pillarDetailWhenYouTrain => 'Unapofanya mazoezi';
 
   @override
-  String get pillarDetailWhenYouTrainBody =>
-      'Fuatilia jinsi unavyofanya mazoezi.';
+  String get pillarDetailWhenYouTrainBody => 'Mwili wa unapofanya mazoezi';
 
   @override
   String get pinnedMessageBarN => '\\n';
@@ -27504,7 +27497,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'Siku $arg0 kwa wiki';
+    return 'Siku kwa wiki $arg0';
   }
 
   @override
@@ -27513,23 +27506,24 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return 'Vifaa $arg0';
+    return 'Idadi ya vifaa $arg0';
   }
 
   @override
   String planPreviewScreenExercisesMin(Object arg0, Object arg1) {
-    return 'Mazoezi $arg0 $arg1';
+    return 'Mazoezi ya chini $arg0 $arg1';
   }
 
   @override
   String get planPreviewScreenIncreaseIntensityVolume =>
-      'Ongeza ukubwa wa mazoezi';
+      'Ongeza kiwango cha nguvu';
 
   @override
-  String get planPreviewScreenMasterTheMovement => 'Boresha mbinu ya mazoezi';
+  String get planPreviewScreenMasterTheMovement => 'Bobea katika harakati';
 
   @override
-  String get planPreviewScreenPeakPerformanceWeek => 'Wiki ya utendaji wa juu';
+  String get planPreviewScreenPeakPerformanceWeek =>
+      'Wiki ya utendaji wa kilele';
 
   @override
   String get planPreviewScreenSetsreps => 'setiReps';
@@ -27551,7 +27545,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String planPreviewScreenWeekNumber(Object arg0) {
-    return 'Wiki ya $arg0';
+    return 'Wiki namba $arg0';
   }
 
   @override
@@ -28490,17 +28484,17 @@ class AppLocalizationsSw extends AppLocalizations {
   String get programMenuButtonViewMyPreferences => 'Tazama Mapendeleo Yangu';
 
   @override
-  String get programMetaApplyStaples => 'Tumia mazoezi ya msingi';
+  String get programMetaApplyStaples => 'Tumia staples';
 
   @override
   String get programMetaApplyStaplesSubtitle =>
-      'Ongeza mazoezi ya msingi kwenye programu yako';
+      'Kichwa kidogo cha kutumia staples';
 
   @override
-  String get programMetaDeloadEvery => 'Punguza mzigo kila baada ya';
+  String get programMetaDeloadEvery => 'Deload kila';
 
   @override
-  String get programMetaFixedLoadsNote => 'Kumbuka mizigo iliyopangwa';
+  String get programMetaFixedLoadsNote => 'Dokezo la mizigo iliyopangwa';
 
   @override
   String get programMetaProgramSettings => 'Mipangilio ya programu';
@@ -28513,7 +28507,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Hubadilisha mazoezi kulingana na maendeleo yako';
 
   @override
-  String get programSummaryAdvancedLabel => 'Advanced';
+  String get programSummaryAdvancedLabel => 'Lebo ya juu';
 
   @override
   String get programSummaryAutomaticallyIncreasesChalle =>
@@ -28524,7 +28518,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Huepuka mazoezi yanayosisitiza mapungufu yako';
 
   @override
-  String get programSummaryBeginnerLabel => 'Beginner';
+  String get programSummaryBeginnerLabel => 'Lebo ya mwanzilishi';
 
   @override
   String get programSummaryBodyweight => 'Uzito wa mwili';
@@ -28554,7 +28548,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get programSummaryInjuryAwareness => 'Uelewa wa Majeraha';
 
   @override
-  String get programSummaryIntermediateLabel => 'Intermediate';
+  String get programSummaryIntermediateLabel => 'Lebo ya kati';
 
   @override
   String get programSummaryLevel => 'Kiwango';
@@ -28585,10 +28579,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get programSummaryStartTraining => 'Anza Mafunzo';
 
   @override
-  String get programSummaryStayFit => 'Baki na siha';
+  String get programSummaryStayFit => 'Kaa katika siha';
 
   @override
-  String get programSummaryStrengthSize => 'Nguvu na ukubwa';
+  String get programSummaryStrengthSize => 'Ukubwa wa nguvu';
 
   @override
   String get programSummaryWhatSIncluded => 'Kinachojumuishwa';
@@ -29260,10 +29254,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Weka maendeleo';
 
   @override
-  String get progressionSelectorSubtitle => 'Chagua jinsi unavyotaka kuendelea';
+  String get progressionSelectorSubtitle => 'Kichwa kidogo';
 
   @override
-  String get progressionSelectorTitle => 'Mfumo wa maendeleo';
+  String get progressionSelectorTitle => 'Kichwa';
 
   @override
   String get progressionSelectorWhenToUse => 'Wakati wa kutumia';
@@ -29776,7 +29770,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quickLogMeasurementsMeasurements => 'Vipimo';
 
   @override
-  String get quickLogMeasurementsNotLoggedYet => 'Vipimo havijawekwa bado';
+  String get quickLogMeasurementsNotLoggedYet => 'Haijarekodiwa bado';
 
   @override
   String get quickLogMeasurementsPleaseSignInTo =>
@@ -29795,14 +29789,14 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return 'Vipimo vimesasishwa siku $arg0 zilizopita';
+    return 'Siku zilizopita $arg0';
   }
 
   @override
-  String get quickLogMeasurementsUpdatedToday => 'Vipimo vimesasishwa leo';
+  String get quickLogMeasurementsUpdatedToday => 'Leo';
 
   @override
-  String get quickLogMeasurementsUpdatedYesterday => 'Vipimo vimesasishwa jana';
+  String get quickLogMeasurementsUpdatedYesterday => 'Jana';
 
   @override
   String get quickLogMeasurementsWaist => 'Kiuno';
@@ -29941,7 +29935,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quickWorkoutDiscoverWorkouts => 'Gundua Mazoezi';
 
   @override
-  String get quickWorkoutDuration => 'Muda wa mazoezi';
+  String get quickWorkoutDuration => 'Muda';
 
   @override
   String get quickWorkoutFavorite => 'Ongeza kwenye vipendwa';
@@ -29950,7 +29944,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quickWorkoutFocus => 'Lengo';
 
   @override
-  String get quickWorkoutFocusOptional => 'Lengo la mazoezi (hiari)';
+  String get quickWorkoutFocusOptional => 'Lengo (hiari)';
 
   @override
   String get quickWorkoutNoSuggestions => 'Hakuna mapendekezo yanayopatikana';
@@ -30096,13 +30090,13 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Lengo la Mazoezi';
 
   @override
-  String get quickWorkoutSubtitle => 'Anza mazoezi ya haraka';
+  String get quickWorkoutSubtitle => 'Kichwa kidogo';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Gusa ili kuongeza jozi za dumbbell';
 
   @override
-  String get quickWorkoutTitle => 'Mazoezi ya haraka';
+  String get quickWorkoutTitle => 'Kichwa';
 
   @override
   String get quickWorkoutUnfavorite => 'Ondoa kwenye vipendwa';
@@ -30239,7 +30233,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return 'Siku $arg0 zimechaguliwa $arg1';
+    return 'Siku zilizochaguliwa $arg0 $arg1';
   }
 
   @override
@@ -30257,13 +30251,13 @@ class AppLocalizationsSw extends AppLocalizations {
       'Unaweza kufanya mazoezi siku ngapi kwa wiki?';
 
   @override
-  String get quizDaysSelectorMin => 'Dakika';
+  String get quizDaysSelectorMin => 'Dak';
 
   @override
-  String get quizDaysSelectorMon => 'Jtt';
+  String get quizDaysSelectorMon => 'Iju';
 
   @override
-  String get quizDaysSelectorSat => 'Jmo';
+  String get quizDaysSelectorSat => 'Imo';
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
@@ -30271,16 +30265,16 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get quizDaysSelectorSun => 'Jpi';
+  String get quizDaysSelectorSun => 'Ipi';
 
   @override
   String get quizDaysSelectorThu => 'Alh';
 
   @override
-  String get quizDaysSelectorTue => 'Jtn';
+  String get quizDaysSelectorTue => 'Tal';
 
   @override
-  String get quizDaysSelectorWed => 'Jtano';
+  String get quizDaysSelectorWed => 'Tan';
 
   @override
   String get quizDaysSelectorWhichDaysWorkBest => 'Ni siku zipi zinafaa zaidi?';
@@ -30338,7 +30332,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quizEquipmentFullGym => 'Gym kamili';
 
   @override
-  String get quizEquipmentFullGymAccess => 'Upatikanaji wa gym kamili';
+  String get quizEquipmentFullGymAccess => 'Upatikanaji wa gym';
 
   @override
   String get quizEquipmentFullGymWithMachines =>
@@ -30364,7 +30358,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return 'Vifaa vilivyotambuliwa $arg0';
+    return 'Idadi iliyotambuliwa $arg0';
   }
 
   @override
@@ -30386,7 +30380,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'Vifaa vingine $arg0';
+    return 'Idadi nyingine $arg0';
   }
 
   @override
@@ -30428,7 +30422,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Inafaa kwa kusafiri - dumbbells, mashine za cardio';
 
   @override
-  String get quizEquipmentTrxSuspension => 'TRX suspension';
+  String get quizEquipmentTrxSuspension => 'Trx suspension';
 
   @override
   String get quizEquipmentU1f3e0 => '🏠';
@@ -30578,7 +30572,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quizFitnessLevelAdvanced => 'Advanced';
 
   @override
-  String get quizFitnessLevelAdvancedDesc => 'Uzoefu mwingi wa mazoezi';
+  String get quizFitnessLevelAdvancedDesc => 'Maelezo ya advanced';
 
   @override
   String get quizFitnessLevelBeHonestWeLl =>
@@ -30588,14 +30582,14 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quizFitnessLevelBeginner => 'Beginner';
 
   @override
-  String get quizFitnessLevelBeginnerDesc => 'Ndio kwanza unaanza';
+  String get quizFitnessLevelBeginnerDesc => 'Maelezo ya beginner';
 
   @override
   String get quizFitnessLevelBrandNewToLifting =>
-      'Ndio kwanza unaanza kunyanyua uzito';
+      'Ndio kwanza naanza kunyanyua uzito';
 
   @override
-  String get quizFitnessLevelBuildingConsistency => 'Unajenga utaratibu';
+  String get quizFitnessLevelBuildingConsistency => 'Najenga utaratibu';
 
   @override
   String get quizFitnessLevelDailyActivityLevelOutside =>
@@ -30613,10 +30607,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quizFitnessLevelIntermediate => 'Intermediate';
 
   @override
-  String get quizFitnessLevelIntermediateDesc => 'Una uzoefu wa kutosha';
+  String get quizFitnessLevelIntermediateDesc => 'Maelezo ya intermediate';
 
   @override
-  String get quizFitnessLevelJustGettingStarted => 'Ndio unaanza';
+  String get quizFitnessLevelJustGettingStarted => 'Ndio kwanza naanza';
 
   @override
   String get quizFitnessLevelLessThan6Months => 'Chini ya miezi 6';
@@ -30625,24 +30619,22 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quizFitnessLevelLight => 'Light';
 
   @override
-  String get quizFitnessLevelLightDesc => 'Mazoezi mepesi';
+  String get quizFitnessLevelLightDesc => 'Maelezo ya light';
 
   @override
-  String get quizFitnessLevelModerate => 'Kiwango cha wastani';
+  String get quizFitnessLevelModerate => 'Moderate';
 
   @override
-  String get quizFitnessLevelModerateDesc =>
-      'Unafanya mazoezi mara kwa mara na una uzoefu wa kutosha.';
+  String get quizFitnessLevelModerateDesc => 'Maelezo ya moderate';
 
   @override
-  String get quizFitnessLevelNever => 'Sijawahi kufanya mazoezi';
+  String get quizFitnessLevelNever => 'Kamwe';
 
   @override
-  String get quizFitnessLevelSedentary => 'Maisha ya kukaa sana';
+  String get quizFitnessLevelSedentary => 'Sedentary';
 
   @override
-  String get quizFitnessLevelSedentaryDesc =>
-      'Sifanyi mazoezi ya kimwili mara kwa mara.';
+  String get quizFitnessLevelSedentaryDesc => 'Maelezo ya sedentary';
 
   @override
   String get quizFitnessLevelSolidFoundation => 'Msingi imara';
@@ -30652,14 +30644,13 @@ class AppLocalizationsSw extends AppLocalizations {
       'Hii hutusaidia kuchagua mazoezi sahihi';
 
   @override
-  String get quizFitnessLevelVeryActive => 'Mwenye bidii sana';
+  String get quizFitnessLevelVeryActive => 'Very active';
 
   @override
-  String get quizFitnessLevelVeryActiveDesc =>
-      'Unafanya mazoezi makali mara nyingi kwa wiki.';
+  String get quizFitnessLevelVeryActiveDesc => 'Maelezo ya very active';
 
   @override
-  String get quizFitnessLevelVeteranLifter => 'Mzoefu wa kunyanyua uzito';
+  String get quizFitnessLevelVeteranLifter => 'Veteran lifter';
 
   @override
   String get quizFitnessLevelWhatSYourCurrent =>
@@ -30687,22 +30678,22 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quizMotivationBuildConfidence => 'Kujenga kujiamini';
 
   @override
-  String get quizMotivationFeelStronger => 'Kujihisi mwenye nguvu zaidi';
+  String get quizMotivationFeelStronger => 'Kujihisi mwenye nguvu';
 
   @override
-  String get quizMotivationHaveMoreEnergy => 'Kuwa na nguvu zaidi';
+  String get quizMotivationHaveMoreEnergy => 'Kuwa na nishati zaidi';
 
   @override
   String get quizMotivationImproveMentalHealth => 'Kuboresha afya ya akili';
 
   @override
-  String get quizMotivationLookBetter => 'Kuonekana nadhifu zaidi';
+  String get quizMotivationLookBetter => 'Kuonekana bora';
 
   @override
   String get quizMotivationSelectAllThatResonate => 'Chagua yote yanayokuhusu';
 
   @override
-  String get quizMotivationSleepBetter => 'Kulala vizuri zaidi';
+  String get quizMotivationSleepBetter => 'Kulala vizuri';
 
   @override
   String get quizMotivationSportsPerformance => 'Utendaji wa michezo';
@@ -32194,7 +32185,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get regenerateSheetCheckingEquipment => 'Inakagua vifaa';
 
   @override
-  String get regenerateSheetCheckingPreferences => 'Inakagua mapendeleo yako';
+  String get regenerateSheetCheckingPreferences => 'Inakagua mapendeleo';
 
   @override
   String get regenerateSheetConnectingToTheAi => 'Inaunganisha na AI';
@@ -32281,22 +32272,20 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get regenerateSheetLoadingInjuriesAndGoals =>
-      'Inapakia majeraha na malengo';
+  String get regenerateSheetLoadingInjuriesAndGoals => 'Majeraha na malengo';
 
   @override
-  String get regenerateSheetLoadingPreferences => 'Inapakia mapendeleo';
+  String get regenerateSheetLoadingPreferences => 'Mapendeleo';
 
   @override
-  String get regenerateSheetLoadingYourProfile => 'Inapakia wasifu wako';
+  String get regenerateSheetLoadingYourProfile => 'Wasifu wako';
 
   @override
-  String get regenerateSheetMatchingIntensity =>
-      'Inalinganisha ukali wa mazoezi';
+  String get regenerateSheetMatchingIntensity => 'Inalinganisha ukali';
 
   @override
   String get regenerateSheetMatchingYourFitnessLevel =>
-      'Inalinganisha na kiwango chako cha siha';
+      'Inalinganisha kiwango chako cha siha';
 
   @override
   String get regenerateSheetNoSuggestionsYet => 'Hakuna mapendekezo bado';
@@ -32316,13 +32305,13 @@ class AppLocalizationsSw extends AppLocalizations {
   String get regenerateSheetPickingYourExercises => 'Inachagua mazoezi yako';
 
   @override
-  String get regenerateSheetPreparingYourRequest => 'Inatayarisha ombi lako';
+  String get regenerateSheetPreparingYourRequest => 'Inaandaa ombi lako';
 
   @override
-  String get regenerateSheetPrimingTheEngine => 'Inatayarisha mfumo';
+  String get regenerateSheetPrimingTheEngine => 'Inaandaa mfumo';
 
   @override
-  String get regenerateSheetPullingYourGoals => 'Inavuta malengo yako';
+  String get regenerateSheetPullingYourGoals => 'Inachota malengo yako';
 
   @override
   String get regenerateSheetReadingYourProfile => 'Inasoma wasifu wako';
@@ -32386,7 +32375,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get regenerateSheetTuningRestPeriods =>
-      'Inarekebisha muda wa kupumzika';
+      'Inarekebisha vipindi vya kupumzika';
 
   @override
   String get regenerateSheetUpdatingYourSchedule => 'Inasasisha ratiba yako';
@@ -33051,7 +33040,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get restRateLastSetOptional => 'hiari';
 
   @override
-  String get restSuggestionAiRestCoach => 'Kocha wa mapumziko wa AI';
+  String get restSuggestionAiRestCoach => 'Kocha wa kupumzika wa AI';
 
   @override
   String get restSuggestionCalculatingOptimalRestTime =>
@@ -33077,7 +33066,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get restSuggestionQuick => 'Haraka';
 
   @override
-  String get restSuggestionQuickRest => 'Mapumziko ya haraka';
+  String get restSuggestionQuickRest => 'Pumziko la haraka';
 
   @override
   String restSuggestionSaveTime(Object arg0) {
@@ -33216,7 +33205,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get restTimerRest => 'Pumzika';
 
   @override
-  String get restTimerSkipRest => 'Ruka mapumziko';
+  String get restTimerSkipRest => 'Ruka pumziko';
 
   @override
   String get retro80sTemplateCalories => 'KALORI';
@@ -33407,14 +33396,14 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get rpeRirHelpsAdjustNextSet =>
-      'RPE na RIR husaidia kurekebisha seti inayofuata';
+      'Inasaidia kurekebisha seti inayofuata';
 
   @override
-  String get rpeRirHowHardWasThatSet => 'Seti hiyo ilikuwa ngumu kiasi gani?';
+  String get rpeRirHowHardWasThatSet => 'Seti hiyo ilikuwa ngumu kiasi gani';
 
   @override
   String get rpeRirRateOfPerceivedExertion =>
-      'Kiwango cha jitihada unazohisi (RPE)';
+      'Kiwango cha jitihada zinazotambulika (RPE)';
 
   @override
   String get rpeRirRepsInReserve => 'Marudio yaliyobaki (RIR)';
@@ -33450,8 +33439,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get safetyDisclaimerBannerInjuryBody =>
-      'Tafadhali kuwa mwangalifu na maeneo haya ya mwili.';
+  String get safetyDisclaimerBannerInjuryBody => 'Mwili wenye jeraha';
 
   @override
   String get safetyDisclaimerBannerLearnMore => 'Jifunze zaidi';
@@ -33467,7 +33455,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get safetyDisclaimerBannerSafetyModeBody =>
-      'Mazoezi yamebadilishwa ili kulinda afya yako.';
+      'Maelezo ya hali ya usalama';
 
   @override
   String get saunaCustomDuration => 'Muda maalum';
@@ -35244,7 +35232,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get shareBreakdownTodaysLifts => 'Muhtasari wa mazoezi ya leo';
+  String get shareBreakdownTodaysLifts => 'Mazoezi ya leo';
 
   @override
   String get shareCoachWorkoutReview => 'Mapitio ya mazoezi ya kocha';
@@ -35266,19 +35254,19 @@ class AppLocalizationsSw extends AppLocalizations {
   String get shareMotivationalCompleted => 'IMEKAMILIKA';
 
   @override
-  String get sharePrNewPr => 'Rekodi mpya ya kibinafsi (PR)';
+  String get sharePrNewPr => 'PR mpya';
 
   @override
-  String get shareStatsCalories => 'Shiriki takwimu za kalori';
+  String get shareStatsCalories => 'Kalori';
 
   @override
-  String get shareStatsDuration => 'Shiriki takwimu za muda';
+  String get shareStatsDuration => 'Muda';
 
   @override
   String get shareStatsEliteTemplate => 'ELITE TEMPLATE';
 
   @override
-  String get shareStatsExercises => 'Shiriki takwimu za mazoezi';
+  String get shareStatsExercises => 'Mazoezi';
 
   @override
   String get shareStatsInstagram => 'Instagram';
@@ -35302,11 +35290,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get shareStatsShowWatermark => 'Onyesha Watermark';
 
   @override
-  String get shareStatsVolume => 'Shiriki takwimu za uzito uliotumika';
+  String get shareStatsVolume => 'Jumla ya uzito';
 
   @override
-  String get shareStatsWorkoutComplete =>
-      'Shiriki takwimu za mazoezi yaliyokamilika';
+  String get shareStatsWorkoutComplete => 'Mazoezi yamekamilika';
 
   @override
   String get shareStrengthFocusAreas => 'MAENEO YA KUZINGATIA';
@@ -36947,13 +36934,13 @@ class AppLocalizationsSw extends AppLocalizations {
   String get stretchControllerPause => 'Sitisha';
 
   @override
-  String get stretchControllerResume => 'Endeleza kunyoosha viungo';
+  String get stretchControllerResume => 'Endelea';
 
   @override
   String get stretchControllerSkipAll => 'Ruka Yote';
 
   @override
-  String get stretchControllerStartTimer => 'Anzisha kipima muda cha kunyoosha';
+  String get stretchControllerStartTimer => 'Anzisha kipima muda';
 
   @override
   String get stretchControllerUpNext => 'INAYOFUATA';
@@ -37822,7 +37809,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get supersetTapToSelect => 'Gusa ili kuchagua';
 
   @override
-  String get supersetType => 'Aina ya Superset';
+  String get supersetType => 'Aina';
 
   @override
   String get syncDetailsAllSynced => 'Zote zimesawazishwa!';
@@ -38630,43 +38617,42 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'Alama ya leo imeshuka $arg0';
+    return 'Imeshuka $arg0';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'Alama ya leo imepata pointi $arg0 $arg1';
+    return 'Pointi ulizopata $arg0 $arg1';
   }
 
   @override
-  String get todayScoreDetailHowItWorks =>
-      'Jinsi alama ya leo inavyofanya kazi';
+  String get todayScoreDetailHowItWorks => 'Jinsi inavyofanya kazi';
 
   @override
   String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'Maelezo ya kutokuwa na shughuli kwa alama ya leo $arg0 $arg1';
+    return 'Maelezo ya kutokuwa hai $arg0 $arg1';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'Kasi ya alama ya leo kwa wastani $arg0 $arg1';
+    return 'Kasi na wastani $arg0 $arg1';
   }
 
   @override
   String get todayScoreDetailNotCounted => 'Haijahesabiwa';
 
   @override
-  String get todayScoreDetailSetupText => 'Sanidi maandishi ya alama ya leo';
+  String get todayScoreDetailSetupText => 'Maandishi ya usanidi';
 
   @override
-  String get todayScoreDetailSteady => 'Alama ya leo imetulia';
+  String get todayScoreDetailSteady => 'Imetulia';
 
   @override
   String get todayScoreDetailTodayScore => 'Alama ya leo';
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'Alama ya leo imepanda $arg0';
+    return 'Imepanda $arg0';
   }
 
   @override
@@ -39115,8 +39101,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get trophiesEarnedAchievementsUnlocked => 'Mafanikio Yamefunguliwa';
 
   @override
-  String get trophiesEarnedAllMilestonesCleared =>
-      'Tuzo zimepatikana, hatua zote muhimu zimefikiwa';
+  String get trophiesEarnedAllMilestonesCleared => 'Hatua zote zimefikiwa';
 
   @override
   String get trophiesEarnedAllTime => 'WAKATI WOTE';
@@ -39134,8 +39119,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get trophiesEarnedKg => ') kg';
 
   @override
-  String get trophiesEarnedMilestoneReached =>
-      'Tuzo zimepatikana, hatua muhimu imefikiwa';
+  String get trophiesEarnedMilestoneReached => 'Hatua imefikiwa';
 
   @override
   String get trophiesEarnedMilestoneReachedNice =>
@@ -39146,12 +39130,12 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'Tuzo zimepatikana, beji mpya $arg0';
+    return 'Beji $arg0';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return 'Tuzo zimepatikana, PR mpya za cardio $arg0';
+    return 'PR za Cardio $arg0';
   }
 
   @override
@@ -39159,7 +39143,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'Tuzo zimepatikana, PR mpya $arg0';
+    return 'PR $arg0';
   }
 
   @override
@@ -39169,8 +39153,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get trophiesEarnedNextMilestones => 'Hatua Muhimu Zinazofuata';
 
   @override
-  String get trophiesEarnedNoNewRecords =>
-      'Tuzo zimepatikana, hakuna rekodi mpya';
+  String get trophiesEarnedNoNewRecords => 'Hakuna rekodi mpya';
 
   @override
   String get trophiesEarnedNoNewRecordsThis =>
@@ -39181,12 +39164,11 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return 'Tuzo zimepatikana, zilizobaki kufungua $arg0 $arg1';
+    return 'Zilizobaki kufungua $arg0 $arg1';
   }
 
   @override
-  String get trophiesEarnedSessionHighlights =>
-      'Tuzo zimepatikana, mambo muhimu ya kikao';
+  String get trophiesEarnedSessionHighlights => 'Vivutio vya kikao';
 
   @override
   String trophiesEarnedSheetPts(Object points) {
@@ -39199,7 +39181,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get trophiesEarnedTitle => 'Tuzo zilizopatikana';
+  String get trophiesEarnedTitle => 'Kichwa cha habari';
 
   @override
   String get trophiesEarnedTotalWorkouts => 'Jumla ya Mazoezi';
@@ -39208,8 +39190,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get trophiesEarnedTrophiesAchievements => 'Tuzo & Mafanikio';
 
   @override
-  String get trophiesEarnedViewAllCardioPRs =>
-      'Tuzo zimepatikana, tazama PR zote za cardio';
+  String get trophiesEarnedViewAllCardioPRs => 'Tazama PR zote za Cardio';
 
   @override
   String get trophiesEarnedViewAllCardioPrs => 'Tazama PR zote za cardio';
@@ -40148,7 +40129,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'Maendeleo ya wiki, idadi iliyokamilika $arg0 $arg1';
+    return 'Idadi iliyokamilika $arg0 $arg1';
   }
 
   @override
@@ -40160,7 +40141,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get weekProgressStripNoWorkoutsScheduled =>
-      'Maendeleo ya wiki, hakuna mazoezi yaliyopangwa';
+      'Hakuna mazoezi yaliyopangwa';
 
   @override
   String get weekProgressStripThisWeek => 'Wiki Hii';
@@ -40851,12 +40832,12 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'Mwelekeo wa uzito, umeshuka wiki hii $arg0';
+    return 'Imeshuka wiki hii $arg0';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'Mwelekeo wa uzito, umeshuka ikilinganishwa na mzunguko uliopita $arg0';
+    return 'Imeshuka ikilinganishwa na mzunguko uliopita $arg0';
   }
 
   @override
@@ -40867,48 +40848,46 @@ class AppLocalizationsSw extends AppLocalizations {
       'Rekodi uzito wako ili kuona mienendo';
 
   @override
-  String get weightTrendCardMaintaining => 'Mwelekeo wa uzito, unadumisha';
+  String get weightTrendCardMaintaining => 'Inadumisha';
 
   @override
-  String get weightTrendCardNoChange => 'Mwelekeo wa uzito, hakuna mabadiliko';
+  String get weightTrendCardNoChange => 'Hakuna mabadiliko';
 
   @override
-  String get weightTrendCardNoData => 'Mwelekeo wa uzito, hakuna data';
+  String get weightTrendCardNoData => 'Hakuna data';
 
   @override
   String get weightTrendCardOnTrack => 'Kwenye mstari';
 
   @override
-  String get weightTrendCardReviewGoals => 'Mwelekeo wa uzito, kagua malengo';
+  String get weightTrendCardReviewGoals => 'Kagua malengo';
 
   @override
-  String get weightTrendCardSameAsLastCycle =>
-      'Mwelekeo wa uzito, sawa na mzunguko uliopita';
+  String get weightTrendCardSameAsLastCycle => 'Sawa na mzunguko uliopita';
 
   @override
   String get weightTrendCardTapToLogWeight => 'Gusa ili kurekodi uzito';
 
   @override
-  String get weightTrendCardTargetHeld => 'Mwelekeo wa uzito, lengo limefikiwa';
+  String get weightTrendCardTargetHeld => 'Lengo limefikiwa';
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return 'Mwelekeo wa uzito, lengo limefikiwa katika kipindi $arg0';
+    return 'Dirisha la lengo lililofikiwa $arg0';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'Mwelekeo wa uzito, umepanda wiki hii $arg0';
+    return 'Imepanda wiki hii $arg0';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'Mwelekeo wa uzito, umepanda ikilinganishwa na mzunguko uliopita $arg0';
+    return 'Imepanda ikilinganishwa na mzunguko uliopita $arg0';
   }
 
   @override
-  String get weightTrendCardWeightStableThisWeek =>
-      'Mwelekeo wa uzito, uzito umetulia wiki hii';
+  String get weightTrendCardWeightStableThisWeek => 'Uzito umetulia wiki hii';
 
   @override
   String get weightTrendCardWeightTrends => 'Mienendo ya uzito';
@@ -41660,7 +41639,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return 'Maelezo ya mazoezi, yanayobadilisha mazoezi $arg0';
+    return 'Inabadilisha mazoezi $arg0';
   }
 
   @override
@@ -41831,8 +41810,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutDetailType => 'Aina';
 
   @override
-  String get workoutDetailUpdatingExercises =>
-      'Maelezo ya mazoezi, yanasasisha mazoezi';
+  String get workoutDetailUpdatingExercises => 'Inasasisha mazoezi';
 
   @override
   String get workoutDetailWantAChallenge => 'UNATAKA CHANGAMOTO?';
@@ -42134,10 +42112,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutImportCalories => 'Kalori';
 
   @override
-  String get workoutImportCardio => 'Ingiza mazoezi ya cardio';
+  String get workoutImportCardio => 'Cardio';
 
   @override
-  String get workoutImportCycling => 'Ingiza mazoezi ya baiskeli';
+  String get workoutImportCycling => 'Kuendesha baiskeli';
 
   @override
   String get workoutImportDistance => 'Umbali';
@@ -42146,21 +42124,21 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutImportDuration => 'Muda';
 
   @override
-  String get workoutImportEasy => 'Ingiza mazoezi mepesi';
+  String get workoutImportEasy => 'Rahisi';
 
   @override
-  String get workoutImportFlexibility => 'Ingiza mazoezi ya kunyoosha viungo';
+  String get workoutImportFlexibility => 'Kunyoosha viungo';
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return 'Ingiza mazoezi kutoka $arg0';
+    return 'Kutoka chanzo $arg0';
   }
 
   @override
-  String get workoutImportHard => 'Ingiza mazoezi magumu';
+  String get workoutImportHard => 'Ngumu';
 
   @override
-  String get workoutImportHiit => 'Ingiza mazoezi ya HIIT';
+  String get workoutImportHiit => 'HIIT';
 
   @override
   String get workoutImportHowHardWasThis =>
@@ -42174,10 +42152,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutImportImportWorkout => 'Ingiza mazoezi';
 
   @override
-  String get workoutImportMedium => 'Ingiza mazoezi ya wastani';
+  String get workoutImportMedium => 'Kati';
 
   @override
-  String get workoutImportOther => 'Ingiza mazoezi mengine';
+  String get workoutImportOther => 'Nyingine';
 
   @override
   String get workoutImportPreviewCardioRows => 'Safu za Cardio';
@@ -42247,7 +42225,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Hii kawaida hukamilika ndani ya sekunde 10–30.';
 
   @override
-  String get workoutImportRunning => 'Ingiza mazoezi ya kukimbia';
+  String get workoutImportRunning => 'Kukimbia';
 
   @override
   String workoutImportScreenAvgBpm(Object avgHeartRate) {
@@ -42265,10 +42243,10 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get workoutImportSkip => 'Ruka uingizaji wa mazoezi';
+  String get workoutImportSkip => 'Ruka';
 
   @override
-  String get workoutImportStrengthTraining => 'Ingiza mazoezi ya nguvu';
+  String get workoutImportStrengthTraining => 'Mazoezi ya nguvu';
 
   @override
   String get workoutImportSummaryActivateProgram => 'Washa programu';
@@ -42334,25 +42312,25 @@ class AppLocalizationsSw extends AppLocalizations {
       'Mapendekezo ya uzito katika programu yataanza kuonyesha historia hii ndani ya dakika moja.';
 
   @override
-  String get workoutImportSwimming => 'Ingiza mazoezi ya kuogelea';
+  String get workoutImportSwimming => 'Kuogelea';
 
   @override
-  String get workoutImportWalking => 'Ingiza mazoezi ya kutembea';
+  String get workoutImportWalking => 'Kutembea';
 
   @override
-  String get workoutImportWeights => 'Ingiza mazoezi ya uzito';
+  String get workoutImportWeights => 'Uzito';
 
   @override
   String get workoutImportWhatTypeOfExercise => 'Ni aina gani ya mazoezi?';
 
   @override
-  String get workoutImportWorkout => 'Ingiza mazoezi';
+  String get workoutImportWorkout => 'Mazoezi';
 
   @override
   String get workoutImportWorkoutDetected => 'Mazoezi yamegunduliwa';
 
   @override
-  String get workoutImportYoga => 'Ingiza mazoezi ya Yoga';
+  String get workoutImportYoga => 'Yoga';
 
   @override
   String get workoutListTitle => 'Mazoezi';
@@ -42466,7 +42444,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return 'Droo ya mpango wa mazoezi, idadi ya mazoezi $arg0';
+    return 'Idadi ya mazoezi $arg0';
   }
 
   @override
@@ -42484,19 +42462,18 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get workoutPlanDrawerRemoveExerciseTooltip =>
-      'Droo ya mpango wa mazoezi, ondoa zana ya mazoezi';
+  String get workoutPlanDrawerRemoveExerciseTooltip => 'Ondoa zana ya mazoezi';
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return 'Droo ya mpango wa mazoezi, seti zimeingizwa $arg0';
+    return 'Seti zilizorekodiwa $arg0';
   }
 
   @override
   String get workoutPlanDrawerSwapExercise => 'Badilisha zoezi';
 
   @override
-  String get workoutPlanDrawerTitle => 'Kichwa cha droo ya mpango wa mazoezi';
+  String get workoutPlanDrawerTitle => 'Kichwa';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Mpango wa Mazoezi';
@@ -42839,7 +42816,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutShowcaseAdjust => 'Rekebisha';
 
   @override
-  String get workoutShowcaseAdvanced => 'Maonyesho ya mazoezi, ya juu';
+  String get workoutShowcaseAdvanced => 'Advanced';
 
   @override
   String get workoutShowcaseAll3SetsDone => 'Seti zote 3 zimekamilika';
@@ -42855,12 +42832,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutShowcaseAskCoach => 'Uliza kocha';
 
   @override
-  String get workoutShowcaseAutoDesc =>
-      'Maonyesho ya mazoezi, maelezo ya kiotomatiki';
+  String get workoutShowcaseAutoDesc => 'Maelezo ya kiotomatiki';
 
   @override
-  String get workoutShowcaseAutoLabel =>
-      'Maonyesho ya mazoezi, lebo ya kiotomatiki';
+  String get workoutShowcaseAutoLabel => 'Lebo ya kiotomatiki';
 
   @override
   String get workoutShowcaseBarbellSquat => 'Barbell Squat';
@@ -42878,16 +42853,16 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutShowcaseCal => 'Cal';
 
   @override
-  String get workoutShowcaseCalories => 'Kalori za mazoezi';
+  String get workoutShowcaseCalories => 'Kalori';
 
   @override
-  String get workoutShowcaseContinue => 'Endelea na onyesho la mazoezi';
+  String get workoutShowcaseContinue => 'Endelea';
 
   @override
-  String get workoutShowcaseDuration => 'Muda wa mazoezi';
+  String get workoutShowcaseDuration => 'Muda';
 
   @override
-  String get workoutShowcaseEasy => 'Mazoezi mepesi';
+  String get workoutShowcaseEasy => 'Rahisi';
 
   @override
   String get workoutShowcaseEpley2255Reps => 'Epley · 225 × 5 marudio';
@@ -42905,49 +42880,49 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutShowcaseFormat1Rm => 'Muundo wa 1RM';
 
   @override
-  String get workoutShowcaseFormatBoarding => 'Muundo wa kupanda';
+  String get workoutShowcaseFormatBoarding => 'Boarding';
 
   @override
-  String get workoutShowcaseFormatCard => 'Muundo wa kadi';
+  String get workoutShowcaseFormatCard => 'Kadi';
 
   @override
-  String get workoutShowcaseFormatDiscord => 'Muundo wa Discord';
+  String get workoutShowcaseFormatDiscord => 'Discord';
 
   @override
-  String get workoutShowcaseFormatFull => 'Muundo kamili';
+  String get workoutShowcaseFormatFull => 'Kamili';
 
   @override
-  String get workoutShowcaseFormatIgStory => 'Muundo wa hadithi ya Instagram';
+  String get workoutShowcaseFormatIgStory => 'Ig story';
 
   @override
-  String get workoutShowcaseFormatNewspaper => 'Muundo wa gazeti';
+  String get workoutShowcaseFormatNewspaper => 'Gazeti';
 
   @override
-  String get workoutShowcaseFormatPassport => 'Muundo wa pasipoti';
+  String get workoutShowcaseFormatPassport => 'Pasipoti';
 
   @override
-  String get workoutShowcaseFormatPolaroid => 'Muundo wa Polaroid';
+  String get workoutShowcaseFormatPolaroid => 'Polaroid';
 
   @override
-  String get workoutShowcaseFormatPrCard => 'Muundo wa kadi ya PR';
+  String get workoutShowcaseFormatPrCard => 'Kadi ya PR';
 
   @override
-  String get workoutShowcaseFormatQuote => 'Muundo wa nukuu';
+  String get workoutShowcaseFormatQuote => 'Nukuu';
 
   @override
-  String get workoutShowcaseFormatReceipt => 'Muundo wa risiti';
+  String get workoutShowcaseFormatReceipt => 'Risiti';
 
   @override
-  String get workoutShowcaseFormatTrading => 'Muundo wa biashara';
+  String get workoutShowcaseFormatTrading => 'Trading';
 
   @override
-  String get workoutShowcaseFormatTrophy => 'Muundo wa kombe';
+  String get workoutShowcaseFormatTrophy => 'Tuzo';
 
   @override
-  String get workoutShowcaseFormatVinyl => 'Muundo wa vinyl';
+  String get workoutShowcaseFormatVinyl => 'Vinyl';
 
   @override
-  String get workoutShowcaseFormatWrapped => 'Muundo wa muhtasari';
+  String get workoutShowcaseFormatWrapped => 'Wrapped';
 
   @override
   String get workoutShowcaseHowYourWeightReps =>
@@ -42969,14 +42944,14 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutShowcaseLinearLabel => 'Lebo ya mstari';
 
   @override
-  String get workoutShowcaseLogAllSets => 'Rekodi seti zote';
+  String get workoutShowcaseLogAllSets => 'Seti zote';
 
   @override
   String get workoutShowcaseLogDrink => 'Ingiza Kinywaji';
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'Rekodi seti $arg0';
+    return 'Seti $arg0';
   }
 
   @override
@@ -42990,10 +42965,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutShowcaseNewPr => 'PR MPYA';
 
   @override
-  String get workoutShowcaseNote => 'Dokezo la mazoezi';
+  String get workoutShowcaseNote => 'Dokezo';
 
   @override
-  String get workoutShowcasePlan => 'Mpango wa mazoezi';
+  String get workoutShowcasePlan => 'Mpango';
 
   @override
   String get workoutShowcasePlanAutoAdjustsNext =>
@@ -43109,10 +43084,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutShowcaseTime => 'Muda';
 
   @override
-  String get workoutShowcaseUndulatingDesc => 'Maelezo ya mabadiliko';
+  String get workoutShowcaseUndulatingDesc => 'Maelezo ya mawimbi';
 
   @override
-  String get workoutShowcaseUndulatingLabel => 'Lebo ya mabadiliko';
+  String get workoutShowcaseUndulatingLabel => 'Lebo ya mawimbi';
 
   @override
   String get workoutShowcaseUpNextBenchPress => 'Inayofuata: Bench Press';
@@ -43951,7 +43926,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get xpGoalsDaily => 'Malengo ya XP ya kila siku';
+  String get xpGoalsDaily => 'Kila siku';
 
   @override
   String get xpGoalsDialog250LevelsAcross11Tiers =>
@@ -43959,52 +43934,51 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get xpGoalsDialogBeginnerToTranscendent =>
-      'Kutoka mwanzilishi hadi bingwa';
+      'Kuanzia mwanzilishi hadi bingwa';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => 'Kamilisha mazoezi XP';
+  String get xpGoalsDialogCompleteWorkoutXp => 'XP ya kukamilisha mazoezi';
 
   @override
   String get xpGoalsDialogDailyGoals => 'Malengo ya kila siku';
 
   @override
   String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'Gumzo la kwanza na kocha wa AI XP';
+      'XP ya mazungumzo na kocha wa AI';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'Mlo wa kwanza, uzito, na vipimo XP';
+      'XP ya vipimo vya uzito wa mlo';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'PR ya kwanza XP';
+  String get xpGoalsDialogFirstPrXp => 'XP ya PR ya kwanza';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp =>
-      'Picha ya kwanza ya maendeleo XP';
+  String get xpGoalsDialogFirstProgressPhotoXp => 'XP ya picha ya maendeleo';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp => 'Lengo la kwanza la protini XP';
+  String get xpGoalsDialogFirstProteinGoalXp => 'XP ya lengo la protini';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => 'Mazoezi ya kwanza XP';
+  String get xpGoalsDialogFirstWorkoutXp => 'XP ya mazoezi ya kwanza';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => 'Fikia lengo la protini XP';
+  String get xpGoalsDialogHitProteinGoalXp => 'XP ya kufikia lengo la protini';
 
   @override
   String get xpGoalsDialogLevels => 'Viwango';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => 'Rekodi vipimo vya mwili XP';
+  String get xpGoalsDialogLogBodyMeasurementsXp => 'XP ya vipimo vya mwili';
 
   @override
-  String get xpGoalsDialogLogMealXp => 'Rekodi mlo XP';
+  String get xpGoalsDialogLogMealXp => 'XP ya kurekodi mlo';
 
   @override
-  String get xpGoalsDialogLogWeightXp => 'Rekodi uzito XP';
+  String get xpGoalsDialogLogWeightXp => 'XP ya kurekodi uzito';
 
   @override
-  String get xpGoalsDialogLoginXp => 'Ingia kwenye akaunti XP';
+  String get xpGoalsDialogLoginXp => 'XP ya kuingia kwenye akaunti';
 
   @override
   String get xpGoalsDialogMilestoneRewards => 'Zawadi za hatua muhimu';
@@ -44081,7 +44055,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'Kiwango cha sasa $arg0';
+    return 'Jumla ya sasa ya kiwango $arg0';
   }
 
   @override
@@ -44181,7 +44155,7 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get xpGoalsScreenXpBonusLegend => 'Ufunguo wa bonasi ya XP';
+  String get xpGoalsScreenXpBonusLegend => 'Ufunguo wa bonasi ya Xp';
 
   @override
   String get xpGoalsScreenYouBadge => 'Beji yako';
@@ -44197,12 +44171,12 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'XP inayopatikana $arg0';
+    return 'Inayopatikana $arg0';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'XP uliyopata leo $arg0';
+    return 'Uliyopata leo $arg0';
   }
 
   @override
@@ -44210,7 +44184,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'Kizidishi cha XP kinatumika $arg0';
+    return 'Kizidishi kinachofanya kazi $arg0';
   }
 
   @override

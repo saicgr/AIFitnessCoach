@@ -313,7 +313,7 @@ abstract class AppLocalizations {
   /// No description provided for @achievementsCardAchievements.
   ///
   /// In en, this message translates to:
-  /// **'Achievements card achievements'**
+  /// **'Achievements'**
   String get achievementsCardAchievements;
 
   /// No description provided for @achievementsCardBadges.
@@ -2754,7 +2754,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelDownloadBasic.
   ///
   /// In en, this message translates to:
-  /// **'Ai model download basic'**
+  /// **'Basic'**
   String get aiModelDownloadBasic;
 
   /// No description provided for @aiModelDownloadBatteryWarning.
@@ -2766,7 +2766,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelDownloadBestQuality.
   ///
   /// In en, this message translates to:
-  /// **'Ai model download best quality'**
+  /// **'Best quality'**
   String get aiModelDownloadBestQuality;
 
   /// No description provided for @aiModelDownloadCancel.
@@ -2856,13 +2856,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelDownloadMultimodal.
   ///
   /// In en, this message translates to:
-  /// **'Ai model download multimodal'**
+  /// **'Multimodal'**
   String get aiModelDownloadMultimodal;
 
   /// No description provided for @aiModelDownloadNotCompatible.
   ///
   /// In en, this message translates to:
-  /// **'Ai model download not compatible'**
+  /// **'Not compatible'**
   String get aiModelDownloadNotCompatible;
 
   /// No description provided for @aiModelDownloadNotSupportedOnThis.
@@ -2880,7 +2880,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelDownloadOptimal.
   ///
   /// In en, this message translates to:
-  /// **'Ai model download optimal'**
+  /// **'Optimal'**
   String get aiModelDownloadOptimal;
 
   /// No description provided for @aiModelDownloadRam.
@@ -2892,7 +2892,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelDownloadRecommended.
   ///
   /// In en, this message translates to:
-  /// **'Ai model download recommended'**
+  /// **'Recommended'**
   String get aiModelDownloadRecommended;
 
   /// No description provided for @aiModelDownloadRemove.
@@ -2928,7 +2928,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelDownloadSearch.
   ///
   /// In en, this message translates to:
-  /// **'Ai model download search'**
+  /// **'Search'**
   String get aiModelDownloadSearch;
 
   /// No description provided for @aiModelDownloadSelectAModel.
@@ -2946,7 +2946,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelDownloadStandard.
   ///
   /// In en, this message translates to:
-  /// **'Ai model download standard'**
+  /// **'Standard'**
   String get aiModelDownloadStandard;
 
   /// No description provided for @aiModelDownloadTokenSavedSecurely.
@@ -7680,7 +7680,7 @@ abstract class AppLocalizations {
   /// No description provided for @commonCancel.
   ///
   /// In en, this message translates to:
-  /// **'Common cancel'**
+  /// **'Cancel'**
   String get commonCancel;
 
   /// No description provided for @commonClear.
@@ -7758,7 +7758,7 @@ abstract class AppLocalizations {
   /// No description provided for @commonYou.
   ///
   /// In en, this message translates to:
-  /// **'Common you'**
+  /// **'You'**
   String get commonYou;
 
   /// No description provided for @communityRecipeSearchCommunityRecipes.
@@ -8254,19 +8254,19 @@ abstract class AppLocalizations {
   /// No description provided for @complianceRingCardAllWorkoutsCompleted.
   ///
   /// In en, this message translates to:
-  /// **'Compliance ring card all workouts completed'**
+  /// **'All workouts completed'**
   String get complianceRingCardAllWorkoutsCompleted;
 
   /// No description provided for @complianceRingCardGetStartedToday.
   ///
   /// In en, this message translates to:
-  /// **'Compliance ring card get started today'**
+  /// **'Get started today'**
   String get complianceRingCardGetStartedToday;
 
   /// No description provided for @complianceRingCardGreatPace.
   ///
   /// In en, this message translates to:
-  /// **'Compliance ring card great pace {arg0}'**
+  /// **'Great pace {arg0}'**
   String complianceRingCardGreatPace(Object arg0);
 
   /// No description provided for @complianceRingCardNoWorkoutsScheduledThis.
@@ -8278,7 +8278,7 @@ abstract class AppLocalizations {
   /// No description provided for @complianceRingCardOnTrack.
   ///
   /// In en, this message translates to:
-  /// **'Compliance ring card on track {arg0}'**
+  /// **'On track {arg0}'**
   String complianceRingCardOnTrack(Object arg0);
 
   /// No description provided for @complianceRingCardWorkoutCompliance.
@@ -8290,7 +8290,7 @@ abstract class AppLocalizations {
   /// No description provided for @complianceRingCardWorkoutsRemaining.
   ///
   /// In en, this message translates to:
-  /// **'Compliance ring card workouts remaining {arg0}'**
+  /// **'Workouts remaining {arg0}'**
   String complianceRingCardWorkoutsRemaining(Object arg0);
 
   /// No description provided for @comprehensiveStatsStatsScores.
@@ -13272,7 +13272,7 @@ abstract class AppLocalizations {
   /// No description provided for @easyHelpLogASetBody.
   ///
   /// In en, this message translates to:
-  /// **'Easy help log a set body'**
+  /// **'Log a set body'**
   String get easyHelpLogASetBody;
 
   /// No description provided for @easyHelpSkipToNextExercise.
@@ -13308,13 +13308,13 @@ abstract class AppLocalizations {
   /// No description provided for @easyHelpTodaysExercise.
   ///
   /// In en, this message translates to:
-  /// **'Easy help todays exercise'**
+  /// **'Todays exercise'**
   String get easyHelpTodaysExercise;
 
   /// No description provided for @easyHelpTodaysExerciseBody.
   ///
   /// In en, this message translates to:
-  /// **'Easy help todays exercise body'**
+  /// **'Todays exercise body'**
   String get easyHelpTodaysExerciseBody;
 
   /// No description provided for @easyHelpWeightAndReps.
@@ -13326,7 +13326,7 @@ abstract class AppLocalizations {
   /// No description provided for @easyHelpWeightAndRepsBody.
   ///
   /// In en, this message translates to:
-  /// **'Easy help weight and reps body'**
+  /// **'Weight and reps body'**
   String get easyHelpWeightAndRepsBody;
 
   /// No description provided for @easyRestOverlayRest.
@@ -13776,7 +13776,7 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetBack.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet back'**
+  /// **'Back'**
   String get editProgramSheetBack;
 
   /// No description provided for @editProgramSheetChangeYourWeeklySchedule.
@@ -13794,7 +13794,7 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetContinue.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet continue'**
+  /// **'Continue'**
   String get editProgramSheetContinue;
 
   /// No description provided for @editProgramSheetCurrent.
@@ -13812,7 +13812,7 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetCustomValue.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet custom value {arg0}'**
+  /// **'Custom value {arg0}'**
   String editProgramSheetCustomValue(Object arg0);
 
   /// No description provided for @editProgramSheetCustomizeProgram.
@@ -13824,7 +13824,7 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetDays.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet days'**
+  /// **'Days'**
   String get editProgramSheetDays;
 
   /// No description provided for @editProgramSheetDaysAgo.
@@ -13848,13 +13848,13 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetDifficulty.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet difficulty'**
+  /// **'Difficulty'**
   String get editProgramSheetDifficulty;
 
   /// No description provided for @editProgramSheetDuration.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet duration'**
+  /// **'Duration'**
   String get editProgramSheetDuration;
 
   /// No description provided for @editProgramSheetEGTrainFor.
@@ -13866,13 +13866,13 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetEquipment.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet equipment'**
+  /// **'Equipment'**
   String get editProgramSheetEquipment;
 
   /// No description provided for @editProgramSheetEquipmentLabel.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet equipment label'**
+  /// **'Equipment label'**
   String get editProgramSheetEquipmentLabel;
 
   /// No description provided for @editProgramSheetExamples.
@@ -13884,37 +13884,37 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetFailedToLoadHistory.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet failed to load history {arg0}'**
+  /// **'Load history {arg0}'**
   String editProgramSheetFailedToLoadHistory(Object arg0);
 
   /// No description provided for @editProgramSheetFailedToRestore.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet failed to restore {arg0}'**
+  /// **'Restore {arg0}'**
   String editProgramSheetFailedToRestore(Object arg0);
 
   /// No description provided for @editProgramSheetFailedToUpdateProgram.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet failed to update program'**
+  /// **'Update program'**
   String get editProgramSheetFailedToUpdateProgram;
 
   /// No description provided for @editProgramSheetFocus.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet focus'**
+  /// **'Focus'**
   String get editProgramSheetFocus;
 
   /// No description provided for @editProgramSheetHealth.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet health'**
+  /// **'Health'**
   String get editProgramSheetHealth;
 
   /// No description provided for @editProgramSheetInjuries.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet injuries'**
+  /// **'Injuries'**
   String get editProgramSheetInjuries;
 
   /// No description provided for @editProgramSheetNoProgramHistoryFound.
@@ -13947,7 +13947,7 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetProgram.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet program'**
+  /// **'Program'**
   String get editProgramSheetProgram;
 
   /// No description provided for @editProgramSheetProgramHistory.
@@ -13983,13 +13983,13 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetSavingPreferences.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet saving preferences'**
+  /// **'Saving preferences'**
   String get editProgramSheetSavingPreferences;
 
   /// No description provided for @editProgramSheetSchedule.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet schedule'**
+  /// **'Schedule'**
   String get editProgramSheetSchedule;
 
   /// No description provided for @editProgramSheetSummary.
@@ -14013,7 +14013,7 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetTrainingProgram.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet training program'**
+  /// **'Training program'**
   String get editProgramSheetTrainingProgram;
 
   /// No description provided for @editProgramSheetUnknownDate.
@@ -14025,13 +14025,13 @@ abstract class AppLocalizations {
   /// No description provided for @editProgramSheetUpdateAndRegenerate.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet update and regenerate'**
+  /// **'Update and regenerate'**
   String get editProgramSheetUpdateAndRegenerate;
 
   /// No description provided for @editProgramSheetUpdating.
   ///
   /// In en, this message translates to:
-  /// **'Edit program sheet updating'**
+  /// **'Updating'**
   String get editProgramSheetUpdating;
 
   /// No description provided for @editProgramSheetWeeksAgo.
@@ -15060,7 +15060,7 @@ abstract class AppLocalizations {
   /// No description provided for @emptyStateClearFilters.
   ///
   /// In en, this message translates to:
-  /// **'Empty state clear filters'**
+  /// **'Clear filters'**
   String get emptyStateClearFilters;
 
   /// No description provided for @emptyStateCompleteYourFirstWorkout.
@@ -15072,7 +15072,7 @@ abstract class AppLocalizations {
   /// No description provided for @emptyStateCreateProgram.
   ///
   /// In en, this message translates to:
-  /// **'Empty state create program'**
+  /// **'Create program'**
   String get emptyStateCreateProgram;
 
   /// No description provided for @emptyStateNoConnection.
@@ -16080,31 +16080,31 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseAddSheetSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Exercise add sheet subtitle'**
+  /// **'Subtitle'**
   String get exerciseAddSheetSubtitle;
 
   /// No description provided for @exerciseAddSheetTabAiPicks.
   ///
   /// In en, this message translates to:
-  /// **'Exercise add sheet tab ai picks'**
+  /// **'Ai picks'**
   String get exerciseAddSheetTabAiPicks;
 
   /// No description provided for @exerciseAddSheetTabLibrary.
   ///
   /// In en, this message translates to:
-  /// **'Exercise add sheet tab library'**
+  /// **'Library'**
   String get exerciseAddSheetTabLibrary;
 
   /// No description provided for @exerciseAddSheetTabMine.
   ///
   /// In en, this message translates to:
-  /// **'Exercise add sheet tab mine'**
+  /// **'Mine'**
   String get exerciseAddSheetTabMine;
 
   /// No description provided for @exerciseAddSheetTabSnapped.
   ///
   /// In en, this message translates to:
-  /// **'Exercise add sheet tab snapped'**
+  /// **'Snapped'**
   String get exerciseAddSheetTabSnapped;
 
   /// No description provided for @exerciseAddSheetTryAgain.
@@ -16729,85 +16729,85 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseDetailsAiCoachTips.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details ai coach tips'**
+  /// **'Ai coach tips'**
   String get exerciseDetailsAiCoachTips;
 
   /// No description provided for @exerciseDetailsBodyweight.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details bodyweight'**
+  /// **'Bodyweight'**
   String get exerciseDetailsBodyweight;
 
   /// No description provided for @exerciseDetailsBreathing.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details breathing'**
+  /// **'Breathing'**
   String get exerciseDetailsBreathing;
 
   /// No description provided for @exerciseDetailsDetails.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details details'**
+  /// **'Details'**
   String get exerciseDetailsDetails;
 
   /// No description provided for @exerciseDetailsDifficulty.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details difficulty'**
+  /// **'Difficulty'**
   String get exerciseDetailsDifficulty;
 
   /// No description provided for @exerciseDetailsDontHaveEquipment.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details dont have equipment'**
+  /// **'Dont have equipment'**
   String get exerciseDetailsDontHaveEquipment;
 
   /// No description provided for @exerciseDetailsEquipment.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details equipment'**
+  /// **'Equipment'**
   String get exerciseDetailsEquipment;
 
   /// No description provided for @exerciseDetailsExerciseInfo.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details exercise info'**
+  /// **'Exercise info'**
   String get exerciseDetailsExerciseInfo;
 
   /// No description provided for @exerciseDetailsFormCues.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details form cues'**
+  /// **'Form cues'**
   String get exerciseDetailsFormCues;
 
   /// No description provided for @exerciseDetailsNotSpecified.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details not specified'**
+  /// **'Not specified'**
   String get exerciseDetailsNotSpecified;
 
   /// No description provided for @exerciseDetailsPrimaryMuscle.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details primary muscle'**
+  /// **'Primary muscle'**
   String get exerciseDetailsPrimaryMuscle;
 
   /// No description provided for @exerciseDetailsProTip.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details pro tip'**
+  /// **'Pro tip'**
   String get exerciseDetailsProTip;
 
   /// No description provided for @exerciseDetailsSecondaryMuscles.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details secondary muscles'**
+  /// **'Secondary muscles'**
   String get exerciseDetailsSecondaryMuscles;
 
   /// No description provided for @exerciseDetailsSetup.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details setup'**
+  /// **'Setup'**
   String get exerciseDetailsSetup;
 
   /// No description provided for @exerciseDetailsSheetBodyweight.
@@ -16897,19 +16897,19 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseDetailsTapVideoHint.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details tap video hint'**
+  /// **'Tap video hint'**
   String get exerciseDetailsTapVideoHint;
 
   /// No description provided for @exerciseDetailsVideo.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details video'**
+  /// **'Video'**
   String get exerciseDetailsVideo;
 
   /// No description provided for @exerciseDetailsWatchOutFor.
   ///
   /// In en, this message translates to:
-  /// **'Exercise details watch out for'**
+  /// **'Watch out for'**
   String get exerciseDetailsWatchOutFor;
 
   /// No description provided for @exerciseFilterApplyFilters.
@@ -18900,7 +18900,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseSwapOptionSwap.
   ///
   /// In en, this message translates to:
-  /// **'Exercise swap option swap'**
+  /// **'Option swap'**
   String get exerciseSwapOptionSwap;
 
   /// No description provided for @exerciseSwapSheetAiPicks.
@@ -19094,31 +19094,31 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseSwapSheetTabAnyEquipment.
   ///
   /// In en, this message translates to:
-  /// **'Exercise swap sheet tab any equipment'**
+  /// **'Any equipment'**
   String get exerciseSwapSheetTabAnyEquipment;
 
   /// No description provided for @exerciseSwapSheetTabRecent.
   ///
   /// In en, this message translates to:
-  /// **'Exercise swap sheet tab recent'**
+  /// **'Recent'**
   String get exerciseSwapSheetTabRecent;
 
   /// No description provided for @exerciseSwapSheetTabSimilar.
   ///
   /// In en, this message translates to:
-  /// **'Exercise swap sheet tab similar'**
+  /// **'Similar'**
   String get exerciseSwapSheetTabSimilar;
 
   /// No description provided for @exerciseSwapSheetTabSnapped.
   ///
   /// In en, this message translates to:
-  /// **'Exercise swap sheet tab snapped'**
+  /// **'Snapped'**
   String get exerciseSwapSheetTabSnapped;
 
   /// No description provided for @exerciseSwapSheetTitle.
   ///
   /// In en, this message translates to:
-  /// **'Exercise swap sheet title'**
+  /// **'Title'**
   String get exerciseSwapSheetTitle;
 
   /// No description provided for @exerciseSwapSheetTryAgain.
@@ -21257,13 +21257,13 @@ abstract class AppLocalizations {
   /// No description provided for @fatigueAlertAcceptSuggestion.
   ///
   /// In en, this message translates to:
-  /// **'Fatigue alert accept suggestion'**
+  /// **'Accept suggestion'**
   String get fatigueAlertAcceptSuggestion;
 
   /// No description provided for @fatigueAlertContinueAsPlanned.
   ///
   /// In en, this message translates to:
-  /// **'Fatigue alert continue as planned'**
+  /// **'Continue as planned'**
   String get fatigueAlertContinueAsPlanned;
 
   /// No description provided for @fatigueAlertModalAcceptSuggestion.
@@ -21341,7 +21341,7 @@ abstract class AppLocalizations {
   /// No description provided for @fatigueAlertStopExercise.
   ///
   /// In en, this message translates to:
-  /// **'Fatigue alert stop exercise'**
+  /// **'Stop exercise'**
   String get fatigueAlertStopExercise;
 
   /// No description provided for @favoriteExercisesFavoriteExercises.
@@ -24011,7 +24011,7 @@ abstract class AppLocalizations {
   /// No description provided for @founderNoteIUsedToLog.
   ///
   /// In en, this message translates to:
-  /// **'I used to log every meal for two weeks straight, feel proud of myself, then walk into a Thai place I couldn\'t read, eat what looked safest, and quietly stop opening the app. Three weeks later I\'d reinstall a different one, swear this was the time, and run the same loop again. Every app logged my data, none of them noticed when I went silent — they were ledgers, not coaches.'**
+  /// **'I\'ve tried every fitness app on the App Store. I\'d log every meal for two weeks straight, feel proud of myself, then quietly stop opening it a few days later. Three weeks later I\'d reinstall a different one, swear this was the time, and run the same loop again. Every app logged my data, none of them noticed when I went silent. They were ledgers, not coaches.'**
   String get founderNoteIUsedToLog;
 
   /// No description provided for @founderNoteInstagram.
@@ -24035,13 +24035,13 @@ abstract class AppLocalizations {
   /// No description provided for @founderNoteSoIBuiltThe.
   ///
   /// In en, this message translates to:
-  /// **'So I built the person, not the ledger. Snap any menu — at home or abroad — and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.'**
+  /// **'So I built the person, not the ledger. Snap any menu, it reads the macros and sorts the options by your goal. Snap your meal, it logs the plate. It builds your workouts, tracks your fasts, logs your water, and pulls you back the morning after you skip without the guilt trip. It learns your foods, your gym, your slip patterns. Less than one session with a real trainer.'**
   String get founderNoteSoIBuiltThe;
 
   /// No description provided for @founderNoteTheFriendsWhoActually.
   ///
   /// In en, this message translates to:
-  /// **'The friends who actually got lean had a person texting them. Real accountability costs about two hundred dollars a month, which is exactly why most of us never have it, and exactly why the gap between \\\"tracking\\\" and \\\"changing\\\" stays open for years.'**
+  /// **'What I actually needed was the opposite of a ledger: a real coach watching, texting, adjusting. That kind of help, a nutritionist plus a trainer who actually text you back, runs three to five hundred dollars a month. Which is exactly why most of us never have it, and exactly why the gap between tracking and changing stays open for years.'**
   String get founderNoteTheFriendsWhoActually;
 
   /// No description provided for @freshnessDecayCardAgo.
@@ -24425,13 +24425,13 @@ abstract class AppLocalizations {
   /// No description provided for @fullScreenChartCouldNotLoad.
   ///
   /// In en, this message translates to:
-  /// **'Full screen chart could not load'**
+  /// **'Could not load'**
   String get fullScreenChartCouldNotLoad;
 
   /// No description provided for @fullScreenChartNotEnoughHistory.
   ///
   /// In en, this message translates to:
-  /// **'Full screen chart not enough history'**
+  /// **'Not enough history'**
   String get fullScreenChartNotEnoughHistory;
 
   /// No description provided for @fullscreenImageViewerCouldNotLoadImage.
@@ -26031,13 +26031,13 @@ abstract class AppLocalizations {
   /// No description provided for @habitsCardCompletedCount.
   ///
   /// In en, this message translates to:
-  /// **'Habits card completed count {arg0} {arg1}'**
+  /// **'Completed count {arg0} {arg1}'**
   String habitsCardCompletedCount(Object arg0, Object arg1);
 
   /// No description provided for @habitsCardDayStreak.
   ///
   /// In en, this message translates to:
-  /// **'Habits card day streak {arg0}'**
+  /// **'Day streak {arg0}'**
   String habitsCardDayStreak(Object arg0);
 
   /// No description provided for @habitsCardFailedToLoadHabits.
@@ -26085,7 +26085,7 @@ abstract class AppLocalizations {
   /// No description provided for @habitsCardViewAllHabits.
   ///
   /// In en, this message translates to:
-  /// **'Habits card view all habits {arg0}'**
+  /// **'View all habits {arg0}'**
   String habitsCardViewAllHabits(Object arg0);
 
   /// No description provided for @habitsCompleted.
@@ -26277,7 +26277,7 @@ abstract class AppLocalizations {
   /// No description provided for @habitsTileCardNoHabits.
   ///
   /// In en, this message translates to:
-  /// **'Habits tile card no habits'**
+  /// **'No habits'**
   String get habitsTileCardNoHabits;
 
   /// No description provided for @habitsTileCardSignInToTrack.
@@ -35452,7 +35452,7 @@ abstract class AppLocalizations {
   /// No description provided for @mainShellPartChatsLeftToday.
   ///
   /// In en, this message translates to:
-  /// **'Main shell part chats left today {arg0}'**
+  /// **'Chats left today {arg0}'**
   String mainShellPartChatsLeftToday(Object arg0);
 
   /// No description provided for @mainShellPartGuestMode.
@@ -37776,7 +37776,7 @@ abstract class AppLocalizations {
   /// No description provided for @metricsDashboardBmi.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard bmi'**
+  /// **'Bmi'**
   String get metricsDashboardBmi;
 
   /// No description provided for @metricsDashboardBodyFat.
@@ -37788,13 +37788,13 @@ abstract class AppLocalizations {
   /// No description provided for @metricsDashboardBodyFatPct.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard body fat pct'**
+  /// **'Body fat pct'**
   String get metricsDashboardBodyFatPct;
 
   /// No description provided for @metricsDashboardCalories.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard calories'**
+  /// **'Calories'**
   String get metricsDashboardCalories;
 
   /// No description provided for @metricsDashboardCaloriesBurned.
@@ -37818,13 +37818,13 @@ abstract class AppLocalizations {
   /// No description provided for @metricsDashboardHeartRate.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard heart rate'**
+  /// **'Heart rate'**
   String get metricsDashboardHeartRate;
 
   /// No description provided for @metricsDashboardHip.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard hip'**
+  /// **'Hip'**
   String get metricsDashboardHip;
 
   /// No description provided for @metricsDashboardMetricType.
@@ -37836,7 +37836,7 @@ abstract class AppLocalizations {
   /// No description provided for @metricsDashboardMuscleMass.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard muscle mass'**
+  /// **'Muscle mass'**
   String get metricsDashboardMuscleMass;
 
   /// No description provided for @metricsDashboardNoDataAvailable.
@@ -37848,7 +37848,7 @@ abstract class AppLocalizations {
   /// No description provided for @metricsDashboardNoMetricDataYet.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard no metric data yet {arg0}'**
+  /// **'No metric data yet {arg0}'**
   String metricsDashboardNoMetricDataYet(Object arg0);
 
   /// No description provided for @metricsDashboardQuickStats.
@@ -37860,7 +37860,7 @@ abstract class AppLocalizations {
   /// No description provided for @metricsDashboardRestingHeartRate.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard resting heart rate'**
+  /// **'Resting heart rate'**
   String get metricsDashboardRestingHeartRate;
 
   /// No description provided for @metricsDashboardRestingHr.
@@ -37872,7 +37872,7 @@ abstract class AppLocalizations {
   /// No description provided for @metricsDashboardSave.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard save'**
+  /// **'Save'**
   String get metricsDashboardSave;
 
   /// No description provided for @metricsDashboardTotalTime.
@@ -37890,13 +37890,13 @@ abstract class AppLocalizations {
   /// No description provided for @metricsDashboardValue.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard value'**
+  /// **'Value'**
   String get metricsDashboardValue;
 
   /// No description provided for @metricsDashboardWaist.
   ///
   /// In en, this message translates to:
-  /// **'Metrics dashboard waist'**
+  /// **'Waist'**
   String get metricsDashboardWaist;
 
   /// No description provided for @metricsDashboardWeight.
@@ -38996,7 +38996,7 @@ abstract class AppLocalizations {
   /// No description provided for @muscleHeatmapTileMostTrained.
   ///
   /// In en, this message translates to:
-  /// **'Muscle heatmap tile most trained {arg0}'**
+  /// **'Most trained {arg0}'**
   String muscleHeatmapTileMostTrained(Object arg0);
 
   /// No description provided for @muscleHeatmapTileMuscles.
@@ -39008,7 +39008,7 @@ abstract class AppLocalizations {
   /// No description provided for @muscleHeatmapTileRetry.
   ///
   /// In en, this message translates to:
-  /// **'Muscle heatmap tile retry'**
+  /// **'Retry'**
   String get muscleHeatmapTileRetry;
 
   /// No description provided for @muscleHeatmapUpperBody.
@@ -40175,13 +40175,13 @@ abstract class AppLocalizations {
   /// No description provided for @neatGamificationWidgetsActiveWalker.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets active walker'**
+  /// **'Active walker'**
   String get neatGamificationWidgetsActiveWalker;
 
   /// No description provided for @neatGamificationWidgetsCasualMover.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets casual mover'**
+  /// **'Casual mover'**
   String get neatGamificationWidgetsCasualMover;
 
   /// No description provided for @neatGamificationWidgetsClaimReward.
@@ -40193,13 +40193,13 @@ abstract class AppLocalizations {
   /// No description provided for @neatGamificationWidgetsCouchPotato.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets couch potato'**
+  /// **'Couch potato'**
   String get neatGamificationWidgetsCouchPotato;
 
   /// No description provided for @neatGamificationWidgetsCurrentXp.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets current xp {arg0}'**
+  /// **'Current xp {arg0}'**
   String neatGamificationWidgetsCurrentXp(Object arg0);
 
   /// No description provided for @neatGamificationWidgetsDailyChallenge.
@@ -40211,13 +40211,13 @@ abstract class AppLocalizations {
   /// No description provided for @neatGamificationWidgetsExpired.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets expired'**
+  /// **'Expired'**
   String get neatGamificationWidgetsExpired;
 
   /// No description provided for @neatGamificationWidgetsHoursMinutesLeft.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets hours minutes left {arg0} {arg1}'**
+  /// **'Hours minutes left {arg0} {arg1}'**
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1);
 
   /// No description provided for @neatGamificationWidgetsLevel.
@@ -40241,25 +40241,25 @@ abstract class AppLocalizations {
   /// No description provided for @neatGamificationWidgetsMinutesLeft.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets minutes left {arg0}'**
+  /// **'Minutes left {arg0}'**
   String neatGamificationWidgetsMinutesLeft(Object arg0);
 
   /// No description provided for @neatGamificationWidgetsNeat.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets neat'**
+  /// **'Neat'**
   String get neatGamificationWidgetsNeat;
 
   /// No description provided for @neatGamificationWidgetsNeatChampion.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets neat champion'**
+  /// **'Champion'**
   String get neatGamificationWidgetsNeatChampion;
 
   /// No description provided for @neatGamificationWidgetsNeatEnthusiast.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets neat enthusiast'**
+  /// **'Enthusiast'**
   String get neatGamificationWidgetsNeatEnthusiast;
 
   /// No description provided for @neatGamificationWidgetsNeatPts.
@@ -40283,13 +40283,13 @@ abstract class AppLocalizations {
   /// No description provided for @neatGamificationWidgetsScore.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets score'**
+  /// **'Score'**
   String get neatGamificationWidgetsScore;
 
   /// No description provided for @neatGamificationWidgetsStepGoal.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets step goal {arg0}'**
+  /// **'Step goal {arg0}'**
   String neatGamificationWidgetsStepGoal(Object arg0);
 
   /// No description provided for @neatGamificationWidgetsSteps.
@@ -40301,7 +40301,7 @@ abstract class AppLocalizations {
   /// No description provided for @neatGamificationWidgetsTargetActiveHours.
   ///
   /// In en, this message translates to:
-  /// **'Neat gamification widgets target active hours {arg0}'**
+  /// **'Target active hours {arg0}'**
   String neatGamificationWidgetsTargetActiveHours(Object arg0);
 
   /// No description provided for @neatGamificationWidgetsU1f3c6.
@@ -43695,43 +43695,43 @@ abstract class AppLocalizations {
   /// No description provided for @openAllCratesActivityCrate.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates activity crate'**
+  /// **'Activity crate'**
   String get openAllCratesActivityCrate;
 
   /// No description provided for @openAllCratesBonusCrateToOpen.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates bonus crate to open'**
+  /// **'Bonus crate to open'**
   String get openAllCratesBonusCrateToOpen;
 
   /// No description provided for @openAllCratesCollect.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates collect {arg0} {arg1}'**
+  /// **'Collect {arg0} {arg1}'**
   String openAllCratesCollect(Object arg0, Object arg1);
 
   /// No description provided for @openAllCratesCratesOpened.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates crates opened {arg0}'**
+  /// **'Crates opened {arg0}'**
   String openAllCratesCratesOpened(Object arg0);
 
   /// No description provided for @openAllCratesDailyCrate.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates daily crate'**
+  /// **'Daily crate'**
   String get openAllCratesDailyCrate;
 
   /// No description provided for @openAllCratesDone.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates done'**
+  /// **'Done'**
   String get openAllCratesDone;
 
   /// No description provided for @openAllCratesDoubleXpToken.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates double xp token'**
+  /// **'Double xp token'**
   String get openAllCratesDoubleXpToken;
 
   /// No description provided for @openAllCratesFailedToOpenCrates.
@@ -43743,13 +43743,13 @@ abstract class AppLocalizations {
   /// No description provided for @openAllCratesFitnessCrate.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates fitness crate'**
+  /// **'Fitness crate'**
   String get openAllCratesFitnessCrate;
 
   /// No description provided for @openAllCratesGainedXp.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates gained xp {arg0}'**
+  /// **'Gained xp {arg0}'**
   String openAllCratesGainedXp(Object arg0);
 
   /// No description provided for @openAllCratesMaxLevel.
@@ -43761,7 +43761,7 @@ abstract class AppLocalizations {
   /// No description provided for @openAllCratesOpenYourCrates.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates open your crates'**
+  /// **'Open your crates'**
   String get openAllCratesOpenYourCrates;
 
   /// No description provided for @openAllCratesOpened.
@@ -43773,25 +43773,25 @@ abstract class AppLocalizations {
   /// No description provided for @openAllCratesOpeningYourCrates.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates opening your crates'**
+  /// **'Opening your crates'**
   String get openAllCratesOpeningYourCrates;
 
   /// No description provided for @openAllCratesPickRewardPerDay.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates pick reward per day {arg0} {arg1}'**
+  /// **'Pick reward per day {arg0} {arg1}'**
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1);
 
   /// No description provided for @openAllCratesPickYourReward.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates pick your reward {arg0} {arg1}'**
+  /// **'Pick your reward {arg0} {arg1}'**
   String openAllCratesPickYourReward(Object arg0, Object arg1);
 
   /// No description provided for @openAllCratesProtectYourStreak.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates protect your streak'**
+  /// **'Protect your streak'**
   String get openAllCratesProtectYourStreak;
 
   /// No description provided for @openAllCratesSelectAll.
@@ -43803,31 +43803,31 @@ abstract class AppLocalizations {
   /// No description provided for @openAllCratesStreakCrate.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates streak crate'**
+  /// **'Streak crate'**
   String get openAllCratesStreakCrate;
 
   /// No description provided for @openAllCratesStreakShield.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates streak shield'**
+  /// **'Streak shield'**
   String get openAllCratesStreakShield;
 
   /// No description provided for @openAllCratesToday.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates today'**
+  /// **'Today'**
   String get openAllCratesToday;
 
   /// No description provided for @openAllCratesTotalXpFormatted.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates total xp formatted {arg0}'**
+  /// **'Total xp formatted {arg0}'**
   String openAllCratesTotalXpFormatted(Object arg0);
 
   /// No description provided for @openAllCratesTotalXpLevel.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates total xp level {arg0} {arg1}'**
+  /// **'Total xp level {arg0} {arg1}'**
   String openAllCratesTotalXpLevel(Object arg0, Object arg1);
 
   /// No description provided for @openAllCratesUd83cUdf89Rewards.
@@ -43839,19 +43839,19 @@ abstract class AppLocalizations {
   /// No description provided for @openAllCratesXpInLevel.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates xp in level {arg0} {arg1}'**
+  /// **'Xp in level {arg0} {arg1}'**
   String openAllCratesXpInLevel(Object arg0, Object arg1);
 
   /// No description provided for @openAllCratesXpToNextLevel.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates xp to next level {arg0} {arg1}'**
+  /// **'Xp to next level {arg0} {arg1}'**
   String openAllCratesXpToNextLevel(Object arg0, Object arg1);
 
   /// No description provided for @openAllCratesYesterday.
   ///
   /// In en, this message translates to:
-  /// **'Open all crates yesterday'**
+  /// **'Yesterday'**
   String get openAllCratesYesterday;
 
   /// No description provided for @overallScoreHeroOverall.
@@ -45600,7 +45600,7 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailCouldNotLoad.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail could not load'**
+  /// **'Could not load'**
   String get pillarDetailCouldNotLoad;
 
   /// No description provided for @pillarDetailCustomTrends.
@@ -45624,7 +45624,7 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailFiveOrMoreLoggedDays.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail five or more logged days'**
+  /// **'Five or more logged days'**
   String get pillarDetailFiveOrMoreLoggedDays;
 
   /// No description provided for @pillarDetailHeatmap30d.
@@ -45636,13 +45636,13 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailHourlyActivityRibbon.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail hourly activity ribbon'**
+  /// **'Hourly activity ribbon'**
   String get pillarDetailHourlyActivityRibbon;
 
   /// No description provided for @pillarDetailHourlyActivityRibbonBody.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail hourly activity ribbon body'**
+  /// **'Hourly activity ribbon body'**
   String get pillarDetailHourlyActivityRibbonBody;
 
   /// No description provided for @pillarDetailIntensity.
@@ -45660,31 +45660,31 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailLogged.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail logged'**
+  /// **'Logged'**
   String get pillarDetailLogged;
 
   /// No description provided for @pillarDetailMacroStream.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail macro stream'**
+  /// **'Macro stream'**
   String get pillarDetailMacroStream;
 
   /// No description provided for @pillarDetailMacroStreamBody.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail macro stream body'**
+  /// **'Macro stream body'**
   String get pillarDetailMacroStreamBody;
 
   /// No description provided for @pillarDetailNoHistoryYet.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail no history yet'**
+  /// **'No history yet'**
   String get pillarDetailNoHistoryYet;
 
   /// No description provided for @pillarDetailOpenActivity.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail open activity'**
+  /// **'Activity'**
   String get pillarDetailOpenActivity;
 
   /// No description provided for @pillarDetailOpenFullScreen.
@@ -45696,7 +45696,7 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailOpenNutrition.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail open nutrition'**
+  /// **'Nutrition'**
   String get pillarDetailOpenNutrition;
 
   /// No description provided for @pillarDetailOpenSleep.
@@ -45708,13 +45708,13 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailOpenWorkouts.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail open workouts'**
+  /// **'Workouts'**
   String get pillarDetailOpenWorkouts;
 
   /// No description provided for @pillarDetailPending.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail pending'**
+  /// **'Pending'**
   String get pillarDetailPending;
 
   /// No description provided for @pillarDetailProteinHit.
@@ -45762,19 +45762,19 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailSetAGoal.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail set a goal'**
+  /// **'Set a goal'**
   String get pillarDetailSetAGoal;
 
   /// No description provided for @pillarDetailSleepStages.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail sleep stages'**
+  /// **'Sleep stages'**
   String get pillarDetailSleepStages;
 
   /// No description provided for @pillarDetailSleepStagesBody.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail sleep stages body'**
+  /// **'Sleep stages body'**
   String get pillarDetailSleepStagesBody;
 
   /// No description provided for @pillarDetailSparkline7d.
@@ -45804,7 +45804,7 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailTwoOrMoreLoggedDays.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail two or more logged days'**
+  /// **'Two or more logged days'**
   String get pillarDetailTwoOrMoreLoggedDays;
 
   /// No description provided for @pillarDetailVariety.
@@ -45816,7 +45816,7 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailViewFullStats.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail view full stats'**
+  /// **'View full stats'**
   String get pillarDetailViewFullStats;
 
   /// No description provided for @pillarDetailVolume.
@@ -45828,13 +45828,13 @@ abstract class AppLocalizations {
   /// No description provided for @pillarDetailWhenYouTrain.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail when you train'**
+  /// **'When you train'**
   String get pillarDetailWhenYouTrain;
 
   /// No description provided for @pillarDetailWhenYouTrainBody.
   ///
   /// In en, this message translates to:
-  /// **'Pillar detail when you train body'**
+  /// **'When you train body'**
   String get pillarDetailWhenYouTrainBody;
 
   /// No description provided for @pinnedMessageBarN.
@@ -45954,7 +45954,7 @@ abstract class AppLocalizations {
   /// No description provided for @planPreviewScreenBuildStrengthFoundation.
   ///
   /// In en, this message translates to:
-  /// **'Plan preview screen build strength foundation'**
+  /// **'Build strength foundation'**
   String get planPreviewScreenBuildStrengthFoundation;
 
   /// No description provided for @planPreviewScreenBuildingYour4Week.
@@ -45972,7 +45972,7 @@ abstract class AppLocalizations {
   /// No description provided for @planPreviewScreenDaysPerWeek.
   ///
   /// In en, this message translates to:
-  /// **'Plan preview screen days per week {arg0}'**
+  /// **'Days per week {arg0}'**
   String planPreviewScreenDaysPerWeek(Object arg0);
 
   /// No description provided for @planPreviewScreenDesignedBasedOnYour.
@@ -45984,31 +45984,31 @@ abstract class AppLocalizations {
   /// No description provided for @planPreviewScreenEquipmentCount.
   ///
   /// In en, this message translates to:
-  /// **'Plan preview screen equipment count {arg0}'**
+  /// **'Equipment count {arg0}'**
   String planPreviewScreenEquipmentCount(Object arg0);
 
   /// No description provided for @planPreviewScreenExercisesMin.
   ///
   /// In en, this message translates to:
-  /// **'Plan preview screen exercises min {arg0} {arg1}'**
+  /// **'Exercises min {arg0} {arg1}'**
   String planPreviewScreenExercisesMin(Object arg0, Object arg1);
 
   /// No description provided for @planPreviewScreenIncreaseIntensityVolume.
   ///
   /// In en, this message translates to:
-  /// **'Plan preview screen increase intensity volume'**
+  /// **'Increase intensity volume'**
   String get planPreviewScreenIncreaseIntensityVolume;
 
   /// No description provided for @planPreviewScreenMasterTheMovement.
   ///
   /// In en, this message translates to:
-  /// **'Plan preview screen master the movement'**
+  /// **'Master the movement'**
   String get planPreviewScreenMasterTheMovement;
 
   /// No description provided for @planPreviewScreenPeakPerformanceWeek.
   ///
   /// In en, this message translates to:
-  /// **'Plan preview screen peak performance week'**
+  /// **'Peak performance week'**
   String get planPreviewScreenPeakPerformanceWeek;
 
   /// No description provided for @planPreviewScreenSetsreps.
@@ -46044,7 +46044,7 @@ abstract class AppLocalizations {
   /// No description provided for @planPreviewScreenWeekNumber.
   ///
   /// In en, this message translates to:
-  /// **'Plan preview screen week number {arg0}'**
+  /// **'Week number {arg0}'**
   String planPreviewScreenWeekNumber(Object arg0);
 
   /// No description provided for @planPreviewScreenWhatYouLlAchieve.
@@ -46774,7 +46774,7 @@ abstract class AppLocalizations {
   /// No description provided for @preAuthQuizSkipAndFinish.
   ///
   /// In en, this message translates to:
-  /// **'Pre auth quiz skip and finish'**
+  /// **'Skip and finish'**
   String get preAuthQuizSkipAndFinish;
 
   /// No description provided for @preAuthQuizSkipLetAiDecide.
@@ -47626,37 +47626,37 @@ abstract class AppLocalizations {
   /// No description provided for @programMetaApplyStaples.
   ///
   /// In en, this message translates to:
-  /// **'Program meta apply staples'**
+  /// **'Apply staples'**
   String get programMetaApplyStaples;
 
   /// No description provided for @programMetaApplyStaplesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Program meta apply staples subtitle'**
+  /// **'Apply staples subtitle'**
   String get programMetaApplyStaplesSubtitle;
 
   /// No description provided for @programMetaDeloadEvery.
   ///
   /// In en, this message translates to:
-  /// **'Program meta deload every'**
+  /// **'Deload every'**
   String get programMetaDeloadEvery;
 
   /// No description provided for @programMetaFixedLoadsNote.
   ///
   /// In en, this message translates to:
-  /// **'Program meta fixed loads note'**
+  /// **'Fixed loads note'**
   String get programMetaFixedLoadsNote;
 
   /// No description provided for @programMetaProgramSettings.
   ///
   /// In en, this message translates to:
-  /// **'Program meta program settings'**
+  /// **'Program settings'**
   String get programMetaProgramSettings;
 
   /// No description provided for @programMetaProgression.
   ///
   /// In en, this message translates to:
-  /// **'Program meta progression'**
+  /// **'Progression'**
   String get programMetaProgression;
 
   /// No description provided for @programSummaryAdaptsWorkoutsBasedOn.
@@ -47668,7 +47668,7 @@ abstract class AppLocalizations {
   /// No description provided for @programSummaryAdvancedLabel.
   ///
   /// In en, this message translates to:
-  /// **'Program summary advanced label'**
+  /// **'Advanced label'**
   String get programSummaryAdvancedLabel;
 
   /// No description provided for @programSummaryAutomaticallyIncreasesChalle.
@@ -47686,25 +47686,25 @@ abstract class AppLocalizations {
   /// No description provided for @programSummaryBeginnerLabel.
   ///
   /// In en, this message translates to:
-  /// **'Program summary beginner label'**
+  /// **'Beginner label'**
   String get programSummaryBeginnerLabel;
 
   /// No description provided for @programSummaryBodyweight.
   ///
   /// In en, this message translates to:
-  /// **'Program summary bodyweight'**
+  /// **'Bodyweight'**
   String get programSummaryBodyweight;
 
   /// No description provided for @programSummaryBuildMuscle.
   ///
   /// In en, this message translates to:
-  /// **'Program summary build muscle'**
+  /// **'Build muscle'**
   String get programSummaryBuildMuscle;
 
   /// No description provided for @programSummaryEndurance.
   ///
   /// In en, this message translates to:
-  /// **'Program summary endurance'**
+  /// **'Endurance'**
   String get programSummaryEndurance;
 
   /// No description provided for @programSummaryEquipment.
@@ -47716,13 +47716,13 @@ abstract class AppLocalizations {
   /// No description provided for @programSummaryFullGym.
   ///
   /// In en, this message translates to:
-  /// **'Program summary full gym'**
+  /// **'Full gym'**
   String get programSummaryFullGym;
 
   /// No description provided for @programSummaryGeneralFitness.
   ///
   /// In en, this message translates to:
-  /// **'Program summary general fitness'**
+  /// **'General fitness'**
   String get programSummaryGeneralFitness;
 
   /// No description provided for @programSummaryGenerateNewProgram.
@@ -47734,7 +47734,7 @@ abstract class AppLocalizations {
   /// No description provided for @programSummaryGetStronger.
   ///
   /// In en, this message translates to:
-  /// **'Program summary get stronger'**
+  /// **'Get stronger'**
   String get programSummaryGetStronger;
 
   /// No description provided for @programSummaryInjuryAwareness.
@@ -47746,7 +47746,7 @@ abstract class AppLocalizations {
   /// No description provided for @programSummaryIntermediateLabel.
   ///
   /// In en, this message translates to:
-  /// **'Program summary intermediate label'**
+  /// **'Intermediate label'**
   String get programSummaryIntermediateLabel;
 
   /// No description provided for @programSummaryLevel.
@@ -47758,7 +47758,7 @@ abstract class AppLocalizations {
   /// No description provided for @programSummaryLoseWeight.
   ///
   /// In en, this message translates to:
-  /// **'Program summary lose weight'**
+  /// **'Lose weight'**
   String get programSummaryLoseWeight;
 
   /// No description provided for @programSummaryMacrosAndMealsAligned.
@@ -47770,7 +47770,7 @@ abstract class AppLocalizations {
   /// No description provided for @programSummaryNItems.
   ///
   /// In en, this message translates to:
-  /// **'Program summary n items {arg0}'**
+  /// **'N items {arg0}'**
   String programSummaryNItems(Object arg0);
 
   /// No description provided for @programSummaryNutritionIntegration.
@@ -47800,13 +47800,13 @@ abstract class AppLocalizations {
   /// No description provided for @programSummaryStayFit.
   ///
   /// In en, this message translates to:
-  /// **'Program summary stay fit'**
+  /// **'Stay fit'**
   String get programSummaryStayFit;
 
   /// No description provided for @programSummaryStrengthSize.
   ///
   /// In en, this message translates to:
-  /// **'Program summary strength size'**
+  /// **'Strength size'**
   String get programSummaryStrengthSize;
 
   /// No description provided for @programSummaryWhatSIncluded.
@@ -48940,13 +48940,13 @@ abstract class AppLocalizations {
   /// No description provided for @progressionSelectorSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Progression selector subtitle'**
+  /// **'Subtitle'**
   String get progressionSelectorSubtitle;
 
   /// No description provided for @progressionSelectorTitle.
   ///
   /// In en, this message translates to:
-  /// **'Progression selector title'**
+  /// **'Title'**
   String get progressionSelectorTitle;
 
   /// No description provided for @progressionSelectorWhenToUse.
@@ -49853,7 +49853,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickLogMeasurementsNotLoggedYet.
   ///
   /// In en, this message translates to:
-  /// **'Quick log measurements not logged yet'**
+  /// **'Not logged yet'**
   String get quickLogMeasurementsNotLoggedYet;
 
   /// No description provided for @quickLogMeasurementsPleaseSignInTo.
@@ -49883,19 +49883,19 @@ abstract class AppLocalizations {
   /// No description provided for @quickLogMeasurementsUpdatedDaysAgo.
   ///
   /// In en, this message translates to:
-  /// **'Quick log measurements updated days ago {arg0}'**
+  /// **'Days ago {arg0}'**
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0);
 
   /// No description provided for @quickLogMeasurementsUpdatedToday.
   ///
   /// In en, this message translates to:
-  /// **'Quick log measurements updated today'**
+  /// **'Today'**
   String get quickLogMeasurementsUpdatedToday;
 
   /// No description provided for @quickLogMeasurementsUpdatedYesterday.
   ///
   /// In en, this message translates to:
-  /// **'Quick log measurements updated yesterday'**
+  /// **'Yesterday'**
   String get quickLogMeasurementsUpdatedYesterday;
 
   /// No description provided for @quickLogMeasurementsWaist.
@@ -50147,7 +50147,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickWorkoutDuration.
   ///
   /// In en, this message translates to:
-  /// **'Quick workout duration'**
+  /// **'Duration'**
   String get quickWorkoutDuration;
 
   /// No description provided for @quickWorkoutFavorite.
@@ -50165,7 +50165,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickWorkoutFocusOptional.
   ///
   /// In en, this message translates to:
-  /// **'Quick workout focus optional'**
+  /// **'Focus optional'**
   String get quickWorkoutFocusOptional;
 
   /// No description provided for @quickWorkoutNoSuggestions.
@@ -50414,7 +50414,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickWorkoutSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Quick workout subtitle'**
+  /// **'Subtitle'**
   String get quickWorkoutSubtitle;
 
   /// No description provided for @quickWorkoutTapToAddPairs.
@@ -50426,7 +50426,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickWorkoutTitle.
   ///
   /// In en, this message translates to:
-  /// **'Quick workout title'**
+  /// **'Title'**
   String get quickWorkoutTitle;
 
   /// No description provided for @quickWorkoutUnfavorite.
@@ -50639,7 +50639,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizDaysSelectorBest.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector best'**
+  /// **'Best'**
   String get quizDaysSelectorBest;
 
   /// No description provided for @quizDaysSelectorConsistencyBeatsIntensity.
@@ -50651,13 +50651,13 @@ abstract class AppLocalizations {
   /// No description provided for @quizDaysSelectorDays.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector days {arg0}'**
+  /// **'Days {arg0}'**
   String quizDaysSelectorDays(Object arg0);
 
   /// No description provided for @quizDaysSelectorDaysSelected.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector days selected {arg0} {arg1}'**
+  /// **'Days selected {arg0} {arg1}'**
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1);
 
   /// No description provided for @quizDaysSelectorForYourWorkouts.
@@ -50669,7 +50669,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizDaysSelectorFri.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector fri'**
+  /// **'Fri'**
   String get quizDaysSelectorFri;
 
   /// No description provided for @quizDaysSelectorHowLongAreYour.
@@ -50687,49 +50687,49 @@ abstract class AppLocalizations {
   /// No description provided for @quizDaysSelectorMin.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector min'**
+  /// **'Min'**
   String get quizDaysSelectorMin;
 
   /// No description provided for @quizDaysSelectorMon.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector mon'**
+  /// **'Mon'**
   String get quizDaysSelectorMon;
 
   /// No description provided for @quizDaysSelectorSat.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector sat'**
+  /// **'Sat'**
   String get quizDaysSelectorSat;
 
   /// No description provided for @quizDaysSelectorSelectNDays.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector select n days {arg0}'**
+  /// **'Select n days {arg0}'**
   String quizDaysSelectorSelectNDays(Object arg0);
 
   /// No description provided for @quizDaysSelectorSun.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector sun'**
+  /// **'Sun'**
   String get quizDaysSelectorSun;
 
   /// No description provided for @quizDaysSelectorThu.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector thu'**
+  /// **'Thu'**
   String get quizDaysSelectorThu;
 
   /// No description provided for @quizDaysSelectorTue.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector tue'**
+  /// **'Tue'**
   String get quizDaysSelectorTue;
 
   /// No description provided for @quizDaysSelectorWed.
   ///
   /// In en, this message translates to:
-  /// **'Quiz days selector wed'**
+  /// **'Wed'**
   String get quizDaysSelectorWed;
 
   /// No description provided for @quizDaysSelectorWhichDaysWorkBest.
@@ -50747,7 +50747,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentBarbell.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment barbell'**
+  /// **'Barbell'**
   String get quizEquipmentBarbell;
 
   /// No description provided for @quizEquipmentBodyweightBands.
@@ -50777,7 +50777,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentCableMachine.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment cable machine'**
+  /// **'Cable machine'**
   String get quizEquipmentCableMachine;
 
   /// No description provided for @quizEquipmentCouldnTLoadIdentified.
@@ -50819,13 +50819,13 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentEnablesChestPress.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment enables chest press'**
+  /// **'Enables chest press'**
   String get quizEquipmentEnablesChestPress;
 
   /// No description provided for @quizEquipmentFlatBench.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment flat bench'**
+  /// **'Flat bench'**
   String get quizEquipmentFlatBench;
 
   /// No description provided for @quizEquipmentFullGym.
@@ -50837,7 +50837,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentFullGymAccess.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment full gym access'**
+  /// **'Gym access'**
   String get quizEquipmentFullGymAccess;
 
   /// No description provided for @quizEquipmentFullGymWithMachines.
@@ -50855,7 +50855,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentHome.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment home'**
+  /// **'Home'**
   String get quizEquipmentHome;
 
   /// No description provided for @quizEquipmentHomeDumbbellsBench.
@@ -50885,7 +50885,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentIdentifiedCount.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment identified count {arg0}'**
+  /// **'Identified count {arg0}'**
   String quizEquipmentIdentifiedCount(Object arg0);
 
   /// No description provided for @quizEquipmentKettlebell.
@@ -50897,7 +50897,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentMedicineBall.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment medicine ball'**
+  /// **'Medicine ball'**
   String get quizEquipmentMedicineBall;
 
   /// No description provided for @quizEquipmentMinimalEquipmentBodyweight.
@@ -50909,7 +50909,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentNeededForBarbell.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment needed for barbell'**
+  /// **'Needed for barbell'**
   String get quizEquipmentNeededForBarbell;
 
   /// No description provided for @quizEquipmentNoEquipmentIdentifiedPick.
@@ -50921,19 +50921,19 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentOtherCount.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment other count {arg0}'**
+  /// **'Other count {arg0}'**
   String quizEquipmentOtherCount(Object arg0);
 
   /// No description provided for @quizEquipmentOtherEquipment.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment other equipment'**
+  /// **'Other equipment'**
   String get quizEquipmentOtherEquipment;
 
   /// No description provided for @quizEquipmentPullUpBar.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment pull up bar'**
+  /// **'Pull up bar'**
   String get quizEquipmentPullUpBar;
 
   /// No description provided for @quizEquipmentQuickPresets.
@@ -50957,7 +50957,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentResistanceBands.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment resistance bands'**
+  /// **'Resistance bands'**
   String get quizEquipmentResistanceBands;
 
   /// No description provided for @quizEquipmentSelectAllThatApply.
@@ -50975,7 +50975,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentSquatRack.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment squat rack'**
+  /// **'Squat rack'**
   String get quizEquipmentSquatRack;
 
   /// No description provided for @quizEquipmentTakeAFewPhotos.
@@ -50993,7 +50993,7 @@ abstract class AppLocalizations {
   /// No description provided for @quizEquipmentTrxSuspension.
   ///
   /// In en, this message translates to:
-  /// **'Quiz equipment trx suspension'**
+  /// **'Trx suspension'**
   String get quizEquipmentTrxSuspension;
 
   /// No description provided for @quizEquipmentU1f3e0.
@@ -51233,13 +51233,13 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelAdvanced.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level advanced'**
+  /// **'Advanced'**
   String get quizFitnessLevelAdvanced;
 
   /// No description provided for @quizFitnessLevelAdvancedDesc.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level advanced desc'**
+  /// **'Advanced desc'**
   String get quizFitnessLevelAdvancedDesc;
 
   /// No description provided for @quizFitnessLevelBeHonestWeLl.
@@ -51251,25 +51251,25 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelBeginner.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level beginner'**
+  /// **'Beginner'**
   String get quizFitnessLevelBeginner;
 
   /// No description provided for @quizFitnessLevelBeginnerDesc.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level beginner desc'**
+  /// **'Beginner desc'**
   String get quizFitnessLevelBeginnerDesc;
 
   /// No description provided for @quizFitnessLevelBrandNewToLifting.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level brand new to lifting'**
+  /// **'Brand new to lifting'**
   String get quizFitnessLevelBrandNewToLifting;
 
   /// No description provided for @quizFitnessLevelBuildingConsistency.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level building consistency'**
+  /// **'Building consistency'**
   String get quizFitnessLevelBuildingConsistency;
 
   /// No description provided for @quizFitnessLevelDailyActivityLevelOutside.
@@ -51293,19 +51293,19 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelIntermediate.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level intermediate'**
+  /// **'Intermediate'**
   String get quizFitnessLevelIntermediate;
 
   /// No description provided for @quizFitnessLevelIntermediateDesc.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level intermediate desc'**
+  /// **'Intermediate desc'**
   String get quizFitnessLevelIntermediateDesc;
 
   /// No description provided for @quizFitnessLevelJustGettingStarted.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level just getting started'**
+  /// **'Just getting started'**
   String get quizFitnessLevelJustGettingStarted;
 
   /// No description provided for @quizFitnessLevelLessThan6Months.
@@ -51317,49 +51317,49 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelLight.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level light'**
+  /// **'Light'**
   String get quizFitnessLevelLight;
 
   /// No description provided for @quizFitnessLevelLightDesc.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level light desc'**
+  /// **'Light desc'**
   String get quizFitnessLevelLightDesc;
 
   /// No description provided for @quizFitnessLevelModerate.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level moderate'**
+  /// **'Moderate'**
   String get quizFitnessLevelModerate;
 
   /// No description provided for @quizFitnessLevelModerateDesc.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level moderate desc'**
+  /// **'Moderate desc'**
   String get quizFitnessLevelModerateDesc;
 
   /// No description provided for @quizFitnessLevelNever.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level never'**
+  /// **'Never'**
   String get quizFitnessLevelNever;
 
   /// No description provided for @quizFitnessLevelSedentary.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level sedentary'**
+  /// **'Sedentary'**
   String get quizFitnessLevelSedentary;
 
   /// No description provided for @quizFitnessLevelSedentaryDesc.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level sedentary desc'**
+  /// **'Sedentary desc'**
   String get quizFitnessLevelSedentaryDesc;
 
   /// No description provided for @quizFitnessLevelSolidFoundation.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level solid foundation'**
+  /// **'Solid foundation'**
   String get quizFitnessLevelSolidFoundation;
 
   /// No description provided for @quizFitnessLevelThisHelpsUsPick.
@@ -51371,19 +51371,19 @@ abstract class AppLocalizations {
   /// No description provided for @quizFitnessLevelVeryActive.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level very active'**
+  /// **'Very active'**
   String get quizFitnessLevelVeryActive;
 
   /// No description provided for @quizFitnessLevelVeryActiveDesc.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level very active desc'**
+  /// **'Very active desc'**
   String get quizFitnessLevelVeryActiveDesc;
 
   /// No description provided for @quizFitnessLevelVeteranLifter.
   ///
   /// In en, this message translates to:
-  /// **'Quiz fitness level veteran lifter'**
+  /// **'Veteran lifter'**
   String get quizFitnessLevelVeteranLifter;
 
   /// No description provided for @quizFitnessLevelWhatSYourCurrent.
@@ -51419,37 +51419,37 @@ abstract class AppLocalizations {
   /// No description provided for @quizMotivationBeHealthierOverall.
   ///
   /// In en, this message translates to:
-  /// **'Quiz motivation be healthier overall'**
+  /// **'Be healthier overall'**
   String get quizMotivationBeHealthierOverall;
 
   /// No description provided for @quizMotivationBuildConfidence.
   ///
   /// In en, this message translates to:
-  /// **'Quiz motivation build confidence'**
+  /// **'Build confidence'**
   String get quizMotivationBuildConfidence;
 
   /// No description provided for @quizMotivationFeelStronger.
   ///
   /// In en, this message translates to:
-  /// **'Quiz motivation feel stronger'**
+  /// **'Feel stronger'**
   String get quizMotivationFeelStronger;
 
   /// No description provided for @quizMotivationHaveMoreEnergy.
   ///
   /// In en, this message translates to:
-  /// **'Quiz motivation have more energy'**
+  /// **'Have more energy'**
   String get quizMotivationHaveMoreEnergy;
 
   /// No description provided for @quizMotivationImproveMentalHealth.
   ///
   /// In en, this message translates to:
-  /// **'Quiz motivation improve mental health'**
+  /// **'Improve mental health'**
   String get quizMotivationImproveMentalHealth;
 
   /// No description provided for @quizMotivationLookBetter.
   ///
   /// In en, this message translates to:
-  /// **'Quiz motivation look better'**
+  /// **'Look better'**
   String get quizMotivationLookBetter;
 
   /// No description provided for @quizMotivationSelectAllThatResonate.
@@ -51461,13 +51461,13 @@ abstract class AppLocalizations {
   /// No description provided for @quizMotivationSleepBetter.
   ///
   /// In en, this message translates to:
-  /// **'Quiz motivation sleep better'**
+  /// **'Sleep better'**
   String get quizMotivationSleepBetter;
 
   /// No description provided for @quizMotivationSportsPerformance.
   ///
   /// In en, this message translates to:
-  /// **'Quiz motivation sports performance'**
+  /// **'Sports performance'**
   String get quizMotivationSportsPerformance;
 
   /// No description provided for @quizMotivationWhatSDrivingYou.
@@ -53906,7 +53906,7 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetAddingVariety.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet adding variety'**
+  /// **'Adding variety'**
   String get regenerateSheetAddingVariety;
 
   /// No description provided for @regenerateSheetAiGenerationTakes.
@@ -53942,25 +53942,25 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetApplyThisWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet apply this workout'**
+  /// **'Apply this workout'**
   String get regenerateSheetApplyThisWorkout;
 
   /// No description provided for @regenerateSheetBalancingMuscleGroups.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet balancing muscle groups'**
+  /// **'Balancing muscle groups'**
   String get regenerateSheetBalancingMuscleGroups;
 
   /// No description provided for @regenerateSheetBootingUpTheAi.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet booting up the ai'**
+  /// **'Booting up the ai'**
   String get regenerateSheetBootingUpTheAi;
 
   /// No description provided for @regenerateSheetBuildingYourPlan.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet building your plan'**
+  /// **'Building your plan'**
   String get regenerateSheetBuildingYourPlan;
 
   /// No description provided for @regenerateSheetBuildingYourWorkout.
@@ -53978,19 +53978,19 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetCheckingPreferences.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet checking preferences'**
+  /// **'Checking preferences'**
   String get regenerateSheetCheckingPreferences;
 
   /// No description provided for @regenerateSheetConnectingToTheAi.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet connecting to the ai'**
+  /// **'Connecting to the ai'**
   String get regenerateSheetConnectingToTheAi;
 
   /// No description provided for @regenerateSheetConsideringFocusAreas.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet considering focus areas'**
+  /// **'Considering focus areas'**
   String get regenerateSheetConsideringFocusAreas;
 
   /// No description provided for @regenerateSheetCustomize.
@@ -54008,7 +54008,7 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetCustomizeOrLetAiSuggest.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet customize or let ai suggest'**
+  /// **'Customize or let ai suggest'**
   String get regenerateSheetCustomizeOrLetAiSuggest;
 
   /// No description provided for @regenerateSheetDescribeYourIdealWorkout.
@@ -54020,13 +54020,13 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetDesigningYourWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet designing your workout'**
+  /// **'Designing your workout'**
   String get regenerateSheetDesigningYourWorkout;
 
   /// No description provided for @regenerateSheetDialingInSetsAndReps.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet dialing in sets and reps'**
+  /// **'Dialing in sets and reps'**
   String get regenerateSheetDialingInSetsAndReps;
 
   /// No description provided for @regenerateSheetDoThisToday.
@@ -54038,7 +54038,7 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetEnterAPrompt.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet enter a prompt'**
+  /// **'Enter a prompt'**
   String get regenerateSheetEnterAPrompt;
 
   /// No description provided for @regenerateSheetEnterAPromptAbove.
@@ -54050,13 +54050,13 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetFilteringByEquipment.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet filtering by equipment'**
+  /// **'Filtering by equipment'**
   String get regenerateSheetFilteringByEquipment;
 
   /// No description provided for @regenerateSheetFilteringByYourEquipment.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet filtering by your equipment'**
+  /// **'Filtering by your equipment'**
   String get regenerateSheetFilteringByYourEquipment;
 
   /// No description provided for @regenerateSheetFinalizingDetails.
@@ -54068,19 +54068,19 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetFinalizingYourWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet finalizing your workout'**
+  /// **'Finalizing your workout'**
   String get regenerateSheetFinalizingYourWorkout;
 
   /// No description provided for @regenerateSheetFineTuningTheDetails.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet fine tuning the details'**
+  /// **'Fine tuning the details'**
   String get regenerateSheetFineTuningTheDetails;
 
   /// No description provided for @regenerateSheetGeneratingElapsed.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet generating elapsed {arg0}'**
+  /// **'Generating elapsed {arg0}'**
   String regenerateSheetGeneratingElapsed(Object arg0);
 
   /// No description provided for @regenerateSheetGeneratingSuggestions.
@@ -54104,7 +54104,7 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetGettingReady.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet getting ready'**
+  /// **'Getting ready'**
   String get regenerateSheetGettingReady;
 
   /// No description provided for @regenerateSheetHoldingYourSchedule.
@@ -54128,31 +54128,31 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetLoadingInjuriesAndGoals.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet loading injuries and goals'**
+  /// **'Injuries and goals'**
   String get regenerateSheetLoadingInjuriesAndGoals;
 
   /// No description provided for @regenerateSheetLoadingPreferences.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet loading preferences'**
+  /// **'Preferences'**
   String get regenerateSheetLoadingPreferences;
 
   /// No description provided for @regenerateSheetLoadingYourProfile.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet loading your profile'**
+  /// **'Your profile'**
   String get regenerateSheetLoadingYourProfile;
 
   /// No description provided for @regenerateSheetMatchingIntensity.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet matching intensity'**
+  /// **'Matching intensity'**
   String get regenerateSheetMatchingIntensity;
 
   /// No description provided for @regenerateSheetMatchingYourFitnessLevel.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet matching your fitness level'**
+  /// **'Matching your fitness level'**
   String get regenerateSheetMatchingYourFitnessLevel;
 
   /// No description provided for @regenerateSheetNoSuggestionsYet.
@@ -54170,7 +54170,7 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetPairingPushAndPull.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet pairing push and pull'**
+  /// **'Pairing push and pull'**
   String get regenerateSheetPairingPushAndPull;
 
   /// No description provided for @regenerateSheetPersonalizingExercises.
@@ -54182,31 +54182,31 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetPickingYourExercises.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet picking your exercises'**
+  /// **'Picking your exercises'**
   String get regenerateSheetPickingYourExercises;
 
   /// No description provided for @regenerateSheetPreparingYourRequest.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet preparing your request'**
+  /// **'Preparing your request'**
   String get regenerateSheetPreparingYourRequest;
 
   /// No description provided for @regenerateSheetPrimingTheEngine.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet priming the engine'**
+  /// **'Priming the engine'**
   String get regenerateSheetPrimingTheEngine;
 
   /// No description provided for @regenerateSheetPullingYourGoals.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet pulling your goals'**
+  /// **'Pulling your goals'**
   String get regenerateSheetPullingYourGoals;
 
   /// No description provided for @regenerateSheetReadingYourProfile.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet reading your profile'**
+  /// **'Reading your profile'**
   String get regenerateSheetReadingYourProfile;
 
   /// No description provided for @regenerateSheetRegenerateCurrentWorkout.
@@ -54218,7 +54218,7 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetRegenerateWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet regenerate workout'**
+  /// **'Regenerate workout'**
   String get regenerateSheetRegenerateWorkout;
 
   /// No description provided for @regenerateSheetRegenerationComplete.
@@ -54236,13 +54236,13 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetRespectingYourInjuryList.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet respecting your injury list'**
+  /// **'Respecting your injury list'**
   String get regenerateSheetRespectingYourInjuryList;
 
   /// No description provided for @regenerateSheetRestoredFromLastRegen.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet restored from last regen'**
+  /// **'Restored from last regen'**
   String get regenerateSheetRestoredFromLastRegen;
 
   /// No description provided for @regenerateSheetRestoredFromLastRegeneration.
@@ -54254,13 +54254,13 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetSavingToYourPlan.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet saving to your plan'**
+  /// **'Saving to your plan'**
   String get regenerateSheetSavingToYourPlan;
 
   /// No description provided for @regenerateSheetScanningTheExerciseLibrary.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet scanning the exercise library'**
+  /// **'Scanning the exercise library'**
   String get regenerateSheetScanningTheExerciseLibrary;
 
   /// No description provided for @regenerateSheetSchedulingYourWorkout.
@@ -54272,13 +54272,13 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetSequencingCompoundLifts.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet sequencing compound lifts'**
+  /// **'Sequencing compound lifts'**
   String get regenerateSheetSequencingCompoundLifts;
 
   /// No description provided for @regenerateSheetShapingTheSession.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet shaping the session'**
+  /// **'Shaping the session'**
   String get regenerateSheetShapingTheSession;
 
   /// No description provided for @regenerateSheetStartingRegeneration.
@@ -54302,19 +54302,19 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetTodayNotInUsualDays.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet today not in usual days'**
+  /// **'Today not in usual days'**
   String get regenerateSheetTodayNotInUsualDays;
 
   /// No description provided for @regenerateSheetTuningRestPeriods.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet tuning rest periods'**
+  /// **'Tuning rest periods'**
   String get regenerateSheetTuningRestPeriods;
 
   /// No description provided for @regenerateSheetUpdatingYourSchedule.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet updating your schedule'**
+  /// **'Updating your schedule'**
   String get regenerateSheetUpdatingYourSchedule;
 
   /// No description provided for @regenerateSheetUseThisSuggestion.
@@ -54326,7 +54326,7 @@ abstract class AppLocalizations {
   /// No description provided for @regenerateSheetWarmingUp.
   ///
   /// In en, this message translates to:
-  /// **'Regenerate sheet warming up'**
+  /// **'Warming up'**
   String get regenerateSheetWarmingUp;
 
   /// No description provided for @regenerateSheetWhen.
@@ -55401,13 +55401,13 @@ abstract class AppLocalizations {
   /// No description provided for @restSuggestionAiRestCoach.
   ///
   /// In en, this message translates to:
-  /// **'Rest suggestion ai rest coach'**
+  /// **'Ai rest coach'**
   String get restSuggestionAiRestCoach;
 
   /// No description provided for @restSuggestionCalculatingOptimalRestTime.
   ///
   /// In en, this message translates to:
-  /// **'Rest suggestion calculating optimal rest time'**
+  /// **'Calculating optimal rest time'**
   String get restSuggestionCalculatingOptimalRestTime;
 
   /// No description provided for @restSuggestionCardAiRestCoach.
@@ -55443,31 +55443,31 @@ abstract class AppLocalizations {
   /// No description provided for @restSuggestionQuick.
   ///
   /// In en, this message translates to:
-  /// **'Rest suggestion quick'**
+  /// **'Quick'**
   String get restSuggestionQuick;
 
   /// No description provided for @restSuggestionQuickRest.
   ///
   /// In en, this message translates to:
-  /// **'Rest suggestion quick rest'**
+  /// **'Quick rest'**
   String get restSuggestionQuickRest;
 
   /// No description provided for @restSuggestionSaveTime.
   ///
   /// In en, this message translates to:
-  /// **'Rest suggestion save time {arg0}'**
+  /// **'Save time {arg0}'**
   String restSuggestionSaveTime(Object arg0);
 
   /// No description provided for @restSuggestionSuggested.
   ///
   /// In en, this message translates to:
-  /// **'Rest suggestion suggested'**
+  /// **'Suggested'**
   String get restSuggestionSuggested;
 
   /// No description provided for @restSuggestionUseSuggested.
   ///
   /// In en, this message translates to:
-  /// **'Rest suggestion use suggested'**
+  /// **'Use suggested'**
   String get restSuggestionUseSuggested;
 
   /// No description provided for @restTimerCardBaseRest.
@@ -55665,13 +55665,13 @@ abstract class AppLocalizations {
   /// No description provided for @restTimerRest.
   ///
   /// In en, this message translates to:
-  /// **'Rest timer rest'**
+  /// **'Rest'**
   String get restTimerRest;
 
   /// No description provided for @restTimerSkipRest.
   ///
   /// In en, this message translates to:
-  /// **'Rest timer skip rest'**
+  /// **'Skip rest'**
   String get restTimerSkipRest;
 
   /// No description provided for @retro80sTemplateCalories.
@@ -56025,37 +56025,37 @@ abstract class AppLocalizations {
   /// No description provided for @rpeRirHelpsAdjustNextSet.
   ///
   /// In en, this message translates to:
-  /// **'Rpe rir helps adjust next set'**
+  /// **'Helps adjust next set'**
   String get rpeRirHelpsAdjustNextSet;
 
   /// No description provided for @rpeRirHowHardWasThatSet.
   ///
   /// In en, this message translates to:
-  /// **'Rpe rir how hard was that set'**
+  /// **'How hard was that set'**
   String get rpeRirHowHardWasThatSet;
 
   /// No description provided for @rpeRirRateOfPerceivedExertion.
   ///
   /// In en, this message translates to:
-  /// **'Rpe rir rate of perceived exertion'**
+  /// **'Rate of perceived exertion'**
   String get rpeRirRateOfPerceivedExertion;
 
   /// No description provided for @rpeRirRepsInReserve.
   ///
   /// In en, this message translates to:
-  /// **'Rpe rir reps in reserve'**
+  /// **'Reps in reserve'**
   String get rpeRirRepsInReserve;
 
   /// No description provided for @rpeRirRir.
   ///
   /// In en, this message translates to:
-  /// **'Rpe rir rir'**
+  /// **'Rir'**
   String get rpeRirRir;
 
   /// No description provided for @rpeRirRpe.
   ///
   /// In en, this message translates to:
-  /// **'Rpe rir rpe'**
+  /// **'Rpe'**
   String get rpeRirRpe;
 
   /// No description provided for @rpeTwoRepsLeft.
@@ -56091,19 +56091,19 @@ abstract class AppLocalizations {
   /// No description provided for @safetyDisclaimerBannerDismissDisclaimer.
   ///
   /// In en, this message translates to:
-  /// **'Safety disclaimer banner dismiss disclaimer'**
+  /// **'Dismiss disclaimer'**
   String get safetyDisclaimerBannerDismissDisclaimer;
 
   /// No description provided for @safetyDisclaimerBannerInjuriesFlagged.
   ///
   /// In en, this message translates to:
-  /// **'Safety disclaimer banner injuries flagged {arg0}'**
+  /// **'Injuries flagged {arg0}'**
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0);
 
   /// No description provided for @safetyDisclaimerBannerInjuryBody.
   ///
   /// In en, this message translates to:
-  /// **'Safety disclaimer banner injury body'**
+  /// **'Injury body'**
   String get safetyDisclaimerBannerInjuryBody;
 
   /// No description provided for @safetyDisclaimerBannerLearnMore.
@@ -56121,13 +56121,13 @@ abstract class AppLocalizations {
   /// No description provided for @safetyDisclaimerBannerSafetyModeActive.
   ///
   /// In en, this message translates to:
-  /// **'Safety disclaimer banner safety mode active'**
+  /// **'Safety mode active'**
   String get safetyDisclaimerBannerSafetyModeActive;
 
   /// No description provided for @safetyDisclaimerBannerSafetyModeBody.
   ///
   /// In en, this message translates to:
-  /// **'Safety disclaimer banner safety mode body'**
+  /// **'Safety mode body'**
   String get safetyDisclaimerBannerSafetyModeBody;
 
   /// No description provided for @saunaCustomDuration.
@@ -59051,13 +59051,13 @@ abstract class AppLocalizations {
   /// No description provided for @shareBreakdownTodaysLifts.
   ///
   /// In en, this message translates to:
-  /// **'Share breakdown todays lifts'**
+  /// **'Todays lifts'**
   String get shareBreakdownTodaysLifts;
 
   /// No description provided for @shareCoachWorkoutReview.
   ///
   /// In en, this message translates to:
-  /// **'Share coach workout review'**
+  /// **'Coach workout review'**
   String get shareCoachWorkoutReview;
 
   /// No description provided for @shareInsightsShareReport.
@@ -59087,19 +59087,19 @@ abstract class AppLocalizations {
   /// No description provided for @sharePrNewPr.
   ///
   /// In en, this message translates to:
-  /// **'Share pr new pr'**
+  /// **'Pr new pr'**
   String get sharePrNewPr;
 
   /// No description provided for @shareStatsCalories.
   ///
   /// In en, this message translates to:
-  /// **'Share stats calories'**
+  /// **'Calories'**
   String get shareStatsCalories;
 
   /// No description provided for @shareStatsDuration.
   ///
   /// In en, this message translates to:
-  /// **'Share stats duration'**
+  /// **'Duration'**
   String get shareStatsDuration;
 
   /// No description provided for @shareStatsEliteTemplate.
@@ -59111,7 +59111,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareStatsExercises.
   ///
   /// In en, this message translates to:
-  /// **'Share stats exercises'**
+  /// **'Exercises'**
   String get shareStatsExercises;
 
   /// No description provided for @shareStatsInstagram.
@@ -59153,13 +59153,13 @@ abstract class AppLocalizations {
   /// No description provided for @shareStatsVolume.
   ///
   /// In en, this message translates to:
-  /// **'Share stats volume'**
+  /// **'Volume'**
   String get shareStatsVolume;
 
   /// No description provided for @shareStatsWorkoutComplete.
   ///
   /// In en, this message translates to:
-  /// **'Share stats workout complete'**
+  /// **'Workout complete'**
   String get shareStatsWorkoutComplete;
 
   /// No description provided for @shareStrengthFocusAreas.
@@ -61925,7 +61925,7 @@ abstract class AppLocalizations {
   /// No description provided for @stretchControllerResume.
   ///
   /// In en, this message translates to:
-  /// **'Stretch controller resume'**
+  /// **'Resume'**
   String get stretchControllerResume;
 
   /// No description provided for @stretchControllerSkipAll.
@@ -61937,7 +61937,7 @@ abstract class AppLocalizations {
   /// No description provided for @stretchControllerStartTimer.
   ///
   /// In en, this message translates to:
-  /// **'Stretch controller start timer'**
+  /// **'Start timer'**
   String get stretchControllerStartTimer;
 
   /// No description provided for @stretchControllerUpNext.
@@ -63487,7 +63487,7 @@ abstract class AppLocalizations {
   /// No description provided for @supersetType.
   ///
   /// In en, this message translates to:
-  /// **'Superset Type'**
+  /// **'Type'**
   String get supersetType;
 
   /// No description provided for @syncDetailsAllSynced.
@@ -64819,31 +64819,31 @@ abstract class AppLocalizations {
   /// No description provided for @todayScoreDetailDown.
   ///
   /// In en, this message translates to:
-  /// **'Today score detail down {arg0}'**
+  /// **'Down {arg0}'**
   String todayScoreDetailDown(Object arg0);
 
   /// No description provided for @todayScoreDetailEarnedPts.
   ///
   /// In en, this message translates to:
-  /// **'Today score detail earned pts {arg0} {arg1}'**
+  /// **'Earned pts {arg0} {arg1}'**
   String todayScoreDetailEarnedPts(Object arg0, Object arg1);
 
   /// No description provided for @todayScoreDetailHowItWorks.
   ///
   /// In en, this message translates to:
-  /// **'Today score detail how it works'**
+  /// **'How it works'**
   String get todayScoreDetailHowItWorks;
 
   /// No description provided for @todayScoreDetailInactiveExplanation.
   ///
   /// In en, this message translates to:
-  /// **'Today score detail inactive explanation {arg0} {arg1}'**
+  /// **'Inactive explanation {arg0} {arg1}'**
   String todayScoreDetailInactiveExplanation(Object arg0, Object arg1);
 
   /// No description provided for @todayScoreDetailMomentumWithAvg.
   ///
   /// In en, this message translates to:
-  /// **'Today score detail momentum with avg {arg0} {arg1}'**
+  /// **'Momentum with avg {arg0} {arg1}'**
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1);
 
   /// No description provided for @todayScoreDetailNotCounted.
@@ -64855,13 +64855,13 @@ abstract class AppLocalizations {
   /// No description provided for @todayScoreDetailSetupText.
   ///
   /// In en, this message translates to:
-  /// **'Today score detail setup text'**
+  /// **'Setup text'**
   String get todayScoreDetailSetupText;
 
   /// No description provided for @todayScoreDetailSteady.
   ///
   /// In en, this message translates to:
-  /// **'Today score detail steady'**
+  /// **'Steady'**
   String get todayScoreDetailSteady;
 
   /// No description provided for @todayScoreDetailTodayScore.
@@ -64873,7 +64873,7 @@ abstract class AppLocalizations {
   /// No description provided for @todayScoreDetailUp.
   ///
   /// In en, this message translates to:
-  /// **'Today score detail up {arg0}'**
+  /// **'Up {arg0}'**
   String todayScoreDetailUp(Object arg0);
 
   /// No description provided for @todayScoreSetupAddAWorkoutPlan.
@@ -65620,7 +65620,7 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedAllMilestonesCleared.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned all milestones cleared'**
+  /// **'All milestones cleared'**
   String get trophiesEarnedAllMilestonesCleared;
 
   /// No description provided for @trophiesEarnedAllTime.
@@ -65656,7 +65656,7 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedMilestoneReached.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned milestone reached'**
+  /// **'Milestone reached'**
   String get trophiesEarnedMilestoneReached;
 
   /// No description provided for @trophiesEarnedMilestoneReachedNice.
@@ -65674,13 +65674,13 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedNewBadges.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned new badges {arg0}'**
+  /// **'Badges {arg0}'**
   String trophiesEarnedNewBadges(Object arg0);
 
   /// No description provided for @trophiesEarnedNewCardioPRs.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned new cardio p rs {arg0}'**
+  /// **'Cardio p rs {arg0}'**
   String trophiesEarnedNewCardioPRs(Object arg0);
 
   /// No description provided for @trophiesEarnedNewPR.
@@ -65692,7 +65692,7 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedNewPRs.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned new p rs {arg0}'**
+  /// **'P rs {arg0}'**
   String trophiesEarnedNewPRs(Object arg0);
 
   /// No description provided for @trophiesEarnedNewPr.
@@ -65710,7 +65710,7 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedNoNewRecords.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned no new records'**
+  /// **'No new records'**
   String get trophiesEarnedNoNewRecords;
 
   /// No description provided for @trophiesEarnedNoNewRecordsThis.
@@ -65728,13 +65728,13 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedRemainingToUnlock.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned remaining to unlock {arg0} {arg1}'**
+  /// **'Remaining to unlock {arg0} {arg1}'**
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1);
 
   /// No description provided for @trophiesEarnedSessionHighlights.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned session highlights'**
+  /// **'Session highlights'**
   String get trophiesEarnedSessionHighlights;
 
   /// No description provided for @trophiesEarnedSheetPts.
@@ -65752,7 +65752,7 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned title'**
+  /// **'Title'**
   String get trophiesEarnedTitle;
 
   /// No description provided for @trophiesEarnedTotalWorkouts.
@@ -65770,7 +65770,7 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedViewAllCardioPRs.
   ///
   /// In en, this message translates to:
-  /// **'Trophies earned view all cardio p rs'**
+  /// **'View all cardio p rs'**
   String get trophiesEarnedViewAllCardioPRs;
 
   /// No description provided for @trophiesEarnedViewAllCardioPrs.
@@ -66046,7 +66046,7 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsBreakfastLogged.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets breakfast logged {arg0}'**
+  /// **'Logged {arg0}/7 last week'**
   String unifiedHomeWidgetsBreakfastLogged(Object arg0);
 
   /// No description provided for @unifiedHomeWidgetsBreakfastSuggestion.
@@ -66082,19 +66082,19 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsCupsToday.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets cups today {arg0} {arg1}'**
+  /// **'{arg0} / {arg1} cups today'**
   String unifiedHomeWidgetsCupsToday(Object arg0, Object arg1);
 
   /// No description provided for @unifiedHomeWidgetsDrink16ozPostWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets drink oz post workout'**
+  /// **'Drink 16oz post-workout'**
   String get unifiedHomeWidgetsDrink16ozPostWorkout;
 
   /// No description provided for @unifiedHomeWidgetsEndTheDayAtGoal.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets end the day at goal {arg0}'**
+  /// **'End the day at goal — {arg0} cups left'**
   String unifiedHomeWidgetsEndTheDayAtGoal(Object arg0);
 
   /// No description provided for @unifiedHomeWidgetsFasting.
@@ -66124,7 +66124,7 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsKcalBurned.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets kcal burned {arg0}'**
+  /// **'{arg0} kcal burned'**
   String unifiedHomeWidgetsKcalBurned(Object arg0);
 
   /// No description provided for @unifiedHomeWidgetsKcalLeft.
@@ -66154,7 +66154,7 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsNoWorkoutWasScheduled.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets no workout was scheduled'**
+  /// **'No workout was scheduled'**
   String get unifiedHomeWidgetsNoWorkoutWasScheduled;
 
   /// No description provided for @unifiedHomeWidgetsNutrition.
@@ -66166,13 +66166,13 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsOver.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets over'**
+  /// **'over'**
   String get unifiedHomeWidgetsOver;
 
   /// No description provided for @unifiedHomeWidgetsOvernightWaterReset.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets overnight water reset'**
+  /// **'Overnight water reset — drink up'**
   String get unifiedHomeWidgetsOvernightWaterReset;
 
   /// No description provided for @unifiedHomeWidgetsProtein.
@@ -66190,19 +66190,19 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsRefuelHydration.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets refuel hydration'**
+  /// **'Refuel hydration'**
   String get unifiedHomeWidgetsRefuelHydration;
 
   /// No description provided for @unifiedHomeWidgetsRestDayNoWorkoutScheduled.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets rest day no workout scheduled'**
+  /// **'Rest day — no workout scheduled'**
   String get unifiedHomeWidgetsRestDayNoWorkoutScheduled;
 
   /// No description provided for @unifiedHomeWidgetsRestDayNothingScheduled.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets rest day nothing scheduled'**
+  /// **'Rest day — nothing scheduled'**
   String get unifiedHomeWidgetsRestDayNothingScheduled;
 
   /// No description provided for @unifiedHomeWidgetsSeeYourStepsCalories.
@@ -66214,7 +66214,7 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsSleep.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets sleep'**
+  /// **'Sleep'**
   String get unifiedHomeWidgetsSleep;
 
   /// No description provided for @unifiedHomeWidgetsStartAFast.
@@ -66226,7 +66226,7 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsWakeHydration.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets wake hydration'**
+  /// **'Wake hydration'**
   String get unifiedHomeWidgetsWakeHydration;
 
   /// No description provided for @unifiedHomeWidgetsWater.
@@ -66238,7 +66238,7 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsWorkoutCompleteGreatJob.
   ///
   /// In en, this message translates to:
-  /// **'Unified home widgets workout complete great job'**
+  /// **'Workout complete — great job!'**
   String get unifiedHomeWidgetsWorkoutCompleteGreatJob;
 
   /// No description provided for @unresolvedExercisesApplyMapping.
@@ -67300,7 +67300,7 @@ abstract class AppLocalizations {
   /// No description provided for @weekProgressStripCompletedCount.
   ///
   /// In en, this message translates to:
-  /// **'Week progress strip completed count {arg0} {arg1}'**
+  /// **'Completed count {arg0} {arg1}'**
   String weekProgressStripCompletedCount(Object arg0, Object arg1);
 
   /// No description provided for @weekProgressStripCouldNotLoadProgress.
@@ -67318,7 +67318,7 @@ abstract class AppLocalizations {
   /// No description provided for @weekProgressStripNoWorkoutsScheduled.
   ///
   /// In en, this message translates to:
-  /// **'Week progress strip no workouts scheduled'**
+  /// **'No workouts scheduled'**
   String get weekProgressStripNoWorkoutsScheduled;
 
   /// No description provided for @weekProgressStripThisWeek.
@@ -68453,13 +68453,13 @@ abstract class AppLocalizations {
   /// No description provided for @weightTrendCardDownThisWeek.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card down this week {arg0}'**
+  /// **'Down this week {arg0}'**
   String weightTrendCardDownThisWeek(Object arg0);
 
   /// No description provided for @weightTrendCardDownVsLastCycle.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card down vs last cycle {arg0}'**
+  /// **'Down vs last cycle {arg0}'**
   String weightTrendCardDownVsLastCycle(Object arg0);
 
   /// No description provided for @weightTrendCardLoadingWeight.
@@ -68477,19 +68477,19 @@ abstract class AppLocalizations {
   /// No description provided for @weightTrendCardMaintaining.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card maintaining'**
+  /// **'Maintaining'**
   String get weightTrendCardMaintaining;
 
   /// No description provided for @weightTrendCardNoChange.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card no change'**
+  /// **'No change'**
   String get weightTrendCardNoChange;
 
   /// No description provided for @weightTrendCardNoData.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card no data'**
+  /// **'No data'**
   String get weightTrendCardNoData;
 
   /// No description provided for @weightTrendCardOnTrack.
@@ -68501,13 +68501,13 @@ abstract class AppLocalizations {
   /// No description provided for @weightTrendCardReviewGoals.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card review goals'**
+  /// **'Review goals'**
   String get weightTrendCardReviewGoals;
 
   /// No description provided for @weightTrendCardSameAsLastCycle.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card same as last cycle'**
+  /// **'Same as last cycle'**
   String get weightTrendCardSameAsLastCycle;
 
   /// No description provided for @weightTrendCardTapToLogWeight.
@@ -68519,31 +68519,31 @@ abstract class AppLocalizations {
   /// No description provided for @weightTrendCardTargetHeld.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card target held'**
+  /// **'Target held'**
   String get weightTrendCardTargetHeld;
 
   /// No description provided for @weightTrendCardTargetHeldWindow.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card target held window {arg0}'**
+  /// **'Target held window {arg0}'**
   String weightTrendCardTargetHeldWindow(Object arg0);
 
   /// No description provided for @weightTrendCardUpThisWeek.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card up this week {arg0}'**
+  /// **'Up this week {arg0}'**
   String weightTrendCardUpThisWeek(Object arg0);
 
   /// No description provided for @weightTrendCardUpVsLastCycle.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card up vs last cycle {arg0}'**
+  /// **'Up vs last cycle {arg0}'**
   String weightTrendCardUpVsLastCycle(Object arg0);
 
   /// No description provided for @weightTrendCardWeightStableThisWeek.
   ///
   /// In en, this message translates to:
-  /// **'Weight trend card weight stable this week'**
+  /// **'Weight stable this week'**
   String get weightTrendCardWeightStableThisWeek;
 
   /// No description provided for @weightTrendCardWeightTrends.
@@ -69784,7 +69784,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutDetailReplacingExercises.
   ///
   /// In en, this message translates to:
-  /// **'Workout detail replacing exercises {arg0}'**
+  /// **'Replacing exercises {arg0}'**
   String workoutDetailReplacingExercises(Object arg0);
 
   /// No description provided for @workoutDetailRevert.
@@ -70042,7 +70042,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutDetailUpdatingExercises.
   ///
   /// In en, this message translates to:
-  /// **'Workout detail updating exercises'**
+  /// **'Updating exercises'**
   String get workoutDetailUpdatingExercises;
 
   /// No description provided for @workoutDetailWantAChallenge.
@@ -70574,13 +70574,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutImportCardio.
   ///
   /// In en, this message translates to:
-  /// **'Workout import cardio'**
+  /// **'Cardio'**
   String get workoutImportCardio;
 
   /// No description provided for @workoutImportCycling.
   ///
   /// In en, this message translates to:
-  /// **'Workout import cycling'**
+  /// **'Cycling'**
   String get workoutImportCycling;
 
   /// No description provided for @workoutImportDistance.
@@ -70598,31 +70598,31 @@ abstract class AppLocalizations {
   /// No description provided for @workoutImportEasy.
   ///
   /// In en, this message translates to:
-  /// **'Workout import easy'**
+  /// **'Easy'**
   String get workoutImportEasy;
 
   /// No description provided for @workoutImportFlexibility.
   ///
   /// In en, this message translates to:
-  /// **'Workout import flexibility'**
+  /// **'Flexibility'**
   String get workoutImportFlexibility;
 
   /// No description provided for @workoutImportFromSource.
   ///
   /// In en, this message translates to:
-  /// **'Workout import from source {arg0}'**
+  /// **'From source {arg0}'**
   String workoutImportFromSource(Object arg0);
 
   /// No description provided for @workoutImportHard.
   ///
   /// In en, this message translates to:
-  /// **'Workout import hard'**
+  /// **'Hard'**
   String get workoutImportHard;
 
   /// No description provided for @workoutImportHiit.
   ///
   /// In en, this message translates to:
-  /// **'Workout import hiit'**
+  /// **'Hiit'**
   String get workoutImportHiit;
 
   /// No description provided for @workoutImportHowHardWasThis.
@@ -70646,13 +70646,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutImportMedium.
   ///
   /// In en, this message translates to:
-  /// **'Workout import medium'**
+  /// **'Medium'**
   String get workoutImportMedium;
 
   /// No description provided for @workoutImportOther.
   ///
   /// In en, this message translates to:
-  /// **'Workout import other'**
+  /// **'Other'**
   String get workoutImportOther;
 
   /// No description provided for @workoutImportPreviewCardioRows.
@@ -70766,7 +70766,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutImportRunning.
   ///
   /// In en, this message translates to:
-  /// **'Workout import running'**
+  /// **'Running'**
   String get workoutImportRunning;
 
   /// No description provided for @workoutImportScreenAvgBpm.
@@ -70790,13 +70790,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutImportSkip.
   ///
   /// In en, this message translates to:
-  /// **'Workout import skip'**
+  /// **'Skip'**
   String get workoutImportSkip;
 
   /// No description provided for @workoutImportStrengthTraining.
   ///
   /// In en, this message translates to:
-  /// **'Workout import strength training'**
+  /// **'Strength training'**
   String get workoutImportStrengthTraining;
 
   /// No description provided for @workoutImportSummaryActivateProgram.
@@ -70904,19 +70904,19 @@ abstract class AppLocalizations {
   /// No description provided for @workoutImportSwimming.
   ///
   /// In en, this message translates to:
-  /// **'Workout import swimming'**
+  /// **'Swimming'**
   String get workoutImportSwimming;
 
   /// No description provided for @workoutImportWalking.
   ///
   /// In en, this message translates to:
-  /// **'Workout import walking'**
+  /// **'Walking'**
   String get workoutImportWalking;
 
   /// No description provided for @workoutImportWeights.
   ///
   /// In en, this message translates to:
-  /// **'Workout import weights'**
+  /// **'Weights'**
   String get workoutImportWeights;
 
   /// No description provided for @workoutImportWhatTypeOfExercise.
@@ -70928,7 +70928,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutImportWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Workout import workout'**
+  /// **'Workout'**
   String get workoutImportWorkout;
 
   /// No description provided for @workoutImportWorkoutDetected.
@@ -70940,7 +70940,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutImportYoga.
   ///
   /// In en, this message translates to:
-  /// **'Workout import yoga'**
+  /// **'Yoga'**
   String get workoutImportYoga;
 
   /// No description provided for @workoutListTitle.
@@ -71120,7 +71120,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutPlanDrawerExerciseCount.
   ///
   /// In en, this message translates to:
-  /// **'Workout plan drawer exercise count {arg0}'**
+  /// **'Exercise count {arg0}'**
   String workoutPlanDrawerExerciseCount(Object arg0);
 
   /// No description provided for @workoutPlanDrawerLoggedTheyWillBe.
@@ -71150,13 +71150,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutPlanDrawerRemoveExerciseTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Workout plan drawer remove exercise tooltip'**
+  /// **'Remove exercise tooltip'**
   String get workoutPlanDrawerRemoveExerciseTooltip;
 
   /// No description provided for @workoutPlanDrawerSetsLogged.
   ///
   /// In en, this message translates to:
-  /// **'Workout plan drawer sets logged {arg0}'**
+  /// **'Sets logged {arg0}'**
   String workoutPlanDrawerSetsLogged(Object arg0);
 
   /// No description provided for @workoutPlanDrawerSwapExercise.
@@ -71168,7 +71168,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutPlanDrawerTitle.
   ///
   /// In en, this message translates to:
-  /// **'Workout plan drawer title'**
+  /// **'Title'**
   String get workoutPlanDrawerTitle;
 
   /// No description provided for @workoutPlanDrawerWorkoutPlan.
@@ -71768,7 +71768,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseAdvanced.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase advanced'**
+  /// **'Advanced'**
   String get workoutShowcaseAdvanced;
 
   /// No description provided for @workoutShowcaseAll3SetsDone.
@@ -71798,13 +71798,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseAutoDesc.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase auto desc'**
+  /// **'Auto desc'**
   String get workoutShowcaseAutoDesc;
 
   /// No description provided for @workoutShowcaseAutoLabel.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase auto label'**
+  /// **'Auto label'**
   String get workoutShowcaseAutoLabel;
 
   /// No description provided for @workoutShowcaseBarbellSquat.
@@ -71840,25 +71840,25 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseCalories.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase calories'**
+  /// **'Calories'**
   String get workoutShowcaseCalories;
 
   /// No description provided for @workoutShowcaseContinue.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase continue'**
+  /// **'Continue'**
   String get workoutShowcaseContinue;
 
   /// No description provided for @workoutShowcaseDuration.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase duration'**
+  /// **'Duration'**
   String get workoutShowcaseDuration;
 
   /// No description provided for @workoutShowcaseEasy.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase easy'**
+  /// **'Easy'**
   String get workoutShowcaseEasy;
 
   /// No description provided for @workoutShowcaseEpley2255Reps.
@@ -71870,19 +71870,19 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseEverySetYouLog.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase every set you log'**
+  /// **'Every set you log'**
   String get workoutShowcaseEverySetYouLog;
 
   /// No description provided for @workoutShowcaseEveryWorkoutFlows.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase every workout flows'**
+  /// **'Every workout flows'**
   String get workoutShowcaseEveryWorkoutFlows;
 
   /// No description provided for @workoutShowcaseFinishWorkout.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase finish workout'**
+  /// **'Finish workout'**
   String get workoutShowcaseFinishWorkout;
 
   /// No description provided for @workoutShowcaseFormat1Rm.
@@ -71894,91 +71894,91 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseFormatBoarding.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format boarding'**
+  /// **'Boarding'**
   String get workoutShowcaseFormatBoarding;
 
   /// No description provided for @workoutShowcaseFormatCard.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format card'**
+  /// **'Card'**
   String get workoutShowcaseFormatCard;
 
   /// No description provided for @workoutShowcaseFormatDiscord.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format discord'**
+  /// **'Discord'**
   String get workoutShowcaseFormatDiscord;
 
   /// No description provided for @workoutShowcaseFormatFull.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format full'**
+  /// **'Full'**
   String get workoutShowcaseFormatFull;
 
   /// No description provided for @workoutShowcaseFormatIgStory.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format ig story'**
+  /// **'Ig story'**
   String get workoutShowcaseFormatIgStory;
 
   /// No description provided for @workoutShowcaseFormatNewspaper.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format newspaper'**
+  /// **'Newspaper'**
   String get workoutShowcaseFormatNewspaper;
 
   /// No description provided for @workoutShowcaseFormatPassport.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format passport'**
+  /// **'Passport'**
   String get workoutShowcaseFormatPassport;
 
   /// No description provided for @workoutShowcaseFormatPolaroid.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format polaroid'**
+  /// **'Polaroid'**
   String get workoutShowcaseFormatPolaroid;
 
   /// No description provided for @workoutShowcaseFormatPrCard.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format pr card'**
+  /// **'Pr card'**
   String get workoutShowcaseFormatPrCard;
 
   /// No description provided for @workoutShowcaseFormatQuote.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format quote'**
+  /// **'Quote'**
   String get workoutShowcaseFormatQuote;
 
   /// No description provided for @workoutShowcaseFormatReceipt.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format receipt'**
+  /// **'Receipt'**
   String get workoutShowcaseFormatReceipt;
 
   /// No description provided for @workoutShowcaseFormatTrading.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format trading'**
+  /// **'Trading'**
   String get workoutShowcaseFormatTrading;
 
   /// No description provided for @workoutShowcaseFormatTrophy.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format trophy'**
+  /// **'Trophy'**
   String get workoutShowcaseFormatTrophy;
 
   /// No description provided for @workoutShowcaseFormatVinyl.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format vinyl'**
+  /// **'Vinyl'**
   String get workoutShowcaseFormatVinyl;
 
   /// No description provided for @workoutShowcaseFormatWrapped.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase format wrapped'**
+  /// **'Wrapped'**
   String get workoutShowcaseFormatWrapped;
 
   /// No description provided for @workoutShowcaseHowYourWeightReps.
@@ -72008,19 +72008,19 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseLinearDesc.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase linear desc'**
+  /// **'Linear desc'**
   String get workoutShowcaseLinearDesc;
 
   /// No description provided for @workoutShowcaseLinearLabel.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase linear label'**
+  /// **'Linear label'**
   String get workoutShowcaseLinearLabel;
 
   /// No description provided for @workoutShowcaseLogAllSets.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase log all sets'**
+  /// **'All sets'**
   String get workoutShowcaseLogAllSets;
 
   /// No description provided for @workoutShowcaseLogDrink.
@@ -72032,7 +72032,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseLogSet.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase log set {arg0}'**
+  /// **'Set {arg0}'**
   String workoutShowcaseLogSet(Object arg0);
 
   /// No description provided for @workoutShowcaseLogWater.
@@ -72056,13 +72056,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseNote.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase note'**
+  /// **'Note'**
   String get workoutShowcaseNote;
 
   /// No description provided for @workoutShowcasePlan.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase plan'**
+  /// **'Plan'**
   String get workoutShowcasePlan;
 
   /// No description provided for @workoutShowcasePlanAutoAdjustsNext.
@@ -72086,13 +72086,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcasePyramidDesc.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase pyramid desc'**
+  /// **'Pyramid desc'**
   String get workoutShowcasePyramidDesc;
 
   /// No description provided for @workoutShowcasePyramidLabel.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase pyramid label'**
+  /// **'Pyramid label'**
   String get workoutShowcasePyramidLabel;
 
   /// No description provided for @workoutShowcaseRare.
@@ -72222,7 +72222,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseTapToLogSet.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase tap to log set {arg0}'**
+  /// **'Tap to log set {arg0}'**
   String workoutShowcaseTapToLogSet(Object arg0);
 
   /// No description provided for @workoutShowcaseTheGainsGazette.
@@ -72240,13 +72240,13 @@ abstract class AppLocalizations {
   /// No description provided for @workoutShowcaseUndulatingDesc.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase undulating desc'**
+  /// **'Undulating desc'**
   String get workoutShowcaseUndulatingDesc;
 
   /// No description provided for @workoutShowcaseUndulatingLabel.
   ///
   /// In en, this message translates to:
-  /// **'Workout showcase undulating label'**
+  /// **'Undulating label'**
   String get workoutShowcaseUndulatingLabel;
 
   /// No description provided for @workoutShowcaseUpNextBenchPress.
@@ -73171,7 +73171,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutTopBarMore.
   ///
   /// In en, this message translates to:
-  /// **'Workout top bar more'**
+  /// **'More'**
   String get workoutTopBarMore;
 
   /// No description provided for @workoutTopBarSkipExercise.
@@ -73675,7 +73675,7 @@ abstract class AppLocalizations {
   /// No description provided for @xpGoalsDaily.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals daily'**
+  /// **'Daily'**
   String get xpGoalsDaily;
 
   /// No description provided for @xpGoalsDialog250LevelsAcross11Tiers.
@@ -73687,103 +73687,103 @@ abstract class AppLocalizations {
   /// No description provided for @xpGoalsDialogBeginnerToTranscendent.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog beginner to transcendent'**
+  /// **'Beginner to transcendent'**
   String get xpGoalsDialogBeginnerToTranscendent;
 
   /// No description provided for @xpGoalsDialogCompleteWorkoutXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog complete workout xp'**
+  /// **'Complete workout xp'**
   String get xpGoalsDialogCompleteWorkoutXp;
 
   /// No description provided for @xpGoalsDialogDailyGoals.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog daily goals'**
+  /// **'Daily goals'**
   String get xpGoalsDialogDailyGoals;
 
   /// No description provided for @xpGoalsDialogFirstChatWithAiCoachXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog first chat with ai coach xp'**
+  /// **'Chat with ai coach xp'**
   String get xpGoalsDialogFirstChatWithAiCoachXp;
 
   /// No description provided for @xpGoalsDialogFirstMealWeightMeasurementsXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog first meal weight measurements xp'**
+  /// **'Meal weight measurements xp'**
   String get xpGoalsDialogFirstMealWeightMeasurementsXp;
 
   /// No description provided for @xpGoalsDialogFirstPrXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog first pr xp'**
+  /// **'Pr xp'**
   String get xpGoalsDialogFirstPrXp;
 
   /// No description provided for @xpGoalsDialogFirstProgressPhotoXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog first progress photo xp'**
+  /// **'Progress photo xp'**
   String get xpGoalsDialogFirstProgressPhotoXp;
 
   /// No description provided for @xpGoalsDialogFirstProteinGoalXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog first protein goal xp'**
+  /// **'Protein goal xp'**
   String get xpGoalsDialogFirstProteinGoalXp;
 
   /// No description provided for @xpGoalsDialogFirstWorkoutXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog first workout xp'**
+  /// **'Workout xp'**
   String get xpGoalsDialogFirstWorkoutXp;
 
   /// No description provided for @xpGoalsDialogHitProteinGoalXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog hit protein goal xp'**
+  /// **'Hit protein goal xp'**
   String get xpGoalsDialogHitProteinGoalXp;
 
   /// No description provided for @xpGoalsDialogLevels.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog levels'**
+  /// **'Levels'**
   String get xpGoalsDialogLevels;
 
   /// No description provided for @xpGoalsDialogLogBodyMeasurementsXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog log body measurements xp'**
+  /// **'Body measurements xp'**
   String get xpGoalsDialogLogBodyMeasurementsXp;
 
   /// No description provided for @xpGoalsDialogLogMealXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog log meal xp'**
+  /// **'Meal xp'**
   String get xpGoalsDialogLogMealXp;
 
   /// No description provided for @xpGoalsDialogLogWeightXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog log weight xp'**
+  /// **'Weight xp'**
   String get xpGoalsDialogLogWeightXp;
 
   /// No description provided for @xpGoalsDialogLoginXp.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog login xp'**
+  /// **'Login xp'**
   String get xpGoalsDialogLoginXp;
 
   /// No description provided for @xpGoalsDialogMilestoneRewards.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals dialog milestone rewards'**
+  /// **'Milestone rewards'**
   String get xpGoalsDialogMilestoneRewards;
 
   /// No description provided for @xpGoalsFirstTimeBonuses.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals first time bonuses'**
+  /// **'First time bonuses'**
   String get xpGoalsFirstTimeBonuses;
 
   /// No description provided for @xpGoalsGotIt.
@@ -73849,7 +73849,7 @@ abstract class AppLocalizations {
   /// No description provided for @xpGoalsScreenConsumableLegend.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals screen consumable legend'**
+  /// **'Consumable legend'**
   String get xpGoalsScreenConsumableLegend;
 
   /// No description provided for @xpGoalsScreenErrorLoadingMonthlyAchievem.
@@ -73915,7 +73915,7 @@ abstract class AppLocalizations {
   /// No description provided for @xpGoalsScreenLevelCurrentTotal.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals screen level current total {arg0}'**
+  /// **'Level current total {arg0}'**
   String xpGoalsScreenLevelCurrentTotal(Object arg0);
 
   /// No description provided for @xpGoalsScreenLevelProgress.
@@ -73963,7 +73963,7 @@ abstract class AppLocalizations {
   /// No description provided for @xpGoalsScreenMilestoneLegend.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals screen milestone legend'**
+  /// **'Milestone legend'**
   String get xpGoalsScreenMilestoneLegend;
 
   /// No description provided for @xpGoalsScreenNoLevelsAvailable.
@@ -74062,13 +74062,13 @@ abstract class AppLocalizations {
   /// No description provided for @xpGoalsScreenXpBonusLegend.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals screen xp bonus legend'**
+  /// **'Xp bonus legend'**
   String get xpGoalsScreenXpBonusLegend;
 
   /// No description provided for @xpGoalsScreenYouBadge.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals screen you badge'**
+  /// **'You badge'**
   String get xpGoalsScreenYouBadge;
 
   /// No description provided for @xpGoalsTrophyRoom.
@@ -74092,13 +74092,13 @@ abstract class AppLocalizations {
   /// No description provided for @xpGoalsXpAvailable.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals xp available {arg0}'**
+  /// **'Available {arg0}'**
   String xpGoalsXpAvailable(Object arg0);
 
   /// No description provided for @xpGoalsXpEarnedToday.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals xp earned today {arg0}'**
+  /// **'Earned today {arg0}'**
   String xpGoalsXpEarnedToday(Object arg0);
 
   /// No description provided for @xpGoalsXpGoals.
@@ -74110,7 +74110,7 @@ abstract class AppLocalizations {
   /// No description provided for @xpGoalsXpMultiplierActive.
   ///
   /// In en, this message translates to:
-  /// **'Xp goals xp multiplier active {arg0}'**
+  /// **'Multiplier active {arg0}'**
   String xpGoalsXpMultiplierActive(Object arg0);
 
   /// No description provided for @xpHeroTileDayStreak.

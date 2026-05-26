@@ -86,7 +86,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get achievementsByCategory => 'শ্রেণী অনুসারে';
 
   @override
-  String get achievementsCardAchievements => 'অ্যাচিভমেন্ট কার্ড অ্যাচিভমেন্টস';
+  String get achievementsCardAchievements => 'অর্জনসমূহ';
 
   @override
   String achievementsCardBadges(Object totalAchieved) {
@@ -1577,14 +1577,14 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনি এই সংযোগ থেকে আটকাতে চান এমন কিছু আনচেক করুন।';
 
   @override
-  String get aiModelDownloadBasic => 'AI মডেল ডাউনলোড বেসিক';
+  String get aiModelDownloadBasic => 'বেসিক';
 
   @override
   String get aiModelDownloadBatteryWarning =>
       'অন-ডিভাইস AI মডেলগুলো আপনার ফোনে অনেক বেশি কম্পিউটেশন চালায়। এর ফলে ওয়ার্কআউট জেনারেশনের সময় ব্যাটারি দ্রুত খরচ হতে পারে এবং ডিভাইস গরম হতে পারে। বড় মডেলগুলো বেশি রিসোর্স ব্যবহার করে।';
 
   @override
-  String get aiModelDownloadBestQuality => 'AI মডেল ডাউনলোড সেরা কোয়ালিটি';
+  String get aiModelDownloadBestQuality => 'সেরা কোয়ালিটি';
 
   @override
   String get aiModelDownloadCancel => 'বাতিল';
@@ -1638,11 +1638,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiModelDownloadModelOptions => 'মডেল অপশন';
 
   @override
-  String get aiModelDownloadMultimodal => 'AI মডেল ডাউনলোড মাল্টিমোডাল';
+  String get aiModelDownloadMultimodal => 'মাল্টিমোডাল';
 
   @override
-  String get aiModelDownloadNotCompatible =>
-      'AI মডেল ডাউনলোড সামঞ্জস্যপূর্ণ নয়';
+  String get aiModelDownloadNotCompatible => 'সামঞ্জস্যপূর্ণ নয়';
 
   @override
   String get aiModelDownloadNotSupportedOnThis => 'এই ডিভাইসে সমর্থিত নয়';
@@ -1651,13 +1650,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get aiModelDownloadOnDeviceAiModel => 'অন-ডিভাইস এআই মডেল';
 
   @override
-  String get aiModelDownloadOptimal => 'AI মডেল ডাউনলোড অপ্টিমাল';
+  String get aiModelDownloadOptimal => 'অপ্টিমাল';
 
   @override
   String get aiModelDownloadRam => 'RAM';
 
   @override
-  String get aiModelDownloadRecommended => 'AI মডেল ডাউনলোড প্রস্তাবিত';
+  String get aiModelDownloadRecommended => 'প্রস্তাবিত';
 
   @override
   String get aiModelDownloadRemove => 'সরান';
@@ -1680,7 +1679,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadSearch => 'AI মডেল ডাউনলোড সার্চ';
+  String get aiModelDownloadSearch => 'অনুসন্ধান';
 
   @override
   String get aiModelDownloadSelectAModel => 'একটি মডেল নির্বাচন করুন';
@@ -1691,7 +1690,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadStandard => 'AI মডেল ডাউনলোড স্ট্যান্ডার্ড';
+  String get aiModelDownloadStandard => 'স্ট্যান্ডার্ড';
 
   @override
   String get aiModelDownloadTokenSavedSecurely =>
@@ -4860,7 +4859,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return 'সঠিক পথে আছেন $arg0';
+    return 'সঠিক পথে $arg0';
   }
 
   @override
@@ -4868,7 +4867,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return 'ওয়ার্কআউট বাকি আছে $arg0';
+    return 'বাকি ওয়ার্কআউট $arg0';
   }
 
   @override
@@ -7825,7 +7824,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get easyHelpLogASet => 'একটি সেট লগ করুন';
 
   @override
-  String get easyHelpLogASetBody => 'সেট লগ করার সহজ উপায়';
+  String get easyHelpLogASetBody => 'একটি সেট লগ করুন';
 
   @override
   String get easyHelpSkipToNextExercise => 'পরবর্তী ব্যায়ামে যান';
@@ -7854,7 +7853,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get easyHelpWeightAndReps => 'ওজন এবং রেপস';
 
   @override
-  String get easyHelpWeightAndRepsBody => 'ওজন এবং রেপস যোগ করার সহজ উপায়';
+  String get easyHelpWeightAndRepsBody => 'ওজন এবং রেপস';
 
   @override
   String get easyRestOverlayRest => 'বিশ্রাম';
@@ -8128,7 +8127,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return 'কাস্টম ভ্যালু $arg0';
+    return 'কাস্টম মান $arg0';
   }
 
   @override
@@ -8172,17 +8171,16 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'হিস্ট্রি লোড করতে ব্যর্থ $arg0';
+    return 'হিস্ট্রি লোড করুন $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'রিস্টোর করতে ব্যর্থ $arg0';
+    return 'রিস্টোর করুন $arg0';
   }
 
   @override
-  String get editProgramSheetFailedToUpdateProgram =>
-      'প্রোগ্রাম আপডেট করতে ব্যর্থ';
+  String get editProgramSheetFailedToUpdateProgram => 'প্রোগ্রাম আপডেট করুন';
 
   @override
   String get editProgramSheetFocus => 'ফোকাস';
@@ -8191,7 +8189,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get editProgramSheetHealth => 'স্বাস্থ্য';
 
   @override
-  String get editProgramSheetInjuries => 'ইনজুরি';
+  String get editProgramSheetInjuries => 'আঘাত';
 
   @override
   String get editProgramSheetNoProgramHistoryFound =>
@@ -8236,7 +8234,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'কাস্টম প্রোগ্রাম সংরক্ষণ করুন';
 
   @override
-  String get editProgramSheetSavingPreferences => 'পছন্দগুলো সেভ করা হচ্ছে';
+  String get editProgramSheetSavingPreferences => 'পছন্দসমূহ সংরক্ষণ করা হচ্ছে';
 
   @override
   String get editProgramSheetSchedule => 'সময়সূচী';
@@ -8262,7 +8260,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপডেট এবং পুনরায় তৈরি করুন';
 
   @override
-  String get editProgramSheetUpdating => 'আপডেট হচ্ছে';
+  String get editProgramSheetUpdating => 'আপডেট করা হচ্ছে';
 
   @override
   String editProgramSheetWeeksAgo(Object weeks) {
@@ -8876,7 +8874,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনার নিজস্ব এক্সারসাইজ তৈরি করুন';
 
   @override
-  String get emptyStateClearFilters => 'ফিল্টার ক্লিয়ার করুন';
+  String get emptyStateClearFilters => 'ফিল্টার পরিষ্কার করুন';
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
@@ -9466,16 +9464,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'স্ন্যাপড';
 
   @override
-  String get exerciseAddSheetSubtitle => 'ব্যায়াম যোগ করার সাবটাইটেল';
+  String get exerciseAddSheetSubtitle => 'সাবটাইটেল';
 
   @override
-  String get exerciseAddSheetTabAiPicks => 'AI পিকস';
+  String get exerciseAddSheetTabAiPicks => 'AI পিক্স';
 
   @override
   String get exerciseAddSheetTabLibrary => 'লাইব্রেরি';
 
   @override
-  String get exerciseAddSheetTabMine => 'আমার ব্যায়াম';
+  String get exerciseAddSheetTabMine => 'আমার';
 
   @override
   String get exerciseAddSheetTabSnapped => 'স্ন্যাপড';
@@ -9877,7 +9875,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get exerciseDetailsFormCues => 'ফর্ম কিউস';
 
   @override
-  String get exerciseDetailsNotSpecified => 'উল্লেখ করা নেই';
+  String get exerciseDetailsNotSpecified => 'উল্লেখ করা হয়নি';
 
   @override
   String get exerciseDetailsPrimaryMuscle => 'প্রাথমিক পেশী';
@@ -9936,7 +9934,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get exerciseDetailsSheetWatchOutFor => 'জন্য আউট দেখুন';
 
   @override
-  String get exerciseDetailsTapVideoHint => 'ভিডিও দেখতে ট্যাপ করুন';
+  String get exerciseDetailsTapVideoHint => 'ভিডিও হিন্টে ট্যাপ করুন';
 
   @override
   String get exerciseDetailsVideo => 'ভিডিও';
@@ -11152,7 +11150,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get exerciseSwapNoAlternatives => 'কোনো বিকল্প পাওয়া যায়নি';
 
   @override
-  String get exerciseSwapOptionSwap => 'বদল করুন';
+  String get exerciseSwapOptionSwap => 'বিকল্প অদলবদল';
 
   @override
   String get exerciseSwapSheetAiPicks => 'AI পছন্দ';
@@ -11272,7 +11270,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get exerciseSwapSheetTabSnapped => 'স্ন্যাপড';
 
   @override
-  String get exerciseSwapSheetTitle => 'ব্যায়াম বদল করুন';
+  String get exerciseSwapSheetTitle => 'শিরোনাম';
 
   @override
   String get exerciseSwapSheetTryAgain => 'আবার চেষ্টা করুন';
@@ -12543,8 +12541,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get fatigueAlertAcceptSuggestion =>
-      'ক্লান্তি সতর্কতার পরামর্শ গ্রহণ করুন';
+  String get fatigueAlertAcceptSuggestion => 'পরামর্শ গ্রহণ করুন';
 
   @override
   String get fatigueAlertContinueAsPlanned => 'পরিকল্পনা অনুযায়ী চালিয়ে যান';
@@ -14491,10 +14488,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get fullScreenChartCompareWith => 'এর সাথে তুলনা করুন...';
 
   @override
-  String get fullScreenChartCouldNotLoad => 'ফুল স্ক্রিন চার্ট লোড করা যায়নি';
+  String get fullScreenChartCouldNotLoad => 'লোড করা যায়নি';
 
   @override
-  String get fullScreenChartNotEnoughHistory => 'পর্যাপ্ত হিস্ট্রি নেই';
+  String get fullScreenChartNotEnoughHistory => 'পর্যাপ্ত ইতিহাস নেই';
 
   @override
   String get fullscreenImageViewerCouldNotLoadImage => 'ছবি লোড করা যায়নি';
@@ -15433,12 +15430,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'অভ্যাস সম্পন্ন হয়েছে $arg0 $arg1';
+    return 'সম্পন্ন হয়েছে $arg0 $arg1';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return '$arg0 দিনের স্ট্রিক';
+    return 'দিনের ধারাবাহিকতা $arg0';
   }
 
   @override
@@ -21192,7 +21189,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return 'আজকের জন্য চ্যাট বাকি আছে $arg0';
+    return 'আজকের বাকি চ্যাট $arg0';
   }
 
   @override
@@ -22599,7 +22596,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get metricsDashboardAddMetric => 'মেট্রিক যোগ করুন';
 
   @override
-  String get metricsDashboardBmi => 'BMI';
+  String get metricsDashboardBmi => 'Bmi';
 
   @override
   String get metricsDashboardBodyFat => 'শরীরের চর্বি';
@@ -23304,14 +23301,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'সবচেয়ে বেশি প্রশিক্ষিত $arg0';
+    return 'সবচেয়ে বেশি প্রশিক্ষিত $arg0';
   }
 
   @override
   String get muscleHeatmapTileMuscles => 'মাসল';
 
   @override
-  String get muscleHeatmapTileRetry => 'পুনরায় চেষ্টা করুন';
+  String get muscleHeatmapTileRetry => 'পুনরায় চেষ্টা করুন';
 
   @override
   String get muscleHeatmapUpperBody => 'আপার বডি';
@@ -24018,10 +24015,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get neatGamificationWidgetsActive => 'সক্রিয়';
 
   @override
-  String get neatGamificationWidgetsActiveWalker => 'অ্যাক্টিভ ওয়াকার';
+  String get neatGamificationWidgetsActiveWalker => 'সক্রিয় হাঁটার ব্যক্তি';
 
   @override
-  String get neatGamificationWidgetsCasualMover => 'ক্যাজুয়াল মুভার';
+  String get neatGamificationWidgetsCasualMover => 'সাধারণ মুভার';
 
   @override
   String get neatGamificationWidgetsClaimReward => 'পুরস্কার দাবি করুন';
@@ -24031,18 +24028,18 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return 'বর্তমান XP $arg0';
+    return 'বর্তমান xp $arg0';
   }
 
   @override
   String get neatGamificationWidgetsDailyChallenge => 'দৈনিক চ্যালেঞ্জ';
 
   @override
-  String get neatGamificationWidgetsExpired => 'মেয়াদ শেষ';
+  String get neatGamificationWidgetsExpired => 'মেয়াদ শেষ';
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return '$arg0 ঘণ্টা $arg1 মিনিট বাকি';
+    return 'বাকি সময় $arg0 ঘণ্টা $arg1 মিনিট';
   }
 
   @override
@@ -24058,17 +24055,17 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return '$arg0 মিনিট বাকি';
+    return 'বাকি সময় $arg0 মিনিট';
   }
 
   @override
   String get neatGamificationWidgetsNeat => 'NEAT';
 
   @override
-  String get neatGamificationWidgetsNeatChampion => 'NEAT চ্যাম্পিয়ন';
+  String get neatGamificationWidgetsNeatChampion => 'চ্যাম্পিয়ন';
 
   @override
-  String get neatGamificationWidgetsNeatEnthusiast => 'NEAT উৎসাহী';
+  String get neatGamificationWidgetsNeatEnthusiast => 'উৎসাহী';
 
   @override
   String get neatGamificationWidgetsNeatPts => 'NEAT পয়েন্ট';
@@ -24087,7 +24084,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return 'স্টেপ গোল $arg0';
+    return 'লক্ষ্যমাত্রা $arg0';
   }
 
   @override
@@ -24095,7 +24092,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return 'লক্ষ্য সক্রিয় ঘণ্টা $arg0';
+    return 'লক্ষ্যমাত্রা সক্রিয় ঘণ্টা $arg0';
   }
 
   @override
@@ -26153,13 +26150,13 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get openAllCratesDailyCrate => 'ডেইলি ক্রেট';
+  String get openAllCratesDailyCrate => 'দৈনিক ক্রেট';
 
   @override
   String get openAllCratesDone => 'সম্পন্ন';
 
   @override
-  String get openAllCratesDoubleXpToken => 'ডাবল XP টোকেন';
+  String get openAllCratesDoubleXpToken => 'ডাবল xp টোকেন';
 
   @override
   String get openAllCratesFailedToOpenCrates =>
@@ -26170,7 +26167,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return 'অর্জিত XP $arg0';
+    return 'অর্জিত xp $arg0';
   }
 
   @override
@@ -26196,7 +26193,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get openAllCratesProtectYourStreak => 'আপনার স্ট্রিক রক্ষা করুন';
+  String get openAllCratesProtectYourStreak => 'আপনার ধারাবাহিকতা রক্ষা করুন';
 
   @override
   String get openAllCratesSelectAll => 'সব নির্বাচন করুন';
@@ -27282,7 +27279,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get pillarDetailHourlyActivityRibbonBody =>
-      'আপনার সারাদিনের অ্যাক্টিভিটির সারাংশ';
+      'ঘণ্টাভিত্তিক অ্যাক্টিভিটি রিবনের বিবরণ';
 
   @override
   String get pillarDetailIntensity => 'তীব্রতা';
@@ -27297,25 +27294,25 @@ class AppLocalizationsBn extends AppLocalizations {
   String get pillarDetailMacroStream => 'ম্যাক্রো স্ট্রিম';
 
   @override
-  String get pillarDetailMacroStreamBody => 'আপনার পুষ্টির তথ্যের প্রবাহ';
+  String get pillarDetailMacroStreamBody => 'ম্যাক্রো স্ট্রিমের বিবরণ';
 
   @override
-  String get pillarDetailNoHistoryYet => 'এখনও কোনো হিস্ট্রি নেই';
+  String get pillarDetailNoHistoryYet => 'এখনও কোনো ইতিহাস নেই';
 
   @override
-  String get pillarDetailOpenActivity => 'অ্যাক্টিভিটি খুলুন';
+  String get pillarDetailOpenActivity => 'অ্যাক্টিভিটি';
 
   @override
   String get pillarDetailOpenFullScreen => 'ফুল স্ক্রিনে খুলুন';
 
   @override
-  String get pillarDetailOpenNutrition => 'পুষ্টি খুলুন';
+  String get pillarDetailOpenNutrition => 'পুষ্টি';
 
   @override
   String get pillarDetailOpenSleep => 'Sleep খুলুন →';
 
   @override
-  String get pillarDetailOpenWorkouts => 'ওয়ার্কআউট খুলুন';
+  String get pillarDetailOpenWorkouts => 'ওয়ার্কআউট';
 
   @override
   String get pillarDetailPending => 'অপেক্ষমাণ';
@@ -27354,13 +27351,13 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get pillarDetailSetAGoal => 'একটি লক্ষ্য নির্ধারণ করুন';
+  String get pillarDetailSetAGoal => 'লক্ষ্য নির্ধারণ করুন';
 
   @override
   String get pillarDetailSleepStages => 'ঘুমের পর্যায়';
 
   @override
-  String get pillarDetailSleepStagesBody => 'আপনার ঘুমের গুণমান বিশ্লেষণ করুন';
+  String get pillarDetailSleepStagesBody => 'ঘুমের পর্যায়ের বিবরণ';
 
   @override
   String get pillarDetailSparkline7d => 'sparkline-7d';
@@ -27387,10 +27384,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get pillarDetailVolume => 'ভলিউম';
 
   @override
-  String get pillarDetailWhenYouTrain => 'যখন আপনি প্রশিক্ষণ নেন';
+  String get pillarDetailWhenYouTrain => 'আপনি যখন প্রশিক্ষণ নেন';
 
   @override
-  String get pillarDetailWhenYouTrainBody => 'আপনার প্রশিক্ষণের সময়ের বিশ্লেষণ';
+  String get pillarDetailWhenYouTrainBody => 'প্রশিক্ষণের সময়কার বিবরণ';
 
   @override
   String get pinnedMessageBarN => '\\n';
@@ -27472,7 +27469,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'প্রতি সপ্তাহে $arg0 দিন';
+    return 'প্রতি সপ্তাহে দিন $arg0';
   }
 
   @override
@@ -27486,12 +27483,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String planPreviewScreenExercisesMin(Object arg0, Object arg1) {
-    return 'ব্যায়াম $arg0 $arg1';
+    return 'ব্যায়াম $arg0 $arg1';
   }
 
   @override
   String get planPreviewScreenIncreaseIntensityVolume =>
-      'তীব্রতা এবং ভলিউম বৃদ্ধি করুন';
+      'তীব্রতা এবং ভলিউম বাড়ান';
 
   @override
   String get planPreviewScreenMasterTheMovement =>
@@ -27520,7 +27517,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String planPreviewScreenWeekNumber(Object arg0) {
-    return 'সপ্তাহ $arg0';
+    return 'সপ্তাহ নম্বর $arg0';
   }
 
   @override
@@ -27950,7 +27947,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get preAuthQuizSafetyFirst => 'নিরাপত্তাই সবার আগে';
 
   @override
-  String get preAuthQuizSkipAndFinish => 'এড়িয়ে যান এবং শেষ করুন';
+  String get preAuthQuizSkipAndFinish => 'এড়িয়ে যান এবং শেষ করুন';
 
   @override
   String get preAuthQuizSkipLetAiDecide => 'বাদ দিন, AI কে সিদ্ধান্ত নিতে দিন';
@@ -28458,17 +28455,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get programMenuButtonViewMyPreferences => 'আমার পছন্দগুলো দেখুন';
 
   @override
-  String get programMetaApplyStaples => 'প্রধান ব্যায়াম প্রয়োগ করুন';
+  String get programMetaApplyStaples => 'স্ট্যাপল প্রয়োগ করুন';
 
   @override
-  String get programMetaApplyStaplesSubtitle =>
-      'আপনার প্রোগ্রামে মূল ব্যায়ামগুলো যোগ করুন';
+  String get programMetaApplyStaplesSubtitle => 'স্ট্যাপল প্রয়োগের সাবটাইটেল';
 
   @override
-  String get programMetaDeloadEvery => 'প্রতিটি ডিলোড';
+  String get programMetaDeloadEvery => 'প্রতিবার ডিলোড করুন';
 
   @override
-  String get programMetaFixedLoadsNote => 'স্থির লোড নোট';
+  String get programMetaFixedLoadsNote => 'ফিক্সড লোড নোট';
 
   @override
   String get programMetaProgramSettings => 'প্রোগ্রাম সেটিংস';
@@ -28495,7 +28491,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get programSummaryBeginnerLabel => 'বিগিনার';
 
   @override
-  String get programSummaryBodyweight => 'বডিওয়েট';
+  String get programSummaryBodyweight => 'বডিওয়েট';
 
   @override
   String get programSummaryBuildMuscle => 'পেশী গঠন';
@@ -28516,19 +28512,19 @@ class AppLocalizationsBn extends AppLocalizations {
   String get programSummaryGenerateNewProgram => 'নতুন প্রোগ্রাম তৈরি করুন';
 
   @override
-  String get programSummaryGetStronger => 'শক্তিশালী হওয়া';
+  String get programSummaryGetStronger => 'আরও শক্তিশালী হোন';
 
   @override
   String get programSummaryInjuryAwareness => 'ইনজুরি সচেতনতা';
 
   @override
-  String get programSummaryIntermediateLabel => 'ইন্টারমিডিয়েট';
+  String get programSummaryIntermediateLabel => 'ইন্টারমিডিয়েট';
 
   @override
   String get programSummaryLevel => 'স্তর';
 
   @override
-  String get programSummaryLoseWeight => 'ওজন কমানো';
+  String get programSummaryLoseWeight => 'ওজন কমান';
 
   @override
   String get programSummaryMacrosAndMealsAligned =>
@@ -28553,10 +28549,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get programSummaryStartTraining => 'প্রশিক্ষণ শুরু করুন';
 
   @override
-  String get programSummaryStayFit => 'ফিট থাকা';
+  String get programSummaryStayFit => 'ফিট থাকুন';
 
   @override
-  String get programSummaryStrengthSize => 'শক্তি এবং আকার';
+  String get programSummaryStrengthSize => 'শক্তি ও আকার';
 
   @override
   String get programSummaryWhatSIncluded => 'যা অন্তর্ভুক্ত আছে';
@@ -29229,10 +29225,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get progressionSelectorSetProgression => 'অগ্রগতি সেট করুন';
 
   @override
-  String get progressionSelectorSubtitle => 'আপনার অগ্রগতির পদ্ধতি বেছে নিন';
+  String get progressionSelectorSubtitle => 'সাবটাইটেল';
 
   @override
-  String get progressionSelectorTitle => 'প্রগ্রেশন পদ্ধতি';
+  String get progressionSelectorTitle => 'শিরোনাম';
 
   @override
   String get progressionSelectorWhenToUse => 'কখন ব্যবহার করবেন';
@@ -29744,7 +29740,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quickLogMeasurementsMeasurements => 'পরিমাপ';
 
   @override
-  String get quickLogMeasurementsNotLoggedYet => 'পরিমাপ এখনো লগ করা হয়নি';
+  String get quickLogMeasurementsNotLoggedYet => 'এখনও লগ করা হয়নি';
 
   @override
   String get quickLogMeasurementsPleaseSignInTo =>
@@ -29763,14 +29759,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return '$arg0 দিন আগে আপডেট করা হয়েছে';
+    return '$arg0 দিন আগে';
   }
 
   @override
-  String get quickLogMeasurementsUpdatedToday => 'আজ আপডেট করা হয়েছে';
+  String get quickLogMeasurementsUpdatedToday => 'আজ';
 
   @override
-  String get quickLogMeasurementsUpdatedYesterday => 'গতকাল আপডেট করা হয়েছে';
+  String get quickLogMeasurementsUpdatedYesterday => 'গতকাল';
 
   @override
   String get quickLogMeasurementsWaist => 'কোমর';
@@ -29908,7 +29904,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quickWorkoutDiscoverWorkouts => 'ওয়ার্কআউট খুঁজুন';
 
   @override
-  String get quickWorkoutDuration => 'ওয়ার্কআউটের সময়কাল';
+  String get quickWorkoutDuration => 'সময়কাল';
 
   @override
   String get quickWorkoutFavorite => 'প্রিয় তালিকায় যোগ করুন';
@@ -30063,13 +30059,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'ওয়ার্কআউট ফোকাস';
 
   @override
-  String get quickWorkoutSubtitle => 'দ্রুত একটি ওয়ার্কআউট শুরু করুন';
+  String get quickWorkoutSubtitle => 'সাবটাইটেল';
 
   @override
   String get quickWorkoutTapToAddPairs => 'ডাম্বেল জোড়া যোগ করতে ট্যাপ করুন';
 
   @override
-  String get quickWorkoutTitle => 'কুইক ওয়ার্কআউট';
+  String get quickWorkoutTitle => 'শিরোনাম';
 
   @override
   String get quickWorkoutUnfavorite => 'প্রিয় তালিকা থেকে সরান';
@@ -30207,7 +30203,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return '$arg0 এর মধ্যে $arg1 দিন নির্বাচিত';
+    return 'নির্বাচিত দিন $arg0 $arg1';
   }
 
   @override
@@ -30224,7 +30220,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনি সপ্তাহে কত দিন ব্যায়াম করতে পারবেন?';
 
   @override
-  String get quizDaysSelectorMin => 'ন্যূনতম';
+  String get quizDaysSelectorMin => 'কমপক্ষে';
 
   @override
   String get quizDaysSelectorMon => 'সোম';
@@ -30305,7 +30301,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quizEquipmentFullGym => 'ফুল জিম';
 
   @override
-  String get quizEquipmentFullGymAccess => 'সম্পূর্ণ জিম অ্যাক্সেস';
+  String get quizEquipmentFullGymAccess => 'জিম অ্যাক্সেস';
 
   @override
   String get quizEquipmentFullGymWithMachines =>
@@ -30315,7 +30311,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quizEquipmentGym => 'জিম';
 
   @override
-  String get quizEquipmentHome => 'হোম';
+  String get quizEquipmentHome => 'বাসা';
 
   @override
   String get quizEquipmentHomeDumbbellsBench => 'বাসা + ডাম্বেল ও বেঞ্চ';
@@ -30331,7 +30327,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return '$arg0 টি সরঞ্জাম শনাক্ত হয়েছে';
+    return 'শনাক্তকৃত সংখ্যা $arg0';
   }
 
   @override
@@ -30345,7 +30341,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'ন্যূনতম সরঞ্জাম - বডিওয়েট, ম্যাট';
 
   @override
-  String get quizEquipmentNeededForBarbell => 'বারবেলের জন্য প্রয়োজনীয়';
+  String get quizEquipmentNeededForBarbell => 'বারবেলের জন্য প্রয়োজনীয়';
 
   @override
   String get quizEquipmentNoEquipmentIdentifiedPick =>
@@ -30353,14 +30349,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'অন্যান্য $arg0 টি সরঞ্জাম';
+    return 'অন্যান্য সংখ্যা $arg0';
   }
 
   @override
   String get quizEquipmentOtherEquipment => 'অন্যান্য সরঞ্জাম';
 
   @override
-  String get quizEquipmentPullUpBar => 'পুল-আপ বার';
+  String get quizEquipmentPullUpBar => 'পুল আপ বার';
 
   @override
   String get quizEquipmentQuickPresets => 'কুইক প্রিসেট';
@@ -30384,7 +30380,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনার ওয়ার্কআউট পরিবেশ নির্বাচন করলে আমরা আপনার সেটআপের জন্য সঠিক ব্যায়াম এবং সরঞ্জামের পরামর্শ দিতে পারি।';
 
   @override
-  String get quizEquipmentSquatRack => 'স্কোয়াট র‍্যাক';
+  String get quizEquipmentSquatRack => 'স্কোয়াট র‍্যাক';
 
   @override
   String get quizEquipmentTakeAFewPhotos =>
@@ -30395,7 +30391,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'ভ্রমণের জন্য উপযুক্ত - ডাম্বেল, কার্ডিও মেশিন';
 
   @override
-  String get quizEquipmentTrxSuspension => 'TRX সাসপেনশন';
+  String get quizEquipmentTrxSuspension => 'Trx সাসপেনশন';
 
   @override
   String get quizEquipmentU1f3e0 => '🏠';
@@ -30546,8 +30542,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quizFitnessLevelAdvanced => 'অ্যাডভান্সড';
 
   @override
-  String get quizFitnessLevelAdvancedDesc =>
-      'আপনি অভিজ্ঞ এবং আপনার ট্রেনিংয়ে দক্ষতা আছে';
+  String get quizFitnessLevelAdvancedDesc => 'অ্যাডভান্সড বর্ণনা';
 
   @override
   String get quizFitnessLevelBeHonestWeLl =>
@@ -30557,13 +30552,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quizFitnessLevelBeginner => 'বিগিনার';
 
   @override
-  String get quizFitnessLevelBeginnerDesc => 'আপনি নতুন শুরু করছেন';
+  String get quizFitnessLevelBeginnerDesc => 'বিগিনার বর্ণনা';
 
   @override
-  String get quizFitnessLevelBrandNewToLifting => 'লিফটিংয়ে একদম নতুন';
+  String get quizFitnessLevelBrandNewToLifting => 'লিফটিংয়ে একদম নতুন';
 
   @override
-  String get quizFitnessLevelBuildingConsistency => 'ধারাবাহিকতা তৈরি করছেন';
+  String get quizFitnessLevelBuildingConsistency => 'ধারাবাহিকতা তৈরি করছি';
 
   @override
   String get quizFitnessLevelDailyActivityLevelOutside =>
@@ -30577,38 +30572,37 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quizFitnessLevelHowLongHaveYou => 'আপনি কতদিন ধরে ওজন তুলছেন?';
 
   @override
-  String get quizFitnessLevelIntermediate => 'ইন্টারমিডিয়েট';
+  String get quizFitnessLevelIntermediate => 'ইন্টারমিডিয়েট';
 
   @override
-  String get quizFitnessLevelIntermediateDesc =>
-      'আপনি নিয়মিত ব্যায়াম করছেন এবং কিছু অভিজ্ঞতা আছে';
+  String get quizFitnessLevelIntermediateDesc => 'ইন্টারমিডিয়েট বর্ণনা';
 
   @override
-  String get quizFitnessLevelJustGettingStarted => 'মাত্র শুরু করছেন';
+  String get quizFitnessLevelJustGettingStarted => 'মাত্র শুরু করছি';
 
   @override
   String get quizFitnessLevelLessThan6Months => '৬ মাসের কম';
 
   @override
-  String get quizFitnessLevelLight => 'লাইট';
+  String get quizFitnessLevelLight => 'হালকা';
 
   @override
-  String get quizFitnessLevelLightDesc => 'হালকা ব্যায়াম বা রিকভারি ফোকাসড';
+  String get quizFitnessLevelLightDesc => 'হালকা বর্ণনা';
 
   @override
-  String get quizFitnessLevelModerate => 'মাঝারি ফিটনেস লেভেল';
+  String get quizFitnessLevelModerate => 'মাঝারি';
 
   @override
-  String get quizFitnessLevelModerateDesc => 'মাঝারি ফিটনেস লেভেলের বিবরণ';
+  String get quizFitnessLevelModerateDesc => 'মাঝারি বর্ণনা';
 
   @override
   String get quizFitnessLevelNever => 'কখনোই না';
 
   @override
-  String get quizFitnessLevelSedentary => 'নিষ্ক্রিয় জীবনযাপন';
+  String get quizFitnessLevelSedentary => 'নিষ্ক্রিয়';
 
   @override
-  String get quizFitnessLevelSedentaryDesc => 'নিষ্ক্রিয় জীবনযাপনের বিবরণ';
+  String get quizFitnessLevelSedentaryDesc => 'নিষ্ক্রিয় বর্ণনা';
 
   @override
   String get quizFitnessLevelSolidFoundation => 'মজবুত ভিত্তি';
@@ -30618,10 +30612,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'এটি আমাদের সঠিক ব্যায়াম বেছে নিতে সাহায্য করে';
 
   @override
-  String get quizFitnessLevelVeryActive => 'খুবই সক্রিয়';
+  String get quizFitnessLevelVeryActive => 'খুবই সক্রিয়';
 
   @override
-  String get quizFitnessLevelVeryActiveDesc => 'খুবই সক্রিয় জীবনযাপনের বিবরণ';
+  String get quizFitnessLevelVeryActiveDesc => 'খুবই সক্রিয় বর্ণনা';
 
   @override
   String get quizFitnessLevelVeteranLifter => 'অভিজ্ঞ লিফটার';
@@ -30657,10 +30651,11 @@ class AppLocalizationsBn extends AppLocalizations {
   String get quizMotivationFeelStronger => 'আরও শক্তিশালী অনুভব করা';
 
   @override
-  String get quizMotivationHaveMoreEnergy => 'আরও বেশি শক্তি অনুভব করা';
+  String get quizMotivationHaveMoreEnergy => 'আরও বেশি শক্তি পাওয়া';
 
   @override
-  String get quizMotivationImproveMentalHealth => 'মানসিক স্বাস্থ্যের উন্নতি';
+  String get quizMotivationImproveMentalHealth =>
+      'মানসিক স্বাস্থ্যের উন্নতি করা';
 
   @override
   String get quizMotivationLookBetter => 'আরও ভালো দেখানো';
@@ -30670,7 +30665,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনার সাথে মিলে যায় এমন সব নির্বাচন করুন';
 
   @override
-  String get quizMotivationSleepBetter => 'আরও ভালো ঘুম';
+  String get quizMotivationSleepBetter => 'আরও ভালো ঘুম হওয়া';
 
   @override
   String get quizMotivationSportsPerformance => 'খেলার পারফরম্যান্স';
@@ -32122,8 +32117,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get refuelWindowCardWater => 'জল';
 
   @override
-  String get regenerateSheetAddingVariety =>
-      'বৈচিত্র্য যোগ করতে পুনরায় তৈরি করুন';
+  String get regenerateSheetAddingVariety => 'বৈচিত্র্য যোগ করা হচ্ছে';
 
   @override
   String get regenerateSheetAiGenerationTakes =>
@@ -32167,8 +32161,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get regenerateSheetCheckingPreferences => 'পছন্দগুলো যাচাই করা হচ্ছে';
 
   @override
-  String get regenerateSheetConnectingToTheAi =>
-      'AI-এর সাথে সংযোগ স্থাপন করা হচ্ছে';
+  String get regenerateSheetConnectingToTheAi => 'AI-এর সাথে সংযোগ করা হচ্ছে';
 
   @override
   String get regenerateSheetConsideringFocusAreas =>
@@ -32223,11 +32216,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get regenerateSheetFineTuningTheDetails =>
-      'বিস্তারিত বিষয়গুলো ঠিকঠাক করা হচ্ছে';
+      'বিস্তারিত বিষয়গুলো ঠিক করা হচ্ছে';
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return 'তৈরি হতে সময় লেগেছে $arg0';
+    return 'জেনারেট হতে সময় লেগেছে $arg0';
   }
 
   @override
@@ -32281,7 +32274,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get regenerateSheetPairingPushAndPull =>
-      'পুশ এবং পুল ব্যায়ামগুলো জোড়া লাগানো হচ্ছে';
+      'পুশ এবং পুল ব্যায়ামগুলো জোড়া করা হচ্ছে';
 
   @override
   String get regenerateSheetPersonalizingExercises =>
@@ -32293,7 +32286,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get regenerateSheetPreparingYourRequest =>
-      'আপনার অনুরোধ প্রস্তুত করা হচ্ছে';
+      'আপনার অনুরোধটি প্রস্তুত করা হচ্ছে';
 
   @override
   String get regenerateSheetPrimingTheEngine => 'ইঞ্জিন প্রস্তুত করা হচ্ছে';
@@ -32323,7 +32316,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get regenerateSheetRestoredFromLastRegen =>
-      'গতবার তৈরি করা থেকে পুনরুদ্ধার করা হয়েছে';
+      'গতবার জেনারেট করা থেকে পুনরুদ্ধার করা হয়েছে';
 
   @override
   String get regenerateSheetRestoredFromLastRegeneration =>
@@ -32343,7 +32336,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get regenerateSheetSequencingCompoundLifts =>
-      'কম্পাউন্ড লিফটগুলোর ক্রম সাজানো হচ্ছে';
+      'কম্পাউন্ড লিফটগুলো সাজানো হচ্ছে';
 
   @override
   String get regenerateSheetShapingTheSession => 'সেশনটি সাজানো হচ্ছে';
@@ -32362,7 +32355,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get regenerateSheetTodayNotInUsualDays =>
-      'আজকের দিনটি সাধারণ দিনের তালিকায় নেই';
+      'আজ স্বাভাবিক দিনের তালিকায় নেই';
 
   @override
   String get regenerateSheetTuningRestPeriods =>
@@ -33032,7 +33025,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get restSuggestionCalculatingOptimalRestTime =>
-      'সর্বোত্তম বিশ্রামের সময় গণনা করা হচ্ছে';
+      'বিশ্রামের সঠিক সময় গণনা করা হচ্ছে';
 
   @override
   String get restSuggestionCardAiRestCoach => 'AI রেস্ট কোচ';
@@ -33380,18 +33373,17 @@ class AppLocalizationsBn extends AppLocalizations {
   String get rpePillRpeRateOfPerceived => 'RPE — Rate of Perceived Exertion';
 
   @override
-  String get rpeRirHelpsAdjustNextSet =>
-      'RPE এবং RIR পরবর্তী সেট সামঞ্জস্য করতে সাহায্য করে';
+  String get rpeRirHelpsAdjustNextSet => 'পরবর্তী সেট সমন্বয় করতে সাহায্য করে';
 
   @override
-  String get rpeRirHowHardWasThatSet => 'সেটটি কতটা কঠিন ছিল?';
+  String get rpeRirHowHardWasThatSet => 'সেটটি কতটা কঠিন ছিল';
 
   @override
   String get rpeRirRateOfPerceivedExertion =>
-      'RPE (Rate of Perceived Exertion)';
+      'Rate of Perceived Exertion (RPE)';
 
   @override
-  String get rpeRirRepsInReserve => 'RIR (Reps in Reserve)';
+  String get rpeRirRepsInReserve => 'Reps in Reserve (RIR)';
 
   @override
   String get rpeRirRir => 'RIR';
@@ -35209,10 +35201,10 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get shareBreakdownTodaysLifts => 'আজকের লিফটের ব্রেকডাউন শেয়ার করুন';
+  String get shareBreakdownTodaysLifts => 'আজকের লিফট';
 
   @override
-  String get shareCoachWorkoutReview => 'কোচের ওয়ার্কআউট রিভিউ শেয়ার করুন';
+  String get shareCoachWorkoutReview => 'কোচ ওয়ার্কআউট রিভিউ';
 
   @override
   String get shareInsightsShareReport => 'রিপোর্ট শেয়ার করুন';
@@ -35231,19 +35223,19 @@ class AppLocalizationsBn extends AppLocalizations {
   String get shareMotivationalCompleted => 'সম্পন্ন';
 
   @override
-  String get sharePrNewPr => 'নতুন PR শেয়ার করুন';
+  String get sharePrNewPr => 'নতুন PR';
 
   @override
-  String get shareStatsCalories => 'ক্যালোরি পরিসংখ্যান শেয়ার করুন';
+  String get shareStatsCalories => 'ক্যালোরি';
 
   @override
-  String get shareStatsDuration => 'সময়কাল পরিসংখ্যান শেয়ার করুন';
+  String get shareStatsDuration => 'সময়কাল';
 
   @override
   String get shareStatsEliteTemplate => 'এলিট টেমপ্লেট';
 
   @override
-  String get shareStatsExercises => 'ব্যায়াম পরিসংখ্যান শেয়ার করুন';
+  String get shareStatsExercises => 'ব্যায়াম';
 
   @override
   String get shareStatsInstagram => 'Instagram';
@@ -35267,11 +35259,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get shareStatsShowWatermark => 'ওয়াটারমার্ক দেখান';
 
   @override
-  String get shareStatsVolume => 'ভলিউম পরিসংখ্যান শেয়ার করুন';
+  String get shareStatsVolume => 'ভলিউম';
 
   @override
-  String get shareStatsWorkoutComplete =>
-      'ওয়ার্কআউট সম্পন্ন পরিসংখ্যান শেয়ার করুন';
+  String get shareStatsWorkoutComplete => 'ওয়ার্কআউট সম্পন্ন';
 
   @override
   String get shareStrengthFocusAreas => 'ফোকাস এরিয়া';
@@ -36905,7 +36896,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get stretchControllerPause => 'পজ';
 
   @override
-  String get stretchControllerResume => 'স্ট্রেচিং পুনরায় শুরু করুন';
+  String get stretchControllerResume => 'চালিয়ে যান';
 
   @override
   String get stretchControllerSkipAll => 'সব বাদ দিন';
@@ -37783,7 +37774,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get supersetTapToSelect => 'নির্বাচন করতে ট্যাপ করুন';
 
   @override
-  String get supersetType => 'Superset ধরন';
+  String get supersetType => 'ধরন';
 
   @override
   String get syncDetailsAllSynced => 'সব সিঙ্ক হয়েছে!';
@@ -38589,42 +38580,42 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'আজকের স্কোর কমেছে $arg0';
+    return '$arg0 কমেছে';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'আজকের স্কোর অর্জন করেছে $arg0 $arg1';
+    return 'অর্জিত পয়েন্ট $arg0 $arg1';
   }
 
   @override
-  String get todayScoreDetailHowItWorks => 'আজকের স্কোর কীভাবে কাজ করে';
+  String get todayScoreDetailHowItWorks => 'এটি কীভাবে কাজ করে';
 
   @override
   String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'আজকের স্কোর নিষ্ক্রিয় ব্যাখ্যা $arg0 $arg1';
+    return 'নিষ্ক্রিয়তার ব্যাখ্যা $arg0 $arg1';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'গড় সহ আজকের স্কোর মোমেন্টাম $arg0 $arg1';
+    return 'গড় $arg0 সহ মোমেন্টাম $arg1';
   }
 
   @override
   String get todayScoreDetailNotCounted => 'গণনা করা হয়নি';
 
   @override
-  String get todayScoreDetailSetupText => 'আজকের স্কোর সেটআপ টেক্সট';
+  String get todayScoreDetailSetupText => 'সেটআপ টেক্সট';
 
   @override
-  String get todayScoreDetailSteady => 'আজকের স্কোর স্থিতিশীল';
+  String get todayScoreDetailSteady => 'স্থিতিশীল';
 
   @override
   String get todayScoreDetailTodayScore => 'আজকের স্কোর';
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'আজকের স্কোর বেড়েছে $arg0';
+    return '$arg0 বেড়েছে';
   }
 
   @override
@@ -39074,8 +39065,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get trophiesEarnedAchievementsUnlocked => 'অ্যাচিভমেন্ট আনলক হয়েছে';
 
   @override
-  String get trophiesEarnedAllMilestonesCleared =>
-      'সমস্ত মাইলফলক সম্পন্ন হয়েছে';
+  String get trophiesEarnedAllMilestonesCleared => 'সব মাইলফলক অর্জিত হয়েছে';
 
   @override
   String get trophiesEarnedAllTime => 'সর্বকালের';
@@ -39104,12 +39094,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'নতুন ব্যাজ অর্জন করেছেন $arg0';
+    return 'ব্যাজ $arg0';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return 'নতুন কার্ডিও PR অর্জন করেছেন $arg0';
+    return 'নতুন কার্ডিও PR $arg0';
   }
 
   @override
@@ -39117,7 +39107,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'নতুন PR অর্জন করেছেন $arg0';
+    return 'নতুন PR $arg0';
   }
 
   @override
@@ -39127,7 +39117,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get trophiesEarnedNextMilestones => 'পরবর্তী মাইলফলক';
 
   @override
-  String get trophiesEarnedNoNewRecords => 'নতুন কোনো রেকর্ড নেই';
+  String get trophiesEarnedNoNewRecords => 'কোনো নতুন রেকর্ড নেই';
 
   @override
   String get trophiesEarnedNoNewRecordsThis =>
@@ -39155,7 +39145,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get trophiesEarnedTitle => 'অর্জিত ট্রফি';
+  String get trophiesEarnedTitle => 'শিরোনাম';
 
   @override
   String get trophiesEarnedTotalWorkouts => 'মোট ওয়ার্কআউট';
@@ -39164,7 +39154,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get trophiesEarnedTrophiesAchievements => 'ট্রফি এবং অ্যাচিভমেন্ট';
 
   @override
-  String get trophiesEarnedViewAllCardioPRs => 'সমস্ত কার্ডিও PR দেখুন';
+  String get trophiesEarnedViewAllCardioPRs => 'সব কার্ডিও PR দেখুন';
 
   @override
   String get trophiesEarnedViewAllCardioPrs => 'সব কার্ডিও PR দেখুন';
@@ -40098,7 +40088,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'সপ্তাহের অগ্রগতি সম্পন্ন হয়েছে $arg0 $arg1';
+    return 'সম্পন্ন হয়েছে $arg0 $arg1';
   }
 
   @override
@@ -40799,12 +40789,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'এই সপ্তাহে ওজন কমেছে $arg0';
+    return 'এই সপ্তাহে কমেছে $arg0';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'গত সাইকেলের তুলনায় ওজন কমেছে $arg0';
+    return 'গত সাইকেলের তুলনায় কমেছে $arg0';
   }
 
   @override
@@ -40815,7 +40805,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'ট্রেন্ড দেখতে আপনার ওজন লগ করুন';
 
   @override
-  String get weightTrendCardMaintaining => 'ওজন বজায় রাখা হচ্ছে';
+  String get weightTrendCardMaintaining => 'বজায় রাখা হয়েছে';
 
   @override
   String get weightTrendCardNoChange => 'কোনো পরিবর্তন নেই';
@@ -40827,10 +40817,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get weightTrendCardOnTrack => 'সঠিক পথে';
 
   @override
-  String get weightTrendCardReviewGoals => 'লক্ষ্যগুলো পর্যালোচনা করুন';
+  String get weightTrendCardReviewGoals => 'লক্ষ্য পর্যালোচনা করুন';
 
   @override
-  String get weightTrendCardSameAsLastCycle => 'গত সাইকেলের মতোই আছে';
+  String get weightTrendCardSameAsLastCycle => 'গত সাইকেলের মতোই';
 
   @override
   String get weightTrendCardTapToLogWeight => 'ওজন লগ করতে ট্যাপ করুন';
@@ -40840,17 +40830,17 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return 'লক্ষ্য বজায় আছে $arg0';
+    return 'লক্ষ্য বজায় রাখার উইন্ডো $arg0';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'এই সপ্তাহে ওজন বেড়েছে $arg0';
+    return 'এই সপ্তাহে বেড়েছে $arg0';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'গত সাইকেলের তুলনায় ওজন বেড়েছে $arg0';
+    return 'গত সাইকেলের তুলনায় বেড়েছে $arg0';
   }
 
   @override
@@ -42084,10 +42074,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutImportCalories => 'ক্যালরি';
 
   @override
-  String get workoutImportCardio => 'কার্ডিও ইম্পোর্ট';
+  String get workoutImportCardio => 'কার্ডিও';
 
   @override
-  String get workoutImportCycling => 'সাইক্লিং ইম্পোর্ট';
+  String get workoutImportCycling => 'সাইক্লিং';
 
   @override
   String get workoutImportDistance => 'দূরত্ব';
@@ -42096,21 +42086,21 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutImportDuration => 'সময়কাল';
 
   @override
-  String get workoutImportEasy => 'সহজ ইম্পোর্ট';
+  String get workoutImportEasy => 'সহজ';
 
   @override
-  String get workoutImportFlexibility => 'ফ্লেক্সিবিলিটি ইম্পোর্ট';
+  String get workoutImportFlexibility => 'ফ্লেক্সিবিলিটি';
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return '$arg0 থেকে ইম্পোর্ট করুন';
+    return 'সোর্স $arg0 থেকে';
   }
 
   @override
-  String get workoutImportHard => 'কঠিন ইম্পোর্ট';
+  String get workoutImportHard => 'কঠিন';
 
   @override
-  String get workoutImportHiit => 'HIIT ইম্পোর্ট';
+  String get workoutImportHiit => 'HIIT';
 
   @override
   String get workoutImportHowHardWasThis => 'এই ওয়ার্কআউট কতটা কঠিন ছিল?';
@@ -42123,10 +42113,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutImportImportWorkout => 'ওয়ার্কআউট আমদানি করুন';
 
   @override
-  String get workoutImportMedium => 'মাঝারি ইম্পোর্ট';
+  String get workoutImportMedium => 'মাঝারি';
 
   @override
-  String get workoutImportOther => 'অন্যান্য ইম্পোর্ট';
+  String get workoutImportOther => 'অন্যান্য';
 
   @override
   String get workoutImportPreviewCardioRows => 'কার্ডিও সারি';
@@ -42197,7 +42187,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'এটি সাধারণত 10-30 সেকেন্ডের মধ্যে শেষ হয়।';
 
   @override
-  String get workoutImportRunning => 'রানিং ইম্পোর্ট';
+  String get workoutImportRunning => 'রানিং';
 
   @override
   String workoutImportScreenAvgBpm(Object avgHeartRate) {
@@ -42215,10 +42205,10 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get workoutImportSkip => 'ইম্পোর্ট এড়িয়ে যান';
+  String get workoutImportSkip => 'এড়িয়ে যান';
 
   @override
-  String get workoutImportStrengthTraining => 'স্ট্রেংথ ট্রেনিং ইম্পোর্ট';
+  String get workoutImportStrengthTraining => 'স্ট্রেংথ ট্রেনিং';
 
   @override
   String get workoutImportSummaryActivateProgram => 'প্রোগ্রাম চালু করুন';
@@ -42285,25 +42275,25 @@ class AppLocalizationsBn extends AppLocalizations {
       'অ্যাপ জুড়ে ওজন পরামর্শ এক মিনিটের মধ্যে এই ইতিহাস প্রতিফলিত করা শুরু করবে।';
 
   @override
-  String get workoutImportSwimming => 'সাঁতার ইম্পোর্ট';
+  String get workoutImportSwimming => 'সাঁতার';
 
   @override
-  String get workoutImportWalking => 'হাঁটা ইম্পোর্ট';
+  String get workoutImportWalking => 'হাঁটা';
 
   @override
-  String get workoutImportWeights => 'ওয়েটস ইম্পোর্ট';
+  String get workoutImportWeights => 'ওয়েটস';
 
   @override
   String get workoutImportWhatTypeOfExercise => 'কি ধরনের ব্যায়াম?';
 
   @override
-  String get workoutImportWorkout => 'ওয়ার্কআউট ইম্পোর্ট';
+  String get workoutImportWorkout => 'ওয়ার্কআউট';
 
   @override
   String get workoutImportWorkoutDetected => 'ওয়ার্কআউট শনাক্ত করা হয়েছে';
 
   @override
-  String get workoutImportYoga => 'যোগব্যায়াম ইম্পোর্ট';
+  String get workoutImportYoga => 'যোগব্যায়াম';
 
   @override
   String get workoutListTitle => 'ওয়ার্কআউট';
@@ -42447,7 +42437,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'ব্যায়াম পরিবর্তন করুন';
 
   @override
-  String get workoutPlanDrawerTitle => 'ওয়ার্কআউট প্ল্যান';
+  String get workoutPlanDrawerTitle => 'শিরোনাম';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'ওয়ার্কআউট পরিকল্পনা';
@@ -42790,7 +42780,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutShowcaseAdjust => 'সামঞ্জস্য করুন';
 
   @override
-  String get workoutShowcaseAdvanced => 'অ্যাডভান্সড ওয়ার্কআউট';
+  String get workoutShowcaseAdvanced => 'অ্যাডভান্সড';
 
   @override
   String get workoutShowcaseAll3SetsDone => 'সব ৩টি সেট সম্পন্ন';
@@ -42806,10 +42796,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutShowcaseAskCoach => 'কোচকে জিজ্ঞাসা করুন';
 
   @override
-  String get workoutShowcaseAutoDesc => 'স্বয়ংক্রিয় বর্ণনা';
+  String get workoutShowcaseAutoDesc => 'অটো ডেসক্রিপশন';
 
   @override
-  String get workoutShowcaseAutoLabel => 'স্বয়ংক্রিয় লেবেল';
+  String get workoutShowcaseAutoLabel => 'অটো লেবেল';
 
   @override
   String get workoutShowcaseBarbellSquat => 'বারবেল স্কোয়াট';
@@ -42827,83 +42817,76 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutShowcaseCal => 'ক্যাল';
 
   @override
-  String get workoutShowcaseCalories => 'ওয়ার্কআউট শোকেস ক্যালোরি';
+  String get workoutShowcaseCalories => 'ক্যালোরি';
 
   @override
-  String get workoutShowcaseContinue => 'ওয়ার্কআউট শোকেস চালিয়ে যান';
+  String get workoutShowcaseContinue => 'চালিয়ে যান';
 
   @override
-  String get workoutShowcaseDuration => 'ওয়ার্কআউট শোকেস সময়কাল';
+  String get workoutShowcaseDuration => 'সময়কাল';
 
   @override
-  String get workoutShowcaseEasy => 'ওয়ার্কআউট শোকেস সহজ';
+  String get workoutShowcaseEasy => 'সহজ';
 
   @override
   String get workoutShowcaseEpley2255Reps => 'Epley · ২২৫ × ৫ রেপস';
 
   @override
-  String get workoutShowcaseEverySetYouLog =>
-      'ওয়ার্কআউট শোকেস প্রতিটি সেট যা আপনি লগ করেন';
+  String get workoutShowcaseEverySetYouLog => 'আপনার লগ করা প্রতিটি সেট';
 
   @override
-  String get workoutShowcaseEveryWorkoutFlows =>
-      'ওয়ার্কআউট শোকেস প্রতিটি ওয়ার্কআউট ফ্লো';
+  String get workoutShowcaseEveryWorkoutFlows => 'প্রতিটি ওয়ার্কআউট ফ্লো';
 
   @override
-  String get workoutShowcaseFinishWorkout =>
-      'ওয়ার্কআউট শোকেস ওয়ার্কআউট শেষ করুন';
+  String get workoutShowcaseFinishWorkout => 'ওয়ার্কআউট শেষ করুন';
 
   @override
   String get workoutShowcaseFormat1Rm => 'ওয়ার্কআউট শোকেস ফরম্যাট 1RM';
 
   @override
-  String get workoutShowcaseFormatBoarding => 'ওয়ার্কআউট শোকেস ফরম্যাট বোর্ডিং';
+  String get workoutShowcaseFormatBoarding => 'বোর্ডিং';
 
   @override
-  String get workoutShowcaseFormatCard => 'ওয়ার্কআউট শোকেস ফরম্যাট কার্ড';
+  String get workoutShowcaseFormatCard => 'কার্ড';
 
   @override
-  String get workoutShowcaseFormatDiscord => 'ওয়ার্কআউট শোকেস ফরম্যাট Discord';
+  String get workoutShowcaseFormatDiscord => 'Discord';
 
   @override
-  String get workoutShowcaseFormatFull => 'ওয়ার্কআউট শোকেস ফরম্যাট সম্পূর্ণ';
+  String get workoutShowcaseFormatFull => 'সম্পূর্ণ';
 
   @override
-  String get workoutShowcaseFormatIgStory =>
-      'ওয়ার্কআউট শোকেস ফরম্যাট IG স্টোরি';
+  String get workoutShowcaseFormatIgStory => 'Ig story';
 
   @override
-  String get workoutShowcaseFormatNewspaper =>
-      'ওয়ার্কআউট শোকেস ফরম্যাট সংবাদপত্র';
+  String get workoutShowcaseFormatNewspaper => 'সংবাদপত্র';
 
   @override
-  String get workoutShowcaseFormatPassport =>
-      'ওয়ার্কআউট শোকেস ফরম্যাট পাসপোর্ট';
+  String get workoutShowcaseFormatPassport => 'পাসপোর্ট';
 
   @override
-  String get workoutShowcaseFormatPolaroid =>
-      'ওয়ার্কআউট শোকেস ফরম্যাট পোলারয়েড';
+  String get workoutShowcaseFormatPolaroid => 'পোলারয়েড';
 
   @override
-  String get workoutShowcaseFormatPrCard => 'ওয়ার্কআউট শোকেস ফরম্যাট PR কার্ড';
+  String get workoutShowcaseFormatPrCard => 'Pr card';
 
   @override
-  String get workoutShowcaseFormatQuote => 'ওয়ার্কআউট শোকেস ফরম্যাট উক্তি';
+  String get workoutShowcaseFormatQuote => 'উক্তি';
 
   @override
-  String get workoutShowcaseFormatReceipt => 'ওয়ার্কআউট শোকেস ফরম্যাট রসিদ';
+  String get workoutShowcaseFormatReceipt => 'রসিদ';
 
   @override
-  String get workoutShowcaseFormatTrading => 'ওয়ার্কআউট শোকেস ফরম্যাট ট্রেডিং';
+  String get workoutShowcaseFormatTrading => 'ট্রেডিং';
 
   @override
-  String get workoutShowcaseFormatTrophy => 'ওয়ার্কআউট শোকেস ফরম্যাট ট্রফি';
+  String get workoutShowcaseFormatTrophy => 'ট্রফি';
 
   @override
-  String get workoutShowcaseFormatVinyl => 'ওয়ার্কআউট শোকেস ফরম্যাট ভিনাইল';
+  String get workoutShowcaseFormatVinyl => 'ভিনাইল';
 
   @override
-  String get workoutShowcaseFormatWrapped => 'ওয়ার্কআউট শোকেস ফরম্যাট র‍্যাপড';
+  String get workoutShowcaseFormatWrapped => 'র‍্যাপড';
 
   @override
   String get workoutShowcaseHowYourWeightReps =>
@@ -42919,20 +42902,20 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutShowcaseLR => 'এল/আর';
 
   @override
-  String get workoutShowcaseLinearDesc => 'ওয়ার্কআউট শোকেস লিনিয়ার বর্ণনা';
+  String get workoutShowcaseLinearDesc => 'লিনিয়ার ডেসক্রিপশন';
 
   @override
-  String get workoutShowcaseLinearLabel => 'ওয়ার্কআউট শোকেস লিনিয়ার লেবেল';
+  String get workoutShowcaseLinearLabel => 'লিনিয়ার লেবেল';
 
   @override
-  String get workoutShowcaseLogAllSets => 'ওয়ার্কআউট শোকেস সব সেট লগ করুন';
+  String get workoutShowcaseLogAllSets => 'সব সেট';
 
   @override
   String get workoutShowcaseLogDrink => 'লগ পানীয়';
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'ওয়ার্কআউট শোকেস সেট $arg0 লগ করুন';
+    return 'সেট $arg0';
   }
 
   @override
@@ -42945,10 +42928,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutShowcaseNewPr => 'নতুন PR';
 
   @override
-  String get workoutShowcaseNote => 'ওয়ার্কআউট শোকেস নোট';
+  String get workoutShowcaseNote => 'নোট';
 
   @override
-  String get workoutShowcasePlan => 'ওয়ার্কআউট শোকেস প্ল্যান';
+  String get workoutShowcasePlan => 'প্ল্যান';
 
   @override
   String get workoutShowcasePlanAutoAdjustsNext =>
@@ -42961,10 +42944,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutShowcaseProgressionModel => 'প্রগ্রেশন মডেল';
 
   @override
-  String get workoutShowcasePyramidDesc => 'ওয়ার্কআউট শোকেস পিরামিড বর্ণনা';
+  String get workoutShowcasePyramidDesc => 'পিরামিড ডেসক্রিপশন';
 
   @override
-  String get workoutShowcasePyramidLabel => 'ওয়ার্কআউট শোকেস পিরামিড লেবেল';
+  String get workoutShowcasePyramidLabel => 'পিরামিড লেবেল';
 
   @override
   String get workoutShowcaseRare => '★ বিরল';
@@ -43054,7 +43037,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String workoutShowcaseTapToLogSet(Object arg0) {
-    return 'ওয়ার্কআউট শোকেস সেট $arg0 লগ করতে ট্যাপ করুন';
+    return 'সেট $arg0 লগ করতে ট্যাপ করুন';
   }
 
   @override
@@ -43064,12 +43047,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutShowcaseTime => 'সময়';
 
   @override
-  String get workoutShowcaseUndulatingDesc =>
-      'ওয়ার্কআউট শোকেস আনডুলেটিং বর্ণনা';
+  String get workoutShowcaseUndulatingDesc => 'আনডুলেটিং ডেসক্রিপশন';
 
   @override
-  String get workoutShowcaseUndulatingLabel =>
-      'ওয়ার্কআউট শোকেস আনডুলেটিং লেবেল';
+  String get workoutShowcaseUndulatingLabel => 'আনডুলেটিং লেবেল';
 
   @override
   String get workoutShowcaseUpNextBenchPress => 'পরবর্তী: বেঞ্চ প্রেস';
@@ -43607,7 +43588,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get workoutTopBarCompleteWorkout => 'ওয়ার্কআউট সম্পন্ন করুন';
 
   @override
-  String get workoutTopBarMore => 'ওয়ার্কআউট টপ বার আরও';
+  String get workoutTopBarMore => 'আরও';
 
   @override
   String get workoutTopBarSkipExercise => 'ব্যায়াম বাদ দিন';
@@ -43904,7 +43885,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get xpGoalsDaily => 'XP লক্ষ্য দৈনিক';
+  String get xpGoalsDaily => 'দৈনিক';
 
   @override
   String get xpGoalsDialog250LevelsAcross11Tiers =>
@@ -43912,64 +43893,57 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get xpGoalsDialogBeginnerToTranscendent =>
-      'XP লক্ষ্য ডায়ালগ বিগিনার থেকে ট্রান্সেন্ডেন্ট';
+      'বিগিনার থেকে ট্রান্সেন্ডেন্ট';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp =>
-      'XP লক্ষ্য ডায়ালগ ওয়ার্কআউট সম্পন্ন XP';
+  String get xpGoalsDialogCompleteWorkoutXp => 'ওয়ার্কআউট সম্পন্ন করার XP';
 
   @override
-  String get xpGoalsDialogDailyGoals => 'XP লক্ষ্য ডায়ালগ দৈনিক লক্ষ্য';
+  String get xpGoalsDialogDailyGoals => 'দৈনিক লক্ষ্য';
 
   @override
   String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'XP লক্ষ্য ডায়ালগ AI কোচের সাথে প্রথম চ্যাট XP';
+      'AI কোচের সাথে চ্যাট করার XP';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'XP লক্ষ্য ডায়ালগ প্রথম খাবার ওজন পরিমাপ XP';
+      'খাবারের ওজন পরিমাপের XP';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'XP লক্ষ্য ডায়ালগ প্রথম PR XP';
+  String get xpGoalsDialogFirstPrXp => 'Pr XP';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp =>
-      'XP লক্ষ্য ডায়ালগ প্রথম প্রগ্রেস ফটো XP';
+  String get xpGoalsDialogFirstProgressPhotoXp => 'প্রগ্রেস ফটোর XP';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp =>
-      'XP লক্ষ্য ডায়ালগ প্রথম প্রোটিন লক্ষ্য XP';
+  String get xpGoalsDialogFirstProteinGoalXp => 'প্রোটিন লক্ষ্যের XP';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp =>
-      'XP লক্ষ্য ডায়ালগ প্রথম ওয়ার্কআউট XP';
+  String get xpGoalsDialogFirstWorkoutXp => 'প্রথম ওয়ার্কআউটের XP';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp =>
-      'XP লক্ষ্য ডায়ালগ প্রোটিন লক্ষ্য পূরণ XP';
+  String get xpGoalsDialogHitProteinGoalXp => 'প্রোটিন লক্ষ্য পূরণের XP';
 
   @override
-  String get xpGoalsDialogLevels => 'XP লক্ষ্য ডায়ালগ লেভেল';
+  String get xpGoalsDialogLevels => 'লেভেল';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp =>
-      'XP লক্ষ্য ডায়ালগ শরীরের পরিমাপ লগ XP';
+  String get xpGoalsDialogLogBodyMeasurementsXp => 'শরীরের পরিমাপ লগ করার XP';
 
   @override
-  String get xpGoalsDialogLogMealXp => 'XP লক্ষ্য ডায়ালগ খাবার লগ XP';
+  String get xpGoalsDialogLogMealXp => 'খাবার লগ করার XP';
 
   @override
-  String get xpGoalsDialogLogWeightXp => 'XP লক্ষ্য ডায়ালগ ওজন লগ XP';
+  String get xpGoalsDialogLogWeightXp => 'ওজন লগ করার XP';
 
   @override
-  String get xpGoalsDialogLoginXp => 'XP লক্ষ্য ডায়ালগ লগইন XP';
+  String get xpGoalsDialogLoginXp => 'লগইন XP';
 
   @override
-  String get xpGoalsDialogMilestoneRewards =>
-      'XP লক্ষ্য ডায়ালগ মাইলস্টোন রিওয়ার্ড';
+  String get xpGoalsDialogMilestoneRewards => 'মাইলস্টোন রিওয়ার্ড';
 
   @override
-  String get xpGoalsFirstTimeBonuses => 'XP লক্ষ্য প্রথমবার বোনাস';
+  String get xpGoalsFirstTimeBonuses => 'প্রথমবারের বোনাস';
 
   @override
   String get xpGoalsGotIt => 'বুঝেছি!';
@@ -44004,8 +43978,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'প্রথম ওয়ার্কআউট সম্পন্ন করুন';
 
   @override
-  String get xpGoalsScreenConsumableLegend =>
-      'XP লক্ষ্য স্ক্রিন কনজুমেবল লিজেন্ড';
+  String get xpGoalsScreenConsumableLegend => 'কনজুমেবল লিজেন্ড';
 
   @override
   String get xpGoalsScreenErrorLoadingMonthlyAchievem =>
@@ -44041,7 +44014,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'XP লক্ষ্য স্ক্রিন লেভেল বর্তমান মোট $arg0';
+    return 'লেভেলের বর্তমান মোট $arg0';
   }
 
   @override
@@ -44066,8 +44039,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get xpGoalsScreenMilestone => 'মাইলস্টোন';
 
   @override
-  String get xpGoalsScreenMilestoneLegend =>
-      'XP লক্ষ্য স্ক্রিন মাইলস্টোন লিজেন্ড';
+  String get xpGoalsScreenMilestoneLegend => 'মাইলস্টোন লিজেন্ড';
 
   @override
   String get xpGoalsScreenNoLevelsAvailable => 'কোনো লেভেল উপলব্ধ নেই';
@@ -44141,10 +44113,10 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get xpGoalsScreenXpBonusLegend => 'XP লক্ষ্য স্ক্রিন XP বোনাস লিজেন্ড';
+  String get xpGoalsScreenXpBonusLegend => 'Xp বোনাস লিজেন্ড';
 
   @override
-  String get xpGoalsScreenYouBadge => 'XP লক্ষ্য স্ক্রিন আপনি ব্যাজ';
+  String get xpGoalsScreenYouBadge => 'আপনার ব্যাজ';
 
   @override
   String get xpGoalsTrophyRoom => 'ট্রফি রুম';
@@ -44157,12 +44129,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'XP লক্ষ্য XP উপলব্ধ $arg0';
+    return 'উপলব্ধ $arg0';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'XP লক্ষ্য আজ অর্জিত XP $arg0';
+    return 'আজ অর্জিত $arg0';
   }
 
   @override
@@ -44170,7 +44142,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'XP লক্ষ্য XP মাল্টিপ্লায়ার সক্রিয় $arg0';
+    return 'মাল্টিপ্লায়ার সক্রিয় $arg0';
   }
 
   @override

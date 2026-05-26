@@ -87,7 +87,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get achievementsByCategory => 'THEO DANH MỤC';
 
   @override
-  String get achievementsCardAchievements => 'Thẻ thành tựu';
+  String get achievementsCardAchievements => 'Thành tựu';
 
   @override
   String achievementsCardBadges(Object totalAchieved) {
@@ -1583,15 +1583,14 @@ class AppLocalizationsVi extends AppLocalizations {
       'Bỏ chọn bất kỳ thứ gì bạn muốn giữ lại khỏi kết nối này.';
 
   @override
-  String get aiModelDownloadBasic => 'Tải xuống mô hình AI cơ bản';
+  String get aiModelDownloadBasic => 'Cơ bản';
 
   @override
   String get aiModelDownloadBatteryWarning =>
       'Các mô hình AI trên thiết bị thực hiện tính toán chuyên sâu trên điện thoại của bạn. Điều này có thể làm hao pin nhanh hơn và khiến thiết bị nóng lên trong quá trình tạo bài tập. Các mô hình lớn hơn sẽ sử dụng nhiều tài nguyên hơn.';
 
   @override
-  String get aiModelDownloadBestQuality =>
-      'Tải xuống mô hình AI chất lượng tốt nhất';
+  String get aiModelDownloadBestQuality => 'Chất lượng tốt nhất';
 
   @override
   String get aiModelDownloadCancel => 'Hủy';
@@ -1645,10 +1644,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aiModelDownloadModelOptions => 'Tùy chọn mô hình';
 
   @override
-  String get aiModelDownloadMultimodal => 'Tải xuống mô hình AI đa phương thức';
+  String get aiModelDownloadMultimodal => 'Đa phương thức';
 
   @override
-  String get aiModelDownloadNotCompatible => 'Mô hình AI không tương thích';
+  String get aiModelDownloadNotCompatible => 'Không tương thích';
 
   @override
   String get aiModelDownloadNotSupportedOnThis =>
@@ -1658,13 +1657,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get aiModelDownloadOnDeviceAiModel => 'Mô hình AI trên thiết bị';
 
   @override
-  String get aiModelDownloadOptimal => 'Tải xuống mô hình AI tối ưu';
+  String get aiModelDownloadOptimal => 'Tối ưu';
 
   @override
   String get aiModelDownloadRam => 'RAM';
 
   @override
-  String get aiModelDownloadRecommended => 'Tải xuống mô hình AI được đề xuất';
+  String get aiModelDownloadRecommended => 'Được đề xuất';
 
   @override
   String get aiModelDownloadRemove => 'Xóa';
@@ -1687,7 +1686,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadSearch => 'Tìm kiếm tải xuống mô hình AI';
+  String get aiModelDownloadSearch => 'Tìm kiếm';
 
   @override
   String get aiModelDownloadSelectAModel => 'Chọn một mô hình';
@@ -1698,7 +1697,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadStandard => 'Tải xuống mô hình AI tiêu chuẩn';
+  String get aiModelDownloadStandard => 'Tiêu chuẩn';
 
   @override
   String get aiModelDownloadTokenSavedSecurely => 'Token đã được lưu an toàn';
@@ -4855,7 +4854,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return 'Tiến độ tuyệt vời $arg0';
+    return 'Nhịp độ tuyệt vời $arg0';
   }
 
   @override
@@ -7821,7 +7820,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get easyHelpLogASet => 'Ghi lại một hiệp';
 
   @override
-  String get easyHelpLogASetBody => 'Hướng dẫn ghi lại hiệp tập';
+  String get easyHelpLogASetBody => 'Ghi lại một hiệp';
 
   @override
   String get easyHelpSkipToNextExercise => 'Chuyển sang bài tập tiếp theo';
@@ -7844,13 +7843,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get easyHelpTodaysExercise => 'Bài tập hôm nay';
 
   @override
-  String get easyHelpTodaysExerciseBody => 'Hướng dẫn bài tập hôm nay';
+  String get easyHelpTodaysExerciseBody => 'Nội dung bài tập hôm nay';
 
   @override
   String get easyHelpWeightAndReps => 'Trọng lượng và số lần';
 
   @override
-  String get easyHelpWeightAndRepsBody => 'Hướng dẫn về mức tạ và số lần lặp';
+  String get easyHelpWeightAndRepsBody => 'Khối lượng và số lần lặp';
 
   @override
   String get easyRestOverlayRest => 'Nghỉ';
@@ -8131,7 +8130,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get editProgramSheetCustomizeProgram => 'Tùy chỉnh chương trình';
 
   @override
-  String get editProgramSheetDays => 'Số ngày';
+  String get editProgramSheetDays => 'Ngày';
 
   @override
   String editProgramSheetDaysAgo(Object days) {
@@ -8168,17 +8167,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'Không tải được lịch sử $arg0';
+    return 'Tải lịch sử $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'Không khôi phục được $arg0';
+    return 'Khôi phục $arg0';
   }
 
   @override
-  String get editProgramSheetFailedToUpdateProgram =>
-      'Không cập nhật được chương trình';
+  String get editProgramSheetFailedToUpdateProgram => 'Cập nhật chương trình';
 
   @override
   String get editProgramSheetFocus => 'Trọng tâm';
@@ -9455,7 +9453,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Đã chụp';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Phụ đề thêm bài tập';
+  String get exerciseAddSheetSubtitle => 'Phụ đề';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'AI gợi ý';
@@ -9843,7 +9841,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exerciseDetailsBodyweight => 'Trọng lượng cơ thể';
 
   @override
-  String get exerciseDetailsBreathing => 'Hơi thở';
+  String get exerciseDetailsBreathing => 'Hít thở';
 
   @override
   String get exerciseDetailsDetails => 'Chi tiết';
@@ -9923,7 +9921,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exerciseDetailsSheetWatchOutFor => 'Lưu ý';
 
   @override
-  String get exerciseDetailsTapVideoHint => 'Chạm để xem video';
+  String get exerciseDetailsTapVideoHint => 'Chạm vào gợi ý video';
 
   @override
   String get exerciseDetailsVideo => 'Video';
@@ -11132,7 +11130,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exerciseSwapNoAlternatives => 'Không tìm thấy lựa chọn thay thế';
 
   @override
-  String get exerciseSwapOptionSwap => 'Hoán đổi';
+  String get exerciseSwapOptionSwap => 'Tùy chọn thay thế';
 
   @override
   String get exerciseSwapSheetAiPicks => 'AI gợi ý';
@@ -11249,10 +11247,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exerciseSwapSheetTabSimilar => 'Tương tự';
 
   @override
-  String get exerciseSwapSheetTabSnapped => 'Tab hoán đổi bài tập đã khớp';
+  String get exerciseSwapSheetTabSnapped => 'Đã chụp';
 
   @override
-  String get exerciseSwapSheetTitle => 'Tiêu đề bảng hoán đổi bài tập';
+  String get exerciseSwapSheetTitle => 'Tiêu đề';
 
   @override
   String get exerciseSwapSheetTryAgain => 'Thử lại';
@@ -12519,8 +12517,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get fatigueAlertAcceptSuggestion =>
-      'Chấp nhận đề xuất cảnh báo mệt mỏi';
+  String get fatigueAlertAcceptSuggestion => 'Chấp nhận gợi ý';
 
   @override
   String get fatigueAlertContinueAsPlanned => 'Tiếp tục theo kế hoạch';
@@ -14471,12 +14468,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get fullScreenChartCompareWith => 'So sánh với…';
 
   @override
-  String get fullScreenChartCouldNotLoad =>
-      'Không thể tải biểu đồ toàn màn hình';
+  String get fullScreenChartCouldNotLoad => 'Không thể tải';
 
   @override
-  String get fullScreenChartNotEnoughHistory =>
-      'Không đủ dữ liệu lịch sử cho biểu đồ';
+  String get fullScreenChartNotEnoughHistory => 'Không đủ dữ liệu lịch sử';
 
   @override
   String get fullscreenImageViewerCouldNotLoadImage => 'Không thể tải hình ảnh';
@@ -15409,12 +15404,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'Đã hoàn thành $arg0 trên $arg1';
+    return 'Số lần hoàn thành $arg0 $arg1';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return '$arg0 ngày liên tiếp';
+    return 'Chuỗi ngày $arg0';
   }
 
   @override
@@ -15557,7 +15552,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get habitsTileCardNoHabits => 'Chưa có thói quen nào';
+  String get habitsTileCardNoHabits => 'Không có thói quen nào';
 
   @override
   String get habitsTileCardSignInToTrack => 'Đăng nhập để theo dõi thói quen';
@@ -21160,7 +21155,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return 'Số lượt chat còn lại hôm nay: $arg0';
+    return 'Số lượt chat còn lại hôm nay $arg0';
   }
 
   @override
@@ -22586,7 +22581,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get metricsDashboardHeartRate => 'Nhịp tim';
 
   @override
-  String get metricsDashboardHip => 'Vòng hông';
+  String get metricsDashboardHip => 'Hông';
 
   @override
   String get metricsDashboardMetricType => 'LOẠI CHỈ SỐ';
@@ -23270,7 +23265,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'Nhóm cơ tập luyện nhiều nhất: $arg0';
+    return 'Tập luyện nhiều nhất $arg0';
   }
 
   @override
@@ -23998,7 +23993,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return 'XP hiện tại: $arg0';
+    return 'XP hiện tại $arg0';
   }
 
   @override
@@ -24032,10 +24027,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get neatGamificationWidgetsNeat => 'NEAT';
 
   @override
-  String get neatGamificationWidgetsNeatChampion => 'Nhà vô địch NEAT';
+  String get neatGamificationWidgetsNeatChampion => 'Nhà vô địch';
 
   @override
-  String get neatGamificationWidgetsNeatEnthusiast => 'Người đam mê NEAT';
+  String get neatGamificationWidgetsNeatEnthusiast => 'Người đam mê';
 
   @override
   String get neatGamificationWidgetsNeatPts => 'Điểm NEAT';
@@ -24054,7 +24049,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return 'Mục tiêu bước chân: $arg0';
+    return 'Mục tiêu bước chân $arg0';
   }
 
   @override
@@ -24062,7 +24057,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return 'Mục tiêu giờ hoạt động: $arg0';
+    return 'Mục tiêu giờ hoạt động $arg0';
   }
 
   @override
@@ -26109,10 +26104,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get openAllCrates24HoursOf2xXp => '24 giờ nhân đôi XP';
 
   @override
-  String get openAllCratesActivityCrate => 'Hộp quà hoạt động';
+  String get openAllCratesActivityCrate => 'Hộp hoạt động';
 
   @override
-  String get openAllCratesBonusCrateToOpen => 'Hộp quà thưởng cần mở';
+  String get openAllCratesBonusCrateToOpen => 'Hộp thưởng cần mở';
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
@@ -26121,11 +26116,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return 'Số hộp quà đã mở: $arg0';
+    return 'Số hộp đã mở $arg0';
   }
 
   @override
-  String get openAllCratesDailyCrate => 'Hộp quà hàng ngày';
+  String get openAllCratesDailyCrate => 'Hộp hàng ngày';
 
   @override
   String get openAllCratesDone => 'Xong';
@@ -26138,7 +26133,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Không thể mở thùng. Vui lòng thử lại.';
 
   @override
-  String get openAllCratesFitnessCrate => 'Hộp quà thể hình';
+  String get openAllCratesFitnessCrate => 'Hộp thể hình';
 
   @override
   String openAllCratesGainedXp(Object arg0) {
@@ -26149,13 +26144,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get openAllCratesMaxLevel => 'Cấp tối đa';
 
   @override
-  String get openAllCratesOpenYourCrates => 'Mở hộp quà của bạn';
+  String get openAllCratesOpenYourCrates => 'Mở hộp của bạn';
 
   @override
   String get openAllCratesOpened => ') đã mở!';
 
   @override
-  String get openAllCratesOpeningYourCrates => 'Đang mở hộp quà của bạn';
+  String get openAllCratesOpeningYourCrates => 'Đang mở hộp của bạn';
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
@@ -26174,22 +26169,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get openAllCratesSelectAll => 'Chọn tất cả';
 
   @override
-  String get openAllCratesStreakCrate => 'Hộp quà chuỗi ngày';
+  String get openAllCratesStreakCrate => 'Thùng Streak';
 
   @override
-  String get openAllCratesStreakShield => 'Khiên bảo vệ chuỗi ngày';
+  String get openAllCratesStreakShield => 'Khiên Streak';
 
   @override
   String get openAllCratesToday => 'Hôm nay';
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return 'Tổng XP: $arg0';
+    return 'Tổng XP $arg0';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return 'Tổng XP cấp độ $arg0 $arg1';
+    return 'Tổng XP cấp $arg0 $arg1';
   }
 
   @override
@@ -26197,12 +26192,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return 'XP trong cấp độ $arg0 $arg1';
+    return 'XP trong cấp $arg0 $arg1';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return 'XP để lên cấp tiếp theo $arg0 $arg1';
+    return 'XP đến cấp tiếp theo $arg0 $arg1';
   }
 
   @override
@@ -27228,7 +27223,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pillarDetailComponents => 'Thành phần';
 
   @override
-  String get pillarDetailCouldNotLoad => 'Không thể tải chi tiết trụ cột';
+  String get pillarDetailCouldNotLoad => 'Không thể tải';
 
   @override
   String get pillarDetailCustomTrends => 'Xu hướng tùy chỉnh';
@@ -27241,7 +27236,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pillarDetailDuration => 'Thời lượng';
 
   @override
-  String get pillarDetailFiveOrMoreLoggedDays => 'Năm ngày trở lên đã ghi lại';
+  String get pillarDetailFiveOrMoreLoggedDays => 'Năm ngày ghi chép trở lên';
 
   @override
   String get pillarDetailHeatmap30d => 'bản đồ nhiệt-30n';
@@ -27251,7 +27246,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get pillarDetailHourlyActivityRibbonBody =>
-      'Theo dõi mức độ hoạt động của bạn theo từng giờ trong ngày.';
+      'Nội dung dải hoạt động hàng giờ';
 
   @override
   String get pillarDetailIntensity => 'Cường độ';
@@ -27260,32 +27255,31 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pillarDetailLast30Days => '30 ngày qua';
 
   @override
-  String get pillarDetailLogged => 'Đã ghi lại';
+  String get pillarDetailLogged => 'Đã ghi';
 
   @override
-  String get pillarDetailMacroStream => 'Dòng dữ liệu dinh dưỡng';
+  String get pillarDetailMacroStream => 'Luồng Macro';
 
   @override
-  String get pillarDetailMacroStreamBody =>
-      'Theo dõi Macro của bạn để đạt mục tiêu dinh dưỡng.';
+  String get pillarDetailMacroStreamBody => 'Nội dung luồng Macro';
 
   @override
   String get pillarDetailNoHistoryYet => 'Chưa có lịch sử';
 
   @override
-  String get pillarDetailOpenActivity => 'Mở hoạt động';
+  String get pillarDetailOpenActivity => 'Hoạt động';
 
   @override
   String get pillarDetailOpenFullScreen => 'Mở toàn màn hình';
 
   @override
-  String get pillarDetailOpenNutrition => 'Mở dinh dưỡng';
+  String get pillarDetailOpenNutrition => 'Dinh dưỡng';
 
   @override
   String get pillarDetailOpenSleep => 'Mở Giấc ngủ →';
 
   @override
-  String get pillarDetailOpenWorkouts => 'Mở bài tập';
+  String get pillarDetailOpenWorkouts => 'Bài tập';
 
   @override
   String get pillarDetailPending => 'Đang chờ';
@@ -27327,11 +27321,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pillarDetailSetAGoal => 'Đặt mục tiêu';
 
   @override
-  String get pillarDetailSleepStages => 'Các giai đoạn giấc ngủ';
+  String get pillarDetailSleepStages => 'Giai đoạn giấc ngủ';
 
   @override
-  String get pillarDetailSleepStagesBody =>
-      'Phân tích chất lượng giấc ngủ của bạn qua từng giai đoạn.';
+  String get pillarDetailSleepStagesBody => 'Nội dung giai đoạn giấc ngủ';
 
   @override
   String get pillarDetailSparkline7d => 'biểu đồ đường-7n';
@@ -27347,7 +27340,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pillarDetailTracking => 'Theo dõi';
 
   @override
-  String get pillarDetailTwoOrMoreLoggedDays => 'Hai ngày trở lên đã ghi lại';
+  String get pillarDetailTwoOrMoreLoggedDays => 'Hai ngày ghi chép trở lên';
 
   @override
   String get pillarDetailVariety => 'Sự đa dạng';
@@ -27362,8 +27355,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pillarDetailWhenYouTrain => 'Khi bạn tập luyện';
 
   @override
-  String get pillarDetailWhenYouTrainBody =>
-      'Chi tiết trụ cột khi bạn tập luyện cơ thể';
+  String get pillarDetailWhenYouTrainBody => 'Nội dung khi bạn tập luyện';
 
   @override
   String get pinnedMessageBarN => '\\n';
@@ -27432,7 +27424,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get planPreviewScreenBuildStrengthFoundation =>
-      'Màn hình xem trước kế hoạch xây dựng nền tảng sức mạnh';
+      'Xây dựng nền tảng sức mạnh';
 
   @override
   String get planPreviewScreenBuildingYour4Week =>
@@ -27462,15 +27454,14 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get planPreviewScreenIncreaseIntensityVolume =>
-      'Màn hình xem trước kế hoạch tăng cường độ và khối lượng';
+      'Tăng cường độ và khối lượng';
 
   @override
-  String get planPreviewScreenMasterTheMovement =>
-      'Màn hình xem trước kế hoạch làm chủ chuyển động';
+  String get planPreviewScreenMasterTheMovement => 'Làm chủ chuyển động';
 
   @override
   String get planPreviewScreenPeakPerformanceWeek =>
-      'Màn hình xem trước kế hoạch tuần đạt hiệu suất đỉnh cao';
+      'Tuần đạt hiệu suất đỉnh cao';
 
   @override
   String get planPreviewScreenSetsreps => 'số hiệp/số lần';
@@ -27491,7 +27482,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String planPreviewScreenWeekNumber(Object arg0) {
-    return 'Tuần $arg0';
+    return 'Tuần số $arg0';
   }
 
   @override
@@ -28429,17 +28420,17 @@ class AppLocalizationsVi extends AppLocalizations {
   String get programMenuButtonViewMyPreferences => 'Xem tùy chọn của tôi';
 
   @override
-  String get programMetaApplyStaples => 'Áp dụng các bài tập nền tảng';
+  String get programMetaApplyStaples => 'Áp dụng các bài tập cơ bản';
 
   @override
   String get programMetaApplyStaplesSubtitle =>
-      'Áp dụng các bài tập nền tảng cho chương trình';
+      'Phụ đề áp dụng các bài tập cơ bản';
 
   @override
-  String get programMetaDeloadEvery => 'Giảm tải mỗi';
+  String get programMetaDeloadEvery => 'Deload mỗi';
 
   @override
-  String get programMetaFixedLoadsNote => 'Lưu ý về mức tạ cố định';
+  String get programMetaFixedLoadsNote => 'Ghi chú về mức tạ cố định';
 
   @override
   String get programMetaProgramSettings => 'Cài đặt chương trình';
@@ -28481,7 +28472,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get programSummaryFullGym => 'Phòng gym đầy đủ';
 
   @override
-  String get programSummaryGeneralFitness => 'Thể hình tổng quát';
+  String get programSummaryGeneralFitness => 'Thể hình chung';
 
   @override
   String get programSummaryGenerateNewProgram => 'Tạo chương trình mới';
@@ -29203,10 +29194,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Thiết lập tiến triển';
 
   @override
-  String get progressionSelectorSubtitle => 'Chọn cách bạn muốn tiến bộ';
+  String get progressionSelectorSubtitle => 'Phụ đề';
 
   @override
-  String get progressionSelectorTitle => 'Cài đặt tiến trình';
+  String get progressionSelectorTitle => 'Tiêu đề';
 
   @override
   String get progressionSelectorWhenToUse => 'Khi nào nên sử dụng';
@@ -29719,7 +29710,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quickLogMeasurementsMeasurements => 'Số đo';
 
   @override
-  String get quickLogMeasurementsNotLoggedYet => 'Chưa ghi lại số đo';
+  String get quickLogMeasurementsNotLoggedYet => 'Chưa ghi chép';
 
   @override
   String get quickLogMeasurementsPleaseSignInTo =>
@@ -29738,15 +29729,14 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return 'Số đo đã cập nhật $arg0 ngày trước';
+    return '$arg0 ngày trước';
   }
 
   @override
-  String get quickLogMeasurementsUpdatedToday => 'Số đo đã cập nhật hôm nay';
+  String get quickLogMeasurementsUpdatedToday => 'Hôm nay';
 
   @override
-  String get quickLogMeasurementsUpdatedYesterday =>
-      'Số đo đã cập nhật hôm qua';
+  String get quickLogMeasurementsUpdatedYesterday => 'Hôm qua';
 
   @override
   String get quickLogMeasurementsWaist => 'Vòng eo';
@@ -29885,7 +29875,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quickWorkoutDiscoverWorkouts => 'Khám phá các buổi tập';
 
   @override
-  String get quickWorkoutDuration => 'Thời lượng tập luyện nhanh';
+  String get quickWorkoutDuration => 'Thời lượng';
 
   @override
   String get quickWorkoutFavorite => 'Yêu thích';
@@ -29894,7 +29884,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quickWorkoutFocus => 'Trọng tâm';
 
   @override
-  String get quickWorkoutFocusOptional => 'Trọng tâm tập luyện (tùy chọn)';
+  String get quickWorkoutFocusOptional => 'Trọng tâm (tùy chọn)';
 
   @override
   String get quickWorkoutNoSuggestions => 'Không có gợi ý nào';
@@ -30040,13 +30030,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Trọng tâm bài tập';
 
   @override
-  String get quickWorkoutSubtitle => 'Tạo một buổi tập nhanh chóng';
+  String get quickWorkoutSubtitle => 'Phụ đề';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Chạm để thêm cặp tạ đơn';
 
   @override
-  String get quickWorkoutTitle => 'Tập luyện nhanh';
+  String get quickWorkoutTitle => 'Tiêu đề';
 
   @override
   String get quickWorkoutUnfavorite => 'Bỏ yêu thích';
@@ -30202,7 +30192,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Bạn có thể tập bao nhiêu ngày mỗi tuần?';
 
   @override
-  String get quizDaysSelectorMin => 'tối thiểu';
+  String get quizDaysSelectorMin => 'Tối thiểu';
 
   @override
   String get quizDaysSelectorMon => 'Thứ 2';
@@ -30275,17 +30265,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizEquipmentDumbbells => 'Tạ đơn';
 
   @override
-  String get quizEquipmentEnablesChestPress =>
-      'Cho phép thực hiện bài đẩy ngực';
+  String get quizEquipmentEnablesChestPress => 'Hỗ trợ đẩy ngực';
 
   @override
-  String get quizEquipmentFlatBench => 'Ghế phẳng';
+  String get quizEquipmentFlatBench => 'Ghế tập phẳng';
 
   @override
   String get quizEquipmentFullGym => 'Phòng gym đầy đủ';
 
   @override
-  String get quizEquipmentFullGymAccess => 'Quyền truy cập phòng gym đầy đủ';
+  String get quizEquipmentFullGymAccess => 'Quyền sử dụng phòng gym';
 
   @override
   String get quizEquipmentFullGymWithMachines =>
@@ -30311,7 +30300,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String quizEquipmentIdentifiedCount(Object arg0) {
-    return 'Đã xác định $arg0 thiết bị';
+    return 'Số lượng đã xác định $arg0';
   }
 
   @override
@@ -30333,7 +30322,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'Thiết bị khác $arg0';
+    return 'Số lượng khác $arg0';
   }
 
   @override
@@ -30364,7 +30353,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Việc chọn môi trường tập luyện giúp chúng tôi đề xuất các bài tập và thiết bị phù hợp cho không gian của bạn.';
 
   @override
-  String get quizEquipmentSquatRack => 'Giá đỡ tạ';
+  String get quizEquipmentSquatRack => 'Khung gánh tạ';
 
   @override
   String get quizEquipmentTakeAFewPhotos =>
@@ -30526,8 +30515,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizFitnessLevelAdvanced => 'Nâng cao';
 
   @override
-  String get quizFitnessLevelAdvancedDesc =>
-      'Bạn đã tập luyện lâu năm và muốn tối ưu hóa hiệu suất';
+  String get quizFitnessLevelAdvancedDesc => 'Mô tả trình độ nâng cao';
 
   @override
   String get quizFitnessLevelBeHonestWeLl =>
@@ -30537,16 +30525,14 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizFitnessLevelBeginner => 'Người mới bắt đầu';
 
   @override
-  String get quizFitnessLevelBeginnerDesc =>
-      'Bạn mới làm quen với việc tập luyện';
+  String get quizFitnessLevelBeginnerDesc => 'Mô tả trình độ người mới';
 
   @override
   String get quizFitnessLevelBrandNewToLifting =>
       'Hoàn toàn mới với việc tập tạ';
 
   @override
-  String get quizFitnessLevelBuildingConsistency =>
-      'Đang xây dựng sự nhất quán';
+  String get quizFitnessLevelBuildingConsistency => 'Đang xây dựng sự kiên trì';
 
   @override
   String get quizFitnessLevelDailyActivityLevelOutside =>
@@ -30564,8 +30550,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizFitnessLevelIntermediate => 'Trung cấp';
 
   @override
-  String get quizFitnessLevelIntermediateDesc =>
-      'Bạn đã có kinh nghiệm và muốn nâng cao kết quả';
+  String get quizFitnessLevelIntermediateDesc => 'Mô tả trình độ trung cấp';
 
   @override
   String get quizFitnessLevelJustGettingStarted => 'Chỉ mới bắt đầu';
@@ -30574,26 +30559,25 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizFitnessLevelLessThan6Months => 'Dưới 6 tháng';
 
   @override
-  String get quizFitnessLevelLight => 'Mức độ nhẹ';
+  String get quizFitnessLevelLight => 'Nhẹ';
 
   @override
-  String get quizFitnessLevelLightDesc => 'Tập luyện 1-2 lần mỗi tuần';
+  String get quizFitnessLevelLightDesc => 'Mô tả mức độ nhẹ';
 
   @override
-  String get quizFitnessLevelModerate => 'Mức độ trung bình';
+  String get quizFitnessLevelModerate => 'Trung bình';
 
   @override
-  String get quizFitnessLevelModerateDesc => 'Tập luyện 3-4 lần mỗi tuần';
+  String get quizFitnessLevelModerateDesc => 'Mô tả mức độ trung bình';
 
   @override
-  String get quizFitnessLevelNever => 'Chưa bao giờ tập luyện';
+  String get quizFitnessLevelNever => 'Chưa bao giờ';
 
   @override
   String get quizFitnessLevelSedentary => 'Ít vận động';
 
   @override
-  String get quizFitnessLevelSedentaryDesc =>
-      'Công việc văn phòng, ít hoạt động thể chất';
+  String get quizFitnessLevelSedentaryDesc => 'Mô tả mức độ ít vận động';
 
   @override
   String get quizFitnessLevelSolidFoundation => 'Nền tảng vững chắc';
@@ -30606,8 +30590,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizFitnessLevelVeryActive => 'Rất năng động';
 
   @override
-  String get quizFitnessLevelVeryActiveDesc =>
-      'Tập luyện 5 lần trở lên mỗi tuần';
+  String get quizFitnessLevelVeryActiveDesc => 'Mô tả mức độ rất năng động';
 
   @override
   String get quizFitnessLevelVeteranLifter => 'Người tập lâu năm';
@@ -30638,7 +30621,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizMotivationBuildConfidence => 'Xây dựng sự tự tin';
 
   @override
-  String get quizMotivationFeelStronger => 'Cảm thấy khỏe khoắn hơn';
+  String get quizMotivationFeelStronger => 'Cảm thấy khỏe hơn';
 
   @override
   String get quizMotivationHaveMoreEnergy => 'Có nhiều năng lượng hơn';
@@ -30648,7 +30631,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Cải thiện sức khỏe tinh thần';
 
   @override
-  String get quizMotivationLookBetter => 'Cải thiện vóc dáng';
+  String get quizMotivationLookBetter => 'Cải thiện ngoại hình';
 
   @override
   String get quizMotivationSelectAllThatResonate =>
@@ -30658,7 +30641,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizMotivationSleepBetter => 'Ngủ ngon hơn';
 
   @override
-  String get quizMotivationSportsPerformance => 'Nâng cao hiệu suất thể thao';
+  String get quizMotivationSportsPerformance => 'Hiệu suất thể thao';
 
   @override
   String get quizMotivationWhatSDrivingYou => 'Điều gì thúc đẩy bạn tập luyện?';
@@ -32175,7 +32158,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get regenerateSheetDialingInSetsAndReps =>
-      'Đang điều chỉnh số hiệp và số lần lặp';
+      'Đang thiết lập số hiệp và số lần lặp';
 
   @override
   String get regenerateSheetDoThisToday => 'Tập hôm nay';
@@ -32201,11 +32184,12 @@ class AppLocalizationsVi extends AppLocalizations {
       'Đang hoàn thiện bài tập của bạn';
 
   @override
-  String get regenerateSheetFineTuningTheDetails => 'Đang tinh chỉnh chi tiết';
+  String get regenerateSheetFineTuningTheDetails =>
+      'Đang tinh chỉnh các chi tiết';
 
   @override
   String regenerateSheetGeneratingElapsed(Object arg0) {
-    return 'Đang tạo, đã trôi qua $arg0';
+    return 'Đang tạo $arg0';
   }
 
   @override
@@ -32234,20 +32218,20 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get regenerateSheetLoadingInjuriesAndGoals =>
-      'Đang tải chấn thương và mục tiêu';
+      'Chấn thương và mục tiêu';
 
   @override
-  String get regenerateSheetLoadingPreferences => 'Đang tải tùy chọn';
+  String get regenerateSheetLoadingPreferences => 'Tùy chọn';
 
   @override
-  String get regenerateSheetLoadingYourProfile => 'Đang tải hồ sơ của bạn';
+  String get regenerateSheetLoadingYourProfile => 'Hồ sơ của bạn';
 
   @override
   String get regenerateSheetMatchingIntensity => 'Đang khớp cường độ';
 
   @override
   String get regenerateSheetMatchingYourFitnessLevel =>
-      'Đang khớp với mức độ thể chất của bạn';
+      'Đang khớp với mức độ thể lực của bạn';
 
   @override
   String get regenerateSheetNoSuggestionsYet => 'Chưa có gợi ý nào';
@@ -32265,7 +32249,8 @@ class AppLocalizationsVi extends AppLocalizations {
       'Đang cá nhân hóa bài tập';
 
   @override
-  String get regenerateSheetPickingYourExercises => 'Đang chọn bài tập';
+  String get regenerateSheetPickingYourExercises =>
+      'Đang chọn các bài tập của bạn';
 
   @override
   String get regenerateSheetPreparingYourRequest =>
@@ -32275,8 +32260,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get regenerateSheetPrimingTheEngine => 'Đang khởi động hệ thống';
 
   @override
-  String get regenerateSheetPullingYourGoals =>
-      'Đang truy xuất mục tiêu của bạn';
+  String get regenerateSheetPullingYourGoals => 'Đang lấy mục tiêu của bạn';
 
   @override
   String get regenerateSheetReadingYourProfile => 'Đang đọc hồ sơ của bạn';
@@ -32296,7 +32280,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get regenerateSheetRespectingYourInjuryList =>
-      'Đang lưu ý danh sách chấn thương của bạn';
+      'Đang tuân thủ danh sách chấn thương của bạn';
 
   @override
   String get regenerateSheetRestoredFromLastRegen =>
@@ -32337,7 +32321,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get regenerateSheetTodayNotInUsualDays =>
-      'Hôm nay không nằm trong ngày tập thường lệ';
+      'Hôm nay không nằm trong các ngày tập thông thường';
 
   @override
   String get regenerateSheetTuningRestPeriods =>
@@ -33030,7 +33014,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return 'Tiết kiệm $arg0';
+    return 'Tiết kiệm thời gian $arg0';
   }
 
   @override
@@ -33353,17 +33337,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get rpePillRpeRateOfPerceived => 'RPE — Mức độ gắng sức cảm nhận';
 
   @override
-  String get rpeRirHelpsAdjustNextSet =>
-      'RPE và RIR giúp điều chỉnh hiệp tiếp theo';
+  String get rpeRirHelpsAdjustNextSet => 'Giúp điều chỉnh hiệp tiếp theo';
 
   @override
-  String get rpeRirHowHardWasThatSet => 'Hiệp vừa rồi khó thế nào?';
+  String get rpeRirHowHardWasThatSet => 'Hiệp đó khó như thế nào';
 
   @override
-  String get rpeRirRateOfPerceivedExertion => 'RPE (Mức độ gắng sức cảm nhận)';
+  String get rpeRirRateOfPerceivedExertion => 'Mức độ gắng sức cảm nhận (RPE)';
 
   @override
-  String get rpeRirRepsInReserve => 'RIR (Số lần lặp dự trữ)';
+  String get rpeRirRepsInReserve => 'Số lần lặp dự trữ (RIR)';
 
   @override
   String get rpeRirRir => 'RIR';
@@ -33392,12 +33375,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return 'Đã gắn cờ $arg0 chấn thương';
+    return 'Đã gắn cờ chấn thương $arg0';
   }
 
   @override
-  String get safetyDisclaimerBannerInjuryBody =>
-      'Vui lòng tập luyện cẩn thận với các chấn thương đã lưu.';
+  String get safetyDisclaimerBannerInjuryBody => 'Vùng chấn thương';
 
   @override
   String get safetyDisclaimerBannerLearnMore => 'Tìm hiểu thêm';
@@ -33412,8 +33394,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Chế độ an toàn đang bật';
 
   @override
-  String get safetyDisclaimerBannerSafetyModeBody =>
-      'Zealova đã điều chỉnh bài tập để đảm bảo an toàn cho bạn.';
+  String get safetyDisclaimerBannerSafetyModeBody => 'Nội dung chế độ an toàn';
 
   @override
   String get saunaCustomDuration => 'Thời lượng tùy chỉnh';
@@ -35185,11 +35166,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get shareBreakdownTodaysLifts => 'Chia sẻ tóm tắt các bài tập hôm nay';
+  String get shareBreakdownTodaysLifts => 'Các bài tập hôm nay';
 
   @override
-  String get shareCoachWorkoutReview =>
-      'Chia sẻ đánh giá bài tập từ huấn luyện viên';
+  String get shareCoachWorkoutReview => 'Đánh giá buổi tập của huấn luyện viên';
 
   @override
   String get shareInsightsShareReport => 'Chia sẻ báo cáo';
@@ -35208,19 +35188,19 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shareMotivationalCompleted => 'ĐÃ HOÀN THÀNH';
 
   @override
-  String get sharePrNewPr => 'Chia sẻ PR mới';
+  String get sharePrNewPr => 'PR mới';
 
   @override
-  String get shareStatsCalories => 'Chia sẻ thống kê calo';
+  String get shareStatsCalories => 'Calo';
 
   @override
-  String get shareStatsDuration => 'Chia sẻ thống kê thời gian';
+  String get shareStatsDuration => 'Thời lượng';
 
   @override
   String get shareStatsEliteTemplate => 'MẪU ELITE';
 
   @override
-  String get shareStatsExercises => 'Chia sẻ thống kê bài tập';
+  String get shareStatsExercises => 'Bài tập';
 
   @override
   String get shareStatsInstagram => 'Instagram';
@@ -35244,10 +35224,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shareStatsShowWatermark => 'Hiện hình mờ';
 
   @override
-  String get shareStatsVolume => 'Chia sẻ thống kê khối lượng';
+  String get shareStatsVolume => 'Khối lượng';
 
   @override
-  String get shareStatsWorkoutComplete => 'Chia sẻ thống kê hoàn thành bài tập';
+  String get shareStatsWorkoutComplete => 'Hoàn thành buổi tập';
 
   @override
   String get shareStrengthFocusAreas => 'VÙNG TẬP TRUNG';
@@ -36887,13 +36867,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get stretchControllerPause => 'Tạm dừng';
 
   @override
-  String get stretchControllerResume => 'Tiếp tục giãn cơ';
+  String get stretchControllerResume => 'Tiếp tục';
 
   @override
   String get stretchControllerSkipAll => 'Bỏ qua tất cả';
 
   @override
-  String get stretchControllerStartTimer => 'Bắt đầu bộ đếm giờ';
+  String get stretchControllerStartTimer => 'Bắt đầu hẹn giờ';
 
   @override
   String get stretchControllerUpNext => 'TIẾP THEO';
@@ -37763,7 +37743,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get supersetTapToSelect => 'Chạm để chọn';
 
   @override
-  String get supersetType => 'Loại Superset';
+  String get supersetType => 'Loại';
 
   @override
   String get syncDetailsAllSynced => 'Đã đồng bộ tất cả!';
@@ -38571,42 +38551,42 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'Điểm hôm nay giảm $arg0';
+    return 'Giảm $arg0';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'Điểm hôm nay đã đạt $arg0 $arg1';
+    return 'Điểm đã đạt $arg0 $arg1';
   }
 
   @override
-  String get todayScoreDetailHowItWorks => 'Cách hoạt động của điểm hôm nay';
+  String get todayScoreDetailHowItWorks => 'Cách thức hoạt động';
 
   @override
   String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'Điểm hôm nay không hoạt động $arg0 $arg1';
+    return 'Giải thích trạng thái không hoạt động $arg0 $arg1';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'Đà điểm hôm nay với trung bình $arg0 $arg1';
+    return 'Đà phát triển với trung bình $arg0 $arg1';
   }
 
   @override
   String get todayScoreDetailNotCounted => 'Không được tính';
 
   @override
-  String get todayScoreDetailSetupText => 'Thiết lập điểm hôm nay';
+  String get todayScoreDetailSetupText => 'Thiết lập văn bản';
 
   @override
-  String get todayScoreDetailSteady => 'Điểm hôm nay ổn định';
+  String get todayScoreDetailSteady => 'Ổn định';
 
   @override
   String get todayScoreDetailTodayScore => 'Điểm hôm nay';
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'Điểm hôm nay tăng $arg0';
+    return 'Tăng $arg0';
   }
 
   @override
@@ -39052,7 +39032,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get trophiesEarnedAchievementsUnlocked => 'Thành tựu đã mở khóa';
 
   @override
-  String get trophiesEarnedAllMilestonesCleared => 'Đã đạt tất cả các cột mốc';
+  String get trophiesEarnedAllMilestonesCleared =>
+      'Đã hoàn thành tất cả cột mốc';
 
   @override
   String get trophiesEarnedAllTime => 'TẤT CẢ';
@@ -39070,7 +39051,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get trophiesEarnedKg => ') kg';
 
   @override
-  String get trophiesEarnedMilestoneReached => 'Đã đạt cột mốc mới';
+  String get trophiesEarnedMilestoneReached => 'Đã đạt cột mốc';
 
   @override
   String get trophiesEarnedMilestoneReachedNice =>
@@ -39081,12 +39062,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'Đã nhận huy hiệu mới $arg0';
+    return 'Huy hiệu $arg0';
   }
 
   @override
   String trophiesEarnedNewCardioPRs(Object arg0) {
-    return 'Đã đạt PR cardio mới $arg0';
+    return 'PR Cardio $arg0';
   }
 
   @override
@@ -39094,7 +39075,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String trophiesEarnedNewPRs(Object arg0) {
-    return 'Đã đạt PR mới $arg0';
+    return 'PR $arg0';
   }
 
   @override
@@ -39119,7 +39100,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get trophiesEarnedSessionHighlights => 'Điểm nổi bật của buổi tập';
+  String get trophiesEarnedSessionHighlights => 'Điểm nổi bật của phiên tập';
 
   @override
   String trophiesEarnedSheetPts(Object points) {
@@ -39132,7 +39113,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get trophiesEarnedTitle => 'Thành tích đã đạt được';
+  String get trophiesEarnedTitle => 'Tiêu đề';
 
   @override
   String get trophiesEarnedTotalWorkouts => 'Tổng số buổi tập';
@@ -39141,7 +39122,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get trophiesEarnedTrophiesAchievements => 'Cúp & Thành tựu';
 
   @override
-  String get trophiesEarnedViewAllCardioPRs => 'Xem tất cả PR cardio';
+  String get trophiesEarnedViewAllCardioPRs => 'Xem tất cả PR Cardio';
 
   @override
   String get trophiesEarnedViewAllCardioPrs => 'Xem tất cả PR Cardio';
@@ -40075,7 +40056,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'Tiến độ tuần đã hoàn thành $arg0 $arg1';
+    return 'Số lượng đã hoàn thành $arg0 $arg1';
   }
 
   @override
@@ -40087,7 +40068,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get weekProgressStripNoWorkoutsScheduled =>
-      'Không có bài tập nào được lên lịch';
+      'Không có buổi tập nào được lên lịch';
 
   @override
   String get weekProgressStripThisWeek => 'Tuần này';
@@ -40780,12 +40761,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'Xu hướng cân nặng giảm tuần này $arg0';
+    return 'Giảm trong tuần này $arg0';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'Xu hướng cân nặng giảm so với chu kỳ trước $arg0';
+    return 'Giảm so với chu kỳ trước $arg0';
   }
 
   @override
@@ -40796,7 +40777,7 @@ class AppLocalizationsVi extends AppLocalizations {
       'Ghi lại cân nặng để xem xu hướng';
 
   @override
-  String get weightTrendCardMaintaining => 'Đang duy trì cân nặng';
+  String get weightTrendCardMaintaining => 'Đang duy trì';
 
   @override
   String get weightTrendCardNoChange => 'Không thay đổi';
@@ -40826,12 +40807,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'Xu hướng cân nặng tăng tuần này $arg0';
+    return 'Tăng trong tuần này $arg0';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'Xu hướng cân nặng tăng so với chu kỳ trước $arg0';
+    return 'Tăng so với chu kỳ trước $arg0';
   }
 
   @override
@@ -41583,7 +41564,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return 'Đang thay thế các bài tập $arg0';
+    return 'Đang thay thế bài tập $arg0';
   }
 
   @override
@@ -41753,7 +41734,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutDetailType => 'Loại';
 
   @override
-  String get workoutDetailUpdatingExercises => 'Đang cập nhật các bài tập';
+  String get workoutDetailUpdatingExercises => 'Đang cập nhật bài tập';
 
   @override
   String get workoutDetailWantAChallenge => 'BẠN MUỐN THỬ THÁCH?';
@@ -42071,11 +42052,11 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutImportEasy => 'Dễ';
 
   @override
-  String get workoutImportFlexibility => 'Độ linh hoạt';
+  String get workoutImportFlexibility => 'Độ dẻo dai';
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return 'Nhập từ $arg0';
+    return 'Từ nguồn $arg0';
   }
 
   @override
@@ -42405,7 +42386,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get workoutPlanDrawerRemoveExerciseTooltip => 'Xóa bài tập';
+  String get workoutPlanDrawerRemoveExerciseTooltip => 'Gỡ bỏ bài tập';
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
@@ -42416,7 +42397,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Đổi bài tập';
 
   @override
-  String get workoutPlanDrawerTitle => 'Kế hoạch tập luyện';
+  String get workoutPlanDrawerTitle => 'Tiêu đề';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Kế hoạch tập luyện';
@@ -42773,10 +42754,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutShowcaseAskCoach => 'Hỏi huấn luyện viên';
 
   @override
-  String get workoutShowcaseAutoDesc => 'Mô tả tự động cho buổi tập';
+  String get workoutShowcaseAutoDesc => 'Mô tả tự động';
 
   @override
-  String get workoutShowcaseAutoLabel => 'Tự động';
+  String get workoutShowcaseAutoLabel => 'Nhãn tự động';
 
   @override
   String get workoutShowcaseBarbellSquat => 'Barbell Squat';
@@ -42794,7 +42775,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutShowcaseCal => 'Cal';
 
   @override
-  String get workoutShowcaseCalories => 'Calo';
+  String get workoutShowcaseCalories => 'Calories';
 
   @override
   String get workoutShowcaseContinue => 'Tiếp tục';
@@ -42812,59 +42793,58 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutShowcaseEverySetYouLog => 'Mỗi hiệp bạn ghi lại';
 
   @override
-  String get workoutShowcaseEveryWorkoutFlows =>
-      'Mỗi buổi tập đều có dòng chảy';
+  String get workoutShowcaseEveryWorkoutFlows => 'Mỗi buổi tập đều trôi chảy';
 
   @override
-  String get workoutShowcaseFinishWorkout => 'Hoàn thành buổi tập';
+  String get workoutShowcaseFinishWorkout => 'Kết thúc buổi tập';
 
   @override
   String get workoutShowcaseFormat1Rm => 'Định dạng 1RM';
 
   @override
-  String get workoutShowcaseFormatBoarding => 'Định dạng lên máy bay';
+  String get workoutShowcaseFormatBoarding => 'Boarding';
 
   @override
-  String get workoutShowcaseFormatCard => 'Định dạng thẻ';
+  String get workoutShowcaseFormatCard => 'Thẻ';
 
   @override
-  String get workoutShowcaseFormatDiscord => 'Định dạng Discord';
+  String get workoutShowcaseFormatDiscord => 'Discord';
 
   @override
-  String get workoutShowcaseFormatFull => 'Định dạng đầy đủ';
+  String get workoutShowcaseFormatFull => 'Đầy đủ';
 
   @override
-  String get workoutShowcaseFormatIgStory => 'Định dạng IG Story';
+  String get workoutShowcaseFormatIgStory => 'Ig story';
 
   @override
-  String get workoutShowcaseFormatNewspaper => 'Định dạng báo chí';
+  String get workoutShowcaseFormatNewspaper => 'Báo chí';
 
   @override
-  String get workoutShowcaseFormatPassport => 'Định dạng hộ chiếu';
+  String get workoutShowcaseFormatPassport => 'Hộ chiếu';
 
   @override
-  String get workoutShowcaseFormatPolaroid => 'Định dạng Polaroid';
+  String get workoutShowcaseFormatPolaroid => 'Polaroid';
 
   @override
-  String get workoutShowcaseFormatPrCard => 'Định dạng thẻ PR';
+  String get workoutShowcaseFormatPrCard => 'Thẻ PR';
 
   @override
-  String get workoutShowcaseFormatQuote => 'Định dạng trích dẫn';
+  String get workoutShowcaseFormatQuote => 'Trích dẫn';
 
   @override
-  String get workoutShowcaseFormatReceipt => 'Định dạng biên lai';
+  String get workoutShowcaseFormatReceipt => 'Biên lai';
 
   @override
-  String get workoutShowcaseFormatTrading => 'Định dạng thẻ giao dịch';
+  String get workoutShowcaseFormatTrading => 'Giao dịch';
 
   @override
-  String get workoutShowcaseFormatTrophy => 'Định dạng cúp';
+  String get workoutShowcaseFormatTrophy => 'Cúp';
 
   @override
-  String get workoutShowcaseFormatVinyl => 'Định dạng đĩa than';
+  String get workoutShowcaseFormatVinyl => 'Đĩa than';
 
   @override
-  String get workoutShowcaseFormatWrapped => 'Định dạng tổng kết';
+  String get workoutShowcaseFormatWrapped => 'Tổng kết';
 
   @override
   String get workoutShowcaseHowYourWeightReps =>
@@ -42883,17 +42863,17 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutShowcaseLinearDesc => 'Mô tả tuyến tính';
 
   @override
-  String get workoutShowcaseLinearLabel => 'Tuyến tính';
+  String get workoutShowcaseLinearLabel => 'Nhãn tuyến tính';
 
   @override
-  String get workoutShowcaseLogAllSets => 'Ghi lại tất cả các hiệp';
+  String get workoutShowcaseLogAllSets => 'Tất cả các hiệp';
 
   @override
   String get workoutShowcaseLogDrink => 'Ghi lại đồ uống';
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'Ghi hiệp $arg0';
+    return 'Hiệp $arg0';
   }
 
   @override
@@ -42925,7 +42905,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutShowcasePyramidDesc => 'Mô tả kim tự tháp';
 
   @override
-  String get workoutShowcasePyramidLabel => 'Kim tự tháp';
+  String get workoutShowcasePyramidLabel => 'Nhãn kim tự tháp';
 
   @override
   String get workoutShowcaseRare => '★ HIẾM';
@@ -43028,7 +43008,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutShowcaseUndulatingDesc => 'Mô tả nhấp nhô';
 
   @override
-  String get workoutShowcaseUndulatingLabel => 'Nhấp nhô';
+  String get workoutShowcaseUndulatingLabel => 'Nhãn nhấp nhô';
 
   @override
   String get workoutShowcaseUpNextBenchPress => 'Tiếp theo: Bench Press';
@@ -43860,14 +43840,13 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get xpGoalsDaily => 'Mục tiêu XP hàng ngày';
+  String get xpGoalsDaily => 'Hàng ngày';
 
   @override
   String get xpGoalsDialog250LevelsAcross11Tiers => '250 cấp độ qua 11 bậc';
 
   @override
-  String get xpGoalsDialogBeginnerToTranscendent =>
-      'Từ người mới đến siêu việt';
+  String get xpGoalsDialogBeginnerToTranscendent => 'Từ người mới đến bậc thầy';
 
   @override
   String get xpGoalsDialogCompleteWorkoutXp => 'XP hoàn thành buổi tập';
@@ -43877,25 +43856,23 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'XP trò chuyện lần đầu với huấn luyện viên AI';
+      'XP trò chuyện với huấn luyện viên AI';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'XP ghi bữa ăn, cân nặng, số đo lần đầu';
+      'XP đo lường cân nặng bữa ăn';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'XP cho PR đầu tiên';
+  String get xpGoalsDialogFirstPrXp => 'XP PR đầu tiên';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp =>
-      'XP cho ảnh tiến trình đầu tiên';
+  String get xpGoalsDialogFirstProgressPhotoXp => 'XP ảnh tiến trình đầu tiên';
 
   @override
-  String get xpGoalsDialogFirstProteinGoalXp =>
-      'XP cho mục tiêu protein đầu tiên';
+  String get xpGoalsDialogFirstProteinGoalXp => 'XP mục tiêu protein đầu tiên';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => 'XP cho buổi tập đầu tiên';
+  String get xpGoalsDialogFirstWorkoutXp => 'XP buổi tập đầu tiên';
 
   @override
   String get xpGoalsDialogHitProteinGoalXp => 'XP đạt mục tiêu protein';
@@ -43904,7 +43881,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get xpGoalsDialogLevels => 'Cấp độ';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => 'XP ghi số đo cơ thể';
+  String get xpGoalsDialogLogBodyMeasurementsXp => 'XP đo lường cơ thể';
 
   @override
   String get xpGoalsDialogLogMealXp => 'XP ghi bữa ăn';
@@ -43992,7 +43969,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'Cấp độ hiện tại $arg0';
+    return 'Tổng cấp độ hiện tại $arg0';
   }
 
   @override
@@ -44092,7 +44069,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get xpGoalsScreenXpBonusLegend => 'Chú giải thưởng XP';
+  String get xpGoalsScreenXpBonusLegend => 'Chú giải tiền thưởng XP';
 
   @override
   String get xpGoalsScreenYouBadge => 'Huy hiệu của bạn';
@@ -44108,12 +44085,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'XP khả dụng $arg0';
+    return 'Khả dụng $arg0';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'XP kiếm được hôm nay $arg0';
+    return 'Đã nhận hôm nay $arg0';
   }
 
   @override
@@ -44121,7 +44098,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'Hệ số nhân XP đang hoạt động $arg0';
+    return 'Hệ số nhân đang hoạt động $arg0';
   }
 
   @override

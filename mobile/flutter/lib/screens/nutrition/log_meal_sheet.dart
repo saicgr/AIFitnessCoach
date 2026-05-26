@@ -1331,14 +1331,10 @@ class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSec
       rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealIron, value: AppLocalizations.of(context)!.logMealSheetMg3(p.iron100g.toStringAsFixed(2)), isDark: widget.isDark));
     }
     if (p.potassium100g > 0) {
-      // i18n: logMealSheetMg4/Mg5 were generated with a second positional arg
-      // their impl ignores (codegen drift from commit 70a61819). The ARB
-      // declares one placeholder; the second arg is dead. Pass '' until
-      // flutter gen-l10n is re-run and the abstract signature matches.
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: AppLocalizations.of(context)!.logMealSheetMg4(p.potassium100g.toStringAsFixed(1), ''), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: AppLocalizations.of(context)!.logMealSheetMg4(p.potassium100g.toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.magnesium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: AppLocalizations.of(context)!.logMealSheetMg5(p.magnesium100g.toStringAsFixed(1), ''), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: AppLocalizations.of(context)!.logMealSheetMg5(p.magnesium100g.toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.zinc100g > 0) {
       rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealZinc, value: AppLocalizations.of(context)!.logMealSheetMg6(p.zinc100g.toStringAsFixed(2)), isDark: widget.isDark));

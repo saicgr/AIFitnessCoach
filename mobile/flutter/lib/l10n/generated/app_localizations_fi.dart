@@ -86,7 +86,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get achievementsByCategory => 'KATEGORIOITTAIN';
 
   @override
-  String get achievementsCardAchievements => 'Saavutuskortin saavutukset';
+  String get achievementsCardAchievements => 'Saavutukset';
 
   @override
   String achievementsCardBadges(Object totalAchieved) {
@@ -1580,14 +1580,14 @@ class AppLocalizationsFi extends AppLocalizations {
       'Poista valinta kaikesta, jonka haluat estää tältä yhteydeltä.';
 
   @override
-  String get aiModelDownloadBasic => 'Tekoälymallin lataus perus';
+  String get aiModelDownloadBasic => 'Perus';
 
   @override
   String get aiModelDownloadBatteryWarning =>
       'Laitteessa suoritettavat tekoälymallit vaativat puhelimeltasi paljon tehoa. Tämä voi kuluttaa akkua enemmän ja lämmittää laitetta treenin luomisen aikana. Suuremmat mallit käyttävät enemmän resursseja.';
 
   @override
-  String get aiModelDownloadBestQuality => 'Tekoälymallin lataus paras laatu';
+  String get aiModelDownloadBestQuality => 'Paras laatu';
 
   @override
   String get aiModelDownloadCancel => 'Peruuta';
@@ -1641,12 +1641,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get aiModelDownloadModelOptions => 'Mallin vaihtoehdot';
 
   @override
-  String get aiModelDownloadMultimodal =>
-      'Tekoälymallin lataus multimodaalinen';
+  String get aiModelDownloadMultimodal => 'Multimodaalinen';
 
   @override
-  String get aiModelDownloadNotCompatible =>
-      'Tekoälymallin lataus ei yhteensopiva';
+  String get aiModelDownloadNotCompatible => 'Ei yhteensopiva';
 
   @override
   String get aiModelDownloadNotSupportedOnThis => 'Ei tuettu tällä laitteella';
@@ -1655,13 +1653,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get aiModelDownloadOnDeviceAiModel => 'Laitteen AI-malli';
 
   @override
-  String get aiModelDownloadOptimal => 'Tekoälymallin lataus optimaalinen';
+  String get aiModelDownloadOptimal => 'Optimaalinen';
 
   @override
   String get aiModelDownloadRam => 'RAM';
 
   @override
-  String get aiModelDownloadRecommended => 'Tekoälymallin lataus suositeltu';
+  String get aiModelDownloadRecommended => 'Suositeltu';
 
   @override
   String get aiModelDownloadRemove => 'Poistaa';
@@ -1684,7 +1682,7 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadSearch => 'Tekoälymallin lataus haku';
+  String get aiModelDownloadSearch => 'Hae';
 
   @override
   String get aiModelDownloadSelectAModel => 'Valitse malli';
@@ -1695,7 +1693,7 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get aiModelDownloadStandard => 'Tekoälymallin lataus vakio';
+  String get aiModelDownloadStandard => 'Standardi';
 
   @override
   String get aiModelDownloadTokenSavedSecurely =>
@@ -4840,15 +4838,14 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get complianceRingCardAllWorkoutsCompleted =>
-      'Suoritusympyrän kortti kaikki treenit suoritettu';
+      'Kaikki treenit suoritettu';
 
   @override
-  String get complianceRingCardGetStartedToday =>
-      'Suoritusympyrän kortti aloita tänään';
+  String get complianceRingCardGetStartedToday => 'Aloita tänään';
 
   @override
   String complianceRingCardGreatPace(Object arg0) {
-    return 'Suoritusympyrän kortti hyvä tahti $arg0';
+    return 'Hyvä tahti $arg0';
   }
 
   @override
@@ -4857,7 +4854,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String complianceRingCardOnTrack(Object arg0) {
-    return 'Suoritusympyrän kortti aikataulussa $arg0';
+    return 'Aikataulussa $arg0';
   }
 
   @override
@@ -4865,7 +4862,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String complianceRingCardWorkoutsRemaining(Object arg0) {
-    return 'Suoritusympyrän kortti treenejä jäljellä $arg0';
+    return 'Treeniä jäljellä $arg0';
   }
 
   @override
@@ -7809,7 +7806,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get easyHelpLogASet => 'Kirjaa sarja';
 
   @override
-  String get easyHelpLogASetBody => 'Helppo ohje kirjaa sarja';
+  String get easyHelpLogASetBody => 'Kirjaa sarja';
 
   @override
   String get easyHelpSkipToNextExercise => 'Siirry seuraavaan harjoitukseen';
@@ -7829,17 +7826,16 @@ class AppLocalizationsFi extends AppLocalizations {
   String get easyHelpTodaySExercise => 'Tämän päivän harjoitus';
 
   @override
-  String get easyHelpTodaysExercise => 'Helppo ohje tämän päivän harjoitus';
+  String get easyHelpTodaysExercise => 'Tämän päivän treeni';
 
   @override
-  String get easyHelpTodaysExerciseBody =>
-      'Helppo ohje tämän päivän harjoituksen runko';
+  String get easyHelpTodaysExerciseBody => 'Tämän päivän treenin runko';
 
   @override
   String get easyHelpWeightAndReps => 'Paino ja toistot';
 
   @override
-  String get easyHelpWeightAndRepsBody => 'Helppo ohje paino ja toistot runko';
+  String get easyHelpWeightAndRepsBody => 'Paino ja toistot';
 
   @override
   String get easyRestOverlayRest => 'Lepo';
@@ -8092,7 +8088,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get editPersonalInfoYourName => 'Nimesi';
 
   @override
-  String get editProgramSheetBack => 'Muokkaa ohjelmaa takaisin';
+  String get editProgramSheetBack => 'Takaisin';
 
   @override
   String get editProgramSheetChangeYourWeeklySchedule =>
@@ -8103,7 +8099,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'Valitse aikatauluusi ja tavoitteisiisi sopiva treenijako';
 
   @override
-  String get editProgramSheetContinue => 'Muokkaa ohjelmaa jatka';
+  String get editProgramSheetContinue => 'Jatka';
 
   @override
   String get editProgramSheetCurrent => 'NYKYINEN';
@@ -8113,14 +8109,14 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String editProgramSheetCustomValue(Object arg0) {
-    return 'Muokkaa ohjelmaa mukautettu arvo $arg0';
+    return 'Mukautettu arvo $arg0';
   }
 
   @override
   String get editProgramSheetCustomizeProgram => 'Mukauta ohjelmaa';
 
   @override
-  String get editProgramSheetDays => 'Muokkaa ohjelmaa päivät';
+  String get editProgramSheetDays => 'Päivät';
 
   @override
   String editProgramSheetDaysAgo(Object days) {
@@ -8137,47 +8133,45 @@ class AppLocalizationsFi extends AppLocalizations {
       'Kuvaile, mitä haluat treenata, niin tekoäly luo henkilökohtaisen ohjelman.';
 
   @override
-  String get editProgramSheetDifficulty => 'Muokkaa ohjelmaa vaikeustaso';
+  String get editProgramSheetDifficulty => 'Vaikeustaso';
 
   @override
-  String get editProgramSheetDuration => 'Muokkaa ohjelmaa kesto';
+  String get editProgramSheetDuration => 'Kesto';
 
   @override
   String get editProgramSheetEGTrainFor =>
       'esim. \"Treeni HYROX-kilpailua varten\"';
 
   @override
-  String get editProgramSheetEquipment => 'Muokkaa ohjelmaa välineet';
+  String get editProgramSheetEquipment => 'Välineet';
 
   @override
-  String get editProgramSheetEquipmentLabel =>
-      'Muokkaa ohjelmaa välineiden nimi';
+  String get editProgramSheetEquipmentLabel => 'Välineiden nimi';
 
   @override
   String get editProgramSheetExamples => 'Esimerkkejä';
 
   @override
   String editProgramSheetFailedToLoadHistory(Object arg0) {
-    return 'Muokkaa ohjelmaa historian lataus epäonnistui $arg0';
+    return 'Lataa historia $arg0';
   }
 
   @override
   String editProgramSheetFailedToRestore(Object arg0) {
-    return 'Muokkaa ohjelmaa palautus epäonnistui $arg0';
+    return 'Palauta $arg0';
   }
 
   @override
-  String get editProgramSheetFailedToUpdateProgram =>
-      'Muokkaa ohjelmaa ohjelman päivitys epäonnistui';
+  String get editProgramSheetFailedToUpdateProgram => 'Päivitä ohjelma';
 
   @override
-  String get editProgramSheetFocus => 'Muokkaa ohjelmaa painopiste';
+  String get editProgramSheetFocus => 'Painopiste';
 
   @override
-  String get editProgramSheetHealth => 'Muokkaa ohjelmaa terveys';
+  String get editProgramSheetHealth => 'Terveys';
 
   @override
-  String get editProgramSheetInjuries => 'Muokkaa ohjelmaa vammat';
+  String get editProgramSheetInjuries => 'Vammat';
 
   @override
   String get editProgramSheetNoProgramHistoryFound =>
@@ -8200,7 +8194,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'Valitse vähintään yksi treenipäivä';
 
   @override
-  String get editProgramSheetProgram => 'Muokkaa ohjelmaa ohjelma';
+  String get editProgramSheetProgram => 'Ohjelma';
 
   @override
   String get editProgramSheetProgramHistory => 'Ohjelmahistoria';
@@ -8220,11 +8214,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get editProgramSheetSaveCustomProgram => 'Tallenna mukautettu ohjelma';
 
   @override
-  String get editProgramSheetSavingPreferences =>
-      'Muokkaa ohjelmaa tallennetaan asetuksia';
+  String get editProgramSheetSavingPreferences => 'Tallennetaan asetuksia';
 
   @override
-  String get editProgramSheetSchedule => 'Muokkaa ohjelmaa aikataulu';
+  String get editProgramSheetSchedule => 'Aikataulu';
 
   @override
   String get editProgramSheetSummary => 'Yhteenveto';
@@ -8237,18 +8230,16 @@ class AppLocalizationsFi extends AppLocalizations {
   String get editProgramSheetToday => 'Tänään';
 
   @override
-  String get editProgramSheetTrainingProgram =>
-      'Muokkaa ohjelmaa harjoitusohjelma';
+  String get editProgramSheetTrainingProgram => 'Treeniohjelma';
 
   @override
   String get editProgramSheetUnknownDate => 'Tuntematon päivämäärä';
 
   @override
-  String get editProgramSheetUpdateAndRegenerate =>
-      'Muokkaa ohjelmaa päivitä ja luo uudelleen';
+  String get editProgramSheetUpdateAndRegenerate => 'Päivitä ja luo uudelleen';
 
   @override
-  String get editProgramSheetUpdating => 'Muokkaa ohjelmaa päivitetään';
+  String get editProgramSheetUpdating => 'Päivitetään';
 
   @override
   String editProgramSheetWeeksAgo(Object weeks) {
@@ -9452,20 +9443,19 @@ class AppLocalizationsFi extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Nappasi';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Harjoituksen lisäys alaotsikko';
+  String get exerciseAddSheetSubtitle => 'Alaotsikko';
 
   @override
-  String get exerciseAddSheetTabAiPicks =>
-      'Harjoituksen lisäys tekoälyn valinnat';
+  String get exerciseAddSheetTabAiPicks => 'AI-valinnat';
 
   @override
-  String get exerciseAddSheetTabLibrary => 'Harjoituksen lisäys kirjasto';
+  String get exerciseAddSheetTabLibrary => 'Kirjasto';
 
   @override
-  String get exerciseAddSheetTabMine => 'Harjoituksen lisäys omat';
+  String get exerciseAddSheetTabMine => 'Omat';
 
   @override
-  String get exerciseAddSheetTabSnapped => 'Harjoituksen lisäys kuvattu';
+  String get exerciseAddSheetTabSnapped => 'Kuvatut';
 
   @override
   String get exerciseAddSheetTryAgain => 'Yritä uudelleen';
@@ -9836,11 +9826,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get exerciseDetailYourSessionsWillAppear => 'Treenisi näkyvät täällä';
 
   @override
-  String get exerciseDetailsAiCoachTips =>
-      'Harjoituksen tiedot tekoälyvalmentajan vinkit';
+  String get exerciseDetailsAiCoachTips => 'AI-valmentajan vinkit';
 
   @override
-  String get exerciseDetailsBodyweight => 'Harjoituksen tiedot kehonpaino';
+  String get exerciseDetailsBodyweight => 'Kehonpaino';
 
   @override
   String get exerciseDetailsBreathing => 'Hengitys';
@@ -9849,10 +9838,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get exerciseDetailsDetails => 'Tiedot';
 
   @override
-  String get exerciseDetailsDifficulty => 'Vaikeusaste';
+  String get exerciseDetailsDifficulty => 'Vaikeustaso';
 
   @override
-  String get exerciseDetailsDontHaveEquipment => 'Ei välineitä?';
+  String get exerciseDetailsDontHaveEquipment => 'Ei välineitä';
 
   @override
   String get exerciseDetailsEquipment => 'Välineet';
@@ -9861,22 +9850,22 @@ class AppLocalizationsFi extends AppLocalizations {
   String get exerciseDetailsExerciseInfo => 'Liikkeen tiedot';
 
   @override
-  String get exerciseDetailsFormCues => 'Tekniikkavinkit';
+  String get exerciseDetailsFormCues => 'Suoritustekniikan vinkit';
 
   @override
   String get exerciseDetailsNotSpecified => 'Ei määritelty';
 
   @override
-  String get exerciseDetailsPrimaryMuscle => 'Päälihas';
+  String get exerciseDetailsPrimaryMuscle => 'Päälihasryhmä';
 
   @override
   String get exerciseDetailsProTip => 'Ammattilaisen vinkki';
 
   @override
-  String get exerciseDetailsSecondaryMuscles => 'Avustavat lihakset';
+  String get exerciseDetailsSecondaryMuscles => 'Avustavat lihasryhmät';
 
   @override
-  String get exerciseDetailsSetup => 'Valmistautuminen';
+  String get exerciseDetailsSetup => 'Valmistelu';
 
   @override
   String get exerciseDetailsSheetBodyweight => 'Kehon paino';
@@ -9924,13 +9913,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get exerciseDetailsSheetWatchOutFor => 'Varo';
 
   @override
-  String get exerciseDetailsTapVideoHint => 'Napauta videota';
+  String get exerciseDetailsTapVideoHint => 'Napauta videovinkkiä';
 
   @override
   String get exerciseDetailsVideo => 'Video';
 
   @override
-  String get exerciseDetailsWatchOutFor => 'Huomioi tämä';
+  String get exerciseDetailsWatchOutFor => 'Varo näitä';
 
   @override
   String get exerciseFilterApplyFilters => 'Käytä suodattimia';
@@ -11142,7 +11131,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get exerciseSwapNoAlternatives => 'Vaihtoehtoja ei löytynyt';
 
   @override
-  String get exerciseSwapOptionSwap => 'Vaihda liike';
+  String get exerciseSwapOptionSwap => 'Vaihda vaihtoehto';
 
   @override
   String get exerciseSwapSheetAiPicks => 'AI-valinnat';
@@ -11260,10 +11249,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get exerciseSwapSheetTabSimilar => 'Samankaltaiset';
 
   @override
-  String get exerciseSwapSheetTabSnapped => 'Kuvattu';
+  String get exerciseSwapSheetTabSnapped => 'Snapattu';
 
   @override
-  String get exerciseSwapSheetTitle => 'Vaihda liike';
+  String get exerciseSwapSheetTitle => 'Otsikko';
 
   @override
   String get exerciseSwapSheetTryAgain => 'Yritä uudelleen';
@@ -12580,7 +12569,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get fatigueAlertModalSuggestedRepTarget => 'EHDOTETTU TOISTOTAVOITE';
 
   @override
-  String get fatigueAlertStopExercise => 'Lopeta liike';
+  String get fatigueAlertStopExercise => 'Lopeta harjoitus';
 
   @override
   String get favoriteExercisesFavoriteExercises => 'Suosikkiharjoitukset';
@@ -14475,7 +14464,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get fullScreenChartCompareWith => 'Vertaa...';
 
   @override
-  String get fullScreenChartCouldNotLoad => 'Kaaviota ei voitu ladata';
+  String get fullScreenChartCouldNotLoad => 'Ei voitu ladata';
 
   @override
   String get fullScreenChartNotEnoughHistory => 'Ei tarpeeksi historiaa';
@@ -15418,12 +15407,12 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String habitsCardCompletedCount(Object arg0, Object arg1) {
-    return 'Suoritettu $arg0 / $arg1';
+    return 'Suoritettu määrä $arg0 $arg1';
   }
 
   @override
   String habitsCardDayStreak(Object arg0) {
-    return '$arg0 päivän putki';
+    return 'Päiväputki $arg0';
   }
 
   @override
@@ -15451,7 +15440,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String habitsCardViewAllHabits(Object arg0) {
-    return 'Näytä kaikki tavat ($arg0)';
+    return 'Näytä kaikki tavat $arg0';
   }
 
   @override
@@ -21178,7 +21167,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String mainShellPartChatsLeftToday(Object arg0) {
-    return 'Chatteja jäljellä tänään: $arg0';
+    return 'Chatteja jäljellä tänään $arg0';
   }
 
   @override
@@ -22620,7 +22609,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String metricsDashboardNoMetricDataYet(Object arg0) {
-    return 'Ei mittaustietoja: $arg0';
+    return 'Ei vielä mittaustietoja $arg0';
   }
 
   @override
@@ -23288,7 +23277,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String muscleHeatmapTileMostTrained(Object arg0) {
-    return 'Eniten treenattu: $arg0';
+    return 'Eniten treenattu $arg0';
   }
 
   @override
@@ -24017,7 +24006,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsCurrentXp(Object arg0) {
-    return 'Nykyinen XP: $arg0';
+    return 'Nykyinen XP $arg0';
   }
 
   @override
@@ -24028,7 +24017,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsHoursMinutesLeft(Object arg0, Object arg1) {
-    return '$arg0 h $arg1 min jäljellä';
+    return 'Tunteja ja minuutteja jäljellä $arg0 $arg1';
   }
 
   @override
@@ -24044,17 +24033,17 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsMinutesLeft(Object arg0) {
-    return '$arg0 min jäljellä';
+    return 'Minuutteja jäljellä $arg0';
   }
 
   @override
   String get neatGamificationWidgetsNeat => 'NEAT';
 
   @override
-  String get neatGamificationWidgetsNeatChampion => 'NEAT-mestari';
+  String get neatGamificationWidgetsNeatChampion => 'Mestari';
 
   @override
-  String get neatGamificationWidgetsNeatEnthusiast => 'NEAT-harrastaja';
+  String get neatGamificationWidgetsNeatEnthusiast => 'Harrastaja';
 
   @override
   String get neatGamificationWidgetsNeatPts => 'NEAT-pistettä';
@@ -24073,7 +24062,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsStepGoal(Object arg0) {
-    return 'Askelmääritelmä: $arg0';
+    return 'Askel tavoite $arg0';
   }
 
   @override
@@ -24081,7 +24070,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String neatGamificationWidgetsTargetActiveHours(Object arg0) {
-    return 'Tavoite aktiiviset tunnit: $arg0';
+    return 'Aktiivisuustavoite tunteina $arg0';
   }
 
   @override
@@ -26138,7 +26127,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get openAllCratesActivityCrate => 'Aktiivisuusarkku';
 
   @override
-  String get openAllCratesBonusCrateToOpen => 'Bonusarkku avattavissa';
+  String get openAllCratesBonusCrateToOpen => 'Bonusarkku avattavaksi';
 
   @override
   String openAllCratesCollect(Object arg0, Object arg1) {
@@ -26147,7 +26136,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String openAllCratesCratesOpened(Object arg0) {
-    return 'Arkkuja avattu: $arg0';
+    return 'Arkkuja avattu $arg0';
   }
 
   @override
@@ -26157,7 +26146,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get openAllCratesDone => 'Valmis';
 
   @override
-  String get openAllCratesDoubleXpToken => 'Tupla-XP-merkki';
+  String get openAllCratesDoubleXpToken => 'Tupla-XP-token';
 
   @override
   String get openAllCratesFailedToOpenCrates =>
@@ -26168,14 +26157,14 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String openAllCratesGainedXp(Object arg0) {
-    return 'Saatu XP: $arg0';
+    return 'Saatu XP $arg0';
   }
 
   @override
   String get openAllCratesMaxLevel => 'Maksimitaso';
 
   @override
-  String get openAllCratesOpenYourCrates => 'Avaa arkut';
+  String get openAllCratesOpenYourCrates => 'Avaa arkkusi';
 
   @override
   String get openAllCratesOpened => ') avattu!';
@@ -26185,7 +26174,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String openAllCratesPickRewardPerDay(Object arg0, Object arg1) {
-    return 'Valitse palkinto päivälle $arg0 $arg1';
+    return 'Valitse palkinto per päivä $arg0 $arg1';
   }
 
   @override
@@ -26210,12 +26199,12 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String openAllCratesTotalXpFormatted(Object arg0) {
-    return 'XP yhteensä: $arg0';
+    return 'XP yhteensä $arg0';
   }
 
   @override
   String openAllCratesTotalXpLevel(Object arg0, Object arg1) {
-    return 'XP yhteensä tasolla $arg0: $arg1';
+    return 'XP yhteensä taso $arg0 $arg1';
   }
 
   @override
@@ -26223,16 +26212,16 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String openAllCratesXpInLevel(Object arg0, Object arg1) {
-    return 'XP tasolla $arg0: $arg1';
+    return 'XP tasolla $arg0 $arg1';
   }
 
   @override
   String openAllCratesXpToNextLevel(Object arg0, Object arg1) {
-    return 'XP seuraavaan tasoon $arg0: $arg1';
+    return 'XP seuraavalle tasolle $arg0 $arg1';
   }
 
   @override
-  String get openAllCratesYesterday => 'Avaa kaikki eilisen arkut';
+  String get openAllCratesYesterday => 'Eilen';
 
   @override
   String get overallScoreHeroOverall => 'YHTEENSÄ';
@@ -27256,7 +27245,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get pillarDetailComponents => 'Komponentit';
 
   @override
-  String get pillarDetailCouldNotLoad => 'Pilarin tietoja ei voitu ladata';
+  String get pillarDetailCouldNotLoad => 'Ei voitu ladata';
 
   @override
   String get pillarDetailCustomTrends => 'Mukautetut trendit';
@@ -27270,18 +27259,17 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get pillarDetailFiveOrMoreLoggedDays =>
-      'Pilarin tiedot viisi tai useampi kirjattu päivä';
+      'Viisi tai useampi kirjattu päivä';
 
   @override
   String get pillarDetailHeatmap30d => 'heatmap-30d';
 
   @override
-  String get pillarDetailHourlyActivityRibbon =>
-      'Pilarin tiedot tuntikohtainen aktiivisuusnauha';
+  String get pillarDetailHourlyActivityRibbon => 'Tuntiaktiivisuusnauha';
 
   @override
   String get pillarDetailHourlyActivityRibbonBody =>
-      'Pilarin tiedot tuntikohtainen aktiivisuusnauha runko';
+      'Tuntiaktiivisuusnauhan runko';
 
   @override
   String get pillarDetailIntensity => 'Intensiteetti';
@@ -27290,34 +27278,34 @@ class AppLocalizationsFi extends AppLocalizations {
   String get pillarDetailLast30Days => 'Viimeiset 30 päivää';
 
   @override
-  String get pillarDetailLogged => 'Pilarin tiedot kirjattu';
+  String get pillarDetailLogged => 'Kirjattu';
 
   @override
-  String get pillarDetailMacroStream => 'Pilarin tiedot makrovirta';
+  String get pillarDetailMacroStream => 'Makrovirta';
 
   @override
-  String get pillarDetailMacroStreamBody => 'Pilarin tiedot makrovirta runko';
+  String get pillarDetailMacroStreamBody => 'Makrovirran runko';
 
   @override
-  String get pillarDetailNoHistoryYet => 'Pilarin tiedot ei vielä historiaa';
+  String get pillarDetailNoHistoryYet => 'Ei vielä historiaa';
 
   @override
-  String get pillarDetailOpenActivity => 'Pilarin tiedot avaa aktiivisuus';
+  String get pillarDetailOpenActivity => 'Aktiivisuus';
 
   @override
   String get pillarDetailOpenFullScreen => 'Avaa koko näyttö';
 
   @override
-  String get pillarDetailOpenNutrition => 'Pilarin tiedot avaa ravitsemus';
+  String get pillarDetailOpenNutrition => 'Ravinto';
 
   @override
   String get pillarDetailOpenSleep => 'Avaa uni →';
 
   @override
-  String get pillarDetailOpenWorkouts => 'Pilarin tiedot avaa treenit';
+  String get pillarDetailOpenWorkouts => 'Treenit';
 
   @override
-  String get pillarDetailPending => 'Pilarin tiedot vireillä';
+  String get pillarDetailPending => 'Odottaa';
 
   @override
   String get pillarDetailProteinHit => 'Proteiinitavoite';
@@ -27353,13 +27341,13 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get pillarDetailSetAGoal => 'Pilarin tiedot aseta tavoite';
+  String get pillarDetailSetAGoal => 'Aseta tavoite';
 
   @override
-  String get pillarDetailSleepStages => 'Pilarin tiedot univaiheet';
+  String get pillarDetailSleepStages => 'Univaiheet';
 
   @override
-  String get pillarDetailSleepStagesBody => 'Pilarin tiedot univaiheet runko';
+  String get pillarDetailSleepStagesBody => 'Univaiheiden runko';
 
   @override
   String get pillarDetailSparkline7d => 'sparkline-7d';
@@ -27375,24 +27363,22 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get pillarDetailTwoOrMoreLoggedDays =>
-      'Pilarin tiedot kaksi tai useampi kirjattu päivä';
+      'Kaksi tai useampi kirjattu päivä';
 
   @override
   String get pillarDetailVariety => 'Vaihtelu';
 
   @override
-  String get pillarDetailViewFullStats =>
-      'Pilarin tiedot näytä täydet tilastot';
+  String get pillarDetailViewFullStats => 'Näytä täydet tilastot';
 
   @override
   String get pillarDetailVolume => 'Volyymi';
 
   @override
-  String get pillarDetailWhenYouTrain => 'Pilarin tiedot kun treenaat';
+  String get pillarDetailWhenYouTrain => 'Kun treenaat';
 
   @override
-  String get pillarDetailWhenYouTrainBody =>
-      'Pilarin tiedot kun treenaat runko';
+  String get pillarDetailWhenYouTrainBody => 'Kun treenaat -runko';
 
   @override
   String get pinnedMessageBarN => '\\n';
@@ -27461,7 +27447,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get planPreviewScreenBuildStrengthFoundation =>
-      'Suunnitelman esikatselu rakenna voiman perusta';
+      'Rakenna voiman perusta';
 
   @override
   String get planPreviewScreenBuildingYour4Week =>
@@ -27472,7 +27458,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String planPreviewScreenDaysPerWeek(Object arg0) {
-    return 'Suunnitelman esikatselu päivää viikossa $arg0';
+    return 'Päivää viikossa $arg0';
   }
 
   @override
@@ -27481,25 +27467,23 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String planPreviewScreenEquipmentCount(Object arg0) {
-    return 'Suunnitelman esikatselu välineiden määrä $arg0';
+    return 'Välineiden määrä $arg0';
   }
 
   @override
   String planPreviewScreenExercisesMin(Object arg0, Object arg1) {
-    return 'Suunnitelman esikatselu harjoitukset min $arg0 $arg1';
+    return 'Liikkeitä vähintään $arg0 $arg1';
   }
 
   @override
   String get planPreviewScreenIncreaseIntensityVolume =>
-      'Suunnitelman esikatselu lisää intensiteettiä ja volyymia';
+      'Lisää intensiteettiä ja volyymia';
 
   @override
-  String get planPreviewScreenMasterTheMovement =>
-      'Suunnitelman esikatselu hallitse liike';
+  String get planPreviewScreenMasterTheMovement => 'Hallitse liike';
 
   @override
-  String get planPreviewScreenPeakPerformanceWeek =>
-      'Suunnitelman esikatselu huippusuoritusviikko';
+  String get planPreviewScreenPeakPerformanceWeek => 'Huippusuoritusviikko';
 
   @override
   String get planPreviewScreenSetsreps => 'sarjatToistot';
@@ -27521,7 +27505,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String planPreviewScreenWeekNumber(Object arg0) {
-    return 'Suunnitelman esikatselu viikko $arg0';
+    return 'Viikko $arg0';
   }
 
   @override
@@ -27948,7 +27932,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get preAuthQuizSafetyFirst => 'Turvallisuus ensin';
 
   @override
-  String get preAuthQuizSkipAndFinish => 'Kysely ohita ja lopeta';
+  String get preAuthQuizSkipAndFinish => 'Ohita ja lopeta';
 
   @override
   String get preAuthQuizSkipLetAiDecide => 'Ohita, anna AI:n päättää';
@@ -28456,31 +28440,30 @@ class AppLocalizationsFi extends AppLocalizations {
   String get programMenuButtonViewMyPreferences => 'Näytä asetukseni';
 
   @override
-  String get programMetaApplyStaples => 'Ohjelman meta käytä perusliikkeitä';
+  String get programMetaApplyStaples => 'Käytä perusliikkeitä';
 
   @override
   String get programMetaApplyStaplesSubtitle =>
-      'Ohjelman meta käytä perusliikkeitä alaotsikko';
+      'Käytä perusliikkeitä -alaotsikko';
 
   @override
-  String get programMetaDeloadEvery => 'Ohjelman meta kevennys joka';
+  String get programMetaDeloadEvery => 'Kevyt viikko joka';
 
   @override
-  String get programMetaFixedLoadsNote =>
-      'Ohjelman meta huomautus kiinteistä kuormista';
+  String get programMetaFixedLoadsNote => 'Kiinteiden kuormien huomautus';
 
   @override
-  String get programMetaProgramSettings => 'Ohjelman meta ohjelman asetukset';
+  String get programMetaProgramSettings => 'Ohjelman asetukset';
 
   @override
-  String get programMetaProgression => 'Ohjelman meta progressio';
+  String get programMetaProgression => 'Progressio';
 
   @override
   String get programSummaryAdaptsWorkoutsBasedOn =>
       'Mukauttaa treenit edistymisesi mukaan';
 
   @override
-  String get programSummaryAdvancedLabel => 'Ohjelman yhteenveto edistynyt';
+  String get programSummaryAdvancedLabel => 'Edistynyt';
 
   @override
   String get programSummaryAutomaticallyIncreasesChalle =>
@@ -28491,43 +28474,43 @@ class AppLocalizationsFi extends AppLocalizations {
       'Välttää liikkeitä, jotka rasittavat rajoitteitasi';
 
   @override
-  String get programSummaryBeginnerLabel => 'Ohjelman yhteenveto aloittelija';
+  String get programSummaryBeginnerLabel => 'Aloittelija';
 
   @override
-  String get programSummaryBodyweight => 'Ohjelman yhteenveto kehonpaino';
+  String get programSummaryBodyweight => 'Kehonpaino';
 
   @override
-  String get programSummaryBuildMuscle => 'Ohjelman yhteenveto kasvata lihasta';
+  String get programSummaryBuildMuscle => 'Kasvata lihasta';
 
   @override
-  String get programSummaryEndurance => 'Ohjelman yhteenveto kestävyys';
+  String get programSummaryEndurance => 'Kestävyys';
 
   @override
   String get programSummaryEquipment => 'Välineet';
 
   @override
-  String get programSummaryFullGym => 'Ohjelman yhteenveto täysi kuntosali';
+  String get programSummaryFullGym => 'Täysi kuntosali';
 
   @override
-  String get programSummaryGeneralFitness => 'Ohjelman yhteenveto yleiskunto';
+  String get programSummaryGeneralFitness => 'Yleiskunto';
 
   @override
   String get programSummaryGenerateNewProgram => 'Luo uusi ohjelma';
 
   @override
-  String get programSummaryGetStronger => 'Ohjelman yhteenveto vahvistu';
+  String get programSummaryGetStronger => 'Vahvistu';
 
   @override
   String get programSummaryInjuryAwareness => 'Loukkaantumistietoisuus';
 
   @override
-  String get programSummaryIntermediateLabel => 'Ohjelman yhteenveto keskitaso';
+  String get programSummaryIntermediateLabel => 'Keskitaso';
 
   @override
   String get programSummaryLevel => 'Taso';
 
   @override
-  String get programSummaryLoseWeight => 'Ohjelman yhteenveto laihduta';
+  String get programSummaryLoseWeight => 'Pudota painoa';
 
   @override
   String get programSummaryMacrosAndMealsAligned =>
@@ -28535,7 +28518,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String programSummaryNItems(Object arg0) {
-    return 'Ohjelman yhteenveto n kohdetta $arg0';
+    return '$arg0 kohdetta';
   }
 
   @override
@@ -28553,10 +28536,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get programSummaryStartTraining => 'Aloita treenaaminen';
 
   @override
-  String get programSummaryStayFit => 'Ohjelman yhteenveto pysy kunnossa';
+  String get programSummaryStayFit => 'Pysy kunnossa';
 
   @override
-  String get programSummaryStrengthSize => 'Ohjelman yhteenveto voima ja koko';
+  String get programSummaryStrengthSize => 'Voima ja koko';
 
   @override
   String get programSummaryWhatSIncluded => 'Mitä sisältyy';
@@ -29228,10 +29211,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Aseta edistyminen';
 
   @override
-  String get progressionSelectorSubtitle => 'Progression valitsin alaotsikko';
+  String get progressionSelectorSubtitle => 'Alaotsikko';
 
   @override
-  String get progressionSelectorTitle => 'Progression valitsin otsikko';
+  String get progressionSelectorTitle => 'Otsikko';
 
   @override
   String get progressionSelectorWhenToUse => 'Milloin käyttää';
@@ -29743,8 +29726,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quickLogMeasurementsMeasurements => 'Mitat';
 
   @override
-  String get quickLogMeasurementsNotLoggedYet =>
-      'Pikakirjaus mittoja ei vielä kirjattu';
+  String get quickLogMeasurementsNotLoggedYet => 'Ei vielä kirjattu';
 
   @override
   String get quickLogMeasurementsPleaseSignInTo =>
@@ -29763,16 +29745,14 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String quickLogMeasurementsUpdatedDaysAgo(Object arg0) {
-    return 'Pikakirjaus mitat päivitetty $arg0 päivää sitten';
+    return '$arg0 päivää sitten';
   }
 
   @override
-  String get quickLogMeasurementsUpdatedToday =>
-      'Pikakirjaus mitat päivitetty tänään';
+  String get quickLogMeasurementsUpdatedToday => 'Tänään';
 
   @override
-  String get quickLogMeasurementsUpdatedYesterday =>
-      'Pikakirjaus mitat päivitetty eilen';
+  String get quickLogMeasurementsUpdatedYesterday => 'Eilen';
 
   @override
   String get quickLogMeasurementsWaist => 'Vyötärönympärys';
@@ -29912,7 +29892,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quickWorkoutDiscoverWorkouts => 'Löydä treenejä';
 
   @override
-  String get quickWorkoutDuration => 'Pikatreeni kesto';
+  String get quickWorkoutDuration => 'Kesto';
 
   @override
   String get quickWorkoutFavorite => 'Lisää suosikkeihin';
@@ -29921,7 +29901,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quickWorkoutFocus => 'Painopiste';
 
   @override
-  String get quickWorkoutFocusOptional => 'Pikatreeni painopiste valinnainen';
+  String get quickWorkoutFocusOptional => 'Painopiste (valinnainen)';
 
   @override
   String get quickWorkoutNoSuggestions => 'Ei ehdotuksia saatavilla';
@@ -30067,13 +30047,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Treenin painopiste';
 
   @override
-  String get quickWorkoutSubtitle => 'Pikatreeni alaotsikko';
+  String get quickWorkoutSubtitle => 'Alaotsikko';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Napauta lisätäksesi käsipainopareja';
 
   @override
-  String get quickWorkoutTitle => 'Pikatreeni otsikko';
+  String get quickWorkoutTitle => 'Otsikko';
 
   @override
   String get quickWorkoutUnfavorite => 'Poista suosikeista';
@@ -30199,7 +30179,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'AI luo treenit valitsemallasi välillä';
 
   @override
-  String get quizDaysSelectorBest => 'Kyselyn päivävalitsin paras';
+  String get quizDaysSelectorBest => 'Paras';
 
   @override
   String get quizDaysSelectorConsistencyBeatsIntensity =>
@@ -30207,19 +30187,19 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String quizDaysSelectorDays(Object arg0) {
-    return 'Kyselyn päivävalitsin päivää $arg0';
+    return '$arg0 päivää';
   }
 
   @override
   String quizDaysSelectorDaysSelected(Object arg0, Object arg1) {
-    return 'Kyselyn päivävalitsin valitut päivät $arg0 $arg1';
+    return 'Valitut päivät $arg0 $arg1';
   }
 
   @override
   String get quizDaysSelectorForYourWorkouts => ') treeneillesi';
 
   @override
-  String get quizDaysSelectorFri => 'pe';
+  String get quizDaysSelectorFri => 'Pe';
 
   @override
   String get quizDaysSelectorHowLongAreYour => 'Kuinka pitkiä treenisi ovat?';
@@ -30229,30 +30209,30 @@ class AppLocalizationsFi extends AppLocalizations {
       'Kuinka monta päivää viikossa voit treenata?';
 
   @override
-  String get quizDaysSelectorMin => 'min';
+  String get quizDaysSelectorMin => 'Min';
 
   @override
-  String get quizDaysSelectorMon => 'ma';
+  String get quizDaysSelectorMon => 'Ma';
 
   @override
-  String get quizDaysSelectorSat => 'la';
+  String get quizDaysSelectorSat => 'La';
 
   @override
   String quizDaysSelectorSelectNDays(Object arg0) {
-    return 'Kyselyn päivävalitsin valitse n päivää $arg0';
+    return 'Valitse $arg0 päivää';
   }
 
   @override
-  String get quizDaysSelectorSun => 'su';
+  String get quizDaysSelectorSun => 'Su';
 
   @override
-  String get quizDaysSelectorThu => 'to';
+  String get quizDaysSelectorThu => 'To';
 
   @override
-  String get quizDaysSelectorTue => 'ti';
+  String get quizDaysSelectorTue => 'Ti';
 
   @override
-  String get quizDaysSelectorWed => 'ke';
+  String get quizDaysSelectorWed => 'Ke';
 
   @override
   String get quizDaysSelectorWhichDaysWorkBest =>
@@ -30262,7 +30242,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizEquipmentApartmentFriendly => 'Sopii kerrostaloon';
 
   @override
-  String get quizEquipmentBarbell => 'Tanko';
+  String get quizEquipmentBarbell => 'Levytanko';
 
   @override
   String get quizEquipmentBodyweightBands => 'Kehonpaino + vastuskuminauhat';
@@ -30311,7 +30291,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizEquipmentFullGym => 'Täysi kuntosali';
 
   @override
-  String get quizEquipmentFullGymAccess => 'Pääsy täydelle kuntosalille';
+  String get quizEquipmentFullGymAccess => 'Kuntosalin käyttöoikeus';
 
   @override
   String get quizEquipmentFullGymWithMachines =>
@@ -30351,7 +30331,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'Minimivarusteet – kehonpaino, matto';
 
   @override
-  String get quizEquipmentNeededForBarbell => 'Tarvitaan tankoa varten';
+  String get quizEquipmentNeededForBarbell => 'Tarvitaan levytankoa varten';
 
   @override
   String get quizEquipmentNoEquipmentIdentifiedPick =>
@@ -30359,7 +30339,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String quizEquipmentOtherCount(Object arg0) {
-    return 'Muu välineiden määrä $arg0';
+    return 'Muu määrä $arg0';
   }
 
   @override
@@ -30551,8 +30531,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizFitnessLevelAdvanced => 'Edistynyt';
 
   @override
-  String get quizFitnessLevelAdvancedDesc =>
-      'Olet treenannut pitkään ja tunnet kehosi rajat.';
+  String get quizFitnessLevelAdvancedDesc => 'Edistynyt kuvaus';
 
   @override
   String get quizFitnessLevelBeHonestWeLl =>
@@ -30562,11 +30541,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizFitnessLevelBeginner => 'Aloittelija';
 
   @override
-  String get quizFitnessLevelBeginnerDesc =>
-      'Olet vasta aloittamassa tai palaamassa tauolta.';
+  String get quizFitnessLevelBeginnerDesc => 'Aloittelijan kuvaus';
 
   @override
-  String get quizFitnessLevelBrandNewToLifting => 'Täysin uusi salitreenissä';
+  String get quizFitnessLevelBrandNewToLifting => 'Täysin uusi punttitreenissä';
 
   @override
   String get quizFitnessLevelBuildingConsistency => 'Rakennan säännöllisyyttä';
@@ -30587,8 +30565,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizFitnessLevelIntermediate => 'Keskitaso';
 
   @override
-  String get quizFitnessLevelIntermediateDesc =>
-      'Sinulla on kokemusta ja perusteet hallussa.';
+  String get quizFitnessLevelIntermediateDesc => 'Keskitason kuvaus';
 
   @override
   String get quizFitnessLevelJustGettingStarted => 'Vasta aloittamassa';
@@ -30600,27 +30577,25 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizFitnessLevelLight => 'Kevyt';
 
   @override
-  String get quizFitnessLevelLightDesc => 'Kevyt aktiivisuus arjessa.';
+  String get quizFitnessLevelLightDesc => 'Kevyt kuvaus';
 
   @override
   String get quizFitnessLevelModerate => 'Kohtalainen';
 
   @override
-  String get quizFitnessLevelModerateDesc =>
-      'Säännöllinen liikunta osana arkea.';
+  String get quizFitnessLevelModerateDesc => 'Kohtalainen kuvaus';
 
   @override
-  String get quizFitnessLevelNever => 'En koskaan';
+  String get quizFitnessLevelNever => 'Ei koskaan';
 
   @override
-  String get quizFitnessLevelSedentary => 'Paikallaanolo';
+  String get quizFitnessLevelSedentary => 'Istumatyö';
 
   @override
-  String get quizFitnessLevelSedentaryDesc =>
-      'Vähän tai ei lainkaan liikuntaa.';
+  String get quizFitnessLevelSedentaryDesc => 'Istumatyön kuvaus';
 
   @override
-  String get quizFitnessLevelSolidFoundation => 'Vahva pohja';
+  String get quizFitnessLevelSolidFoundation => 'Vahva perusta';
 
   @override
   String get quizFitnessLevelThisHelpsUsPick =>
@@ -30630,8 +30605,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizFitnessLevelVeryActive => 'Erittäin aktiivinen';
 
   @override
-  String get quizFitnessLevelVeryActiveDesc =>
-      'Erittäin aktiivinen elämäntapa ja säännöllinen treeni.';
+  String get quizFitnessLevelVeryActiveDesc => 'Erittäin aktiivisen kuvaus';
 
   @override
   String get quizFitnessLevelVeteranLifter => 'Kokenut nostaja';
@@ -30659,10 +30633,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizMotivationBeHealthierOverall => 'Olla yleisesti terveempi';
 
   @override
-  String get quizMotivationBuildConfidence => 'Kasvattaa itsevarmuutta';
+  String get quizMotivationBuildConfidence => 'Rakentaa itsevarmuutta';
 
   @override
-  String get quizMotivationFeelStronger => 'Tuntea itseni vahvemmaksi';
+  String get quizMotivationFeelStronger => 'Tuntea itsensä vahvemmaksi';
 
   @override
   String get quizMotivationHaveMoreEnergy => 'Saada lisää energiaa';
@@ -30681,8 +30655,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quizMotivationSleepBetter => 'Nukkua paremmin';
 
   @override
-  String get quizMotivationSportsPerformance =>
-      'Urheilusuorituksen parantaminen';
+  String get quizMotivationSportsPerformance => 'Urheilusuorituskyky';
 
   @override
   String get quizMotivationWhatSDrivingYou => 'Mikä motivoi sinua treenaamaan?';
@@ -32161,7 +32134,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get regenerateSheetBootingUpTheAi => 'Käynnistetään tekoälyä';
 
   @override
-  String get regenerateSheetBuildingYourPlan => 'Rakennetaan suunnitelmaasi';
+  String get regenerateSheetBuildingYourPlan => 'Luodaan suunnitelmaasi';
 
   @override
   String get regenerateSheetBuildingYourWorkout => 'Luodaan treeniäsi…';
@@ -32188,7 +32161,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get regenerateSheetCustomizeOrLetAiSuggest =>
-      'Muokkaa itse tai anna tekoälyn ehdottaa';
+      'Mukauta tai anna tekoälyn ehdottaa';
 
   @override
   String get regenerateSheetDescribeYourIdealWorkout =>
@@ -32205,7 +32178,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get regenerateSheetDoThisToday => 'Tee tämä tänään';
 
   @override
-  String get regenerateSheetEnterAPrompt => 'Kirjoita kehotus';
+  String get regenerateSheetEnterAPrompt => 'Kirjoita kehote';
 
   @override
   String get regenerateSheetEnterAPromptAbove => 'Kirjoita pyyntö yläpuolelle…';
@@ -32216,7 +32189,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get regenerateSheetFilteringByYourEquipment =>
-      'Suodatetaan omien välineidesi mukaan';
+      'Suodatetaan välineidesi mukaan';
 
   @override
   String get regenerateSheetFinalizingDetails =>
@@ -32259,21 +32232,20 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get regenerateSheetLoadingInjuriesAndGoals =>
-      'Ladataan vammoja ja tavoitteita';
+  String get regenerateSheetLoadingInjuriesAndGoals => 'Vammat ja tavoitteet';
 
   @override
-  String get regenerateSheetLoadingPreferences => 'Ladataan asetuksia';
+  String get regenerateSheetLoadingPreferences => 'Asetukset';
 
   @override
-  String get regenerateSheetLoadingYourProfile => 'Ladataan profiiliasi';
+  String get regenerateSheetLoadingYourProfile => 'Profiilisi';
 
   @override
   String get regenerateSheetMatchingIntensity => 'Sovitetaan intensiteettiä';
 
   @override
   String get regenerateSheetMatchingYourFitnessLevel =>
-      'Sovitetaan kuntotasoosi';
+      'Sovitetaan kuntotasosi mukaan';
 
   @override
   String get regenerateSheetNoSuggestionsYet => 'Ei vielä ehdotuksia';
@@ -32296,7 +32268,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get regenerateSheetPreparingYourRequest => 'Valmistellaan pyyntöäsi';
 
   @override
-  String get regenerateSheetPrimingTheEngine => 'Valmistellaan järjestelmää';
+  String get regenerateSheetPrimingTheEngine => 'Valmistellaan moottoria';
 
   @override
   String get regenerateSheetPullingYourGoals => 'Haetaan tavoitteitasi';
@@ -32333,7 +32305,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get regenerateSheetScanningTheExerciseLibrary =>
-      'Selataan liikekirjastoa';
+      'Skannataan liikekirjastoa';
 
   @override
   String get regenerateSheetSchedulingYourWorkout => 'Ajoitetaan treeniäsi';
@@ -32360,7 +32332,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get regenerateSheetTodayNotInUsualDays =>
-      'Tämä päivä ei ole tavallisissa treenipäivissäsi';
+      'Tämä päivä ei kuulu tavallisiin päiviin';
 
   @override
   String get regenerateSheetTuningRestPeriods => 'Säädetään lepotaukoja';
@@ -33020,7 +32992,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get restRateLastSetOptional => 'valinnainen';
 
   @override
-  String get restSuggestionAiRestCoach => 'Tekoälyn lepo-opas';
+  String get restSuggestionAiRestCoach => 'Tekoäly-lepuuttaja';
 
   @override
   String get restSuggestionCalculatingOptimalRestTime =>
@@ -33043,21 +33015,21 @@ class AppLocalizationsFi extends AppLocalizations {
   String get restSuggestionCardUseSuggested => 'Käytä ehdotettua';
 
   @override
-  String get restSuggestionQuick => 'Nopea lepoehdotus';
+  String get restSuggestionQuick => 'Nopea';
 
   @override
-  String get restSuggestionQuickRest => 'Nopea lepoehdotus';
+  String get restSuggestionQuickRest => 'Nopea lepo';
 
   @override
   String restSuggestionSaveTime(Object arg0) {
-    return 'Lepoehdotus säästää aikaa $arg0';
+    return 'Säästä aikaa $arg0';
   }
 
   @override
-  String get restSuggestionSuggested => 'Ehdotettu lepo';
+  String get restSuggestionSuggested => 'Ehdotettu';
 
   @override
-  String get restSuggestionUseSuggested => 'Käytä ehdotettua lepoa';
+  String get restSuggestionUseSuggested => 'Käytä ehdotettua';
 
   @override
   String get restTimerCardBaseRest => 'Peruslepo';
@@ -33182,7 +33154,7 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get restTimerRest => 'Lepotauko';
+  String get restTimerRest => 'Lepo';
 
   @override
   String get restTimerSkipRest => 'Ohita lepo';
@@ -33374,18 +33346,16 @@ class AppLocalizationsFi extends AppLocalizations {
   String get rpePillRpeRateOfPerceived => 'RPE — Rate of Perceived Exertion';
 
   @override
-  String get rpeRirHelpsAdjustNextSet =>
-      'RPE ja RIR auttavat säätämään seuraavaa sarjaa';
+  String get rpeRirHelpsAdjustNextSet => 'Auttaa säätämään seuraavaa sarjaa';
 
   @override
-  String get rpeRirHowHardWasThatSet => 'Kuinka raskas sarja oli?';
+  String get rpeRirHowHardWasThatSet => 'Kuinka raskas sarja oli';
 
   @override
-  String get rpeRirRateOfPerceivedExertion =>
-      'RPE (Rate of Perceived Exertion)';
+  String get rpeRirRateOfPerceivedExertion => 'Koettu rasitustaso (RPE)';
 
   @override
-  String get rpeRirRepsInReserve => 'RIR (Reps in Reserve)';
+  String get rpeRirRepsInReserve => 'Toistot varastossa (RIR)';
 
   @override
   String get rpeRirRir => 'RIR';
@@ -33415,11 +33385,11 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String safetyDisclaimerBannerInjuriesFlagged(Object arg0) {
-    return 'Vammoja merkitty: $arg0';
+    return 'Vammoja merkitty $arg0';
   }
 
   @override
-  String get safetyDisclaimerBannerInjuryBody => 'Vammoja havaittu';
+  String get safetyDisclaimerBannerInjuryBody => 'Vamma-alue';
 
   @override
   String get safetyDisclaimerBannerLearnMore => 'Lue lisää';
@@ -33433,7 +33403,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get safetyDisclaimerBannerSafetyModeActive => 'Turvatila aktiivinen';
 
   @override
-  String get safetyDisclaimerBannerSafetyModeBody => 'Turvatila on aktivoitu';
+  String get safetyDisclaimerBannerSafetyModeBody => 'Turvatilan runko';
 
   @override
   String get saunaCustomDuration => 'Mukautettu kesto';
@@ -35203,11 +35173,10 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get shareBreakdownTodaysLifts =>
-      'Jaa yhteenveto tämän päivän nostoista';
+  String get shareBreakdownTodaysLifts => 'Tämän päivän nostot';
 
   @override
-  String get shareCoachWorkoutReview => 'Jaa valmentajan treenikatsaus';
+  String get shareCoachWorkoutReview => 'Valmentajan treenikatsaus';
 
   @override
   String get shareInsightsShareReport => 'Jaa raportti';
@@ -35226,19 +35195,19 @@ class AppLocalizationsFi extends AppLocalizations {
   String get shareMotivationalCompleted => 'VALMIS';
 
   @override
-  String get sharePrNewPr => 'Jaa uusi PR';
+  String get sharePrNewPr => 'Uusi PR';
 
   @override
-  String get shareStatsCalories => 'Jaa kaloritilastot';
+  String get shareStatsCalories => 'Kalorit';
 
   @override
-  String get shareStatsDuration => 'Jaa keston tilastot';
+  String get shareStatsDuration => 'Kesto';
 
   @override
   String get shareStatsEliteTemplate => 'ELITE-POHJA';
 
   @override
-  String get shareStatsExercises => 'Jaa liikkeiden tilastot';
+  String get shareStatsExercises => 'Liikkeet';
 
   @override
   String get shareStatsInstagram => 'Instagram';
@@ -35261,10 +35230,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get shareStatsShowWatermark => 'Näytä vesileima';
 
   @override
-  String get shareStatsVolume => 'Jaa volyymitilastot';
+  String get shareStatsVolume => 'Volyymi';
 
   @override
-  String get shareStatsWorkoutComplete => 'Jaa treenin valmistumistilastot';
+  String get shareStatsWorkoutComplete => 'Treeni valmis';
 
   @override
   String get shareStrengthFocusAreas => 'PAINOPISTEALUEET';
@@ -36899,13 +36868,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get stretchControllerPause => 'Tauko';
 
   @override
-  String get stretchControllerResume => 'Jatka venyttelyä';
+  String get stretchControllerResume => 'Jatka';
 
   @override
   String get stretchControllerSkipAll => 'Ohita kaikki';
 
   @override
-  String get stretchControllerStartTimer => 'Käynnistä venyttelyn ajastin';
+  String get stretchControllerStartTimer => 'Käynnistä ajastin';
 
   @override
   String get stretchControllerUpNext => 'SEURAAVANA';
@@ -37773,7 +37742,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get supersetTapToSelect => 'Valitse napauttamalla';
 
   @override
-  String get supersetType => 'Supersarjan tyyppi';
+  String get supersetType => 'Tyyppi';
 
   @override
   String get syncDetailsAllSynced => 'Kaikki synkronoitu!';
@@ -38578,42 +38547,42 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String todayScoreDetailDown(Object arg0) {
-    return 'Päivän pisteet laskivat $arg0';
+    return 'Alas $arg0';
   }
 
   @override
   String todayScoreDetailEarnedPts(Object arg0, Object arg1) {
-    return 'Päivän pisteet ansaittu $arg0 $arg1';
+    return 'Ansaitut pisteet $arg0 $arg1';
   }
 
   @override
-  String get todayScoreDetailHowItWorks => 'Miten päivän pisteet toimivat';
+  String get todayScoreDetailHowItWorks => 'Miten se toimii';
 
   @override
   String todayScoreDetailInactiveExplanation(Object arg0, Object arg1) {
-    return 'Päivän pisteet epäaktiivinen selitys $arg0 $arg1';
+    return 'Passiivisuuden selitys $arg0 $arg1';
   }
 
   @override
   String todayScoreDetailMomentumWithAvg(Object arg0, Object arg1) {
-    return 'Päivän pisteet momentum keskiarvolla $arg0 $arg1';
+    return 'Momentum keskiarvolla $arg0 $arg1';
   }
 
   @override
   String get todayScoreDetailNotCounted => 'Ei laskettu';
 
   @override
-  String get todayScoreDetailSetupText => 'Päivän pisteiden asetusteksti';
+  String get todayScoreDetailSetupText => 'Asetusteksti';
 
   @override
-  String get todayScoreDetailSteady => 'Päivän pisteet vakaa';
+  String get todayScoreDetailSteady => 'Tasainen';
 
   @override
   String get todayScoreDetailTodayScore => 'Päivän pisteet';
 
   @override
   String todayScoreDetailUp(Object arg0) {
-    return 'Päivän pisteet nousivat $arg0';
+    return 'Ylös $arg0';
   }
 
   @override
@@ -39090,7 +39059,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String trophiesEarnedNewBadges(Object arg0) {
-    return 'Uudet merkit $arg0';
+    return 'Merkit $arg0';
   }
 
   @override
@@ -39113,8 +39082,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get trophiesEarnedNextMilestones => 'Seuraavat virstanpylväät';
 
   @override
-  String get trophiesEarnedNoNewRecords =>
-      'Palkinnot ansaittu, ei uusia ennätyksiä';
+  String get trophiesEarnedNoNewRecords => 'Ei uusia ennätyksiä';
 
   @override
   String get trophiesEarnedNoNewRecordsThis =>
@@ -39125,12 +39093,11 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String trophiesEarnedRemainingToUnlock(Object arg0, Object arg1) {
-    return 'Palkinnot ansaittu, lukituksen avaamiseen jäljellä $arg0 $arg1';
+    return 'Jäljellä avattavaksi $arg0 $arg1';
   }
 
   @override
-  String get trophiesEarnedSessionHighlights =>
-      'Palkinnot ansaittu, treenin kohokohdat';
+  String get trophiesEarnedSessionHighlights => 'Treenin kohokohdat';
 
   @override
   String trophiesEarnedSheetPts(Object points) {
@@ -39143,7 +39110,7 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get trophiesEarnedTitle => 'Palkinnot ansaittu, otsikko';
+  String get trophiesEarnedTitle => 'Otsikko';
 
   @override
   String get trophiesEarnedTotalWorkouts => 'Treenit yhteensä';
@@ -39152,8 +39119,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get trophiesEarnedTrophiesAchievements => 'Palkinnot ja saavutukset';
 
   @override
-  String get trophiesEarnedViewAllCardioPRs =>
-      'Palkinnot ansaittu, näytä kaikki cardio PR:t';
+  String get trophiesEarnedViewAllCardioPRs => 'Näytä kaikki cardio PR:t';
 
   @override
   String get trophiesEarnedViewAllCardioPrs => 'Näytä kaikki cardio-ennätykset';
@@ -40088,7 +40054,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String weekProgressStripCompletedCount(Object arg0, Object arg1) {
-    return 'Viikon edistyminen, suoritettu määrä $arg0 $arg1';
+    return 'Suoritettu määrä $arg0 $arg1';
   }
 
   @override
@@ -40099,8 +40065,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get weekProgressStripLoading => 'Ladataan...';
 
   @override
-  String get weekProgressStripNoWorkoutsScheduled =>
-      'Viikon edistyminen, ei treenejä aikataulutettu';
+  String get weekProgressStripNoWorkoutsScheduled => 'Ei ajastettuja treenejä';
 
   @override
   String get weekProgressStripThisWeek => 'Tämä viikko';
@@ -40787,12 +40752,12 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String weightTrendCardDownThisWeek(Object arg0) {
-    return 'Painotrendi, laskenut tällä viikolla $arg0';
+    return 'Alas tällä viikolla $arg0';
   }
 
   @override
   String weightTrendCardDownVsLastCycle(Object arg0) {
-    return 'Painotrendi, laskenut vs viime sykli $arg0';
+    return 'Alas vs. edellinen sykli $arg0';
   }
 
   @override
@@ -40803,48 +40768,47 @@ class AppLocalizationsFi extends AppLocalizations {
       'Kirjaa painosi nähdäksesi trendejä';
 
   @override
-  String get weightTrendCardMaintaining => 'Painotrendi, ylläpito';
+  String get weightTrendCardMaintaining => 'Ylläpito';
 
   @override
-  String get weightTrendCardNoChange => 'Painotrendi, ei muutosta';
+  String get weightTrendCardNoChange => 'Ei muutosta';
 
   @override
-  String get weightTrendCardNoData => 'Painotrendi, ei dataa';
+  String get weightTrendCardNoData => 'Ei tietoja';
 
   @override
   String get weightTrendCardOnTrack => 'Oikealla tiellä';
 
   @override
-  String get weightTrendCardReviewGoals => 'Painotrendi, tarkista tavoitteet';
+  String get weightTrendCardReviewGoals => 'Tarkista tavoitteet';
 
   @override
-  String get weightTrendCardSameAsLastCycle =>
-      'Painotrendi, sama kuin viime syklissä';
+  String get weightTrendCardSameAsLastCycle => 'Sama kuin edellisessä syklissä';
 
   @override
   String get weightTrendCardTapToLogWeight => 'Napauta kirjataksesi paino';
 
   @override
-  String get weightTrendCardTargetHeld => 'Painotrendi, tavoite saavutettu';
+  String get weightTrendCardTargetHeld => 'Tavoite saavutettu';
 
   @override
   String weightTrendCardTargetHeldWindow(Object arg0) {
-    return 'Painotrendi, tavoite saavutettu ikkunassa $arg0';
+    return 'Tavoite saavutettu ikkunassa $arg0';
   }
 
   @override
   String weightTrendCardUpThisWeek(Object arg0) {
-    return 'Painotrendi, noussut tällä viikolla $arg0';
+    return 'Ylös tällä viikolla $arg0';
   }
 
   @override
   String weightTrendCardUpVsLastCycle(Object arg0) {
-    return 'Painotrendi, noussut vs viime sykli $arg0';
+    return 'Ylös vs. edellinen sykli $arg0';
   }
 
   @override
   String get weightTrendCardWeightStableThisWeek =>
-      'Painotrendi, paino vakaa tällä viikolla';
+      'Paino vakaa tällä viikolla';
 
   @override
   String get weightTrendCardWeightTrends => 'Painotrendit';
@@ -41600,7 +41564,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String workoutDetailReplacingExercises(Object arg0) {
-    return 'Treenin tiedot korvaavat harjoitukset $arg0';
+    return 'Korvataan liikkeitä $arg0';
   }
 
   @override
@@ -41771,8 +41735,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutDetailType => 'Tyyppi';
 
   @override
-  String get workoutDetailUpdatingExercises =>
-      'Treenin tiedot päivittävät harjoituksia';
+  String get workoutDetailUpdatingExercises => 'Päivitetään liikkeitä';
 
   @override
   String get workoutDetailWantAChallenge => 'HALUATKO HAASTEEN?';
@@ -42075,10 +42038,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutImportCalories => 'Kalorit';
 
   @override
-  String get workoutImportCardio => 'Treenin tuonti: cardio';
+  String get workoutImportCardio => 'Cardio';
 
   @override
-  String get workoutImportCycling => 'Treenin tuonti: pyöräily';
+  String get workoutImportCycling => 'Pyöräily';
 
   @override
   String get workoutImportDistance => 'Etäisyys';
@@ -42087,21 +42050,21 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutImportDuration => 'Kesto';
 
   @override
-  String get workoutImportEasy => 'Treenin tuonti: helppo';
+  String get workoutImportEasy => 'Helppo';
 
   @override
-  String get workoutImportFlexibility => 'Treenin tuonnin joustavuus';
+  String get workoutImportFlexibility => 'Liikkuvuus';
 
   @override
   String workoutImportFromSource(Object arg0) {
-    return 'Treenin tuonti lähteestä $arg0';
+    return 'Lähteet $arg0';
   }
 
   @override
-  String get workoutImportHard => 'Treenin tuonti: raskas';
+  String get workoutImportHard => 'Raskas';
 
   @override
-  String get workoutImportHiit => 'Treenin tuonti: HIIT';
+  String get workoutImportHiit => 'HIIT';
 
   @override
   String get workoutImportHowHardWasThis => 'Kuinka vaikea tämä treeni oli?';
@@ -42113,10 +42076,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutImportImportWorkout => 'Tuo harjoitus';
 
   @override
-  String get workoutImportMedium => 'Treenin tuonti: keskiraskas';
+  String get workoutImportMedium => 'Keskiraskas';
 
   @override
-  String get workoutImportOther => 'Treenin tuonti: muu';
+  String get workoutImportOther => 'Muu';
 
   @override
   String get workoutImportPreviewCardioRows => 'Kuntotreenirivit';
@@ -42188,7 +42151,7 @@ class AppLocalizationsFi extends AppLocalizations {
       'Tämä päättyy yleensä 10–30 sekunnissa.';
 
   @override
-  String get workoutImportRunning => 'Treenin tuonti: juoksu';
+  String get workoutImportRunning => 'Juoksu';
 
   @override
   String workoutImportScreenAvgBpm(Object avgHeartRate) {
@@ -42206,11 +42169,10 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get workoutImportSkip => 'Treenin tuonti: ohita';
+  String get workoutImportSkip => 'Ohita';
 
   @override
-  String get workoutImportStrengthTraining =>
-      'Treenin tuonti: voimaharjoittelu';
+  String get workoutImportStrengthTraining => 'Voimaharjoittelu';
 
   @override
   String get workoutImportSummaryActivateProgram => 'Aktivoi ohjelma';
@@ -42275,25 +42237,25 @@ class AppLocalizationsFi extends AppLocalizations {
       'Sovelluksen painoehdotukset alkavat heijastaa tätä historiaa minuutin sisällä.';
 
   @override
-  String get workoutImportSwimming => 'Treenin tuonti: uinti';
+  String get workoutImportSwimming => 'Uinti';
 
   @override
-  String get workoutImportWalking => 'Treenin tuonti: kävely';
+  String get workoutImportWalking => 'Kävely';
 
   @override
-  String get workoutImportWeights => 'Treenin tuonti: painot';
+  String get workoutImportWeights => 'Painot';
 
   @override
   String get workoutImportWhatTypeOfExercise => 'Millainen harjoitus?';
 
   @override
-  String get workoutImportWorkout => 'Treenin tuonti: treeni';
+  String get workoutImportWorkout => 'Treeni';
 
   @override
   String get workoutImportWorkoutDetected => 'Harjoitus havaittu';
 
   @override
-  String get workoutImportYoga => 'Treenin tuonti: jooga';
+  String get workoutImportYoga => 'Jooga';
 
   @override
   String get workoutListTitle => 'Treenit';
@@ -42407,7 +42369,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String workoutPlanDrawerExerciseCount(Object arg0) {
-    return 'Treenisuunnitelman liikemäärä $arg0';
+    return 'Liikkeiden määrä $arg0';
   }
 
   @override
@@ -42425,19 +42387,18 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get workoutPlanDrawerRemoveExerciseTooltip =>
-      'Poista liike treenisuunnitelmasta';
+  String get workoutPlanDrawerRemoveExerciseTooltip => 'Poista liike';
 
   @override
   String workoutPlanDrawerSetsLogged(Object arg0) {
-    return 'Treenisuunnitelman sarjat kirjattu $arg0';
+    return 'Sarjaa kirjattu $arg0';
   }
 
   @override
   String get workoutPlanDrawerSwapExercise => 'Vaihda liike';
 
   @override
-  String get workoutPlanDrawerTitle => 'Treenisuunnitelma';
+  String get workoutPlanDrawerTitle => 'Otsikko';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Harjoitussuunnitelma';
@@ -42794,10 +42755,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutShowcaseAskCoach => 'Kysy valmentajalta';
 
   @override
-  String get workoutShowcaseAutoDesc => 'Automaattinen';
+  String get workoutShowcaseAutoDesc => 'Automaattinen kuvaus';
 
   @override
-  String get workoutShowcaseAutoLabel => 'Automaattinen';
+  String get workoutShowcaseAutoLabel => 'Automaattinen otsikko';
 
   @override
   String get workoutShowcaseBarbellSquat => 'Tankokyykky';
@@ -42836,55 +42797,55 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutShowcaseEveryWorkoutFlows => 'Jokainen treeni etenee';
 
   @override
-  String get workoutShowcaseFinishWorkout => 'Viimeistele treeni';
+  String get workoutShowcaseFinishWorkout => 'Lopeta treeni';
 
   @override
   String get workoutShowcaseFormat1Rm => '1RM-muoto';
 
   @override
-  String get workoutShowcaseFormatBoarding => 'Lauta-muoto';
+  String get workoutShowcaseFormatBoarding => 'Lennolle';
 
   @override
-  String get workoutShowcaseFormatCard => 'Kortti-muoto';
+  String get workoutShowcaseFormatCard => 'Kortti';
 
   @override
-  String get workoutShowcaseFormatDiscord => 'Discord-muoto';
+  String get workoutShowcaseFormatDiscord => 'Discord';
 
   @override
-  String get workoutShowcaseFormatFull => 'Täysi muoto';
+  String get workoutShowcaseFormatFull => 'Koko';
 
   @override
-  String get workoutShowcaseFormatIgStory => 'IG Story -muoto';
+  String get workoutShowcaseFormatIgStory => 'Ig story';
 
   @override
-  String get workoutShowcaseFormatNewspaper => 'Sanomalehti-muoto';
+  String get workoutShowcaseFormatNewspaper => 'Sanomalehti';
 
   @override
-  String get workoutShowcaseFormatPassport => 'Passi-muoto';
+  String get workoutShowcaseFormatPassport => 'Passi';
 
   @override
-  String get workoutShowcaseFormatPolaroid => 'Polaroid-muoto';
+  String get workoutShowcaseFormatPolaroid => 'Polaroid';
 
   @override
-  String get workoutShowcaseFormatPrCard => 'PR-kortti';
+  String get workoutShowcaseFormatPrCard => 'Pr-kortti';
 
   @override
-  String get workoutShowcaseFormatQuote => 'Sitaatti-muoto';
+  String get workoutShowcaseFormatQuote => 'Lainaus';
 
   @override
-  String get workoutShowcaseFormatReceipt => 'Kuitti-muoto';
+  String get workoutShowcaseFormatReceipt => 'Kuitti';
 
   @override
-  String get workoutShowcaseFormatTrading => 'Vaihtokortti-muoto';
+  String get workoutShowcaseFormatTrading => 'Vaihtokortti';
 
   @override
-  String get workoutShowcaseFormatTrophy => 'Pokaali-muoto';
+  String get workoutShowcaseFormatTrophy => 'Pokaali';
 
   @override
-  String get workoutShowcaseFormatVinyl => 'Vinyyli-muoto';
+  String get workoutShowcaseFormatVinyl => 'Vinyyli';
 
   @override
-  String get workoutShowcaseFormatWrapped => 'Wrapped-muoto';
+  String get workoutShowcaseFormatWrapped => 'Kooste';
 
   @override
   String get workoutShowcaseHowYourWeightReps =>
@@ -42900,20 +42861,20 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutShowcaseLR => 'V/O';
 
   @override
-  String get workoutShowcaseLinearDesc => 'Lineaarinen';
+  String get workoutShowcaseLinearDesc => 'Lineaarinen kuvaus';
 
   @override
-  String get workoutShowcaseLinearLabel => 'Lineaarinen';
+  String get workoutShowcaseLinearLabel => 'Lineaarinen otsikko';
 
   @override
-  String get workoutShowcaseLogAllSets => 'Kirjaa kaikki sarjat';
+  String get workoutShowcaseLogAllSets => 'Kaikki sarjat';
 
   @override
   String get workoutShowcaseLogDrink => 'Log Juoma';
 
   @override
   String workoutShowcaseLogSet(Object arg0) {
-    return 'Kirjaa sarja $arg0';
+    return 'Sarja $arg0';
   }
 
   @override
@@ -42942,10 +42903,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutShowcaseProgressionModel => 'Edistymismalli';
 
   @override
-  String get workoutShowcasePyramidDesc => 'Pyramidi';
+  String get workoutShowcasePyramidDesc => 'Pyramidikuvaus';
 
   @override
-  String get workoutShowcasePyramidLabel => 'Pyramidi';
+  String get workoutShowcasePyramidLabel => 'Pyramidiotsikko';
 
   @override
   String get workoutShowcaseRare => '★ Harvinaista';
@@ -43035,7 +42996,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String workoutShowcaseTapToLogSet(Object arg0) {
-    return 'Napauta kirjataksesi sarjan $arg0';
+    return 'Napauta kirjataksesi sarja $arg0';
   }
 
   @override
@@ -43045,10 +43006,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutShowcaseTime => 'Aika';
 
   @override
-  String get workoutShowcaseUndulatingDesc => 'Aaltoileva';
+  String get workoutShowcaseUndulatingDesc => 'Aaltoileva kuvaus';
 
   @override
-  String get workoutShowcaseUndulatingLabel => 'Aaltoileva';
+  String get workoutShowcaseUndulatingLabel => 'Aaltoileva otsikko';
 
   @override
   String get workoutShowcaseUpNextBenchPress => 'Seuraavaksi: Penkkipunnerrus';
@@ -43885,7 +43846,7 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get xpGoalsDaily => 'Päivittäiset XP-tavoitteet';
+  String get xpGoalsDaily => 'Päivittäinen';
 
   @override
   String get xpGoalsDialog250LevelsAcross11Tiers => '250 tasoa 11 eri tasolla';
@@ -43895,50 +43856,51 @@ class AppLocalizationsFi extends AppLocalizations {
       'Aloittelijasta transsendenttiseksi';
 
   @override
-  String get xpGoalsDialogCompleteWorkoutXp => 'Suorita treeni XP';
+  String get xpGoalsDialogCompleteWorkoutXp => 'Treenin suoritus xp';
 
   @override
   String get xpGoalsDialogDailyGoals => 'Päivittäiset tavoitteet';
 
   @override
   String get xpGoalsDialogFirstChatWithAiCoachXp =>
-      'Ensimmäinen keskustelu AI-valmentajan kanssa XP';
+      'Ensimmäinen keskustelu ai coachin kanssa xp';
 
   @override
   String get xpGoalsDialogFirstMealWeightMeasurementsXp =>
-      'Ensimmäinen ateria, paino ja mittaukset XP';
+      'Ensimmäinen aterian painon mittaus xp';
 
   @override
-  String get xpGoalsDialogFirstPrXp => 'Ensimmäinen PR XP';
+  String get xpGoalsDialogFirstPrXp => 'Ensimmäinen PR xp';
 
   @override
-  String get xpGoalsDialogFirstProgressPhotoXp =>
-      'Ensimmäinen edistymiskuva XP';
+  String get xpGoalsDialogFirstProgressPhotoXp => 'Ensimmäinen kehityskuva xp';
 
   @override
   String get xpGoalsDialogFirstProteinGoalXp =>
-      'Ensimmäinen proteiinitavoite XP';
+      'Ensimmäinen proteiinitavoite xp';
 
   @override
-  String get xpGoalsDialogFirstWorkoutXp => 'Ensimmäinen treeni XP';
+  String get xpGoalsDialogFirstWorkoutXp => 'Ensimmäinen treeni xp';
 
   @override
-  String get xpGoalsDialogHitProteinGoalXp => 'Saavutettu proteiinitavoite XP';
+  String get xpGoalsDialogHitProteinGoalXp =>
+      'Proteiinitavoitteen saavuttaminen xp';
 
   @override
   String get xpGoalsDialogLevels => 'Tasot';
 
   @override
-  String get xpGoalsDialogLogBodyMeasurementsXp => 'Kirjaa kehon mitat XP';
+  String get xpGoalsDialogLogBodyMeasurementsXp =>
+      'Kehon mittausten kirjaaminen xp';
 
   @override
-  String get xpGoalsDialogLogMealXp => 'Kirjaa ateria XP';
+  String get xpGoalsDialogLogMealXp => 'Aterian kirjaaminen xp';
 
   @override
-  String get xpGoalsDialogLogWeightXp => 'Kirjaa paino XP';
+  String get xpGoalsDialogLogWeightXp => 'Painon kirjaaminen xp';
 
   @override
-  String get xpGoalsDialogLoginXp => 'Kirjautuminen XP';
+  String get xpGoalsDialogLoginXp => 'Kirjautuminen xp';
 
   @override
   String get xpGoalsDialogMilestoneRewards => 'Virstanpylväspalkinnot';
@@ -43978,7 +43940,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get xpGoalsScreenCompleteFirstWorkout => 'Suorita ensimmäinen treeni';
 
   @override
-  String get xpGoalsScreenConsumableLegend => 'Kulutettavien selite';
+  String get xpGoalsScreenConsumableLegend => 'Kertakäyttöisten selite';
 
   @override
   String get xpGoalsScreenErrorLoadingMonthlyAchievem =>
@@ -44016,7 +43978,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String xpGoalsScreenLevelCurrentTotal(Object arg0) {
-    return 'Taso $arg0';
+    return 'Tason nykyinen yhteismäärä $arg0';
   }
 
   @override
@@ -44118,7 +44080,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get xpGoalsScreenXpBonusLegend => 'XP-bonusten selite';
 
   @override
-  String get xpGoalsScreenYouBadge => 'XP-tavoitteiden oma merkki';
+  String get xpGoalsScreenYouBadge => 'Sinun merkkisi';
 
   @override
   String get xpGoalsTrophyRoom => 'Pokaalihylly';
@@ -44131,12 +44093,12 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String xpGoalsXpAvailable(Object arg0) {
-    return 'XP-tavoitteet: käytettävissä oleva XP $arg0';
+    return 'Saatavilla $arg0';
   }
 
   @override
   String xpGoalsXpEarnedToday(Object arg0) {
-    return 'XP-tavoitteet: tänään ansaittu XP $arg0';
+    return 'Tänään ansaittu $arg0';
   }
 
   @override
@@ -44144,7 +44106,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String xpGoalsXpMultiplierActive(Object arg0) {
-    return 'XP-tavoitteet: XP-kerroin aktiivinen $arg0';
+    return 'Kerroin aktiivinen $arg0';
   }
 
   @override

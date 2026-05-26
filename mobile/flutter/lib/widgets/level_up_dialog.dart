@@ -154,10 +154,23 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
     // Init particles
     _particles = List.generate(50, (_) => _Particle.random(_random));
 
-    // Build accomplishment cards
-    _accomplishments = _buildAccomplishments();
+    // Accomplishment cards depend on AppLocalizations (inherited), so they
+    // can't be built here — see didChangeDependencies.
+    _accomplishments = const [];
 
     _startSequence();
+  }
+
+  bool _depsResolved = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_depsResolved) {
+      _depsResolved = true;
+      _accomplishments = _buildAccomplishments();
+      if (mounted) setState(() {});
+    }
   }
 
   List<_Accomplishment> _buildAccomplishments() {

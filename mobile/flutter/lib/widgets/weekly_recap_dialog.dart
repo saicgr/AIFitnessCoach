@@ -754,12 +754,16 @@ class _CtaButton extends StatelessWidget {
   }
 }
 
-/// Compact, deliberate "Skip" pill shown top-right of the recap modal.
-/// Uses a translucent fill + soft border drawn from the same theme values
-/// (`textMuted`, `border`) used elsewhere in this file — no hardcoded hex.
+/// Compact "Skip" pill shown top-right of the recap modal.
+/// The pill MUST render opaque — it sits over the dimmed home screen and
+/// any translucency lets the home header's bell + overflow icons bleed
+/// through, producing an unreadable "Skip ⋮×" glyph cluster (user-reported).
 /// Guarantees a 44×44 minimum tap target so it stays comfortably tappable
 /// even though the visible pill is smaller.
 class _SkipPill extends StatelessWidget {
+  // textMuted / border are kept in the constructor so the call site stays
+  // unchanged, but the pill's painted decoration now uses fully opaque
+  // theme-neutral colors (matches the app-tour skip control hardening).
   final Color textMuted;
   final Color border;
   final VoidCallback onTap;
@@ -771,6 +775,12 @@ class _SkipPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pillBg = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFEFEFF0);
+    final pillBorder = isDark
+        ? Colors.white.withValues(alpha: 0.30)
+        : Colors.black.withValues(alpha: 0.22);
+    final pillFg = isDark ? Colors.white : const Color(0xFF1A1A1A);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -785,11 +795,9 @@ class _SkipPill extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                // Subtle translucent fill — reads as an intentional control,
-                // not floating debug text, and stays quieter than the CTA.
-                color: textMuted.withValues(alpha: 0.12),
+                color: pillBg,
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: border),
+                border: Border.all(color: pillBorder, width: 1),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -799,11 +807,11 @@ class _SkipPill extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: textMuted,
+                      color: pillFg,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(Icons.close_rounded, size: 14, color: textMuted),
+                  Icon(Icons.close_rounded, size: 14, color: pillFg),
                 ],
               ),
             ),

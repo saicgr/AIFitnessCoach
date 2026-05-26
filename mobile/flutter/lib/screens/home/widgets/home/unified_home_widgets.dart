@@ -1321,12 +1321,17 @@ class _BreakfastSlotRow extends ConsumerWidget {
                           style: TextStyle(fontSize: 11)),
                       const SizedBox(width: 4),
                     ],
-                    Text(
-                      AppLocalizations.of(context)!.unifiedHomeWidgetsBreakfastLogged(breakfastLast7),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: warn ? c.warning : c.textMuted,
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context)!.unifiedHomeWidgetsBreakfastLogged(breakfastLast7),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: warn ? c.warning : c.textMuted,
+                        ),
                       ),
                     ),
                   ],

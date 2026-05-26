@@ -219,6 +219,50 @@ def _file_scope_prefix(path: Path) -> str:
     return head + "".join(p.capitalize() for p in tail if p)
 
 
+_PLACEHOLDER_RE = re.compile(r"\{[^{}]+\}")
+
+
+def _camel_words(name: str) -> list[str]:
+    """`unifiedHomeWidgets` → ['unified','home','widgets']. Lowercase, no separators."""
+    s = re.sub(r"([A-Z])", r" \1", name)
+    return [w.lower() for w in s.split() if w]
+
+
+def _strip_namespace_pollution(body: str, prefix: str) -> str:
+    """Return `body` with a duplicated namespace prefix stripped, if shape matches.
+
+    Detects the failure mode where ``body`` is the kebab-cased humanization of
+    the camelCase namespace prefix + the meaningful suffix (e.g. body=
+    ``"Unified home widgets wake hydration"`` with prefix=``"unifiedHomeWidgets"``
+    leaves only ``"Wake hydration"``).
+
+    Non-polluted bodies are returned unchanged. Bodies whose leading words
+    only partially match the prefix are returned unchanged — we strip
+    conservatively only when the full prefix is present at the start.
+    """
+    if not body or not prefix:
+        return body
+    prefix_words = _camel_words(prefix)
+    if len(prefix_words) < 2:
+        return body
+    # Walk through body words checking prefix overlap; placeholders/punct
+    # don't move the cursor. Keep the trailing remainder intact.
+    parts = body.split()
+    if len(parts) < len(prefix_words):
+        return body
+    leading_lower = [_PLACEHOLDER_RE.sub("", p).strip(",.;:!?'\"()").lower()
+                     for p in parts[:len(prefix_words)]]
+    if leading_lower != prefix_words:
+        return body
+    remainder = parts[len(prefix_words):]
+    if not remainder:
+        return body  # nothing left after stripping — don't blank the value
+    cleaned = " ".join(remainder).strip()
+    if not cleaned:
+        return body
+    return cleaned[0].upper() + cleaned[1:]
+
+
 def _is_skippable_value(body: str) -> tuple[bool, str]:
     """Return (skip, reason)."""
     if len(body) < 2:
@@ -484,7 +528,23 @@ def analyze_file(path: Path, vocab: dict[str, str]) -> Optional[FileReport]:
             while key in used_keys_this_file or key in report.new_keys:
                 key = f"{base_key}{n}"
                 n += 1
-            report.new_keys[key] = body
+            # Guard against value-equals-key-name pollution. Earlier migrations
+            # landed ~430 entries where the human body string was literally the
+            # kebab-cased version of the namespaced key (e.g. body was
+            # "Unified home widgets wake hydration" with prefix
+            # "unifiedHomeWidgets" → value duplicated the namespace). When we
+            # detect that shape, strip the namespace prefix from the stored
+            # value so the .arb keeps a clean English string and downstream
+            # locale translators don't re-translate the redundant prefix.
+            # See: scripts/i18n_clean_polluted_values.py + docs/i18n_pollution_report.md.
+            stored_value = _strip_namespace_pollution(body, prefix)
+            if stored_value != body:
+                print(
+                    f"  ⚠ namespace-pollution stripped — key={key!r} "
+                    f"old={body!r} new={stored_value!r}",
+                    file=sys.stderr,
+                )
+            report.new_keys[key] = stored_value
             vocab[normalized] = key
             used_keys_this_file.add(key)
 

@@ -56,18 +56,19 @@ class AppTourTooltipCard extends StatelessWidget {
     final textSecondary = isDark
         ? Colors.white.withValues(alpha: 0.72)
         : Colors.black.withValues(alpha: 0.62);
-    // The Skip control needs to stay clearly legible — a faint secondary grey
-    // rendered "barely visible" over the home header. Use a solid filled
-    // capsule with a high-contrast surface so it reads in both light + dark.
+    // The Skip control sits at the top-right of the tour card, over the home
+    // screen's header icons (bell + overflow ⋮). The pill MUST be fully
+    // opaque — earlier translucent alphas (0.06–0.14) let the header icons
+    // bleed through and made the Skip text look like "Skip ⋮×" garble.
     final skipBg = isDark
-        ? Colors.white.withValues(alpha: 0.14)
-        : Colors.black.withValues(alpha: 0.06);
+        ? const Color(0xFF2C2C2E)
+        : const Color(0xFFEFEFF0);
     final skipBorder = isDark
         ? Colors.white.withValues(alpha: 0.30)
-        : Colors.black.withValues(alpha: 0.18);
+        : Colors.black.withValues(alpha: 0.22);
     final skipText = isDark
-        ? Colors.white.withValues(alpha: 0.95)
-        : Colors.black.withValues(alpha: 0.80);
+        ? Colors.white
+        : const Color(0xFF1A1A1A);
 
     // The tour overlay is mounted via an OverlayEntry with no Material
     // ancestor, which causes Flutter to paint Text widgets with the debug
@@ -187,9 +188,10 @@ class _CardContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: step counter + skip — pinned, never scrolls.
-          // The skip pill is wrapped in Flexible + ellipsis so long
-          // translations (e.g. Telugu "ట్యుటోరియల్‌ను దాటవేయి") can never
-          // overflow the card width and bleed off-screen.
+          // The skip pill is a circular X close button: zero translation
+          // surface area (no ellipsis truncation in any locale), universally
+          // recognized, and physically isolated from the surrounding header
+          // icons it sits on top of (bell, overflow menu).
           Row(
             children: [
               Text(
@@ -201,32 +203,25 @@ class _CardContent extends StatelessWidget {
                   letterSpacing: 0.3,
                 ),
               ),
-              const SizedBox(width: 12),
-              Flexible(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: onSkip,
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 13, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: skipBg,
-                        border: Border.all(color: skipBorder, width: 1),
-                        borderRadius: BorderRadius.circular(13),
-                      ),
-                      child: Text(
-                        AppLocalizations.of(context).appTourTooltipSkipTutorial,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: skipText,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
+              const Spacer(),
+              Semantics(
+                button: true,
+                label: AppLocalizations.of(context).appTourTooltipSkipTutorial,
+                child: GestureDetector(
+                  onTap: onSkip,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: skipBg,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: skipBorder, width: 1),
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: skipText,
                     ),
                   ),
                 ),
