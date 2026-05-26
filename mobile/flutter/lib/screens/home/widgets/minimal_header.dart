@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/providers/serious_mode_provider.dart';
-import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import 'components/components.dart';
@@ -110,6 +109,7 @@ class _OverflowMenuButton extends ConsumerWidget {
     return PopupMenuButton<String>(
       tooltip: AppLocalizations.of(context).homeMore,
       icon: Icon(Icons.more_vert, size: 22, color: iconColor),
+      position: PopupMenuPosition.under,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
       onOpened: HapticService.light,
@@ -141,12 +141,13 @@ class _OverflowMenuButton extends ConsumerWidget {
           value: 'change_gym',
           child: Row(
             children: [
-              Icon(Icons.storefront_outlined, size: 20, color: iconColor),
+              Icon(Icons.swap_horiz_rounded, size: 20, color: iconColor),
               const SizedBox(width: 12),
               Text(AppLocalizations.of(context).minimalHeaderChangeGymProfile),
             ],
           ),
         ),
+        const PopupMenuDivider(),
         // Collapse: show single-line summary pill instead of the 7-day strip.
         // Only meaningful when the strip is visible at all.
         if (!weekHidden)
@@ -162,7 +163,7 @@ class _OverflowMenuButton extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Text(weekCollapsed
                     ? AppLocalizations.of(context).minimalHeaderExpandWeekStrip
-                    : 'Collapse week strip'),
+                    : AppLocalizations.of(context).minimalHeaderCollapseWeekStrip),
               ],
             ),
           ),
@@ -183,6 +184,7 @@ class _OverflowMenuButton extends ConsumerWidget {
             ],
           ),
         ),
+        const PopupMenuDivider(),
         PopupMenuItem<String>(
           value: 'my_space',
           child: Row(
@@ -234,7 +236,6 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final xpState = ref.watch(xpProvider);
-    final accent = ref.watch(accentColorProvider).getColor(isDark);
     final progress = xpState.progressFraction.clamp(0.0, 1.0);
     final serious = ref.watch(seriousModeProvider);
 
@@ -243,13 +244,20 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
     final streakDays = ref.watch(xpCurrentStreakProvider);
     final showStreak = !serious && streakDays > 0;
 
+    // Level ring + level-number text both render in neutral (textPrimary)
+    // rather than the user's accent. Per the 2026-05 minimalist redesign
+    // (Surface 1.7 color budget): the accent is reserved for primary CTA
+    // chrome (Coach surface, FAB, active nav). The level ring is a passive
+    // status indicator — it should not compete with the primary action.
+    final levelStroke =
+        isDark ? Colors.white : const Color(0xFF0A0A0A);
     final levelRing = SizedBox(
       width: 36,
       height: 36,
       child: CustomPaint(
         painter: _LevelRingPainter(
           progress: progress,
-          accentColor: accent,
+          accentColor: levelStroke,
           trackColor: isDark
               ? Colors.white.withValues(alpha: 0.12)
               : Colors.black.withValues(alpha: 0.08),
@@ -258,7 +266,7 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
           child: Text(
             '${xpState.currentLevel}',
             style: TextStyle(
-              color: accent,
+              color: levelStroke,
               fontWeight: FontWeight.w800,
               fontSize: 14,
               height: 1,
@@ -303,7 +311,14 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
                     : Colors.black.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
-                  color: const Color(0xFFEC8B2C).withValues(alpha: 0.32),
+                  // Neutral border per the 2026-05 minimalist redesign —
+                  // the fire emoji carries the streak's warm-hue meaning
+                  // on its own. The chip border was previously
+                  // 0xFFEC8B2C (hardcoded orange) which fought with both
+                  // the user's selected accent and the surrounding chrome.
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.black.withValues(alpha: 0.14),
                   width: 1,
                 ),
               ),
