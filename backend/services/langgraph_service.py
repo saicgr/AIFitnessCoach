@@ -247,20 +247,34 @@ class LangGraphCoachService:
                 f"Too many videos ({videos}). Maximum is {MAX_VIDEOS_PER_REQUEST} per request."
             )
 
+    # Stale-joke decay cap. Reviewer transcripts (DC Rainmaker) flagged that
+    # Google Health Coach kept re-surfacing a one-off "queso and rosé" joke
+    # for 10+ days. We don't tag sarcasm per-turn (real ML feature for later);
+    # for the URGENT-tier ship we cap the recent window so old turns fall out
+    # of context naturally. The per-turn behaviour rule lives in the coach +
+    # workout system prompts ("Drop one-off jokes after a short window").
+    RECENT_TURNS_CAP: int = 30
+
     @staticmethod
     def _trim_conversation_history(history: list, max_total_chars: int = 50_000) -> list:
-        """Trim conversation history to fit within a total character budget.
+        """Trim conversation history to fit within a total character budget +
+        a recent-turns cap.
 
-        Keeps the most recent messages, dropping oldest first.
-        Prevents excessively large payloads from being sent to Gemini.
-        50,000 chars ≈ 12,500 tokens.
+        Keeps the most recent messages, dropping oldest first. Two gates:
+          1. Hard turn cap: never send more than RECENT_TURNS_CAP messages
+             (limits the time-window where stale joke / sarcasm references
+             can resurface — see RECENT_TURNS_CAP doc above).
+          2. Char budget: 50k chars ≈ 12.5k tokens.
         """
         if not history:
             return history
+        # 1. Hard cap on turn count — keep tail (most recent).
+        if len(history) > LangGraphCoachService.RECENT_TURNS_CAP:
+            history = history[-LangGraphCoachService.RECENT_TURNS_CAP:]
         total_chars = sum(len(msg.get("content", "")) for msg in history)
         if total_chars <= max_total_chars:
             return history
-        # Drop oldest messages until within budget
+        # 2. Char-budget trim: drop oldest messages until within budget.
         trimmed = list(history)
         while trimmed and total_chars > max_total_chars:
             removed = trimmed.pop(0)

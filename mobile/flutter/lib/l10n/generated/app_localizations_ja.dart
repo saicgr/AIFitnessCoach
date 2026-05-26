@@ -12891,6 +12891,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get foodBrowserPanelFilterByCountry => '国で絞り込む';
 
   @override
+  String get foodBrowserPanelFilterBySource => 'ソースで絞り込む';
+
+  @override
   String get foodBrowserPanelHighFat => '高脂質';
 
   @override
@@ -13648,6 +13651,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get founderNoteDiscord => 'Discord';
+
+  @override
+  String get founderNoteRoadmap => 'ロードマップ';
 
   @override
   String get founderNoteFounderSoloStillOn => '創業者、ソロ、まだバージョン1。';
@@ -21790,6 +21796,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get minimalHeaderChangeGymProfile => 'ジムプロフィールを変更';
+
+  @override
+  String get minimalHeaderCollapseWeekStrip => '週ストリップを折りたたむ';
 
   @override
   String minimalHeaderD(Object streakDays) {
@@ -33688,6 +33697,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shareArtifactCardCopyShare => 'コピーして共有';
 
   @override
+  String get shareableGallerySortDefault => 'デフォルト';
+
+  @override
+  String get shareableGallerySortFavorites => 'お気に入りを先に';
+
+  @override
+  String get shareableGallerySortRecents => '最近のものを先に';
+
+  @override
+  String get shareableGallerySortTooltip => 'テンプレートを並べ替え';
+
+  @override
   String get shareArtifactCardCouldNotCreateShare => '共有リンクを作成できませんでした。';
 
   @override
@@ -37755,7 +37776,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '消費カロリー: $arg0 kcal';
+    return '本日合計 $arg0 kcal';
   }
 
   @override
@@ -42751,4 +42772,23 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get importsPrivacyClearFailedSnack => 'クリアできませんでした。後でもう一度お試しください。';
+
+  @override
+  String get bottomNavLeaderboard => 'Leaderboard';
+
+  @override
+  String get discoverBoardXp => 'XP';
+
+  @override
+  String get discoverResetsSunday => 'Resets Sunday';
+
+  @override
+  String get discoverNoEntriesYet =>
+      'No entries yet · Log a workout this week to climb';
+
+  @override
+  String get discoverViewTop10 => 'View top 10';
+
+  @override
+  String get discoverMovers => 'Movers';
 }

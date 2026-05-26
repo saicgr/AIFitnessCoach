@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Kurucu, tek başıma, hala ilk sürümdeyim.",
   "founderNoteIUsedToLog": "İki hafta boyunca her öğünümü kaydeder, kendimle gurur duyar, sonra okuyamadığım bir Tayland restoranına girer, en güvenli görüneni yer ve sessizce uygulamayı kullanmayı bırakırdım. Üç hafta sonra başka bir uygulama yükler, bu sefer başaracağıma yemin eder ve aynı döngüyü tekrar yaşardım. Her uygulama verilerimi kaydederdi ama sessizleştiğimde hiçbiri fark etmezdi; onlar birer defterdi, koç değil.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Yol Haritası",
   "founderNoteSheetANoteFrom": "{_founderName} KİŞİSİNDEN BİR NOT",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Bu yüzden defteri değil kişiyi inşa ettim. Yurt içinde veya yurt dışında herhangi bir menüyü çekin ve koç bunu size makro olarak okusun. Salı gününü atlarsanız suçluluk duygusu yaşamadan Çarşamba sabahına geri dönersiniz. Ayda bir PT seansından daha az bir sürede yiyeceklerinizi, spor salonunuzu, kayma şeklinizi öğrenir.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Yağ",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Yakılan kcal {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "Bugün toplam {arg0} kcal",
   "unifiedHomeWidgetsKcalLeft": " kcal kaldı",
   "unifiedHomeWidgetsLastNight": "dün gece",
   "unifiedHomeWidgetsLog16oz": "16oz kaydet",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "İstatistikler ve Skorlar",
   "youSkills": "Beceriler",
   "youTrophies": "Kupalar",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "Hafta şeridini daralt",
+  "foodBrowserPanelFilterBySource": "Kaynağa göre filtrele",
+  "shareableGallerySortTooltip": "Şablonları sırala",
+  "shareableGallerySortDefault": "Varsayılan",
+  "shareableGallerySortRecents": "Önce yeniler",
+  "shareableGallerySortFavorites": "Önce favoriler"
 }

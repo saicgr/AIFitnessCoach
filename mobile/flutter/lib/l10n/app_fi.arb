@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Perustaja, yksin, yhä versiossa yksi.",
   "founderNoteIUsedToLog": "Kirjasin aiemmin jokaisen aterian kahden viikon ajan, olin ylpeä itsestäni, kunnes kävelin thaimaalaiseen ravintolaan, jonka ruokalistaa en osannut lukea, söin sitä mikä näytti turvallisimmalta ja lopetin sovelluksen käytön hiljaa. Kolmen viikon kuluttua asensin toisen sovelluksen, vannoin että tällä kertaa onnistun, ja aloitin saman kierteen alusta. Jokainen sovellus kirjasi tietoni, mutta yksikään ei huomannut, kun hiljenin – ne olivat kirjanpitojärjestelmiä, eivät valmentajia.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Tiekartta",
   "founderNoteSheetANoteFrom": "VIESTI HENKILÖLTÄ: {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Joten rakensin henkilön, en pääkirjaa. Nappaa mikä tahansa ruokalista – kotimaassa tai ulkomailla – ja valmentaja lukee sen sinulle takaisin makroissa. Ohita tiistai ja se vetää sinut takaisin keskiviikkoaamuna ilman syyllisyyttä. Se oppii ruokasi, kuntosalisi, liukastumismallisi – alle yhden PT-istunnon kuukaudessa.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Rasva",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Unified home widgets kcal kulutettu {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal yhteensä tänään",
   "unifiedHomeWidgetsKcalLeft": " kcal jäljellä",
   "unifiedHomeWidgetsLastNight": "viime yö",
   "unifiedHomeWidgetsLog16oz": "Kirjaa 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Tilastot ja pisteet",
   "youSkills": "Taidot",
   "youTrophies": "Pokaalit",
-  "youWrapped": "Vuosikooste"
+  "youWrapped": "Vuosikooste",
+  "minimalHeaderCollapseWeekStrip": "Tiivistä viikkopalkki",
+  "foodBrowserPanelFilterBySource": "Suodata lähteen mukaan",
+  "shareableGallerySortTooltip": "Lajittele mallit",
+  "shareableGallerySortDefault": "Oletus",
+  "shareableGallerySortRecents": "Uusimmat ensin",
+  "shareableGallerySortFavorites": "Suosikit ensin"
 }

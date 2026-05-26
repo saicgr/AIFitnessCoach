@@ -561,6 +561,8 @@ class _ManageGymProfilesSheetState
 
                 // Actions
                 PopupMenuButton<String>(
+                  tooltip: AppLocalizations.of(context).homeMore,
+                  position: PopupMenuPosition.under,
                   onSelected: (value) {
                     switch (value) {
                       case 'activate':
@@ -614,6 +616,7 @@ class _ManageGymProfilesSheetState
                         ],
                       ),
                     ),
+                    if (canDelete) const PopupMenuDivider(),
                     if (canDelete)
                       PopupMenuItem(
                         value: 'delete',

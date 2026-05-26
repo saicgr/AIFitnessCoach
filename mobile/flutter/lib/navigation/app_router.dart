@@ -100,6 +100,9 @@ import '../screens/health/combined_health_screen.dart';
 import '../screens/pillar/pillar_detail_screen.dart';
 import '../screens/pillar/full_screen_chart_screen.dart';
 import '../data/providers/pillar_history_provider.dart';
+import '../data/providers/demo_tasks_seen_provider.dart';
+import '../data/providers/lapsed_paywall_gate_provider.dart';
+import '../core/providers/subscription_provider.dart';
 import '../screens/settings/cycle_settings_screen.dart';
 import '../screens/measurements/derived_metric_detail_screen.dart';
 import '../screens/trends/custom_trend_screen.dart';
@@ -334,6 +337,18 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
   // route to coach-selection.
   // AI consent is captured as an inline checkbox on the sign-in screen.
 
+  // Step 0.5: Demo tasks (workout + nutrition app-taste) for users who
+  // signed up via the "Sign In" shortcut on /intro and never passed through
+  // the Build-My-Plan funnel. Funnel users have already had `markSeen()`
+  // fire when they landed on /demo-tasks pre-auth, so they skip this branch.
+  // Gate only fires before personal info is collected — once a user has
+  // started filling in their profile we never re-route them back here.
+  if (!user.isPersonalInfoComplete && !ref.read(demoTasksSeenProvider)) {
+    debugPrint('🧭 [Router] _getNextOnboardingStep → /demo-tasks '
+        '(new user, demo not yet seen)');
+    return '/demo-tasks';
+  }
+
   // Step 1: Personal info (name, DOB) — gate exists at user.dart:194 and
   // requires name + dateOfBirth + gender + heightCm + weightKg.
   if (!user.isPersonalInfoComplete) {
@@ -369,6 +384,45 @@ String _getHomeRoute(AccessibilitySettings accessibilitySettings) {
   return '/home';
 }
 
+/// If the user is an unsubscribed lapser (≥7d since last workout, not on
+/// Premium/Premium+/Lifetime) AND we haven't already shown them the winback
+/// paywall in the last 24h, return `/paywall-pricing`. Otherwise return null
+/// and let the caller fall through to the home route.
+///
+/// Side-effects on a positive decision:
+///   * Marks the [lapsedPaywallGateProvider] timestamp so the next redirect
+///     tick observes the 24h suppression window.
+///   * Fires `paywall_routed_lapsed_user` PostHog event so the funnel
+///     `lifecycle_email_sent → lifecycle_email_clicked → app_open_after_gap
+///      → paywall_routed_lapsed_user → subscription_purchased` becomes
+///     measurable end-to-end.
+///
+/// RevenueCat's offering targeting handles whether this user sees the
+/// regular paywall or a discounted winback offering — the app-side job is
+/// just to get them to the paywall.
+String? _maybeRouteLapsedUser(app_user.User user, Ref ref) {
+  final daysInactive = user.daysSinceLastWorkout ?? 0;
+  if (daysInactive < 7) return null;
+
+  final sub = ref.read(subscriptionProvider);
+  if (sub.isPremiumOrHigher) return null;
+
+  final gate = ref.read(lapsedPaywallGateProvider.notifier);
+  if (!gate.shouldShowNow()) return null;
+
+  // Mark BEFORE returning so a re-render in the same tick doesn't double-fire
+  // the route (GoRouter sometimes re-evaluates redirect for the same loc).
+  gate.markShown();
+
+  ref.read(posthogServiceProvider).capture(
+        eventName: 'paywall_routed_lapsed_user',
+        properties: {
+          'days_since_last_workout': daysInactive,
+        },
+      );
+  return '/paywall-pricing';
+}
+
 /// Handle auth-based redirects (splash, onboarding, login gates)
 String? _handleAuthRedirect(
   GoRouterState state,
@@ -387,6 +441,11 @@ String? _handleAuthRedirect(
       if (user != null) {
         final nextStep = _getNextOnboardingStep(user, ref);
         if (nextStep != null) return nextStep;
+        // Onboarding complete — check the lapsed-user gate before falling
+        // through to home. A 7+ day silent user on Free should land on the
+        // paywall first so RevenueCat can surface the winback offering.
+        final lapsedRoute = _maybeRouteLapsedUser(user, ref);
+        if (lapsedRoute != null) return lapsedRoute;
       }
       // Fire-and-forget: prefetch ALL home screen data during splash → home transition
       BootstrapPrefetchService.prefetch(ref);
@@ -403,6 +462,8 @@ String? _handleAuthRedirect(
       if (user != null) {
         final nextStep = _getNextOnboardingStep(user, ref);
         if (nextStep != null) return nextStep;
+        final lapsedRoute = _maybeRouteLapsedUser(user, ref);
+        if (lapsedRoute != null) return lapsedRoute;
       }
       return homeRoute;
     }

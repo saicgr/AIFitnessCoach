@@ -13513,6 +13513,9 @@ class AppLocalizationsTe extends AppLocalizations {
   String get foodBrowserPanelFilterByCountry => 'దేశం ద్వారా ఫిల్టర్ చేయండి';
 
   @override
+  String get foodBrowserPanelFilterBySource => 'మూలం ద్వారా ఫిల్టర్';
+
+  @override
   String get foodBrowserPanelHighFat => 'అధిక కొవ్వు';
 
   @override
@@ -14297,6 +14300,9 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get founderNoteDiscord => 'Discord';
+
+  @override
+  String get founderNoteRoadmap => 'రోడ్‌మ్యాప్';
 
   @override
   String get founderNoteFounderSoloStillOn =>
@@ -22884,6 +22890,9 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get minimalHeaderChangeGymProfile => 'జిమ్ ప్రొఫైల్‌ను మార్చండి';
+
+  @override
+  String get minimalHeaderCollapseWeekStrip => 'వార పట్టీని ముడుచు';
 
   @override
   String minimalHeaderD(Object streakDays) {
@@ -35347,6 +35356,18 @@ class AppLocalizationsTe extends AppLocalizations {
   String get shareArtifactCardCopyShare => 'కాపీ & షేర్ చేయండి';
 
   @override
+  String get shareableGallerySortDefault => 'డిఫాల్ట్';
+
+  @override
+  String get shareableGallerySortFavorites => 'ఇష్టమైనవి ముందుగా';
+
+  @override
+  String get shareableGallerySortRecents => 'ఇటీవలివి ముందుగా';
+
+  @override
+  String get shareableGallerySortTooltip => 'టెంప్లేట్‌లను క్రమబద్ధీకరించు';
+
+  @override
   String get shareArtifactCardCouldNotCreateShare =>
       'షేర్ లింక్‌ను సృష్టించలేకపోయాము.';
 
@@ -39594,7 +39615,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return 'kcal బర్న్ అయ్యాయి $arg0';
+    return '$arg0 కిలోకాలరీలు నేడు మొత్తం';
   }
 
   @override
@@ -44817,4 +44838,23 @@ class AppLocalizationsTe extends AppLocalizations {
   @override
   String get importsPrivacyClearFailedSnack =>
       'క్లియర్ చేయడం సాధ్యపడలేదు — తర్వాత మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String get bottomNavLeaderboard => 'Leaderboard';
+
+  @override
+  String get discoverBoardXp => 'XP';
+
+  @override
+  String get discoverResetsSunday => 'Resets Sunday';
+
+  @override
+  String get discoverNoEntriesYet =>
+      'No entries yet · Log a workout this week to climb';
+
+  @override
+  String get discoverViewTop10 => 'View top 10';
+
+  @override
+  String get discoverMovers => 'Movers';
 }

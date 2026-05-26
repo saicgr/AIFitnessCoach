@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Founder, solo, nasa version one pa rin.",
   "founderNoteIUsedToLog": "Dati, nililista ko ang bawat kinakain ko sa loob ng dalawang linggong tuloy-tuloy, ipinagmamalaki ko ang sarili ko, tapos papasok ako sa isang Thai restaurant na hindi ko mabasa ang menu, kakain ng mukhang ligtas, at tahimik na hihinto sa paggamit ng app. Pagkalipas ng tatlong linggo, mag-i-install ako ng iba, mangangako na ito na ang tamang oras, at uulitin ang parehong cycle. Bawat app ay nag-log ng data ko, pero wala sa kanila ang nakapansin noong tumigil ako — sila ay mga ledger lang, hindi mga coach.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Roadmap",
   "founderNoteSheetANoteFrom": "MENSAHE MULA KAY {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Kaya itinayo ko ang tao, hindi ang ledger. Kumuha ng anumang menu — sa bahay o sa ibang bansa — at babasahin ito ng coach pabalik sa iyo sa mga macro. Laktawan ang isang Martes at ibabalik ka nito sa Miyerkules ng umaga nang walang kasalanan. Natututunan nito ang iyong mga pagkain, ang iyong gym, ang iyong mga slip pattern — nang wala pang isang PT session sa isang buwan.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Taba",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Kcal na nasunog {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal kabuuan ngayon",
   "unifiedHomeWidgetsKcalLeft": " kcal ang natitira",
   "unifiedHomeWidgetsLastNight": "kagabi",
   "unifiedHomeWidgetsLog16oz": "I-log ang 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Stats at Scores",
   "youSkills": "Mga kasanayan",
   "youTrophies": "Mga tropeo",
-  "youWrapped": "Buod"
+  "youWrapped": "Buod",
+  "minimalHeaderCollapseWeekStrip": "I-collapse ang week strip",
+  "foodBrowserPanelFilterBySource": "Salain ayon sa pinagmulan",
+  "shareableGallerySortTooltip": "Ayusin ang mga template",
+  "shareableGallerySortDefault": "Default",
+  "shareableGallerySortRecents": "Pinakabago muna",
+  "shareableGallerySortFavorites": "Mga paborito muna"
 }

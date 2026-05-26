@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "بانی، اکیلا، ابھی بھی ورژن ون پر۔",
   "founderNoteIUsedToLog": "میں دو ہفتوں تک ہر کھانے کا ریکارڈ رکھتا تھا، خود پر فخر محسوس کرتا تھا، پھر کسی تھائی ریستوران میں جاتا جسے میں پڑھ نہیں سکتا تھا، جو سب سے محفوظ لگتا وہ کھا لیتا، اور خاموشی سے ایپ کھولنا بند کر دیتا۔ تین ہفتے بعد میں کوئی دوسری ایپ انسٹال کرتا، قسم کھاتا کہ اس بار ٹھیک رہے گا، اور وہی چکر دوبارہ شروع ہو جاتا۔ ہر ایپ میرا ڈیٹا لاگ کرتی تھی، لیکن کسی نے یہ نہیں دیکھا کہ میں کب خاموش ہو گیا — وہ لیجر تھے، کوچ نہیں۔",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "روڈ میپ",
   "founderNoteSheetANoteFrom": "ایک نوٹ از {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "تو میں نے شخص بنایا، لیجر نہیں۔ کوئی بھی مینو لیں — اندرون یا بیرون ملک — اور کوچ اسے میکروز میں آپ کو واپس پڑھتا ہے۔ منگل کو چھوڑیں اور یہ آپ کو بدھ کی صبح بغیر جرم کے سفر کے پیچھے کھینچ لے گا۔ یہ آپ کے کھانے، آپ کا جم، آپ کے پرچی کے نمونے سیکھتا ہے — ایک مہینے میں ایک سے کم پی ٹی سیشن کے لیے۔",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "فیٹ",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "جلائی گئی kcal {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} کلوکیلوریز آج کل",
   "unifiedHomeWidgetsKcalLeft": " kcal باقی",
   "unifiedHomeWidgetsLastNight": "گزشتہ رات",
   "unifiedHomeWidgetsLog16oz": "16oz لاگ کریں",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "شماریات اور اسکورز",
   "youSkills": "مہارتیں",
   "youTrophies": "ٹرافیاں",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "ہفتہ پٹی سکیڑیں",
+  "foodBrowserPanelFilterBySource": "ماخذ کے مطابق فلٹر کریں",
+  "shareableGallerySortTooltip": "ٹیمپلیٹس ترتیب دیں",
+  "shareableGallerySortDefault": "طے شدہ",
+  "shareableGallerySortRecents": "حالیہ پہلے",
+  "shareableGallerySortFavorites": "پسندیدہ پہلے"
 }

@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
 import '../core/constants/app_colors.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../data/providers/cosmetics_provider.dart';
 import '../data/services/share_service.dart';
 import '../utils/image_capture_utils.dart';
@@ -1334,21 +1335,21 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     final fg = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.82);
     return PopupMenuButton<_GallerySort>(
       initialValue: _gallerySort,
-      tooltip: 'Sort templates',
+      tooltip: AppLocalizations.of(context).shareableGallerySortTooltip,
       position: PopupMenuPosition.under,
       onSelected: (v) => setState(() => _gallerySort = v),
-      itemBuilder: (_) => const [
+      itemBuilder: (_) => [
         PopupMenuItem(
           value: _GallerySort.defaultOrder,
-          child: Text('Default'),
+          child: Text(AppLocalizations.of(context).shareableGallerySortDefault),
         ),
         PopupMenuItem(
           value: _GallerySort.recents,
-          child: Text('Recents first'),
+          child: Text(AppLocalizations.of(context).shareableGallerySortRecents),
         ),
         PopupMenuItem(
           value: _GallerySort.favorites,
-          child: Text('Favorites first'),
+          child: Text(AppLocalizations.of(context).shareableGallerySortFavorites),
         ),
       ],
       // Glassmorphic, not a solid white pill — a real `BackdropFilter`

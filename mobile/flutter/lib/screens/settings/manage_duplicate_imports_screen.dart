@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/cardio_dedup_repository.dart';
 
@@ -321,13 +322,24 @@ class _MemberRow extends StatelessWidget {
               ),
               const Spacer(),
               PopupMenuButton<String>(
+                tooltip: AppLocalizations.of(context).manageDuplicateImportsUnlinkFromGroup,
+                position: PopupMenuPosition.under,
                 onSelected: (v) {
                   if (v == 'unlink') onUnlink();
                 },
                 itemBuilder: (_) => [
                   PopupMenuItem<String>(
                     value: 'unlink',
-                    child: Text(AppLocalizations.of(context).manageDuplicateImportsUnlinkFromGroup),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.link_off_rounded, size: 18, color: AppColors.error),
+                        const SizedBox(width: 10),
+                        Text(
+                          AppLocalizations.of(context).manageDuplicateImportsUnlinkFromGroup,
+                          style: const TextStyle(color: AppColors.error),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

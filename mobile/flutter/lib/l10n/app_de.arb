@@ -19733,6 +19733,7 @@
   "founderNoteFounderSoloStillOn": "Gründer, Solo, immer noch bei Version eins.",
   "founderNoteIUsedToLog": "Ich habe früher zwei Wochen lang jede Mahlzeit protokolliert, war stolz auf mich, ging dann in einen Thai-Laden, dessen Karte ich nicht lesen konnte, aß das, was am sichersten aussah, und hörte stillschweigend auf, die App zu öffnen. Drei Wochen später installierte ich eine andere, schwor mir, diesmal klappt es, und fing wieder von vorne an. Jede App protokollierte meine Daten, keine bemerkte, wenn ich verstummte – es waren Buchhaltungstools, keine Coaches.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Roadmap",
   "founderNoteSheetANoteFrom": "EINE NOTIZ VON {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Also habe ich die Person erstellt, nicht das Hauptbuch. Schnappen Sie sich ein beliebiges Menü – zu Hause oder im Ausland – und der Coach liest es Ihnen in Makros vor. Wenn Sie einen Dienstag auslassen, werden Sie am Mittwochmorgen ohne Schuldgefühle zurückgeholt. Es lernt Ihre Ernährung, Ihr Fitnessstudio, Ihre Slipmuster – für weniger als eine PT-Sitzung pro Monat.",
@@ -26766,7 +26767,7 @@
   "unifiedHomeWidgetsFat": "Fett",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal verbrannt",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal gesamt heute",
   "unifiedHomeWidgetsKcalLeft": " kcal übrig",
   "unifiedHomeWidgetsLastNight": "letzte Nacht",
   "unifiedHomeWidgetsLog16oz": "16oz protokollieren",
@@ -28141,5 +28142,11 @@
   "youHubStatsScores": "Statistiken & Ergebnisse",
   "youSkills": "Fähigkeiten",
   "youTrophies": "Trophäen",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "Wochenleiste einklappen",
+  "foodBrowserPanelFilterBySource": "Nach Quelle filtern",
+  "shareableGallerySortTooltip": "Vorlagen sortieren",
+  "shareableGallerySortDefault": "Standard",
+  "shareableGallerySortRecents": "Neueste zuerst",
+  "shareableGallerySortFavorites": "Favoriten zuerst"
 }

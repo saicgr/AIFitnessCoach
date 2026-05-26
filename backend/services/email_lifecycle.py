@@ -27,6 +27,7 @@ from services.email_helpers import (
     build_first_workout_stats_grid,
     build_zero_state_row_html,
     build_nutrition_grid_html,
+    lifecycle_open_url,
     overdue_tier,
 )
 
@@ -58,7 +59,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "cancellation_retention")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -112,7 +113,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "trial_expired")
 
         name = first_name_value or "there"
         workouts = stats.workouts_total
@@ -169,7 +170,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "trial_ending")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -232,7 +233,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "streak_at_risk")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -300,7 +301,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "day3_activation")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -452,7 +453,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "onboarding_incomplete")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -538,7 +539,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "first_workout_done")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -609,7 +610,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "achievement_unlocked")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -663,7 +664,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "comeback")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -716,7 +717,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "week1_day1")
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
         subject = f"{name}, day 1 of your plan is ready"
@@ -757,7 +758,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "week1_day3_completed")
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
         subject = f"{name}, 3 days in — you're building something"
@@ -798,7 +799,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "week1_day3_stalled")
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
         subject = f"{name}, no judgment — here when you're ready"
@@ -839,7 +840,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "week1_day5")
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
         subject = f"{name}, halfway through week one"
@@ -880,7 +881,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "week1_day7")
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
         subject = f"🎉 {name}, week 1 complete"
@@ -933,7 +934,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "merch_proximity")
 
         name = first_name_value or "there"
         merch_name = self.MERCH_DISPLAY_NAMES.get(merch_type, merch_type)
@@ -979,7 +980,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "merch_unlocked")
 
         name = first_name_value or "there"
         merch_name = self.MERCH_DISPLAY_NAMES.get(merch_type, merch_type)
@@ -1025,7 +1026,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "level_milestone_celebration")
 
         name = first_name_value or "there"
         subject = f"🏅 Level {level_reached} unlocked, {name}"
@@ -1078,7 +1079,7 @@ class EmailLifecycleMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "merch_claim_reminder")
 
         name = first_name_value or "there"
         merch_name = self.MERCH_DISPLAY_NAMES.get(merch_type, merch_type)

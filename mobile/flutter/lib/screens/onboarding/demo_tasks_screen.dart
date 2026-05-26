@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../data/providers/demo_tasks_seen_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Demo Tasks Screen — Onboarding v5
@@ -34,6 +35,15 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
   void initState() {
     super.initState();
     _loadCompletion();
+    // Mark seen as soon as the user lands here so the post-auth router
+    // doesn't re-route them through this screen after they sign in. Covers
+    // both the funnel path (intro → … → demo-tasks → /sign-in) and any
+    // re-entry; the "Sign In" shortcut never reaches this screen, so its
+    // flag stays false and the router shows the demo post-auth.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // ignore: discarded_futures
+      ref.read(demoTasksSeenProvider.notifier).markSeen();
+    });
   }
 
   Future<void> _loadCompletion() async {

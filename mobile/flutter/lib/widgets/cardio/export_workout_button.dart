@@ -69,6 +69,7 @@ class _ExportWorkoutButtonState extends ConsumerState<ExportWorkoutButton> {
     final accent = AccentColorScope.of(context).getColor(isDark);
     return PopupMenuButton<String>(
       tooltip: AppLocalizations.of(context).exportWorkoutButtonExportWorkout,
+      position: PopupMenuPosition.under,
       enabled: !_busy,
       icon: _busy
           ? SizedBox(

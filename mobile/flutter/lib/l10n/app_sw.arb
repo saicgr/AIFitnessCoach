@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Mwanzilishi, pekee, bado kwenye toleo la kwanza.",
   "founderNoteIUsedToLog": "Nilikuwa nikirekodi kila mlo kwa wiki mbili mfululizo, nikijivunia, kisha naingia kwenye mgahawa wa Thai ambao sikuweza kusoma, nikila kile kilichoonekana kuwa salama, na kuacha kufungua programu kimya kimya. Wiki tatu baadaye ningesakinisha nyingine, nikiapa kuwa hii ndiyo mara ya mwisho, na kurudia mzunguko uleule. Kila programu ilirekodi data yangu, hakuna hata moja iliyogundua niliponyamaza — zilikuwa leja, si makocha.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Ramani ya safari",
   "founderNoteSheetANoteFrom": "UJUMBE KUTOKA KWA {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Kwa hivyo nilimjenga mtu, sio leja. Piga menyu yoyote - nyumbani au nje ya nchi - na mkufunzi atakusomea tena katika makro. Ruka Jumanne na itakurudisha nyuma Jumatano asubuhi bila safari ya hatia. Inajifunza vyakula vyako, ukumbi wako wa mazoezi, mifumo yako ya kuteleza - kwa chini ya kipindi kimoja cha PT kwa mwezi.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Mafuta",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Wijeti za nyumbani, kcal zilizochomwa {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kkal jumla leo",
   "unifiedHomeWidgetsKcalLeft": " kcal zimebaki",
   "unifiedHomeWidgetsLastNight": "usiku uliopita",
   "unifiedHomeWidgetsLog16oz": "Ingiza 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Takwimu na Alama",
   "youSkills": "Ujuzi",
   "youTrophies": "Tuzo",
-  "youWrapped": "Muhtasari"
+  "youWrapped": "Muhtasari",
+  "minimalHeaderCollapseWeekStrip": "Kunja mstari wa wiki",
+  "foodBrowserPanelFilterBySource": "Chuja kwa chanzo",
+  "shareableGallerySortTooltip": "Panga violezo",
+  "shareableGallerySortDefault": "Chaguo-msingi",
+  "shareableGallerySortRecents": "Mpya kwanza",
+  "shareableGallerySortFavorites": "Vipendwa kwanza"
 }

@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "ಸಂಸ್ಥಾಪಕ, ಸೋಲೋ, ಇನ್ನೂ ಮೊದಲ ಆವೃತ್ತಿಯಲ್ಲಿದೆ.",
   "founderNoteIUsedToLog": "ನಾನು ಎರಡು ವಾರಗಳ ಕಾಲ ಪ್ರತಿ ಊಟವನ್ನು ಲಾಗ್ ಮಾಡುತ್ತಿದ್ದೆ, ನನ್ನ ಬಗ್ಗೆ ಹೆಮ್ಮೆ ಪಡುತ್ತಿದ್ದೆ, ನಂತರ ನನಗೆ ಓದಲು ಬಾರದ ಥಾಯ್ ರೆಸ್ಟೋರೆಂಟ್‌ಗೆ ಹೋಗಿ, ಸುರಕ್ಷಿತವಾಗಿ ಕಾಣುವದನ್ನು ತಿಂದು, ಆ್ಯಪ್ ತೆರೆಯುವುದನ್ನು ನಿಲ್ಲಿಸುತ್ತಿದ್ದೆ. ಮೂರು ವಾರಗಳ ನಂತರ ನಾನು ಬೇರೆ ಆ್ಯಪ್ ಅನ್ನು ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡುತ್ತಿದ್ದೆ, ಇದೇ ಸರಿಯಾದ ಸಮಯ ಎಂದು ಪ್ರಮಾಣ ಮಾಡುತ್ತಿದ್ದೆ ಮತ್ತು ಅದೇ ಚಕ್ರವನ್ನು ಮತ್ತೆ ಪುನರಾವರ್ತಿಸುತ್ತಿದ್ದೆ. ಪ್ರತಿಯೊಂದು ಆ್ಯಪ್ ನನ್ನ ಡೇಟಾವನ್ನು ಲಾಗ್ ಮಾಡುತ್ತಿತ್ತು, ಆದರೆ ನಾನು ಯಾವಾಗ ಮೌನವಾಗಿದ್ದೆ ಎಂದು ಯಾವುದೂ ಗಮನಿಸುತ್ತಿರಲಿಲ್ಲ — ಅವು ಕೇವಲ ಲೆಡ್ಜರ್‌ಗಳಾಗಿದ್ದವು, ಕೋಚ್‌ಗಳಲ್ಲ.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "ರೋಡ್‌ಮ್ಯಾಪ್",
   "founderNoteSheetANoteFrom": "{_founderName} ಅವರಿಂದ ಒಂದು ಟಿಪ್ಪಣಿ",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "ಹಾಗಾಗಿ ನಾನು ವ್ಯಕ್ತಿಯನ್ನು ನಿರ್ಮಿಸಿದೆ, ಲೆಡ್ಜರ್ ಅಲ್ಲ. ಮನೆಯಲ್ಲಿ ಅಥವಾ ವಿದೇಶದಲ್ಲಿ ಯಾವುದೇ ಮೆನುವನ್ನು ಸ್ನ್ಯಾಪ್ ಮಾಡಿ ಮತ್ತು ತರಬೇತುದಾರರು ಅದನ್ನು ಮ್ಯಾಕ್ರೋಗಳಲ್ಲಿ ನಿಮಗೆ ಓದುತ್ತಾರೆ. ಮಂಗಳವಾರವನ್ನು ಬಿಟ್ಟುಬಿಡಿ ಮತ್ತು ಅದು ನಿಮ್ಮನ್ನು ಬುಧವಾರ ಬೆಳಿಗ್ಗೆ ತಪ್ಪಿತಸ್ಥ ಟ್ರಿಪ್ ಇಲ್ಲದೆ ಹಿಂದಕ್ಕೆ ಎಳೆಯುತ್ತದೆ. ಇದು ನಿಮ್ಮ ಆಹಾರಗಳು, ನಿಮ್ಮ ಜಿಮ್, ನಿಮ್ಮ ಸ್ಲಿಪ್ ಮಾದರಿಗಳನ್ನು ಕಲಿಯುತ್ತದೆ - ತಿಂಗಳಿಗೆ ಒಂದಕ್ಕಿಂತ ಕಡಿಮೆ PT ಸೆಶನ್‌ಗಾಗಿ.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "ಕೊಬ್ಬು",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "kcal ಸುಡಲಾಗಿದೆ {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} ಕಿಲೋಕ್ಯಾಲರಿ ಇಂದು ಒಟ್ಟು",
   "unifiedHomeWidgetsKcalLeft": " kcal ಬಾಕಿ",
   "unifiedHomeWidgetsLastNight": "ನಿನ್ನೆ ರಾತ್ರಿ",
   "unifiedHomeWidgetsLog16oz": "16oz ಲಾಗ್ ಮಾಡಿ",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "ಅಂಕಿಅಂಶಗಳು ಮತ್ತು ಸ್ಕೋರ್‌ಗಳು",
   "youSkills": "ಕೌಶಲ್ಯಗಳು",
   "youTrophies": "ಟ್ರೋಫಿಗಳು",
-  "youWrapped": "ರ್ಯಾಪ್ಡ್"
+  "youWrapped": "ರ್ಯಾಪ್ಡ್",
+  "minimalHeaderCollapseWeekStrip": "ವಾರದ ಪಟ್ಟಿಯನ್ನು ಮಡಚಿ",
+  "foodBrowserPanelFilterBySource": "ಮೂಲದಿಂದ ಫಿಲ್ಟರ್ ಮಾಡಿ",
+  "shareableGallerySortTooltip": "ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ವಿಂಗಡಿಸಿ",
+  "shareableGallerySortDefault": "ಡೀಫಾಲ್ಟ್",
+  "shareableGallerySortRecents": "ಇತ್ತೀಚಿನವು ಮೊದಲು",
+  "shareableGallerySortFavorites": "ಮೆಚ್ಚಿನವು ಮೊದಲು"
 }

@@ -181,10 +181,32 @@ motivational fluff. Produce a concrete onboarding ask:
 
 _NUTRITION_CARD_MORNING_BRANCH_INSTRUCTION = """SOURCE = nutrition_card_morning (single-line breakfast suggestion)
 You are writing the small breakfast-suggestion line shown inside the
-nutrition card morning slot. Output a SINGLE-line body (1 sentence,
-no bullets). If history_rag returns a typical breakfast for this user
-(e.g. "oats + eggs"), name it. Otherwise give a generic
-"30g protein + 50g carbs" target. headline ≤ 6 words.
+Coach hero card's contextual-nudge stack (breakfast slot). Output a
+SINGLE-line body (1 sentence, no bullets). If history_rag returns a
+typical breakfast for this user (e.g. "oats + eggs"), name it.
+Otherwise give a generic "30g protein + 50g carbs" target. headline
+≤ 6 words. Provide 1 cta (log meal). No additional chips needed.
+"""
+
+_NUTRITION_CARD_LUNCH_BRANCH_INSTRUCTION = """SOURCE = nutrition_card_lunch (single-line lunch suggestion)
+You are writing the small lunch-suggestion line shown inside the
+Coach hero card's contextual-nudge stack (lunch slot, 11:30–14:30
+user-local). Output a SINGLE-line body (1 sentence, no bullets). If
+history_rag returns a typical lunch for this user (e.g. "chicken
+bowl + rice"), name it. Otherwise give a generic
+"35g protein + 60g carbs" target tilted toward sustained-energy
+macros (more protein than breakfast, similar carbs). headline ≤ 6
+words. Provide 1 cta (log meal). No additional chips needed.
+"""
+
+_NUTRITION_CARD_DINNER_BRANCH_INSTRUCTION = """SOURCE = nutrition_card_dinner (single-line dinner suggestion)
+You are writing the small dinner-suggestion line shown inside the
+Coach hero card's contextual-nudge stack (dinner slot, 17:30–20:30
+user-local). Output a SINGLE-line body (1 sentence, no bullets). If
+history_rag returns a typical dinner for this user (e.g. "salmon +
+salad"), name it. Otherwise give a generic
+"35g protein + 30g carbs" target tilted toward overnight recovery
+(protein-forward, fewer carbs than lunch). headline ≤ 6 words.
 Provide 1 cta (log meal). No additional chips needed.
 """
 
@@ -256,6 +278,10 @@ def _build_system_instruction(source: str, cycle_phase: str | None = None) -> st
         branch = _MORNING_ONBOARDING_BRANCH_INSTRUCTION
     elif source == "nutrition_card_morning":
         branch = _NUTRITION_CARD_MORNING_BRANCH_INSTRUCTION
+    elif source == "nutrition_card_lunch":
+        branch = _NUTRITION_CARD_LUNCH_BRANCH_INSTRUCTION
+    elif source == "nutrition_card_dinner":
+        branch = _NUTRITION_CARD_DINNER_BRANCH_INSTRUCTION
     elif source == "workout_card":
         branch = _WORKOUT_CARD_BRANCH_INSTRUCTION
     else:

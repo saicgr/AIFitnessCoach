@@ -109,6 +109,7 @@ class EasyTopBar extends ConsumerWidget {
                   icon: Icon(Icons.more_vert_rounded,
                       size: 20, color: textColor),
                   tooltip: AppLocalizations.of(context).homeMore,
+                  position: PopupMenuPosition.under,
                   onSelected: (v) async {
                     await HapticService.instance.tap();
                     if (v == 'skip' && onSkipToNext != null) {
@@ -139,6 +140,7 @@ class EasyTopBar extends ConsumerWidget {
                           Text(AppLocalizations.of(context).workoutTopBarCompleteWorkout),
                         ]),
                       ),
+                    if (onQuit != null) const PopupMenuDivider(),
                     if (onQuit != null)
                       PopupMenuItem(
                         value: 'quit',

@@ -13440,6 +13440,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get foodBrowserPanelFilterByCountry => 'Filter op land';
 
   @override
+  String get foodBrowserPanelFilterBySource => 'Filteren op bron';
+
+  @override
   String get foodBrowserPanelHighFat => 'Hoog vetgehalte';
 
   @override
@@ -14225,6 +14228,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get founderNoteDiscord => 'Discord';
+
+  @override
+  String get founderNoteRoadmap => 'Roadmap';
 
   @override
   String get founderNoteFounderSoloStillOn =>
@@ -22752,6 +22758,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get minimalHeaderChangeGymProfile => 'Gymprofiel wijzigen';
+
+  @override
+  String get minimalHeaderCollapseWeekStrip => 'Weekstrip inklappen';
 
   @override
   String minimalHeaderD(Object streakDays) {
@@ -35139,6 +35148,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get shareArtifactCardCopyShare => 'Kopiëren & delen';
 
   @override
+  String get shareableGallerySortDefault => 'Standaard';
+
+  @override
+  String get shareableGallerySortFavorites => 'Favorieten eerst';
+
+  @override
+  String get shareableGallerySortRecents => 'Recent eerst';
+
+  @override
+  String get shareableGallerySortTooltip => 'Sjablonen sorteren';
+
+  @override
   String get shareArtifactCardCouldNotCreateShare =>
       'Kon geen deellink aanmaken.';
 
@@ -39353,7 +39374,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return 'Kcal verbrand $arg0';
+    return '$arg0 kcal totaal vandaag';
   }
 
   @override
@@ -44526,4 +44547,23 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get importsPrivacyClearFailedSnack =>
       'Kan niet wissen. Probeer het later opnieuw.';
+
+  @override
+  String get bottomNavLeaderboard => 'Leaderboard';
+
+  @override
+  String get discoverBoardXp => 'XP';
+
+  @override
+  String get discoverResetsSunday => 'Resets Sunday';
+
+  @override
+  String get discoverNoEntriesYet =>
+      'No entries yet · Log a workout this week to climb';
+
+  @override
+  String get discoverViewTop10 => 'View top 10';
+
+  @override
+  String get discoverMovers => 'Movers';
 }

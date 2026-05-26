@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Pengasas, solo, masih pada versi satu.",
   "founderNoteIUsedToLog": "Saya pernah merekod setiap hidangan selama dua minggu berturut-turut, berasa bangga dengan diri sendiri, kemudian masuk ke kedai Thai yang saya tidak faham menunya, makan apa yang kelihatan paling selamat, dan berhenti membuka aplikasi itu secara senyap. Tiga minggu kemudian saya akan memasang aplikasi lain, berjanji ini adalah kali terakhir, dan mengulangi kitaran yang sama. Setiap aplikasi merekod data saya, tiada satu pun yang perasan apabila saya senyap — ia hanyalah lejar, bukan jurulatih.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Peta Hala Tuju",
   "founderNoteSheetANoteFrom": "NOTA DARIPADA {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Jadi saya membina orang itu, bukan lejar. Tangkap mana-mana menu — di rumah atau di luar negara — dan jurulatih membacakannya kembali kepada anda dalam makro. Langkau hari Selasa dan ia menarik anda kembali pagi Rabu tanpa rasa bersalah. Ia mempelajari makanan anda, gim anda, corak slip anda — kurang daripada satu sesi PT sebulan.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Lemak",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Widget utama kcal dibakar {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kkal jumlah hari ini",
   "unifiedHomeWidgetsKcalLeft": " kcal lagi",
   "unifiedHomeWidgetsLastNight": "malam tadi",
   "unifiedHomeWidgetsLog16oz": "Log 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Statistik & Skor",
   "youSkills": "Kemahiran",
   "youTrophies": "Trofi",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "Runtuhkan jalur mingguan",
+  "foodBrowserPanelFilterBySource": "Tapis mengikut sumber",
+  "shareableGallerySortTooltip": "Susun templat",
+  "shareableGallerySortDefault": "Lalai",
+  "shareableGallerySortRecents": "Terkini dahulu",
+  "shareableGallerySortFavorites": "Kegemaran dahulu"
 }

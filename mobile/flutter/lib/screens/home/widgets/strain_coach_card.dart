@@ -87,7 +87,7 @@ class StrainCoachCard extends ConsumerWidget {
           // Coach:" prefix gives the LLM clean context without leaking
           // implementation details.
           final prefill = Uri.encodeComponent(
-              'Strain Coach says: ${rec.rationale} — can you explain?');
+              'Strain Coach says: ${rec.rationale} Can you explain?');
           context.push('/chat?source=strain_coach&prefill=$prefill');
         },
         child: Container(

@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "প্রতিষ্ঠাতা, একা, এখনও প্রথম ভার্সনে আছি।",
   "founderNoteIUsedToLog": "আমি টানা দুই সপ্তাহ প্রতিটি খাবার লগ করতাম, নিজেকে নিয়ে গর্ব বোধ করতাম, তারপর এমন একটি থাই রেস্তোরাঁয় যেতাম যার মেনু আমি পড়তে পারতাম না, যা সবচেয়ে নিরাপদ মনে হতো তা খেতাম এবং চুপচাপ অ্যাপটি ব্যবহার করা বন্ধ করে দিতাম। তিন সপ্তাহ পর আমি অন্য একটি অ্যাপ ইনস্টল করতাম, শপথ করতাম যে এবার ঠিকঠাক করব, এবং আবার একই চক্রে ফিরে যেতাম। প্রতিটি অ্যাপ আমার ডেটা লগ করত, কিন্তু আমি যখন নীরব হয়ে যেতাম তখন কেউ খেয়াল করত না — সেগুলো ছিল খাতা, কোচ নয়।",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "রোডম্যাপ",
   "founderNoteSheetANoteFrom": "{_founderName} এর পক্ষ থেকে একটি নোট",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "তাই আমি ব্যক্তিকে তৈরি করেছি, খাতা নয়। যে কোনো মেনু ছিনতাই করুন — দেশে বা বিদেশে — এবং কোচ আপনাকে ম্যাক্রোতে তা পড়ে শোনাবেন। একটি মঙ্গলবার এড়িয়ে যান এবং এটি আপনাকে অপরাধবোধ ছাড়াই বুধবার সকালে ফিরিয়ে আনবে। এটি আপনার খাবার, আপনার জিম, আপনার স্লিপ প্যাটার্ন শিখে - মাসে একটি PT সেশনের কম জন্য।",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "ফ্যাট",
   "unifiedHomeWidgetsG": "{eaten} / {goal} গ্রাম",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "ক্যালোরি বার্ন হয়েছে {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} কিলোক্যালরি আজকের মোট",
   "unifiedHomeWidgetsKcalLeft": " kcal বাকি",
   "unifiedHomeWidgetsLastNight": "গত রাত",
   "unifiedHomeWidgetsLog16oz": "১৬ আউন্স লগ করুন",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "পরিসংখ্যান ও স্কোর",
   "youSkills": "দক্ষতা",
   "youTrophies": "ট্রফি",
-  "youWrapped": "বর্ষপঞ্জি"
+  "youWrapped": "বর্ষপঞ্জি",
+  "minimalHeaderCollapseWeekStrip": "সপ্তাহের স্ট্রিপ গুটিয়ে নিন",
+  "foodBrowserPanelFilterBySource": "উৎস অনুসারে ফিল্টার করুন",
+  "shareableGallerySortTooltip": "টেমপ্লেট সাজান",
+  "shareableGallerySortDefault": "ডিফল্ট",
+  "shareableGallerySortRecents": "সাম্প্রতিকগুলো প্রথমে",
+  "shareableGallerySortFavorites": "প্রিয়গুলো প্রথমে"
 }

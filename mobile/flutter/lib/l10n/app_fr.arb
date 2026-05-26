@@ -19733,6 +19733,7 @@
   "founderNoteFounderSoloStillOn": "Fondateur, en solo, toujours sur la première version.",
   "founderNoteIUsedToLog": "J'avais l'habitude d'enregistrer chaque repas pendant deux semaines d'affilée, d'être fier de moi, puis d'entrer dans un restaurant thaï dont je ne pouvais pas lire le menu, de manger ce qui semblait le plus sûr, et d'arrêter discrètement d'ouvrir l'application. Trois semaines plus tard, je réinstallais une autre application, jurant que cette fois serait la bonne, et je recommençais le même cycle. Chaque application enregistrait mes données, aucune ne remarquait quand je devenais silencieux — c'étaient des registres, pas des coachs.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Feuille de route",
   "founderNoteSheetANoteFrom": "UN MOT DE {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "J'ai donc construit la personne, pas le grand livre. Prenez n’importe quel menu – chez vous ou à l’étranger – et le coach vous le relit sous forme de macros. Sautez un mardi et cela vous ramènera mercredi matin sans culpabilisation. Il apprend vos aliments, votre salle de sport, vos habitudes de glissement – ​​pour moins d'une séance de physiothérapie par mois.",
@@ -26766,7 +26767,7 @@
   "unifiedHomeWidgetsFat": "Lipides",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal brûlées",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal au total aujourd'hui",
   "unifiedHomeWidgetsKcalLeft": " kcal restantes",
   "unifiedHomeWidgetsLastNight": "la nuit dernière",
   "unifiedHomeWidgetsLog16oz": "Enregistrer 16oz",
@@ -28141,5 +28142,11 @@
   "youHubStatsScores": "Stats et scores",
   "youSkills": "Compétences",
   "youTrophies": "Trophées",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "Réduire la barre de semaine",
+  "foodBrowserPanelFilterBySource": "Filtrer par source",
+  "shareableGallerySortTooltip": "Trier les modèles",
+  "shareableGallerySortDefault": "Par défaut",
+  "shareableGallerySortRecents": "Récents d'abord",
+  "shareableGallerySortFavorites": "Favoris d'abord"
 }

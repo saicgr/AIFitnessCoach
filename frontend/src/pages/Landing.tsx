@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
+import LanguageMarquee from '../components/marketing/LanguageMarquee';
 
 // Apple-style animations - very subtle, purposeful
 const fade = {
@@ -1006,6 +1007,9 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
+
+      {/* Language marquee — 36 native-script endonyms, sourced from mobile/flutter/lib/l10n/*.arb */}
+      <LanguageMarquee />
 
       {/* AI Coach Demo with Typing Animation */}
       <section className="py-20 sm:py-28 px-6 bg-[#000000]">

@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Oprichter, solo, nog steeds bij versie één.",
   "founderNoteIUsedToLog": "Ik logde twee weken lang elke maaltijd, was trots op mezelf, liep dan een Thais restaurant binnen waar ik de kaart niet kon lezen, at wat het veiligst leek en stopte stilletjes met het openen van de app. Drie weken later installeerde ik een andere, zwoer dat dit de keer zou zijn, en begon weer aan dezelfde cirkel. Elke app logde mijn gegevens, geen enkele merkte het op als ik stilviel — het waren grootboeken, geen coaches.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Roadmap",
   "founderNoteSheetANoteFrom": "EEN BERICHT VAN {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Dus ik heb de persoon gebouwd, niet het grootboek. Maak een menu uit – thuis of in het buitenland – en de coach leest het in macro's voor. Als je een dinsdag overslaat, kom je woensdagochtend terug zonder schuldgevoel. Het leert uw voedsel, uw sportschool, uw slippatronen – voor minder dan één PT-sessie per maand.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Vet",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Kcal verbrand {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal totaal vandaag",
   "unifiedHomeWidgetsKcalLeft": " kcal over",
   "unifiedHomeWidgetsLastNight": "afgelopen nacht",
   "unifiedHomeWidgetsLog16oz": "Log 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Statistieken & Scores",
   "youSkills": "Vaardigheden",
   "youTrophies": "Trofeeën",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "Weekstrip inklappen",
+  "foodBrowserPanelFilterBySource": "Filteren op bron",
+  "shareableGallerySortTooltip": "Sjablonen sorteren",
+  "shareableGallerySortDefault": "Standaard",
+  "shareableGallerySortRecents": "Recent eerst",
+  "shareableGallerySortFavorites": "Favorieten eerst"
 }

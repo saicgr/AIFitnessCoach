@@ -90,18 +90,22 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
           PillAppBarAction(
             icon: Icons.calendar_today,
             onTap: () {
+              // Anchor below the right-side action pill instead of the
+              // fixed (100,100) coords that previously dropped the menu
+              // mid-screen on every device size.
+              final size = MediaQuery.of(context).size;
+              final top = MediaQuery.of(context).padding.top + 60;
               showMenu(
                 context: context,
-                position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                position: RelativeRect.fromLTRB(size.width - 220, top, 16, 0),
                 items: [
                   _buildTimeRangeItem('1_day', '1D', timeRange),
                   _buildTimeRangeItem('3_days', '3D', timeRange),
                   _buildTimeRangeItem('7_days', '7D', timeRange),
-                  _buildTimeRangeItem('1_week', '1 Week', timeRange),
-                  _buildTimeRangeItem('2_weeks', '2 Weeks', timeRange),
-                  _buildTimeRangeItem('4_weeks', '4 Weeks', timeRange),
-                  _buildTimeRangeItem('8_weeks', '8 Weeks', timeRange),
-                  _buildTimeRangeItem('12_weeks', '12 Weeks', timeRange),
+                  _buildTimeRangeItem('2_weeks', '2W', timeRange),
+                  _buildTimeRangeItem('4_weeks', '4W', timeRange),
+                  _buildTimeRangeItem('8_weeks', '8W', timeRange),
+                  _buildTimeRangeItem('12_weeks', '12W', timeRange),
                 ],
               ).then((value) {
                 if (value != null) {

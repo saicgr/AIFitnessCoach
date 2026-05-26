@@ -824,6 +824,13 @@ from core.sentry import (
 )
 init_sentry(settings)
 
+# PostHog server-side init — see services/posthog_client.py. Silent no-op
+# when POSTHOG_API_KEY is unset. Powers lifecycle_push_sent /
+# lifecycle_email_sent events fired from push_nudge_cron and email_cron so
+# the re-engagement funnel becomes measurable end-to-end.
+from services.posthog_client import init_posthog as _init_posthog
+_init_posthog()
+
 
 # Create FastAPI app
 # Disable Swagger/OpenAPI docs in production to reduce attack surface
@@ -1073,18 +1080,28 @@ async def health_keep_alive():
 
 
 @app.get("/open", include_in_schema=False)
-async def open_app():
+async def open_app(request: Request):
     """
     Deep-link bounce page linked from emails.
     On mobile: immediately redirects to the Zealova app via the fitwiz:// custom scheme.
     On desktop: shows a friendly page with App Store / Play Store links.
+
+    Forwards the inbound query string (utm_source / utm_medium / utm_campaign)
+    onto the custom-scheme URL so the Flutter IncomingLinkService can fire
+    `lifecycle_email_clicked` with the right campaign. Without this forward,
+    the meta-refresh strips the params and we lose attribution.
     """
+    qs = request.url.query  # already URL-encoded
+    deeplink_target = f"{branding.DEEP_LINK_SCHEME}://"
+    if qs:
+        deeplink_target = f"{deeplink_target}?{qs}"
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="0;url={branding.DEEP_LINK_SCHEME}://">
+<meta http-equiv="refresh" content="0;url={deeplink_target}">
 <title>Opening {branding.APP_NAME}…</title>
 <style>
   *{{margin:0;padding:0;box-sizing:border-box}}
@@ -1102,7 +1119,7 @@ async def open_app():
 <img src="/static/logo.png" alt="{branding.APP_NAME}">
 <h1>Opening {branding.APP_NAME}…</h1>
 <p>If the app doesn't open automatically, tap below.</p>
-<a href="{branding.DEEP_LINK_SCHEME}://" class="btn">Open App</a><br>
+<a href="{deeplink_target}" class="btn">Open App</a><br>
 <a href="https://apps.apple.com/app/{branding.APP_NAME.lower()}/id0000000000" class="btn btn-outline">App Store</a>
 <a href="https://play.google.com/store/apps/details?id={branding.PACKAGE_ID_ANDROID}" class="btn btn-outline">Google Play</a>
 </body>

@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "المؤسس، أعمل بمفردي، ولا أزال في الإصدار الأول.",
   "founderNoteIUsedToLog": "اعتدت على تسجيل كل وجبة لمدة أسبوعين متواصلين، وأشعر بالفخر بنفسي، ثم أدخل إلى مطعم تايلاندي لا أستطيع قراءة قائمته، وآكل ما يبدو الأكثر أماناً، وأتوقف بهدوء عن فتح التطبيق. بعد ثلاثة أسابيع أعيد تثبيت تطبيق مختلف، وأقسم أن هذه هي المرة الأخيرة، وأكرر نفس الحلقة. كل تطبيق كان يسجل بياناتي، لكن لا أحد منها لاحظ عندما انقطعت عن التسجيل — كانت مجرد دفاتر حسابات، وليست مدربين.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "خارطة الطريق",
   "founderNoteSheetANoteFrom": "ملاحظة من {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "لذلك قمت ببناء الشخص، وليس دفتر الأستاذ. قم بالتقاط أي قائمة - في المنزل أو في الخارج - وسيقوم المدرب بقراءتها لك مرة أخرى في وحدات الماكرو. تخطي يوم الثلاثاء وسوف يعيدك صباح الأربعاء دون الشعور بالذنب. إنه يتعلم الأطعمة الخاصة بك، وصالة الألعاب الرياضية الخاصة بك، وأنماط الانزلاق الخاصة بك - لأقل من جلسة PT واحدة في الشهر.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "سمين",
   "unifiedHomeWidgetsG": "{eaten} / {goal} جم",
   "unifiedHomeWidgetsKcal": " سعرة حرارية",
-  "unifiedHomeWidgetsKcalBurned": "عناصر واجهة Zealova: السعرات الحرارية المحروقة {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} سعرة حرارية إجمالي اليوم",
   "unifiedHomeWidgetsKcalLeft": " سعرة حرارية متبقية",
   "unifiedHomeWidgetsLastNight": "الليلة الماضية",
   "unifiedHomeWidgetsLog16oz": "سجل 16 أوقية",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "الإحصائيات والنتائج",
   "youSkills": "المهارات",
   "youTrophies": "الكؤوس",
-  "youWrapped": "ملخص السنة"
+  "youWrapped": "ملخص السنة",
+  "minimalHeaderCollapseWeekStrip": "طي شريط الأسبوع",
+  "foodBrowserPanelFilterBySource": "تصفية حسب المصدر",
+  "shareableGallerySortTooltip": "ترتيب القوالب",
+  "shareableGallerySortDefault": "افتراضي",
+  "shareableGallerySortRecents": "الأحدث أولاً",
+  "shareableGallerySortFavorites": "المفضلة أولاً"
 }

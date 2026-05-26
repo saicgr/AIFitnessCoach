@@ -10,10 +10,32 @@ layout while these stay focused on data → pixels.
 from __future__ import annotations
 from datetime import datetime
 from typing import Optional, Tuple
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from core import branding
 from models.email import TimeBand, ScheduleState, CoachStyle, UserStats
+
+
+def lifecycle_open_url(backend_url: str, campaign: str) -> str:
+    """Build the `/open` deep-link URL with PostHog-trackable UTM params.
+
+    Every lifecycle email's CTA points at `backend_url + /open` which the
+    backend redirects to the universal-link the app intercepts. Adding UTM
+    params lets the Flutter deep-link handler fire `lifecycle_email_clicked`
+    with the right `kind` and lets PostHog's funnel queries join email send
+    → click → install → conversion.
+
+    `campaign` is the same per-job identity used for the `kind` property on
+    the `lifecycle_email_sent` event (e.g. "win_back", "idle_nudge", "day3").
+    """
+    params = urlencode({
+        "utm_source": "lifecycle",
+        "utm_medium": "email",
+        "utm_campaign": campaign,
+    })
+    sep = "&" if "?" in backend_url else "?"
+    return f"{backend_url}/open{sep}{params}"
 
 
 # ─── Social URLs (re-exported from core.branding for callers that imported

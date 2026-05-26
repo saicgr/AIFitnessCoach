@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_colors.dart';
 import '../data/services/haptic_service.dart';
@@ -87,6 +88,14 @@ class FloatingTabBar extends StatelessWidget {
   /// View-switcher (sticky pill) vs launcher (momentary highlight).
   final FloatingTabBarMode mode;
 
+  /// When true, renders a trailing "Ask coach" action button INSIDE the
+  /// bar's glass surface — a sparkle-icon circle anchored at the right
+  /// edge after the user-supplied [items]. Tap → `/chat?source=coach_strip`.
+  /// Doesn't count against the 2–5 items limit (it's a separate fixed-width
+  /// slot, not an Expanded user slot). Default true so every floating
+  /// strip across the app surfaces a consistent coach-access affordance.
+  final bool showCoachAction;
+
   const FloatingTabBar({
     super.key,
     required this.items,
@@ -94,6 +103,7 @@ class FloatingTabBar extends StatelessWidget {
     required this.accentColor,
     this.selectedIndex,
     this.mode = FloatingTabBarMode.viewSwitcher,
+    this.showCoachAction = true,
   });
 
   @override
@@ -209,6 +219,11 @@ class FloatingTabBar extends StatelessWidget {
                             },
                           ),
                         ),
+                      if (showCoachAction)
+                        _FloatingTabBarCoachSlot(
+                          accentColor: accentColor,
+                          isDark: isDark,
+                        ),
                     ],
                   ),
                 ),
@@ -295,6 +310,73 @@ class _TabItemPill extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Trailing "Ask coach" slot rendered inside [FloatingTabBar] when
+/// `showCoachAction` is true. Distinct from the regular [_TabItemPill] —
+/// fixed-width accent-tinted circle with sparkle icon and no label, so
+/// it reads as a separate action affordance rather than a 6th tab.
+///
+/// Tap → `/chat?source=coach_strip`.
+class _FloatingTabBarCoachSlot extends StatelessWidget {
+  final Color accentColor;
+  final bool isDark;
+
+  const _FloatingTabBarCoachSlot({
+    required this.accentColor,
+    required this.isDark,
+  });
+
+  /// Width of the slot. Smaller than a regular tab pill (which gets an
+  /// Expanded share of the available width) — fixed at 44pt so the user
+  /// tabs keep their natural width and the coach slot reads as a docked
+  /// action button.
+  static const double _slotWidth = 44.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: SizedBox(
+        width: _slotWidth,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticService.light();
+            try {
+              context.push('/chat?source=coach_strip');
+            } catch (_) {
+              context.go('/chat');
+            }
+          },
+          child: Center(
+            child: Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: accentColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                size: 18,
+                color: Colors.white,
+                semanticLabel: 'Ask coach',
               ),
             ),
           ),

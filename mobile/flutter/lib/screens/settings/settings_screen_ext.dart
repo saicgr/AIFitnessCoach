@@ -498,6 +498,83 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                // Roadmap tile — opens the public kanban at zealova.com/roadmap
+                // in the system browser. Mirrors the founder-note tile style so
+                // both About-dialog rows read as a pair.
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () async {
+                    final uri = Uri.parse(AppLinks.roadmap);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.orange.withValues(alpha: 0.30),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.orange.withValues(alpha: 0.18),
+                          ),
+                          alignment: Alignment.center,
+                          child: const FaIcon(
+                            FontAwesomeIcons.mapLocationDot,
+                            size: 14,
+                            color: AppColors.orange,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context).founderNoteRoadmap,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.orange,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              Text(
+                                // TODO(i18n): extract to l10n key once
+                                // translation pipeline runs again.
+                                "See what's shipping next",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? AppColors.textSecondary
+                                      : AppColorsLight.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.open_in_new_rounded,
+                          color: AppColors.orange,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             );
           },

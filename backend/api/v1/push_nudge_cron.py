@@ -55,6 +55,7 @@ from core.rate_limiter import limiter
 from core.i18n import get_template as _get_i18n_template
 from services.notification_service import get_notification_service
 from services.notification_suppression import should_suppress_notification
+from services.posthog_client import capture_lifecycle
 
 # Map internal nudge_type → i18n template key base (title/body pairs).
 # Nudge types not listed here fall through to the existing template pool.
@@ -480,6 +481,30 @@ async def _send_nudge(
 
     if success:
         logger.info(f"✅ [Nudge] {nudge_type} sent to {user_id} ({coach_name}) locale={user_locale}")
+        # Fire-and-forget telemetry — PostHog SDK has its own background
+        # thread + the helper swallows exceptions, so this never blocks or
+        # crashes the send loop.
+        capture_lifecycle(
+            user_id=user_id,
+            event_name="lifecycle_push_sent",
+            properties={
+                "kind": nudge_type,
+                "channel": "push",
+                "locale": user_locale,
+                "coaching_style": coaching_style,
+                "intensity": intensity,
+            },
+        )
+    else:
+        capture_lifecycle(
+            user_id=user_id,
+            event_name="lifecycle_send_failed",
+            properties={
+                "kind": nudge_type,
+                "channel": "push",
+                "reason": "fcm_send_returned_false",
+            },
+        )
     return success
 
 

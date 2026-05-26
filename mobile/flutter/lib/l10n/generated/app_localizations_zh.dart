@@ -12737,6 +12737,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get foodBrowserPanelFilterByCountry => '按国家筛选';
 
   @override
+  String get foodBrowserPanelFilterBySource => '按来源筛选';
+
+  @override
   String get foodBrowserPanelHighFat => '高脂肪';
 
   @override
@@ -13489,6 +13492,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get founderNoteDiscord => 'Discord';
+
+  @override
+  String get founderNoteRoadmap => '路线图';
 
   @override
   String get founderNoteFounderSoloStillOn => '创始人，单枪匹马，仍在第一版。';
@@ -21508,6 +21514,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get minimalHeaderChangeGymProfile => '更改健身房配置';
+
+  @override
+  String get minimalHeaderCollapseWeekStrip => '折叠周条';
 
   @override
   String minimalHeaderD(Object streakDays) {
@@ -33281,6 +33290,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareArtifactCardCopyShare => '复制并分享';
 
   @override
+  String get shareableGallerySortDefault => '默认';
+
+  @override
+  String get shareableGallerySortFavorites => '收藏优先';
+
+  @override
+  String get shareableGallerySortRecents => '最近优先';
+
+  @override
+  String get shareableGallerySortTooltip => '模板排序';
+
+  @override
   String get shareArtifactCardCouldNotCreateShare => '无法创建分享链接。';
 
   @override
@@ -37306,7 +37327,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '已消耗 $arg0 kcal';
+    return '今日总计 $arg0 千卡';
   }
 
   @override
@@ -42233,4 +42254,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get importsPrivacyClearFailedSnack => '无法清除 - 请稍后再试。';
+
+  @override
+  String get bottomNavLeaderboard => 'Leaderboard';
+
+  @override
+  String get discoverBoardXp => 'XP';
+
+  @override
+  String get discoverResetsSunday => 'Resets Sunday';
+
+  @override
+  String get discoverNoEntriesYet =>
+      'No entries yet · Log a workout this week to climb';
+
+  @override
+  String get discoverViewTop10 => 'View top 10';
+
+  @override
+  String get discoverMovers => 'Movers';
 }

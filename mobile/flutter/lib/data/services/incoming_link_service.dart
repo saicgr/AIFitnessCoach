@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/referral_provider.dart';
 import 'pending_referral_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import 'package:fitwiz/core/services/posthog_service.dart';
 
 /// OS-level incoming-link handler for Universal Links / App Links / custom
 /// schemes. Separate from `DeepLinkService` (which handles only widget-
@@ -66,6 +67,26 @@ class IncomingLinkService {
 
   static Future<void> _handle(Uri uri, ProviderContainer container) async {
     debugPrint('🔗 [IncomingLink] handling: $uri');
+
+    // Lifecycle email click attribution — fires BEFORE any other branch so
+    // the event lands even if the link's primary purpose (auth callback,
+    // invite redeem, share) takes over routing. The backend `/open` endpoint
+    // (main.py) forwards the inbound query string onto the custom-scheme
+    // redirect so utm_source / utm_medium / utm_campaign survive the bounce.
+    // Matches the `lifecycle_open_url` helper in services/email_helpers.py.
+    final utmSource = uri.queryParameters['utm_source'];
+    if (utmSource == 'lifecycle') {
+      PosthogService().capture(
+        eventName: 'lifecycle_email_clicked',
+        properties: {
+          'kind': uri.queryParameters['utm_campaign'] ?? 'unknown',
+          'channel': 'email',
+          // utm_medium is always "email" today but keep it dynamic so future
+          // off-channel sends (SMS, in-app inbox) reuse the same plumbing.
+          'medium': uri.queryParameters['utm_medium'] ?? 'email',
+        },
+      );
+    }
 
     // Supabase Auth callback (email confirm / magic link / OAuth).
     // Supabase ships TWO callback formats depending on the template:

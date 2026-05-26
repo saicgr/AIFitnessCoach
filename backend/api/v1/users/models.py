@@ -406,6 +406,15 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         screen_width=row.get("screen_width"),
         screen_height=row.get("screen_height"),
         last_device_update=row.get("last_device_update"),
+        # Re-engagement signals — cached by comeback_service. The Flutter
+        # router reads `days_since_last_workout` on app foreground to decide
+        # whether a lapsed unsubscribed user should be routed to the paywall.
+        days_since_last_workout=row.get("days_since_last_workout"),
+        last_workout_date=(
+            str(row.get("last_workout_date"))
+            if row.get("last_workout_date") is not None
+            else None
+        ),
     )
 
 

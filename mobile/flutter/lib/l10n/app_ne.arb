@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "संस्थापक, एक्लै, अझै संस्करण एकमा।",
   "founderNoteIUsedToLog": "म दुई हप्तासम्म हरेक खाना लग गर्थें, आफैंमा गर्व गर्थें, त्यसपछि म पढ्न नसक्ने थाई रेस्टुरेन्टमा जान्थें, जे सुरक्षित देखिन्थ्यो त्यो खान्थें, र चुपचाप एप खोल्न छोड्थें। तीन हप्ता पछि म अर्को एप इन्स्टल गर्थें, यो पटक पक्का गर्छु भनी कसम खान्थें, र फेरि त्यही चक्र दोहोर्याउँथें। हरेक एपले मेरो डेटा लग गर्थ्यो, तर म मौन हुँदा कसैले वास्ता गर्दैनथे — ती लेजरहरू थिए, कोचहरू थिएनन्।",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "रोडम्याप",
   "founderNoteSheetANoteFrom": "{_founderName} बाट एक नोट",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "त्यसैले मैले ब्यक्ति निर्माण गरें, खाता होइन। कुनै पनि मेनु स्न्याप गर्नुहोस् - घर वा विदेशमा - र कोचले यसलाई म्याक्रोमा तपाइँलाई फिर्ता पढ्छ। मंगलबार छोड्नुहोस् र यसले तपाईंलाई दोषी यात्रा बिना बुधबार बिहान फिर्ता तान्छ। यसले तपाइँको खाना, तपाइँको जिम, तपाइँको स्लिप ढाँचाहरू - महिनामा एक PT सत्र भन्दा कमको लागि सिक्छ।",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "फ्याट",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "क्यालोरी बर्न भयो {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} किलोक्यालोरी आज जम्मा",
   "unifiedHomeWidgetsKcalLeft": " kcal बाँकी",
   "unifiedHomeWidgetsLastNight": "गएराती",
   "unifiedHomeWidgetsLog16oz": "16oz लग गर्नुहोस्",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "तथ्याङ्क र स्कोरहरू",
   "youSkills": "सीपहरू",
   "youTrophies": "ट्रफीहरू",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "साप्ताहिक स्ट्रिप संकुचित गर्नुहोस्",
+  "foodBrowserPanelFilterBySource": "स्रोत अनुसार फिल्टर गर्नुहोस्",
+  "shareableGallerySortTooltip": "टेम्प्लेटहरू क्रमबद्ध गर्नुहोस्",
+  "shareableGallerySortDefault": "पूर्वनिर्धारित",
+  "shareableGallerySortRecents": "हालैका पहिले",
+  "shareableGallerySortFavorites": "मनपर्ने पहिले"
 }

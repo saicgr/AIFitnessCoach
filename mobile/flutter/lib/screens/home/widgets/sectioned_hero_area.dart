@@ -357,6 +357,7 @@ class _HeroOverflowMenu extends ConsumerWidget {
     return PopupMenuButton<_HeroOverflowAction>(
       tooltip: AppLocalizations.of(context).workoutPlannerCalendarDisplayOptions,
       icon: Icon(Icons.tune, size: 18, color: tint),
+      position: PopupMenuPosition.under,
       padding: EdgeInsets.zero,
       onSelected: (action) {
         HapticService.selection();

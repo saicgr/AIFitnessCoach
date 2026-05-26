@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'core/providers/locale_provider.dart';
 import 'services/post_meal_checkin_reminder.dart';
@@ -47,11 +48,24 @@ class AppRoot extends ConsumerStatefulWidget {
   ConsumerState<AppRoot> createState() => _AppRootState();
 }
 
-class _AppRootState extends ConsumerState<AppRoot> {
-  // Note: WidgetsBindingObserver + didChangeAppLifecycleState were added
-  // to support the meal-suggestion widget's "refresh on resume" hook.
-  // The hook is staged (see Settings → Coming Soon); re-add the mixin,
-  // observer registration, and override when that feature ships.
+class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
+  // WidgetsBindingObserver was re-added (originally for a shelved
+  // meal-suggestion refresh hook) to power lifecycle telemetry: on every
+  // `AppLifecycleState.resumed` we update `last_app_open_ts` in
+  // SharedPreferences and, if the gap since the previous open was ≥7 days,
+  // fire the `app_open_after_gap` PostHog event. This is the client-side
+  // half of the lifecycle funnel — the backend already fires
+  // `lifecycle_email_sent` / `lifecycle_push_sent` via posthog_client.py.
+  /// SharedPreferences key tracking the previous app-foreground epoch (ms).
+  /// Read by `didChangeAppLifecycleState` AND by the router's lapsed-user
+  /// branch (`_handleAuthRedirect`) — single source of truth for "how long
+  /// since this user opened the app." Both reads must use this constant.
+  static const String _kLastAppOpenTsKey = 'last_app_open_ts';
+
+  /// The lapse threshold for the `app_open_after_gap` event. Matches the
+  /// 7-day cutoff used by the win-back email job + the router branch.
+  static const Duration _kGapThreshold = Duration(days: 7);
+
   bool _syncCallbackSet = false;
   bool _notificationCallbackSet = false;
   bool _posthogListenerSet = false;
@@ -62,6 +76,12 @@ class _AppRootState extends ConsumerState<AppRoot> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Treat the first cold-start app-launch the same as a resume: it is
+    // an open, and if the user is returning after a long absence we want
+    // the event to fire now rather than wait for the first background→
+    // foreground transition (which may never happen in a short session).
+    unawaited(_recordAppOpen());
     // Set up notification storage callback right away
     _setupNotificationStorageCallback();
     // Notification permission is NOT requested here. Cold-prompting on first
@@ -91,6 +111,7 @@ class _AppRootState extends ConsumerState<AppRoot> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     // Clear notification callbacks to prevent memory leaks (perf fix 1.3)
     final notificationService = ref.read(notificationServiceProvider);
     notificationService.onNotificationReceived = null;
@@ -98,6 +119,60 @@ class _AppRootState extends ConsumerState<AppRoot> {
     notificationService.onTokenRefresh = null;
     _incomingShareSubscription?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // Fire-and-forget — the lifecycle callback must return quickly. The
+      // helper swallows all exceptions; telemetry can never block app
+      // foreground transitions.
+      unawaited(_recordAppOpen());
+    }
+  }
+
+  /// Compute the gap since the previous open, fire `app_open_after_gap`
+  /// when ≥ [_kGapThreshold], then persist the current timestamp so the
+  /// next resume can compute a fresh delta. Idempotent + crash-safe.
+  Future<void> _recordAppOpen() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final previousMs = prefs.getInt(_kLastAppOpenTsKey);
+      await prefs.setInt(_kLastAppOpenTsKey, nowMs);
+
+      if (previousMs == null) {
+        // First-ever open on this install — no gap exists. Capture the
+        // baseline ts above; future resumes will have something to compare.
+        return;
+      }
+
+      final gap = Duration(milliseconds: nowMs - previousMs);
+      if (gap < _kGapThreshold) return;
+
+      // Read once — capture(..) is fire-and-forget inside posthog_service.
+      ref.read(posthogServiceProvider).capture(
+            eventName: 'app_open_after_gap',
+            properties: {
+              'days_since_last_open': gap.inDays,
+              // Bucket for funnel analysis; raw days is also kept above
+              // for percentile / cohort analysis.
+              'gap_bucket': _gapBucket(gap.inDays),
+            },
+          );
+    } catch (e) {
+      // Telemetry path must never crash the app — log + swallow.
+      debugPrint('⚠️ [LifecycleTelemetry] _recordAppOpen failed: $e');
+    }
+  }
+
+  String _gapBucket(int days) {
+    if (days < 14) return '7-13d';
+    if (days < 30) return '14-29d';
+    if (days < 60) return '30-59d';
+    if (days < 90) return '60-89d';
+    return '90d+';
   }
 
   // ---------------------------------------------------------------------------

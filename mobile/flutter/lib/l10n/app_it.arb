@@ -19733,6 +19733,7 @@
   "founderNoteFounderSoloStillOn": "Fondatore, da solo, ancora alla versione uno.",
   "founderNoteIUsedToLog": "Registravo ogni pasto per due settimane di fila, mi sentivo orgoglioso, poi entravo in un posto thailandese di cui non riuscivo a leggere il menu, mangiavo ciò che sembrava più sicuro e smettevo silenziosamente di aprire l'app. Tre settimane dopo ne reinstallavo una diversa, giuravo che quella era la volta buona e ricominciavo lo stesso ciclo. Ogni app registrava i miei dati, nessuna notava quando sparivo: erano registri, non coach.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Tabella di marcia",
   "founderNoteSheetANoteFrom": "UNA NOTA DA {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Quindi ho costruito la persona, non il registro. Scatta qualsiasi menu, a casa o all'estero, e il coach te lo leggerà in macro. Salta un martedì e ti riporta indietro mercoledì mattina senza il senso di colpa. Apprende i tuoi alimenti, la tua palestra, i tuoi schemi di slip - per meno di una sessione di PT al mese.",
@@ -26766,7 +26767,7 @@
   "unifiedHomeWidgetsFat": "Grasso",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": "kcal",
-  "unifiedHomeWidgetsKcalBurned": "Kcal bruciate: {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal totali oggi",
   "unifiedHomeWidgetsKcalLeft": "kcal rimanenti",
   "unifiedHomeWidgetsLastNight": "Ieri notte",
   "unifiedHomeWidgetsLog16oz": "Registra 16oz",
@@ -28141,5 +28142,11 @@
   "youHubStatsScores": "Statistiche e punteggi",
   "youSkills": "Abilità",
   "youTrophies": "Trofei",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "Riduci barra settimanale",
+  "foodBrowserPanelFilterBySource": "Filtra per fonte",
+  "shareableGallerySortTooltip": "Ordina modelli",
+  "shareableGallerySortDefault": "Predefinito",
+  "shareableGallerySortRecents": "Recenti prima",
+  "shareableGallerySortFavorites": "Preferiti prima"
 }

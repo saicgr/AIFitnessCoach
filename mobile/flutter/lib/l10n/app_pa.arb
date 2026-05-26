@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "ਸੰਸਥਾਪਕ, ਇਕੱਲਾ, ਅਜੇ ਵੀ ਪਹਿਲੇ ਵਰਜ਼ਨ 'ਤੇ।",
   "founderNoteIUsedToLog": "ਮੈਂ ਲਗਾਤਾਰ ਦੋ ਹਫ਼ਤਿਆਂ ਤੱਕ ਹਰ ਖਾਣੇ ਨੂੰ ਲੌਗ ਕਰਦਾ ਸੀ, ਆਪਣੇ ਆਪ 'ਤੇ ਮਾਣ ਮਹਿਸੂਸ ਕਰਦਾ ਸੀ, ਫਿਰ ਇੱਕ ਥਾਈ ਰੈਸਟੋਰੈਂਟ ਵਿੱਚ ਜਾਂਦਾ ਸੀ ਜਿਸਨੂੰ ਮੈਂ ਪੜ੍ਹ ਨਹੀਂ ਸਕਦਾ ਸੀ, ਜੋ ਸਭ ਤੋਂ ਸੁਰੱਖਿਅਤ ਲੱਗਦਾ ਸੀ ਉਹ ਖਾਂਦਾ ਸੀ, ਅਤੇ ਚੁੱਪਚਾਪ ਐਪ ਖੋਲ੍ਹਣਾ ਬੰਦ ਕਰ ਦਿੰਦਾ ਸੀ। ਤਿੰਨ ਹਫ਼ਤਿਆਂ ਬਾਅਦ ਮੈਂ ਇੱਕ ਵੱਖਰੀ ਐਪ ਦੁਬਾਰਾ ਇੰਸਟਾਲ ਕਰਦਾ ਸੀ, ਸਹੁੰ ਖਾਂਦਾ ਸੀ ਕਿ ਇਹ ਵਾਰ ਸਹੀ ਰਹੇਗਾ, ਅਤੇ ਉਹੀ ਚੱਕਰ ਦੁਬਾਰਾ ਚਲਾਉਂਦਾ ਸੀ। ਹਰ ਐਪ ਮੇਰਾ ਡੇਟਾ ਲੌਗ ਕਰਦੀ ਸੀ, ਪਰ ਕਿਸੇ ਨੇ ਵੀ ਇਹ ਨਹੀਂ ਦੇਖਿਆ ਕਿ ਮੈਂ ਕਦੋਂ ਚੁੱਪ ਹੋ ਗਿਆ — ਉਹ ਸਿਰਫ਼ ਖਾਤਾ-ਬਹੀ ਸਨ, ਕੋਚ ਨਹੀਂ।",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "ਰੋਡਮੈਪ",
   "founderNoteSheetANoteFrom": "{_founderName} ਵੱਲੋਂ ਇੱਕ ਨੋਟ",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "ਇਸ ਲਈ ਮੈਂ ਵਿਅਕਤੀ ਨੂੰ ਬਣਾਇਆ, ਬਹੀ ਨਹੀਂ। ਕੋਈ ਵੀ ਮੀਨੂ - ਘਰ ਜਾਂ ਵਿਦੇਸ਼ ਵਿੱਚ - ਅਤੇ ਕੋਚ ਇਸਨੂੰ ਮੈਕਰੋ ਵਿੱਚ ਤੁਹਾਨੂੰ ਵਾਪਸ ਪੜ੍ਹਦਾ ਹੈ। ਮੰਗਲਵਾਰ ਨੂੰ ਛੱਡੋ ਅਤੇ ਇਹ ਤੁਹਾਨੂੰ ਬੁੱਧਵਾਰ ਦੀ ਸਵੇਰ ਨੂੰ ਬਿਨਾਂ ਦੋਸ਼ ਦੇ ਯਾਤਰਾ ਦੇ ਵਾਪਸ ਖਿੱਚਦਾ ਹੈ। ਇਹ ਤੁਹਾਡੇ ਭੋਜਨ, ਤੁਹਾਡਾ ਜਿਮ, ਤੁਹਾਡੇ ਸਲਿੱਪ ਪੈਟਰਨ - ਇੱਕ ਮਹੀਨੇ ਵਿੱਚ ਇੱਕ ਤੋਂ ਘੱਟ PT ਸੈਸ਼ਨ ਲਈ ਸਿੱਖਦਾ ਹੈ।",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "ਚਰਬੀ",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "kcal ਬਰਨ ਹੋਏ {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} ਕਿਲੋ ਕੈਲੋਰੀ ਅੱਜ ਕੁੱਲ",
   "unifiedHomeWidgetsKcalLeft": " kcal ਬਾਕੀ",
   "unifiedHomeWidgetsLastNight": "ਬੀਤੀ ਰਾਤ",
   "unifiedHomeWidgetsLog16oz": "16oz ਲੌਗ ਕਰੋ",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "ਅੰਕੜੇ ਅਤੇ ਸਕੋਰ",
   "youSkills": "ਹੁਨਰ",
   "youTrophies": "ਟਰਾਫੀਆਂ",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "ਹਫ਼ਤਾਵਾਰ ਪੱਟੀ ਸਮੇਟੋ",
+  "foodBrowserPanelFilterBySource": "ਸਰੋਤ ਅਨੁਸਾਰ ਫਿਲਟਰ ਕਰੋ",
+  "shareableGallerySortTooltip": "ਟੈਮਪਲੇਟ ਛਾਂਟੋ",
+  "shareableGallerySortDefault": "ਡਿਫਾਲਟ",
+  "shareableGallerySortRecents": "ਤਾਜ਼ਾ ਪਹਿਲਾਂ",
+  "shareableGallerySortFavorites": "ਮਨਪਸੰਦ ਪਹਿਲਾਂ"
 }

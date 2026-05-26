@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "സ്ഥാപകൻ, ഒറ്റയ്ക്ക്, ഇപ്പോഴും പതിപ്പ് ഒന്നിൽ.",
   "founderNoteIUsedToLog": "ഞാൻ രണ്ടാഴ്ച തുടർച്ചയായി കഴിക്കുന്ന ഓരോ ഭക്ഷണവും ലോഗ് ചെയ്യാറുണ്ടായിരുന്നു, അതിൽ അഭിമാനിക്കുകയും ചെയ്യുമായിരുന്നു. എന്നാൽ വായിക്കാൻ കഴിയാത്ത ഒരു തായ് റെസ്റ്റോറന്റിൽ കയറി, സുരക്ഷിതമെന്ന് തോന്നുന്നത് കഴിച്ച്, ആപ്പ് തുറക്കുന്നത് പതിയെ നിർത്തി. മൂന്നാഴ്ചയ്ക്ക് ശേഷം ഞാൻ മറ്റൊരു ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യും, ഇത്തവണ അത് ശരിയാക്കുമെന്ന് സത്യം ചെയ്യും, വീണ്ടും അതേ ലൂപ്പിലൂടെ കടന്നുപോകും. എല്ലാ ആപ്പുകളും എന്റെ ഡാറ്റ രേഖപ്പെടുത്തി, പക്ഷേ ഞാൻ നിശബ്ദനായപ്പോൾ ആരും അത് ശ്രദ്ധിച്ചില്ല — അവ വെറും കണക്കുപുസ്തകങ്ങളായിരുന്നു, പരിശീലകരല്ല.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "റോഡ്‌മാപ്പ്",
   "founderNoteSheetANoteFrom": "{_founderName}-ൽ നിന്നുള്ള ഒരു കുറിപ്പ്",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "അതിനാൽ ഞാൻ ആളെ നിർമ്മിച്ചു, ലെഡ്ജറല്ല. സ്വദേശത്തോ വിദേശത്തോ ഉള്ള ഏതെങ്കിലും മെനു സ്നാപ്പ് ചെയ്യുക, കോച്ച് അത് നിങ്ങൾക്ക് മാക്രോകളിൽ തിരികെ വായിക്കും. ഒരു ചൊവ്വാഴ്ച ഒഴിവാക്കുക, അത് ബുധനാഴ്ച രാവിലെ കുറ്റബോധമില്ലാതെ നിങ്ങളെ പിന്നോട്ട് വലിക്കും. ഇത് നിങ്ങളുടെ ഭക്ഷണങ്ങൾ, ജിം, സ്ലിപ്പ് പാറ്റേണുകൾ എന്നിവ പഠിക്കുന്നു - മാസത്തിൽ ഒരു PT സെഷനിൽ താഴെ മാത്രം.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "ഫാറ്റ്",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "എരിച്ച കലോറി {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} കിലോകലോറി ഇന്ന് മൊത്തം",
   "unifiedHomeWidgetsKcalLeft": " kcal ബാക്കി",
   "unifiedHomeWidgetsLastNight": "കഴിഞ്ഞ രാത്രി",
   "unifiedHomeWidgetsLog16oz": "16oz രേഖപ്പെടുത്തുക",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "സ്ഥിതിവിവരക്കണക്കുകളും സ്കോറുകളും",
   "youSkills": "നൈപുണ്യങ്ങൾ",
   "youTrophies": "ട്രോഫികൾ",
-  "youWrapped": "റാപ്പ്ഡ്"
+  "youWrapped": "റാപ്പ്ഡ്",
+  "minimalHeaderCollapseWeekStrip": "ആഴ്ച സ്ട്രിപ്പ് ചുരുട്ടുക",
+  "foodBrowserPanelFilterBySource": "ഉറവിടം അനുസരിച്ച് ഫിൽട്ടർ ചെയ്യുക",
+  "shareableGallerySortTooltip": "ടെംപ്ലേറ്റുകൾ അടുക്കുക",
+  "shareableGallerySortDefault": "സ്ഥിരസ്ഥിതി",
+  "shareableGallerySortRecents": "സമീപകാലത്തേത് ആദ്യം",
+  "shareableGallerySortFavorites": "പ്രിയങ്കരം ആദ്യം"
 }

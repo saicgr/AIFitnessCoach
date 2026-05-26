@@ -13271,6 +13271,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get foodBrowserPanelFilterByCountry => 'تصفية حسب الدولة';
 
   @override
+  String get foodBrowserPanelFilterBySource => 'تصفية حسب المصدر';
+
+  @override
   String get foodBrowserPanelHighFat => 'عالي الدهون';
 
   @override
@@ -14042,6 +14045,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get founderNoteDiscord => 'Discord';
+
+  @override
+  String get founderNoteRoadmap => 'خارطة الطريق';
 
   @override
   String get founderNoteFounderSoloStillOn =>
@@ -22467,6 +22473,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get minimalHeaderChangeGymProfile => 'تغيير ملف تعريف النادي الرياضي';
+
+  @override
+  String get minimalHeaderCollapseWeekStrip => 'طي شريط الأسبوع';
 
   @override
   String minimalHeaderD(Object streakDays) {
@@ -34708,6 +34717,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shareArtifactCardCopyShare => 'نسخ ومشاركة';
 
   @override
+  String get shareableGallerySortDefault => 'افتراضي';
+
+  @override
+  String get shareableGallerySortFavorites => 'المفضلة أولاً';
+
+  @override
+  String get shareableGallerySortRecents => 'الأحدث أولاً';
+
+  @override
+  String get shareableGallerySortTooltip => 'ترتيب القوالب';
+
+  @override
   String get shareArtifactCardCouldNotCreateShare =>
       'تعذر إنشاء رابط المشاركة.';
 
@@ -38888,7 +38909,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return 'عناصر واجهة Zealova: السعرات الحرارية المحروقة $arg0';
+    return '$arg0 سعرة حرارية إجمالي اليوم';
   }
 
   @override
@@ -44011,4 +44032,23 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get importsPrivacyClearFailedSnack =>
       'تعذر المسح — حاول مرة أخرى لاحقًا.';
+
+  @override
+  String get bottomNavLeaderboard => 'Leaderboard';
+
+  @override
+  String get discoverBoardXp => 'XP';
+
+  @override
+  String get discoverResetsSunday => 'Resets Sunday';
+
+  @override
+  String get discoverNoEntriesYet =>
+      'No entries yet · Log a workout this week to climb';
+
+  @override
+  String get discoverViewTop10 => 'View top 10';
+
+  @override
+  String get discoverMovers => 'Movers';
 }

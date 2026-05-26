@@ -101,12 +101,33 @@ extension NotificationServiceCore on NotificationService {
             data: {'type': type},
           );
         }
+        // Telemetry parity with the FCM tap handler above — every push tap
+        // (foreground local-notif or FCM cold-start) fires the same event.
+        PosthogService().capture(
+          eventName: 'lifecycle_notification_tapped',
+          properties: {
+            'kind': type ?? 'unknown',
+            'channel': 'local',
+            'cold_start': false,
+          },
+        );
         onNotificationTapped?.call(type);
         return;
       } catch (_) {
         // Fall through to plain-string dispatch
       }
     }
+    // Plain-string payload — capture as raw kind so we can spot any sender
+    // that's still using the old single-string format.
+    PosthogService().capture(
+      eventName: 'lifecycle_notification_tapped',
+      properties: {
+        'kind': payload,
+        'channel': 'local',
+        'cold_start': false,
+        'legacy_payload_format': true,
+      },
+    );
     onNotificationTapped?.call(payload);
   }
 
@@ -323,6 +344,19 @@ extension NotificationServiceCore on NotificationService {
     // Get notification type from data payload
     final notificationType = message.data['type'] as String?;
     final notification = message.notification;
+
+    // Fire telemetry BEFORE any routing logic so the event lands even if
+    // downstream navigation throws. `kind` is the nudge type the backend
+    // attached on push_nudge_cron (e.g. missed_workout, streak_at_risk,
+    // guilt_day3) — same taxonomy as the backend's `lifecycle_push_sent`.
+    PosthogService().capture(
+      eventName: 'lifecycle_notification_tapped',
+      properties: {
+        'kind': notificationType ?? 'unknown',
+        'channel': 'push',
+        'cold_start': false,
+      },
+    );
 
     // Store in inbox so it appears in the notification list
     if (notification != null) {

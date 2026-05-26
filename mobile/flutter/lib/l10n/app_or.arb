@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "ପ୍ରତିଷ୍ଠାତା, ଏକାକୀ, ଏବେ ବି ପ୍ରଥମ ଭର୍ସନରେ।",
   "founderNoteIUsedToLog": "ମୁଁ ଦୁଇ ସପ୍ତାହ ଧରି ପ୍ରତିଦିନ ମୋର ପ୍ରତ୍ୟେକ ଖାଦ୍ୟ ଲଗ୍ କରୁଥିଲି, ନିଜକୁ ନେଇ ଗର୍ବିତ ଅନୁଭବ କରୁଥିଲି, ତାପରେ ଏକ ଥାଇ ରେଷ୍ଟୁରାଣ୍ଟକୁ ଯାଉଥିଲି ଯାହା ମୁଁ ପଢ଼ି ପାରୁନଥିଲି, ଯାହା ସବୁଠାରୁ ନିରାପଦ ଦେଖାଯାଉଥିଲା ତାହା ଖାଉଥିଲି, ଏବଂ ଚୁପଚାପ୍ ଆପ୍ ଖୋଲିବା ବନ୍ଦ କରିଦେଉଥିଲି। ତିନି ସପ୍ତାହ ପରେ ମୁଁ ଅନ୍ୟ ଏକ ଆପ୍ ଇନଷ୍ଟଲ୍ କରୁଥିଲି, ଏଥର ନିଶ୍ଚୟ ହେବ ବୋଲି ଶପଥ କରୁଥିଲି, ଏବଂ ସେହି ସମାନ ଚକ୍ରରେ ପୁଣି ଚାଲୁଥିଲି। ପ୍ରତ୍ୟେକ ଆପ୍ ମୋର ଡାଟା ଲଗ୍ କରୁଥିଲା, କିନ୍ତୁ ମୁଁ କେବେ ଚୁପ୍ ହୋଇଗଲି ତାହା କେହି ଲକ୍ଷ୍ୟ କରୁନଥିଲେ — ସେଗୁଡ଼ିକ ଖାତା ଥିଲା, କୋଚ୍ ନୁହେଁ।",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "ରୋଡମ୍ୟାପ୍",
   "founderNoteSheetANoteFrom": "{_founderName} ଙ୍କଠାରୁ ଏକ ନୋଟ୍",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "ତେଣୁ ମୁଁ ସେହି ବ୍ୟକ୍ତିଙ୍କୁ ନିର୍ମାଣ କଲି, ଲେଜର ନୁହେଁ | ଯେକ any ଣସି ମେନୁକୁ ସ୍ନାପ୍ କରନ୍ତୁ - ଘରେ କିମ୍ବା ବିଦେଶରେ - ଏବଂ କୋଚ୍ ଏହାକୁ ମାକ୍ରୋରେ ଆପଣଙ୍କୁ ପ s ନ୍ତି | ମଙ୍ଗଳବାର ଛାଡିଦିଅ ଏବଂ ଏହା ତୁମକୁ ବୁଧବାର ସକାଳେ ଦୋଷ ଯାତ୍ରା ବିନା ଟାଣି ନେଇଥାଏ | ଏହା ତୁମର ଖାଦ୍ୟ, ତୁମର ଜିମ୍, ତୁମର ସ୍ଲିପ୍ s ାଞ୍ଚା ଶିଖେ - ମାସରେ ଗୋଟିଏରୁ କମ୍ PT ଅଧିବେଶନ ପାଇଁ |",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "ଫ୍ୟାଟ୍",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "kcal ବର୍ନ୍ ହୋଇଛି {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} କିଲୋକାଲୋରୀ ଆଜି ସମୁଦାୟ",
   "unifiedHomeWidgetsKcalLeft": " kcal ବାକି ଅଛି",
   "unifiedHomeWidgetsLastNight": "ଗତ ରାତି",
   "unifiedHomeWidgetsLog16oz": "16oz ଲଗ୍ କରନ୍ତୁ",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "ଷ୍ଟାଟସ୍ ଏବଂ ସ୍କୋର",
   "youSkills": "ଦକ୍ଷତା",
   "youTrophies": "ଟ୍ରଫି",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "ସପ୍ତାହ ସ୍ଟ୍ରିପ୍ ସଙ୍କୁଚିତ କରନ୍ତୁ",
+  "foodBrowserPanelFilterBySource": "ଉତ୍ସ ଅନୁଯାୟୀ ଫିଲ୍ଟର କରନ୍ତୁ",
+  "shareableGallerySortTooltip": "ଟେମ୍ପଲେଟ୍‌ ସଜାନ୍ତୁ",
+  "shareableGallerySortDefault": "ଡିଫଲ୍ଟ",
+  "shareableGallerySortRecents": "ସମ୍ପ୍ରତିକ ପ୍ରଥମେ",
+  "shareableGallerySortFavorites": "ପ୍ରିୟ ପ୍ରଥମେ"
 }

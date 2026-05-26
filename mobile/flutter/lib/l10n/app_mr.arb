@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "संस्थापक, एकटा, अजूनही पहिल्या आवृत्तीवर.",
   "founderNoteIUsedToLog": "मी सलग दोन आठवडे प्रत्येक जेवण लॉग करायचो, स्वतःचा अभिमान वाटायचा, मग मी अशा थाई रेस्टॉरंटमध्ये जायचो जिथे मला वाचता येत नसे, जे सर्वात सुरक्षित वाटेल ते खायचो आणि शांतपणे ॲप वापरणे थांबवायचो. तीन आठवड्यांनंतर मी दुसरे ॲप पुन्हा इन्स्टॉल करायचो, हीच वेळ आहे अशी शपथ घ्यायचो आणि पुन्हा तेच चक्र सुरू करायचो. प्रत्येक ॲप माझा डेटा लॉग करायचे, पण जेव्हा मी शांत व्हायचो तेव्हा कोणालाच कळायचे नाही — ती फक्त लेजर होती, प्रशिक्षक नव्हते.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "रोडमॅप",
   "founderNoteSheetANoteFrom": "{_founderName} कडून एक टीप",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "म्हणून मी व्यक्ती बांधली, खातेवही नाही. कोणताही मेनू स्नॅप करा — देश किंवा परदेशात — आणि प्रशिक्षक तुम्हाला तो मॅक्रोमध्ये परत वाचतो. एक मंगळवार वगळा आणि ते तुम्हाला अपराधीपणाच्या प्रवासाशिवाय बुधवारी सकाळी परत खेचते. हे तुमचे खाद्यपदार्थ, तुमची व्यायामशाळा, तुमचे स्लिप पॅटर्न शिकते — महिन्याला एकापेक्षा कमी पीटी सत्रासाठी.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "फॅट",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "जळलेल्या Kcal {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} किलोकॅलरी आज एकूण",
   "unifiedHomeWidgetsKcalLeft": " kcal बाकी",
   "unifiedHomeWidgetsLastNight": "काल रात्री",
   "unifiedHomeWidgetsLog16oz": "16oz लॉग करा",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "स्टॅट्स आणि स्कोअर",
   "youSkills": "कौशल्ये",
   "youTrophies": "ट्रॉफी",
-  "youWrapped": "रॅप्ड"
+  "youWrapped": "रॅप्ड",
+  "minimalHeaderCollapseWeekStrip": "साप्ताहिक पट्टी संक्षिप्त करा",
+  "foodBrowserPanelFilterBySource": "स्रोतानुसार फिल्टर करा",
+  "shareableGallerySortTooltip": "टेम्पलेट क्रमवारी लावा",
+  "shareableGallerySortDefault": "डीफॉल्ट",
+  "shareableGallerySortRecents": "अलीकडील प्रथम",
+  "shareableGallerySortFavorites": "आवडते प्रथम"
 }

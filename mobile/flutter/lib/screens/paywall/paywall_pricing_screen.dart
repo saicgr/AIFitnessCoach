@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../data/providers/lapsed_paywall_gate_provider.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/subscription_provider.dart';
@@ -1361,6 +1362,22 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       properties: {},
     );
 
+    // If this paywall view was triggered by the lapsed-user router branch
+    // (see `_maybeRouteLapsedUser` in app_router.dart), fire a dedicated
+    // dismiss event so the lifecycle funnel can measure winback conversion
+    // separately from new-user paywall skips. The gate is "recent" if
+    // marked within the last hour — anything older was a different session.
+    final gateMs = ref.read(lapsedPaywallGateProvider);
+    if (gateMs != null) {
+      final ageMs = DateTime.now().millisecondsSinceEpoch - gateMs;
+      if (ageMs < const Duration(hours: 1).inMilliseconds) {
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'paywall_routed_lapsed_user_dismissed',
+          properties: {'age_ms_since_route': ageMs},
+        );
+      }
+    }
+
     final isReturningUser = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
     if (!context.mounted) return;
     if (isReturningUser) {
@@ -1753,6 +1770,11 @@ class _TrustStrip extends StatelessWidget {
       (Icons.notifications_active_outlined,
           'Reminder before your trial ends'),
       (Icons.payments_outlined, 'No charge today'),
+      // "Yours forever" wedge — Apple-safe phrasing per Option C (export, not
+      // free post-trial access). Settings → Export Data ships the CSV / JSON
+      // export for Hevy, Strong, Fitbod, and generic targets, paywall-free.
+      (Icons.file_download_outlined,
+          'Your data is yours — export anytime, even after canceling'),
     ];
     return Column(
       children: rows.map((r) {

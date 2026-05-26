@@ -19733,6 +19733,7 @@
   "founderNoteFounderSoloStillOn": "Fundador, trabalhando sozinho, ainda na primeira versão.",
   "founderNoteIUsedToLog": "Eu costumava registrar cada refeição por duas semanas seguidas, sentia orgulho de mim mesmo, então entrava em um restaurante tailandês que eu não conseguia ler, comia o que parecia mais seguro e parava silenciosamente de abrir o aplicativo. Três semanas depois, eu reinstalava um diferente, jurava que desta vez seria diferente e repetia o mesmo ciclo. Todos os aplicativos registravam meus dados, nenhum deles notava quando eu ficava em silêncio — eles eram livros-razão, não treinadores.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Roteiro",
   "founderNoteSheetANoteFrom": "UMA NOTA DE {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Então construí a pessoa, não o livro-razão. Selecione qualquer menu – em casa ou no exterior – e o treinador o lê de volta para você em macros. Pule uma terça-feira e você voltará na quarta de manhã sem sentir culpa. Ele aprende sua alimentação, sua academia, seus padrões de escorregamento – em menos de uma sessão de fisioterapia por mês.",
@@ -26766,7 +26767,7 @@
   "unifiedHomeWidgetsFat": "Gorduras",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Kcal queimadas {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal no total hoje",
   "unifiedHomeWidgetsKcalLeft": " kcal restantes",
   "unifiedHomeWidgetsLastNight": "ontem à noite",
   "unifiedHomeWidgetsLog16oz": "Registrar 16oz",
@@ -28141,5 +28142,11 @@
   "youHubStatsScores": "Estatísticas e pontuações",
   "youSkills": "Habilidades",
   "youTrophies": "Troféus",
-  "youWrapped": "Retrospectiva"
+  "youWrapped": "Retrospectiva",
+  "minimalHeaderCollapseWeekStrip": "Recolher barra da semana",
+  "foodBrowserPanelFilterBySource": "Filtrar por fonte",
+  "shareableGallerySortTooltip": "Ordenar modelos",
+  "shareableGallerySortDefault": "Padrão",
+  "shareableGallerySortRecents": "Recentes primeiro",
+  "shareableGallerySortFavorites": "Favoritos primeiro"
 }

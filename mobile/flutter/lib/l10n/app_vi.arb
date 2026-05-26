@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Nhà sáng lập, làm việc độc lập, vẫn đang ở phiên bản một.",
   "founderNoteIUsedToLog": "Tôi từng ghi lại mọi bữa ăn trong hai tuần liên tiếp, cảm thấy tự hào về bản thân, rồi bước vào một quán Thái mà tôi không thể đọc thực đơn, ăn món trông an toàn nhất, và lặng lẽ ngừng mở ứng dụng. Ba tuần sau, tôi lại cài đặt một ứng dụng khác, thề rằng lần này sẽ khác, và lại lặp lại vòng lặp đó. Mọi ứng dụng đều ghi lại dữ liệu của tôi, nhưng không ứng dụng nào nhận ra khi tôi im lặng — chúng chỉ là sổ cái, không phải huấn luyện viên.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Lộ trình",
   "founderNoteSheetANoteFrom": "GHI CHÚ TỪ {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Vì vậy, tôi đã xây dựng con người chứ không phải sổ cái. Chụp bất kỳ menu nào — trong hoặc ngoài nước — và huấn luyện viên sẽ đọc lại cho bạn dưới dạng macro. Bỏ qua ngày thứ Ba và nó sẽ kéo bạn trở lại vào sáng thứ Tư mà không cảm thấy tội lỗi. Nó tìm hiểu các loại thức ăn, bài tập thể dục, kiểu trượt ngã của bạn — chỉ trong chưa đầy một buổi PT mỗi tháng.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Chất béo",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Kcal đã đốt cháy {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal tổng cộng hôm nay",
   "unifiedHomeWidgetsKcalLeft": " kcal còn lại",
   "unifiedHomeWidgetsLastNight": "đêm qua",
   "unifiedHomeWidgetsLog16oz": "Ghi lại 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Số liệu & Điểm số",
   "youSkills": "Kỹ năng",
   "youTrophies": "Cúp",
-  "youWrapped": "Tổng kết"
+  "youWrapped": "Tổng kết",
+  "minimalHeaderCollapseWeekStrip": "Thu gọn dải tuần",
+  "foodBrowserPanelFilterBySource": "Lọc theo nguồn",
+  "shareableGallerySortTooltip": "Sắp xếp mẫu",
+  "shareableGallerySortDefault": "Mặc định",
+  "shareableGallerySortRecents": "Gần đây trước",
+  "shareableGallerySortFavorites": "Yêu thích trước"
 }

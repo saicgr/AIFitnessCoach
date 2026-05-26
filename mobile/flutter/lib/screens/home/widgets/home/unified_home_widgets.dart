@@ -9,19 +9,19 @@ import '../../../../core/providers/user_provider.dart';
 import '../../../../core/widgets/line_icon.dart';
 import '../../../../core/providers/week_start_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
-import '../../../../data/models/nutrition.dart' show FoodLog;
 import '../../../../data/models/workout.dart';
 import '../../../../data/providers/gym_profile_provider.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/home_sections_provider.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
-import '../../../../data/providers/breakfast_suggestion_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/providers/sleep_score_provider.dart';
+import '../../../../data/providers/user_history_snapshot_provider.dart';
 import '../../../../data/services/api_client.dart';
+import '../../../../services/strain_recommendation_service.dart';
 import '../score_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
@@ -654,16 +654,7 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                meta,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white.withValues(alpha: 0.88),
-                                ),
-                              ),
+                              _WorkoutHeroIntensityLine(meta: meta),
                             ],
                           ),
                         ),
@@ -736,15 +727,51 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
   /// image is available — a pure accent gradient so the card never looks bare.
   Widget _buildBackground(ThemeColors c, Color accent) {
     if (_imageUrl != null) {
-      return CachedNetworkImage(
-        imageUrl: _imageUrl!,
-        fit: BoxFit.cover,
-        alignment: Alignment.center,
-        // Limit decoded size in the memory cache (matches HeroWorkoutCard).
-        memCacheWidth: 600,
-        memCacheHeight: 360,
-        placeholder: (_, __) => _accentFill(accent),
-        errorWidget: (_, __, ___) => _accentFill(accent),
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          CachedNetworkImage(
+            imageUrl: _imageUrl!,
+            fit: BoxFit.cover,
+            // Many exercise illustrations in the S3 library are full-figure
+            // line drawings with the head near the top of the canvas.
+            // BoxFit.cover scales the image to fill the wide-short hero
+            // crop, which means with `Alignment.center` the visible window
+            // shows the middle stripe (chest → thighs) and crops the head
+            // off the top. Anchoring at y = -0.25 shifts the visible
+            // window UP (closer to the image's top), pulling the head
+            // into the frame. The leftover top sliver of head is then
+            // blended into the accent scrim by the gradient below so a
+            // crop never reads as a decapitation.
+            alignment: const Alignment(0.0, -0.25),
+            // Limit decoded size in the memory cache (matches HeroWorkoutCard).
+            memCacheWidth: 600,
+            memCacheHeight: 360,
+            placeholder: (_, __) => _accentFill(accent),
+            errorWidget: (_, __, ___) => _accentFill(accent),
+          ),
+          // Top-fade gradient — masks the head-crop edge so any leftover
+          // sliver of forehead reads as a stylistic fade into the card's
+          // accent scrim rather than a hard cut. Covers the upper ~38%
+          // of the hero with a heavy accent overlay that decays to fully
+          // transparent at the action area (mid-image).
+          IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    accent.withValues(alpha: 0.85),
+                    accent.withValues(alpha: 0.30),
+                    accent.withValues(alpha: 0.0),
+                  ],
+                  stops: const [0.0, 0.18, 0.38],
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     }
     // Loading or no-image: an accent gradient fill keeps the hero energetic.
@@ -772,6 +799,137 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
               child: const ColoredBox(color: Colors.white),
             )
           : null,
+    );
+  }
+}
+
+/// The meta line under the Workout hero name, augmented with a leading
+/// strain-tier pill (REST / LIGHT / MODERATE / HARD) + a trailing sleep
+/// score when both signals are available.
+///
+/// Replaces the standalone `StrainCoachCard` that used to live between the
+/// Coach hero and the Workout hero on home. The tier is computed by the
+/// same `chooseStrainRecommendation()` decision tree the old card used;
+/// tap on the pill opens the same rationale screen the old card's
+/// chevron led to (`/chat?source=strain_coach&prefill=…`).
+class _WorkoutHeroIntensityLine extends ConsumerWidget {
+  final String meta;
+  const _WorkoutHeroIntensityLine({required this.meta});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sleepAsync = ref.watch(sleepScoreProvider);
+    final historyAsync = ref.watch(userHistorySnapshotProvider);
+
+    final sleepScore = sleepAsync.valueOrNull?.score?.total;
+    final history = historyAsync.valueOrNull;
+
+    // No usable signal → render the meta line alone, matching the old card's
+    // "we don't fabricate a tier" rule (see `strain_coach_card.dart` :53).
+    if (sleepScore == null && history == null) {
+      return Text(
+        meta,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Colors.white.withValues(alpha: 0.88),
+        ),
+      );
+    }
+
+    final priorHard = history?.priorTwoDaysHardCount ?? 0;
+    final median = history?.volume30dMedianKg ?? 0.0;
+    final yesterdayVolume = history?.yesterdayVolumeKg ?? 0.0;
+    final yesterdayStrainRatio =
+        median > 0 ? yesterdayVolume / median : 0.0;
+    final rec = chooseStrainRecommendation(
+      sleepScore: sleepScore,
+      yesterdayStrainRatio: yesterdayStrainRatio,
+      priorTwoDaysHardCount: priorHard,
+    );
+
+    final composedMeta =
+        sleepScore != null ? '$meta · sleep $sleepScore' : meta;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _WorkoutHeroTierPill(
+          tier: rec.tier,
+          onTap: () {
+            HapticService.light();
+            final prefill = Uri.encodeComponent(
+                'Strain Coach says: ${rec.rationale} Can you explain?');
+            try {
+              context.push('/chat?source=strain_coach&prefill=$prefill');
+            } catch (_) {
+              context.go('/chat');
+            }
+          },
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            composedMeta,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.88),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Tier pill sized for the workout-hero meta line. Sits over the accented
+/// image so it uses a frosted white background to read on any tier color.
+class _WorkoutHeroTierPill extends StatelessWidget {
+  final StrainTier tier;
+  final VoidCallback onTap;
+  const _WorkoutHeroTierPill({required this.tier, required this.onTap});
+
+  String get _label {
+    switch (tier) {
+      case StrainTier.rest:
+        return 'REST';
+      case StrainTier.light:
+        return 'LIGHT';
+      case StrainTier.moderate:
+        return 'MODERATE';
+      case StrainTier.hard:
+        return 'HARD';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.22),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          _label,
+          style: const TextStyle(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.7,
+            color: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -817,13 +975,6 @@ class HomeNutritionCard extends ConsumerStatefulWidget {
 }
 
 class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
-  /// Set to a wall-clock time when the workout just transitioned to
-  /// "completed today". Used to drive the post-workout hydration highlight
-  /// for up to 30 minutes after completion (per §2 in the P5 plan). Reset to
-  /// null once 30 min elapses.
-  DateTime? _workoutJustCompletedAt;
-  bool _lastCompletedToday = false;
-
   @override
   Widget build(BuildContext context) {
     final ref = this.ref;
@@ -853,46 +1004,13 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
         mlPerCup;
     final cupFraction = cupGoal > 0 ? cups / cupGoal : 0.0;
 
-    // Detect workout completion transition (`completedToday` flips false→true)
-    // so the hydration row can briefly highlight a post-workout refuel.
-    final todayWorkout = ref.watch(todayWorkoutProvider).valueOrNull;
-    final completedNow = todayWorkout?.completedToday ?? false;
-    if (completedNow && !_lastCompletedToday) {
-      _workoutJustCompletedAt = DateTime.now();
-    }
-    _lastCompletedToday = completedNow;
+    // Hydration + breakfast morning rows used to render here. Both moved
+    // to the Coach hero card's contextual-nudge stack (see
+    // `coach_contextual_nudge_row.dart`). The post-workout transition
+    // tracker (`_workoutJustCompletedAt`) and the breakfast-logged scan
+    // moved with them — driven now by `contextualNudgeProvider`.
 
-    // Post-workout window — keep the refuel copy for 30 minutes after the
-    // flip. After that, fall back to the standard hydration row (or nothing).
-    final inPostWorkoutWindow = _workoutJustCompletedAt != null &&
-        DateTime.now().difference(_workoutJustCompletedAt!) <
-            const Duration(minutes: 30);
-
-    // Compute morning-state flags (5 AM ≤ now < 11 AM).
     final now = DateTime.now();
-    final isMorning = now.hour >= 5 && now.hour < 11;
-
-    // Has the user logged breakfast today? Scan recentLogs for any item with
-    // mealType=='breakfast' AND logged_at on today's local date.
-    final today = DateTime(now.year, now.month, now.day);
-    final breakfastLogged = nutrition.recentLogs.any((log) {
-      final logLocal = log.loggedAt.isUtc ? log.loggedAt.toLocal() : log.loggedAt;
-      final logDay = DateTime(logLocal.year, logLocal.month, logLocal.day);
-      return logDay == today &&
-          (log.mealType.toLowerCase() == 'breakfast');
-    });
-
-    // Count of mornings in the last 7d with at least one breakfast log.
-    // (Used for the ⚠ marker — "logged X of last 7 mornings".)
-    final breakfastLast7 = _breakfastLoggedCountLast7d(nutrition.recentLogs, today);
-
-    // Show the hydration reset row when:
-    //  * we're in the post-workout 30-min window (regardless of time), OR
-    //  * it's morning AND hydration < 30% of goal.
-    final showHydrationReset = inPostWorkoutWindow ||
-        (isMorning && cupFraction < 0.30);
-
-    final showBreakfastSlot = isMorning && !breakfastLogged;
 
     // Late-day reminder chip on the macros row: ≥ 8 PM AND under 60% of cup goal.
     final showLateDayChip = now.hour >= 20 && cupFraction < 0.60;
@@ -925,19 +1043,6 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                         letterSpacing: 0.7,
                         color: c.textMuted)),
                 const Spacer(),
-                Text(
-                  over ? '${-calLeft} ${AppLocalizations.of(context)!.unifiedHomeWidgetsOver}' : '$calLeft',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: over ? c.warning : c.textPrimary),
-                ),
-                Text(over ? AppLocalizations.of(context)!.unifiedHomeWidgetsKcal : AppLocalizations.of(context)!.unifiedHomeWidgetsKcalLeft,
-                    style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: c.textMuted)),
-                const SizedBox(width: 8),
                 _PlusButton(
                   color: AppColors.macroFat,
                   // The "+" opens the food-log sheet directly. Switch to the
@@ -955,43 +1060,47 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                 ),
               ],
             ),
-            // P5 §2: Morning hydration reset row. Also surfaces post-workout
-            // refuel copy when the user just finished a session.
-            if (showHydrationReset) ...[
-              const SizedBox(height: 10),
-              _HydrationResetRow(
-                c: c,
-                cups: cups,
-                cupGoal: cupGoal,
-                isPostWorkout: inPostWorkoutWindow,
-                onLog16oz: () {
-                  HapticService.light();
-                  if (userId != null) {
-                    // 16 oz ≈ 473 ml. Round to two standard cups (~500ml)
-                    // since the rest of the app treats 250 ml = 1 cup.
-                    ref
-                        .read(hydrationProvider.notifier)
-                        .quickLog(userId: userId, amountMl: 500);
-                  } else {
-                    context.go('/nutrition');
-                  }
-                },
-              ),
-            ],
-            // P5 §2: Morning breakfast suggestion row.
-            if (showBreakfastSlot) ...[
-              const SizedBox(height: 10),
-              _BreakfastSlotRow(
-                c: c,
-                breakfastLast7: breakfastLast7,
-                onQuickLog: () {
-                  HapticService.light();
-                  showLogMealSheet(context, ref,
-                      initialMealType: 'breakfast');
-                },
-              ),
-            ],
-            const SizedBox(height: 11),
+            // kcal-left line grouped with the macros (was in the header row;
+            // moved so calories + macros read as one block).
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  over ? '${-calLeft}' : '$calLeft',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: over ? c.warning : c.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  over
+                      ? AppLocalizations.of(context)!.unifiedHomeWidgetsKcal
+                      : AppLocalizations.of(context)!.unifiedHomeWidgetsKcalLeft,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: c.textMuted,
+                  ),
+                ),
+                if (over) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    AppLocalizations.of(context)!.unifiedHomeWidgetsOver,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: c.warning,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
             _MacroBar(
                 label: AppLocalizations.of(context)!.unifiedHomeWidgetsProtein,
                 eaten: eatenP,
@@ -1144,223 +1253,15 @@ class _NutritionFastingTile extends ConsumerWidget {
   }
 }
 
-/// Count of distinct local-date mornings (yesterday and earlier, up to 7d
-/// back) on which AT LEAST one breakfast food log exists. Used by the
-/// breakfast-slot row to render the "logged X of last 7 mornings" subtext
-/// with a ⚠ marker when X < 5.
-///
-/// `today` is the local-midnight DateTime for today. Today itself is
-/// excluded — we only count completed prior mornings.
-int _breakfastLoggedCountLast7d(List<FoodLog> recentLogs, DateTime today) {
-  final Set<DateTime> mornings = <DateTime>{};
-  for (final log in recentLogs) {
-    if (log.mealType.toLowerCase() != 'breakfast') continue;
-    final local =
-        log.loggedAt.isUtc ? log.loggedAt.toLocal() : log.loggedAt;
-    final day = DateTime(local.year, local.month, local.day);
-    final diff = today.difference(day).inDays;
-    if (diff >= 1 && diff <= 7) mornings.add(day);
-  }
-  return mornings.length;
-}
-
-/// P5 §2 — morning Hydration Reset row.
-///
-/// Renders inside [HomeNutritionCard] above the macro bars when the user is
-/// under 30% of cup goal during the morning bucket OR they just finished a
-/// workout (post-workout refuel highlight, 30-min window).
-class _HydrationResetRow extends StatelessWidget {
-  final ThemeColors c;
-  final int cups;
-  final int cupGoal;
-  final bool isPostWorkout;
-  final VoidCallback onLog16oz;
-
-  const _HydrationResetRow({
-    required this.c,
-    required this.cups,
-    required this.cupGoal,
-    required this.isPostWorkout,
-    required this.onLog16oz,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Distinct title + subtitle copy for the two contexts so the user knows
-    // why the row appeared (wake-state vs. just-finished-workout).
-    final l10n = AppLocalizations.of(context)!;
-    final title = isPostWorkout ? l10n.unifiedHomeWidgetsRefuelHydration : l10n.unifiedHomeWidgetsWakeHydration;
-    final subtitle = isPostWorkout
-        ? l10n.unifiedHomeWidgetsDrink16ozPostWorkout
-        : l10n.unifiedHomeWidgetsOvernightWaterReset;
-    return Container(
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: AppColors.cyan
-            .withValues(alpha: isPostWorkout ? 0.16 : 0.10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: c.cardBorder),
-      ),
-      child: Row(
-        children: [
-          const Text('💧', style: TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: c.textPrimary)),
-                const SizedBox(height: 2),
-                Text(subtitle,
-                    style: TextStyle(
-                        fontSize: 11.5,
-                        height: 1.3,
-                        color: c.textSecondary)),
-                const SizedBox(height: 3),
-                Text(AppLocalizations.of(context)!.unifiedHomeWidgetsCupsToday(cups, cupGoal),
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: c.textMuted)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: AppColors.cyan,
-              foregroundColor: Colors.white,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            onPressed: onLog16oz,
-            child: Text(
-              AppLocalizations.of(context)!.unifiedHomeWidgetsLog16oz,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// P5 §2 — morning Breakfast Slot row.
-///
-/// Renders inside [HomeNutritionCard] when breakfast has NOT been logged AND
-/// the local clock is before 11:00. The suggestion text is the personalized
-/// `surface=nutrition_card_morning` Gemini line from `breakfastSuggestionProvider`
-/// (which RAGs the user's recent breakfast logs server-side). On loading /
-/// network error / pre-tz-init we render the deterministic fallback copy so
-/// the card never shows an empty body.
-class _BreakfastSlotRow extends ConsumerWidget {
-  final ThemeColors c;
-  final int breakfastLast7;
-  final VoidCallback onQuickLog;
-
-  const _BreakfastSlotRow({
-    required this.c,
-    required this.breakfastLast7,
-    required this.onQuickLog,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final warn = breakfastLast7 < 5;
-    final suggestionAsync = ref.watch(breakfastSuggestionProvider);
-    // Primary path: server-personalized line. Fallback path (loading + error)
-    // uses the deterministic copy so render is never blocked. Empty/whitespace
-    // server bodies also fall back — defensive against a degenerate response.
-    final suggestionBody = suggestionAsync.maybeWhen(
-      data: (insight) {
-        final body = insight.body.trim();
-        return body.isEmpty ? kBreakfastSuggestionFallbackBody : body;
-      },
-      orElse: () => kBreakfastSuggestionFallbackBody,
-    );
-    return Container(
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: AppColors.macroCarbs.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: c.cardBorder),
-      ),
-      child: Row(
-        children: [
-          const Text('🍳', style: TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppLocalizations.of(context)!.unifiedHomeWidgetsBreakfastSuggestion,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: c.textPrimary)),
-                const SizedBox(height: 2),
-                Text(
-                  suggestionBody,
-                  style: TextStyle(
-                      fontSize: 11.5,
-                      height: 1.3,
-                      color: c.textSecondary),
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    if (warn) ...[
-                      const Text('⚠',
-                          style: TextStyle(fontSize: 11)),
-                      const SizedBox(width: 4),
-                    ],
-                    Expanded(
-                      child: Text(
-                        AppLocalizations.of(context)!.unifiedHomeWidgetsBreakfastLogged(breakfastLast7),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        softWrap: false,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: warn ? c.warning : c.textMuted,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: AppColors.macroCarbs,
-              foregroundColor: Colors.white,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            onPressed: onQuickLog,
-            child: Text(
-              AppLocalizations.of(context)!.unifiedHomeWidgetsQuickLog,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// `_breakfastLoggedCountLast7d`, `_HydrationResetRow`, and `_BreakfastSlotRow`
+// were removed when the nutrition card's morning nudges moved to the Coach
+// hero card's contextual-nudge stack. Their logic now lives in
+// `lib/data/providers/contextual_nudge_provider.dart` (eligibility) and
+// `lib/widgets/coach/coach_contextual_nudge_row.dart` (presentation). The
+// `unifiedHomeWidgetsBreakfastSuggestion` / `unifiedHomeWidgetsBreakfastLogged`
+// / `unifiedHomeWidgetsWakeHydration` / `unifiedHomeWidgetsRefuelHydration`
+// localization keys are now unreferenced from Dart code; they're kept in
+// the .arb files for one release cycle in case the rollback is needed.
 
 /// Shared chrome for the two side-by-side nutrition-card tiles (Water,
 /// Fasting): tinted icon chip + label (+ optional trailing) · value · track.

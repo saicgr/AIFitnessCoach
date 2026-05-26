@@ -19733,6 +19733,7 @@
   "founderNoteFounderSoloStillOn": "Założyciel, solo, wciąż w pierwszej wersji.",
   "founderNoteIUsedToLog": "Kiedyś logowałem każdy posiłek przez dwa tygodnie z rzędu, czułem dumę, a potem wchodziłem do tajskiej knajpy, której menu nie potrafiłem przeczytać, jadłem to, co wydawało się najbezpieczniejsze i po cichu przestawałem otwierać aplikację. Trzy tygodnie później instalowałem inną, przysięgając, że tym razem się uda, i wpadałem w tę samą pętlę. Każda aplikacja zapisywała moje dane, żadna nie zauważała, kiedy milknąłem — były księgami, nie trenerami.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Plan działania",
   "founderNoteSheetANoteFrom": "WIADOMOŚĆ OD {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Więc stworzyłem osobę, a nie księgę. Zrób dowolne menu — w domu lub za granicą — a trener odczyta je w makrach. Pomiń wtorek, a w środę rano wrócisz do rzeczywistości bez poczucia winy. Uczy się Twojego jedzenia, Twojej siłowni, wzorców poślizgów – przez mniej niż jedną sesję PT w miesiącu.",
@@ -26766,7 +26767,7 @@
   "unifiedHomeWidgetsFat": "Tłuszcze",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Spalone kcal {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal łącznie dziś",
   "unifiedHomeWidgetsKcalLeft": " kcal pozostało",
   "unifiedHomeWidgetsLastNight": "ostatniej nocy",
   "unifiedHomeWidgetsLog16oz": "Zapisz 16oz",
@@ -28141,5 +28142,11 @@
   "youHubStatsScores": "Statystyki i wyniki",
   "youSkills": "Umiejętności",
   "youTrophies": "Trofea",
-  "youWrapped": "Podsumowanie"
+  "youWrapped": "Podsumowanie",
+  "minimalHeaderCollapseWeekStrip": "Zwiń pasek tygodnia",
+  "foodBrowserPanelFilterBySource": "Filtruj według źródła",
+  "shareableGallerySortTooltip": "Sortuj szablony",
+  "shareableGallerySortDefault": "Domyślnie",
+  "shareableGallerySortRecents": "Najnowsze najpierw",
+  "shareableGallerySortFavorites": "Ulubione najpierw"
 }

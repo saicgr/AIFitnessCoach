@@ -597,6 +597,12 @@ async def daily_insight(
             "evening_recap",
             "morning_brief_onboarding",
             "nutrition_card_morning",
+            # Phase 2 of the contextual-nudge merge: lunch + dinner each get
+            # a dedicated prompt branch in daily_insight_prompt.py so the
+            # body line can RAG the user's typical lunch / dinner pattern
+            # and hit slot-specific macro targets.
+            "nutrition_card_lunch",
+            "nutrition_card_dinner",
             "workout_card",
         }
         if source not in _ALLOWED_SOURCES:

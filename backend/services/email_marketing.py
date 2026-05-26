@@ -15,6 +15,7 @@ from services.email_helpers import (
     build_persona_signature_html,
     build_stats_grid_html,
     build_nutrition_grid_html,
+    lifecycle_open_url,
 )
 
 logger = get_logger(__name__)
@@ -42,7 +43,7 @@ class EmailMarketingMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "win_back")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -103,7 +104,7 @@ class EmailMarketingMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "7day_upsell")
 
         name = first_name_value or "there"
         coach = stats.coach_name
@@ -176,7 +177,7 @@ class EmailMarketingMixin:
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
         logo_url = get_settings().email_logo_url
-        open_url = f"{backend_url}/open"
+        open_url = lifecycle_open_url(backend_url, "weekly_summary")
 
         name = first_name_value or "there"
         coach = stats.coach_name

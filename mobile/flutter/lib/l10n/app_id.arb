@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Pendiri, solo, masih di versi satu.",
   "founderNoteIUsedToLog": "Dulu saya mencatat setiap makanan selama dua minggu berturut-turut, merasa bangga pada diri sendiri, lalu masuk ke tempat makan Thailand yang tidak bisa saya baca, makan apa pun yang terlihat paling aman, dan diam-diam berhenti membuka aplikasi. Tiga minggu kemudian saya akan menginstal ulang aplikasi lain, bersumpah kali ini akan berhasil, dan mengulangi siklus yang sama. Setiap aplikasi mencatat data saya, tidak ada yang menyadari saat saya menghilang — mereka hanyalah buku besar, bukan pelatih.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Peta Jalan",
   "founderNoteSheetANoteFrom": "CATATAN DARI {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Jadi saya membuat orangnya, bukan buku besarnya. Jepret menu apa pun — di dalam atau di luar negeri — dan pelatih akan membacakannya kembali untuk Anda dalam makro. Lewati hari Selasa dan itu akan membawa Anda kembali pada Rabu pagi tanpa rasa bersalah. Ia mempelajari makanan Anda, gym Anda, pola slip Anda — kurang dari satu sesi PT dalam sebulan.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Lemak",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kkal",
-  "unifiedHomeWidgetsKcalBurned": "Kkal terbakar {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kkal total hari ini",
   "unifiedHomeWidgetsKcalLeft": " kkal tersisa",
   "unifiedHomeWidgetsLastNight": "tadi malam",
   "unifiedHomeWidgetsLog16oz": "Catat 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Statistik & Skor",
   "youSkills": "Keterampilan",
   "youTrophies": "Trofi",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "Ciutkan strip mingguan",
+  "foodBrowserPanelFilterBySource": "Filter berdasarkan sumber",
+  "shareableGallerySortTooltip": "Urutkan template",
+  "shareableGallerySortDefault": "Default",
+  "shareableGallerySortRecents": "Terbaru dulu",
+  "shareableGallerySortFavorites": "Favorit dulu"
 }

@@ -19733,6 +19733,7 @@
   "founderNoteFounderSoloStillOn": "Zakladatel, sólo, stále ve verzi jedna.",
   "founderNoteIUsedToLog": "Dříve jsem si dva týdny v kuse zapisoval každé jídlo, cítil jsem se na sebe hrdý, pak jsem vešel do thajské restaurace, jejíž menu jsem nepřečetl, snědl to, co vypadalo nejbezpečněji, a potichu přestal aplikaci otevírat. O tři týdny později jsem si nainstaloval jinou, přísahal, že tentokrát to vyjde, a znovu projel stejný kolotoč. Každá aplikace zaznamenala moje data, žádná si nevšimla, když jsem se odmlčel — byly to účetní knihy, ne trenéři.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Plán",
   "founderNoteSheetANoteFrom": "POZNÁMKA OD {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Takže jsem postavil osobu, ne účetní knihu. Udělejte si jakékoli menu – doma nebo v zahraničí – a trenér vám ho přečte v makrech. Vynechejte úterý a středeční ráno vás to stáhne zpět bez výčitek svědomí. Učí se vaše jídla, vaše posilovna, vaše skluzové vzorce – za méně než jedno PT sezení za měsíc.",
@@ -26766,7 +26767,7 @@
   "unifiedHomeWidgetsFat": "Tuky",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Spálené kcal: {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal celkem dnes",
   "unifiedHomeWidgetsKcalLeft": " kcal zbývá",
   "unifiedHomeWidgetsLastNight": "minulou noc",
   "unifiedHomeWidgetsLog16oz": "Zaznamenat 16oz",
@@ -28141,5 +28142,11 @@
   "youHubStatsScores": "Statistiky a skóre",
   "youSkills": "Dovednosti",
   "youTrophies": "Trofeje",
-  "youWrapped": "Shrnutí"
+  "youWrapped": "Shrnutí",
+  "minimalHeaderCollapseWeekStrip": "Sbalit týdenní pruh",
+  "foodBrowserPanelFilterBySource": "Filtrovat podle zdroje",
+  "shareableGallerySortTooltip": "Seřadit šablony",
+  "shareableGallerySortDefault": "Výchozí",
+  "shareableGallerySortRecents": "Nejnovější jako první",
+  "shareableGallerySortFavorites": "Oblíbené jako první"
 }

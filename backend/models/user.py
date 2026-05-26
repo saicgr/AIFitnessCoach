@@ -306,3 +306,11 @@ class User(BaseModel):
     goal_target_date: Optional[str] = Field(default=None, max_length=10)
     paused_at: Optional[datetime] = None
     pause_duration_days: Optional[int] = Field(default=None, ge=1, le=90)
+
+    # ── Re-engagement / lapsed-user signals ──────────────────────────────────
+    # Cached by comeback_service.get_days_since_last_workout(); the Flutter
+    # router reads this to route lapsed unsubscribed users to /paywall-pricing
+    # so RevenueCat can surface a winback offering. NULL = never logged a
+    # workout OR comeback_service hasn't run yet for this user (treat as 0).
+    days_since_last_workout: Optional[int] = Field(default=None, ge=0)
+    last_workout_date: Optional[str] = Field(default=None, max_length=30)

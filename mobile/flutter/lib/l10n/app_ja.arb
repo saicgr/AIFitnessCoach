@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "創業者、ソロ、まだバージョン1。",
   "founderNoteIUsedToLog": "私は2週間連続ですべての食事を記録し、自分を誇らしく思っていましたが、読めないタイ料理店に入って無難そうなものを食べ、静かにアプリを開くのをやめてしまうということを繰り返していました。3週間後には別のアプリを再インストールして「今度こそは」と誓い、また同じループを繰り返すのです。どのアプリも私のデータを記録してくれましたが、私が沈黙したことに気づくものはありませんでした。それらはコーチではなく、単なる台帳だったのです。",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "ロードマップ",
   "founderNoteSheetANoteFrom": "{_founderName}からのメッセージ",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "そこで私は台帳ではなく人間を構築しました。国内外を問わず、どんなメニューでも撮影すると、コーチがそれをマクロで読み上げます。火曜日をスキップすれば、罪悪感を感じることなく水曜日の朝に戻れます。月に 1 回未満の PT セッションで、あなたの食事、ジム、滑りパターンを学習します。",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "脂肪",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": "kcalunit description in lists",
-  "unifiedHomeWidgetsKcalBurned": "消費カロリー: {arg0} kcal",
+  "unifiedHomeWidgetsKcalBurned": "本日合計 {arg0} kcal",
   "unifiedHomeWidgetsKcalLeft": "残りkcal",
   "unifiedHomeWidgetsLastNight": "昨夜",
   "unifiedHomeWidgetsLog16oz": "丸太16オンス",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "統計とスコア",
   "youSkills": "スキル",
   "youTrophies": "トロフィー",
-  "youWrapped": "まとめ"
+  "youWrapped": "まとめ",
+  "minimalHeaderCollapseWeekStrip": "週ストリップを折りたたむ",
+  "foodBrowserPanelFilterBySource": "ソースで絞り込む",
+  "shareableGallerySortTooltip": "テンプレートを並べ替え",
+  "shareableGallerySortDefault": "デフォルト",
+  "shareableGallerySortRecents": "最近のものを先に",
+  "shareableGallerySortFavorites": "お気に入りを先に"
 }

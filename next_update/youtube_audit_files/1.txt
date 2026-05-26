@@ -1,0 +1,1583 @@
+https://www.youtube.com/watch?v=gQjdLttWXuU
+- The all new Google Health
+app is officially here.
+Everyone can start downloading it.
+I think it just popped up
+literally like five minutes ago.
+Today I'm gonna do a quick walkthrough of
+what the Google Health app is like.
+If you're someone who
+plans to buy the Fitbit
+that comes out on May 26th, link below,
+you can start downloading the app.
+You can upload all of
+your Apple Health data
+if you're on iOS.
+If you have an Android, you can
+also download Google Health.
+Now, when you download the app,
+this is what it looks like.
+What you need to do is go to
+your app store and go ahead
+and refresh app updates.
+It should show up as, you
+should be able to update
+to the Google Health app,
+which used to be Fitbit.
+You previously had the Fitbit app.
+This icon and name will change.
+Go ahead and tap the update icon
+and then finally the Fitbit app
+is now The Google Health app.
+Walks you through kind
+of what the updates are,
+some familiar favorites, fresh updates.
+You can sync your updates,
+medical health records,
+get evidence-based answers
+with Google Health Premium.
+I'll even walk through
+what the non-premium
+versus premium looks like.
+They have an optional research
+and development terms that you can
+agree to or say no thanks.
+I obviously said agree.
+And then bam, you are now
+officially on the homepage
+of the Google Health app.
+This does not have premium,
+so you can see here
+there's no data right now
+because I've only done a few
+steps, a few calories burned.
+There's no wearables
+connected to this device.
+I just set this up.
+It's brand new.
+You can see my phone is synced.
+I can connect a Pixel
+or a Fitbit right here.
+Even though the Fitbit Air is not out yet,
+you can actually go ahead and connect it
+on the app, which that's pretty cool.
+You can play around with it a little bit.
+Apps and services, Apple Health,
+Medical Records and Strava.
+I'm gonna go ahead and tap Apple Health.
+It's gonna say sync your
+favorite apps to Google Health.
+This is a one way.
+I think a lot of people ask,
+will this push back to Apple Health?
+Currently they state that Google Health
+only reads from Apple Health
+to consolidate your
+metrics and does not write
+or export any data back
+to Apple Health yet.
+Support for writing back to Apple Health
+will be added later this year.
+If you want to use Bevel,
+maybe you want to read
+your Google Fitbit Air data
+in a different app, can't do that yet,
+or you can't see it in
+the Apple Health app.
+They're just consuming all the data,
+not really giving it back yet.
+Come on, sharing is carrying, Google.
+I go ahead and agree to these terms here.
+Now, before they would just read steps.
+Now you're gonna be able
+to turn all this on.
+So Fitbit would like the access.
+You see a list, heart rate variability,
+respiratory rate, sexual activity.
+Wow, there's none of that,
+I'll tell you that much.
+If I leave that, (indistinct) cut it out.
+I don't know if I want to say that.
+- I think you leave it in.
+- Okay, great.
+Sodium, there's definitely a lot of that.
+I can tell you that.
+We've been running.
+We're running very fast these days.
+Spotting.
+I'm not a female, so that
+will not be in my account.
+State of mind, water, weight,
+all this other information,
+we can go ahead, I'm
+gonna turn all of it on
+because I want Google Health
+to be able to consume that.
+It's gonna start syncing.
+It might take a while if
+you have a lot of data.
+Make sure you're on wifi.
+And it's gonna start uploading your steps,
+your past sleep metrics,
+everything that you have in Apple Health.
+There's not a lot of
+information on this phone,
+so that's why it's so sparse.
+This is my secondary phone.
+I can go ahead and sync my
+medical records right here.
+I agree.
+Quick connect.
+You got clear, so you can
+just identify quickly.
+These are all the providers
+that will sync their medical records
+directly to Google Health.
+The list is pretty extensive.
+I used to use Kaiser, so I know
+that I could probably
+connect their stuff here.
+Kaiser Permanente, I just have
+to find the California one.
+This just shows you how complex
+and convoluted medical information is.
+It's state by state,
+there's just so many laws,
+but they make it super easy
+for you to connect it, which is nice.
+I do not now.
+We'll skip.
+Devices, right now all I have is my phone
+connected for steps.
+Now I can go ahead
+and if I want to continue
+doing that stuff, I can.
+We do not want emails.
+I can update my weight.
+This is the free version of Google Health.
+I can see kind of my
+basic data, hydration.
+I can go ahead and add
+activity, the duration,
+time, walking, whatever it is.
+I would prefer to actually just type it in
+so there is a chat function.
+Oh, there is no chat.
+There you go.
+You have premium, which
+is on the right side.
+This is how different the apps will look.
+We have a Ask Coach button.
+Here, there's no fitness
+and sleep buttons right now.
+The health sections right here,
+you can see we got vitals,
+heart rate, weight, pretty
+much the same amount of data.
+Obviously this one has more
+information inside of it,
+which the other one does not,
+but you can fill in those gaps.
+There's no sleep button over here.
+There's no fitness as well.
+This is kind of the premium features
+I would assume and then today.
+And like if I want to
+(indistinct) health I can log,
+whereas health over here is Ask Coach.
+That's interesting.
+This is one of the differences
+is log instead of Ask Coach.
+I'm on the homepage.
+If I want to tap log, it looks
+like you can log with Coach.
+So log manually, which is simple, easy.
+You have those, those are free included.
+But if you want to log with Coach,
+which is my preferred
+method, you can just chat,
+type what you want to say to camera
+to show a photo of your food.
+These will all be premium features,
+which I think most people will
+get first three months free,
+but after that it can't expire
+if you don't want to use that log.
+Here we are.
+You can upload files, so
+like files of medical data.
+So this is all the AI features.
+It's like, hey, if we're
+gonna use AI to do this,
+that's a premium feature.
+If you want to manually do
+it, like some of this stuff,
+it's super manual.
+It's like filling out a form.
+Time, amount, fluid
+ounces, it's super manual.
+If you want to log your
+sleep manually, you can.
+This, I don't think I would
+have the patience to do,
+but if you do, you can do it.
+Glucose, maybe it's your glucose,
+like I can go ahead and
+just manually enter it.
+That one's relatively simple
+rather than doing a photo.
+Now I can go ahead and
+tap this edit button
+on the top right here and you can see,
+I can add and remove certain features
+or data points that I
+want in my home screen.
+Obviously it takes some
+time for some calibration
+of some data points and one
+app has more than the other,
+but this generally will be very similar.
+Now, on the right side we have premium.
+These are the insights.
+You see those little stars?
+These are our AI insights.
+It's gonna be like, hey, I did this fast,
+great way to flush out
+your legs, it was a run.
+Amazing.
+I can go ahead and ask
+questions, I can chat about it.
+Whereas in the free version,
+you're not gonna get any
+kind of chat buttons.
+Just kind of like view my
+history and that's about it.
+You'll have your raw data,
+but you won't have a ability
+to ask questions, get insights,
+and get a little deeper into the data.
+So you're essentially getting
+the data on the free version.
+You're able to ask questions
+and use AI to do more things
+on the premium version.
+On the top, you can see one says premium,
+the other one just says Google Health.
+Right side is a test flight app,
+so I just have to let you
+know, this is a beta app,
+it's not the full version yet,
+but I assume that these
+are gonna be very similar.
+Now, because the app is out now,
+you actually have a friends
+and family option here.
+You can go ahead and tap that
+and you can start to have a
+leaderboard with your friends,
+share metrics, all that fun information.
+Tap next.
+Your connections to Google Health,
+add a child, add a friend.
+I can go ahead and find myself
+and we can be friends with myself
+because no one else wants
+to be friends with me.
+So this is now available
+because the app is out.
+So if you are actually one of my friends
+and you want to be friends on the Fitbit,
+Google Health app, (indistinct).
+I know a lot of people
+asked about Apple Health,
+like let's say you want to use Bevel,
+Bevel writes a lot of
+information in the app,
+which Google Health can read,
+but it also reads a ton of information
+to give you metrics
+based on other wearables.
+If we go to the Google Health app,
+sitting right above Apple Health,
+tap that data from Google,
+if I go to tap that, you'll
+see that no data is found.
+So Google Health is not writing
+to Apple Health at this time.
+If I go to an app like Bevel,
+all this information is gonna be
+from my whoop or (indistinct) Apple Watch.
+Just to summarize, what
+are the main differences
+with the premium versus the free version?
+The premium will add at
+the Ask Coach, Gemini chat,
+adaptive fitness plans, which
+modify based on, you know,
+training, injuries or travel,
+detailed sleep coaching insights,
+can give you like, hey,
+stayed up last night,
+or your heart rate is a little bit high,
+did you eat something close to bedtime?
+Proactive insights, just like
+that, workout video library,
+mindfulness sessions and
+medical record summaries.
+That's only premium.
+$9.99 per month or it's also now included
+with the Fitbit Premium,
+which is the same thing.
+It's Google Health Premium.
+Or if you have Google AI Pro or Ultra,
+then Google Health Premium slash
+Fitbit premium is included.
+So as you can see here, I've got the
+Fitbit here on my left
+hand, the Steph Curry Band.
+This is 129.
+There is a 99 version that's
+just a different band.
+You're really just paying
+for the extra band,
+the limited edition version.
+It's mainly for the US
+but if you're buying in other countries,
+they have other bands and colors.
+But if I do put it side
+by side by the whoop,
+it just shows you how much bigger
+and how uglier the whoop is.
+I really hope the Whoop 6.0
+has a massive hardware change.
+It feels like half the size.
+And if I put them side
+by side like vertically,
+when you look at these size difference,
+the height is pretty
+similar, I would argue,
+but then the width of the
+Fitbit Air is so tiny,
+it feels like a wristband
+that you wear at a concert,
+whereas the Whoop looks like
+an actual fitness tracker.
+So I think that is insane in
+terms of the size difference.
+One downside though is I can
+wear my Whoop while charging,
+whereas the Fitbit Air,
+you do have to take it off for the charge.
+The charging pins are
+on the bottom over here.
+You look at the pod sizes,
+the Fitbit Air pod right here
+on the right, the Google,
+and then Whoop on the left.
+Like seven days of battery
+left on the Fitbit Air
+in this small form factor is insane.
+Look at that.
+It's about half the width
+and the thickness is
+approximately the same.
+These things are tiny.
+They're getting smaller and smaller.
+My big question is, does
+this have built-in GPS?
+This is tiny.
+No, it does not.
+Yes, this Garmin here has built-in GPS,
+but it's almost four, five,
+six, seven times the size.
+What I did learn is that it uses assisted
+GPS from your phone.
+So I was able to start
+a workout on my phone
+and then it's using the GPS from my phone
+and then the heart rate
+data from the Fitbit Air.
+And the iPhone 17 Pro Max
+does have multi-band GPS,
+so it's gonna be more accurate
+in a busy city like New York,
+but I can see all my information,
+distance, pace, zone.
+You'll get some of the stuff based on
+the accelerometer from
+the Fitbit Air device,
+but you will not get GPS tracks
+like we see on the map here.
+You can see where I ran, the
+different paces I was at,
+and we can zoom in on the map here.
+There we go.
+There's the pinch to zoom.
+You can see all the
+GPS tracks on this map,
+and this is from the GPS of my phone.
+There is no ECG in this.
+There is no NFC for payments,
+and that's why I use my
+Apple Watch for payments,
+to like pay for the subway.
+So I still kind of need this
+or I could use my phone.
+There's no fall detection,
+that's not listed as a feature set yet.
+AFib detection, yes,
+irregular rhythm notifications,
+you can set up in the health tab.
+This is a 24/7 heart rate device,
+so it's gonna be tracking
+your heart rate 24/7.
+It's not just during workouts.
+That's why they actually do
+say that you can wear this
+with a Google Pixel watch
+or any other wearable.
+It's just you won't be able
+to close your activity rings
+on Apple Health or be able
+to read it in other data
+because this Fitbit Air is
+not writing to Apple Health
+and thus it's not gonna show up
+as activity done on the Apple app.
+Whereas if you use a Garmin
+and you write your Garmin data
+to Apple Health, you can actually impact
+these numbers with the Garmin data
+if it's writing to Apple Health.
+Can you swim and shower with this?
+Yes, it's water resistance
+via a surface coating.
+The coating will diminish over
+time with wear and exposure.
+Google says they're not
+liable from moisture damage
+as the coating degrades,
+so really make sure
+that it's not built for swimming,
+but you can swim with it.
+You might know I'm trying
+to run a triathlon later this year,
+but when you go start workout,
+they have a whole bunch
+of exercises here in Open
+Swim, I think Pool Swim.
+Yep.
+Pool Swim is actually an option,
+but they're not measuring
+things like stroke rate
+and even heart rate.
+When I save the workout right here,
+it's really just duration
+and calories right now.
+It is a screenless device,
+which I absolutely love.
+It does have a vibration motor
+in there, so you can use it
+as an alarm to wake you up in the morning.
+It does not vibrate for
+incoming calls, texts
+or app notifications,
+not at launch at least,
+and there's no mention
+of that coming later,
+but people have said that they want this.
+You guys are crazy.
+How about we just don't get
+notified about anything?
+I think yes, it would be
+nice to have the feature,
+but it should always be off.
+Like one thing I wish for the Apple Watch
+is that all notifications
+were automatically off
+and you had to manually approve
+any Apple Watch notification.
+Just my thought.
+Does it auto detect workouts?
+Yes, it'll do runs, walks,
+bike rides, spinning, rowing,
+elliptical and team sports.
+You have to do at least 15 plus minutes
+and you get a notification
+and recap within 30 minutes
+of the session ending.
+And this detection will improve
+as you confirm the
+activities inside of the app.
+Well here, want smarter
+detection, tells you right here.
+You follow guided workouts,
+yes, they have coach generated workouts,
+that give you step-by-step guidance
+with live metrics streamed on your phone.
+You can switch between detailed
+and list view in the app,
+and if you have premium,
+you can do conversation
+(indistinct) and photo logging.
+So take a photo of the gym equipment,
+a whiteboard of the workout
+with the routine, a meal,
+handwritten journal entry,
+and coach will log that
+information for you.
+You can update track logs
+by just chatting like,
+hey, update my run to have
+started at eight o'clock
+instead of seven forty five.
+Can you run without your phone?
+Yes you can.
+It'll track heart rate and
+then accelerometer data,
+but you're not gonna get GPS tracks
+if you didn't start the run on your phone.
+Can you wear it with a pixel watch?
+Yes, you can.
+They do not recommend wearing
+these on the same wrist.
+You want to wear them on opposite wrists.
+You can wear them all day,
+take the pixel watch
+off when you go to bed,
+use this as your sleep tracker,
+and then you can wear both
+as your kind of full daytime tracker
+and get all your heart
+rate throughout the day.
+The data is automatically
+reconciled based on those devices
+and then you can actually
+select which data
+you want to prioritize in the app.
+Maybe you're an Apple
+user and you're like,
+I want to use my Apple Watch.
+Yep.
+And now that's what I'm doing.
+I'm wearing the Apple
+Watch on my right wrist
+and the Fitbit Air on my left wrist.
+The sad thing is the Fitbit Air
+does not write to Apple Health yet.
+Coming later this year.
+I wish I could see some
+of that information,
+like my sleep data on my Apple Watch.
+Then you're like, what if I
+have a Garmin or a (indistinct)?
+What about those?
+Well, these write to Apple
+Health or Health Connect,
+which is the Google version,
+and then Fitbit Air can read
+that data from those apps.
+So you're not directly
+connecting your (indistinct)
+or Garmin data to Fitbit
+Air or Google Health,
+but you are connecting it
+to kind of the home area
+where all the data goes into
+and then it reads the data out of that.
+This is an extra step of flow,
+but if you're using other apps
+to look at this data on your phone,
+you're most likely already using that.
+What about broadcasting heart rate?
+So let's say I want to go to a bike here,
+it's gonna start a workout.
+I wish there was a way to
+make sure GPS is acquired,
+but it does a three, two, one countdown.
+It shows you distance, heart
+rate, beat, elapsed time,
+and then if I want to
+share the heart rate,
+I tap on the right here,
+tap share heart rate,
+and I'll be able to share
+this with compatible devices,
+which is listed on their website.
+The Google Health version
+5.0 app is currently out,
+so if you want to download
+it and start testing it out,
+start uploading your Apple Health data.
+If you're an iOS user like me, do it now.
+Let me know in the comments below
+what you think of it so far
+and subscribe to notifications
+and the link for the Fitbit
+Air is down in the description.
+Now let me know what
+other questions you have.
+I will do a full review with
+data comparisons coming soon,
+not yet, but you have to
+subscribe to see that.
+It'll be on my main
+channel at Sherman Share.
+So subscribe to this
+channel for all the real raw
+detailed stuff that's coming out quick.
+The main channel will
+be more highly produced,
+more in depth, so it's
+coming very, very soon.
+It's just crazy to think that, whoop,
+you could buy three Fitbit Airs.
+Insane.
+
+https://youtu.be/uVE_bC2hhkU
+Something's happening in the wearable
+space that I don't think it's talked
+about enough. The hardware and software
+are splitting apart. For years, if you
+bought a Garmin, you used Garmin
+Connect. Coros used the Coros app. A
+Whoop band, the Whoop app. That was just
+the deal. The hardware and software are
+one thing, basically, and the brand
+controlled both of them. But, now that's
+changing. There's a whole category of
+developers building tools that sit on
+top of your data and do more with it.
+Better analysis, cross-device
+aggregation, AI coaching that pulls from
+your actual training history. And these
+aren't hobby projects. Some of these
+have hundreds of thousands of users.
+Some of them are good enough that
+established brands are filing lawsuits.
+Now, I think overall, this is good news
+for athletes. Your hardware can now earn
+its spot on your wrist purely on its own
+merits. Accurate sensors, long battery
+life, good GPS accuracy, without needing
+to consider if the experience is ruined
+by a weak app. But then, last week,
+Google showed up. And now the question
+is, did they just kill the entire
+movement, or did they at least beat
+everyone to the punch? Let's get INTO
+IT.
+>> [music]
+[music]
+>> NOW, BEFORE WE GET TO GOOGLE, I NEED TO
+MAKE A point about built-in app AI. Cuz
+I think most people are dramatically
+over estimating what it can actually do.
+For instance, when Garmin's daily
+suggested workout tells you to go and
+run 8 miles the day before a race, or
+pushes a hard interval session 2 days
+out from your marathon, that's not a
+bug. That's just a limitation of the
+daily suggested workout feature. The
+training intelligence inside these apps
+is not the same thing as a capable AI
+model working with full context about
+who you are and what you've done. And to
+be clear, this isn't a knock specific to
+Garmin. Every brand has some version of
+this problem. The AI in your respective
+fitness watch app is the result of
+rushing some level of AI chat
+integration because AI is the hot thing.
+But, none of them have the technical
+chops to put together something with
+deep insights. It doesn't know your
+injury history. It doesn't know how you
+felt on your last long run. I mean,
+yeah, you can mark down you felt strong,
+but do you think it's going to read into
+that and adjust the pace of your next
+workout because of that? No, it's making
+pattern-based suggestions from a simple
+model. And the results are sometimes
+fine, but they're sometimes just
+completely wrong as well. What I've seen
+from people who fed months of real
+training data into a proper large
+language model, HRV trends, sleep
+scores, race schedule, resting heart
+rate over time, training notes, it's a
+qualitatively different level of output.
+It's not a little better, it's
+meaningfully different. Plans built from
+your actual history, not a generic
+template with your name on it. And in my
+opinion, that's what makes this space
+worth paying attention to. Keep that in
+mind as we go. Here's how I think about
+where the market currently stands.
+There's three tiers here. Tier one is
+where pretty much everyone is at right
+now, the brand native app. Garmin
+Connect, Polar Flow, Whoop app, Coros.
+It works out of the box, it's fine for
+most people, and it has the limits that
+we just talked about. But, it starts
+getting more interesting here. Tier two
+is third-party aggregators. Apps that
+sit on top of your data, either
+presenting it differently or pulling
+from multiple devices into one view. A
+couple good examples would be the Sonar
+app, which is a health tracking like
+super app. There's hundreds of thousands
+of users, hundred-plus device
+integrations. So, if you're on a Garmin
+watch for workouts or an Oura Ring for
+sleep and recovery, Sonar I pull that
+both into one place and look at it
+holistically. And here's the detail that
+actually matters for multi-device users,
+configurable conflict resolution. When
+two devices give you different resting
+heart rate readings, you can choose how
+Sonar would handle it. You could choose
+the highest value, you could average
+them together, the most recent value.
+That kind of control is necessary when
+you're mixing hardware across brands.
+Then there's the even more popular Bevel
+app. It's an AI health companion. It's
+got that Whoop-like interface. It pulls
+in data from Apple Watches, Garmin,
+Aura, Strava, and continuous glucose
+monitors as well, like Dexcom and Libre.
+Which brings me to something worth
+mentioning here, in March Whoop sued
+Bevel claiming Bevel copied their
+layout and but the interesting thing is
+that Bevel had the layout back in 2023
+and Whoop introduced it in 2025. So,
+that lawsuit might prove to be a big
+whoops.
+>> [laughter]
+>> That's
+Okay, that was bad. That just made more
+people aware of Bevel while Whoop looks
+like just big bad corporation trying to
+squash the little guy. But the more
+important thing here though is that
+Whoop isn't going to file a lawsuit
+against irrelevant competitors. That's a
+signal that Bevel's onto something here.
+Third-party software got good enough to
+actually threaten a brand whose entire
+product value is the software
+experience. So, that's our second tier.
+And in just a month or two ago, I
+thought this was the future. As a
+reviewer, I'm always switching brands
+and being able to have continuity to my
+data is huge. Brands of wearables is
+great. I've got my Amazfit Helio strap,
+my Ring Conn ring, my Coros watch, and
+having them all in one space, it's
+fantastic. But now there's tier three.
+Now, tier three is where things get
+genuinely interesting here, pulling your
+data directly into an AI for real
+analysis. Now, the easiest entry here
+right now is freddy.coach. It's a
+managed bridge that connects your
+wearable data, Polar, Whoop, Oura,
+Garmin, Suunto, and more directly to
+Claude or ChatGPT or any MCP compatible
+AI. No reverse engineering, no technical
+setup, you authorize it, and then you
+basically just ask questions in plain
+language. What's my average heart rate
+variability been over the last 6 weeks?
+Or build me a 12-week training block for
+a next half marathon based on my actual
+fitness history and my goal time. And
+you get answers built from your real
+data, not a generic program from a book.
+And I think that's important. Most
+software that makes a plan asks you just
+a few qualifying questions, right? Your
+average weekly mileage, your average
+pace, recent race performance, and then
+it generates a plan off of just set
+formulas using those
+very few inputs. That's leagues below
+what these models are capable of. So,
+for Polar users specifically, there's an
+official MCP server on GitHub that taps
+directly into Polar's Access Link API.
+It's fully supported, it's stable, and
+Coros, and this just happened, it
+actually they they just launched their
+own official MCP server beta this month.
+Right now, it's read-only. There's 15
+endpoints, it works with both Claude and
+ChatGPT, but they've already said that
+write capabilities are coming. So, this
+means in the near future, an AI could
+generate a structured training plan from
+your actual data and push it directly to
+your Coros account and therefore onto
+your watch. That's not speculation,
+that's on the official Coros roadmap.
+There are still community-built Coros
+servers on GitHub that reverse engineer
+the API, but if you're going to give
+Coros a go, then go straight for the
+official beta on coros.com. That's
+definitely the one to use right now. But
+the point is that Tier 3 exists, it
+works, and the quality of output from a
+mature AI with full training context is
+considerably better than what any brand
+app is offering today. And right in the
+middle of all this development momentum,
+Google shows up and announces the Fitbit
+Air. Okay, Fitbit Air, it's a screenless
+wearable. Maybe they eat Whoop's lunch
+cuz it's 99 bucks, you don't need a
+subscription. But, here's what actually
+matters. It's the new Google Health app.
+So, as I said, the Fitbit Air, it's 99
+bucks. It's a similar concept to Whoop,
+right? It ships towards the end of May,
+and as of May 19th, the Fitbit app
+becomes Google Health. So, if you're an
+existing Fitbit user, this is an
+automatic update, your data carries
+over. So, it's interesting because the
+Google Health Coach is powered by
+Gemini. Personalized fitness planning,
+recovery analysis, sleep insights, AI
+coaching built directly into the app.
+That does require Google Health Premium
+at 10 bucks a month or 100 bucks a year,
+and the Fitbit Air is going to give you
+3 months of the free trial included, so
+you get to see what all the AI goodies
+will give you. Now, on the data
+aggregation side, Google Health connects
+through Apple Health and Android Health
+Connect, plus direct integrations with
+services like Strava, MyFitnessPal, and
+Withings, and full device-level support
+for Garmin, Whoop, and Oura are on their
+road map. So, not at launch, but rolling
+out throughout 2026 is what they've
+said. So, it's worth knowing that it's
+coming, but it's not going to be there
+just yet. But, the direction is obvious.
+This will be the first time a major
+brand has one of the top AI models built
+into the app. No more need to take the
+extra steps that I really just went over
+for the tier three level to interface
+with a top-level AI platform. So, with
+that consideration, did Google just
+swallow this entire space? If you've
+paid attention in the AI tech
+development space, you've seen this
+pattern before. A niche tool gets
+traction doing something the big
+platforms haven't built yet. Developers
+build a clever wrapper, and users find
+it. Then, Gemini or Claude or ChatGPT
+ships the feature natively or big
+platform just buys the workflow outright
+and the indie tool just loses any reason
+to exist. It happened in design
+software, it's happening with coding
+assistance, it's happening right now
+with legal and finance tools. Now, I
+know what some of you guys are thinking,
+AI slop, and yeah, I get it. That's all
+that's fair pushback. We've seen Will
+Smith eat spaghetti and the badly
+generated images with six fingers and
+the track record of AI coaching so far
+has been mixed and there's real reason
+to be skeptical of anything that just
+slaps AI powered on it and hands you a
+training plan. But, what's different
+here about these tier three tools and
+increasingly about Google Health is that
+the AI has access to your actual data
+over time. That changes what the output
+looks like. It's not pulling from a
+general population model, it's working
+from your numbers. So, basically, Google
+just shipped a version of tier two and
+tier three package into a $99 device and
+a $10 a month subscription aimed at
+anyone who doesn't want to go through
+the mess of setting up MCP servers or
+digging through GitHub. And for those
+users, which, I mean, be honest, is
+pretty much everyone, Google Health is
+the most accessible version of this that
+has ever existed. But, the indie tools
+still have more reach today. Google's
+third-party device support is limited at
+launch, like I said, so if you're on
+Coros or Polar or a brand that's not in
+Google's immediate rollout, then
+something like Sonar to aggregate things
+in or freddy.coach to have that tier
+three experience are more practical
+options right now. The window is open
+for them, but it's probably not going to
+stay open for too long. And here's the
+thing though, the larger trend doesn't
+change regardless of who wins. Hardware
+and software are decoupling. Your watch
+doesn't have to live or die by the
+quality of its companion app anymore.
+You can own a Coros and analyze with
+Claude. You can wear a Polar and use
+Sonar. You can, at least in the near
+future, use your Garmin watch with
+Google's Gemini health coach. You're not
+going to be locked in, and that's good
+for athletes. It means the hardware
+competes on what it actually is. Good
+sensors, good accuracy, long battery
+life, nice-looking form factor, not on
+whether the brand also happened to build
+a good app. And the software competes on
+what it actually does, what its
+capabilities are with your data. I will
+say Google entering this space
+accelerates all of this. When a big
+player comes in, everyone takes notice,
+everyone follows. It makes the category
+real for a much broader audience.
+Whether that ends up being good or bad
+for the indie developers building in the
+space is a separate question. I'd assume
+bad, but for the people wearing the
+hardware, it's a win. So, where are you
+with all this? Are you still living
+entirely in your brand app? Have you
+started pulling data out into different
+third-party tools? And if you're already
+on something like sonar or bevel or
+freddy.coach, what might you make the
+switch? Drop it in the comments.
+Genuinely curious what people are using
+these days. And if there's interest in
+actually going a bit deeper into this AI
+tier three stuff and seeing what it's
+actually like to set it up, let me know
+if you have interest in seeing that in
+the comments, and maybe I'll make a
+follow-up video on going through and
+setting things up in a step-by-step
+basis. If so, let me know. Thanks so
+much for hanging out with me today. I'm
+Dave, and this is Dave Does Fitness.
+Have an awesome day and stay fit.
+>> [music]
+[music]
+
+https://www.youtube.com/watch?v=J_ApXNMuweQ
+The Fitbit app is now the Google Health app.
+With a Google Health Premium subscription,
+you get access to the Google Health Coach built
+with Gemini. Your coach uses the goals you set and
+the data you track to provide personalized fitness
+plans and sleep guidance. The more you share, the
+more your coach learns over time and the better
+the personalized recommendations get. First,
+get started with a goal-setting conversation with
+your coach. You can find this immediately after
+activating your Premium membership or look out
+for a reminder on the top of the Today stream
+or on your Fitness tab. Share your goals and what
+works for you like your favorite ways to exercise
+or your busy days during the week, so your coach
+can provide you with a more personalized plan.
+Start a conversation with your coach at
+any time to change or update your goals.
+Once goal setting is complete, your coach will
+create a fitness plan for you and begin to
+deliver personalized insights daily. Check out
+the Fitness tab for your plan details. Here,
+you’ll see recommendations for weekly goals like
+get 350 Cardio Load or do 3 strength sessions,
+along with recommendations for specific exercises
+to achieve those goals. These update every week,
+and you can adjust your plan at any time from
+the Fitness tab or by chatting with the coach.
+Wear your device at night - and check in on
+the Sleep tab for a detailed breakdown on how
+you slept, see trends and get coach’s advice
+on how to tackle the day ahead to feel more
+energetic and get better sleep over time. Use
+the Today tab to see updates and feedback from
+your coach as you make progress. If you track
+your sleep at night you can see a summary of
+how you slept and your coach’s recommendations
+for the day. Or, if you track a workout, you can
+see your coach’s feedback and analysis. Use the
+Sleep and Health tabs for additional insights
+or to opt into additional offerings like, High or
+Low heart rate or Irregular rhythm notifications.
+Chat with your coach 24/7 to log meals, activities
+or for science-backed answers to your questions.
+Get started with your coach
+today for personalized and
+proactive guidance to help you achieve your goals.
+
+https://www.youtube.com/watch?v=NkTdCLbGH38
+So Google just did something kind of
+bold. They're trying to reignite the
+health space, which let's be honest has
+been getting pretty stale as of late. So
+Google basically said, what if the best
+fitness tracker was the one that you
+forgot you were wearing? Meet the Fitbit
+Air.
+>> [music]
+>> This thing is $99 with no screen and
+about the size of a Tic Tac. How's it
+going everyone? My name is RJ and after
+spending some real time with the Fitbit
+Air, I think Whoop is in trouble. I
+think Apple might be in trouble and I
+think this is one of the more
+interesting product launches that we've
+seen this year. That really isn't
+getting the hype that it deserves. So
+let's get into it. Quick context before
+we go anywhere. Fitbit as a brand has
+been quiet for a while. Google acquired
+them back in 2021 and since then it's
+kind of felt like nothing was really
+happening. A few updates here, a Pixel
+Watch over there, but nothing that
+really moved the needle. A lot of people
+including myself kind of assumed that
+Fitbit was just going to fade slowly
+into Google's ecosystem and then
+disappear. That's not what happened.
+What actually happened is Google spent
+the last few years building something
+and the Fitbit Air is the first product
+where you really see the strategy. It's
+not trying to compete with the Apple
+Watch. It's going after a completely
+different category, the screenless
+fitness tracker, which up until now has
+basically been Whoop's playground. But
+here's where things get really
+interesting. Google didn't just copy
+Whoop. They looked at Whoop's business
+model, which is you pay a subscription
+forever or your tracker stops working
+and Google did the opposite. The Fitbit
+Air is $99. You buy it, you own it and
+all the core stuff, heart rate, sleep
+tracking, SPO2, AFib detection, the
+smart wake alarm works forever with no
+subscription. That's a really aggressive
+model and it's the kind of thing only a
+company with Google's resources can
+really pull off. So, allow me to walk
+you through what this thing actually is.
+The Fitbit Air is a tiny pebble, about 5
+g, smaller than my thumbnail, that clips
+into a band. That's it. No screen, no
+buttons, no display of any kind. The
+whole tracker is made of recycled
+polycarbonate. The back has an array of
+sensors, and there's a little LED on the
+side that doubles as your status light.
+You double tap the pebble and it lights
+up white if your battery is good, red if
+you need to charge. Now, the band
+situation is where it gets fun. Google
+launched the Air with a few different
+band options. There is the performance
+loop, which is a textile band with a
+micro-adjustable buckle, the active
+band, which is silicone for workouts,
+and the elevated modern band, which is
+more of a leather style look for when
+you want to dress it up. The one that I
+got is the performance loop in lavender,
+which is kind of the soft blue color,
+and it really fits nicely on the wrist.
+I also ordered the elevated modern band
+in black, which should be here in a few
+days. The whole point of the system is
+that you can swap the pebble between the
+bands depending on what you're doing.
+Workout bands for the gym, fabric band
+for the day, something more dressed up
+for the evening. And the pebble pops in
+and out with zero effort. Push, click,
+and you're done. On the wrist, honestly,
+the first thing you notice is that you
+don't notice it. This thing weighs 12 g.
+The Apple Watch that I used to wear on
+my wrist weighs significantly more, and
+the difference is night and day. I've
+had this on my wrist now for about 10
+days. Workouts, work, sleeping in it,
+showering in it, and I genuinely forget
+that it's there, which sounds like a
+small thing, but it's actually a huge
+deal. Because the whole point of a
+fitness tracker is that you wear it all
+the time. And if it's bulky or
+uncomfortable or it bothers you at
+night, you take it off. And then, of
+course, you can't track anything. The
+Fitbit Air just kind of disappears into
+your routine, which I think is the
+entire pitch. Now, let's talk about
+what's actually inside this thing.
+Because for a $99 device, the sensor
+package is pretty impressive. You're
+getting 24/7 heart rate monitoring,
+heart rate variability, resting heart
+rate, SPO2, which is your blood oxygen,
+skin temperature variation, breathing
+rate, and probably the headline feature,
+irregular rhythm notifications, which is
+the AFib detection. AFib is normally
+locked behind a much more expensive
+device. Now, for comparison, Whoop
+charges $359 a year for AFib detection
+on their top-tier device. The Fitbit Ace
+just includes it. Battery is rated for 7
+days. Google says you can do a 5-minute
+fast charge and get a full day battery
+life, which is pretty clutch. It is
+water-resistant down to 50 m, so
+showers, pool, oceans are all fine. And
+it tracks workouts automatically. You
+start running, it figures out that
+you're running. You hop on a bike, it
+figures out that you're on a bike. No
+starting, no stopping, no telling it
+what you're doing. It just knows. So,
+here's my personal angle. I'm actually
+using this thing. I'm getting back to
+the gym, trying to shed some pandemic
+weight that's been around for way too
+long, and the Fitbit Ace is my primary
+tracker for all of it. Steps, heart rate
+on the StairMaster, hit sessions,
+lifting, everything is going through
+this little pebble on my wrist. And
+honestly, I'm really excited about it.
+Because the other half of this story is
+what Google built to go with it. So,
+that's the hardware. Now, let's talk
+about the app. Because if you're buying
+a screenless tracker, the app is the
+product. There is no watch face, there
+is no display. The only way you can see
+your data is on your phone. So, the app
+has to be incredible. And as of today,
+like literally today, May 19th, the
+Fitbit app does not exist anymore. It's
+now called Google Health. The same data,
+the same account, the same history, but
+the entire interface has been rebuilt
+around four tabs: today, fitness, sleep,
+and health. This is a big deal for a
+couple of reasons. One, if you're an
+existing Fitbit user, you don't have to
+do anything. The app updates
+automatically, your data carries over,
+and you wake up with the new app. Two,
+Google Health is now available on your
+iPhone, iOS 16.4 or higher. And if
+you're on an iPhone, even if you don't
+have a Fitbit, even if you never owned
+one, you can download Google Health
+today and pull all of your Apple Health
+data straight into it. Your Apple Watch
+steps, your workouts, your heart rate,
+all of it. Which is kind of wild when
+you think about it. Google just put
+their fitness app on the iPhone with
+full Apple Watch integration. On the
+same day they launched a device designed
+to make Apple's whole strategy look
+outdated. That is not an accident.
+That's a play. But the actual real
+reason why the Google Health app is a
+really big deal is what's inside. Which
+is, of course, the new Google Health
+Coach. And this is the part where things
+get genuinely new. The health coach is a
+Gemini powered AI built into the app.
+And instead of showing you a bunch of
+charts and graphs and leaving you to
+figure out what they mean, it actually
+talks to you. You can ask it how many
+reps you should be pushing, what kind of
+weight you should be doing, what kind of
+cardio makes sense for the day. For me,
+this is the use case. I want to dial in
+a routine. I want a coach that knows my
+data, knows my goals, and tells me what
+to do. I want to walk into the gym and
+already have a plan instead of standing
+there scrolling through Instagram trying
+to figure out what to train. And the
+health coach is supposed to do exactly
+that. Now, whether it actually delivers
+on that promise, that still needs to be
+tested. And that's a big part of what
+I'm going to be evaluating over the next
+couple of weeks. Now, the coach is a
+part of Google Health Premium, which is
+10 bucks a month. You get 3 months free
+in the box with Fitbit Air. And here's
+the thing nobody's really talking about.
+If you already pay for Google AI Pro or
+Ultra, Health Premium is included.
+You're already paying for it. So, if
+you're a Gemini subscriber, that is
+essentially a free upgrade to your
+existing plan. So, let's zoom out for a
+second. I think there's a bigger story
+here. Google just disrupted the entire
+health tracking space. Whoop's whole
+model is pay us forever or your hardware
+stops working. Apple's model is buy our
+expensive watch and we'll give you the
+basics for free. No AI, no real
+coaching, just charts and graphics. And
+now, Google walks in with a $99 tracker,
+a free tier that's actually useful, an
+optional subscription that's cheaper
+than Whoop, and a Gemini powered AI
+coach that nobody else is shipping. So,
+what does that mean? Honestly, I'm not
+totally sure yet. We have to see if the
+sensors are accurate, if the sleep
+tracking is real, if the battery
+actually gives you 7 days. But, the
+pieces are there and the price is there
+and the strategy is for sure there. And
+that is more than I can say for most
+product launches. So, that is my first
+look at the Fitbit Air. $99, seamless,
+12 grams, 7 days of battery, new AI
+coach, new app for the iPhone and
+Android, and one of the most aggressive
+moves Google has made in the consumer
+hardware space in years. And I'm going
+to be honest with you guys. I've had
+this on my wrist for about 10 days at
+this point. So, I have a lot of
+thoughts. But, the official review
+embargo doesn't lift till May 26th,
+which means I can't share the testing
+data, the accuracy comparisons, battery
+numbers, or my real verdict until then.
+What I can tell you today is what's in
+the box, how it feels, and what Google
+is actually trying to do here. The real
+review, the one with the data, the
+comparisons, my complete take, is coming
+out May 26th. So, make sure you guys hit
+that subscribe button. And of course, if
+you guys made it to the end of this
+video, drop a dolphin emoji down in the
+comments below. I would love to know who
+my true supporters are. And make sure
+you guys are subscribed, because trust
+me, I have a lot to say. I'll catch you
+guys all in the next one, and don't
+forget to flex with your tech.
+
+https://www.youtube.com/watch?v=Yg4d5LIZfXc
+What's going on everyone? It's Justin
+here, and today I'm going to be talking
+about my health tech setup. So, over the
+past few years, I've been checking out a
+bunch of different tech products,
+specifically when it comes to wearables.
+Whether it is something that you wear on
+your wrist, something you wear on your
+finger, and also other pieces of tech
+including sleep data that are either
+built into the bed, as well as wearables
+in the past before I got a smart bed
+setup. But, if you're traveling around
+all these different time zones, going to
+places last minute, and having an
+adaptive work schedule where deadlines
+kind of come out of nowhere, it's a
+little bit more difficult to have any
+sort of consistency in your lifestyle
+and trying to maintain like a stable
+health and fitness plan, and especially
+when it comes to managing a sleep plan.
+And with having all these separate
+health tracking devices and data, I was
+looking for the best way to consolidate
+and understand everything, and I think I
+found the perfect app for it. Bevel is
+an app that is unique in the way that it
+acts as an everything app to analyze
+recovery, strain, sleep, and nutrition,
+and you can integrate it with some of
+your favorite wearables including Oura
+Ring, Apple Watch specifically which has
+both sleep, fitness, and daily strain
+data, and also apps like Strava and
+Garmin, and take all that data and bring
+it into one place while using AI to be
+able to give you actionable insights
+based on this health data to actually
+make it useful, and things that you can
+use to then change, adapt, or take
+suggestions of your daily health and
+wellness lifestyle schedule. I'm going
+to be giving away an Apple Watch to one
+of you guys in this video, so if you
+guys want to enter, just go ahead and
+subscribe to the channel, drop a like on
+this video, and leave a comment down
+below with your Instagram username so
+Trevor from my team can contact you
+directly because we have had some scam
+comments in the comment section and I'll
+be picking a winner in 2 weeks.
+So I've actually known about Bevel for
+quite a while. Recently, I reached out
+to Bevel and I had the opportunity to
+try out Bevel 3.0 before it came out and
+I want to give a huge thanks to them for
+sponsoring this video, but all of the
+thoughts and opinions are my own from my
+personal experience that I'm showing you
+in this episode. So the way that I would
+describe Bevel is that it brings
+together all of your information and is
+your all-in-one health companion. At the
+top of the app, you have access to three
+clear global metrics: strain, recovery,
+and sleep. With each one, you can go
+more in-depth and learn exactly which
+features are influencing them the most
+and what you could do to improve them.
+Nutrition is just below and besides the
+usual metrics, Bevel also includes
+AI-assisted food logging so you can
+simply take a picture of your food and
+let Bevel handle the rest. And it's
+actually quite accurate in my
+experience. Having all of the
+information in one place allows you to
+understand aspects of your health. I
+personally just really like the
+interface of how everything works and
+how I'm able to customize the experience
+based on what I need because I found in
+the past whenever I was wearing
+different health wearables, I just
+wasn't really using the information and
+ultimately I would stop using them,
+switch between different devices, and
+then go to simpler methods. But also for
+someone who doesn't really like to
+journal because I haven't really found a
+point of it, this at least has a unique
+journaling method that can let you type
+in different variances of your day, how
+much caffeine you might have consumed,
+whether you feel tired even though the
+sleep data says you slept pretty well.
+As you go through your data sources, you
+can connect your native integration. So
+in this case, I've got Strava and Oura.
+And then for each of the sources, I can
+choose where that data actually comes
+from. And so in the case of heart rate,
+it comes from many different places: the
+Apple Watch, the Eight Sleep, the Garmin
+Connect, blood oxygen, and the Oura. And
+I can choose specifically which ones I
+want hidden and which ones I want
+aggregated within the Bevel app. So,
+having all of those options right here
+and being able to customize them is an
+easy way to figure out where your
+sources of data are coming from based on
+those preferences. And so, if you're
+someone who has just the Apple Watch,
+which already captures great data, and
+especially when it comes to the heart
+rate readings, the accuracy, the ability
+for sleep data as well, the central hub
+is already established, but then you can
+import the data selectively and have
+Bevel take it to the next level and
+round all of the things together,
+whether it is your activity, your sleep,
+your strain, and your nutrition. The
+Apple Watch Ultra is a device that I
+think looks really good, and it's very
+durable, it's accurate. Apple has
+continued to improve it heavily over the
+years, and I just find that as someone
+who really does care about you'll notice
+that all of the health products that I
+use are either silently integrated or
+well-designed. This is a very accurate
+way to be able to get readings of heart
+rate monitoring that is not only able to
+continuously monitor to you throughout
+the day, but if you picked up a model
+like the Ultra, for example, it is
+extremely durable and versatile. The
+other device that I have in my setup is
+the Oura Ring. And this one in
+particular is the Oura Ring 4. I
+personally have really liked the Oura
+Ring because of the form factor. I'm
+someone who rotates around throughout
+different devices, and so I feel like
+Bevel is like the perfect app for me
+because I might wear the Apple Watch at
+some moments. In other cases, I might
+wear one of my other watches in the
+collection, but the Oura Ring is great
+for collecting sleep data, especially
+when I'm traveling. When it comes to
+steps, my iPhone is always in my pocket,
+and so the step source comes from there.
+And then when I'm at home, I actually
+have the Eight Sleep, which allows me to
+control the temperature of my bed. I can
+change it. I can adapt it based on the
+preferences. I can give it feedback. But
+at the same time, it gives me data and
+insights that I've synced with Bevel
+that contributes to the sleep, the
+strain, and the overall score of my
+daily health. If you're a runner, Strava
+is where you might record your run
+specifically. And so, it actually
+gathers the sources from the best places
+possible, customized to your experience
+and your device preferences, and brings
+it all together into an ultimate summary
+experience and consultation.
+If you feel like you need more
+assistance understanding the data and
+want to be able to ask questions
+directly in the app, you have access to
+Bevel Intelligence. And it interprets
+all of the collected data, provides
+recommendations, connects the trends
+from different categories from the data
+and the general feedback itself, gives
+you deeper insights as to why your
+recovery and stress might be high or
+low. And there's also a conversational
+layer that asks you specific questions
+to answer and tries to provide better
+insights based on talking to you. But on
+top of that, Bevel has also recently
+announced Bevel 3.0. So, Bevel 3.0 just
+came out and it has three major
+features. You've got Bevel Intelligence
+V2, as well as biological age, which I
+know is a very popular and fun metric
+for people to compare, and you also have
+health records. So, Bevel Intelligence
+is something we talked about. And with
+V2, it acts as a personal data analyst
+and health coach that works with you
+24/7. It can manage all these different
+files for you, such as training plans,
+personal preferences, and it learns and
+updates over time as your plan adapts
+and as you learn more about yourself and
+try to gather new routines and instances
+to improve your health. It also
+proactively checks in with you
+throughout the day, and it also
+integrates web search, which accesses
+research from the web based on real
+health references and applies those
+learnings to your recommendations.
+Biological age, on the other hand, is a
+feature that I know a lot of people talk
+about and like to compare as a metric
+because it's an aggregation of data all
+together that can form a calculation
+such as biological age. It gives you
+updates every Monday based on your
+lifestyle, sleep, fitness, blood work,
+and other biomarkers. With health
+records, it just allows you to input
+more historical data within for Bevel to
+work off of. This includes storing blood
+tests, clinical notes, medical records
+directly in Bevel. So, whenever you get
+all of these records, you at least have
+a safe place to store it to reference
+back, but you can also use it to give
+you better feedback. And the biomarkers
+are automatically extracted from blood
+tests and fed into your biology tab and
+your biological age calculation to give
+it more context when paired with your
+real-world analysis. At the end of the
+day, I feel like with Bevel 3.0, it is
+just allowing you to have more streams
+of useful data storage and intelligence
+to give you more confident answers and
+advice for your lifestyle and just give
+you a bigger picture of your overall
+health insights. And in this case, I
+mean, we've had a very intense week
+through travel, heading home in between,
+25,000 steps a day exploring New York, a
+super long car ride here, and
+ultimately, it's time to just relax,
+make up on some sleep, go back at it
+tomorrow. And I like that I have the
+companion of Bevel that as someone who
+may not have like the most active
+lifestyle, I'm able to curate it to
+monitor my stress and my energy to allow
+me to work as much as possible because
+that is ultimately what I love to do. At
+the end of the day, I really feel like
+this is the health app for everyone.
+There are so many amazing smart health
+products out there. Ones that are
+focused on fitness, running, they're
+also separate dietary apps. And on top
+of that, there are sleep tracking apps
+as well. But to be able to bring all of
+that information together from Apple
+Health, Apple Watch, the Aura ring, or
+if you wear like a Garmin or use Strava
+for running specifically, is an
+experience that puts all of that data
+into action. As always, if you guys
+enjoyed this video, make sure you go
+ahead and drop a like, subscribe to the
+channel, and I'll see you guys in the
+next video.

@@ -39899,12 +39899,6 @@ abstract class AppLocalizations {
   /// **'Discover'**
   String get navDiscover;
 
-  /// No description provided for @bottomNavLeaderboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Leaderboard'**
-  String get bottomNavLeaderboard;
-
   /// No description provided for @navHome.
   ///
   /// In en, this message translates to:
@@ -45882,7 +45876,7 @@ abstract class AppLocalizations {
   /// No description provided for @pinnedNutrientsCardPinnedNutrients.
   ///
   /// In en, this message translates to:
-  /// **'Pinned nutrients'**
+  /// **'More nutrients'**
   String get pinnedNutrientsCardPinnedNutrients;
 
   /// No description provided for @planAnalyzingBuildingYourPlan.
@@ -74862,6 +74856,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t clear — try again later.'**
   String get importsPrivacyClearFailedSnack;
+
+  /// No description provided for @bottomNavLeaderboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard'**
+  String get bottomNavLeaderboard;
+
+  /// No description provided for @discoverBoardXp.
+  ///
+  /// In en, this message translates to:
+  /// **'XP'**
+  String get discoverBoardXp;
+
+  /// No description provided for @discoverResetsSunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Resets Sunday'**
+  String get discoverResetsSunday;
+
+  /// No description provided for @discoverNoEntriesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries yet · Log a workout this week to climb'**
+  String get discoverNoEntriesYet;
+
+  /// No description provided for @discoverViewTop10.
+  ///
+  /// In en, this message translates to:
+  /// **'View top 10'**
+  String get discoverViewTop10;
+
+  /// No description provided for @discoverMovers.
+  ///
+  /// In en, this message translates to:
+  /// **'Movers'**
+  String get discoverMovers;
 }
 
 class _AppLocalizationsDelegate

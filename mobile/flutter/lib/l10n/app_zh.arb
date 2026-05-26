@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "创始人，单枪匹马，仍在第一版。",
   "founderNoteIUsedToLog": "我曾经连续两周记录每一顿饭，为自己感到自豪，然后走进一家看不懂菜单的泰国餐厅，吃看起来最安全的东西，然后默默地不再打开那个应用。三周后，我会重新安装另一个应用，发誓这次一定能坚持，然后再次陷入同样的循环。每个应用都记录了我的数据，但没有一个在我沉默时注意到我——它们只是账本，而不是教练。",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "路线图",
   "founderNoteSheetANoteFrom": "来自 {_founderName} 的寄语",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "所以我建立的是人，而不是账本。拍下任何菜单——无论是在国内还是国外——教练都会以宏的方式将其读给你听。跳过周二，周三早上你就会回到过去，而不会感到内疚。它可以了解您的食物、您的健身情况、您的滑倒模式——每月只需不到一次的 PT 疗程。",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "脂肪",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "已消耗 {arg0} kcal",
+  "unifiedHomeWidgetsKcalBurned": "今日总计 {arg0} 千卡",
   "unifiedHomeWidgetsKcalLeft": " kcal 剩余",
   "unifiedHomeWidgetsLastNight": "昨晚",
   "unifiedHomeWidgetsLog16oz": "记录 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "统计与得分",
   "youSkills": "技能",
   "youTrophies": "奖杯",
-  "youWrapped": "年度回顾"
+  "youWrapped": "年度回顾",
+  "minimalHeaderCollapseWeekStrip": "折叠周条",
+  "foodBrowserPanelFilterBySource": "按来源筛选",
+  "shareableGallerySortTooltip": "模板排序",
+  "shareableGallerySortDefault": "默认",
+  "shareableGallerySortRecents": "最近优先",
+  "shareableGallerySortFavorites": "收藏优先"
 }

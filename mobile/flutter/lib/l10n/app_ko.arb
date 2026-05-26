@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "1인 창업자, 여전히 버전 1에 머물러 있습니다.",
   "founderNoteIUsedToLog": "저는 2주 동안 매일 모든 식사를 기록하며 뿌듯해하다가, 메뉴를 읽을 수 없는 태국 식당에 들어가 가장 안전해 보이는 음식을 먹고 조용히 앱을 삭제하곤 했습니다. 3주 뒤에는 다른 앱을 다시 설치하고 이번엔 다를 거라 다짐하며 같은 과정을 반복했죠. 모든 앱이 제 데이터를 기록했지만, 제가 기록을 멈췄을 때 알아차린 앱은 없었습니다. 그것들은 코치가 아니라 장부였으니까요.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "로드맵",
   "founderNoteSheetANoteFrom": "창립자의 메시지: {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "그래서 장부가 아닌 사람을 지었습니다. 국내든 해외든 메뉴를 찍으면 코치가 매크로로 다시 읽어줍니다. 화요일을 건너뛰면 죄책감 없이 수요일 아침에 돌아올 수 있습니다. 한 달에 한 번 미만의 PT 세션으로 음식, 체육관, 슬립 패턴을 학습합니다.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "지방",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "소모 칼로리: {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "오늘 총 {arg0} kcal",
   "unifiedHomeWidgetsKcalLeft": " kcal 남음",
   "unifiedHomeWidgetsLastNight": "지난밤",
   "unifiedHomeWidgetsLog16oz": "16oz 기록",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "통계 및 점수",
   "youSkills": "스킬",
   "youTrophies": "트로피",
-  "youWrapped": "연말 결산"
+  "youWrapped": "연말 결산",
+  "minimalHeaderCollapseWeekStrip": "주간 스트립 접기",
+  "foodBrowserPanelFilterBySource": "출처별 필터",
+  "shareableGallerySortTooltip": "템플릿 정렬",
+  "shareableGallerySortDefault": "기본값",
+  "shareableGallerySortRecents": "최근순",
+  "shareableGallerySortFavorites": "즐겨찾기 먼저"
 }

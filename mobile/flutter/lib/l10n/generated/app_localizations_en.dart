@@ -23634,9 +23634,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDiscover => 'Discover';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
-
-  @override
   String get navHome => 'Home';
 
   @override
@@ -44182,4 +44179,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get importsPrivacyClearFailedSnack =>
       'Couldn\'t clear — try again later.';
+
+  @override
+  String get bottomNavLeaderboard => 'Leaderboard';
+
+  @override
+  String get discoverBoardXp => 'XP';
+
+  @override
+  String get discoverResetsSunday => 'Resets Sunday';
+
+  @override
+  String get discoverNoEntriesYet =>
+      'No entries yet · Log a workout this week to climb';
+
+  @override
+  String get discoverViewTop10 => 'View top 10';
+
+  @override
+  String get discoverMovers => 'Movers';
 }

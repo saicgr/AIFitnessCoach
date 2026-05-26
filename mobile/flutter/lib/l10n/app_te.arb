@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "వ్యవస్థాపకుడు, సోలో, ఇంకా వెర్షన్ వన్‌లోనే ఉన్నాను.",
   "founderNoteIUsedToLog": "నేను రెండు వారాల పాటు ప్రతి భోజనాన్ని లాగ్ చేసేవాడిని, గర్వంగా అనిపించేది, ఆపై చదవలేని థాయ్ రెస్టారెంట్‌లోకి వెళ్లి, సురక్షితంగా అనిపించినది తిని, యాప్‌ను తెరవడం ఆపేసేవాడిని. మూడు వారాల తర్వాత మరొక యాప్‌ను ఇన్‌స్టాల్ చేసి, ఈసారి కచ్చితంగా చేస్తానని ప్రమాణం చేసి, మళ్ళీ అదే లూప్‌లో పడేవాడిని. ప్రతి యాప్ నా డేటాను లాగ్ చేసేది, కానీ నేను మౌనంగా ఉన్నప్పుడు ఏదీ గమనించలేదు — అవి కేవలం లెడ్జర్లు, కోచ్‌లు కావు.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "రోడ్‌మ్యాప్",
   "founderNoteSheetANoteFrom": "{_founderName} నుండి ఒక నోట్",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "కాబట్టి నేను వ్యక్తిని నిర్మించాను, లెడ్జర్ కాదు. ఏదైనా మెనుని — స్వదేశంలో లేదా విదేశాలలో — స్నాప్ చేయండి మరియు కోచ్ దానిని మాక్రోలలో మీకు తిరిగి చదువుతారు. మంగళవారం దాటవేయండి మరియు అపరాధ యాత్ర లేకుండా బుధవారం ఉదయం మిమ్మల్ని వెనక్కి లాగుతుంది. ఇది మీ ఆహారాలు, మీ వ్యాయామశాల, మీ స్లిప్ ప్యాటర్న్‌లను నేర్చుకుంటుంది — నెలకు ఒక PT సెషన్ కంటే తక్కువ సమయం.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "ఫ్యాట్",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "kcal బర్న్ అయ్యాయి {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} కిలోకాలరీలు నేడు మొత్తం",
   "unifiedHomeWidgetsKcalLeft": " kcal మిగిలి ఉన్నాయి",
   "unifiedHomeWidgetsLastNight": "నిన్న రాత్రి",
   "unifiedHomeWidgetsLog16oz": "16oz లాగ్ చేయండి",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "గణాంకాలు & స్కోర్లు",
   "youSkills": "నైపుణ్యాలు",
   "youTrophies": "ట్రోఫీలు",
-  "youWrapped": "ర్యాప్డ్"
+  "youWrapped": "ర్యాప్డ్",
+  "minimalHeaderCollapseWeekStrip": "వార పట్టీని ముడుచు",
+  "foodBrowserPanelFilterBySource": "మూలం ద్వారా ఫిల్టర్",
+  "shareableGallerySortTooltip": "టెంప్లేట్‌లను క్రమబద్ధీకరించు",
+  "shareableGallerySortDefault": "డిఫాల్ట్",
+  "shareableGallerySortRecents": "ఇటీవలివి ముందుగా",
+  "shareableGallerySortFavorites": "ఇష్టమైనవి ముందుగా"
 }

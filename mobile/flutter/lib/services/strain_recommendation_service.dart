@@ -73,7 +73,7 @@ StrainRecommendation chooseStrainRecommendation({
   if (priorTwoDaysHardCount >= 2) {
     return const StrainRecommendation(
       tier: StrainTier.rest,
-      rationale: 'Two hard days in a row — take today off.',
+      rationale: 'Two hard days in a row, take today off.',
     );
   }
 
@@ -84,12 +84,12 @@ StrainRecommendation chooseStrainRecommendation({
     if (s < 60) {
       return StrainRecommendation(
         tier: StrainTier.light,
-        rationale: 'Sleep was $s — keep it light today.',
+        rationale: 'Sleep $s · keep it light today.',
       );
     }
     return const StrainRecommendation(
       tier: StrainTier.light,
-      rationale: 'Yesterday was a heavy day — keep it light.',
+      rationale: 'Yesterday was a heavy day, keep it light.',
     );
   }
 
@@ -99,18 +99,18 @@ StrainRecommendation chooseStrainRecommendation({
     if (s < 75) {
       return StrainRecommendation(
         tier: StrainTier.moderate,
-        rationale: 'Sleep was $s — moderate effort today.',
+        rationale: 'Sleep $s · moderate effort today.',
       );
     }
     return const StrainRecommendation(
       tier: StrainTier.moderate,
-      rationale: 'Yesterday added load — moderate effort today.',
+      rationale: 'Yesterday added load, moderate effort today.',
     );
   }
 
   // 4. Default green-light — sleep is good and yesterday wasn't excessive.
   return const StrainRecommendation(
     tier: StrainTier.hard,
-    rationale: 'Recovered and ready — green light for hard work.',
+    rationale: 'Recovered and ready, green light for hard work.',
   );
 }

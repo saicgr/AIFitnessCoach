@@ -26,6 +26,7 @@ from core.timezone_utils import get_user_today, _safe_zone
 from services.email_service import get_email_service
 from services.email_helpers import first_name, time_band
 from services.notification_suppression import should_suppress_notification
+from services.posthog_client import capture_lifecycle
 from models.email import UserStats, ScheduleState, TimeBand, CoachStyle
 
 logger = get_logger(__name__)
@@ -243,6 +244,23 @@ def _log_email_sent(
         supabase.client.table("email_send_log").insert(row).execute()
     except Exception as e:
         logger.error(f"❌ Failed to log email send: {e}", exc_info=True)
+
+    # Single backend chokepoint for `lifecycle_email_sent`. Every successful
+    # send across the 21 _job_* functions in this module funnels through
+    # _log_email_sent, so wiring telemetry here covers them all without
+    # touching each job site individually. `email_type` carries the job
+    # identity (win_back, idle_nudge, etc.); `metadata` carries job-specific
+    # context that's useful for PostHog funnel analysis.
+    capture_lifecycle(
+        user_id=str(user_id),
+        event_name="lifecycle_email_sent",
+        properties={
+            "kind": email_type,
+            "channel": "email",
+            "local_date": local_date,
+            **(metadata or {}),
+        },
+    )
 
 
 # ─── Main Endpoint ──────────────────────────────────────────────────────────

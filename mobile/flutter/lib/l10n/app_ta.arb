@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "நிறுவனர், தனியாக, இன்னும் முதல் பதிப்பில்.",
   "founderNoteIUsedToLog": "நான் இரண்டு வாரங்கள் தொடர்ந்து ஒவ்வொரு உணவையும் பதிவு செய்வேன், என்னைப் பற்றி பெருமைப்படுவேன், பிறகு என்னால் படிக்க முடியாத ஒரு தாய் உணவகத்திற்குள் நுழைந்து, பாதுகாப்பானதாகத் தெரிந்ததைச் சாப்பிட்டுவிட்டு, அமைதியாக செயலியைத் திறப்பதை நிறுத்திவிடுவேன். மூன்று வாரங்களுக்குப் பிறகு நான் வேறொன்றை மீண்டும் நிறுவுவேன், இதுதான் சரியான நேரம் என்று சத்தியம் செய்வேன், மீண்டும் அதே சுழற்சியை இயக்குவேன். ஒவ்வொரு செயலியும் எனது தரவைப் பதிவு செய்தது, நான் அமைதியானபோது அவற்றில் எதுவும் கவனிக்கவில்லை — அவை லெட்ஜர்கள், பயிற்சியாளர்கள் அல்ல.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "வழித்திட்டம்",
   "founderNoteSheetANoteFrom": "{_founderName}-இடமிருந்து ஒரு குறிப்பு",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "எனவே நான் நபரை கட்டினேன், பேரேடு அல்ல. உள்நாட்டிலோ வெளிநாட்டிலோ - ஏதேனும் மெனுவை எடுத்து, பயிற்சியாளர் அதை மேக்ரோக்களில் உங்களுக்குத் திரும்பப் படிக்கிறார். ஒரு செவ்வாய் கிழமையைத் தவிர்த்தால், அது குற்ற உணர்வு இல்லாமல் புதன்கிழமை காலை உங்களை பின்னுக்கு இழுக்கும். இது உங்கள் உணவுகள், உங்கள் உடற்பயிற்சி கூடம், உங்கள் சீட்டு முறைகள் - ஒரு மாதத்திற்கு ஒரு PT அமர்வுக்கு குறைவாகவே கற்றுக்கொள்கிறது.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "கொழுப்பு",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "எரிக்கப்பட்ட கலோரிகள் {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} கிலோகலோரி இன்று மொத்தம்",
   "unifiedHomeWidgetsKcalLeft": " kcal மீதமுள்ளது",
   "unifiedHomeWidgetsLastNight": "நேற்றிரவு",
   "unifiedHomeWidgetsLog16oz": "16oz பதிவு செய்யவும்",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "புள்ளிவிவரங்கள் & மதிப்பெண்கள்",
   "youSkills": "திறமைகள்",
   "youTrophies": "கோப்பைகள்",
-  "youWrapped": "ரேப்ட்"
+  "youWrapped": "ரேப்ட்",
+  "minimalHeaderCollapseWeekStrip": "வார பட்டியை சுருக்கு",
+  "foodBrowserPanelFilterBySource": "மூலத்தின் அடிப்படையில் வடிகட்டு",
+  "shareableGallerySortTooltip": "டெம்ப்ளேட்களை வரிசைப்படுத்து",
+  "shareableGallerySortDefault": "இயல்புநிலை",
+  "shareableGallerySortRecents": "சமீபத்தியவை முதலில்",
+  "shareableGallerySortFavorites": "பிடித்தவை முதலில்"
 }

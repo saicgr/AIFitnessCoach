@@ -19733,6 +19733,7 @@
   "founderNoteFounderSoloStillOn": "Fundador, en solitario, todavía en la versión uno.",
   "founderNoteIUsedToLog": "Solía registrar cada comida durante dos semanas seguidas, sentirme orgulloso de mí mismo, luego entrar a un lugar tailandés cuyo menú no podía leer, comer lo que parecía más seguro y dejar de abrir la aplicación silenciosamente. Tres semanas después, reinstalaba otra, juraba que esta vez sí, y repetía el mismo ciclo. Cada aplicación registraba mis datos, ninguna notaba cuando me ausentaba; eran libros contables, no entrenadores.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Hoja de ruta",
   "founderNoteSheetANoteFrom": "UNA NOTA DE {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Entonces construí la persona, no el libro de contabilidad. Tome cualquier menú, en casa o en el extranjero, y el entrenador se lo leerá en macros. Si te saltas el martes, volverás al miércoles por la mañana sin sentirte culpable. Aprende tus alimentos, tu gimnasio, tus patrones de deslizamiento, durante menos de una sesión de fisioterapia al mes.",
@@ -26766,7 +26767,7 @@
   "unifiedHomeWidgetsFat": "Gordo",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Kcal quemadas: {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal totales hoy",
   "unifiedHomeWidgetsKcalLeft": " kcal restantes",
   "unifiedHomeWidgetsLastNight": "anoche",
   "unifiedHomeWidgetsLog16oz": "Registro de 16 oz",
@@ -28141,5 +28142,11 @@
   "youHubStatsScores": "Estadísticas y puntuaciones",
   "youSkills": "Habilidades",
   "youTrophies": "Trofeos",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "Contraer barra semanal",
+  "foodBrowserPanelFilterBySource": "Filtrar por fuente",
+  "shareableGallerySortTooltip": "Ordenar plantillas",
+  "shareableGallerySortDefault": "Predeterminado",
+  "shareableGallerySortRecents": "Recientes primero",
+  "shareableGallerySortFavorites": "Favoritos primero"
 }

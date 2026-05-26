@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../controllers/workout_timer_controller.dart';
@@ -227,6 +228,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                               : Colors.grey.shade700,
                         ),
                         tooltip: AppLocalizations.of(context)!.workoutTopBarMore,
+                        position: PopupMenuPosition.under,
                         onSelected: (v) {
                           HapticFeedback.selectionClick();
                           if (v == 'skip_exercise') {
@@ -247,13 +249,18 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                                   Text(l.workoutTopBarSkipExercise),
                                 ]),
                               ),
+                            if (onCompleteWorkoutNow != null && onSkipExercise != null)
+                              const PopupMenuDivider(),
                             if (onCompleteWorkoutNow != null)
                               PopupMenuItem<String>(
                                 value: 'complete_now',
                                 child: Row(children: [
-                                  const Icon(Icons.check_circle_rounded, size: 18),
+                                  Icon(Icons.check_circle_rounded,
+                                      size: 18, color: AppColors.cyan),
                                   const SizedBox(width: 10),
-                                  Text(l.workoutTopBarCompleteWorkout),
+                                  Text(l.workoutTopBarCompleteWorkout,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600)),
                                 ]),
                               ),
                           ];

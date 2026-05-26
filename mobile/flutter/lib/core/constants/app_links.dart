@@ -9,6 +9,7 @@ class AppLinks {
   // ── Website ───────────────────────────────────────────────────────────────
 
   static const String website = 'https://${Branding.marketingDomain}';
+  static const String roadmap = 'https://${Branding.marketingDomain}/roadmap';
 
   // ── Social Media ──────────────────────────────────────────────────────────
 

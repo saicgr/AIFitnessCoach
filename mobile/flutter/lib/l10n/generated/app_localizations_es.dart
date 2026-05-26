@@ -13524,6 +13524,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get foodBrowserPanelFilterByCountry => 'Filtrar por país';
 
   @override
+  String get foodBrowserPanelFilterBySource => 'Filtrar por fuente';
+
+  @override
   String get foodBrowserPanelHighFat => 'Alto en grasas';
 
   @override
@@ -14312,6 +14315,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get founderNoteDiscord => 'Discord';
+
+  @override
+  String get founderNoteRoadmap => 'Hoja de ruta';
 
   @override
   String get founderNoteFounderSoloStillOn =>
@@ -22872,6 +22878,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get minimalHeaderChangeGymProfile => 'Cambiar perfil de gimnasio';
+
+  @override
+  String get minimalHeaderCollapseWeekStrip => 'Contraer barra semanal';
 
   @override
   String minimalHeaderD(Object streakDays) {
@@ -35348,6 +35357,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shareArtifactCardCopyShare => 'Copiar y compartir';
 
   @override
+  String get shareableGallerySortDefault => 'Predeterminado';
+
+  @override
+  String get shareableGallerySortFavorites => 'Favoritos primero';
+
+  @override
+  String get shareableGallerySortRecents => 'Recientes primero';
+
+  @override
+  String get shareableGallerySortTooltip => 'Ordenar plantillas';
+
+  @override
   String get shareArtifactCardCouldNotCreateShare =>
       'No se pudo crear el enlace para compartir.';
 
@@ -39598,7 +39619,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return 'Kcal quemadas: $arg0';
+    return '$arg0 kcal totales hoy';
   }
 
   @override
@@ -44817,4 +44838,23 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get importsPrivacyClearFailedSnack =>
       'No se pudo borrar. Vuelve a intentarlo más tarde.';
+
+  @override
+  String get bottomNavLeaderboard => 'Leaderboard';
+
+  @override
+  String get discoverBoardXp => 'XP';
+
+  @override
+  String get discoverResetsSunday => 'Resets Sunday';
+
+  @override
+  String get discoverNoEntriesYet =>
+      'No entries yet · Log a workout this week to climb';
+
+  @override
+  String get discoverViewTop10 => 'View top 10';
+
+  @override
+  String get discoverMovers => 'Movers';
 }

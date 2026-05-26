@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Grundare, solo, fortfarande på version ett.",
   "founderNoteIUsedToLog": "Jag brukade logga varje måltid i två veckor i sträck, känna mig stolt, för att sedan gå in på en thairestaurang där jag inte kunde läsa menyn, äta det som såg säkrast ut och tyst sluta öppna appen. Tre veckor senare installerade jag en annan, svor på att det var denna gång det skulle gå, och körde samma loop igen. Varje app loggade min data, ingen av dem märkte när jag blev tyst — de var huvudböcker, inte coacher.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Färdplan",
   "founderNoteSheetANoteFrom": "EN HÄLSNING FRÅN {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Så jag byggde personen, inte huvudboken. Knäpp valfri meny - hemma eller utomlands - och tränaren läser tillbaka den för dig i makron. Hoppa över en tisdag och det drar dig tillbaka onsdag morgon utan skuldresan. Den lär sig din mat, ditt gym, dina halkmönster - för mindre än ett PT-pass i månaden.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Fett",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Unified home widgets kcal förbrukade {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal totalt idag",
   "unifiedHomeWidgetsKcalLeft": " kcal kvar",
   "unifiedHomeWidgetsLastNight": "i natt",
   "unifiedHomeWidgetsLog16oz": "Logga 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Statistik och poäng",
   "youSkills": "Färdigheter",
   "youTrophies": "Troféer",
-  "youWrapped": "Sammanfattning"
+  "youWrapped": "Sammanfattning",
+  "minimalHeaderCollapseWeekStrip": "Fäll ihop veckoraden",
+  "foodBrowserPanelFilterBySource": "Filtrera efter källa",
+  "shareableGallerySortTooltip": "Sortera mallar",
+  "shareableGallerySortDefault": "Standard",
+  "shareableGallerySortRecents": "Senaste först",
+  "shareableGallerySortFavorites": "Favoriter först"
 }

@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "संस्थापक, अकेले, अभी भी पहले संस्करण पर।",
   "founderNoteIUsedToLog": "मैं लगातार दो सप्ताह तक हर भोजन को लॉग करता था, खुद पर गर्व महसूस करता था, फिर एक ऐसी थाई जगह पर जाता था जिसे मैं पढ़ नहीं सकता था, जो सबसे सुरक्षित दिखता था उसे खाता था, और चुपचाप ऐप खोलना बंद कर देता था। तीन सप्ताह बाद मैं एक अलग ऐप फिर से इंस्टॉल करता, कसम खाता कि यह बार सही है, और फिर से वही चक्र चलाता। हर ऐप मेरा डेटा लॉग करता था, लेकिन जब मैं चुप हो जाता था तो उनमें से कोई भी ध्यान नहीं देता था — वे लेजर थे, कोच नहीं।",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "रोडमैप",
   "founderNoteSheetANoteFrom": "{_founderName} की ओर से एक नोट",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "इसलिए मैंने व्यक्ति का निर्माण किया, बही का नहीं। किसी भी मेनू को स्नैप करें - घर पर या विदेश में - और कोच इसे मैक्रोज़ में आपको वापस पढ़ता है। मंगलवार को छोड़ दें और यह आपको बुधवार की सुबह बिना किसी अपराधबोध यात्रा के वापस ले आएगा। यह आपके भोजन, आपके जिम, आपके स्लिप पैटर्न को सीखता है - एक महीने में एक से भी कम पीटी सत्र के लिए।",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "मोटा",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "कैलोरी बर्न हुई {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} किलोकैलोरी आज कुल",
   "unifiedHomeWidgetsKcalLeft": " kcal बाकी",
   "unifiedHomeWidgetsLastNight": "पिछली रात",
   "unifiedHomeWidgetsLog16oz": "लॉग 16ऑउंस",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "आंकड़े और स्कोर",
   "youSkills": "कौशल",
   "youTrophies": "ट्रॉफियाँ",
-  "youWrapped": "रैप्ड"
+  "youWrapped": "रैप्ड",
+  "minimalHeaderCollapseWeekStrip": "साप्ताहिक स्ट्रिप संक्षिप्त करें",
+  "foodBrowserPanelFilterBySource": "स्रोत के अनुसार फ़िल्टर करें",
+  "shareableGallerySortTooltip": "टेम्पलेट क्रमबद्ध करें",
+  "shareableGallerySortDefault": "डिफ़ॉल्ट",
+  "shareableGallerySortRecents": "हाल के पहले",
+  "shareableGallerySortFavorites": "पसंदीदा पहले"
 }

@@ -850,6 +850,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       // actions so they don't consume a full row each.
                       PopupMenuButton<String>(
                         tooltip: AppLocalizations.of(context).workoutCompleteMoreActions,
+                        position: PopupMenuPosition.under,
                         onSelected: (value) {
                           switch (value) {
                             case 'water':

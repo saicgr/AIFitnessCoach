@@ -818,6 +818,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                 const Spacer(),
                 PopupMenuButton<_Preset>(
                   tooltip: AppLocalizations.of(context).editWeightsApplyAPreset,
+                  position: PopupMenuPosition.under,
                   onSelected: _applyPreset,
                   itemBuilder: (context) => _presetMenuItems(),
                   child: Row(

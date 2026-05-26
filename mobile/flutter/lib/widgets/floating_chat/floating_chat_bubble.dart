@@ -1,37 +1,32 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
+import '../../data/providers/coach_bubble_minimized_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../data/services/haptic_service.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../app_tour/app_tour_controller.dart';
 import '../coach_avatar.dart';
-import '../main_shell.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'floating_chat_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
-/// Resolves the currently selected [CoachPersona] from AI settings.
-CoachPersona? _resolveCoach(String? coachPersonaId) {
-  if (coachPersonaId == null || coachPersonaId.isEmpty) return null;
-  try {
-    return CoachPersona.predefinedCoaches.firstWhere((c) => c.id == coachPersonaId);
-  } catch (_) {
-    return null;
-  }
-}
-
 /// Floating AI Coach chat bubble widget with drag-to-dismiss support.
 /// This is a self-contained widget that can be added to any Stack.
 /// Uses floatingChatProvider for persistent state across navigation.
 ///
-/// Drag the bubble to the bottom-center dismiss zone (trash icon) to hide it
-/// and disable the floating bubble toggle in settings.
-class FloatingChatBubble extends ConsumerWidget {
+/// Press-and-hold the bubble (~500ms) to grab it (haptic confirms), then
+/// drag to reposition. Drag into the bottom-center dismiss zone (trash
+/// icon) to minimize to the side tab for today.
+class FloatingChatBubble extends ConsumerStatefulWidget {
   const FloatingChatBubble({super.key});
 
   /// Height of the dismiss zone at the bottom of the screen.
@@ -41,11 +36,31 @@ class FloatingChatBubble extends ConsumerWidget {
   static bool _isInDismissZone(double bubbleBottom) => bubbleBottom <= 20;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FloatingChatBubble> createState() =>
+      _FloatingChatBubbleState();
+}
+
+class _FloatingChatBubbleState extends ConsumerState<FloatingChatBubble> {
+  // Position captured at long-press start. The long-press gesture reports
+  // cumulative offset-from-origin (not per-frame delta), so we apply that
+  // offset against the press-start origin to compute the new position.
+  double _dragOriginRight = 0;
+  double _dragOriginBottom = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
+    // Per-day "minimized to side tab" override. When true, render the
+    // glass side-tab form instead of the full draggable head — the user
+    // dragged the head into the dismiss zone today and wants a tinier
+    // footprint until midnight rollover.
+    final isMinimizedToday = ref.watch(coachBubbleMinimizedProvider);
+    if (isMinimizedToday) {
+      return const _CoachSideTab();
+    }
+
     final chatState = ref.watch(floatingChatProvider);
     final notifier = ref.read(floatingChatProvider.notifier);
-    final aiSettings = ref.watch(aiSettingsProvider);
-    final coach = _resolveCoach(aiSettings.coachPersonaId);
     final screenSize = MediaQuery.of(context).size;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -58,7 +73,7 @@ class FloatingChatBubble extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            height: _dismissZoneHeight + bottomPadding,
+            height: FloatingChatBubble._dismissZoneHeight + bottomPadding,
             child: IgnorePointer(
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -114,25 +129,55 @@ class FloatingChatBubble extends ConsumerWidget {
           bottom: chatState.bubbleBottom + bottomPadding,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
+            // Quick tap → open chat. (LongPress takes ~500ms, so a normal
+            // tap never triggers the drag path below.)
             onTap: () {
               context.push('/chat');
             },
-            onPanStart: (_) => notifier.setDragging(true),
-            onPanUpdate: (details) {
-              final newRight = (chatState.bubbleRight - details.delta.dx)
-                  .clamp(16.0, screenSize.width - 72);
-              // Allow dragging lower (down to 0) so bubble can reach dismiss zone
-              final newBottom = (chatState.bubbleBottom - details.delta.dy)
-                  .clamp(0.0, screenSize.height - 200);
-              notifier.updateBubblePosition(newRight, newBottom);
-              notifier.setOverDismissZone(_isInDismissZone(newBottom));
+            // Press-and-hold-then-drag: drag is gated by a long-press so
+            // a quick swipe across the bubble never accidentally pulls it
+            // along. Mirrors the Material "draggable widget" idiom (you
+            // see the same gate in chat-head implementations across iOS
+            // and Android system UIs). Light haptic on press-start
+            // confirms "grabbed" before any movement happens.
+            onLongPressStart: (_) {
+              HapticFeedback.selectionClick();
+              // Capture the press-start position. `onLongPressMoveUpdate`
+              // reports cumulative `offsetFromOrigin`, not per-frame delta,
+              // so each subsequent update needs to apply the cumulative
+              // offset against this captured origin.
+              _dragOriginRight = chatState.bubbleRight;
+              _dragOriginBottom = chatState.bubbleBottom;
+              notifier.setDragging(true);
             },
-            onPanEnd: (_) {
+            onLongPressMoveUpdate: (details) {
+              // `right` decreases as finger moves right (bubbleRight is
+              // distance FROM the right edge); `bottom` decreases as
+              // finger moves down. Hence the inverted signs.
+              final newRight =
+                  (_dragOriginRight - details.offsetFromOrigin.dx)
+                      .clamp(16.0, screenSize.width - 72);
+              final newBottom =
+                  (_dragOriginBottom - details.offsetFromOrigin.dy)
+                      .clamp(0.0, screenSize.height - 200);
+              notifier.updateBubblePosition(newRight, newBottom);
+              notifier
+                  .setOverDismissZone(FloatingChatBubble._isInDismissZone(newBottom));
+            },
+            onLongPressEnd: (_) {
               if (chatState.isOverDismissZone) {
-                // Dismiss: disable the bubble in settings
+                // Minimize for today — the head morphs into a glass
+                // side-tab on the right edge until midnight local. User
+                // keeps access (tap side-tab to bring head back) without
+                // the full draggable footprint. Distinct from the
+                // permanent settings opt-out (Settings → AI Coach toggle).
                 HapticFeedback.heavyImpact();
-                ref.read(edgeHandleEnabledProvider.notifier).setEnabled(false);
-                // Reset position for if re-enabled later
+                ref
+                    .read(coachBubbleMinimizedProvider.notifier)
+                    .minimize();
+                // Reset position so the head reappears at a sane default
+                // next time the user un-minimizes (next-day rollover or
+                // tap on the side tab).
                 notifier.updateBubblePosition(16, 100);
               } else {
                 // Snap back if dragged too low but not into dismiss zone
@@ -151,47 +196,152 @@ class FloatingChatBubble extends ConsumerWidget {
               child: AnimatedOpacity(
                 opacity: chatState.isOverDismissZone ? 0.5 : 1.0,
                 duration: const Duration(milliseconds: 150),
-                child: coach != null
-                    ? CoachAvatar(
-                        key: AppTourKeys.aiChatKey,
-                        coach: coach,
-                        size: 56,
-                        showBorder: true,
-                        borderWidth: 3,
-                        showShadow: true,
-                        enableTapToView: false,
-                      )
-                    : Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [AppColors.purple, AppColors.cyan],
-                          ),
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.cyan.withValues(
-                                  alpha: chatState.isDragging ? 0.6 : 0.4),
-                              blurRadius: chatState.isDragging ? 20 : 16,
-                              offset: const Offset(0, 4),
-                              spreadRadius: chatState.isDragging ? 2 : 0,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.auto_awesome,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
+                // Glass-styled sparkle bubble. Always sparkle regardless
+                // of whether a CoachPersona is selected — matches the
+                // Coach hero card's eyebrow icon for brand consistency.
+                // BackdropFilter + semi-transparent accent overlay makes
+                // the head visually lighter on top of page content, so
+                // it doesn't sit like a hard solid circle.
+                child: _GlassSparkleHead(
+                  key: AppTourKeys.aiChatKey,
+                  isDragging: chatState.isDragging,
+                ),
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Glass-styled circular sparkle head — the default visual for the
+/// persistent floating coach bubble. Replaces the previous solid
+/// purple/cyan gradient + CoachAvatar branches.
+///
+/// Effect: `BackdropFilter` blur 12 over whatever sits behind it, with a
+/// 0.55-alpha accent overlay and a 1px white inner border. Reads as
+/// "frosted glass with a sparkle inside" — visually lighter than a hard
+/// solid circle, so the head doesn't compete as aggressively with page
+/// content for attention.
+///
+/// Scaling/shadow nuances mirror the original behaviour: a stronger glow
+/// while dragging so the user gets clear feedback that the gesture is
+/// being recognised.
+class _GlassSparkleHead extends StatelessWidget {
+  final bool isDragging;
+  const _GlassSparkleHead({super.key, required this.isDragging});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
+    return ClipOval(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          width: 56,
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: c.accent.withValues(alpha: isDragging ? 0.75 : 0.55),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.45),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: c.accent.withValues(
+                    alpha: isDragging ? 0.45 : 0.28),
+                blurRadius: isDragging ? 22 : 14,
+                offset: const Offset(0, 4),
+                spreadRadius: isDragging ? 2 : 0,
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.auto_awesome,
+            color: c.accentContrast,
+            size: 24,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Glass-styled side tab. Renders on the right edge of the screen as a
+/// compact rounded chip when the user has minimized the floating coach
+/// head for the day via the drag-to-dismiss zone. Tap → restores the
+/// full floating head; auto-restores on next-day midnight rollover via
+/// [coachBubbleMinimizedProvider]'s per-day SharedPrefs key.
+///
+/// Position is fixed (vertically centered on the right edge) so the user
+/// always knows where it is — different from the head, which is
+/// draggable. Glass styling (BackdropFilter blur + accent overlay) makes
+/// it visually lighter than the head so it competes less for attention.
+class _CoachSideTab extends ConsumerWidget {
+  const _CoachSideTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = ThemeColors.of(context);
+
+    return Positioned(
+      right: 0,
+      // Roughly centered vertically on the right edge — picked from the
+      // ~30% mark above the nav so the user's thumb naturally finds it
+      // without colliding with sticky in-page widgets that tend to sit
+      // just above the nav.
+      bottom: MediaQuery.sizeOf(context).height * 0.30,
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          ref.read(coachBubbleMinimizedProvider.notifier).expand();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(18),
+            bottomLeft: Radius.circular(18),
+          ),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: Container(
+              width: 32,
+              height: 58,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: c.accent.withValues(alpha: 0.55),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                ),
+                border: Border(
+                  top: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.30), width: 1),
+                  left: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.30), width: 1),
+                  bottom: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.30), width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 10,
+                    offset: const Offset(-2, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.auto_awesome,
+                size: 16,
+                color: c.accentContrast,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

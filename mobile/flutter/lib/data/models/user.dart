@@ -71,6 +71,15 @@ class User extends Equatable {
   final String? workoutUiMode;
   @JsonKey(name: 'workout_ui_mode_user_explicit')
   final bool? workoutUiModeUserExplicit;
+  // Re-engagement signals — cached server-side by comeback_service. Used by
+  // the post-auth router (app_router.dart `_handleAuthRedirect`) to route
+  // lapsed unsubscribed users to /paywall-pricing so RevenueCat can surface
+  // a winback offering. NULL = comeback_service hasn't computed yet — treat
+  // the same as 0 ("not lapsed") in router gating logic.
+  @JsonKey(name: 'days_since_last_workout')
+  final int? daysSinceLastWorkout;
+  @JsonKey(name: 'last_workout_date')
+  final String? lastWorkoutDate;
 
   const User({
     required this.id,
@@ -110,6 +119,8 @@ class User extends Equatable {
     this.vacationEndDate,
     this.workoutUiMode,
     this.workoutUiModeUserExplicit,
+    this.daysSinceLastWorkout,
+    this.lastWorkoutDate,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -700,6 +711,8 @@ class User extends Equatable {
         vacationEndDate,
         workoutUiMode,
         workoutUiModeUserExplicit,
+        daysSinceLastWorkout,
+        lastWorkoutDate,
       ];
 
   User copyWith({
@@ -740,6 +753,8 @@ class User extends Equatable {
     String? workoutUiMode,
     bool? workoutUiModeUserExplicit,
     String? workoutWeightUnit,
+    int? daysSinceLastWorkout,
+    String? lastWorkoutDate,
   }) {
     return User(
       id: id ?? this.id,
@@ -780,6 +795,8 @@ class User extends Equatable {
       workoutUiModeUserExplicit:
           workoutUiModeUserExplicit ?? this.workoutUiModeUserExplicit,
       workoutWeightUnit: workoutWeightUnit ?? this.workoutWeightUnit,
+      daysSinceLastWorkout: daysSinceLastWorkout ?? this.daysSinceLastWorkout,
+      lastWorkoutDate: lastWorkoutDate ?? this.lastWorkoutDate,
     );
   }
 }

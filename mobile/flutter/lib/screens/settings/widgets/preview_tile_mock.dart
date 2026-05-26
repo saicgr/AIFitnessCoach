@@ -74,7 +74,7 @@ class PreviewTileMock extends StatelessWidget {
           icon: Icons.directions_walk,
           color: const Color(0xFF22C55E),
           title: 'Daily Stats',
-          subtitle: '320 kcal burned',
+          subtitle: '320 kcal total today',
           value: '8,234 steps',
         );
       case TileType.habits:

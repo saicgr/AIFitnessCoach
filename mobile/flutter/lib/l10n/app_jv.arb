@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Founder, solo, isih ing versi siji.",
   "founderNoteIUsedToLog": "Aku biyen nyathet saben dhaharan suwene rong minggu, rumangsa bangga, banjur mlebu menyang panggonan Thai sing aku ora bisa maca menune, mangan apa wae sing katon aman, lan meneng-meneng mandheg mbukak aplikasi kasebut. Telung minggu sabanjure aku bakal nginstal maneh sing beda, sumpah iki wektune, lan nglakoni siklus sing padha maneh. Saben aplikasi nyathet dataku, ora ana sing ngerti nalika aku meneng — iku mung buku cathetan, dudu pelatih.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Roadmap",
   "founderNoteSheetANoteFrom": "CATETAN SAKA {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Dadi aku mbangun wong, dudu buku besar. Snap menu apa wae - ing omah utawa ing luar negeri - lan pelatih maca maneh ing makro. Skip a Selasa lan narik sampeyan bali Rebo esuk tanpa trip sirno. Sinau panganan, gym, pola slip - kurang saka siji sesi PT saben wulan.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Lemak",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Kcal sing diobong {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kkal total dina iki",
   "unifiedHomeWidgetsKcalLeft": " kcal isih",
   "unifiedHomeWidgetsLastNight": "bengi mau",
   "unifiedHomeWidgetsLog16oz": "Cathet 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Statistik & Skor",
   "youSkills": "Ketrampilan",
   "youTrophies": "Trofi",
-  "youWrapped": "Rangkuman"
+  "youWrapped": "Rangkuman",
+  "minimalHeaderCollapseWeekStrip": "Cilikne strip minggu",
+  "foodBrowserPanelFilterBySource": "Saring miturut sumber",
+  "shareableGallerySortTooltip": "Urutake cithakan",
+  "shareableGallerySortDefault": "Standar",
+  "shareableGallerySortRecents": "Anyar dhisik",
+  "shareableGallerySortFavorites": "Favorit dhisik"
 }

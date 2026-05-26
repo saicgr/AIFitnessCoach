@@ -183,6 +183,8 @@ class HabitCard extends StatelessWidget {
                 // Menu button
                 PopupMenuButton<String>(
                   icon: Icon(Icons.more_vert, color: Colors.grey.shade400),
+                  tooltip: AppLocalizations.of(context).homeMore,
+                  position: PopupMenuPosition.under,
                   onSelected: (value) {
                     switch (value) {
                       case 'edit':
@@ -204,6 +206,7 @@ class HabitCard extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const PopupMenuDivider(),
                     PopupMenuItem(
                       value: 'delete',
                       child: Row(

@@ -17,8 +17,11 @@ import '../../home/widgets/manage_gym_profiles_sheet.dart';
 
 
 part 'editable_fitness_card_part_editable_fitness_card_state.dart';
-part 'editable_fitness_card_part_editable_fitness_card_state_ext.dart';
-part 'editable_fitness_card_part_fitness_tile.dart';
+// `_buildGridView` (8-tile 4×2 grid) + `_FitnessTile` part files were
+// deleted in the 2026-05 minimalist redesign (Surface 5.B.6). View mode
+// now uses the same vertical list as edit mode. The file-level backup
+// at `docs/planning/redesign-2026-05/backup/lib/screens/profile/widgets/`
+// preserves the originals for one-shot restore if a rollback is needed.
 
 
 /// Editable fitness card with inline editing for goal, level, days, and injuries.

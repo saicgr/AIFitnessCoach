@@ -65,7 +65,7 @@
 		<key>NSPhotoLibraryAddUsageDescription</key>
 		<string>Zealova needs access to save workout recap images to your photo library.</string>
 		<key>NSUserTrackingUsageDescription</key>
-		<string>Zealova uses this permission to deliver personalized fitness recommendations and measure feature performance. We never sell your data.</string>
+		<string>Allowing tracking lets Zealova personalize your AI coach recommendations and measure which features actually help users hit their goals. Data stays inside Zealova — we never sell it and we don't share it with advertisers.</string>
 		<key>NSFaceIDUsageDescription</key>
 		<string>Zealova uses Face ID to keep your account and health data secure when you re-open the app.</string>
 		<key>NSMicrophoneUsageDescription</key>

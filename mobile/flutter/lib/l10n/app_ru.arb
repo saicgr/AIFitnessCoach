@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Основатель, работаю один, всё ещё на первой версии.",
   "founderNoteIUsedToLog": "Я записывал каждый прием пищи две недели подряд, гордился собой, а потом заходил в тайский ресторан, где не мог прочитать меню, съедал то, что казалось самым безопасным, и тихо переставал открывать приложение. Через три недели я устанавливал другое, клялся, что в этот раз всё получится, и снова запускал тот же цикл. Каждое приложение записывало мои данные, но ни одно не замечало, когда я пропадал — это были просто бухгалтерские книги, а не тренеры.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "План развития",
   "founderNoteSheetANoteFrom": "ЗАМЕТКА ОТ {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Поэтому я создал человека, а не бухгалтерскую книгу. Прикрепите любое меню — дома или за границей — и тренер прочитает его вам в виде макросов. Пропустите вторник, и вы вернетесь в среду утром без чувства вины. Он изучает вашу еду, ваш тренажерный зал, ваши привычки скольжения — менее чем за одну тренировку в месяц.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Жиры",
   "unifiedHomeWidgetsG": "{eaten} / {goal} г",
   "unifiedHomeWidgetsKcal": " ккал",
-  "unifiedHomeWidgetsKcalBurned": "Ккал сожжено {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "Всего {arg0} ккал сегодня",
   "unifiedHomeWidgetsKcalLeft": " ккал осталось",
   "unifiedHomeWidgetsLastNight": "прошлой ночью",
   "unifiedHomeWidgetsLog16oz": "Записать 16 унций",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Статистика и результаты",
   "youSkills": "Навыки",
   "youTrophies": "Трофеи",
-  "youWrapped": "Итоги года"
+  "youWrapped": "Итоги года",
+  "minimalHeaderCollapseWeekStrip": "Свернуть недельную полосу",
+  "foodBrowserPanelFilterBySource": "Фильтр по источнику",
+  "shareableGallerySortTooltip": "Сортировать шаблоны",
+  "shareableGallerySortDefault": "По умолчанию",
+  "shareableGallerySortRecents": "Сначала новые",
+  "shareableGallerySortFavorites": "Сначала избранные"
 }

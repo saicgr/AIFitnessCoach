@@ -304,7 +304,7 @@ class FounderNoteSheet extends ConsumerWidget {
                                 ? const [
                                     TextSpan(
                                       text:
-                                          "I'm building this in public and I read every message that comes through the chat. If something feels off, half-baked, or wrong for the way you actually live — tap the coach icon and tell me. I'll either fix it or tell you why I won't.",
+                                          "I'm building this in public. Roadmap's at zealova.com/roadmap and I read every message myself. If something feels off or wrong for how you actually live, find me on Discord or Instagram below. I'll fix it or tell you why I won't.",
                                     ),
                                   ]
                                 : [
@@ -317,7 +317,7 @@ class FounderNoteSheet extends ConsumerWidget {
                                     ),
                                     const TextSpan(
                                       text:
-                                          ", I'm building this in public and I read every message that comes through the chat. If something feels off, half-baked, or wrong for the way you actually live — tap the coach icon and tell me. I'll either fix it or tell you why I won't.",
+                                          ", I'm building this in public. Roadmap's at zealova.com/roadmap and I read every message myself. If something feels off or wrong for how you actually live, find me on Discord or Instagram below. I'll fix it or tell you why I won't.",
                                     ),
                                   ],
                           ),
@@ -386,6 +386,13 @@ class FounderNoteSheet extends ConsumerWidget {
                         label: AppLocalizations.of(context).wrappedShareInstagram,
                         color: const Color(0xFFE1306C),
                         onTap: () => _open(AppLinks.instagram),
+                      ),
+                      const SizedBox(width: 22),
+                      _InlineSocialLink(
+                        icon: FontAwesomeIcons.mapLocationDot,
+                        label: AppLocalizations.of(context).founderNoteRoadmap,
+                        color: AppColors.orange,
+                        onTap: () => _open(AppLinks.roadmap),
                       ),
                     ],
                   ).animate().fadeIn(delay: 720.ms),

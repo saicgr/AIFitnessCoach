@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "Wanda ya kafa, ni kaɗai, har yanzu ina sigar farko.",
   "founderNoteIUsedToLog": "Na kasance ina rubuta kowane abinci da na ci har tsawon makonni biyu a jere, ina jin alfahari da kaina, sannan in shiga wani gidan abinci na Thai da ba zan iya karanta menu ba, in ci abin da ya fi kusa, sannan in daina buɗe manhajar a hankali. Bayan makonni uku zan sake shigar da wata manhajar, in rantse cewa wannan karon zan yi, sannan in sake komawa tsohon halina. Kowane manhaja tana adana bayanaina, amma babu wadda ta lura lokacin da na daina amfani da ita — littattafan lissafi ne kawai, ba kocin motsa jiki ba.",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "Taswirar hanya",
   "founderNoteSheetANoteFrom": "SAKO DAGA {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "Don haka ni na gina mutum, ba littatafai ba. Ɗauki kowane menu - a gida ko waje - kuma kocin ya karanta muku shi a cikin macro. Tsallake ranar Talata kuma zai dawo da ku da safiyar Laraba ba tare da balaguron laifi ba. Yana koyon abincin ku, dakin motsa jiki, tsarin zamewar ku - kasa da zaman PT ɗaya a wata.",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "Kitse",
   "unifiedHomeWidgetsG": "{eaten} / {goal} g",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "Kcal da aka kona {arg0}",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} kcal jimillar yau",
   "unifiedHomeWidgetsKcalLeft": " kcal saura",
   "unifiedHomeWidgetsLastNight": "daren jiya",
   "unifiedHomeWidgetsLog16oz": "Yi rijistar 16oz",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "Kididdiga da Maki",
   "youSkills": "Kwarewa",
   "youTrophies": "Kofuna",
-  "youWrapped": "Takaitawa"
+  "youWrapped": "Takaitawa",
+  "minimalHeaderCollapseWeekStrip": "Naɗe layin mako",
+  "foodBrowserPanelFilterBySource": "Tace ta tushe",
+  "shareableGallerySortTooltip": "Tsara samfurori",
+  "shareableGallerySortDefault": "Tsoho",
+  "shareableGallerySortRecents": "Sabbi a farko",
+  "shareableGallerySortFavorites": "Abubuwan da aka fi so a farko"
 }

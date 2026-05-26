@@ -293,6 +293,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
         ],
       ),
       tooltip: l10n.socialFeedOptions,
+      position: PopupMenuPosition.under,
       onSelected: (value) {
         HapticFeedback.selectionClick();
         if (value == 'my_posts_toggle') {

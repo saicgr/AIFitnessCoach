@@ -19734,6 +19734,7 @@
   "founderNoteFounderSoloStillOn": "ผู้ก่อตั้ง ทำคนเดียว ยังอยู่ในเวอร์ชันแรก",
   "founderNoteIUsedToLog": "ผมเคยบันทึกทุกมื้ออาหารติดต่อกันสองสัปดาห์ รู้สึกภูมิใจในตัวเอง แล้วก็เดินเข้าร้านอาหารไทยที่อ่านเมนูไม่ออก กินอะไรที่ดูปลอดภัยที่สุด แล้วก็เลิกเปิดแอปไปเงียบๆ สามสัปดาห์ต่อมาผมก็ติดตั้งแอปใหม่ สาบานว่าครั้งนี้จะเป็นครั้งสุดท้าย แล้วก็วนลูปเดิม ทุกแอปบันทึกข้อมูลของผม แต่ไม่มีแอปไหนสังเกตเห็นเลยตอนที่ผมหายไป พวกมันเป็นแค่สมุดบัญชี ไม่ใช่โค้ช",
   "founderNoteInstagram": "Instagram",
+  "founderNoteRoadmap": "แผนงาน",
   "founderNoteSheetANoteFrom": "ข้อความจาก {_founderName}",
   "founderNoteSheetValue": "— {_founderName}",
   "founderNoteSoIBuiltThe": "ดังนั้นฉันจึงสร้างบุคคล ไม่ใช่บัญชีแยกประเภท ถ่ายภาพเมนูใดก็ได้ ที่บ้านหรือต่างประเทศ แล้วโค้ชจะอ่านกลับมาให้คุณในรูปแบบมาโคร ข้ามวันอังคารแล้วมันจะดึงคุณกลับมาในเช้าวันพุธโดยไม่รู้สึกผิด โดยจะเรียนรู้อาหาร ห้องออกกำลังกาย รูปแบบการลื่นของคุณ น้อยกว่าหนึ่งครั้งต่อเดือน",
@@ -26767,7 +26768,7 @@
   "unifiedHomeWidgetsFat": "ไขมัน",
   "unifiedHomeWidgetsG": "{eaten} / {goal} กรัม",
   "unifiedHomeWidgetsKcal": " kcal",
-  "unifiedHomeWidgetsKcalBurned": "เผาผลาญ {arg0} kcal",
+  "unifiedHomeWidgetsKcalBurned": "{arg0} กิโลแคลอรี รวมวันนี้",
   "unifiedHomeWidgetsKcalLeft": " kcal ที่เหลือ",
   "unifiedHomeWidgetsLastNight": "เมื่อคืนนี้",
   "unifiedHomeWidgetsLog16oz": "บันทึก 16 ออนซ์",
@@ -28142,5 +28143,11 @@
   "youHubStatsScores": "สถิติและคะแนน",
   "youSkills": "ทักษะ",
   "youTrophies": "ถ้วยรางวัล",
-  "youWrapped": "Wrapped"
+  "youWrapped": "Wrapped",
+  "minimalHeaderCollapseWeekStrip": "ย่อแถบสัปดาห์",
+  "foodBrowserPanelFilterBySource": "กรองตามแหล่งที่มา",
+  "shareableGallerySortTooltip": "เรียงเทมเพลต",
+  "shareableGallerySortDefault": "ค่าเริ่มต้น",
+  "shareableGallerySortRecents": "ล่าสุดก่อน",
+  "shareableGallerySortFavorites": "รายการโปรดก่อน"
 }
