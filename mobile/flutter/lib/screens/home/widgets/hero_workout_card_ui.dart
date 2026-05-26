@@ -192,88 +192,121 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
     // HIIT / Yoga / etc.). The asset pipeline is fail-soft: a missing PNG
     // falls through to the per-exercise endpoint URL, then the gradient.
     if (_typeAssetPath != null) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [
-                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.1)!,
-                        const Color(0xFF0f0f1a),
-                      ]
-                    : [
-                        Color.lerp(Colors.white, accentColor, 0.05)!,
-                        Color.lerp(const Color(0xFFF0F4F8), accentColor, 0.1)!,
-                      ],
-              ),
-            ),
-          ),
-          Image.asset(
-            _typeAssetPath!,
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
-            errorBuilder: (_, __, ___) {
-              if (_backgroundImageUrl != null) {
-                return CachedNetworkImage(
-                  imageUrl: _backgroundImageUrl!,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                  memCacheWidth: 400,
-                  memCacheHeight: 400,
-                  placeholder: (_, __) => const SizedBox.shrink(),
-                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
+      return _wrapHeroWithFigureFade(
+        isDark: isDark,
+        accentColor: accentColor,
+        child: Image.asset(
+          _typeAssetPath!,
+          fit: BoxFit.cover,
+          // Bias the crop so the figure's TORSO sits center-frame and any
+          // overflow happens at the top edge (where the head fade hides
+          // it). Prior `Alignment.center` was producing visibly cropped
+          // foreheads / faces on the per-exercise illustrations that
+          // serve as the fail-soft fallback below.
+          alignment: const Alignment(0.0, 0.55),
+          errorBuilder: (_, __, ___) {
+            if (_backgroundImageUrl != null) {
+              return CachedNetworkImage(
+                imageUrl: _backgroundImageUrl!,
+                fit: BoxFit.cover,
+                alignment: const Alignment(0.0, 0.55),
+                memCacheWidth: 400,
+                memCacheHeight: 400,
+                placeholder: (_, __) => const SizedBox.shrink(),
+                errorWidget: (_, __, ___) => const SizedBox.shrink(),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       );
     }
 
     if (_backgroundImageUrl != null) {
-      // Image with a nice gradient background behind it (accent-tinted)
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background gradient with accent color tint
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [
-                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.1)!,
-                        const Color(0xFF0f0f1a),
-                      ]
-                    : [
-                        Color.lerp(Colors.white, accentColor, 0.05)!,
-                        Color.lerp(const Color(0xFFF0F4F8), accentColor, 0.1)!,
-                      ],
-              ),
-            ),
-          ),
-          // The actual image
-          CachedNetworkImage(
-            imageUrl: _backgroundImageUrl!,
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
-            // Perf fix 2.2: limit decoded image size in memory cache
-            memCacheWidth: 400,
-            memCacheHeight: 400,
-            placeholder: (_, __) => const SizedBox.shrink(),
-            errorWidget: (_, __, ___) => const SizedBox.shrink(),
-          ),
-        ],
+      return _wrapHeroWithFigureFade(
+        isDark: isDark,
+        accentColor: accentColor,
+        child: CachedNetworkImage(
+          imageUrl: _backgroundImageUrl!,
+          fit: BoxFit.cover,
+          alignment: const Alignment(0.0, 0.55),
+          memCacheWidth: 400,
+          memCacheHeight: 400,
+          placeholder: (_, __) => const SizedBox.shrink(),
+          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+        ),
       );
     }
 
     return _buildFallbackBackground(isDark);
+  }
+
+  /// Common wrapper used by both the per-workout-type asset path and the
+  /// per-exercise network image path: paints the accent-tinted background
+  /// gradient behind the figure, lays the image on top, and overlays a
+  /// top-fade gradient that masks the upper ~40% of the image (the region
+  /// where the figure's head ends up when the source illustration is
+  /// taller than the card crop window). Combined with `Alignment(0, 0.55)`
+  /// the result reads as a faded, top-soft figure rather than a hard
+  /// "headless torso" cut.
+  Widget _wrapHeroWithFigureFade({
+    required bool isDark,
+    required Color accentColor,
+    required Widget child,
+  }) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Background gradient behind the figure.
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isDark
+                  ? [
+                      Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.1)!,
+                      const Color(0xFF0f0f1a),
+                    ]
+                  : [
+                      Color.lerp(Colors.white, accentColor, 0.05)!,
+                      Color.lerp(const Color(0xFFF0F4F8), accentColor, 0.1)!,
+                    ],
+            ),
+          ),
+        ),
+        child,
+        // Top fade — opaque accent-tinted at the very top, transparent
+        // around 45% down. Hides the headless-torso crop that the
+        // existing /exercise-images illustrations produce when shown as
+        // a wide hero. Mirrors the dark-mode background so the fade is
+        // seamless against whichever surface the figure sits on.
+        IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.25, 0.55],
+                colors: isDark
+                    ? [
+                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.15)!,
+                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.10)!
+                            .withValues(alpha: 0.55),
+                        Colors.transparent,
+                      ]
+                    : [
+                        Color.lerp(Colors.white, accentColor, 0.18)!,
+                        Color.lerp(Colors.white, accentColor, 0.10)!
+                            .withValues(alpha: 0.55),
+                        Colors.transparent,
+                      ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
 
