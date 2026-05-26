@@ -241,6 +241,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       unawaited(
         ref.read(subscriptionProvider.notifier).refreshFromRevenueCat(),
       );
+      // Re-fetch XP on resume so the level ring updates when a workout the
+      // user completed on another device (or via a background process)
+      // bumped their total — without forcing them to pull-to-refresh.
+      unawaited(
+        ref.read(xpProvider.notifier).loadUserXP(showLoading: false),
+      );
     } catch (e) {
       debugPrint('⚠️ [Home] lifecycle resume skipped post-dispose: $e');
     }

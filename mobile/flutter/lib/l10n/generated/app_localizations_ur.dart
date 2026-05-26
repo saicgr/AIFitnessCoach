@@ -14219,7 +14219,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'اس لیے میں نے لیجر نہیں، انسان بنایا۔ بینکاک میں اس مینو کی تصویر لیں اور کوچ اسے آپ کے لیے میکروز میں پڑھ کر سنائے گا۔ منگل کو ورزش چھوڑ دیں تو یہ آپ کو بدھ کی صبح بغیر کسی احساسِ جرم کے واپس لے آئے گا۔ یہ آپ کے کھانے، آپ کے جم، آپ کے پھسلنے کے پیٹرن سیکھتا ہے — مہینے میں ایک PT سیشن سے بھی کم قیمت پر۔';
+      'تو میں نے شخص بنایا، لیجر نہیں۔ کوئی بھی مینو لیں — اندرون یا بیرون ملک — اور کوچ اسے میکروز میں آپ کو واپس پڑھتا ہے۔ منگل کو چھوڑیں اور یہ آپ کو بدھ کی صبح بغیر جرم کے سفر کے پیچھے کھینچ لے گا۔ یہ آپ کے کھانے، آپ کا جم، آپ کے پرچی کے نمونے سیکھتا ہے — ایک مہینے میں ایک سے کم پی ٹی سیشن کے لیے۔';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20287,12 +20287,12 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44283,10 +44283,17 @@ class AppLocalizationsUr extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'ایپ کی زبان کے مطابق';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'درآمدات';
 
   @override
-  String get settingsImportsSubtitle => 'ہر وہ چیز جو آپ نے Zealova میں شیئر کی ہے۔';
+  String get settingsImportsSubtitle =>
+      'ہر وہ چیز جو آپ نے Zealova میں شیئر کی ہے۔';
 
   @override
   String get settingsCycleTrackingTitle => 'سائیکل ٹریکنگ';
@@ -44308,7 +44315,8 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'اطلاعات موقوف ہیں۔ دوبارہ شروع کرنے کے لیے کسی بھی وقت آف کریں۔';
+  String get vacationModeBannerPausedNoEnd =>
+      'اطلاعات موقوف ہیں۔ دوبارہ شروع کرنے کے لیے کسی بھی وقت آف کریں۔';
 
   @override
   String get vacationModeBannerScheduled => 'طے شدہ';
@@ -44322,7 +44330,8 @@ class AppLocalizationsUr extends AppLocalizations {
   String get vacationModeBannerOn => 'اطلاعات آن ہیں۔';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'غیر اہم یاد دہانیوں کو روکنے کے لیے ذیل میں تعطیل وضع کو فعال کریں۔';
+  String get vacationModeBannerOnSubtitle =>
+      'غیر اہم یاد دہانیوں کو روکنے کے لیے ذیل میں تعطیل وضع کو فعال کریں۔';
 
   @override
   String get difficultyEasy => 'مبتدی';
@@ -44378,7 +44387,8 @@ class AppLocalizationsUr extends AppLocalizations {
   String get importsEmptyTitle => 'ابھی تک کچھ بھی شیئر نہیں کیا گیا۔';
 
   @override
-  String get importsEmptyBody => 'کہیں بھی شیئر کریں کو دبائیں — فوٹوز، یوٹیوب، چیٹ جی پی ٹی، ایک وائس میمو — اور یہ خود بخود یہاں آ جائے گا۔';
+  String get importsEmptyBody =>
+      'کہیں بھی شیئر کریں کو دبائیں — فوٹوز، یوٹیوب، چیٹ جی پی ٹی، ایک وائس میمو — اور یہ خود بخود یہاں آ جائے گا۔';
 
   @override
   String get importsActionOpen => 'کھولیں۔';
@@ -44393,10 +44403,12 @@ class AppLocalizationsUr extends AppLocalizations {
   String get importsSnackRetrying => 'دوبارہ درآمد کرنے کی کوشش کی جا رہی ہے…';
 
   @override
-  String get importsSnackRetryFailed => 'دوبارہ کوشش نہیں کی جا سکی — بعد میں دوبارہ کوشش کریں۔';
+  String get importsSnackRetryFailed =>
+      'دوبارہ کوشش نہیں کی جا سکی — بعد میں دوبارہ کوشش کریں۔';
 
   @override
-  String get importsSnackReclassifyQueued => 'قطار میں دوبارہ درجہ بندی کریں — دوبارہ راستہ دینے کے لیے آئٹم کا دوبارہ اشتراک کریں۔';
+  String get importsSnackReclassifyQueued =>
+      'قطار میں دوبارہ درجہ بندی کریں — دوبارہ راستہ دینے کے لیے آئٹم کا دوبارہ اشتراک کریں۔';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44404,7 +44416,8 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'ریکارڈز کو آپ کی درآمدات کی تاریخ سے ہٹا دیا جاتا ہے۔ درآمد شدہ ورزش / ترکیبیں / کھانے کے لاگ خود ہی رہتے ہیں۔';
+  String get importsDeleteConfirmBody =>
+      'ریکارڈز کو آپ کی درآمدات کی تاریخ سے ہٹا دیا جاتا ہے۔ درآمد شدہ ورزش / ترکیبیں / کھانے کے لاگ خود ہی رہتے ہیں۔';
 
   @override
   String get importsActionCancel => 'منسوخ کریں۔';
@@ -44458,7 +44471,8 @@ class AppLocalizationsUr extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'حدود';
 
   @override
-  String get importsLimitsFooter => 'روزانہ کیپ سب کے لیے یکساں ہیں۔ وہ درآمدی معیار کو بلند رکھتے ہیں اور بھاگنے والے اخراجات سے بچاتے ہیں۔';
+  String get importsLimitsFooter =>
+      'روزانہ کیپ سب کے لیے یکساں ہیں۔ وہ درآمدی معیار کو بلند رکھتے ہیں اور بھاگنے والے اخراجات سے بچاتے ہیں۔';
 
   @override
   String get importsPrivacySectionTitle => 'درآمدات';
@@ -44467,19 +44481,22 @@ class AppLocalizationsUr extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'روٹنگ سے پہلے ہمیشہ پوچھیں۔';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'آٹو روٹ الٹی گنتی کو چھوڑیں — ہر شیئر انتخاب کنندہ کو کھولتا ہے۔';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'آٹو روٹ الٹی گنتی کو چھوڑیں — ہر شیئر انتخاب کنندہ کو کھولتا ہے۔';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'مشترکہ تاریخ کو صاف کریں۔';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'آپ کی درآمدات کی فہرست سے ہر ریکارڈ کو ہٹاتا ہے۔ درآمد شدہ ورزش، ترکیبیں، اور کھانے کے نوشتہ جات خود ہی رہتے ہیں۔';
+  String get importsPrivacyClearHistorySubtitle =>
+      'آپ کی درآمدات کی فہرست سے ہر ریکارڈ کو ہٹاتا ہے۔ درآمد شدہ ورزش، ترکیبیں، اور کھانے کے نوشتہ جات خود ہی رہتے ہیں۔';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'مشترکہ سرگزشت صاف کریں؟';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'آپ کی درآمدات کی فہرست میں سے ہر قطار کو ہٹا دیا جاتا ہے۔ آپ کے درآمد کردہ ورزش، ترکیبیں اور کھانے کے لاگ وہیں رہتے ہیں جہاں وہ ہیں۔';
+  String get importsPrivacyClearConfirmBody =>
+      'آپ کی درآمدات کی فہرست میں سے ہر قطار کو ہٹا دیا جاتا ہے۔ آپ کے درآمد کردہ ورزش، ترکیبیں اور کھانے کے لاگ وہیں رہتے ہیں جہاں وہ ہیں۔';
 
   @override
   String get importsPrivacyClearAction => 'صاف';
@@ -44488,5 +44505,6 @@ class AppLocalizationsUr extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'مشترکہ تاریخ صاف کر دی گئی۔';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'صاف نہیں ہو سکا — بعد میں دوبارہ کوشش کریں۔';
+  String get importsPrivacyClearFailedSnack =>
+      'صاف نہیں ہو سکا — بعد میں دوبارہ کوشش کریں۔';
 }

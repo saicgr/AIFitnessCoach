@@ -2122,7 +2122,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get appTourTooltipGotIt => 'అర్థమైంది!';
 
   @override
-  String get appTourTooltipSkipTutorial => 'ట్యుటోరియల్‌ను దాటవేయి';
+  String get appTourTooltipSkipTutorial => 'దాటవేయి';
 
   @override
   String get appearanceAppearance => 'రూపురేఖలు';
@@ -14341,7 +14341,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'కాబట్టి నేను లెడ్జర్‌ను కాకుండా వ్యక్తిని నిర్మించాను. బ్యాంకాక్‌లో ఆ మెనూని స్నాప్ చేయండి, కోచ్ దాన్ని మీకు మ్యాక్రోలలో తిరిగి చదివి వినిపిస్తుంది. మంగళవారం స్కిప్ చేయండి, అది బుధవారం ఉదయం మిమ్మల్ని గిల్ట్ ట్రిప్ లేకుండా తిరిగి ట్రాక్‌లోకి తెస్తుంది. ఇది మీ ఆహారాలు, మీ జిమ్, మీ స్లిప్ ప్యాటర్న్‌లను నేర్చుకుంటుంది — నెలకు ఒక PT సెషన్ కంటే తక్కువ ధరకే.';
+      'కాబట్టి నేను వ్యక్తిని నిర్మించాను, లెడ్జర్ కాదు. ఏదైనా మెనుని — స్వదేశంలో లేదా విదేశాలలో — స్నాప్ చేయండి మరియు కోచ్ దానిని మాక్రోలలో మీకు తిరిగి చదువుతారు. మంగళవారం దాటవేయండి మరియు అపరాధ యాత్ర లేకుండా బుధవారం ఉదయం మిమ్మల్ని వెనక్కి లాగుతుంది. ఇది మీ ఆహారాలు, మీ వ్యాయామశాల, మీ స్లిప్ ప్యాటర్న్‌లను నేర్చుకుంటుంది — నెలకు ఒక PT సెషన్ కంటే తక్కువ సమయం.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20465,12 +20465,12 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44655,10 +44655,17 @@ class AppLocalizationsTe extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'యాప్ భాష వలె';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'దిగుమతులు';
 
   @override
-  String get settingsImportsSubtitle => 'మీరు Zealovaలో భాగస్వామ్యం చేసిన ప్రతిదీ';
+  String get settingsImportsSubtitle =>
+      'మీరు Zealovaలో భాగస్వామ్యం చేసిన ప్రతిదీ';
 
   @override
   String get settingsCycleTrackingTitle => 'సైకిల్ ట్రాకింగ్';
@@ -44680,7 +44687,8 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'నోటిఫికేషన్‌లు పాజ్ చేయబడ్డాయి. పునఃప్రారంభించడానికి ఎప్పుడైనా ఆఫ్ చేయండి.';
+  String get vacationModeBannerPausedNoEnd =>
+      'నోటిఫికేషన్‌లు పాజ్ చేయబడ్డాయి. పునఃప్రారంభించడానికి ఎప్పుడైనా ఆఫ్ చేయండి.';
 
   @override
   String get vacationModeBannerScheduled => 'షెడ్యూల్ చేయబడింది';
@@ -44694,7 +44702,8 @@ class AppLocalizationsTe extends AppLocalizations {
   String get vacationModeBannerOn => 'నోటిఫికేషన్‌లు ఆన్‌లో ఉన్నాయి';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'క్లిష్టమైన రిమైండర్‌లను పాజ్ చేయడానికి దిగువన వెకేషన్ మోడ్‌ని ప్రారంభించండి.';
+  String get vacationModeBannerOnSubtitle =>
+      'క్లిష్టమైన రిమైండర్‌లను పాజ్ చేయడానికి దిగువన వెకేషన్ మోడ్‌ని ప్రారంభించండి.';
 
   @override
   String get difficultyEasy => 'అనుభవశూన్యుడు';
@@ -44721,7 +44730,8 @@ class AppLocalizationsTe extends AppLocalizations {
   String get importsAppBarTitle => 'దిగుమతులు';
 
   @override
-  String get importsTooltipFormatsLimits => 'మద్దతు ఉన్న ఫార్మాట్‌లు & పరిమితులు';
+  String get importsTooltipFormatsLimits =>
+      'మద్దతు ఉన్న ఫార్మాట్‌లు & పరిమితులు';
 
   @override
   String get importsTooltipDone => 'పూర్తయింది';
@@ -44750,7 +44760,8 @@ class AppLocalizationsTe extends AppLocalizations {
   String get importsEmptyTitle => 'ఇంకా ఏదీ భాగస్వామ్యం చేయలేదు';
 
   @override
-  String get importsEmptyBody => 'ఎక్కడైనా షేర్ చేయి నొక్కండి — ఫోటోలు, YouTube, ChatGPT, వాయిస్ మెమో — మరియు ఇది స్వయంచాలకంగా ఇక్కడ ల్యాండ్ అవుతుంది.';
+  String get importsEmptyBody =>
+      'ఎక్కడైనా షేర్ చేయి నొక్కండి — ఫోటోలు, YouTube, ChatGPT, వాయిస్ మెమో — మరియు ఇది స్వయంచాలకంగా ఇక్కడ ల్యాండ్ అవుతుంది.';
 
   @override
   String get importsActionOpen => 'తెరవండి';
@@ -44765,10 +44776,12 @@ class AppLocalizationsTe extends AppLocalizations {
   String get importsSnackRetrying => 'దిగుమతిని మళ్లీ ప్రయత్నిస్తోంది...';
 
   @override
-  String get importsSnackRetryFailed => 'మళ్లీ ప్రయత్నించడం సాధ్యపడలేదు — తర్వాత మళ్లీ ప్రయత్నించండి.';
+  String get importsSnackRetryFailed =>
+      'మళ్లీ ప్రయత్నించడం సాధ్యపడలేదు — తర్వాత మళ్లీ ప్రయత్నించండి.';
 
   @override
-  String get importsSnackReclassifyQueued => 'క్యూలో ఉన్న రీక్లాసిఫై - రీరూట్ చేయడానికి అంశాన్ని మళ్లీ భాగస్వామ్యం చేయండి.';
+  String get importsSnackReclassifyQueued =>
+      'క్యూలో ఉన్న రీక్లాసిఫై - రీరూట్ చేయడానికి అంశాన్ని మళ్లీ భాగస్వామ్యం చేయండి.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44776,7 +44789,8 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'మీ దిగుమతుల చరిత్ర నుండి రికార్డులు తీసివేయబడ్డాయి. దిగుమతి చేసుకున్న వర్కౌట్‌లు / వంటకాలు / ఆహార లాగ్‌లు అలాగే ఉంటాయి.';
+  String get importsDeleteConfirmBody =>
+      'మీ దిగుమతుల చరిత్ర నుండి రికార్డులు తీసివేయబడ్డాయి. దిగుమతి చేసుకున్న వర్కౌట్‌లు / వంటకాలు / ఆహార లాగ్‌లు అలాగే ఉంటాయి.';
 
   @override
   String get importsActionCancel => 'రద్దు చేయి';
@@ -44830,35 +44844,44 @@ class AppLocalizationsTe extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'పరిమితులు';
 
   @override
-  String get importsLimitsFooter => 'డైలీ క్యాప్‌లు అందరికీ ఒకే విధంగా ఉంటాయి. అవి దిగుమతి నాణ్యతను ఎక్కువగా ఉంచుతాయి మరియు రన్అవే ఖర్చుల నుండి రక్షణ కల్పిస్తాయి.';
+  String get importsLimitsFooter =>
+      'డైలీ క్యాప్‌లు అందరికీ ఒకే విధంగా ఉంటాయి. అవి దిగుమతి నాణ్యతను ఎక్కువగా ఉంచుతాయి మరియు రన్అవే ఖర్చుల నుండి రక్షణ కల్పిస్తాయి.';
 
   @override
   String get importsPrivacySectionTitle => 'దిగుమతులు';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'రూటింగ్ చేయడానికి ముందు ఎల్లప్పుడూ అడగండి';
+  String get importsPrivacyAlwaysAskTitle =>
+      'రూటింగ్ చేయడానికి ముందు ఎల్లప్పుడూ అడగండి';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'ఆటో-రూట్ కౌంట్‌డౌన్‌ను దాటవేయి — ప్రతి షేర్ ఎంపికను తెరుస్తుంది.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'ఆటో-రూట్ కౌంట్‌డౌన్‌ను దాటవేయి — ప్రతి షేర్ ఎంపికను తెరుస్తుంది.';
 
   @override
-  String get importsPrivacyClearHistoryTitle => 'భాగస్వామ్య చరిత్రను క్లియర్ చేయండి';
+  String get importsPrivacyClearHistoryTitle =>
+      'భాగస్వామ్య చరిత్రను క్లియర్ చేయండి';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'మీ దిగుమతుల జాబితా నుండి ప్రతి రికార్డును తొలగిస్తుంది. దిగుమతి చేసుకున్న వర్కౌట్‌లు, వంటకాలు మరియు ఆహార లాగ్‌లు అలాగే ఉంటాయి.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'మీ దిగుమతుల జాబితా నుండి ప్రతి రికార్డును తొలగిస్తుంది. దిగుమతి చేసుకున్న వర్కౌట్‌లు, వంటకాలు మరియు ఆహార లాగ్‌లు అలాగే ఉంటాయి.';
 
   @override
-  String get importsPrivacyClearConfirmTitle => 'భాగస్వామ్య చరిత్రను క్లియర్ చేయాలా?';
+  String get importsPrivacyClearConfirmTitle =>
+      'భాగస్వామ్య చరిత్రను క్లియర్ చేయాలా?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'మీ దిగుమతుల జాబితాలోని ప్రతి అడ్డు వరుస తీసివేయబడుతుంది. మీరు దిగుమతి చేసుకున్న వర్కౌట్‌లు, వంటకాలు మరియు ఆహార లాగ్‌లు అవి ఉన్న చోటనే ఉంటాయి.';
+  String get importsPrivacyClearConfirmBody =>
+      'మీ దిగుమతుల జాబితాలోని ప్రతి అడ్డు వరుస తీసివేయబడుతుంది. మీరు దిగుమతి చేసుకున్న వర్కౌట్‌లు, వంటకాలు మరియు ఆహార లాగ్‌లు అవి ఉన్న చోటనే ఉంటాయి.';
 
   @override
   String get importsPrivacyClearAction => 'క్లియర్';
 
   @override
-  String get importsPrivacyClearedSnack => 'భాగస్వామ్య చరిత్ర క్లియర్ చేయబడింది.';
+  String get importsPrivacyClearedSnack =>
+      'భాగస్వామ్య చరిత్ర క్లియర్ చేయబడింది.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'క్లియర్ చేయడం సాధ్యపడలేదు — తర్వాత మళ్లీ ప్రయత్నించండి.';
+  String get importsPrivacyClearFailedSnack =>
+      'క్లియర్ చేయడం సాధ్యపడలేదు — తర్వాత మళ్లీ ప్రయత్నించండి.';
 }

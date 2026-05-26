@@ -14340,7 +14340,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Así que construí a la persona, no al libro contable. Toma una foto de ese menú en Bangkok y el entrenador te lo lee en macros. Si te saltas un martes, te recupera el miércoles por la mañana sin hacerte sentir culpable. Aprende tus comidas, tu gimnasio, tus patrones de desliz; por menos de lo que cuesta una sesión de entrenamiento personal al mes.';
+      'Entonces construí la persona, no el libro de contabilidad. Tome cualquier menú, en casa o en el extranjero, y el entrenador se lo leerá en macros. Si te saltas el martes, volverás al miércoles por la mañana sin sentirte culpable. Aprende tus alimentos, tu gimnasio, tus patrones de deslizamiento, durante menos de una sesión de fisioterapia al mes.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20445,12 +20445,12 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44617,6 +44617,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'Igual que el idioma de la aplicación';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Importaciones';
 
   @override
@@ -44626,7 +44632,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'Seguimiento del ciclo';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'Periodo, fertilidad y predicciones.';
+  String get settingsCycleTrackingSubtitle =>
+      'Periodo, fertilidad y predicciones.';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44642,7 +44649,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Las notificaciones están en pausa. Apaga en cualquier momento para reanudar.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Las notificaciones están en pausa. Apaga en cualquier momento para reanudar.';
 
   @override
   String get vacationModeBannerScheduled => 'Programado';
@@ -44656,7 +44664,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vacationModeBannerOn => 'Las notificaciones están activadas.';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Habilite el modo de vacaciones a continuación para pausar los recordatorios no críticos.';
+  String get vacationModeBannerOnSubtitle =>
+      'Habilite el modo de vacaciones a continuación para pausar los recordatorios no críticos.';
 
   @override
   String get difficultyEasy => 'Principiante';
@@ -44712,7 +44721,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importsEmptyTitle => 'Nada compartido aún';
 
   @override
-  String get importsEmptyBody => 'Presiona Compartir en cualquier lugar (Fotos, YouTube, ChatGPT, una nota de voz) y llegará aquí automáticamente.';
+  String get importsEmptyBody =>
+      'Presiona Compartir en cualquier lugar (Fotos, YouTube, ChatGPT, una nota de voz) y llegará aquí automáticamente.';
 
   @override
   String get importsActionOpen => 'Abierto';
@@ -44727,10 +44737,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importsSnackRetrying => 'Reintentando la importación…';
 
   @override
-  String get importsSnackRetryFailed => 'No se pudo volver a intentar. Vuelve a intentarlo más tarde.';
+  String get importsSnackRetryFailed =>
+      'No se pudo volver a intentar. Vuelve a intentarlo más tarde.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Reclasificar en cola: comparte el elemento nuevamente para redireccionarlo.';
+  String get importsSnackReclassifyQueued =>
+      'Reclasificar en cola: comparte el elemento nuevamente para redireccionarlo.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44738,7 +44750,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Los registros se eliminan de su historial de importaciones. Los entrenamientos, recetas y registros de alimentos importados permanecen.';
+  String get importsDeleteConfirmBody =>
+      'Los registros se eliminan de su historial de importaciones. Los entrenamientos, recetas y registros de alimentos importados permanecen.';
 
   @override
   String get importsActionCancel => 'Cancelar';
@@ -44777,12 +44790,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return 'Estado: {estado}';
+    return 'Estado: $status';
   }
 
   @override
   String importsDetailDetectedAs(Object intent) {
-    return 'Detectado como: {intención}';
+    return 'Detectado como: $intent';
   }
 
   @override
@@ -44792,28 +44805,33 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Límites';
 
   @override
-  String get importsLimitsFooter => 'Los límites diarios son los mismos para todos. Mantienen alta la calidad de las importaciones y protegen contra costos descontrolados.';
+  String get importsLimitsFooter =>
+      'Los límites diarios son los mismos para todos. Mantienen alta la calidad de las importaciones y protegen contra costos descontrolados.';
 
   @override
   String get importsPrivacySectionTitle => 'Importaciones';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Pregunte siempre antes de realizar la ruta';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Pregunte siempre antes de realizar la ruta';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Omita la cuenta atrás de la ruta automática: cada acción abre el selector.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Omita la cuenta atrás de la ruta automática: cada acción abre el selector.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Borrar historial compartido';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Elimina todos los registros de su lista de Importaciones. Los entrenamientos, recetas y registros de alimentos importados permanecen.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Elimina todos los registros de su lista de Importaciones. Los entrenamientos, recetas y registros de alimentos importados permanecen.';
 
   @override
   String get importsPrivacyClearConfirmTitle => '¿Borrar historial compartido?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Se eliminan todas las filas de su lista de Importaciones. Los entrenamientos, recetas y registros de alimentos que importaste permanecen donde están.';
+  String get importsPrivacyClearConfirmBody =>
+      'Se eliminan todas las filas de su lista de Importaciones. Los entrenamientos, recetas y registros de alimentos que importaste permanecen donde están.';
 
   @override
   String get importsPrivacyClearAction => 'Claro';
@@ -44822,5 +44840,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Historial compartido borrado.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'No se pudo borrar. Vuelve a intentarlo más tarde.';
+  String get importsPrivacyClearFailedSnack =>
+      'No se pudo borrar. Vuelve a intentarlo más tarde.';
 }

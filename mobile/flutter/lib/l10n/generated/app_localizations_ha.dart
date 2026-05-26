@@ -14270,7 +14270,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Don haka na gina mutum, ba littafin lissafi ba. Ɗauki hoton menu a Bangkok kuma kocin zai karanta maka shi a matsayin macros. Idan ka tsallake ranar Talata, zai dawo da kai ranar Laraba da safe ba tare da sa ka jin laifi ba. Yana koyon abincinka, motsa jikinka, da halayenka — akan farashin da bai kai na zaman kocin motsa jiki sau ɗaya a wata ba.';
+      'Don haka ni na gina mutum, ba littatafai ba. Ɗauki kowane menu - a gida ko waje - kuma kocin ya karanta muku shi a cikin macro. Tsallake ranar Talata kuma zai dawo da ku da safiyar Laraba ba tare da balaguron laifi ba. Yana koyon abincin ku, dakin motsa jiki, tsarin zamewar ku - kasa da zaman PT ɗaya a wata.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20353,12 +20353,12 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44398,6 +44398,12 @@ class AppLocalizationsHa extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Kamar harshen manhajar';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Ana shigo da kaya';
 
   @override
@@ -44419,11 +44425,12 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String vacationModeBannerPausedUntil(Object endDate) {
-    return 'Ana dakatar da sanarwar har zuwa {ƙarshen kwanan wata}.';
+    return 'Ana dakatar da sanarwar har zuwa $endDate.';
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'An dakatar da sanarwar. Kashe kowane lokaci don ci gaba.';
+  String get vacationModeBannerPausedNoEnd =>
+      'An dakatar da sanarwar. Kashe kowane lokaci don ci gaba.';
 
   @override
   String get vacationModeBannerScheduled => 'An tsara';
@@ -44437,7 +44444,8 @@ class AppLocalizationsHa extends AppLocalizations {
   String get vacationModeBannerOn => 'Ana kunna sanarwar';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Kunna yanayin hutu a ƙasa don dakatar da masu tuni marasa mahimmanci.';
+  String get vacationModeBannerOnSubtitle =>
+      'Kunna yanayin hutu a ƙasa don dakatar da masu tuni marasa mahimmanci.';
 
   @override
   String get difficultyEasy => 'Mafari';
@@ -44493,7 +44501,8 @@ class AppLocalizationsHa extends AppLocalizations {
   String get importsEmptyTitle => 'Babu wani abu da aka raba tukuna';
 
   @override
-  String get importsEmptyBody => 'Danna Raba ko\'ina - Hotuna, YouTube, ChatGPT, memo na murya - kuma zai sauka anan ta atomatik.';
+  String get importsEmptyBody =>
+      'Danna Raba ko\'ina - Hotuna, YouTube, ChatGPT, memo na murya - kuma zai sauka anan ta atomatik.';
 
   @override
   String get importsActionOpen => 'Bude';
@@ -44508,10 +44517,12 @@ class AppLocalizationsHa extends AppLocalizations {
   String get importsSnackRetrying => 'Ana sake gwada shigo da…';
 
   @override
-  String get importsSnackRetryFailed => 'Ba za a iya sake gwadawa ba - sake gwadawa daga baya.';
+  String get importsSnackRetryFailed =>
+      'Ba za a iya sake gwadawa ba - sake gwadawa daga baya.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Sake rarraba jerin gwano - raba abun kuma don sake hanyar.';
+  String get importsSnackReclassifyQueued =>
+      'Sake rarraba jerin gwano - raba abun kuma don sake hanyar.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44519,7 +44530,8 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'An cire bayanan daga tarihin shigo da ku. Ayyukan motsa jiki / girke-girke / rajistan ayyukan abinci da kansu suna zama.';
+  String get importsDeleteConfirmBody =>
+      'An cire bayanan daga tarihin shigo da ku. Ayyukan motsa jiki / girke-girke / rajistan ayyukan abinci da kansu suna zama.';
 
   @override
   String get importsActionCancel => 'Soke';
@@ -44528,13 +44540,15 @@ class AppLocalizationsHa extends AppLocalizations {
   String get importsRowImportFailed => 'An gaza shigo da shi';
 
   @override
-  String get importsTitleImportedWorkout => 'Aikin motsa jiki da aka shigo dashi';
+  String get importsTitleImportedWorkout =>
+      'Aikin motsa jiki da aka shigo dashi';
 
   @override
   String get importsTitleImportedRecipe => 'Shigo da girke-girke';
 
   @override
-  String get importsTitleImportedMealPlan => 'Shirin abincin da aka shigo dashi';
+  String get importsTitleImportedMealPlan =>
+      'Shirin abincin da aka shigo dashi';
 
   @override
   String get importsTitleLoggedMeal => 'Cin abinci';
@@ -44563,7 +44577,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String importsDetailDetectedAs(Object intent) {
-    return 'An gano shi azaman: {nufin}';
+    return 'An gano shi azaman: $intent';
   }
 
   @override
@@ -44573,28 +44587,33 @@ class AppLocalizationsHa extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Iyaka';
 
   @override
-  String get importsLimitsFooter => 'Kwancen yau da kullum iri ɗaya ne ga kowa. Suna kiyaye ingancin shigo da kaya kuma suna kare farashin gudu.';
+  String get importsLimitsFooter =>
+      'Kwancen yau da kullum iri ɗaya ne ga kowa. Suna kiyaye ingancin shigo da kaya kuma suna kare farashin gudu.';
 
   @override
   String get importsPrivacySectionTitle => 'Ana shigo da kaya';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Koyaushe tambaya kafin a yi hanya';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Koyaushe tambaya kafin a yi hanya';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Tsallake kirgawa ta hanyar atomatik - kowane rabo yana buɗe mai zaɓi.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Tsallake kirgawa ta hanyar atomatik - kowane rabo yana buɗe mai zaɓi.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Share tarihin raba';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Yana cire kowane rikodin daga lissafin shigo da ku. Ayyukan motsa jiki da aka shigo da su, girke-girke, da rajistan ayyukan abinci da kansu suna tsayawa.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Yana cire kowane rikodin daga lissafin shigo da ku. Ayyukan motsa jiki da aka shigo da su, girke-girke, da rajistan ayyukan abinci da kansu suna tsayawa.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Share tarihin raba?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Ana cire kowane layi a cikin jerin abubuwan shigo da kaya. Ayyukan motsa jiki, girke-girke, da rajistan ayyukan abinci da kuka shigo da su suna tsayawa a inda suke.';
+  String get importsPrivacyClearConfirmBody =>
+      'Ana cire kowane layi a cikin jerin abubuwan shigo da kaya. Ayyukan motsa jiki, girke-girke, da rajistan ayyukan abinci da kuka shigo da su suna tsayawa a inda suke.';
 
   @override
   String get importsPrivacyClearAction => 'Share';
@@ -44603,5 +44622,6 @@ class AppLocalizationsHa extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'An share tarihin da aka raba.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'An kasa sharewa - sake gwadawa daga baya.';
+  String get importsPrivacyClearFailedSnack =>
+      'An kasa sharewa - sake gwadawa daga baya.';
 }

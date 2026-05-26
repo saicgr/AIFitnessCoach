@@ -1610,6 +1610,12 @@ _PATCH_ME_ALLOWED_FIELDS: set = {
     # Trial / paywall state mirrors written by client-side IAP listeners.
     "paywall_completed",
     "trial_start_date",
+    # Locale — UI language and AI Coach reply language. Frontend writes these
+    # the moment the user toggles language in Settings so the change persists
+    # immediately rather than waiting for the next chat call to lazily
+    # back-propagate Accept-Language.
+    "preferred_locale",
+    "chat_locale",
 }
 
 
@@ -1634,6 +1640,27 @@ async def patch_me(
     # sends it inside a try/except).
     update_data = {k: v for k, v in body.items() if k in _PATCH_ME_ALLOWED_FIELDS}
     dropped = [k for k in body.keys() if k not in _PATCH_ME_ALLOWED_FIELDS]
+
+    # Locale fields must be a SUPPORTED ISO 639-1 code (or None to clear
+    # chat_locale). Reject garbage at the boundary instead of writing it
+    # straight to the column — the in-app toggle is the only legitimate
+    # caller and it only ever sends a code from supportedAppLocales.
+    if "preferred_locale" in update_data or "chat_locale" in update_data:
+        from core.locale import SUPPORTED_LOCALES
+        for _k in ("preferred_locale", "chat_locale"):
+            if _k not in update_data:
+                continue
+            _v = update_data[_k]
+            if _v is None and _k == "chat_locale":
+                continue  # explicit clear allowed for chat_locale
+            if not isinstance(_v, str) or _v.lower() not in SUPPORTED_LOCALES:
+                logger.info(
+                    "[PATCH /me] user %s — rejected %s=%r (not in SUPPORTED_LOCALES)",
+                    current_user.get("id"), _k, _v,
+                )
+                update_data.pop(_k, None)
+            else:
+                update_data[_k] = _v.lower()
     if dropped:
         logger.info(
             "[PATCH /me] user %s — dropped unknown fields: %s",

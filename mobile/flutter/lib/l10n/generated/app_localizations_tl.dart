@@ -14375,7 +14375,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Kaya binuo ko ang tao, hindi ang ledger. I-snap mo lang ang menu sa Bangkok at babasahin ito pabalik sa iyo ng coach sa macros. Kung makaligtaan mo ang isang Martes, hihilahin ka niya pabalik sa Miyerkules ng umaga nang walang guilt trip. Natututunan nito ang iyong mga pagkain, iyong gym, iyong mga slip pattern — sa halagang mas mababa sa isang session ng PT bawat buwan.';
+      'Kaya itinayo ko ang tao, hindi ang ledger. Kumuha ng anumang menu — sa bahay o sa ibang bansa — at babasahin ito ng coach pabalik sa iyo sa mga macro. Laktawan ang isang Martes at ibabalik ka nito sa Miyerkules ng umaga nang walang kasalanan. Natututunan nito ang iyong mga pagkain, ang iyong gym, ang iyong mga slip pattern — nang wala pang isang PT session sa isang buwan.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20491,12 +20491,12 @@ class AppLocalizationsTl extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44722,6 +44722,12 @@ class AppLocalizationsTl extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Katulad ng wika ng app';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Mga import';
 
   @override
@@ -44747,7 +44753,8 @@ class AppLocalizationsTl extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Naka-pause ang mga notification. I-off anumang oras para ipagpatuloy.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Naka-pause ang mga notification. I-off anumang oras para ipagpatuloy.';
 
   @override
   String get vacationModeBannerScheduled => 'Naka-iskedyul';
@@ -44761,7 +44768,8 @@ class AppLocalizationsTl extends AppLocalizations {
   String get vacationModeBannerOn => 'Naka-on ang mga notification';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'I-enable ang vacation mode sa ibaba para i-pause ang mga hindi kritikal na paalala.';
+  String get vacationModeBannerOnSubtitle =>
+      'I-enable ang vacation mode sa ibaba para i-pause ang mga hindi kritikal na paalala.';
 
   @override
   String get difficultyEasy => 'Baguhan';
@@ -44788,7 +44796,8 @@ class AppLocalizationsTl extends AppLocalizations {
   String get importsAppBarTitle => 'Mga import';
 
   @override
-  String get importsTooltipFormatsLimits => 'Mga sinusuportahang format at limitasyon';
+  String get importsTooltipFormatsLimits =>
+      'Mga sinusuportahang format at limitasyon';
 
   @override
   String get importsTooltipDone => 'Tapos na';
@@ -44817,7 +44826,8 @@ class AppLocalizationsTl extends AppLocalizations {
   String get importsEmptyTitle => 'Wala pang naibahagi';
 
   @override
-  String get importsEmptyBody => 'Pindutin ang Ibahagi kahit saan — Mga larawan, YouTube, ChatGPT, isang voice memo — at awtomatiko itong mapupunta dito.';
+  String get importsEmptyBody =>
+      'Pindutin ang Ibahagi kahit saan — Mga larawan, YouTube, ChatGPT, isang voice memo — at awtomatiko itong mapupunta dito.';
 
   @override
   String get importsActionOpen => 'Bukas';
@@ -44832,10 +44842,12 @@ class AppLocalizationsTl extends AppLocalizations {
   String get importsSnackRetrying => 'Sinusubukang muli ang pag-import…';
 
   @override
-  String get importsSnackRetryFailed => 'Hindi masubukang muli — subukang muli sa ibang pagkakataon.';
+  String get importsSnackRetryFailed =>
+      'Hindi masubukang muli — subukang muli sa ibang pagkakataon.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Reclassify queued — ibahagi muli ang item upang i-reroute.';
+  String get importsSnackReclassifyQueued =>
+      'Reclassify queued — ibahagi muli ang item upang i-reroute.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44843,7 +44855,8 @@ class AppLocalizationsTl extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Ang mga tala ay tinanggal mula sa iyong kasaysayan ng pag-import. Ang mga imported na ehersisyo / recipe / food log ay nananatili.';
+  String get importsDeleteConfirmBody =>
+      'Ang mga tala ay tinanggal mula sa iyong kasaysayan ng pag-import. Ang mga imported na ehersisyo / recipe / food log ay nananatili.';
 
   @override
   String get importsActionCancel => 'Kanselahin';
@@ -44897,7 +44910,8 @@ class AppLocalizationsTl extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Mga limitasyon';
 
   @override
-  String get importsLimitsFooter => 'Ang mga pang-araw-araw na takip ay pareho para sa lahat. Pinapanatili nilang mataas ang kalidad ng pag-import at pinoprotektahan laban sa mga gastos na tumatakbo.';
+  String get importsLimitsFooter =>
+      'Ang mga pang-araw-araw na takip ay pareho para sa lahat. Pinapanatili nilang mataas ang kalidad ng pag-import at pinoprotektahan laban sa mga gastos na tumatakbo.';
 
   @override
   String get importsPrivacySectionTitle => 'Mga import';
@@ -44906,26 +44920,33 @@ class AppLocalizationsTl extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Laging magtanong bago magruta';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Laktawan ang auto-route countdown — bawat pagbabahagi ay magbubukas sa tagapili.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Laktawan ang auto-route countdown — bawat pagbabahagi ay magbubukas sa tagapili.';
 
   @override
-  String get importsPrivacyClearHistoryTitle => 'I-clear ang nakabahaging kasaysayan';
+  String get importsPrivacyClearHistoryTitle =>
+      'I-clear ang nakabahaging kasaysayan';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Inaalis ang bawat tala sa iyong listahan ng Mga Import. Ang mga imported na workout, recipe, at food log ay nananatili.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Inaalis ang bawat tala sa iyong listahan ng Mga Import. Ang mga imported na workout, recipe, at food log ay nananatili.';
 
   @override
-  String get importsPrivacyClearConfirmTitle => 'I-clear ang nakabahaging kasaysayan?';
+  String get importsPrivacyClearConfirmTitle =>
+      'I-clear ang nakabahaging kasaysayan?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Ang bawat row sa iyong listahan ng Mga Import ay aalisin. Ang mga ehersisyo, recipe, at food log na na-import mo ay nananatili kung nasaan sila.';
+  String get importsPrivacyClearConfirmBody =>
+      'Ang bawat row sa iyong listahan ng Mga Import ay aalisin. Ang mga ehersisyo, recipe, at food log na na-import mo ay nananatili kung nasaan sila.';
 
   @override
   String get importsPrivacyClearAction => 'Maaliwalas';
 
   @override
-  String get importsPrivacyClearedSnack => 'Na-clear ang nakabahaging kasaysayan.';
+  String get importsPrivacyClearedSnack =>
+      'Na-clear ang nakabahaging kasaysayan.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Hindi ma-clear — subukang muli sa ibang pagkakataon.';
+  String get importsPrivacyClearFailedSnack =>
+      'Hindi ma-clear — subukang muli sa ibang pagkakataon.';
 }

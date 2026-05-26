@@ -26838,7 +26838,7 @@
   "vacationModeBannerPausedNoEnd": "Meldingen zijn onderbroken. Schakel op elk gewenst moment uit om te hervatten.",
   "vacationModeBannerPausedUntil": "Meldingen worden onderbroken tot {endDate}.",
   "vacationModeBannerScheduled": "Gepland",
-  "vacationModeBannerStartsOn": "Begint op {startDatum}.",
+  "vacationModeBannerStartsOn": "Begint op {startDate}.",
   "vacationModeClear": "Wissen",
   "vacationModeEndDate": "Einddatum",
   "vacationModeLeaveEmptyForOpen": "Laat leeg voor een onbepaalde vakantie",

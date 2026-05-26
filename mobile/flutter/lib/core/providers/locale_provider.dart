@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../data/services/api_client.dart';
 
 /// Phase 5 — app locale state.
 ///
@@ -70,9 +73,11 @@ const rtlAppLanguageCodes = <String>{'ar', 'ur'};
 bool isRtlLanguageCode(String code) => rtlAppLanguageCodes.contains(code);
 
 class LocaleNotifier extends StateNotifier<LocaleState> {
-  LocaleNotifier() : super(const LocaleState()) {
+  LocaleNotifier(this._ref) : super(const LocaleState()) {
     _load();
   }
+
+  final Ref _ref;
 
   static const _prefKey = 'app_locale_code';
 
@@ -92,9 +97,28 @@ class LocaleNotifier extends StateNotifier<LocaleState> {
     } else {
       await prefs.setString(_prefKey, locale.languageCode);
     }
+    // Persist to the backend immediately so subsequent server-side rendering
+    // (push nudges, lifecycle emails, daily-insight prompts, coach prompts)
+    // picks up the new language without waiting for the next chat call to
+    // lazily back-propagate Accept-Language. The previous flow left the
+    // `users.preferred_locale` column at "en" forever for accounts that
+    // toggled language but never sent a chat message.
+    final code = locale?.languageCode ?? 'en';
+    try {
+      final api = _ref.read(apiClientProvider);
+      await api.dio.patch(
+        '/api/v1/users/me',
+        data: {'preferred_locale': code},
+      );
+      debugPrint('🌐 [Locale] Persisted preferred_locale=$code to backend');
+    } catch (e) {
+      // Non-fatal — Accept-Language header on the very next authenticated
+      // request will re-trigger the same persistence path on the backend.
+      debugPrint('⚠️ [Locale] backend persist failed (will retry via header): $e');
+    }
   }
 }
 
 final localeProvider = StateNotifierProvider<LocaleNotifier, LocaleState>(
-  (ref) => LocaleNotifier(),
+  (ref) => LocaleNotifier(ref),
 );

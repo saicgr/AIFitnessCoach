@@ -14217,7 +14217,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'म्हणून मी लेजर नाही, तर व्यक्ती तयार केली. बँकॉकच्या त्या मेनूचा फोटो काढा आणि कोच तुम्हाला त्याचे मॅक्रो वाचून दाखवेल. मंगळवार चुकवा आणि तो तुम्हाला बुधवारी सकाळी कोणत्याही अपराधीपणाशिवाय पुन्हा ट्रॅकवर आणेल. हे तुमचे अन्न, तुमची जिम, तुमच्या सवयी शिकते — दरमहा एका PT सत्रापेक्षा कमी खर्चात.';
+      'म्हणून मी व्यक्ती बांधली, खातेवही नाही. कोणताही मेनू स्नॅप करा — देश किंवा परदेशात — आणि प्रशिक्षक तुम्हाला तो मॅक्रोमध्ये परत वाचतो. एक मंगळवार वगळा आणि ते तुम्हाला अपराधीपणाच्या प्रवासाशिवाय बुधवारी सकाळी परत खेचते. हे तुमचे खाद्यपदार्थ, तुमची व्यायामशाळा, तुमचे स्लिप पॅटर्न शिकते — महिन्याला एकापेक्षा कमी पीटी सत्रासाठी.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20276,12 +20276,12 @@ class AppLocalizationsMr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44275,16 +44275,24 @@ class AppLocalizationsMr extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'ॲपच्या भाषेप्रमाणेच';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'आयात करतो';
 
   @override
-  String get settingsImportsSubtitle => 'तुम्ही Zealova मध्ये सामायिक केलेले सर्व काही';
+  String get settingsImportsSubtitle =>
+      'तुम्ही Zealova मध्ये सामायिक केलेले सर्व काही';
 
   @override
   String get settingsCycleTrackingTitle => 'सायकल ट्रॅकिंग';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'कालावधी, प्रजनन क्षमता आणि अंदाज';
+  String get settingsCycleTrackingSubtitle =>
+      'कालावधी, प्रजनन क्षमता आणि अंदाज';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44300,7 +44308,8 @@ class AppLocalizationsMr extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'सूचनांना विराम दिला आहे. पुन्हा सुरू करण्यासाठी कधीही बंद करा.';
+  String get vacationModeBannerPausedNoEnd =>
+      'सूचनांना विराम दिला आहे. पुन्हा सुरू करण्यासाठी कधीही बंद करा.';
 
   @override
   String get vacationModeBannerScheduled => 'अनुसूचित';
@@ -44314,7 +44323,8 @@ class AppLocalizationsMr extends AppLocalizations {
   String get vacationModeBannerOn => 'सूचना चालू आहेत';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'गंभीर नसलेल्या स्मरणपत्रांना विराम देण्यासाठी खाली सुट्टीचा मोड सक्षम करा.';
+  String get vacationModeBannerOnSubtitle =>
+      'गंभीर नसलेल्या स्मरणपत्रांना विराम देण्यासाठी खाली सुट्टीचा मोड सक्षम करा.';
 
   @override
   String get difficultyEasy => 'नवशिक्या';
@@ -44370,7 +44380,8 @@ class AppLocalizationsMr extends AppLocalizations {
   String get importsEmptyTitle => 'अजून काहीही शेअर केलेले नाही';
 
   @override
-  String get importsEmptyBody => 'कुठेही शेअर करा दाबा — फोटो, YouTube, ChatGPT, व्हॉइस मेमो — आणि ते आपोआप येथे येईल.';
+  String get importsEmptyBody =>
+      'कुठेही शेअर करा दाबा — फोटो, YouTube, ChatGPT, व्हॉइस मेमो — आणि ते आपोआप येथे येईल.';
 
   @override
   String get importsActionOpen => 'उघडा';
@@ -44385,10 +44396,12 @@ class AppLocalizationsMr extends AppLocalizations {
   String get importsSnackRetrying => 'आयात करण्याचा पुन्हा प्रयत्न करत आहे...';
 
   @override
-  String get importsSnackRetryFailed => 'पुन्हा प्रयत्न करू शकलो नाही — नंतर पुन्हा प्रयत्न करा.';
+  String get importsSnackRetryFailed =>
+      'पुन्हा प्रयत्न करू शकलो नाही — नंतर पुन्हा प्रयत्न करा.';
 
   @override
-  String get importsSnackReclassifyQueued => 'रांगेत पुनर्वर्गीकृत करा — पुन्हा मार्ग काढण्यासाठी आयटम पुन्हा सामायिक करा.';
+  String get importsSnackReclassifyQueued =>
+      'रांगेत पुनर्वर्गीकृत करा — पुन्हा मार्ग काढण्यासाठी आयटम पुन्हा सामायिक करा.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44396,7 +44409,8 @@ class AppLocalizationsMr extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'तुमच्या आयात इतिहासातून रेकॉर्ड काढले जातात. आयात केलेले वर्कआउट्स / रेसिपी / फूड लॉग स्वतःच राहतात.';
+  String get importsDeleteConfirmBody =>
+      'तुमच्या आयात इतिहासातून रेकॉर्ड काढले जातात. आयात केलेले वर्कआउट्स / रेसिपी / फूड लॉग स्वतःच राहतात.';
 
   @override
   String get importsActionCancel => 'रद्द करा';
@@ -44450,7 +44464,8 @@ class AppLocalizationsMr extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'मर्यादा';
 
   @override
-  String get importsLimitsFooter => 'दैनंदिन कॅप्स प्रत्येकासाठी समान आहेत. ते आयात गुणवत्ता उच्च ठेवतात आणि पळून जाणाऱ्या खर्चापासून संरक्षण करतात.';
+  String get importsLimitsFooter =>
+      'दैनंदिन कॅप्स प्रत्येकासाठी समान आहेत. ते आयात गुणवत्ता उच्च ठेवतात आणि पळून जाणाऱ्या खर्चापासून संरक्षण करतात.';
 
   @override
   String get importsPrivacySectionTitle => 'आयात करतो';
@@ -44459,19 +44474,23 @@ class AppLocalizationsMr extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'रूटिंग करण्यापूर्वी नेहमी विचारा';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'स्वयं-मार्ग काउंटडाउन वगळा — प्रत्येक शेअर निवडकर्ता उघडतो.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'स्वयं-मार्ग काउंटडाउन वगळा — प्रत्येक शेअर निवडकर्ता उघडतो.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'शेअर केलेला इतिहास साफ करा';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'तुमच्या आयात सूचीमधून प्रत्येक रेकॉर्ड काढून टाकते. आयात केलेले वर्कआउट्स, रेसिपी आणि फूड लॉग स्वतःच राहतात.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'तुमच्या आयात सूचीमधून प्रत्येक रेकॉर्ड काढून टाकते. आयात केलेले वर्कआउट्स, रेसिपी आणि फूड लॉग स्वतःच राहतात.';
 
   @override
-  String get importsPrivacyClearConfirmTitle => 'शेअर केलेला इतिहास साफ करायचा?';
+  String get importsPrivacyClearConfirmTitle =>
+      'शेअर केलेला इतिहास साफ करायचा?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'तुमच्या आयात सूचीमधील प्रत्येक पंक्ती काढून टाकली आहे. तुम्ही आयात केलेले वर्कआउट्स, रेसिपी आणि फूड लॉग ते आहेत तिथेच राहतात.';
+  String get importsPrivacyClearConfirmBody =>
+      'तुमच्या आयात सूचीमधील प्रत्येक पंक्ती काढून टाकली आहे. तुम्ही आयात केलेले वर्कआउट्स, रेसिपी आणि फूड लॉग ते आहेत तिथेच राहतात.';
 
   @override
   String get importsPrivacyClearAction => 'साफ';
@@ -44480,5 +44499,6 @@ class AppLocalizationsMr extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'शेअर केलेला इतिहास साफ केला.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'साफ करू शकलो नाही — नंतर पुन्हा प्रयत्न करा.';
+  String get importsPrivacyClearFailedSnack =>
+      'साफ करू शकलो नाही — नंतर पुन्हा प्रयत्न करा.';
 }

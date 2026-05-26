@@ -10,6 +10,19 @@ extension __HomeScreenStateExt on _HomeScreenState {
     ref.read(posthogServiceProvider).capture(
       eventName: 'home_screen_viewed',
     );
+    // Force-fetch the user's XP / level on home mount so the level ring +
+    // streak chip never stick on a stale cached value. The provider seeds
+    // from an in-memory snapshot for instant first paint (still snappy),
+    // then this call quietly reconciles with the server. Previously the
+    // home screen only WATCHED xpProvider and never triggered a load — so
+    // users who opened the app straight to home saw whatever level had
+    // been cached weeks ago, no matter how much they'd actually earned.
+    Future.microtask(() {
+      if (!mounted) return;
+      unawaited(
+        ref.read(xpProvider.notifier).loadUserXP(showLoading: false),
+      );
+    });
     // Fire-and-forget daily fitness-profile snapshot. Debounced 1x/day via
     // SharedPreferences so repeat opens on the same day are a no-op.
     // Replaces the external cron for active users.

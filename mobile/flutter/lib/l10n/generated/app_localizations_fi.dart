@@ -14243,7 +14243,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Joten rakensin ihmisen, en kirjanpitoa. Nappaa kuva ruokalistasta Bangkokissa, niin valmentaja lukee sen sinulle makroina. Jos skippaat tiistain, se hakee sinut takaisin keskiviikkoaamuna ilman syyllistämistä. Se oppii ruokasi, salisi ja lipsumiskaavasi – halvemmalla kuin yksi PT-tapaaminen kuukaudessa.';
+      'Joten rakensin henkilön, en pääkirjaa. Nappaa mikä tahansa ruokalista – kotimaassa tai ulkomailla – ja valmentaja lukee sen sinulle takaisin makroissa. Ohita tiistai ja se vetää sinut takaisin keskiviikkoaamuna ilman syyllisyyttä. Se oppii ruokasi, kuntosalisi, liukastumismallisi – alle yhden PT-istunnon kuukaudessa.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20317,12 +20317,12 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44346,6 +44346,12 @@ class AppLocalizationsFi extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Sama kuin sovelluksen kieli';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Tuonti';
 
   @override
@@ -44355,7 +44361,8 @@ class AppLocalizationsFi extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'Pyörän seuranta';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'Kuukautiset, hedelmällisyys ja ennusteet';
+  String get settingsCycleTrackingSubtitle =>
+      'Kuukautiset, hedelmällisyys ja ennusteet';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44371,7 +44378,8 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Ilmoitukset on keskeytetty. Sammuta milloin tahansa jatkaaksesi.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Ilmoitukset on keskeytetty. Sammuta milloin tahansa jatkaaksesi.';
 
   @override
   String get vacationModeBannerScheduled => 'Aikataulutettu';
@@ -44385,7 +44393,8 @@ class AppLocalizationsFi extends AppLocalizations {
   String get vacationModeBannerOn => 'Ilmoitukset ovat päällä';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Ota lomatila käyttöön alla keskeyttääksesi ei-kriittiset muistutukset.';
+  String get vacationModeBannerOnSubtitle =>
+      'Ota lomatila käyttöön alla keskeyttääksesi ei-kriittiset muistutukset.';
 
   @override
   String get difficultyEasy => 'Aloittelija';
@@ -44441,7 +44450,8 @@ class AppLocalizationsFi extends AppLocalizations {
   String get importsEmptyTitle => 'Mitään ei ole vielä jaettu';
 
   @override
-  String get importsEmptyBody => 'Napsauta Jaa missä tahansa – valokuvat, YouTube, ChatGPT, äänimuistio – ja se laskeutuu tänne automaattisesti.';
+  String get importsEmptyBody =>
+      'Napsauta Jaa missä tahansa – valokuvat, YouTube, ChatGPT, äänimuistio – ja se laskeutuu tänne automaattisesti.';
 
   @override
   String get importsActionOpen => 'Avata';
@@ -44456,10 +44466,12 @@ class AppLocalizationsFi extends AppLocalizations {
   String get importsSnackRetrying => 'Yritetään tuontia uudelleen…';
 
   @override
-  String get importsSnackRetryFailed => 'Ei voitu yrittää uudelleen – yritä myöhemmin uudelleen.';
+  String get importsSnackRetryFailed =>
+      'Ei voitu yrittää uudelleen – yritä myöhemmin uudelleen.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Luokittele uudelleen jonossa — jaa kohde uudelleen reitittääksesi uudelleen.';
+  String get importsSnackReclassifyQueued =>
+      'Luokittele uudelleen jonossa — jaa kohde uudelleen reitittääksesi uudelleen.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44467,7 +44479,8 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Tietueet poistetaan tuontihistoriastasi. Tuodut treenit / reseptit / ruokalokit itse pysyvät.';
+  String get importsDeleteConfirmBody =>
+      'Tietueet poistetaan tuontihistoriastasi. Tuodut treenit / reseptit / ruokalokit itse pysyvät.';
 
   @override
   String get importsActionCancel => 'Peruuttaa';
@@ -44521,7 +44534,8 @@ class AppLocalizationsFi extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Rajoitukset';
 
   @override
-  String get importsLimitsFooter => 'Päivärajat ovat samat kaikille. Ne pitävät tuontilaadun korkeana ja suojaavat karkaavilta kustannuksilta.';
+  String get importsLimitsFooter =>
+      'Päivärajat ovat samat kaikille. Ne pitävät tuontilaadun korkeana ja suojaavat karkaavilta kustannuksilta.';
 
   @override
   String get importsPrivacySectionTitle => 'Tuonti';
@@ -44530,19 +44544,22 @@ class AppLocalizationsFi extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Kysy aina ennen reititystä';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Ohita automaattisen reitin lähtölaskenta – jokainen jako avaa valitsimen.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Ohita automaattisen reitin lähtölaskenta – jokainen jako avaa valitsimen.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Tyhjennä jaettu historia';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Poistaa kaikki tietueet tuontiluettelostasi. Tuodut harjoitukset, reseptit ja ruokalokit säilyvät.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Poistaa kaikki tietueet tuontiluettelostasi. Tuodut harjoitukset, reseptit ja ruokalokit säilyvät.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Poistetaanko jaettu historia?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Jokainen tuontiluettelosi rivi poistetaan. Tuomasi harjoitukset, reseptit ja ruokalokit pysyvät paikoillaan.';
+  String get importsPrivacyClearConfirmBody =>
+      'Jokainen tuontiluettelosi rivi poistetaan. Tuomasi harjoitukset, reseptit ja ruokalokit pysyvät paikoillaan.';
 
   @override
   String get importsPrivacyClearAction => 'Selkeä';
@@ -44551,5 +44568,6 @@ class AppLocalizationsFi extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Jaettu historia tyhjennetty.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Ei voitu tyhjentää – yritä myöhemmin uudelleen.';
+  String get importsPrivacyClearFailedSnack =>
+      'Ei voitu tyhjentää – yritä myöhemmin uudelleen.';
 }

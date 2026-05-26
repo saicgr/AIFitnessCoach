@@ -14333,7 +14333,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Così ho costruito la persona, non il registro. Scatta una foto a quel menu a Bangkok e il coach te lo legge in macro. Salta un martedì e ti riporta in carreggiata mercoledì mattina senza farti sentire in colpa. Impara i tuoi cibi, la tua palestra, i tuoi schemi di sgarro — per meno di una sessione di PT al mese.';
+      'Quindi ho costruito la persona, non il registro. Scatta qualsiasi menu, a casa o all\'estero, e il coach te lo leggerà in macro. Salta un martedì e ti riporta indietro mercoledì mattina senza il senso di colpa. Apprende i tuoi alimenti, la tua palestra, i tuoi schemi di slip - per meno di una sessione di PT al mese.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20441,12 +20441,12 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44616,10 +44616,17 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Come la lingua dell\'app';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Importazioni';
 
   @override
-  String get settingsImportsSubtitle => 'Tutto quello che hai condiviso su Zealova';
+  String get settingsImportsSubtitle =>
+      'Tutto quello che hai condiviso su Zealova';
 
   @override
   String get settingsCycleTrackingTitle => 'Monitoraggio del ciclo';
@@ -44641,7 +44648,8 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Le notifiche sono in pausa. Spegni in qualsiasi momento per riprendere.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Le notifiche sono in pausa. Spegni in qualsiasi momento per riprendere.';
 
   @override
   String get vacationModeBannerScheduled => 'Programmato';
@@ -44655,7 +44663,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get vacationModeBannerOn => 'Le notifiche sono attive';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Abilita la modalità vacanza di seguito per mettere in pausa i promemoria non critici.';
+  String get vacationModeBannerOnSubtitle =>
+      'Abilita la modalità vacanza di seguito per mettere in pausa i promemoria non critici.';
 
   @override
   String get difficultyEasy => 'Principiante';
@@ -44711,7 +44720,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get importsEmptyTitle => 'Niente di condiviso ancora';
 
   @override
-  String get importsEmptyBody => 'Premi Condividi ovunque - Foto, YouTube, ChatGPT, un memo vocale - e arriverà qui automaticamente.';
+  String get importsEmptyBody =>
+      'Premi Condividi ovunque - Foto, YouTube, ChatGPT, un memo vocale - e arriverà qui automaticamente.';
 
   @override
   String get importsActionOpen => 'Aprire';
@@ -44726,10 +44736,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get importsSnackRetrying => 'Nuovo tentativo di importazione…';
 
   @override
-  String get importsSnackRetryFailed => 'Impossibile riprovare: riprova più tardi.';
+  String get importsSnackRetryFailed =>
+      'Impossibile riprovare: riprova più tardi.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Riclassifica in coda: condividi nuovamente l\'elemento per reindirizzarlo.';
+  String get importsSnackReclassifyQueued =>
+      'Riclassifica in coda: condividi nuovamente l\'elemento per reindirizzarlo.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44737,7 +44749,8 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'I record vengono rimossi dalla cronologia delle importazioni. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono.';
+  String get importsDeleteConfirmBody =>
+      'I record vengono rimossi dalla cronologia delle importazioni. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono.';
 
   @override
   String get importsActionCancel => 'Cancellare';
@@ -44776,7 +44789,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return 'Stato: {stato}';
+    return 'Stato: $status';
   }
 
   @override
@@ -44791,28 +44804,35 @@ class AppLocalizationsIt extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Limiti';
 
   @override
-  String get importsLimitsFooter => 'I limiti giornalieri sono uguali per tutti. Mantengono elevata la qualità delle importazioni e proteggono dai costi galoppanti.';
+  String get importsLimitsFooter =>
+      'I limiti giornalieri sono uguali per tutti. Mantengono elevata la qualità delle importazioni e proteggono dai costi galoppanti.';
 
   @override
   String get importsPrivacySectionTitle => 'Importazioni';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Chiedi sempre prima di indirizzare';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Chiedi sempre prima di indirizzare';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Salta il conto alla rovescia del percorso automatico: ogni condivisione apre il selettore.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Salta il conto alla rovescia del percorso automatico: ogni condivisione apre il selettore.';
 
   @override
-  String get importsPrivacyClearHistoryTitle => 'Cancella la cronologia condivisa';
+  String get importsPrivacyClearHistoryTitle =>
+      'Cancella la cronologia condivisa';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Rimuove tutti i record dall\'elenco delle importazioni. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Rimuove tutti i record dall\'elenco delle importazioni. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono.';
 
   @override
-  String get importsPrivacyClearConfirmTitle => 'Cancellare la cronologia condivisa?';
+  String get importsPrivacyClearConfirmTitle =>
+      'Cancellare la cronologia condivisa?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Ogni riga nell\'elenco delle importazioni viene rimossa. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono dove sono.';
+  String get importsPrivacyClearConfirmBody =>
+      'Ogni riga nell\'elenco delle importazioni viene rimossa. Gli allenamenti, le ricette e i registri degli alimenti importati rimangono dove sono.';
 
   @override
   String get importsPrivacyClearAction => 'Chiaro';
@@ -44821,5 +44841,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Cronologia condivisa cancellata.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Impossibile cancellare: riprova più tardi.';
+  String get importsPrivacyClearFailedSnack =>
+      'Impossibile cancellare: riprova più tardi.';
 }

@@ -20875,7 +20875,7 @@
   "importsDeleteConfirmTitle": "{count}개의 가져오기를 삭제하시겠습니까?",
   "importsDetailDetectedAs": "다음으로 감지됨: {intent}",
   "importsDetailFrom": "보낸 사람: {url}",
-  "importsDetailStatus": "상태: {상태}",
+  "importsDetailStatus": "상태: {status}",
   "importsEmptyBody": "사진, YouTube, ChatGPT, 음성 메모 등 어디에서나 공유를 누르면 여기에 자동으로 전송됩니다.",
   "importsEmptyTitle": "아직 공유된 항목이 없습니다.",
   "importsFilterAll": "모두",

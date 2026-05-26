@@ -14139,7 +14139,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'So I built the person, not the ledger. Snap that menu in Bangkok and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.';
+      'So I built the person, not the ledger. Snap any menu — at home or abroad — and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20155,12 +20155,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44044,10 +44044,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Same as app language';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Imports';
 
   @override
-  String get settingsImportsSubtitle => 'Everything you\'ve shared into Zealova';
+  String get settingsImportsSubtitle =>
+      'Everything you\'ve shared into Zealova';
 
   @override
   String get settingsCycleTrackingTitle => 'Cycle Tracking';
@@ -44069,7 +44076,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Notifications are paused. Turn off anytime to resume.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Notifications are paused. Turn off anytime to resume.';
 
   @override
   String get vacationModeBannerScheduled => 'Scheduled';
@@ -44083,7 +44091,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vacationModeBannerOn => 'Notifications are on';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Enable vacation mode below to pause non-critical reminders.';
+  String get vacationModeBannerOnSubtitle =>
+      'Enable vacation mode below to pause non-critical reminders.';
 
   @override
   String get difficultyEasy => 'Beginner';
@@ -44139,7 +44148,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importsEmptyTitle => 'Nothing shared yet';
 
   @override
-  String get importsEmptyBody => 'Hit Share anywhere — Photos, YouTube, ChatGPT, a voice memo — and it\'ll land here automatically.';
+  String get importsEmptyBody =>
+      'Hit Share anywhere — Photos, YouTube, ChatGPT, a voice memo — and it\'ll land here automatically.';
 
   @override
   String get importsActionOpen => 'Open';
@@ -44157,7 +44167,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importsSnackRetryFailed => 'Couldn\'t retry — try again later.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Reclassify queued — share the item again to reroute.';
+  String get importsSnackReclassifyQueued =>
+      'Reclassify queued — share the item again to reroute.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44165,7 +44176,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'The records are removed from your imports history. Imported workouts / recipes / food logs themselves stay.';
+  String get importsDeleteConfirmBody =>
+      'The records are removed from your imports history. Imported workouts / recipes / food logs themselves stay.';
 
   @override
   String get importsActionCancel => 'Cancel';
@@ -44219,7 +44231,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Limits';
 
   @override
-  String get importsLimitsFooter => 'Daily caps are the same for everyone. They keep import quality high and protect against runaway costs.';
+  String get importsLimitsFooter =>
+      'Daily caps are the same for everyone. They keep import quality high and protect against runaway costs.';
 
   @override
   String get importsPrivacySectionTitle => 'Imports';
@@ -44228,19 +44241,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Always ask before routing';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Skip the auto-route countdown — every share opens the chooser.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Skip the auto-route countdown — every share opens the chooser.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Clear shared history';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Removes every record from your Imports list. Imported workouts, recipes, and food logs themselves stay.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Removes every record from your Imports list. Imported workouts, recipes, and food logs themselves stay.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Clear shared history?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Every row in your Imports list is removed. The workouts, recipes, and food logs you imported stay where they are.';
+  String get importsPrivacyClearConfirmBody =>
+      'Every row in your Imports list is removed. The workouts, recipes, and food logs you imported stay where they are.';
 
   @override
   String get importsPrivacyClearAction => 'Clear';
@@ -44249,5 +44265,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Shared history cleared.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Couldn\'t clear — try again later.';
+  String get importsPrivacyClearFailedSnack =>
+      'Couldn\'t clear — try again later.';
 }

@@ -13674,7 +13674,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      '그래서 저는 장부가 아닌 사람을 위한 앱을 만들었습니다. 방콕에서 메뉴판을 찍으면 코치가 매크로 영양소로 읽어줍니다. 화요일을 건너뛰면 죄책감을 주지 않고 수요일 아침에 다시 이끌어줍니다. 한 달에 PT 한 번 받는 비용보다 저렴하게 당신의 음식, 체육관, 그리고 습관을 학습합니다.';
+      '그래서 장부가 아닌 사람을 지었습니다. 국내든 해외든 메뉴를 찍으면 코치가 매크로로 다시 읽어줍니다. 화요일을 건너뛰면 죄책감 없이 수요일 아침에 돌아올 수 있습니다. 한 달에 한 번 미만의 PT 세션으로 음식, 체육관, 슬립 패턴을 학습합니다.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -19461,12 +19461,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -42549,6 +42549,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => '앱 언어와 동일';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => '수입품';
 
   @override
@@ -42588,7 +42594,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get vacationModeBannerOn => '알림이 켜져 있습니다';
 
   @override
-  String get vacationModeBannerOnSubtitle => '중요하지 않은 알림을 일시중지하려면 아래에서 휴가 모드를 활성화하세요.';
+  String get vacationModeBannerOnSubtitle =>
+      '중요하지 않은 알림을 일시중지하려면 아래에서 휴가 모드를 활성화하세요.';
 
   @override
   String get difficultyEasy => '초보자';
@@ -42644,7 +42651,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsEmptyTitle => '아직 공유된 항목이 없습니다.';
 
   @override
-  String get importsEmptyBody => '사진, YouTube, ChatGPT, 음성 메모 등 어디에서나 공유를 누르면 여기에 자동으로 전송됩니다.';
+  String get importsEmptyBody =>
+      '사진, YouTube, ChatGPT, 음성 메모 등 어디에서나 공유를 누르면 여기에 자동으로 전송됩니다.';
 
   @override
   String get importsActionOpen => '열려 있는';
@@ -42662,7 +42670,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsSnackRetryFailed => '다시 시도할 수 없습니다. 나중에 다시 시도하세요.';
 
   @override
-  String get importsSnackReclassifyQueued => '대기 중인 재분류 - 항목을 다시 공유하여 경로를 재지정합니다.';
+  String get importsSnackReclassifyQueued =>
+      '대기 중인 재분류 - 항목을 다시 공유하여 경로를 재지정합니다.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -42670,7 +42679,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => '해당 기록은 수입 내역에서 제거됩니다. 가져온 운동/레시피/음식 로그 자체가 그대로 유지됩니다.';
+  String get importsDeleteConfirmBody =>
+      '해당 기록은 수입 내역에서 제거됩니다. 가져온 운동/레시피/음식 로그 자체가 그대로 유지됩니다.';
 
   @override
   String get importsActionCancel => '취소';
@@ -42709,7 +42719,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return '상태: {상태}';
+    return '상태: $status';
   }
 
   @override
@@ -42724,7 +42734,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsLimitsLimitsHeader => '제한';
 
   @override
-  String get importsLimitsFooter => '일일 한도는 모든 사람에게 동일합니다. 수입 품질을 높게 유지하고 폭주하는 비용으로부터 보호합니다.';
+  String get importsLimitsFooter =>
+      '일일 한도는 모든 사람에게 동일합니다. 수입 품질을 높게 유지하고 폭주하는 비용으로부터 보호합니다.';
 
   @override
   String get importsPrivacySectionTitle => '수입품';
@@ -42733,19 +42744,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => '라우팅하기 전에 항상 물어보세요.';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => '자동 경로 카운트다운을 건너뛰세요. 공유할 때마다 선택기가 열립니다.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      '자동 경로 카운트다운을 건너뛰세요. 공유할 때마다 선택기가 열립니다.';
 
   @override
   String get importsPrivacyClearHistoryTitle => '공유 기록 지우기';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => '가져오기 목록에서 모든 기록을 제거합니다. 가져온 운동, 레시피, 음식 로그는 그대로 유지됩니다.';
+  String get importsPrivacyClearHistorySubtitle =>
+      '가져오기 목록에서 모든 기록을 제거합니다. 가져온 운동, 레시피, 음식 로그는 그대로 유지됩니다.';
 
   @override
   String get importsPrivacyClearConfirmTitle => '공유 기록을 삭제하시겠습니까?';
 
   @override
-  String get importsPrivacyClearConfirmBody => '가져오기 목록의 모든 행이 제거됩니다. 가져온 운동, 레시피, 음식 기록은 그대로 유지됩니다.';
+  String get importsPrivacyClearConfirmBody =>
+      '가져오기 목록의 모든 행이 제거됩니다. 가져온 운동, 레시피, 음식 기록은 그대로 유지됩니다.';
 
   @override
   String get importsPrivacyClearAction => '분명한';

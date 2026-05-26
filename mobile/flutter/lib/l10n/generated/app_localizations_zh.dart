@@ -13512,7 +13512,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      '所以我构建的是“人”，而不是“账本”。在曼谷拍下那张菜单，教练就能为你读出其中的宏量营养素。错过了一个周二，它会在周三早上把你拉回来，而不会让你感到内疚。它会学习你的饮食、你的健身房、你的懈怠模式——费用不到每月一次私教课的零头。';
+      '所以我建立的是人，而不是账本。拍下任何菜单——无论是在国内还是国外——教练都会以宏的方式将其读给你听。跳过周二，周三早上你就会回到过去，而不会感到内疚。它可以了解您的食物、您的健身情况、您的滑倒模式——每月只需不到一次的 PT 疗程。';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -19182,12 +19182,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -42018,6 +42018,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => '与应用语言相同';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => '进口';
 
   @override
@@ -42113,7 +42119,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importsEmptyTitle => '尚未分享任何内容';
 
   @override
-  String get importsEmptyBody => '点击“在任何地方共享”——照片、YouTube、ChatGPT、语音备忘录——它就会自动降落到此处。';
+  String get importsEmptyBody =>
+      '点击“在任何地方共享”——照片、YouTube、ChatGPT、语音备忘录——它就会自动降落到此处。';
 
   @override
   String get importsActionOpen => '打开';
@@ -42139,7 +42146,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => '这些记录将从您的导入历史记录中删除。导入的锻炼/食谱/食物日志本身会保留。';
+  String get importsDeleteConfirmBody =>
+      '这些记录将从您的导入历史记录中删除。导入的锻炼/食谱/食物日志本身会保留。';
 
   @override
   String get importsActionCancel => '取消';
@@ -42178,12 +42186,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return '状态：{状态}';
+    return '状态：$status';
   }
 
   @override
   String importsDetailDetectedAs(Object intent) {
-    return '检测为：{意图}';
+    return '检测为：$intent';
   }
 
   @override
@@ -42208,13 +42216,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importsPrivacyClearHistoryTitle => '清除共享历史记录';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => '从导入列表中删除每条记录。导入的锻炼、食谱和食物日志本身会保留下来。';
+  String get importsPrivacyClearHistorySubtitle =>
+      '从导入列表中删除每条记录。导入的锻炼、食谱和食物日志本身会保留下来。';
 
   @override
   String get importsPrivacyClearConfirmTitle => '清除共享历史记录？';
 
   @override
-  String get importsPrivacyClearConfirmBody => '导入列表中的每一行都将被删除。您导入的锻炼、食谱和饮食日志保留在原处。';
+  String get importsPrivacyClearConfirmBody =>
+      '导入列表中的每一行都将被删除。您导入的锻炼、食谱和饮食日志保留在原处。';
 
   @override
   String get importsPrivacyClearAction => '清除';

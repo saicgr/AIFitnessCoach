@@ -187,6 +187,9 @@ class _CardContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: step counter + skip — pinned, never scrolls.
+          // The skip pill is wrapped in Flexible + ellipsis so long
+          // translations (e.g. Telugu "ట్యుటోరియల్‌ను దాటవేయి") can never
+          // overflow the card width and bleed off-screen.
           Row(
             children: [
               Text(
@@ -198,25 +201,32 @@ class _CardContent extends StatelessWidget {
                   letterSpacing: 0.3,
                 ),
               ),
-              const Spacer(),
-              GestureDetector(
-                onTap: onSkip,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: skipBg,
-                    border: Border.all(color: skipBorder, width: 1),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context).appTourTooltipSkipTutorial,
-                    style: TextStyle(
-                      color: skipText,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.2,
+              const SizedBox(width: 12),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: onSkip,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 13, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: skipBg,
+                        border: Border.all(color: skipBorder, width: 1),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context).appTourTooltipSkipTutorial,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: skipText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
                     ),
                   ),
                 ),

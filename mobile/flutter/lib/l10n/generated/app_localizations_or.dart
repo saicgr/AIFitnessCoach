@@ -14281,7 +14281,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'ତେଣୁ ମୁଁ ଖାତା ନୁହେଁ, ବ୍ୟକ୍ତିକୁ ତିଆରି କଲି। ବ୍ୟାଙ୍ଗକକରେ ସେହି ମେନୁର ଫଟୋ ଉଠାନ୍ତୁ ଏବଂ କୋଚ୍ ଏହାକୁ ଆପଣଙ୍କ ପାଇଁ ମାକ୍ରୋରେ ପଢ଼ି ଶୁଣାଇବ। ମଙ୍ଗଳବାର ବାଦ୍ ଦିଅନ୍ତୁ ଏବଂ ଏହା ଆପଣଙ୍କୁ ବୁଧବାର ସକାଳେ ବିନା କୌଣସି ଅନୁଶୋଚନାରେ ପୁଣି ଟ୍ରାକକୁ ଫେରାଇ ଆଣିବ। ଏହା ଆପଣଙ୍କ ଖାଦ୍ୟ, ଆପଣଙ୍କ ଜିମ୍, ଆପଣଙ୍କ ଭୁଲ୍ କରିବାର ଢଙ୍ଗକୁ ଶିଖିଥାଏ — ମାସକୁ ଗୋଟିଏ PT ସେସନ୍ ଠାରୁ କମ୍ ମୂଲ୍ୟରେ।';
+      'ତେଣୁ ମୁଁ ସେହି ବ୍ୟକ୍ତିଙ୍କୁ ନିର୍ମାଣ କଲି, ଲେଜର ନୁହେଁ | ଯେକ any ଣସି ମେନୁକୁ ସ୍ନାପ୍ କରନ୍ତୁ - ଘରେ କିମ୍ବା ବିଦେଶରେ - ଏବଂ କୋଚ୍ ଏହାକୁ ମାକ୍ରୋରେ ଆପଣଙ୍କୁ ପ s ନ୍ତି | ମଙ୍ଗଳବାର ଛାଡିଦିଅ ଏବଂ ଏହା ତୁମକୁ ବୁଧବାର ସକାଳେ ଦୋଷ ଯାତ୍ରା ବିନା ଟାଣି ନେଇଥାଏ | ଏହା ତୁମର ଖାଦ୍ୟ, ତୁମର ଜିମ୍, ତୁମର ସ୍ଲିପ୍ s ାଞ୍ଚା ଶିଖେ - ମାସରେ ଗୋଟିଏରୁ କମ୍ PT ଅଧିବେଶନ ପାଇଁ |';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20387,12 +20387,12 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44548,10 +44548,17 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'ଆପ୍ ଭାଷା ସହିତ ସମାନ';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'ଆମଦାନୀ';
 
   @override
-  String get settingsImportsSubtitle => 'ଆପଣ ସବୁକିଛି ଜାଲୋଭା ରେ ଅଂଶୀଦାର କରିଛନ୍ତି |';
+  String get settingsImportsSubtitle =>
+      'ଆପଣ ସବୁକିଛି ଜାଲୋଭା ରେ ଅଂଶୀଦାର କରିଛନ୍ତି |';
 
   @override
   String get settingsCycleTrackingTitle => 'ଚକ୍ର ଟ୍ରାକିଂ |';
@@ -44561,7 +44568,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String settingsAboutBrand(Object appName) {
-    return '{AppName about ବିଷୟରେ |';
+    return '$appName ବିଷୟରେ';
   }
 
   @override
@@ -44569,25 +44576,27 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String vacationModeBannerPausedUntil(Object endDate) {
-    return 'ବିଜ୍ଞପ୍ତିଗୁଡିକ {endDate until ପର୍ଯ୍ୟନ୍ତ ବିରତ |';
+    return '$endDate ପର୍ଯ୍ୟନ୍ତ ବିଜ୍ଞପ୍ତିଗୁଡିକ ବିରତ ରଖାଯାଇଛି।';
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'ବିଜ୍ଞପ୍ତିଗୁଡିକ ବିରତ | ପୁନ ume କାର୍ଯ୍ୟ ଆରମ୍ଭ କରିବାକୁ ଯେକ time ଣସି ସମୟରେ ବନ୍ଦ କରନ୍ତୁ |';
+  String get vacationModeBannerPausedNoEnd =>
+      'ବିଜ୍ଞପ୍ତିଗୁଡିକ ବିରତ | ପୁନ ume କାର୍ଯ୍ୟ ଆରମ୍ଭ କରିବାକୁ ଯେକ time ଣସି ସମୟରେ ବନ୍ଦ କରନ୍ତୁ |';
 
   @override
   String get vacationModeBannerScheduled => 'ଅନୁସୂଚିତ';
 
   @override
   String vacationModeBannerStartsOn(Object startDate) {
-    return 'ଆରମ୍ଭ {ଆରମ୍ଭ ତାରିଖ} |';
+    return 'ଆରମ୍ଭ $startDate';
   }
 
   @override
   String get vacationModeBannerOn => 'ବିଜ୍ଞପ୍ତିଗୁଡିକ ଅନ୍ ଅଛି |';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'ଅଣ-ଜଟିଳ ସ୍ମାରକଗୁଡ଼ିକୁ ବିରାମ ଦେବା ପାଇଁ ନିମ୍ନରେ ଛୁଟି ମୋଡ୍ ସକ୍ଷମ କରନ୍ତୁ |';
+  String get vacationModeBannerOnSubtitle =>
+      'ଅଣ-ଜଟିଳ ସ୍ମାରକଗୁଡ଼ିକୁ ବିରାମ ଦେବା ପାଇଁ ନିମ୍ନରେ ଛୁଟି ମୋଡ୍ ସକ୍ଷମ କରନ୍ତୁ |';
 
   @override
   String get difficultyEasy => 'ଆରମ୍ଭ';
@@ -44636,14 +44645,15 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String importsSelectedCount(Object count) {
-    return '{ଗଣନା} ମନୋନୀତ |';
+    return '$count ମନୋନୀତ';
   }
 
   @override
   String get importsEmptyTitle => 'ଏପର୍ଯ୍ୟନ୍ତ କିଛି ଅଂଶୀଦାର ହୋଇନାହିଁ |';
 
   @override
-  String get importsEmptyBody => 'ଯେକ anywhere ଣସି ସ୍ଥାନରେ ସେୟାର ହିଟ୍ କରନ୍ତୁ - ଫଟୋ, ୟୁଟ୍ୟୁବ୍, ଚାଟ୍ ଜିପିଟି, ଏକ ଭଏସ୍ ମେମୋ - ଏବଂ ଏହା ସ୍ୱୟଂଚାଳିତ ଭାବରେ ଏଠାରେ ଅବତରଣ କରିବ |';
+  String get importsEmptyBody =>
+      'ଯେକ anywhere ଣସି ସ୍ଥାନରେ ସେୟାର ହିଟ୍ କରନ୍ତୁ - ଫଟୋ, ୟୁଟ୍ୟୁବ୍, ଚାଟ୍ ଜିପିଟି, ଏକ ଭଏସ୍ ମେମୋ - ଏବଂ ଏହା ସ୍ୱୟଂଚାଳିତ ଭାବରେ ଏଠାରେ ଅବତରଣ କରିବ |';
 
   @override
   String get importsActionOpen => 'ଖୋଲନ୍ତୁ |';
@@ -44658,18 +44668,21 @@ class AppLocalizationsOr extends AppLocalizations {
   String get importsSnackRetrying => 'ଆମଦାନି ପୁନ ry ଚେଷ୍ଟା କରୁଛି…';
 
   @override
-  String get importsSnackRetryFailed => 'ପୁନ ry ଚେଷ୍ଟା କରିପାରିଲା ନାହିଁ - ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |';
+  String get importsSnackRetryFailed =>
+      'ପୁନ ry ଚେଷ୍ଟା କରିପାରିଲା ନାହିଁ - ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |';
 
   @override
-  String get importsSnackReclassifyQueued => 'ଧାଡିରେ ପୁନ l ବିଶେଷ କରନ୍ତୁ - ପୁନର୍ବାର ମାର୍ଗକୁ ଆଇଟମ୍ ଅଂଶୀଦାର କରନ୍ତୁ |';
+  String get importsSnackReclassifyQueued =>
+      'ଧାଡିରେ ପୁନ l ବିଶେଷ କରନ୍ତୁ - ପୁନର୍ବାର ମାର୍ଗକୁ ଆଇଟମ୍ ଅଂଶୀଦାର କରନ୍ତୁ |';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
-    return '{ଗଣନା} ଆମଦାନୀ ବିଲୋପ କରିବେ କି?';
+    return '$count ଆମଦାନୀ ବିଲୋପ କରିବେ କି?';
   }
 
   @override
-  String get importsDeleteConfirmBody => 'ରେକର୍ଡଗୁଡିକ ଆପଣଙ୍କର ଆମଦାନୀ ଇତିହାସରୁ ଅପସାରିତ ହୋଇଛି | ଆମଦାନୀ ହୋଇଥିବା ୱାର୍କଆଉଟ୍ / ରେସିପି / ଖାଦ୍ୟ ଲଗ୍ ନିଜେ ରହନ୍ତି |';
+  String get importsDeleteConfirmBody =>
+      'ରେକର୍ଡଗୁଡିକ ଆପଣଙ୍କର ଆମଦାନୀ ଇତିହାସରୁ ଅପସାରିତ ହୋଇଛି | ଆମଦାନୀ ହୋଇଥିବା ୱାର୍କଆଉଟ୍ / ରେସିପି / ଖାଦ୍ୟ ଲଗ୍ ନିଜେ ରହନ୍ତି |';
 
   @override
   String get importsActionCancel => 'ବାତିଲ୍ କରନ୍ତୁ |';
@@ -44708,12 +44721,12 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return 'ସ୍ଥିତି: {ସ୍ଥିତି}';
+    return 'ସ୍ଥିତି: $status';
   }
 
   @override
   String importsDetailDetectedAs(Object intent) {
-    return 'ଭାବରେ ଚିହ୍ନଟ: {ଉଦ୍ଦେଶ୍ୟ}';
+    return 'ଭାବରେ ଚିହ୍ନଟ: $intent';
   }
 
   @override
@@ -44723,28 +44736,33 @@ class AppLocalizationsOr extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'ସୀମା';
 
   @override
-  String get importsLimitsFooter => 'ଦ Daily ନିକ କ୍ୟାପ୍ ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ | ସେମାନେ ଆମଦାନୀ ଗୁଣବତ୍ତାକୁ ଉଚ୍ଚରେ ରଖନ୍ତି ଏବଂ ପଳାୟନ ଖର୍ଚ୍ଚରୁ ରକ୍ଷା କରନ୍ତି |';
+  String get importsLimitsFooter =>
+      'ଦ Daily ନିକ କ୍ୟାପ୍ ସମସ୍ତଙ୍କ ପାଇଁ ସମାନ | ସେମାନେ ଆମଦାନୀ ଗୁଣବତ୍ତାକୁ ଉଚ୍ଚରେ ରଖନ୍ତି ଏବଂ ପଳାୟନ ଖର୍ଚ୍ଚରୁ ରକ୍ଷା କରନ୍ତି |';
 
   @override
   String get importsPrivacySectionTitle => 'ଆମଦାନୀ';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'ରାଉଟିଙ୍ଗ୍ ପୂର୍ବରୁ ସର୍ବଦା ପଚାରନ୍ତୁ |';
+  String get importsPrivacyAlwaysAskTitle =>
+      'ରାଉଟିଙ୍ଗ୍ ପୂର୍ବରୁ ସର୍ବଦା ପଚାରନ୍ତୁ |';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'ଅଟୋ-ରୁଟ୍ କାଉଣ୍ଟଡାଉନ୍ କୁ ଛାଡିଦିଅ - ପ୍ରତ୍ୟେକ ଅଂଶ ଚୟନକର୍ତ୍ତା ଖୋଲିବ |';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'ଅଟୋ-ରୁଟ୍ କାଉଣ୍ଟଡାଉନ୍ କୁ ଛାଡିଦିଅ - ପ୍ରତ୍ୟେକ ଅଂଶ ଚୟନକର୍ତ୍ତା ଖୋଲିବ |';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'ଅଂଶୀଦାର ଇତିହାସ ସଫା କରନ୍ତୁ |';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'ଆପଣଙ୍କର ଆମଦାନୀ ତାଲିକାରୁ ପ୍ରତ୍ୟେକ ରେକର୍ଡ ଅପସାରଣ କରେ | ଆମଦାନୀ ହୋଇଥିବା ୱାର୍କଆଉଟ୍, ରେସିପି, ଏବଂ ଖାଦ୍ୟ ଲଗ୍ ନିଜେ ରହନ୍ତି |';
+  String get importsPrivacyClearHistorySubtitle =>
+      'ଆପଣଙ୍କର ଆମଦାନୀ ତାଲିକାରୁ ପ୍ରତ୍ୟେକ ରେକର୍ଡ ଅପସାରଣ କରେ | ଆମଦାନୀ ହୋଇଥିବା ୱାର୍କଆଉଟ୍, ରେସିପି, ଏବଂ ଖାଦ୍ୟ ଲଗ୍ ନିଜେ ରହନ୍ତି |';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'ଅଂଶୀଦାର ଇତିହାସ ସଫା କରନ୍ତୁ?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'ତୁମର ଆମଦାନୀ ତାଲିକାରେ ଥିବା ପ୍ରତ୍ୟେକ ଧାଡି ଅପସାରିତ ହୋଇଛି | ଆପଣ ଆମଦାନୀ କରିଥିବା ୱାର୍କଆଉଟ୍, ରେସିପି, ଏବଂ ଖାଦ୍ୟ ଲଗ୍ ସେମାନେ କେଉଁଠାରେ ରୁହନ୍ତି |';
+  String get importsPrivacyClearConfirmBody =>
+      'ତୁମର ଆମଦାନୀ ତାଲିକାରେ ଥିବା ପ୍ରତ୍ୟେକ ଧାଡି ଅପସାରିତ ହୋଇଛି | ଆପଣ ଆମଦାନୀ କରିଥିବା ୱାର୍କଆଉଟ୍, ରେସିପି, ଏବଂ ଖାଦ୍ୟ ଲଗ୍ ସେମାନେ କେଉଁଠାରେ ରୁହନ୍ତି |';
 
   @override
   String get importsPrivacyClearAction => 'ସଫା';
@@ -44753,5 +44771,6 @@ class AppLocalizationsOr extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'ଅଂଶୀଦାର ଇତିହାସ ସଫା ହେଲା |';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'ସଫା ହୋଇପାରିଲା ନାହିଁ - ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |';
+  String get importsPrivacyClearFailedSnack =>
+      'ସଫା ହୋଇପାରିଲା ନାହିଁ - ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |';
 }

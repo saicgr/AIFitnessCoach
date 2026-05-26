@@ -14070,7 +14070,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'لذا قمت ببناء الشخص، وليس دفتر الحسابات. التقط صورة لتلك القائمة في بانكوك وسيقوم المدرب بقراءتها لك وتحويلها إلى ماكروز. إذا فاتك يوم الثلاثاء، سيعيدك إلى المسار صباح الأربعاء دون الشعور بالذنب. إنه يتعلم أطعمتك، وناديك الرياضي، وأنماط تعثرك — مقابل أقل من تكلفة جلسة تدريب شخصي واحدة في الشهر.';
+      'لذلك قمت ببناء الشخص، وليس دفتر الأستاذ. قم بالتقاط أي قائمة - في المنزل أو في الخارج - وسيقوم المدرب بقراءتها لك مرة أخرى في وحدات الماكرو. تخطي يوم الثلاثاء وسوف يعيدك صباح الأربعاء دون الشعور بالذنب. إنه يتعلم الأطعمة الخاصة بك، وصالة الألعاب الرياضية الخاصة بك، وأنماط الانزلاق الخاصة بك - لأقل من جلسة PT واحدة في الشهر.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20069,12 +20069,12 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g مجم';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g مجم';
   }
 
@@ -43825,6 +43825,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'نفس لغة التطبيق';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'الواردات';
 
   @override
@@ -43850,7 +43856,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'الإخطارات متوقفة مؤقتا. قم بإيقاف التشغيل في أي وقت للاستئناف.';
+  String get vacationModeBannerPausedNoEnd =>
+      'الإخطارات متوقفة مؤقتا. قم بإيقاف التشغيل في أي وقت للاستئناف.';
 
   @override
   String get vacationModeBannerScheduled => 'المقرر';
@@ -43864,7 +43871,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get vacationModeBannerOn => 'الإخطارات قيد التشغيل';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'قم بتمكين وضع الإجازة أدناه لإيقاف التذكيرات غير المهمة مؤقتًا.';
+  String get vacationModeBannerOnSubtitle =>
+      'قم بتمكين وضع الإجازة أدناه لإيقاف التذكيرات غير المهمة مؤقتًا.';
 
   @override
   String get difficultyEasy => 'مبتدئ';
@@ -43920,7 +43928,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get importsEmptyTitle => 'لم تتم مشاركة أي شيء حتى الآن';
 
   @override
-  String get importsEmptyBody => 'اضغط على "المشاركة في أي مكان" — الصور، وYouTube، وChatGPT، والمذكرة الصوتية — وستصل هنا تلقائيًا.';
+  String get importsEmptyBody =>
+      'اضغط على \"المشاركة في أي مكان\" — الصور، وYouTube، وChatGPT، والمذكرة الصوتية — وستصل هنا تلقائيًا.';
 
   @override
   String get importsActionOpen => 'يفتح';
@@ -43935,10 +43944,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get importsSnackRetrying => 'جارٍ إعادة محاولة الاستيراد...';
 
   @override
-  String get importsSnackRetryFailed => 'تعذرت إعادة المحاولة — حاول مرة أخرى لاحقًا.';
+  String get importsSnackRetryFailed =>
+      'تعذرت إعادة المحاولة — حاول مرة أخرى لاحقًا.';
 
   @override
-  String get importsSnackReclassifyQueued => 'إعادة تصنيف العنصر في قائمة الانتظار — قم بمشاركة العنصر مرة أخرى لإعادة توجيهه.';
+  String get importsSnackReclassifyQueued =>
+      'إعادة تصنيف العنصر في قائمة الانتظار — قم بمشاركة العنصر مرة أخرى لإعادة توجيهه.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -43946,7 +43957,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'تتم إزالة السجلات من سجل الواردات الخاص بك. تبقى التدريبات / الوصفات / سجلات الطعام المستوردة نفسها.';
+  String get importsDeleteConfirmBody =>
+      'تتم إزالة السجلات من سجل الواردات الخاص بك. تبقى التدريبات / الوصفات / سجلات الطعام المستوردة نفسها.';
 
   @override
   String get importsActionCancel => 'يلغي';
@@ -43985,7 +43997,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return 'الحالة: {الحالة}';
+    return 'الحالة: $status';
   }
 
   @override
@@ -44000,7 +44012,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'حدود';
 
   @override
-  String get importsLimitsFooter => 'الحدود القصوى اليومية هي نفسها للجميع. إنها تحافظ على جودة الواردات عالية وتحمي من التكاليف الجامحة.';
+  String get importsLimitsFooter =>
+      'الحدود القصوى اليومية هي نفسها للجميع. إنها تحافظ على جودة الواردات عالية وتحمي من التكاليف الجامحة.';
 
   @override
   String get importsPrivacySectionTitle => 'الواردات';
@@ -44009,19 +44022,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'اسأل دائمًا قبل التوجيه';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'تخطي العد التنازلي للمسار التلقائي — كل مشاركة تفتح أداة الاختيار.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'تخطي العد التنازلي للمسار التلقائي — كل مشاركة تفتح أداة الاختيار.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'مسح التاريخ المشترك';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'يزيل كل سجل من قائمة الواردات الخاصة بك. تبقى التدريبات والوصفات وسجلات الطعام المستوردة نفسها.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'يزيل كل سجل من قائمة الواردات الخاصة بك. تبقى التدريبات والوصفات وسجلات الطعام المستوردة نفسها.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'هل تريد محو السجل المشترك؟';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'تتم إزالة كل صف في قائمة الواردات الخاصة بك. تبقى التدريبات والوصفات وسجلات الطعام التي قمت باستيرادها في مكانها.';
+  String get importsPrivacyClearConfirmBody =>
+      'تتم إزالة كل صف في قائمة الواردات الخاصة بك. تبقى التدريبات والوصفات وسجلات الطعام التي قمت باستيرادها في مكانها.';
 
   @override
   String get importsPrivacyClearAction => 'واضح';
@@ -44030,5 +44046,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'تم مسح السجل المشترك.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'تعذر المسح — حاول مرة أخرى لاحقًا.';
+  String get importsPrivacyClearFailedSnack =>
+      'تعذر المسح — حاول مرة أخرى لاحقًا.';
 }

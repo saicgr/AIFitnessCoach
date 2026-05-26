@@ -14184,7 +14184,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'ผมเลยสร้างสิ่งที่ดูแลคน ไม่ใช่แค่สมุดบัญชี แค่ถ่ายรูปเมนูในกรุงเทพฯ แล้วโค้ชจะอ่านค่าสารอาหารกลับมาให้คุณ ถ้าพลาดวันอังคาร โค้ชจะดึงคุณกลับมาในเช้าวันพุธโดยไม่ทำให้รู้สึกผิด มันเรียนรู้อาหารของคุณ ยิมของคุณ และรูปแบบการหลุดวินัยของคุณ ทั้งหมดนี้ในราคาที่ถูกกว่าจ้าง PT เดือนละครั้ง';
+      'ดังนั้นฉันจึงสร้างบุคคล ไม่ใช่บัญชีแยกประเภท ถ่ายภาพเมนูใดก็ได้ ที่บ้านหรือต่างประเทศ แล้วโค้ชจะอ่านกลับมาให้คุณในรูปแบบมาโคร ข้ามวันอังคารแล้วมันจะดึงคุณกลับมาในเช้าวันพุธโดยไม่รู้สึกผิด โดยจะเรียนรู้อาหาร ห้องออกกำลังกาย รูปแบบการลื่นของคุณ น้อยกว่าหนึ่งครั้งต่อเดือน';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20240,12 +20240,12 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g มก.';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g มก.';
   }
 
@@ -44165,6 +44165,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'ภาษาเดียวกับแอป';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'นำเข้า';
 
   @override
@@ -44174,7 +44180,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'การติดตามรอบเดือน';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'ระยะเวลา การเจริญพันธุ์ และการพยากรณ์';
+  String get settingsCycleTrackingSubtitle =>
+      'ระยะเวลา การเจริญพันธุ์ และการพยากรณ์';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44190,7 +44197,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'การแจ้งเตือนถูกหยุดชั่วคราว ปิดได้ตลอดเวลาเพื่อดำเนินการต่อ';
+  String get vacationModeBannerPausedNoEnd =>
+      'การแจ้งเตือนถูกหยุดชั่วคราว ปิดได้ตลอดเวลาเพื่อดำเนินการต่อ';
 
   @override
   String get vacationModeBannerScheduled => 'กำหนดเวลาแล้ว';
@@ -44204,7 +44212,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get vacationModeBannerOn => 'การแจ้งเตือนเปิดอยู่';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'เปิดใช้งานโหมดวันหยุดด้านล่างเพื่อหยุดการแจ้งเตือนที่ไม่สำคัญชั่วคราว';
+  String get vacationModeBannerOnSubtitle =>
+      'เปิดใช้งานโหมดวันหยุดด้านล่างเพื่อหยุดการแจ้งเตือนที่ไม่สำคัญชั่วคราว';
 
   @override
   String get difficultyEasy => 'ระดับเริ่มต้น';
@@ -44260,7 +44269,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get importsEmptyTitle => 'ยังไม่มีการแชร์ใดๆ';
 
   @override
-  String get importsEmptyBody => 'กดแชร์ได้ทุกที่ เช่น รูปภาพ, YouTube, ChatGPT, บันทึกเสียง และจะมาที่นี่โดยอัตโนมัติ';
+  String get importsEmptyBody =>
+      'กดแชร์ได้ทุกที่ เช่น รูปภาพ, YouTube, ChatGPT, บันทึกเสียง และจะมาที่นี่โดยอัตโนมัติ';
 
   @override
   String get importsActionOpen => 'เปิด';
@@ -44275,10 +44285,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get importsSnackRetrying => 'กำลังลองนำเข้าอีกครั้ง...';
 
   @override
-  String get importsSnackRetryFailed => 'ไม่สามารถลองอีกครั้ง — ลองอีกครั้งในภายหลัง';
+  String get importsSnackRetryFailed =>
+      'ไม่สามารถลองอีกครั้ง — ลองอีกครั้งในภายหลัง';
 
   @override
-  String get importsSnackReclassifyQueued => 'จัดประเภทใหม่ในคิว — แบ่งปันรายการอีกครั้งเพื่อเปลี่ยนเส้นทาง';
+  String get importsSnackReclassifyQueued =>
+      'จัดประเภทใหม่ในคิว — แบ่งปันรายการอีกครั้งเพื่อเปลี่ยนเส้นทาง';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44286,7 +44298,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'บันทึกจะถูกลบออกจากประวัติการนำเข้าของคุณ การออกกำลังกาย/สูตรอาหาร/บันทึกอาหารที่นำเข้ามาเองยังคงอยู่';
+  String get importsDeleteConfirmBody =>
+      'บันทึกจะถูกลบออกจากประวัติการนำเข้าของคุณ การออกกำลังกาย/สูตรอาหาร/บันทึกอาหารที่นำเข้ามาเองยังคงอยู่';
 
   @override
   String get importsActionCancel => 'ยกเลิก';
@@ -44325,7 +44338,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return 'สถานะ: {สถานะ}';
+    return 'สถานะ: $status';
   }
 
   @override
@@ -44340,7 +44353,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'ขีดจำกัด';
 
   @override
-  String get importsLimitsFooter => 'แคปรายวันจะเหมือนกันสำหรับทุกคน พวกเขารักษาคุณภาพการนำเข้าให้อยู่ในระดับสูงและป้องกันต้นทุนที่ควบคุมไม่ได้';
+  String get importsLimitsFooter =>
+      'แคปรายวันจะเหมือนกันสำหรับทุกคน พวกเขารักษาคุณภาพการนำเข้าให้อยู่ในระดับสูงและป้องกันต้นทุนที่ควบคุมไม่ได้';
 
   @override
   String get importsPrivacySectionTitle => 'นำเข้า';
@@ -44349,19 +44363,22 @@ class AppLocalizationsTh extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'ควรถามก่อนกำหนดเส้นทางเสมอ';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'ข้ามการนับถอยหลังเส้นทางอัตโนมัติ — ทุกการแชร์จะเปิดตัวเลือก';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'ข้ามการนับถอยหลังเส้นทางอัตโนมัติ — ทุกการแชร์จะเปิดตัวเลือก';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'ล้างประวัติการแชร์';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'ลบทุกบันทึกออกจากรายการนำเข้าของคุณ การออกกำลังกาย สูตรอาหาร และบันทึกอาหารที่นำเข้าจะยังคงอยู่';
+  String get importsPrivacyClearHistorySubtitle =>
+      'ลบทุกบันทึกออกจากรายการนำเข้าของคุณ การออกกำลังกาย สูตรอาหาร และบันทึกอาหารที่นำเข้าจะยังคงอยู่';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'ล้างประวัติการแชร์ใช่ไหม';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'ทุกแถวในรายการนำเข้าของคุณจะถูกลบออก การออกกำลังกาย สูตรอาหาร และบันทึกอาหารที่คุณนำเข้าจะยังคงอยู่ในตำแหน่งเดิม';
+  String get importsPrivacyClearConfirmBody =>
+      'ทุกแถวในรายการนำเข้าของคุณจะถูกลบออก การออกกำลังกาย สูตรอาหาร และบันทึกอาหารที่คุณนำเข้าจะยังคงอยู่ในตำแหน่งเดิม';
 
   @override
   String get importsPrivacyClearAction => 'ชัดเจน';
@@ -44370,5 +44387,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'ล้างประวัติที่แชร์แล้ว';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'ไม่สามารถล้างได้ โปรดลองอีกครั้งในภายหลัง';
+  String get importsPrivacyClearFailedSnack =>
+      'ไม่สามารถล้างได้ โปรดลองอีกครั้งในภายหลัง';
 }

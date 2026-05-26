@@ -20875,7 +20875,7 @@
   "importsDeleteConfirmTitle": "ลบการนำเข้า {count} รายการใช่ไหม",
   "importsDetailDetectedAs": "ตรวจพบว่าเป็น: {intent}",
   "importsDetailFrom": "จาก: {url}",
-  "importsDetailStatus": "สถานะ: {สถานะ}",
+  "importsDetailStatus": "สถานะ: {status}",
   "importsEmptyBody": "กดแชร์ได้ทุกที่ เช่น รูปภาพ, YouTube, ChatGPT, บันทึกเสียง และจะมาที่นี่โดยอัตโนมัติ",
   "importsEmptyTitle": "ยังไม่มีการแชร์ใดๆ",
   "importsFilterAll": "ทั้งหมด",

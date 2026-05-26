@@ -14265,7 +14265,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Dus bouwde ik de persoon, niet het grootboek. Scan dat menu in Bangkok en de coach leest het voor je terug in macro\'s. Sla een dinsdag over en hij trekt je woensdagochtend weer terug zonder schuldgevoel. Hij leert je voedingsmiddelen, je sportschool, je uitglijders — voor minder dan één PT-sessie per maand.';
+      'Dus ik heb de persoon gebouwd, niet het grootboek. Maak een menu uit – thuis of in het buitenland – en de coach leest het in macro\'s voor. Als je een dinsdag overslaat, kom je woensdagochtend terug zonder schuldgevoel. Het leert uw voedsel, uw sportschool, uw slippatronen – voor minder dan één PT-sessie per maand.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20341,12 +20341,12 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44362,6 +44362,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Zelfde als app-taal';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Importeert';
 
   @override
@@ -44371,7 +44377,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'Cyclus volgen';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'Periode, vruchtbaarheid en voorspellingen';
+  String get settingsCycleTrackingSubtitle =>
+      'Periode, vruchtbaarheid en voorspellingen';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44387,21 +44394,23 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Meldingen zijn onderbroken. Schakel op elk gewenst moment uit om te hervatten.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Meldingen zijn onderbroken. Schakel op elk gewenst moment uit om te hervatten.';
 
   @override
   String get vacationModeBannerScheduled => 'Gepland';
 
   @override
   String vacationModeBannerStartsOn(Object startDate) {
-    return 'Begint op {startDatum}.';
+    return 'Begint op $startDate.';
   }
 
   @override
   String get vacationModeBannerOn => 'Meldingen staan ​​aan';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Schakel hieronder de vakantiemodus in om niet-kritieke herinneringen te onderbreken.';
+  String get vacationModeBannerOnSubtitle =>
+      'Schakel hieronder de vakantiemodus in om niet-kritieke herinneringen te onderbreken.';
 
   @override
   String get difficultyEasy => 'Beginner';
@@ -44457,7 +44466,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get importsEmptyTitle => 'Nog niets gedeeld';
 
   @override
-  String get importsEmptyBody => 'Druk op \'Deel overal\' - Foto\'s, YouTube, ChatGPT, een spraakmemo - en het komt hier automatisch terecht.';
+  String get importsEmptyBody =>
+      'Druk op \'Deel overal\' - Foto\'s, YouTube, ChatGPT, een spraakmemo - en het komt hier automatisch terecht.';
 
   @override
   String get importsActionOpen => 'Open';
@@ -44472,10 +44482,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get importsSnackRetrying => 'Importeren opnieuw proberen…';
 
   @override
-  String get importsSnackRetryFailed => 'Kan het niet opnieuw proberen. Probeer het later opnieuw.';
+  String get importsSnackRetryFailed =>
+      'Kan het niet opnieuw proberen. Probeer het later opnieuw.';
 
   @override
-  String get importsSnackReclassifyQueued => 'In de wachtrij opnieuw classificeren: deel het item opnieuw om het om te leiden.';
+  String get importsSnackReclassifyQueued =>
+      'In de wachtrij opnieuw classificeren: deel het item opnieuw om het om te leiden.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44483,7 +44495,8 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'De records worden verwijderd uit uw importgeschiedenis. Geïmporteerde trainingen/recepten/voedsellogboeken blijven zelf behouden.';
+  String get importsDeleteConfirmBody =>
+      'De records worden verwijderd uit uw importgeschiedenis. Geïmporteerde trainingen/recepten/voedsellogboeken blijven zelf behouden.';
 
   @override
   String get importsActionCancel => 'Annuleren';
@@ -44537,28 +44550,33 @@ class AppLocalizationsNl extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Grenzen';
 
   @override
-  String get importsLimitsFooter => 'Daglimieten zijn voor iedereen hetzelfde. Ze houden de importkwaliteit hoog en beschermen tegen op hol geslagen kosten.';
+  String get importsLimitsFooter =>
+      'Daglimieten zijn voor iedereen hetzelfde. Ze houden de importkwaliteit hoog en beschermen tegen op hol geslagen kosten.';
 
   @override
   String get importsPrivacySectionTitle => 'Importeert';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Vraag het altijd voordat u gaat routeren';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Vraag het altijd voordat u gaat routeren';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Sla het aftellen van de automatische route over: bij elk delen wordt de kiezer geopend.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Sla het aftellen van de automatische route over: bij elk delen wordt de kiezer geopend.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Wis gedeelde geschiedenis';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Verwijdert elke record uit uw importlijst. Geïmporteerde trainingen, recepten en voedsellogboeken zelf blijven behouden.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Verwijdert elke record uit uw importlijst. Geïmporteerde trainingen, recepten en voedsellogboeken zelf blijven behouden.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Gedeelde geschiedenis wissen?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Elke rij in uw importlijst wordt verwijderd. De trainingen, recepten en voedsellogboeken die u hebt geïmporteerd, blijven waar ze zijn.';
+  String get importsPrivacyClearConfirmBody =>
+      'Elke rij in uw importlijst wordt verwijderd. De trainingen, recepten en voedsellogboeken die u hebt geïmporteerd, blijven waar ze zijn.';
 
   @override
   String get importsPrivacyClearAction => 'Duidelijk';
@@ -44567,5 +44585,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Gedeelde geschiedenis gewist.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Kan niet wissen. Probeer het later opnieuw.';
+  String get importsPrivacyClearFailedSnack =>
+      'Kan niet wissen. Probeer het later opnieuw.';
 }

@@ -14237,7 +14237,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Vì vậy, tôi đã xây dựng một người đồng hành, không phải một cuốn sổ cái. Hãy chụp ảnh thực đơn đó ở Bangkok và huấn luyện viên sẽ đọc lại cho bạn các chỉ số macro. Bỏ lỡ một ngày thứ Ba và ứng dụng sẽ kéo bạn trở lại vào sáng thứ Tư mà không khiến bạn cảm thấy tội lỗi. Nó học hỏi thói quen ăn uống, phòng tập và các kiểu trượt dốc của bạn — với chi phí ít hơn một buổi PT mỗi tháng.';
+      'Vì vậy, tôi đã xây dựng con người chứ không phải sổ cái. Chụp bất kỳ menu nào — trong hoặc ngoài nước — và huấn luyện viên sẽ đọc lại cho bạn dưới dạng macro. Bỏ qua ngày thứ Ba và nó sẽ kéo bạn trở lại vào sáng thứ Tư mà không cảm thấy tội lỗi. Nó tìm hiểu các loại thức ăn, bài tập thể dục, kiểu trượt ngã của bạn — chỉ trong chưa đầy một buổi PT mỗi tháng.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20306,12 +20306,12 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44324,6 +44324,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Giống ngôn ngữ ứng dụng';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Nhập khẩu';
 
   @override
@@ -44333,7 +44339,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'Theo dõi chu kỳ';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'Thời kỳ, khả năng sinh sản và dự đoán';
+  String get settingsCycleTrackingSubtitle =>
+      'Thời kỳ, khả năng sinh sản và dự đoán';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44349,7 +44356,8 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Thông báo bị tạm dừng. Tắt bất cứ lúc nào để tiếp tục.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Thông báo bị tạm dừng. Tắt bất cứ lúc nào để tiếp tục.';
 
   @override
   String get vacationModeBannerScheduled => 'Đã lên lịch';
@@ -44363,7 +44371,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get vacationModeBannerOn => 'Thông báo đang bật';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Bật chế độ nghỉ bên dưới để tạm dừng những lời nhắc không quan trọng.';
+  String get vacationModeBannerOnSubtitle =>
+      'Bật chế độ nghỉ bên dưới để tạm dừng những lời nhắc không quan trọng.';
 
   @override
   String get difficultyEasy => 'Người mới bắt đầu';
@@ -44390,7 +44399,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get importsAppBarTitle => 'Nhập khẩu';
 
   @override
-  String get importsTooltipFormatsLimits => 'Các định dạng và giới hạn được hỗ trợ';
+  String get importsTooltipFormatsLimits =>
+      'Các định dạng và giới hạn được hỗ trợ';
 
   @override
   String get importsTooltipDone => 'Xong';
@@ -44419,7 +44429,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get importsEmptyTitle => 'Chưa có gì được chia sẻ';
 
   @override
-  String get importsEmptyBody => 'Nhấn Chia sẻ ở mọi nơi - Ảnh, YouTube, ChatGPT, bản ghi nhớ giọng nói - và nó sẽ tự động chuyển đến đây.';
+  String get importsEmptyBody =>
+      'Nhấn Chia sẻ ở mọi nơi - Ảnh, YouTube, ChatGPT, bản ghi nhớ giọng nói - và nó sẽ tự động chuyển đến đây.';
 
   @override
   String get importsActionOpen => 'Mở';
@@ -44437,7 +44448,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get importsSnackRetryFailed => 'Không thể thử lại - hãy thử lại sau.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Phân loại lại hàng đợi - chia sẻ lại mục đó để định tuyến lại.';
+  String get importsSnackReclassifyQueued =>
+      'Phân loại lại hàng đợi - chia sẻ lại mục đó để định tuyến lại.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44445,7 +44457,8 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Các bản ghi sẽ bị xóa khỏi lịch sử nhập của bạn. Các bài tập / công thức nấu ăn / nhật ký thực phẩm đã nhập sẽ được giữ lại.';
+  String get importsDeleteConfirmBody =>
+      'Các bản ghi sẽ bị xóa khỏi lịch sử nhập của bạn. Các bài tập / công thức nấu ăn / nhật ký thực phẩm đã nhập sẽ được giữ lại.';
 
   @override
   String get importsActionCancel => 'Hủy bỏ';
@@ -44484,7 +44497,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return 'Trạng thái: {trạng thái}';
+    return 'Trạng thái: $status';
   }
 
   @override
@@ -44499,7 +44512,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Giới hạn';
 
   @override
-  String get importsLimitsFooter => 'Mũ hàng ngày là như nhau cho tất cả mọi người. Họ duy trì chất lượng nhập khẩu cao và bảo vệ khỏi chi phí tăng vọt.';
+  String get importsLimitsFooter =>
+      'Mũ hàng ngày là như nhau cho tất cả mọi người. Họ duy trì chất lượng nhập khẩu cao và bảo vệ khỏi chi phí tăng vọt.';
 
   @override
   String get importsPrivacySectionTitle => 'Nhập khẩu';
@@ -44508,19 +44522,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Luôn hỏi trước khi định tuyến';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Bỏ qua việc đếm ngược tuyến đường tự động — mỗi lượt chia sẻ sẽ mở ra bộ chọn.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Bỏ qua việc đếm ngược tuyến đường tự động — mỗi lượt chia sẻ sẽ mở ra bộ chọn.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Xóa lịch sử chia sẻ';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Xóa mọi bản ghi khỏi danh sách Nhập của bạn. Các bài tập, công thức nấu ăn và nhật ký thực phẩm đã nhập sẽ được giữ nguyên.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Xóa mọi bản ghi khỏi danh sách Nhập của bạn. Các bài tập, công thức nấu ăn và nhật ký thực phẩm đã nhập sẽ được giữ nguyên.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Xóa lịch sử chia sẻ?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Mọi hàng trong danh sách Nhập của bạn sẽ bị xóa. Các bài tập, công thức nấu ăn và nhật ký thực phẩm bạn đã nhập vẫn giữ nguyên.';
+  String get importsPrivacyClearConfirmBody =>
+      'Mọi hàng trong danh sách Nhập của bạn sẽ bị xóa. Các bài tập, công thức nấu ăn và nhật ký thực phẩm bạn đã nhập vẫn giữ nguyên.';
 
   @override
   String get importsPrivacyClearAction => 'Thông thoáng';
@@ -44529,5 +44546,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Đã xóa lịch sử chia sẻ.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Không thể xóa - hãy thử lại sau.';
+  String get importsPrivacyClearFailedSnack =>
+      'Không thể xóa - hãy thử lại sau.';
 }

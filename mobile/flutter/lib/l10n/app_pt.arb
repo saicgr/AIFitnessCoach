@@ -20894,7 +20894,7 @@
   "importsPrivacySectionTitle": "Importações",
   "importsRowImportFailed": "Falha na importação",
   "importsSearchHint": "Pesquisar importações…",
-  "importsSelectedCount": "{contagem} selecionados",
+  "importsSelectedCount": "{count} selecionados",
   "importsSnackReclassifyQueued": "Reclassificar na fila — compartilhe o item novamente para redirecionar.",
   "importsSnackRetryFailed": "Não foi possível tentar novamente. Tente novamente mais tarde.",
   "importsSnackRetrying": "Tentando importar novamente…",

@@ -20875,7 +20875,7 @@
   "importsDeleteConfirmTitle": "Удалить импорт: {count}?",
   "importsDetailDetectedAs": "Обнаружено как: {intent}",
   "importsDetailFrom": "От: {url}",
-  "importsDetailStatus": "Статус: {статус}",
+  "importsDetailStatus": "Статус: {status}",
   "importsEmptyBody": "Нажмите «Поделиться» в любом месте — «Фото», «YouTube», ChatGPT, голосовая заметка — и она автоматически появится здесь.",
   "importsEmptyTitle": "Пока ничего не опубликовано",
   "importsFilterAll": "Все",

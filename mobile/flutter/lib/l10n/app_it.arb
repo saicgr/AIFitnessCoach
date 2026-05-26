@@ -20874,7 +20874,7 @@
   "importsDeleteConfirmTitle": "Eliminare {count} importazioni?",
   "importsDetailDetectedAs": "Rilevato come: {intent}",
   "importsDetailFrom": "Da: {url}",
-  "importsDetailStatus": "Stato: {stato}",
+  "importsDetailStatus": "Stato: {status}",
   "importsEmptyBody": "Premi Condividi ovunque - Foto, YouTube, ChatGPT, un memo vocale - e arriverà qui automaticamente.",
   "importsEmptyTitle": "Niente di condiviso ancora",
   "importsFilterAll": "Tutto",

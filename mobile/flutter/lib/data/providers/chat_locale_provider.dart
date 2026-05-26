@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/api_client.dart';
 
 /// AI Coach chat language state.
 ///
@@ -20,9 +23,11 @@ class ChatLocaleState {
 }
 
 class ChatLocaleNotifier extends StateNotifier<ChatLocaleState> {
-  ChatLocaleNotifier() : super(const ChatLocaleState()) {
+  ChatLocaleNotifier(this._ref) : super(const ChatLocaleState()) {
     _load();
   }
+
+  final Ref _ref;
 
   /// SharedPreferences key — separate namespace from the UI locale key.
   static const prefKey = 'chat_locale_code';
@@ -46,6 +51,22 @@ class ChatLocaleNotifier extends StateNotifier<ChatLocaleState> {
     } else {
       await prefs.setString(prefKey, locale.languageCode);
     }
+    // Persist to the backend immediately so the coach picks up the new
+    // override on the NEXT message instead of waiting for the chat
+    // endpoint to lazily back-propagate the X-Chat-Locale header.
+    try {
+      final api = _ref.read(apiClientProvider);
+      await api.dio.patch(
+        '/api/v1/users/me',
+        // null clears the override server-side; explicit null is honoured.
+        data: {'chat_locale': locale?.languageCode},
+      );
+      debugPrint(
+          '🌐 [ChatLocale] Persisted chat_locale=${locale?.languageCode} to backend');
+    } catch (e) {
+      debugPrint(
+          '⚠️ [ChatLocale] backend persist failed (will retry via header): $e');
+    }
   }
 
   /// Alias for setLocale(null) — clears the chat-language override.
@@ -54,5 +75,5 @@ class ChatLocaleNotifier extends StateNotifier<ChatLocaleState> {
 
 final chatLocaleProvider =
     StateNotifierProvider<ChatLocaleNotifier, ChatLocaleState>(
-  (ref) => ChatLocaleNotifier(),
+  (ref) => ChatLocaleNotifier(ref),
 );

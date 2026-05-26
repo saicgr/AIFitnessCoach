@@ -13671,7 +13671,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'そこで私は、台帳ではなく「人」を構築しました。バンコクでメニューを撮影すれば、コーチがそれをマクロ栄養素として読み取ってくれます。火曜日をサボっても、罪悪感を与えることなく水曜の朝に引き戻してくれます。あなたの食事、ジム、そして挫折パターンを学習します。月1回のパーソナルトレーニングよりも安価に。';
+      'そこで私は台帳ではなく人間を構築しました。国内外を問わず、どんなメニューでも撮影すると、コーチがそれをマクロで読み上げます。火曜日をスキップすれば、罪悪感を感じることなく水曜日の朝に戻れます。月に 1 回未満の PT セッションで、あなたの食事、ジム、滑りパターンを学習します。';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -19446,12 +19446,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -42535,6 +42535,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'アプリの言語と同じ';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => '輸入品';
 
   @override
@@ -42548,7 +42554,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String settingsAboutBrand(Object appName) {
-    return '{アプリ名} について';
+    return '$appName について';
   }
 
   @override
@@ -42574,7 +42580,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get vacationModeBannerOn => '通知がオンになっています';
 
   @override
-  String get vacationModeBannerOnSubtitle => '重要ではないリマインダーを一時停止するには、以下の休暇モードを有効にします。';
+  String get vacationModeBannerOnSubtitle =>
+      '重要ではないリマインダーを一時停止するには、以下の休暇モードを有効にします。';
 
   @override
   String get difficultyEasy => '初心者';
@@ -42630,7 +42637,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importsEmptyTitle => 'まだ何も共有されていません';
 
   @override
-  String get importsEmptyBody => '写真、YouTube、ChatGPT、ボイスメモなど、どこでも共有を押すと、自動的にここに表示されます。';
+  String get importsEmptyBody =>
+      '写真、YouTube、ChatGPT、ボイスメモなど、どこでも共有を押すと、自動的にここに表示されます。';
 
   @override
   String get importsActionOpen => '開ける';
@@ -42656,7 +42664,8 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'レコードはインポート履歴から削除されます。インポートしたワークアウト/レシピ/食事ログ自体は残ります。';
+  String get importsDeleteConfirmBody =>
+      'レコードはインポート履歴から削除されます。インポートしたワークアウト/レシピ/食事ログ自体は残ります。';
 
   @override
   String get importsActionCancel => 'キャンセル';
@@ -42695,7 +42704,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return 'ステータス: {ステータス}';
+    return 'ステータス: $status';
   }
 
   @override
@@ -42719,19 +42728,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'ルーティングする前に必ず尋ねる';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => '自動ルートのカウントダウンをスキップします。すべての共有でセレクターが開きます。';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      '自動ルートのカウントダウンをスキップします。すべての共有でセレクターが開きます。';
 
   @override
   String get importsPrivacyClearHistoryTitle => '共有履歴をクリアする';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'インポート リストからすべてのレコードを削除します。インポートしたワークアウト、レシピ、食事ログ自体は残ります。';
+  String get importsPrivacyClearHistorySubtitle =>
+      'インポート リストからすべてのレコードを削除します。インポートしたワークアウト、レシピ、食事ログ自体は残ります。';
 
   @override
   String get importsPrivacyClearConfirmTitle => '共有履歴を消去しますか?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Imports リストのすべての行が削除されます。インポートしたワークアウト、レシピ、食事ログはそのまま残ります。';
+  String get importsPrivacyClearConfirmBody =>
+      'Imports リストのすべての行が削除されます。インポートしたワークアウト、レシピ、食事ログはそのまま残ります。';
 
   @override
   String get importsPrivacyClearAction => 'クリア';

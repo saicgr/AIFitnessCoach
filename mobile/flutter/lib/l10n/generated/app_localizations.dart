@@ -24035,7 +24035,7 @@ abstract class AppLocalizations {
   /// No description provided for @founderNoteSoIBuiltThe.
   ///
   /// In en, this message translates to:
-  /// **'So I built the person, not the ledger. Snap that menu in Bangkok and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.'**
+  /// **'So I built the person, not the ledger. Snap any menu — at home or abroad — and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.'**
   String get founderNoteSoIBuiltThe;
 
   /// No description provided for @founderNoteTheFriendsWhoActually.
@@ -34030,13 +34030,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{potassium100g} mg'**
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g);
+  String logMealSheetMg4(Object potassium100g);
 
   /// No description provided for @logMealSheetMg5.
   ///
   /// In en, this message translates to:
   /// **'{magnesium100g} mg'**
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g);
+  String logMealSheetMg5(Object magnesium100g);
 
   /// No description provided for @logMealSheetMg6.
   ///
@@ -74419,6 +74419,18 @@ abstract class AppLocalizations {
   /// **'Same as app language'**
   String get settingsChatLanguageSameAsApp;
 
+  /// No description provided for @commonOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get commonOk;
+
+  /// No description provided for @commonNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get commonNo;
+
   /// No description provided for @settingsImportsTitle.
   ///
   /// In en, this message translates to:
@@ -74446,7 +74458,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAboutBrand.
   ///
   /// In en, this message translates to:
-  /// **'About $appName'**
+  /// **'About {appName}'**
   String settingsAboutBrand(Object appName);
 
   /// No description provided for @vacationModeBannerActive.
@@ -74458,7 +74470,7 @@ abstract class AppLocalizations {
   /// No description provided for @vacationModeBannerPausedUntil.
   ///
   /// In en, this message translates to:
-  /// **'Notifications are paused until $endDate.'**
+  /// **'Notifications are paused until {endDate}.'**
   String vacationModeBannerPausedUntil(Object endDate);
 
   /// No description provided for @vacationModeBannerPausedNoEnd.
@@ -74476,7 +74488,7 @@ abstract class AppLocalizations {
   /// No description provided for @vacationModeBannerStartsOn.
   ///
   /// In en, this message translates to:
-  /// **'Starts $startDate.'**
+  /// **'Starts {startDate}.'**
   String vacationModeBannerStartsOn(Object startDate);
 
   /// No description provided for @vacationModeBannerOn.
@@ -74584,7 +74596,7 @@ abstract class AppLocalizations {
   /// No description provided for @importsSelectedCount.
   ///
   /// In en, this message translates to:
-  /// **'$count selected'**
+  /// **'{count} selected'**
   String importsSelectedCount(Object count);
 
   /// No description provided for @importsEmptyTitle.
@@ -74638,7 +74650,7 @@ abstract class AppLocalizations {
   /// No description provided for @importsDeleteConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'Delete $count imports?'**
+  /// **'Delete {count} imports?'**
   String importsDeleteConfirmTitle(Object count);
 
   /// No description provided for @importsDeleteConfirmBody.
@@ -74710,19 +74722,19 @@ abstract class AppLocalizations {
   /// No description provided for @importsDetailFrom.
   ///
   /// In en, this message translates to:
-  /// **'From: $url'**
+  /// **'From: {url}'**
   String importsDetailFrom(Object url);
 
   /// No description provided for @importsDetailStatus.
   ///
   /// In en, this message translates to:
-  /// **'Status: $status'**
+  /// **'Status: {status}'**
   String importsDetailStatus(Object status);
 
   /// No description provided for @importsDetailDetectedAs.
   ///
   /// In en, this message translates to:
-  /// **'Detected as: $intent'**
+  /// **'Detected as: {intent}'**
   String importsDetailDetectedAs(Object intent);
 
   /// No description provided for @importsLimitsTitle.

@@ -14210,7 +14210,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Bu yüzden bir defter değil, bir kişi inşa ettim. Bangkok\'taki o menünün fotoğrafını çekin, koç size makroları okusun. Bir Salı gününü atlayın, suçluluk duygusu yaratmadan Çarşamba sabahı sizi tekrar yola soksun. Besinlerinizi, spor salonunuzu, kaçamak düzenlerinizi öğrenir; hem de ayda bir PT seansından daha ucuza.';
+      'Bu yüzden defteri değil kişiyi inşa ettim. Yurt içinde veya yurt dışında herhangi bir menüyü çekin ve koç bunu size makro olarak okusun. Salı gününü atlarsanız suçluluk duygusu yaşamadan Çarşamba sabahına geri dönersiniz. Ayda bir PT seansından daha az bir sürede yiyeceklerinizi, spor salonunuzu, kayma şeklinizi öğrenir.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20264,12 +20264,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44262,6 +44262,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Uygulama diliyle aynı';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'İthalat';
 
   @override
@@ -44271,7 +44277,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'Döngü Takibi';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'Adet dönemi, doğurganlık ve tahminler';
+  String get settingsCycleTrackingSubtitle =>
+      'Adet dönemi, doğurganlık ve tahminler';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44287,7 +44294,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Bildirimler duraklatıldı. Devam etmek için istediğiniz zaman kapatın.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Bildirimler duraklatıldı. Devam etmek için istediğiniz zaman kapatın.';
 
   @override
   String get vacationModeBannerScheduled => 'planlanmış';
@@ -44301,7 +44309,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get vacationModeBannerOn => 'Bildirimler açık';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Kritik olmayan hatırlatıcıları duraklatmak için aşağıda tatil modunu etkinleştirin.';
+  String get vacationModeBannerOnSubtitle =>
+      'Kritik olmayan hatırlatıcıları duraklatmak için aşağıda tatil modunu etkinleştirin.';
 
   @override
   String get difficultyEasy => 'Acemi';
@@ -44357,7 +44366,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsEmptyTitle => 'Henüz hiçbir şey paylaşılmadı';
 
   @override
-  String get importsEmptyBody => 'İstediğiniz yerde Paylaş\'a basın (Fotoğraflar, YouTube, ChatGPT, sesli not) otomatik olarak buraya gelecektir.';
+  String get importsEmptyBody =>
+      'İstediğiniz yerde Paylaş\'a basın (Fotoğraflar, YouTube, ChatGPT, sesli not) otomatik olarak buraya gelecektir.';
 
   @override
   String get importsActionOpen => 'Açık';
@@ -44372,10 +44382,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsSnackRetrying => 'İçe aktarma yeniden deneniyor…';
 
   @override
-  String get importsSnackRetryFailed => 'Tekrar denenemedi; daha sonra tekrar deneyin.';
+  String get importsSnackRetryFailed =>
+      'Tekrar denenemedi; daha sonra tekrar deneyin.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Sıraya alınanları yeniden sınıflandır — yeniden yönlendirmek için öğeyi yeniden paylaşın.';
+  String get importsSnackReclassifyQueued =>
+      'Sıraya alınanları yeniden sınıflandır — yeniden yönlendirmek için öğeyi yeniden paylaşın.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44383,7 +44395,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Kayıtlar, içe aktarma geçmişinizden kaldırılır. İçe aktarılan antrenmanlar/yemek tarifleri/yemek günlükleri kalır.';
+  String get importsDeleteConfirmBody =>
+      'Kayıtlar, içe aktarma geçmişinizden kaldırılır. İçe aktarılan antrenmanlar/yemek tarifleri/yemek günlükleri kalır.';
 
   @override
   String get importsActionCancel => 'İptal etmek';
@@ -44437,7 +44450,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Sınırlar';
 
   @override
-  String get importsLimitsFooter => 'Günlük limitler herkes için aynıdır. İthalat kalitesini yüksek tutar ve kontrolden çıkan maliyetlere karşı koruma sağlar.';
+  String get importsLimitsFooter =>
+      'Günlük limitler herkes için aynıdır. İthalat kalitesini yüksek tutar ve kontrolden çıkan maliyetlere karşı koruma sağlar.';
 
   @override
   String get importsPrivacySectionTitle => 'İthalat';
@@ -44446,19 +44460,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Yönlendirmeden önce daima sor';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Otomatik rota geri sayımını atlayın; her paylaşım seçiciyi açar.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Otomatik rota geri sayımını atlayın; her paylaşım seçiciyi açar.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Paylaşılan geçmişi temizle';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'İçe Aktarılanlar listenizdeki her kaydı kaldırır. İçe aktarılan antrenmanlar, tarifler ve yemek günlükleri kalır.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'İçe Aktarılanlar listenizdeki her kaydı kaldırır. İçe aktarılan antrenmanlar, tarifler ve yemek günlükleri kalır.';
 
   @override
-  String get importsPrivacyClearConfirmTitle => 'Paylaşılan geçmiş temizlensin mi?';
+  String get importsPrivacyClearConfirmTitle =>
+      'Paylaşılan geçmiş temizlensin mi?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'İçe Aktarılanlar listenizdeki her satır kaldırılır. İçe aktardığınız antrenmanlar, tarifler ve yemek günlükleri oldukları yerde kalır.';
+  String get importsPrivacyClearConfirmBody =>
+      'İçe Aktarılanlar listenizdeki her satır kaldırılır. İçe aktardığınız antrenmanlar, tarifler ve yemek günlükleri oldukları yerde kalır.';
 
   @override
   String get importsPrivacyClearAction => 'Temizlemek';
@@ -44467,5 +44485,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Paylaşılan geçmiş temizlendi.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Temizlenemedi; daha sonra tekrar deneyin.';
+  String get importsPrivacyClearFailedSnack =>
+      'Temizlenemedi; daha sonra tekrar deneyin.';
 }

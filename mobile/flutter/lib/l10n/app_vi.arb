@@ -20875,7 +20875,7 @@
   "importsDeleteConfirmTitle": "Xóa nội dung nhập {count}?",
   "importsDetailDetectedAs": "Đã phát hiện là: {intent}",
   "importsDetailFrom": "Từ: {url}",
-  "importsDetailStatus": "Trạng thái: {trạng thái}",
+  "importsDetailStatus": "Trạng thái: {status}",
   "importsEmptyBody": "Nhấn Chia sẻ ở mọi nơi - Ảnh, YouTube, ChatGPT, bản ghi nhớ giọng nói - và nó sẽ tự động chuyển đến đây.",
   "importsEmptyTitle": "Chưa có gì được chia sẻ",
   "importsFilterAll": "Tất cả",

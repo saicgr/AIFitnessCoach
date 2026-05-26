@@ -14326,7 +14326,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'ಆದ್ದರಿಂದ ನಾನು ಲೆಡ್ಜರ್ ಅಲ್ಲ, ವ್ಯಕ್ತಿಯನ್ನು ನಿರ್ಮಿಸಿದೆ. ಬ್ಯಾಂಕಾಕ್‌ನಲ್ಲಿ ಆ ಮೆನುವನ್ನು ಸ್ನ್ಯಾಪ್ ಮಾಡಿ ಮತ್ತು ಕೋಚ್ ಅದನ್ನು ಮ್ಯಾಕ್ರೋಗಳಲ್ಲಿ ನಿಮಗೆ ಓದಿ ಹೇಳುತ್ತದೆ. ಮಂಗಳವಾರವನ್ನು ತಪ್ಪಿಸಿದರೆ, ಅದು ಬುಧವಾರ ಬೆಳಿಗ್ಗೆ ನಿಮ್ಮನ್ನು ಮತ್ತೆ ಕರೆತರುತ್ತದೆ, ಯಾವುದೇ ಅಪರಾಧ ಭಾವನೆಯಿಲ್ಲದೆ. ಇದು ನಿಮ್ಮ ಆಹಾರಗಳು, ನಿಮ್ಮ ಜಿಮ್, ನಿಮ್ಮ ಜಾರುವ ಮಾದರಿಗಳನ್ನು ಕಲಿಯುತ್ತದೆ — ತಿಂಗಳಿಗೆ ಒಂದು PT ಸೆಷನ್‌ಗಿಂತ ಕಡಿಮೆ ಬೆಲೆಯಲ್ಲಿ.';
+      'ಹಾಗಾಗಿ ನಾನು ವ್ಯಕ್ತಿಯನ್ನು ನಿರ್ಮಿಸಿದೆ, ಲೆಡ್ಜರ್ ಅಲ್ಲ. ಮನೆಯಲ್ಲಿ ಅಥವಾ ವಿದೇಶದಲ್ಲಿ ಯಾವುದೇ ಮೆನುವನ್ನು ಸ್ನ್ಯಾಪ್ ಮಾಡಿ ಮತ್ತು ತರಬೇತುದಾರರು ಅದನ್ನು ಮ್ಯಾಕ್ರೋಗಳಲ್ಲಿ ನಿಮಗೆ ಓದುತ್ತಾರೆ. ಮಂಗಳವಾರವನ್ನು ಬಿಟ್ಟುಬಿಡಿ ಮತ್ತು ಅದು ನಿಮ್ಮನ್ನು ಬುಧವಾರ ಬೆಳಿಗ್ಗೆ ತಪ್ಪಿತಸ್ಥ ಟ್ರಿಪ್ ಇಲ್ಲದೆ ಹಿಂದಕ್ಕೆ ಎಳೆಯುತ್ತದೆ. ಇದು ನಿಮ್ಮ ಆಹಾರಗಳು, ನಿಮ್ಮ ಜಿಮ್, ನಿಮ್ಮ ಸ್ಲಿಪ್ ಮಾದರಿಗಳನ್ನು ಕಲಿಯುತ್ತದೆ - ತಿಂಗಳಿಗೆ ಒಂದಕ್ಕಿಂತ ಕಡಿಮೆ PT ಸೆಶನ್‌ಗಾಗಿ.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20444,12 +20444,12 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44650,6 +44650,12 @@ class AppLocalizationsKn extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'ಆ್ಯಪ್ ಭಾಷೆಯಂತೆಯೇ';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'ಆಮದು ಮಾಡಿಕೊಳ್ಳುತ್ತದೆ';
 
   @override
@@ -44659,7 +44665,8 @@ class AppLocalizationsKn extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'ಸೈಕಲ್ ಟ್ರ್ಯಾಕಿಂಗ್';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'ಅವಧಿ, ಫಲವತ್ತತೆ ಮತ್ತು ಭವಿಷ್ಯವಾಣಿಗಳು';
+  String get settingsCycleTrackingSubtitle =>
+      'ಅವಧಿ, ಫಲವತ್ತತೆ ಮತ್ತು ಭವಿಷ್ಯವಾಣಿಗಳು';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44675,7 +44682,8 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'ಅಧಿಸೂಚನೆಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಲಾಗಿದೆ. ಪುನರಾರಂಭಿಸಲು ಯಾವಾಗ ಬೇಕಾದರೂ ಆಫ್ ಮಾಡಿ.';
+  String get vacationModeBannerPausedNoEnd =>
+      'ಅಧಿಸೂಚನೆಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಲಾಗಿದೆ. ಪುನರಾರಂಭಿಸಲು ಯಾವಾಗ ಬೇಕಾದರೂ ಆಫ್ ಮಾಡಿ.';
 
   @override
   String get vacationModeBannerScheduled => 'ನಿಗದಿಪಡಿಸಲಾಗಿದೆ';
@@ -44689,7 +44697,8 @@ class AppLocalizationsKn extends AppLocalizations {
   String get vacationModeBannerOn => 'ಅಧಿಸೂಚನೆಗಳು ಆನ್ ಆಗಿವೆ';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'ನಿರ್ಣಾಯಕವಲ್ಲದ ಜ್ಞಾಪನೆಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಲು ಕೆಳಗೆ ರಜೆಯ ಮೋಡ್ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.';
+  String get vacationModeBannerOnSubtitle =>
+      'ನಿರ್ಣಾಯಕವಲ್ಲದ ಜ್ಞಾಪನೆಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಲು ಕೆಳಗೆ ರಜೆಯ ಮೋಡ್ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.';
 
   @override
   String get difficultyEasy => 'ಹರಿಕಾರ';
@@ -44745,7 +44754,8 @@ class AppLocalizationsKn extends AppLocalizations {
   String get importsEmptyTitle => 'ಇನ್ನೂ ಏನನ್ನೂ ಹಂಚಿಕೊಂಡಿಲ್ಲ';
 
   @override
-  String get importsEmptyBody => 'ಫೋಟೋಗಳು, ಯೂಟ್ಯೂಬ್, ಚಾಟ್‌ಜಿಪಿಟಿ, ಧ್ವನಿ ಜ್ಞಾಪಕ - ಎಲ್ಲಿಯಾದರೂ ಹಂಚಿಕೊಳ್ಳಿ ಒತ್ತಿರಿ ಮತ್ತು ಅದು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಇಲ್ಲಿ ಇಳಿಯುತ್ತದೆ.';
+  String get importsEmptyBody =>
+      'ಫೋಟೋಗಳು, ಯೂಟ್ಯೂಬ್, ಚಾಟ್‌ಜಿಪಿಟಿ, ಧ್ವನಿ ಜ್ಞಾಪಕ - ಎಲ್ಲಿಯಾದರೂ ಹಂಚಿಕೊಳ್ಳಿ ಒತ್ತಿರಿ ಮತ್ತು ಅದು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಇಲ್ಲಿ ಇಳಿಯುತ್ತದೆ.';
 
   @override
   String get importsActionOpen => 'ತೆರೆಯಿರಿ';
@@ -44760,10 +44770,12 @@ class AppLocalizationsKn extends AppLocalizations {
   String get importsSnackRetrying => 'ಆಮದು ಮರುಪ್ರಯತ್ನಿಸಲಾಗುತ್ತಿದೆ...';
 
   @override
-  String get importsSnackRetryFailed => 'ಮರುಪ್ರಯತ್ನಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ — ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+  String get importsSnackRetryFailed =>
+      'ಮರುಪ್ರಯತ್ನಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ — ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
 
   @override
-  String get importsSnackReclassifyQueued => 'ಸರದಿಯಲ್ಲಿ ಮರುವರ್ಗೀಕರಿಸಿ - ಮರುಮಾರ್ಗಕ್ಕೆ ಐಟಂ ಅನ್ನು ಮತ್ತೊಮ್ಮೆ ಹಂಚಿಕೊಳ್ಳಿ.';
+  String get importsSnackReclassifyQueued =>
+      'ಸರದಿಯಲ್ಲಿ ಮರುವರ್ಗೀಕರಿಸಿ - ಮರುಮಾರ್ಗಕ್ಕೆ ಐಟಂ ಅನ್ನು ಮತ್ತೊಮ್ಮೆ ಹಂಚಿಕೊಳ್ಳಿ.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44771,7 +44783,8 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'ನಿಮ್ಮ ಆಮದು ಇತಿಹಾಸದಿಂದ ದಾಖಲೆಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ. ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು / ಪಾಕವಿಧಾನಗಳು / ಆಹಾರ ದಾಖಲೆಗಳು ಸ್ವತಃ ಉಳಿಯುತ್ತವೆ.';
+  String get importsDeleteConfirmBody =>
+      'ನಿಮ್ಮ ಆಮದು ಇತಿಹಾಸದಿಂದ ದಾಖಲೆಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ. ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು / ಪಾಕವಿಧಾನಗಳು / ಆಹಾರ ದಾಖಲೆಗಳು ಸ್ವತಃ ಉಳಿಯುತ್ತವೆ.';
 
   @override
   String get importsActionCancel => 'ರದ್ದುಮಾಡಿ';
@@ -44825,7 +44838,8 @@ class AppLocalizationsKn extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'ಮಿತಿಗಳು';
 
   @override
-  String get importsLimitsFooter => 'ದೈನಂದಿನ ಕ್ಯಾಪ್‌ಗಳು ಎಲ್ಲರಿಗೂ ಒಂದೇ ಆಗಿರುತ್ತವೆ. ಅವರು ಆಮದು ಗುಣಮಟ್ಟವನ್ನು ಉನ್ನತ ಮಟ್ಟದಲ್ಲಿರಿಸುತ್ತಾರೆ ಮತ್ತು ಓಡಿಹೋದ ವೆಚ್ಚಗಳಿಂದ ರಕ್ಷಿಸುತ್ತಾರೆ.';
+  String get importsLimitsFooter =>
+      'ದೈನಂದಿನ ಕ್ಯಾಪ್‌ಗಳು ಎಲ್ಲರಿಗೂ ಒಂದೇ ಆಗಿರುತ್ತವೆ. ಅವರು ಆಮದು ಗುಣಮಟ್ಟವನ್ನು ಉನ್ನತ ಮಟ್ಟದಲ್ಲಿರಿಸುತ್ತಾರೆ ಮತ್ತು ಓಡಿಹೋದ ವೆಚ್ಚಗಳಿಂದ ರಕ್ಷಿಸುತ್ತಾರೆ.';
 
   @override
   String get importsPrivacySectionTitle => 'ಆಮದು ಮಾಡಿಕೊಳ್ಳುತ್ತದೆ';
@@ -44834,26 +44848,32 @@ class AppLocalizationsKn extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'ರೂಟಿಂಗ್ ಮಾಡುವ ಮೊದಲು ಯಾವಾಗಲೂ ಕೇಳಿ';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'ಸ್ವಯಂ-ಮಾರ್ಗ ಕೌಂಟ್‌ಡೌನ್ ಅನ್ನು ಬಿಟ್ಟುಬಿಡಿ - ಪ್ರತಿ ಹಂಚಿಕೆಯು ಆಯ್ಕೆದಾರನನ್ನು ತೆರೆಯುತ್ತದೆ.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'ಸ್ವಯಂ-ಮಾರ್ಗ ಕೌಂಟ್‌ಡೌನ್ ಅನ್ನು ಬಿಟ್ಟುಬಿಡಿ - ಪ್ರತಿ ಹಂಚಿಕೆಯು ಆಯ್ಕೆದಾರನನ್ನು ತೆರೆಯುತ್ತದೆ.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'ಹಂಚಿದ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸಿ';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'ನಿಮ್ಮ ಆಮದು ಪಟ್ಟಿಯಿಂದ ಪ್ರತಿ ದಾಖಲೆಯನ್ನು ತೆಗೆದುಹಾಕುತ್ತದೆ. ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು, ಪಾಕವಿಧಾನಗಳು ಮತ್ತು ಆಹಾರದ ದಾಖಲೆಗಳು ಉಳಿಯುತ್ತವೆ.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'ನಿಮ್ಮ ಆಮದು ಪಟ್ಟಿಯಿಂದ ಪ್ರತಿ ದಾಖಲೆಯನ್ನು ತೆಗೆದುಹಾಕುತ್ತದೆ. ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು, ಪಾಕವಿಧಾನಗಳು ಮತ್ತು ಆಹಾರದ ದಾಖಲೆಗಳು ಉಳಿಯುತ್ತವೆ.';
 
   @override
-  String get importsPrivacyClearConfirmTitle => 'ಹಂಚಿದ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸುವುದೇ?';
+  String get importsPrivacyClearConfirmTitle =>
+      'ಹಂಚಿದ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸುವುದೇ?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'ನಿಮ್ಮ ಆಮದು ಪಟ್ಟಿಯಲ್ಲಿರುವ ಪ್ರತಿ ಸಾಲನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ. ನೀವು ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು, ಪಾಕವಿಧಾನಗಳು ಮತ್ತು ಆಹಾರದ ಲಾಗ್‌ಗಳು ಅವು ಇರುವಲ್ಲಿಯೇ ಇರುತ್ತವೆ.';
+  String get importsPrivacyClearConfirmBody =>
+      'ನಿಮ್ಮ ಆಮದು ಪಟ್ಟಿಯಲ್ಲಿರುವ ಪ್ರತಿ ಸಾಲನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ. ನೀವು ಆಮದು ಮಾಡಿದ ಜೀವನಕ್ರಮಗಳು, ಪಾಕವಿಧಾನಗಳು ಮತ್ತು ಆಹಾರದ ಲಾಗ್‌ಗಳು ಅವು ಇರುವಲ್ಲಿಯೇ ಇರುತ್ತವೆ.';
 
   @override
   String get importsPrivacyClearAction => 'ತೆರವುಗೊಳಿಸಿ';
 
   @override
-  String get importsPrivacyClearedSnack => 'ಹಂಚಿದ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸಲಾಗಿದೆ.';
+  String get importsPrivacyClearedSnack =>
+      'ಹಂಚಿದ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸಲಾಗಿದೆ.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'ತೆರವುಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ - ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+  String get importsPrivacyClearFailedSnack =>
+      'ತೆರವುಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ - ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
 }

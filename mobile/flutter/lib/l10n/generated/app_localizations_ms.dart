@@ -14236,7 +14236,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Jadi saya membina orang, bukan lejar. Tangkap gambar menu itu di Bangkok dan jurulatih akan membacanya semula kepada anda dalam bentuk makro. Terlepas hari Selasa dan ia akan menarik anda kembali pada pagi Rabu tanpa rasa bersalah. Ia mempelajari makanan anda, gim anda, corak tergelincir anda — dengan harga kurang daripada satu sesi PT sebulan.';
+      'Jadi saya membina orang itu, bukan lejar. Tangkap mana-mana menu — di rumah atau di luar negara — dan jurulatih membacakannya kembali kepada anda dalam makro. Langkau hari Selasa dan ia menarik anda kembali pagi Rabu tanpa rasa bersalah. Ia mempelajari makanan anda, gim anda, corak slip anda — kurang daripada satu sesi PT sebulan.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20323,12 +20323,12 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44380,6 +44380,12 @@ class AppLocalizationsMs extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Sama seperti bahasa aplikasi';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Import';
 
   @override
@@ -44405,7 +44411,8 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Pemberitahuan dijeda. Matikan bila-bila masa untuk menyambung semula.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Pemberitahuan dijeda. Matikan bila-bila masa untuk menyambung semula.';
 
   @override
   String get vacationModeBannerScheduled => 'Dijadualkan';
@@ -44419,7 +44426,8 @@ class AppLocalizationsMs extends AppLocalizations {
   String get vacationModeBannerOn => 'Pemberitahuan dihidupkan';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Dayakan mod percutian di bawah untuk menjeda peringatan tidak kritikal.';
+  String get vacationModeBannerOnSubtitle =>
+      'Dayakan mod percutian di bawah untuk menjeda peringatan tidak kritikal.';
 
   @override
   String get difficultyEasy => 'pemula';
@@ -44475,7 +44483,8 @@ class AppLocalizationsMs extends AppLocalizations {
   String get importsEmptyTitle => 'Tiada apa yang dikongsikan lagi';
 
   @override
-  String get importsEmptyBody => 'Tekan Kongsi di mana-mana — Foto, YouTube, ChatGPT, memo suara — dan ia akan tiba di sini secara automatik.';
+  String get importsEmptyBody =>
+      'Tekan Kongsi di mana-mana — Foto, YouTube, ChatGPT, memo suara — dan ia akan tiba di sini secara automatik.';
 
   @override
   String get importsActionOpen => 'Buka';
@@ -44490,10 +44499,12 @@ class AppLocalizationsMs extends AppLocalizations {
   String get importsSnackRetrying => 'Mencuba semula import…';
 
   @override
-  String get importsSnackRetryFailed => 'Tidak dapat mencuba semula — cuba lagi kemudian.';
+  String get importsSnackRetryFailed =>
+      'Tidak dapat mencuba semula — cuba lagi kemudian.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Klasifikasikan semula baris gilir — kongsi item sekali lagi untuk mengubah hala.';
+  String get importsSnackReclassifyQueued =>
+      'Klasifikasikan semula baris gilir — kongsi item sekali lagi untuk mengubah hala.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44501,7 +44512,8 @@ class AppLocalizationsMs extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Rekod dialih keluar daripada sejarah import anda. Latihan / resipi / log makanan yang diimport masih kekal.';
+  String get importsDeleteConfirmBody =>
+      'Rekod dialih keluar daripada sejarah import anda. Latihan / resipi / log makanan yang diimport masih kekal.';
 
   @override
   String get importsActionCancel => 'Batal';
@@ -44555,28 +44567,33 @@ class AppLocalizationsMs extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'had';
 
   @override
-  String get importsLimitsFooter => 'Tudung harian adalah sama untuk semua orang. Mereka mengekalkan kualiti import yang tinggi dan melindungi daripada kos lari.';
+  String get importsLimitsFooter =>
+      'Tudung harian adalah sama untuk semua orang. Mereka mengekalkan kualiti import yang tinggi dan melindungi daripada kos lari.';
 
   @override
   String get importsPrivacySectionTitle => 'Import';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Sentiasa bertanya sebelum membuat laluan';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Sentiasa bertanya sebelum membuat laluan';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Langkau undur laluan auto — setiap bahagian membuka pemilih.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Langkau undur laluan auto — setiap bahagian membuka pemilih.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Kosongkan sejarah kongsi';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Mengalih keluar setiap rekod daripada senarai Import anda. Latihan yang diimport, resipi dan log makanan itu sendiri kekal.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Mengalih keluar setiap rekod daripada senarai Import anda. Latihan yang diimport, resipi dan log makanan itu sendiri kekal.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Kosongkan sejarah kongsi?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Setiap baris dalam senarai Import anda dialih keluar. Latihan, resipi dan log makanan yang anda import kekal di tempatnya.';
+  String get importsPrivacyClearConfirmBody =>
+      'Setiap baris dalam senarai Import anda dialih keluar. Latihan, resipi dan log makanan yang anda import kekal di tempatnya.';
 
   @override
   String get importsPrivacyClearAction => 'Jelas';
@@ -44585,5 +44602,6 @@ class AppLocalizationsMs extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Sejarah yang dikongsi dikosongkan.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Tidak dapat mengosongkan — cuba lagi kemudian.';
+  String get importsPrivacyClearFailedSnack =>
+      'Tidak dapat mengosongkan — cuba lagi kemudian.';
 }

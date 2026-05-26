@@ -567,7 +567,11 @@ async def send_message(
         # preferred_locale (UI locale) persisted from Accept-Language.
         # chat_locale (AI reply locale) persisted from X-Chat-Locale (or None to clear).
         _locale_db = _get_supabase_db_for_locale()
-        if _ui_locale and _ui_locale != "en":
+        # Always persist the resolved UI locale — including "en" — so that a
+        # user toggling Telugu → English in Settings actually rewrites the
+        # DB column back to "en". The previous `!= "en"` gate left stale
+        # non-English locales pinned on the row forever once written.
+        if _ui_locale:
             background_tasks.add_task(
                 persist_user_locale,
                 str(chat_request.user_id),
@@ -1088,8 +1092,10 @@ async def send_message_stream(
                 background_tasks.add_task(track_premium_usage, chat_request.user_id, _stream_gate_feature, _stream_tz)
 
             # Persist locales — same two-track logic as /send endpoint.
+            # Always write the resolved UI locale (including "en") so a
+            # Telugu→English toggle re-writes the column back to "en".
             _locale_db_s = _get_supabase_db_for_locale()
-            if _stream_ui_locale and _stream_ui_locale != "en":
+            if _stream_ui_locale:
                 background_tasks.add_task(
                     persist_user_locale,
                     str(chat_request.user_id),

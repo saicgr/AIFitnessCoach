@@ -14211,7 +14211,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Tak jsem vytvořil osobu, ne účetní knihu. Vyfoťte to menu v Bangkoku a trenér vám ho přečte zpět v makrech. Vynecháte úterní trénink a ve středu ráno vás vytáhne zpět bez pocitu viny. Učí se vaše jídla, vaši posilovnu, vaše vzorce selhání — za méně než cenu jedné lekce s osobním trenérem měsíčně.';
+      'Takže jsem postavil osobu, ne účetní knihu. Udělejte si jakékoli menu – doma nebo v zahraničí – a trenér vám ho přečte v makrech. Vynechejte úterý a středeční ráno vás to stáhne zpět bez výčitek svědomí. Učí se vaše jídla, vaše posilovna, vaše skluzové vzorce – za méně než jedno PT sezení za měsíc.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20268,12 +20268,12 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44234,6 +44234,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Stejný jako jazyk aplikace';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Dovoz';
 
   @override
@@ -44259,7 +44265,8 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Oznámení jsou pozastavena. Pro obnovení kdykoli vypněte.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Oznámení jsou pozastavena. Pro obnovení kdykoli vypněte.';
 
   @override
   String get vacationModeBannerScheduled => 'Naplánováno';
@@ -44273,7 +44280,8 @@ class AppLocalizationsCs extends AppLocalizations {
   String get vacationModeBannerOn => 'Oznámení jsou zapnutá';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Chcete-li pozastavit nekritická připomenutí, níže povolte režim dovolené.';
+  String get vacationModeBannerOnSubtitle =>
+      'Chcete-li pozastavit nekritická připomenutí, níže povolte režim dovolené.';
 
   @override
   String get difficultyEasy => 'Začátečník';
@@ -44329,7 +44337,8 @@ class AppLocalizationsCs extends AppLocalizations {
   String get importsEmptyTitle => 'Zatím nic sdíleno';
 
   @override
-  String get importsEmptyBody => 'Klikněte na Sdílet kdekoli – Fotky, YouTube, ChatGPT, hlasová poznámka – a automaticky se zobrazí zde.';
+  String get importsEmptyBody =>
+      'Klikněte na Sdílet kdekoli – Fotky, YouTube, ChatGPT, hlasová poznámka – a automaticky se zobrazí zde.';
 
   @override
   String get importsActionOpen => 'OTEVŘENO';
@@ -44344,10 +44353,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get importsSnackRetrying => 'Opakování importu…';
 
   @override
-  String get importsSnackRetryFailed => 'Nepodařilo se opakovat – zkuste to znovu později.';
+  String get importsSnackRetryFailed =>
+      'Nepodařilo se opakovat – zkuste to znovu později.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Reklasifikovat ve frontě — sdílejte položku znovu, aby byla přesměrována.';
+  String get importsSnackReclassifyQueued =>
+      'Reklasifikovat ve frontě — sdílejte položku znovu, aby byla přesměrována.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44355,7 +44366,8 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Záznamy budou odstraněny z vaší historie importů. Samotné importované tréninky / recepty / záznamy o jídle zůstávají.';
+  String get importsDeleteConfirmBody =>
+      'Záznamy budou odstraněny z vaší historie importů. Samotné importované tréninky / recepty / záznamy o jídle zůstávají.';
 
   @override
   String get importsActionCancel => 'Zrušit';
@@ -44409,7 +44421,8 @@ class AppLocalizationsCs extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Limity';
 
   @override
-  String get importsLimitsFooter => 'Denní limity jsou pro všechny stejné. Udržují vysokou kvalitu dovozu a chrání před útěky.';
+  String get importsLimitsFooter =>
+      'Denní limity jsou pro všechny stejné. Udržují vysokou kvalitu dovozu a chrání před útěky.';
 
   @override
   String get importsPrivacySectionTitle => 'Dovoz';
@@ -44418,19 +44431,22 @@ class AppLocalizationsCs extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Před směrováním se vždy zeptejte';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Přeskočte odpočítávání automatické trasy – každé sdílení otevře výběr.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Přeskočte odpočítávání automatické trasy – každé sdílení otevře výběr.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Vymazat sdílenou historii';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Odebere každý záznam z vašeho seznamu importů. Importovaná cvičení, recepty a samotné záznamy o jídle zůstávají.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Odebere každý záznam z vašeho seznamu importů. Importovaná cvičení, recepty a samotné záznamy o jídle zůstávají.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Vymazat sdílenou historii?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Každý řádek v seznamu importů bude odstraněn. Cvičení, recepty a záznamy o jídle, které jste importovali, zůstanou tam, kde jsou.';
+  String get importsPrivacyClearConfirmBody =>
+      'Každý řádek v seznamu importů bude odstraněn. Cvičení, recepty a záznamy o jídle, které jste importovali, zůstanou tam, kde jsou.';
 
   @override
   String get importsPrivacyClearAction => 'Jasný';
@@ -44439,5 +44455,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Sdílená historie byla vymazána.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Nelze vymazat – zkuste to znovu později.';
+  String get importsPrivacyClearFailedSnack =>
+      'Nelze vymazat – zkuste to znovu později.';
 }

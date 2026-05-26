@@ -14195,7 +14195,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Så jag byggde personen, inte huvudboken. Fota menyn i Bangkok så läser coachen upp den för dig i makron. Missa en tisdag så drar den dig tillbaka onsdag morgon utan dåligt samvete. Den lär sig din mat, ditt gym, dina mönster för när du faller ur rutiner — för mindre än en PT-session i månaden.';
+      'Så jag byggde personen, inte huvudboken. Knäpp valfri meny - hemma eller utomlands - och tränaren läser tillbaka den för dig i makron. Hoppa över en tisdag och det drar dig tillbaka onsdag morgon utan skuldresan. Den lär sig din mat, ditt gym, dina halkmönster - för mindre än ett PT-pass i månaden.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20250,12 +20250,12 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44196,6 +44196,12 @@ class AppLocalizationsSv extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Samma som appens språk';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Importer';
 
   @override
@@ -44205,7 +44211,8 @@ class AppLocalizationsSv extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'Cykelspårning';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'Period, fertilitet och förutsägelser';
+  String get settingsCycleTrackingSubtitle =>
+      'Period, fertilitet och förutsägelser';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44221,7 +44228,8 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Aviseringar pausas. Stäng av när som helst för att fortsätta.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Aviseringar pausas. Stäng av när som helst för att fortsätta.';
 
   @override
   String get vacationModeBannerScheduled => 'Schemalagt';
@@ -44235,7 +44243,8 @@ class AppLocalizationsSv extends AppLocalizations {
   String get vacationModeBannerOn => 'Aviseringar är på';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Aktivera semesterläget nedan för att pausa icke-kritiska påminnelser.';
+  String get vacationModeBannerOnSubtitle =>
+      'Aktivera semesterläget nedan för att pausa icke-kritiska påminnelser.';
 
   @override
   String get difficultyEasy => 'Nybörjare';
@@ -44262,7 +44271,8 @@ class AppLocalizationsSv extends AppLocalizations {
   String get importsAppBarTitle => 'Importer';
 
   @override
-  String get importsTooltipFormatsLimits => 'Format och begränsningar som stöds';
+  String get importsTooltipFormatsLimits =>
+      'Format och begränsningar som stöds';
 
   @override
   String get importsTooltipDone => 'Gjort';
@@ -44291,7 +44301,8 @@ class AppLocalizationsSv extends AppLocalizations {
   String get importsEmptyTitle => 'Inget delat ännu';
 
   @override
-  String get importsEmptyBody => 'Tryck på Dela var som helst — Foton, YouTube, ChatGPT, ett röstmemo — och det landar här automatiskt.';
+  String get importsEmptyBody =>
+      'Tryck på Dela var som helst — Foton, YouTube, ChatGPT, ett röstmemo — och det landar här automatiskt.';
 
   @override
   String get importsActionOpen => 'Öppna';
@@ -44306,10 +44317,12 @@ class AppLocalizationsSv extends AppLocalizations {
   String get importsSnackRetrying => 'Försöker importera igen...';
 
   @override
-  String get importsSnackRetryFailed => 'Det gick inte att försöka igen – försök igen senare.';
+  String get importsSnackRetryFailed =>
+      'Det gick inte att försöka igen – försök igen senare.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Omklassificera i kö — dela objektet igen för att omdirigera.';
+  String get importsSnackReclassifyQueued =>
+      'Omklassificera i kö — dela objektet igen för att omdirigera.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44317,7 +44330,8 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Posterna tas bort från din importhistorik. Importerade träningspass/recept/matloggar stannar kvar.';
+  String get importsDeleteConfirmBody =>
+      'Posterna tas bort från din importhistorik. Importerade träningspass/recept/matloggar stannar kvar.';
 
   @override
   String get importsActionCancel => 'Avboka';
@@ -44371,7 +44385,8 @@ class AppLocalizationsSv extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Gränser';
 
   @override
-  String get importsLimitsFooter => 'Dagliga tak är samma för alla. De håller importkvaliteten hög och skyddar mot skenande kostnader.';
+  String get importsLimitsFooter =>
+      'Dagliga tak är samma för alla. De håller importkvaliteten hög och skyddar mot skenande kostnader.';
 
   @override
   String get importsPrivacySectionTitle => 'Importer';
@@ -44380,19 +44395,22 @@ class AppLocalizationsSv extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'Fråga alltid innan rutt';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Hoppa över nedräkningen av automatisk rutt - varje delning öppnar väljaren.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Hoppa över nedräkningen av automatisk rutt - varje delning öppnar väljaren.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Rensa delad historik';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Tar bort alla poster från din importlista. Importerade träningspass, recept och matloggar stannar kvar.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Tar bort alla poster från din importlista. Importerade träningspass, recept och matloggar stannar kvar.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Rensa delad historik?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Varje rad i din importlista tas bort. Träningspassen, recepten och matloggarna du importerade stannar där de är.';
+  String get importsPrivacyClearConfirmBody =>
+      'Varje rad i din importlista tas bort. Träningspassen, recepten och matloggarna du importerade stannar där de är.';
 
   @override
   String get importsPrivacyClearAction => 'Rensa';
@@ -44401,5 +44419,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Den delade historiken har rensats.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Det gick inte att rensa – försök igen senare.';
+  String get importsPrivacyClearFailedSnack =>
+      'Det gick inte att rensa – försök igen senare.';
 }

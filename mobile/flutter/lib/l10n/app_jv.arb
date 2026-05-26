@@ -20873,7 +20873,7 @@
   "importsAppBarTitle": "Impor",
   "importsDeleteConfirmBody": "Cathetan dibusak saka riwayat impor sampeyan. Latihan / resep / log panganan sing diimpor dhewe tetep.",
   "importsDeleteConfirmTitle": "Mbusak {count} impor?",
-  "importsDetailDetectedAs": "Dideteksi minangka: {maksud}",
+  "importsDetailDetectedAs": "Dideteksi minangka: {intent}",
   "importsDetailFrom": "Saka: {url}",
   "importsDetailStatus": "Status: {status}",
   "importsEmptyBody": "Pencet Nuduhake ing endi wae - Foto, YouTube, ChatGPT, memo swara - lan bakal teka ing kene kanthi otomatis.",

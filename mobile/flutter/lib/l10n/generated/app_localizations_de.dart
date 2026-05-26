@@ -14334,7 +14334,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Also habe ich die Person gebaut, nicht das Buchhaltungstool. Fotografiere das Menü in Bangkok und der Coach liest dir die Makros vor. Überspringe einen Dienstag und er holt dich am Mittwochmorgen zurück, ohne schlechtes Gewissen. Er lernt deine Lebensmittel, dein Fitnessstudio, deine Ausrutscher-Muster – für weniger als eine PT-Stunde im Monat.';
+      'Also habe ich die Person erstellt, nicht das Hauptbuch. Schnappen Sie sich ein beliebiges Menü – zu Hause oder im Ausland – und der Coach liest es Ihnen in Makros vor. Wenn Sie einen Dienstag auslassen, werden Sie am Mittwochmorgen ohne Schuldgefühle zurückgeholt. Es lernt Ihre Ernährung, Ihr Fitnessstudio, Ihre Slipmuster – für weniger als eine PT-Sitzung pro Monat.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20442,13 +20442,13 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
-    return '$magnesium100g mg';
+  String logMealSheetMg4(Object potassium100g) {
+    return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
-    return '$zinc100g mg';
+  String logMealSheetMg5(Object magnesium100g) {
+    return '$magnesium100g mg';
   }
 
   @override
@@ -44601,16 +44601,24 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Wie App-Sprache';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Importe';
 
   @override
-  String get settingsImportsSubtitle => 'Alles, was Sie in Zealova geteilt haben';
+  String get settingsImportsSubtitle =>
+      'Alles, was Sie in Zealova geteilt haben';
 
   @override
   String get settingsCycleTrackingTitle => 'Zyklusverfolgung';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'Periode, Fruchtbarkeit und Vorhersagen';
+  String get settingsCycleTrackingSubtitle =>
+      'Periode, Fruchtbarkeit und Vorhersagen';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44626,7 +44634,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Benachrichtigungen werden pausiert. Zum Fortfahren jederzeit ausschalten.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Benachrichtigungen werden pausiert. Zum Fortfahren jederzeit ausschalten.';
 
   @override
   String get vacationModeBannerScheduled => 'Geplant';
@@ -44640,7 +44649,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get vacationModeBannerOn => 'Benachrichtigungen sind aktiviert';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Aktivieren Sie unten den Urlaubsmodus, um unkritische Erinnerungen zu pausieren.';
+  String get vacationModeBannerOnSubtitle =>
+      'Aktivieren Sie unten den Urlaubsmodus, um unkritische Erinnerungen zu pausieren.';
 
   @override
   String get difficultyEasy => 'Anfänger';
@@ -44667,7 +44677,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get importsAppBarTitle => 'Importe';
 
   @override
-  String get importsTooltipFormatsLimits => 'Unterstützte Formate und Einschränkungen';
+  String get importsTooltipFormatsLimits =>
+      'Unterstützte Formate und Einschränkungen';
 
   @override
   String get importsTooltipDone => 'Erledigt';
@@ -44696,7 +44707,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get importsEmptyTitle => 'Noch nichts geteilt';
 
   @override
-  String get importsEmptyBody => 'Klicken Sie irgendwo auf „Teilen“ – Fotos, YouTube, ChatGPT, eine Sprachnotiz – und es landet automatisch hier.';
+  String get importsEmptyBody =>
+      'Klicken Sie irgendwo auf „Teilen“ – Fotos, YouTube, ChatGPT, eine Sprachnotiz – und es landet automatisch hier.';
 
   @override
   String get importsActionOpen => 'Offen';
@@ -44711,10 +44723,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get importsSnackRetrying => 'Import wird erneut versucht…';
 
   @override
-  String get importsSnackRetryFailed => 'Konnte es nicht noch einmal versuchen. Versuchen Sie es später noch einmal.';
+  String get importsSnackRetryFailed =>
+      'Konnte es nicht noch einmal versuchen. Versuchen Sie es später noch einmal.';
 
   @override
-  String get importsSnackReclassifyQueued => 'In der Warteschlange neu klassifizieren – Geben Sie das Element erneut frei, um es umzuleiten.';
+  String get importsSnackReclassifyQueued =>
+      'In der Warteschlange neu klassifizieren – Geben Sie das Element erneut frei, um es umzuleiten.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44722,7 +44736,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Die Datensätze werden aus Ihrem Importverlauf entfernt. Importierte Trainingseinheiten/Rezepte/Ernährungsprotokolle selbst bleiben erhalten.';
+  String get importsDeleteConfirmBody =>
+      'Die Datensätze werden aus Ihrem Importverlauf entfernt. Importierte Trainingseinheiten/Rezepte/Ernährungsprotokolle selbst bleiben erhalten.';
 
   @override
   String get importsActionCancel => 'Stornieren';
@@ -44776,28 +44791,33 @@ class AppLocalizationsDe extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Grenzen';
 
   @override
-  String get importsLimitsFooter => 'Die täglichen Obergrenzen sind für alle gleich. Sie halten die Importqualität hoch und schützen vor unkontrollierten Kosten.';
+  String get importsLimitsFooter =>
+      'Die täglichen Obergrenzen sind für alle gleich. Sie halten die Importqualität hoch und schützen vor unkontrollierten Kosten.';
 
   @override
   String get importsPrivacySectionTitle => 'Importe';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Fragen Sie immer vor der Weiterleitung nach';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Fragen Sie immer vor der Weiterleitung nach';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Überspringen Sie den Countdown für die automatische Route – jede Freigabe öffnet die Auswahl.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Überspringen Sie den Countdown für die automatische Route – jede Freigabe öffnet die Auswahl.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Gemeinsamen Verlauf löschen';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Entfernt jeden Datensatz aus Ihrer Importliste. Importierte Trainings, Rezepte und Ernährungsprotokolle selbst bleiben erhalten.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Entfernt jeden Datensatz aus Ihrer Importliste. Importierte Trainings, Rezepte und Ernährungsprotokolle selbst bleiben erhalten.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Gemeinsamen Verlauf löschen?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Jede Zeile in Ihrer Importliste wird entfernt. Die von Ihnen importierten Trainingseinheiten, Rezepte und Ernährungsprotokolle bleiben dort, wo sie sind.';
+  String get importsPrivacyClearConfirmBody =>
+      'Jede Zeile in Ihrer Importliste wird entfernt. Die von Ihnen importierten Trainingseinheiten, Rezepte und Ernährungsprotokolle bleiben dort, wo sie sind.';
 
   @override
   String get importsPrivacyClearAction => 'Klar';
@@ -44806,5 +44826,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Geteilter Verlauf gelöscht.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Fehler konnte nicht gelöscht werden. Versuchen Sie es später noch einmal.';
+  String get importsPrivacyClearFailedSnack =>
+      'Fehler konnte nicht gelöscht werden. Versuchen Sie es später noch einmal.';
 }

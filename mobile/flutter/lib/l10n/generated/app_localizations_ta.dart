@@ -14438,7 +14438,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'எனவே நான் லெட்ஜரை அல்ல, நபரை உருவாக்கினேன். பேங்காக் மெனுவை ஸ்னாப் செய்யுங்கள், பயிற்சியாளர் அதை உங்களுக்கு மேக்ரோக்களில் வாசித்துக் காட்டுவார். ஒரு செவ்வாய்க்கிழமை தவறவிடுங்கள், அது குற்ற உணர்ச்சியின்றி புதன்கிழமை காலை உங்களை மீண்டும் அழைத்து வரும். இது உங்கள் உணவுகள், உங்கள் ஜிம், உங்கள் தவறான முறைகளைக் கற்றுக்கொள்கிறது — மாதத்திற்கு ஒரு PT அமர்வை விடக் குறைவான விலையில்.';
+      'எனவே நான் நபரை கட்டினேன், பேரேடு அல்ல. உள்நாட்டிலோ வெளிநாட்டிலோ - ஏதேனும் மெனுவை எடுத்து, பயிற்சியாளர் அதை மேக்ரோக்களில் உங்களுக்குத் திரும்பப் படிக்கிறார். ஒரு செவ்வாய் கிழமையைத் தவிர்த்தால், அது குற்ற உணர்வு இல்லாமல் புதன்கிழமை காலை உங்களை பின்னுக்கு இழுக்கும். இது உங்கள் உணவுகள், உங்கள் உடற்பயிற்சி கூடம், உங்கள் சீட்டு முறைகள் - ஒரு மாதத்திற்கு ஒரு PT அமர்வுக்கு குறைவாகவே கற்றுக்கொள்கிறது.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20606,12 +20606,12 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44938,16 +44938,24 @@ class AppLocalizationsTa extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'செயலியின் அதே மொழி';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'இறக்குமதிகள்';
 
   @override
-  String get settingsImportsSubtitle => 'Zealova இல் நீங்கள் பகிர்ந்த அனைத்தும்';
+  String get settingsImportsSubtitle =>
+      'Zealova இல் நீங்கள் பகிர்ந்த அனைத்தும்';
 
   @override
   String get settingsCycleTrackingTitle => 'சைக்கிள் கண்காணிப்பு';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'காலம், கருவுறுதல் மற்றும் கணிப்புகள்';
+  String get settingsCycleTrackingSubtitle =>
+      'காலம், கருவுறுதல் மற்றும் கணிப்புகள்';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44963,7 +44971,8 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'அறிவிப்புகள் இடைநிறுத்தப்பட்டுள்ளன. மீண்டும் தொடங்க எந்த நேரத்திலும் அணைக்கவும்.';
+  String get vacationModeBannerPausedNoEnd =>
+      'அறிவிப்புகள் இடைநிறுத்தப்பட்டுள்ளன. மீண்டும் தொடங்க எந்த நேரத்திலும் அணைக்கவும்.';
 
   @override
   String get vacationModeBannerScheduled => 'திட்டமிடப்பட்டது';
@@ -44977,7 +44986,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get vacationModeBannerOn => 'அறிவிப்புகள் இயக்கத்தில் உள்ளன';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'முக்கியமான நினைவூட்டல்களை இடைநிறுத்த, கீழே விடுமுறை பயன்முறையை இயக்கவும்.';
+  String get vacationModeBannerOnSubtitle =>
+      'முக்கியமான நினைவூட்டல்களை இடைநிறுத்த, கீழே விடுமுறை பயன்முறையை இயக்கவும்.';
 
   @override
   String get difficultyEasy => 'ஆரம்பநிலை';
@@ -45004,7 +45014,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get importsAppBarTitle => 'இறக்குமதிகள்';
 
   @override
-  String get importsTooltipFormatsLimits => 'ஆதரிக்கப்படும் வடிவங்கள் மற்றும் வரம்புகள்';
+  String get importsTooltipFormatsLimits =>
+      'ஆதரிக்கப்படும் வடிவங்கள் மற்றும் வரம்புகள்';
 
   @override
   String get importsTooltipDone => 'முடிந்தது';
@@ -45033,7 +45044,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get importsEmptyTitle => 'இதுவரை எதுவும் பகிரப்படவில்லை';
 
   @override
-  String get importsEmptyBody => 'புகைப்படங்கள், YouTube, ChatGPT, குரல் குறிப்பு - எங்கு வேண்டுமானாலும் பகிர் என்பதை அழுத்தவும், அது தானாகவே இங்கு வந்து சேரும்.';
+  String get importsEmptyBody =>
+      'புகைப்படங்கள், YouTube, ChatGPT, குரல் குறிப்பு - எங்கு வேண்டுமானாலும் பகிர் என்பதை அழுத்தவும், அது தானாகவே இங்கு வந்து சேரும்.';
 
   @override
   String get importsActionOpen => 'திற';
@@ -45048,10 +45060,12 @@ class AppLocalizationsTa extends AppLocalizations {
   String get importsSnackRetrying => 'இறக்குமதியை மீண்டும் முயற்சிக்கிறது…';
 
   @override
-  String get importsSnackRetryFailed => 'மீண்டும் முயற்சிக்க முடியவில்லை — பிறகு முயற்சிக்கவும்.';
+  String get importsSnackRetryFailed =>
+      'மீண்டும் முயற்சிக்க முடியவில்லை — பிறகு முயற்சிக்கவும்.';
 
   @override
-  String get importsSnackReclassifyQueued => 'வரிசைப்படுத்தப்பட்டதை மீண்டும் வகைப்படுத்தவும் - வழிமாற்றுவதற்கு உருப்படியை மீண்டும் பகிரவும்.';
+  String get importsSnackReclassifyQueued =>
+      'வரிசைப்படுத்தப்பட்டதை மீண்டும் வகைப்படுத்தவும் - வழிமாற்றுவதற்கு உருப்படியை மீண்டும் பகிரவும்.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -45059,7 +45073,8 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'உங்கள் இறக்குமதி வரலாற்றிலிருந்து பதிவுகள் அகற்றப்பட்டன. இறக்குமதி செய்யப்பட்ட உடற்பயிற்சிகள் / சமையல் வகைகள் / உணவுப் பதிவுகள் அப்படியே இருக்கும்.';
+  String get importsDeleteConfirmBody =>
+      'உங்கள் இறக்குமதி வரலாற்றிலிருந்து பதிவுகள் அகற்றப்பட்டன. இறக்குமதி செய்யப்பட்ட உடற்பயிற்சிகள் / சமையல் வகைகள் / உணவுப் பதிவுகள் அப்படியே இருக்கும்.';
 
   @override
   String get importsActionCancel => 'ரத்து செய்';
@@ -45074,7 +45089,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get importsTitleImportedRecipe => 'இறக்குமதி செய்யப்பட்ட செய்முறை';
 
   @override
-  String get importsTitleImportedMealPlan => 'இறக்குமதி செய்யப்பட்ட உணவுத் திட்டம்';
+  String get importsTitleImportedMealPlan =>
+      'இறக்குமதி செய்யப்பட்ட உணவுத் திட்டம்';
 
   @override
   String get importsTitleLoggedMeal => 'பதிவு செய்யப்பட்ட உணவு';
@@ -45113,28 +45129,34 @@ class AppLocalizationsTa extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'வரம்புகள்';
 
   @override
-  String get importsLimitsFooter => 'தினசரி தொப்பிகள் அனைவருக்கும் ஒரே மாதிரியானவை. அவை இறக்குமதி தரத்தை உயர்வாக வைத்து, ரன்வே செலவுகளிலிருந்து பாதுகாக்கின்றன.';
+  String get importsLimitsFooter =>
+      'தினசரி தொப்பிகள் அனைவருக்கும் ஒரே மாதிரியானவை. அவை இறக்குமதி தரத்தை உயர்வாக வைத்து, ரன்வே செலவுகளிலிருந்து பாதுகாக்கின்றன.';
 
   @override
   String get importsPrivacySectionTitle => 'இறக்குமதிகள்';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'ரூட்டிங் செய்வதற்கு முன் எப்போதும் கேளுங்கள்';
+  String get importsPrivacyAlwaysAskTitle =>
+      'ரூட்டிங் செய்வதற்கு முன் எப்போதும் கேளுங்கள்';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'ஆட்டோ-ரூட் கவுண்ட்டவுனைத் தவிர்க்கவும் - ஒவ்வொரு பங்கும் தேர்வாளரைத் திறக்கும்.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'ஆட்டோ-ரூட் கவுண்ட்டவுனைத் தவிர்க்கவும் - ஒவ்வொரு பங்கும் தேர்வாளரைத் திறக்கும்.';
 
   @override
-  String get importsPrivacyClearHistoryTitle => 'பகிரப்பட்ட வரலாற்றை அழிக்கவும்';
+  String get importsPrivacyClearHistoryTitle =>
+      'பகிரப்பட்ட வரலாற்றை அழிக்கவும்';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'உங்கள் இறக்குமதி பட்டியலில் இருந்து ஒவ்வொரு பதிவையும் நீக்குகிறது. இறக்குமதி செய்யப்பட்ட உடற்பயிற்சிகளும், சமையல் குறிப்புகளும், உணவுப் பதிவுகளும் அப்படியே இருக்கும்.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'உங்கள் இறக்குமதி பட்டியலில் இருந்து ஒவ்வொரு பதிவையும் நீக்குகிறது. இறக்குமதி செய்யப்பட்ட உடற்பயிற்சிகளும், சமையல் குறிப்புகளும், உணவுப் பதிவுகளும் அப்படியே இருக்கும்.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'பகிரப்பட்ட வரலாற்றை அழிக்கவா?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'உங்கள் இறக்குமதி பட்டியலில் உள்ள ஒவ்வொரு வரிசையும் அகற்றப்படும். நீங்கள் இறக்குமதி செய்த உடற்பயிற்சிகளும், சமையல் குறிப்புகளும், உணவுப் பதிவுகளும் இருக்கும் இடத்திலேயே இருக்கும்.';
+  String get importsPrivacyClearConfirmBody =>
+      'உங்கள் இறக்குமதி பட்டியலில் உள்ள ஒவ்வொரு வரிசையும் அகற்றப்படும். நீங்கள் இறக்குமதி செய்த உடற்பயிற்சிகளும், சமையல் குறிப்புகளும், உணவுப் பதிவுகளும் இருக்கும் இடத்திலேயே இருக்கும்.';
 
   @override
   String get importsPrivacyClearAction => 'தெளிவு';
@@ -45143,5 +45165,6 @@ class AppLocalizationsTa extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'பகிரப்பட்ட வரலாறு அழிக்கப்பட்டது.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'அழிக்க முடியவில்லை — பிறகு முயற்சிக்கவும்.';
+  String get importsPrivacyClearFailedSnack =>
+      'அழிக்க முடியவில்லை — பிறகு முயற்சிக்கவும்.';
 }

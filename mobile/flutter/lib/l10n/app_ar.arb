@@ -20875,7 +20875,7 @@
   "importsDeleteConfirmTitle": "هل تريد حذف {count} الواردات؟",
   "importsDetailDetectedAs": "تم اكتشافه كـ: {intent}",
   "importsDetailFrom": "من: {url}",
-  "importsDetailStatus": "الحالة: {الحالة}",
+  "importsDetailStatus": "الحالة: {status}",
   "importsEmptyBody": "اضغط على \"المشاركة في أي مكان\" — الصور، وYouTube، وChatGPT، والمذكرة الصوتية — وستصل هنا تلقائيًا.",
   "importsEmptyTitle": "لم تتم مشاركة أي شيء حتى الآن",
   "importsFilterAll": "الجميع",

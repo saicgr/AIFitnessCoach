@@ -14221,7 +14221,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Jadi saya membangun sosok pelatih, bukan buku besar. Potret menu itu di Bangkok dan pelatih akan membacakannya kembali untuk Anda dalam bentuk makro. Lewati hari Selasa dan ia akan menarik Anda kembali di Rabu pagi tanpa rasa bersalah. Ia mempelajari makanan Anda, gym Anda, pola penyimpangan Anda — dengan biaya kurang dari satu sesi PT sebulan.';
+      'Jadi saya membuat orangnya, bukan buku besarnya. Jepret menu apa pun — di dalam atau di luar negeri — dan pelatih akan membacakannya kembali untuk Anda dalam makro. Lewati hari Selasa dan itu akan membawa Anda kembali pada Rabu pagi tanpa rasa bersalah. Ia mempelajari makanan Anda, gym Anda, pola slip Anda — kurang dari satu sesi PT dalam sebulan.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20289,12 +20289,12 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44304,10 +44304,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Sama dengan bahasa aplikasi';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Impor';
 
   @override
-  String get settingsImportsSubtitle => 'Segala sesuatu yang telah Anda bagikan ke Zealova';
+  String get settingsImportsSubtitle =>
+      'Segala sesuatu yang telah Anda bagikan ke Zealova';
 
   @override
   String get settingsCycleTrackingTitle => 'Pelacakan Siklus';
@@ -44317,7 +44324,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String settingsAboutBrand(Object appName) {
-    return 'Tentang {namaaplikasi}';
+    return 'Tentang $appName';
   }
 
   @override
@@ -44329,7 +44336,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Notifikasi dijeda. Matikan kapan saja untuk melanjutkan.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Notifikasi dijeda. Matikan kapan saja untuk melanjutkan.';
 
   @override
   String get vacationModeBannerScheduled => 'Dijadwalkan';
@@ -44343,7 +44351,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get vacationModeBannerOn => 'Notifikasi aktif';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Aktifkan mode liburan di bawah untuk menjeda pengingat yang tidak penting.';
+  String get vacationModeBannerOnSubtitle =>
+      'Aktifkan mode liburan di bawah untuk menjeda pengingat yang tidak penting.';
 
   @override
   String get difficultyEasy => 'Pemula';
@@ -44399,7 +44408,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get importsEmptyTitle => 'Belum ada yang dibagikan';
 
   @override
-  String get importsEmptyBody => 'Tekan Bagikan di mana saja — Foto, YouTube, ChatGPT, memo suara — dan memo itu akan muncul di sini secara otomatis.';
+  String get importsEmptyBody =>
+      'Tekan Bagikan di mana saja — Foto, YouTube, ChatGPT, memo suara — dan memo itu akan muncul di sini secara otomatis.';
 
   @override
   String get importsActionOpen => 'Membuka';
@@ -44414,10 +44424,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get importsSnackRetrying => 'Mencoba mengimpor lagi…';
 
   @override
-  String get importsSnackRetryFailed => 'Tidak dapat mencoba lagi — coba lagi nanti.';
+  String get importsSnackRetryFailed =>
+      'Tidak dapat mencoba lagi — coba lagi nanti.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Klasifikasikan ulang antrean — bagikan item lagi untuk merutekan ulang.';
+  String get importsSnackReclassifyQueued =>
+      'Klasifikasikan ulang antrean — bagikan item lagi untuk merutekan ulang.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44425,7 +44437,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Catatan tersebut akan dihapus dari riwayat impor Anda. Latihan/resep/catatan makanan yang diimpor tetap ada.';
+  String get importsDeleteConfirmBody =>
+      'Catatan tersebut akan dihapus dari riwayat impor Anda. Latihan/resep/catatan makanan yang diimpor tetap ada.';
 
   @override
   String get importsActionCancel => 'Membatalkan';
@@ -44479,28 +44492,33 @@ class AppLocalizationsId extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Batasan';
 
   @override
-  String get importsLimitsFooter => 'Batas harian sama untuk semua orang. Mereka menjaga kualitas impor tetap tinggi dan melindungi terhadap biaya yang tidak terkendali.';
+  String get importsLimitsFooter =>
+      'Batas harian sama untuk semua orang. Mereka menjaga kualitas impor tetap tinggi dan melindungi terhadap biaya yang tidak terkendali.';
 
   @override
   String get importsPrivacySectionTitle => 'Impor';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Selalu bertanya sebelum merutekan';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Selalu bertanya sebelum merutekan';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Lewati hitungan mundur rute otomatis — setiap pembagian akan membuka pemilih.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Lewati hitungan mundur rute otomatis — setiap pembagian akan membuka pemilih.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Hapus riwayat bersama';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Menghapus setiap catatan dari daftar Impor Anda. Latihan, resep, dan catatan makanan yang diimpor tetap ada.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Menghapus setiap catatan dari daftar Impor Anda. Latihan, resep, dan catatan makanan yang diimpor tetap ada.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Hapus riwayat bersama?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Setiap baris dalam daftar Impor Anda dihapus. Latihan, resep, dan catatan makanan yang Anda impor tetap berada di tempatnya.';
+  String get importsPrivacyClearConfirmBody =>
+      'Setiap baris dalam daftar Impor Anda dihapus. Latihan, resep, dan catatan makanan yang Anda impor tetap berada di tempatnya.';
 
   @override
   String get importsPrivacyClearAction => 'Jernih';
@@ -44509,5 +44527,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Riwayat bersama dihapus.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Tidak dapat menghapus — coba lagi nanti.';
+  String get importsPrivacyClearFailedSnack =>
+      'Tidak dapat menghapus — coba lagi nanti.';
 }

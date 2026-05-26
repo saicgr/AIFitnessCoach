@@ -14262,7 +14262,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'তাই আমি খাতা নয়, একজন ব্যক্তিকে তৈরি করেছি। ব্যাংককের সেই মেনুর ছবি তুলুন এবং কোচ আপনাকে ম্যাক্রোর হিসেবে তা পড়ে শোনাবে। মঙ্গলবার বাদ দিন, এটি আপনাকে বুধবার সকালে কোনো অপরাধবোধ ছাড়াই আবার ফিরিয়ে আনবে। এটি আপনার খাবার, আপনার জিম, আপনার ভুল করার ধরনগুলো শিখে নেয় — মাসে একটি PT সেশনের চেয়েও কম খরচে।';
+      'তাই আমি ব্যক্তিকে তৈরি করেছি, খাতা নয়। যে কোনো মেনু ছিনতাই করুন — দেশে বা বিদেশে — এবং কোচ আপনাকে ম্যাক্রোতে তা পড়ে শোনাবেন। একটি মঙ্গলবার এড়িয়ে যান এবং এটি আপনাকে অপরাধবোধ ছাড়াই বুধবার সকালে ফিরিয়ে আনবে। এটি আপনার খাবার, আপনার জিম, আপনার স্লিপ প্যাটার্ন শিখে - মাসে একটি PT সেশনের কম জন্য।';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20335,12 +20335,12 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44373,6 +44373,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'অ্যাপের ভাষার মতোই';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'আমদানি';
 
   @override
@@ -44398,7 +44404,8 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'বিজ্ঞপ্তিগুলি বিরাম দেওয়া হয়েছে৷ আবার শুরু করতে যেকোনো সময় বন্ধ করুন।';
+  String get vacationModeBannerPausedNoEnd =>
+      'বিজ্ঞপ্তিগুলি বিরাম দেওয়া হয়েছে৷ আবার শুরু করতে যেকোনো সময় বন্ধ করুন।';
 
   @override
   String get vacationModeBannerScheduled => 'নির্ধারিত';
@@ -44412,7 +44419,8 @@ class AppLocalizationsBn extends AppLocalizations {
   String get vacationModeBannerOn => 'বিজ্ঞপ্তি চালু আছে';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'অ-গুরুত্বপূর্ণ অনুস্মারকগুলিকে বিরাম দিতে নীচের অবকাশ মোড সক্ষম করুন৷';
+  String get vacationModeBannerOnSubtitle =>
+      'অ-গুরুত্বপূর্ণ অনুস্মারকগুলিকে বিরাম দিতে নীচের অবকাশ মোড সক্ষম করুন৷';
 
   @override
   String get difficultyEasy => 'শিক্ষানবিস';
@@ -44468,7 +44476,8 @@ class AppLocalizationsBn extends AppLocalizations {
   String get importsEmptyTitle => 'এখনো কিছুই শেয়ার করা হয়নি';
 
   @override
-  String get importsEmptyBody => 'যে কোন জায়গায় শেয়ার করুন - ফটো, YouTube, ChatGPT, একটি ভয়েস মেমো - এবং এটি স্বয়ংক্রিয়ভাবে এখানে অবতরণ করবে।';
+  String get importsEmptyBody =>
+      'যে কোন জায়গায় শেয়ার করুন - ফটো, YouTube, ChatGPT, একটি ভয়েস মেমো - এবং এটি স্বয়ংক্রিয়ভাবে এখানে অবতরণ করবে।';
 
   @override
   String get importsActionOpen => 'খোলা';
@@ -44483,10 +44492,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get importsSnackRetrying => 'আমদানির পুনরায় চেষ্টা করা হচ্ছে...';
 
   @override
-  String get importsSnackRetryFailed => 'আবার চেষ্টা করা যায়নি — পরে আবার চেষ্টা করুন।';
+  String get importsSnackRetryFailed =>
+      'আবার চেষ্টা করা যায়নি — পরে আবার চেষ্টা করুন।';
 
   @override
-  String get importsSnackReclassifyQueued => 'সারিবদ্ধ পুনরায় শ্রেণীবদ্ধ করুন — পুনরায় রুট করতে আইটেমটি আবার ভাগ করুন।';
+  String get importsSnackReclassifyQueued =>
+      'সারিবদ্ধ পুনরায় শ্রেণীবদ্ধ করুন — পুনরায় রুট করতে আইটেমটি আবার ভাগ করুন।';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44494,7 +44505,8 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'রেকর্ড আপনার আমদানি ইতিহাস থেকে সরানো হয়. আমদানিকৃত ওয়ার্কআউট / রেসিপি / খাবার লগ নিজেরাই থাকে।';
+  String get importsDeleteConfirmBody =>
+      'রেকর্ড আপনার আমদানি ইতিহাস থেকে সরানো হয়. আমদানিকৃত ওয়ার্কআউট / রেসিপি / খাবার লগ নিজেরাই থাকে।';
 
   @override
   String get importsActionCancel => 'বাতিল করুন';
@@ -44548,7 +44560,8 @@ class AppLocalizationsBn extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'সীমা';
 
   @override
-  String get importsLimitsFooter => 'দৈনিক ক্যাপ সবার জন্য একই। তারা আমদানির মান উচ্চ রাখে এবং পলাতক খরচ থেকে রক্ষা করে।';
+  String get importsLimitsFooter =>
+      'দৈনিক ক্যাপ সবার জন্য একই। তারা আমদানির মান উচ্চ রাখে এবং পলাতক খরচ থেকে রক্ষা করে।';
 
   @override
   String get importsPrivacySectionTitle => 'আমদানি';
@@ -44557,19 +44570,22 @@ class AppLocalizationsBn extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'সর্বদা রাউটিং আগে জিজ্ঞাসা করুন';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'স্বয়ংক্রিয়-রুট কাউন্টডাউন এড়িয়ে যান — প্রতিটি শেয়ার চয়নকারীকে খোলে।';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'স্বয়ংক্রিয়-রুট কাউন্টডাউন এড়িয়ে যান — প্রতিটি শেয়ার চয়নকারীকে খোলে।';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'শেয়ার করা ইতিহাস সাফ করুন';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'আপনার আমদানি তালিকা থেকে প্রতিটি রেকর্ড সরিয়ে দেয়। আমদানিকৃত ওয়ার্কআউট, রেসিপি এবং খাবারের লগ নিজেরাই থাকে।';
+  String get importsPrivacyClearHistorySubtitle =>
+      'আপনার আমদানি তালিকা থেকে প্রতিটি রেকর্ড সরিয়ে দেয়। আমদানিকৃত ওয়ার্কআউট, রেসিপি এবং খাবারের লগ নিজেরাই থাকে।';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'শেয়ার করা ইতিহাস সাফ করবেন?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'আপনার আমদানি তালিকার প্রতিটি সারি সরানো হয়েছে। আপনার আমদানি করা ওয়ার্কআউট, রেসিপি এবং খাবারের লগগুলি যেখানে আছে সেখানেই থাকে৷';
+  String get importsPrivacyClearConfirmBody =>
+      'আপনার আমদানি তালিকার প্রতিটি সারি সরানো হয়েছে। আপনার আমদানি করা ওয়ার্কআউট, রেসিপি এবং খাবারের লগগুলি যেখানে আছে সেখানেই থাকে৷';
 
   @override
   String get importsPrivacyClearAction => 'পরিষ্কার';
@@ -44578,5 +44594,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'শেয়ার করা ইতিহাস সাফ করা হয়েছে৷';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'পরিষ্কার করা যায়নি — পরে আবার চেষ্টা করুন।';
+  String get importsPrivacyClearFailedSnack =>
+      'পরিষ্কার করা যায়নি — পরে আবার চেষ্টা করুন।';
 }

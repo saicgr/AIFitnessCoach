@@ -14207,7 +14207,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'इसलिए मैंने लेजर नहीं, बल्कि व्यक्ति को बनाया। बैंकॉक में उस मेनू की फोटो लें और कोच उसे आपके लिए मैक्रोज़ में वापस पढ़ देगा। मंगलवार को छोड़ दें और यह आपको बिना किसी अपराधबोध के बुधवार सुबह वापस खींच लेगा। यह आपके भोजन, आपके जिम, आपके फिसलने के पैटर्न को सीखता है — प्रति माह एक PT सत्र से भी कम कीमत पर।';
+      'इसलिए मैंने व्यक्ति का निर्माण किया, बही का नहीं। किसी भी मेनू को स्नैप करें - घर पर या विदेश में - और कोच इसे मैक्रोज़ में आपको वापस पढ़ता है। मंगलवार को छोड़ दें और यह आपको बुधवार की सुबह बिना किसी अपराधबोध यात्रा के वापस ले आएगा। यह आपके भोजन, आपके जिम, आपके स्लिप पैटर्न को सीखता है - एक महीने में एक से भी कम पीटी सत्र के लिए।';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20273,12 +20273,12 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44297,16 +44297,24 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'ऐप की भाषा के समान';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'आयात';
 
   @override
-  String get settingsImportsSubtitle => 'वह सब कुछ जो आपने ज़ीलोवा में साझा किया है';
+  String get settingsImportsSubtitle =>
+      'वह सब कुछ जो आपने ज़ीलोवा में साझा किया है';
 
   @override
   String get settingsCycleTrackingTitle => 'साइकिल ट्रैकिंग';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'अवधि, प्रजनन क्षमता और भविष्यवाणियाँ';
+  String get settingsCycleTrackingSubtitle =>
+      'अवधि, प्रजनन क्षमता और भविष्यवाणियाँ';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44322,7 +44330,8 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'सूचनाएं रोक दी गई हैं. फिर से शुरू करने के लिए किसी भी समय बंद करें।';
+  String get vacationModeBannerPausedNoEnd =>
+      'सूचनाएं रोक दी गई हैं. फिर से शुरू करने के लिए किसी भी समय बंद करें।';
 
   @override
   String get vacationModeBannerScheduled => 'अनुसूचित';
@@ -44336,7 +44345,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get vacationModeBannerOn => 'सूचनाएं चालू हैं';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'गैर-महत्वपूर्ण अनुस्मारक को रोकने के लिए नीचे अवकाश मोड सक्षम करें।';
+  String get vacationModeBannerOnSubtitle =>
+      'गैर-महत्वपूर्ण अनुस्मारक को रोकने के लिए नीचे अवकाश मोड सक्षम करें।';
 
   @override
   String get difficultyEasy => 'शुरुआती';
@@ -44385,14 +44395,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String importsSelectedCount(Object count) {
-    return '{गिनती} चयनित';
+    return '$count चयनित';
   }
 
   @override
   String get importsEmptyTitle => 'अभी तक कुछ भी साझा नहीं किया गया';
 
   @override
-  String get importsEmptyBody => 'कहीं भी शेयर करें दबाएं - फ़ोटो, यूट्यूब, चैटजीपीटी, एक वॉयस मेमो - और यह स्वचालित रूप से यहां आ जाएगा।';
+  String get importsEmptyBody =>
+      'कहीं भी शेयर करें दबाएं - फ़ोटो, यूट्यूब, चैटजीपीटी, एक वॉयस मेमो - और यह स्वचालित रूप से यहां आ जाएगा।';
 
   @override
   String get importsActionOpen => 'खुला';
@@ -44407,18 +44418,21 @@ class AppLocalizationsHi extends AppLocalizations {
   String get importsSnackRetrying => 'आयात का पुनः प्रयास किया जा रहा है...';
 
   @override
-  String get importsSnackRetryFailed => 'पुनः प्रयास नहीं किया जा सका - बाद में पुनः प्रयास करें।';
+  String get importsSnackRetryFailed =>
+      'पुनः प्रयास नहीं किया जा सका - बाद में पुनः प्रयास करें।';
 
   @override
-  String get importsSnackReclassifyQueued => 'कतारबद्ध को पुनः वर्गीकृत करें - आइटम को पुनः रूट करने के लिए फिर से साझा करें।';
+  String get importsSnackReclassifyQueued =>
+      'कतारबद्ध को पुनः वर्गीकृत करें - आइटम को पुनः रूट करने के लिए फिर से साझा करें।';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
-    return '{गिनती} आयात हटाएं?';
+    return '$count आयात हटाएं?';
   }
 
   @override
-  String get importsDeleteConfirmBody => 'आपके आयात इतिहास से रिकॉर्ड हटा दिए जाते हैं। आयातित वर्कआउट/रेसिपी/फूड लॉग स्वयं रहते हैं।';
+  String get importsDeleteConfirmBody =>
+      'आपके आयात इतिहास से रिकॉर्ड हटा दिए जाते हैं। आयातित वर्कआउट/रेसिपी/फूड लॉग स्वयं रहते हैं।';
 
   @override
   String get importsActionCancel => 'रद्द करना';
@@ -44452,17 +44466,17 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String importsDetailFrom(Object url) {
-    return 'प्रेषक: {यूआरएल}';
+    return 'प्रेषक: $url';
   }
 
   @override
   String importsDetailStatus(Object status) {
-    return 'स्थिति: {स्थिति}';
+    return 'स्थिति: $status';
   }
 
   @override
   String importsDetailDetectedAs(Object intent) {
-    return 'इस प्रकार पाया गया: {इरादा}';
+    return 'इस प्रकार पाया गया: $intent';
   }
 
   @override
@@ -44472,7 +44486,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'सीमाएं';
 
   @override
-  String get importsLimitsFooter => 'दैनिक सीमाएँ सभी के लिए समान हैं। वे आयात की गुणवत्ता को उच्च रखते हैं और अत्यधिक लागत से बचाते हैं।';
+  String get importsLimitsFooter =>
+      'दैनिक सीमाएँ सभी के लिए समान हैं। वे आयात की गुणवत्ता को उच्च रखते हैं और अत्यधिक लागत से बचाते हैं।';
 
   @override
   String get importsPrivacySectionTitle => 'आयात';
@@ -44481,19 +44496,22 @@ class AppLocalizationsHi extends AppLocalizations {
   String get importsPrivacyAlwaysAskTitle => 'रूटिंग से पहले हमेशा पूछें';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'ऑटो-रूट उलटी गिनती छोड़ें - प्रत्येक शेयर चयनकर्ता खोलता है।';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'ऑटो-रूट उलटी गिनती छोड़ें - प्रत्येक शेयर चयनकर्ता खोलता है।';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'साझा इतिहास साफ़ करें';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'आपकी आयात सूची से प्रत्येक रिकॉर्ड हटा देता है। आयातित वर्कआउट, रेसिपी और भोजन लॉग स्वयं रहते हैं।';
+  String get importsPrivacyClearHistorySubtitle =>
+      'आपकी आयात सूची से प्रत्येक रिकॉर्ड हटा देता है। आयातित वर्कआउट, रेसिपी और भोजन लॉग स्वयं रहते हैं।';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'साझा इतिहास साफ़ करें?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'आपकी आयात सूची की प्रत्येक पंक्ति हटा दी गई है। आपके द्वारा आयातित वर्कआउट, रेसिपी और भोजन लॉग वहीं रहते हैं जहां वे हैं।';
+  String get importsPrivacyClearConfirmBody =>
+      'आपकी आयात सूची की प्रत्येक पंक्ति हटा दी गई है। आपके द्वारा आयातित वर्कआउट, रेसिपी और भोजन लॉग वहीं रहते हैं जहां वे हैं।';
 
   @override
   String get importsPrivacyClearAction => 'स्पष्ट';
@@ -44502,5 +44520,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'साझा इतिहास साफ़ किया गया.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'साफ़ नहीं किया जा सका - बाद में पुनः प्रयास करें।';
+  String get importsPrivacyClearFailedSnack =>
+      'साफ़ नहीं किया जा सका - बाद में पुनः प्रयास करें।';
 }

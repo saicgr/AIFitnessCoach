@@ -14270,7 +14270,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Kwa hivyo nilijenga mtu, si leja. Piga picha ya menyu hiyo Bangkok na kocha anaisoma kwako katika macros. Ruka Jumanne na inakurudisha Jumatano asubuhi bila kukufanya ujihisi na hatia. Inajifunza vyakula vyako, mazoezi yako, mifumo yako ya kuteleza — kwa chini ya gharama ya kikao kimoja cha PT kwa mwezi.';
+      'Kwa hivyo nilimjenga mtu, sio leja. Piga menyu yoyote - nyumbani au nje ya nchi - na mkufunzi atakusomea tena katika makro. Ruka Jumanne na itakurudisha nyuma Jumatano asubuhi bila safari ya hatia. Inajifunza vyakula vyako, ukumbi wako wa mazoezi, mifumo yako ya kuteleza - kwa chini ya kipindi kimoja cha PT kwa mwezi.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20354,12 +20354,12 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g mg';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g mg';
   }
 
@@ -44413,10 +44413,17 @@ class AppLocalizationsSw extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Sawa na lugha ya programu';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Uagizaji';
 
   @override
-  String get settingsImportsSubtitle => 'Kila kitu ambacho umeshiriki kwenye Zealova';
+  String get settingsImportsSubtitle =>
+      'Kila kitu ambacho umeshiriki kwenye Zealova';
 
   @override
   String get settingsCycleTrackingTitle => 'Ufuatiliaji wa Mzunguko';
@@ -44438,7 +44445,8 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Arifa zimesitishwa. Zima wakati wowote ili uendelee.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Arifa zimesitishwa. Zima wakati wowote ili uendelee.';
 
   @override
   String get vacationModeBannerScheduled => 'Imepangwa';
@@ -44452,7 +44460,8 @@ class AppLocalizationsSw extends AppLocalizations {
   String get vacationModeBannerOn => 'Arifa zimewashwa';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Washa hali ya likizo hapa chini ili kusitisha vikumbusho visivyo muhimu.';
+  String get vacationModeBannerOnSubtitle =>
+      'Washa hali ya likizo hapa chini ili kusitisha vikumbusho visivyo muhimu.';
 
   @override
   String get difficultyEasy => 'Mwanzilishi';
@@ -44508,7 +44517,8 @@ class AppLocalizationsSw extends AppLocalizations {
   String get importsEmptyTitle => 'Bado hakuna kilichoshirikiwa';
 
   @override
-  String get importsEmptyBody => 'Gonga Shiriki popote - Picha, YouTube, ChatGPT, memo ya sauti - na itatua hapa kiotomatiki.';
+  String get importsEmptyBody =>
+      'Gonga Shiriki popote - Picha, YouTube, ChatGPT, memo ya sauti - na itatua hapa kiotomatiki.';
 
   @override
   String get importsActionOpen => 'Fungua';
@@ -44523,10 +44533,12 @@ class AppLocalizationsSw extends AppLocalizations {
   String get importsSnackRetrying => 'Inajaribu kuleta tena...';
 
   @override
-  String get importsSnackRetryFailed => 'Haikuweza kujaribu tena - jaribu tena baadaye.';
+  String get importsSnackRetryFailed =>
+      'Haikuweza kujaribu tena - jaribu tena baadaye.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Panga upya kwenye foleni - shiriki kipengee tena ili kubadilisha njia.';
+  String get importsSnackReclassifyQueued =>
+      'Panga upya kwenye foleni - shiriki kipengee tena ili kubadilisha njia.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44534,7 +44546,8 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Rekodi huondolewa kwenye historia yako ya uagizaji. Mazoezi / mapishi / kumbukumbu za chakula zilizoingizwa hukaa yenyewe.';
+  String get importsDeleteConfirmBody =>
+      'Rekodi huondolewa kwenye historia yako ya uagizaji. Mazoezi / mapishi / kumbukumbu za chakula zilizoingizwa hukaa yenyewe.';
 
   @override
   String get importsActionCancel => 'Ghairi';
@@ -44588,28 +44601,34 @@ class AppLocalizationsSw extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Mipaka';
 
   @override
-  String get importsLimitsFooter => 'Kofia za kila siku ni sawa kwa kila mtu. Huweka ubora wa juu na kulinda dhidi ya gharama za kukimbia.';
+  String get importsLimitsFooter =>
+      'Kofia za kila siku ni sawa kwa kila mtu. Huweka ubora wa juu na kulinda dhidi ya gharama za kukimbia.';
 
   @override
   String get importsPrivacySectionTitle => 'Uagizaji';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Uliza kila wakati kabla ya kuelekeza';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Uliza kila wakati kabla ya kuelekeza';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Ruka kihesabu cha njia kiotomatiki - kila sehemu hufungua kichagua.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Ruka kihesabu cha njia kiotomatiki - kila sehemu hufungua kichagua.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Futa historia iliyoshirikiwa';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Huondoa kila rekodi kwenye orodha yako ya Uagizaji. Mazoezi kutoka nje, mapishi, na kumbukumbu za chakula hubaki.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Huondoa kila rekodi kwenye orodha yako ya Uagizaji. Mazoezi kutoka nje, mapishi, na kumbukumbu za chakula hubaki.';
 
   @override
-  String get importsPrivacyClearConfirmTitle => 'Je, ungependa kufuta historia iliyoshirikiwa?';
+  String get importsPrivacyClearConfirmTitle =>
+      'Je, ungependa kufuta historia iliyoshirikiwa?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Kila safu katika orodha yako ya Uagizaji huondolewa. Mazoezi, mapishi na kumbukumbu za vyakula ulizoagiza hukaa pale zilipo.';
+  String get importsPrivacyClearConfirmBody =>
+      'Kila safu katika orodha yako ya Uagizaji huondolewa. Mazoezi, mapishi na kumbukumbu za vyakula ulizoagiza hukaa pale zilipo.';
 
   @override
   String get importsPrivacyClearAction => 'Wazi';
@@ -44618,5 +44637,6 @@ class AppLocalizationsSw extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Historia iliyoshirikiwa imefutwa.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Haikuweza kufuta - jaribu tena baadaye.';
+  String get importsPrivacyClearFailedSnack =>
+      'Haikuweza kufuta - jaribu tena baadaye.';
 }

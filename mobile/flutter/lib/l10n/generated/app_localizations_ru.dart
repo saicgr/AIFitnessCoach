@@ -14291,7 +14291,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'Поэтому я создал человека, а не бухгалтерскую книгу. Сфотографируйте меню в Бангкоке, и тренер переведет его для вас в макросы. Пропустите вторник, и он вернет вас в строй в среду утром без чувства вины. Он изучает ваши продукты, ваш зал, ваши паттерны срывов — и всё это дешевле, чем одна тренировка с персональным тренером в месяц.';
+      'Поэтому я создал человека, а не бухгалтерскую книгу. Прикрепите любое меню — дома или за границей — и тренер прочитает его вам в виде макросов. Пропустите вторник, и вы вернетесь в среду утром без чувства вины. Он изучает вашу еду, ваш тренажерный зал, ваши привычки скольжения — менее чем за одну тренировку в месяц.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
@@ -20376,12 +20376,12 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String logMealSheetMg4(Object potassium100g, Object magnesium100g) {
+  String logMealSheetMg4(Object potassium100g) {
     return '$potassium100g мг';
   }
 
   @override
-  String logMealSheetMg5(Object magnesium100g, Object zinc100g) {
+  String logMealSheetMg5(Object magnesium100g) {
     return '$magnesium100g мг';
   }
 
@@ -44447,6 +44447,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsChatLanguageSameAsApp => 'Как в приложении';
 
   @override
+  String get commonOk => 'OK';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
   String get settingsImportsTitle => 'Импорт';
 
   @override
@@ -44456,7 +44462,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsCycleTrackingTitle => 'Отслеживание цикла';
 
   @override
-  String get settingsCycleTrackingSubtitle => 'Менструация, фертильность и прогнозы';
+  String get settingsCycleTrackingSubtitle =>
+      'Менструация, фертильность и прогнозы';
 
   @override
   String settingsAboutBrand(Object appName) {
@@ -44472,7 +44479,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get vacationModeBannerPausedNoEnd => 'Уведомления приостановлены. Выключите в любое время, чтобы возобновить работу.';
+  String get vacationModeBannerPausedNoEnd =>
+      'Уведомления приостановлены. Выключите в любое время, чтобы возобновить работу.';
 
   @override
   String get vacationModeBannerScheduled => 'Запланировано';
@@ -44486,7 +44494,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get vacationModeBannerOn => 'Уведомления включены';
 
   @override
-  String get vacationModeBannerOnSubtitle => 'Включите режим отпуска ниже, чтобы приостановить некритические напоминания.';
+  String get vacationModeBannerOnSubtitle =>
+      'Включите режим отпуска ниже, чтобы приостановить некритические напоминания.';
 
   @override
   String get difficultyEasy => 'Новичок';
@@ -44513,7 +44522,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importsAppBarTitle => 'Импорт';
 
   @override
-  String get importsTooltipFormatsLimits => 'Поддерживаемые форматы и ограничения';
+  String get importsTooltipFormatsLimits =>
+      'Поддерживаемые форматы и ограничения';
 
   @override
   String get importsTooltipDone => 'Сделанный';
@@ -44542,7 +44552,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importsEmptyTitle => 'Пока ничего не опубликовано';
 
   @override
-  String get importsEmptyBody => 'Нажмите «Поделиться» в любом месте — «Фото», «YouTube», ChatGPT, голосовая заметка — и она автоматически появится здесь.';
+  String get importsEmptyBody =>
+      'Нажмите «Поделиться» в любом месте — «Фото», «YouTube», ChatGPT, голосовая заметка — и она автоматически появится здесь.';
 
   @override
   String get importsActionOpen => 'Открыть';
@@ -44557,10 +44568,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importsSnackRetrying => 'Повторная попытка импорта…';
 
   @override
-  String get importsSnackRetryFailed => 'Не удалось повторить попытку. Повторите попытку позже.';
+  String get importsSnackRetryFailed =>
+      'Не удалось повторить попытку. Повторите попытку позже.';
 
   @override
-  String get importsSnackReclassifyQueued => 'Переклассифицировать в очереди — снова поделиться элементом, чтобы перенаправить его.';
+  String get importsSnackReclassifyQueued =>
+      'Переклассифицировать в очереди — снова поделиться элементом, чтобы перенаправить его.';
 
   @override
   String importsDeleteConfirmTitle(Object count) {
@@ -44568,7 +44581,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get importsDeleteConfirmBody => 'Записи будут удалены из вашей истории импорта. Сами импортированные тренировки/рецепты/логи питания остаются.';
+  String get importsDeleteConfirmBody =>
+      'Записи будут удалены из вашей истории импорта. Сами импортированные тренировки/рецепты/логи питания остаются.';
 
   @override
   String get importsActionCancel => 'Отмена';
@@ -44607,7 +44621,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String importsDetailStatus(Object status) {
-    return 'Статус: {статус}';
+    return 'Статус: $status';
   }
 
   @override
@@ -44622,28 +44636,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importsLimitsLimitsHeader => 'Пределы';
 
   @override
-  String get importsLimitsFooter => 'Дневные лимиты одинаковы для всех. Они поддерживают высокое качество импорта и защищают от неконтролируемых расходов.';
+  String get importsLimitsFooter =>
+      'Дневные лимиты одинаковы для всех. Они поддерживают высокое качество импорта и защищают от неконтролируемых расходов.';
 
   @override
   String get importsPrivacySectionTitle => 'Импорт';
 
   @override
-  String get importsPrivacyAlwaysAskTitle => 'Всегда спрашивайте перед маршрутизацией';
+  String get importsPrivacyAlwaysAskTitle =>
+      'Всегда спрашивайте перед маршрутизацией';
 
   @override
-  String get importsPrivacyAlwaysAskSubtitle => 'Пропустите обратный отсчет автоматического маршрута — каждая акция открывает выбор.';
+  String get importsPrivacyAlwaysAskSubtitle =>
+      'Пропустите обратный отсчет автоматического маршрута — каждая акция открывает выбор.';
 
   @override
   String get importsPrivacyClearHistoryTitle => 'Очистить общую историю';
 
   @override
-  String get importsPrivacyClearHistorySubtitle => 'Удаляет все записи из вашего списка импорта. Импортированные тренировки, рецепты и журналы питания остаются.';
+  String get importsPrivacyClearHistorySubtitle =>
+      'Удаляет все записи из вашего списка импорта. Импортированные тренировки, рецепты и журналы питания остаются.';
 
   @override
   String get importsPrivacyClearConfirmTitle => 'Очистить общую историю?';
 
   @override
-  String get importsPrivacyClearConfirmBody => 'Каждая строка в вашем списке импорта будет удалена. Импортированные вами тренировки, рецепты и журналы питания остаются там, где они есть.';
+  String get importsPrivacyClearConfirmBody =>
+      'Каждая строка в вашем списке импорта будет удалена. Импортированные вами тренировки, рецепты и журналы питания остаются там, где они есть.';
 
   @override
   String get importsPrivacyClearAction => 'Прозрачный';
@@ -44652,5 +44671,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importsPrivacyClearedSnack => 'Общая история удалена.';
 
   @override
-  String get importsPrivacyClearFailedSnack => 'Не удалось очистить — повторите попытку позже.';
+  String get importsPrivacyClearFailedSnack =>
+      'Не удалось очистить — повторите попытку позже.';
 }
