@@ -191,7 +191,8 @@ async def scan_nutrition_label(
         db = get_supabase_db()
         from services.food_override_service import apply_user_food_overrides
 
-        food_items, override_totals, num_overridden = apply_user_food_overrides(
+        food_items, override_totals, num_overridden = await asyncio.to_thread(
+            apply_user_food_overrides,
             db, user_id, analysis.get("food_items", []) or [],
         )
         analysis["food_items"] = food_items
@@ -299,7 +300,8 @@ async def scan_app_screenshot(
         db = get_supabase_db()
         from services.food_override_service import apply_user_food_overrides
 
-        food_items, override_totals, num_overridden = apply_user_food_overrides(
+        food_items, override_totals, num_overridden = await asyncio.to_thread(
+            apply_user_food_overrides,
             db, user_id, analysis.get("food_items", []) or [],
         )
         analysis["food_items"] = food_items

@@ -623,11 +623,28 @@ class FoodAnalysisCacheServicePhase2:
         novel: List[Tuple[str, Stage1Dish]],
         user_context: Dict[str, Any],
     ) -> List[Optional[Dict[str, Any]]]:
-        """Estimate macros + enrichment + micronutrients for novel dishes via
-        Gemini. One `parse_food_description` call per dish, but fired
-        CONCURRENTLY (Semaphore-capped) — a 7-component compound meal used to
-        take 7×latency sequentially; now it's ~1×latency.
+        """Estimate macros + enrichment for novel dishes via Gemini.
+
+        For multi-dish novel batches (the common case for compound text inputs
+        and multi-dish food photos) we issue ONE batched Gemini call returning
+        a JSON array — collapses N sequential round-trips into one (~5-8s
+        regardless of N). Falls back to the per-dish concurrent path on
+        batched failure or for single-dish batches.
         """
+        if len(novel) > 1:
+            try:
+                batched = await asyncio.wait_for(
+                    self._stage2_gemini_batched(novel, user_context),
+                    timeout=20.0,
+                )
+                if batched and any(r is not None for r in batched):
+                    return batched
+                logger.warning("[stage2_gemini] batched returned all-None; falling back to per-dish")
+            except asyncio.TimeoutError:
+                logger.warning("[stage2_gemini] batched TIMEOUT (>20s); falling back to per-dish")
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"[stage2_gemini] batched failed ({e}); falling back to per-dish")
+
         sem = asyncio.Semaphore(5)  # cap concurrent Gemini calls
 
         async def _one(name: str, dish: Stage1Dish) -> Optional[Dict[str, Any]]:
@@ -681,6 +698,97 @@ class FoodAnalysisCacheServicePhase2:
 
         # gather preserves order → aligns with the zip(novel, results) caller
         return await asyncio.gather(*[_one(n, d) for n, d in novel])
+
+    async def _stage2_gemini_batched(
+        self,
+        novel: List[Tuple[str, Stage1Dish]],
+        user_context: Dict[str, Any],
+    ) -> List[Optional[Dict[str, Any]]]:
+        """One Gemini call estimating macros + enrichment for the whole novel
+        list. Returns results in the same order as `novel`. Each entry mirrors
+        the per-dish `_stage2_gemini_for_novel` shape: a food-item dict with
+        calories / protein_g / carbs_g / fat_g / fiber_g / sugar_g +
+        enrichment cols (inflammation_score, fodmap_rating, rating, …).
+        """
+        from services.gemini.constants import gemini_generate_with_retry
+
+        rules_block = user_context.get("standing_rules_block", "") or ""
+        dish_lines = "\n".join(
+            f"{i + 1}. {dish.name} ({dish.weight_g_estimate:.0f}g)"
+            for i, (_, dish) in enumerate(novel)
+        )
+
+        prompt = f"""Estimate nutrition for each dish below. Return ONE JSON array, one entry per dish, in the SAME ORDER.
+
+DISHES:
+{dish_lines}
+
+{rules_block}
+
+For EACH dish return:
+{{
+  "name": "<dish name>",
+  "calories": <int kcal>,
+  "protein_g": <float>,
+  "carbs_g": <float>,
+  "fat_g": <float>,
+  "fiber_g": <float>,
+  "sugar_g": <float>,
+  "sodium_mg": <float>,
+  "inflammation_score": <int 1-10>,
+  "is_ultra_processed": <bool>,
+  "fodmap_rating": "low" | "medium" | "high" | null,
+  "rating": <int 1-10>
+}}
+
+Top-level JSON: {{"items": [<entry>, <entry>, ...]}}
+
+Guidelines:
+- Match the dish ORDER exactly — entry i corresponds to dish i.
+- Macros are TOTAL for the listed gram weight, not per-100g.
+- Keep output to the JSON only — no prose."""
+
+        response = await gemini_generate_with_retry(
+            model=get_settings().gemini_vision_model,
+            contents=[prompt],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.2,
+                max_output_tokens=2000,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
+            ),
+            method_name="stage2_gemini_batched",
+        )
+        raw = (response.text or "").strip()
+        if raw.startswith("```"):
+            raw = raw.strip("`").lstrip("json").strip()
+        parsed = json.loads(raw)
+        items = parsed.get("items") or []
+
+        # Align by order; if Gemini returned fewer entries than asked, the
+        # tail comes back as None and the caller's `served_by` marks them
+        # stage2_failed so they fall out of the result silently.
+        results: List[Optional[Dict[str, Any]]] = []
+        for i, (_, dish) in enumerate(novel):
+            if i >= len(items):
+                results.append(None)
+                continue
+            item = items[i]
+            if not isinstance(item, dict):
+                results.append(None)
+                continue
+            cal = float(item.get("calories") or 0)
+            p = float(item.get("protein_g") or 0)
+            c = float(item.get("carbs_g") or 0)
+            f = float(item.get("fat_g") or 0)
+            if cal <= 0 and p <= 0 and c <= 0 and f <= 0:
+                results.append(None)
+                continue
+            item.setdefault("name", dish.name)
+            if cal > 0 and p <= 0 and c <= 0 and f <= 0:
+                item["_macro_unknown"] = True
+            results.append(item)
+        return results
 
     @staticmethod
     def _compute_health_score(

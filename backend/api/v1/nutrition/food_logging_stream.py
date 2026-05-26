@@ -121,19 +121,34 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             return f"event: error\ndata: {json.dumps(data)}\n\n"
 
         try:
-            # Step 0: Check for contextual meal reference (leftovers, same thing, my usual, etc.)
-            from services.contextual_meal_service import detect_and_resolve as detect_contextual
-            from core.db.nutrition_db import NutritionDB
-
-            contextual_db = NutritionDB()
-            _ctx_tz = resolve_timezone(request, get_supabase_db(), body.user_id)
-            contextual_result = await detect_contextual(
-                description=body.description,
-                user_id=body.user_id,
-                current_meal_type=body.meal_type,
-                nutrition_db=contextual_db,
-                timezone_str=_ctx_tz,
+            # Step 0: Check for contextual meal reference (leftovers, same thing,
+            # my usual, etc.). Short-circuit: only invoke the DB lookup when the
+            # description actually contains a contextual reference word —
+            # plain new-food entries ("2 eggs, toast, OJ") skip it entirely and
+            # save ~0.5-2s on the hot path.
+            _desc_lower = (body.description or "").lower()
+            _CONTEXTUAL_KEYWORDS = (
+                "leftover", "leftovers", "rest of", "rest of the",
+                "same as", "same thing", "same again", "again",
+                "my usual", "usual", "yesterday", "yesterday's",
+                "last night", "last time", "earlier",
             )
+            _has_contextual_ref = any(kw in _desc_lower for kw in _CONTEXTUAL_KEYWORDS)
+
+            contextual_result = None
+            if _has_contextual_ref:
+                from services.contextual_meal_service import detect_and_resolve as detect_contextual
+                from core.db.nutrition_db import NutritionDB
+
+                contextual_db = NutritionDB()
+                _ctx_tz = await asyncio.to_thread(resolve_timezone, request, get_supabase_db(), body.user_id)
+                contextual_result = await detect_contextual(
+                    description=body.description,
+                    user_id=body.user_id,
+                    current_meal_type=body.meal_type,
+                    nutrition_db=contextual_db,
+                    timezone_str=_ctx_tz,
+                )
 
             if contextual_result is not None:
                 if contextual_result.found:
@@ -279,7 +294,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 # Render proxy from closing the SSE connection during long AI calls
                 # L3 — fetch the user's standing food-logging rules and build
                 # the prompt block so they're applied to this text analysis.
-                _rules = fetch_food_logging_rules(db, body.user_id)
+                _rules = await asyncio.to_thread(fetch_food_logging_rules, db, body.user_id)
                 _rules_block = build_rules_prompt_block(
                     _rules,
                     has_per_log_instruction=bool((body.description or "").strip()),
@@ -326,7 +341,8 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             # Apply per-user food overrides on the text-stream path too.
             from services.food_override_service import apply_user_food_overrides
             _ov_db = get_supabase_db()
-            food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+            food_items, _override_totals, _n_overridden = await asyncio.to_thread(
+                apply_user_food_overrides,
                 _ov_db, body.user_id, food_items,
             )
             if _n_overridden:
@@ -558,7 +574,7 @@ async def log_food_from_image_streaming(
             gemini_service = GeminiService()
 
             # L3 — standing food-logging rules for the image-log path.
-            _log_rules = fetch_food_logging_rules(get_supabase_db(), user_id)
+            _log_rules = await asyncio.to_thread(fetch_food_logging_rules, get_supabase_db(), user_id)
             _log_rules_block = build_rules_prompt_block(
                 _log_rules, has_per_log_instruction=False,
             )
@@ -613,7 +629,8 @@ async def log_food_from_image_streaming(
             # user edits trump the global heuristic.
             from services.food_override_service import apply_user_food_overrides
             db = get_supabase_db()
-            food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+            food_items, _override_totals, _n_overridden = await asyncio.to_thread(
+                apply_user_food_overrides,
                 db, user_id, food_items,
             )
             if _n_overridden:
@@ -629,7 +646,8 @@ async def log_food_from_image_streaming(
             # 198k-row food_nutrition_overrides table by exact normalized name.
             # On a confident match → verified macros + verified_source.
             from services.food_override_service import apply_global_verified_crosscheck
-            food_items, _verified_totals, _n_verified = apply_global_verified_crosscheck(
+            food_items, _verified_totals, _n_verified = await asyncio.to_thread(
+                apply_global_verified_crosscheck,
                 food_items,
             )
             if _n_verified:
@@ -953,7 +971,7 @@ async def analyze_food_from_image_streaming(
                     # path. Threaded through user_context into the Stage-2
                     # Gemini macro estimation so prep rules (low-oil, skim
                     # milk, 0-cal sweetener) adjust the estimate.
-                    _img_rules = fetch_food_logging_rules(get_supabase_db(), user_id)
+                    _img_rules = await asyncio.to_thread(fetch_food_logging_rules, get_supabase_db(), user_id)
                     _img_rules_block = build_rules_prompt_block(
                         _img_rules, has_per_log_instruction=False,
                     )
@@ -974,7 +992,7 @@ async def analyze_food_from_image_streaming(
             else:
                 # Legacy heavyweight path — preserved for rollback safety.
                 # L3 — standing food-logging rules on the legacy image path.
-                _legacy_rules = fetch_food_logging_rules(get_supabase_db(), user_id)
+                _legacy_rules = await asyncio.to_thread(fetch_food_logging_rules, get_supabase_db(), user_id)
                 _legacy_rules_block = build_rules_prompt_block(
                     _legacy_rules, has_per_log_instruction=False,
                 )
@@ -1034,7 +1052,8 @@ async def analyze_food_from_image_streaming(
             # skip_indices only protects just-edited-in-sheet items.
             from services.food_override_service import apply_user_food_overrides
             _ov_db = get_supabase_db()
-            food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+            food_items, _override_totals, _n_overridden = await asyncio.to_thread(
+                apply_user_food_overrides,
                 _ov_db, user_id, food_items,
             )
             if _n_overridden:
@@ -1051,7 +1070,8 @@ async def analyze_food_from_image_streaming(
             # which flows out through the `done` event's `food_items` so the
             # frontend's verified badge picks it up.
             from services.food_override_service import apply_global_verified_crosscheck
-            food_items, _verified_totals, _n_verified = apply_global_verified_crosscheck(
+            food_items, _verified_totals, _n_verified = await asyncio.to_thread(
+                apply_global_verified_crosscheck,
                 food_items,
             )
             if _n_verified:
@@ -1415,7 +1435,7 @@ async def log_food_from_multi_image_streaming(
             # L3 — standing food-logging rules for the multi-image path.
             # Applied to plate + buffet analyses (the user's own food); the
             # rules service decides whether the rule block is non-empty.
-            _multi_rules = fetch_food_logging_rules(db, user_id)
+            _multi_rules = await asyncio.to_thread(fetch_food_logging_rules, db, user_id)
             _multi_rules_block = build_rules_prompt_block(
                 _multi_rules, has_per_log_instruction=bool((user_message or "").strip()),
             )

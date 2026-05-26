@@ -1572,8 +1572,7 @@ Return ONLY valid JSON with this exact structure:
     "unit_notes": ["e.g. kj_converted, per_100g_normalized — empty if none"],
     "low_confidence": <true if the screenshot layout is unknown or values are shaky>,
     "health_score": <integer 1-10>,
-    "health_score_reasons": ["1-5 tags from: high_protein, high_fiber, anti_inflammatory, low_added_sugar, balanced_macros (positives) | ultra_processed, deep_fried, refined_flour, added_sugar, high_sodium, high_glycemic, low_fiber, processed_meat, trans_fat (negatives)"],
-    "feedback": "Brief coaching feedback about the logged meals (2-3 sentences)"
+    "health_score_reasons": ["1-5 tags from: high_protein, high_fiber, anti_inflammatory, low_added_sugar, balanced_macros (positives) | ultra_processed, deep_fried, refined_flour, added_sugar, high_sodium, high_glycemic, low_fiber, processed_meat, trans_fat (negatives)"]
 }}
 
 Guidelines:
@@ -1581,7 +1580,7 @@ Guidelines:
 - If macros are partially visible, estimate from calories and food type
 - Health score based on overall meal quality
 - health_score_reasons must contain 1-5 short tags explaining WHY the meal earned its score
-- Feedback should acknowledge the tracking effort and provide tips"""
+- Keep output strictly to the JSON — no prose, no commentary"""
 
         try:
             logger.info("Analyzing app screenshot with Gemini OCR")
@@ -1601,7 +1600,7 @@ Guidelines:
                 contents=[prompt, image_part],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    max_output_tokens=4000,
+                    max_output_tokens=1500,
                     thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
                     temperature=0.2,
                 ),
@@ -1713,15 +1712,14 @@ Return ONLY valid JSON with this exact structure:
     "total_carbs_g": <float>,
     "total_fat_g": <float>,
     "total_fiber_g": <float>,
-    "health_score": <integer 1-10>,
-    "feedback": "Brief coaching feedback about this food choice (2-3 sentences)"
+    "health_score": <integer 1-10>
 }}
 
 Guidelines:
 - Read exact values from the label
 - Multiply ALL values by {servings_consumed} servings consumed
 - Health score based on nutritional quality
-- Note high sodium, sugar, or trans fat if present in feedback"""
+- Keep output strictly to the JSON — no prose, no commentary"""
 
         try:
             logger.info(f"Analyzing nutrition label ({servings_consumed} servings) with Gemini OCR")
@@ -1741,7 +1739,7 @@ Guidelines:
                 contents=[prompt, image_part],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    max_output_tokens=3000,
+                    max_output_tokens=1200,
                     thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
                     temperature=0.2,
                 ),
