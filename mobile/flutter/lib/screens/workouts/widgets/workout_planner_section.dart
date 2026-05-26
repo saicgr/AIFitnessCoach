@@ -268,6 +268,7 @@ class WorkoutTuneMenu extends ConsumerWidget {
     return PopupMenuButton<_TuneAction>(
       tooltip: AppLocalizations.of(context).workoutPlannerCalendarDisplayOptions,
       icon: Icon(Icons.tune, size: 18, color: tint),
+      position: PopupMenuPosition.under,
       padding: EdgeInsets.zero,
       onSelected: (action) {
         HapticService.selection();
@@ -291,7 +292,7 @@ class WorkoutTuneMenu extends ConsumerWidget {
                 child: Text(
                   startsSunday
                       ? AppLocalizations.of(context).workoutPlannerStartWeekOnMonday
-                      : 'Start week on Sunday',
+                      : AppLocalizations.of(context).sectionedHeroAreaStartWeekOnSunday,
                 ),
               ),
               Text(

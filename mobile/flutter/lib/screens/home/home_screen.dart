@@ -42,12 +42,16 @@ import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
 import 'widgets/edit_tracking_sheet.dart';
 import 'widgets/stacked_banner_panel.dart';
+import 'widgets/calibration_banner.dart';
 import '../../widgets/rating_prompt_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/today_score_card.dart';
 import 'widgets/coach_hero_card.dart';
 import 'widgets/readiness_tile.dart';
-import 'widgets/strain_coach_card.dart';
+// StrainCoachCard was folded into the workout-hero meta line as a tier chip
+// (see `_WorkoutHeroIntensityLine` in unified_home_widgets.dart). The widget
+// itself stays in `widgets/strain_coach_card.dart` for the rationale detail
+// screen, but the home screen no longer renders it.
 import 'widgets/score_change_announcement_sheet.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
@@ -1043,6 +1047,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SliverToBoxAdapter(child: StackedBannerPanel()),
                 const SliverToBoxAdapter(child: RatingPromptBanner()),
 
+                // First-7-days calibration banner. Sets expectations so users
+                // don't churn at Day 3 thinking the AI is dumb — it's
+                // learning. Self-collapses past the 7-day window or after
+                // user dismisses.
+                const SliverToBoxAdapter(child: CalibrationBanner()),
+
                 // One-time cycle-tracking setup invitation for existing
                 // eligible users (Phase E). Self-collapses to zero height
                 // when the user is ineligible, already set up, or has
@@ -1053,8 +1063,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 // visibility chosen via "My Space" (homeSectionsProvider).
                 ..._homeSectionSlivers(ref.watch(homeSectionsProvider)),
 
-                // Bottom padding for nav bar.
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                // Bottom padding for the floating nav. Derived from the
+                // actual safe-area inset + the nav-bar intrinsic height
+                // (56pt — matches `main_shell_part_edge_panel_handle.dart`)
+                // + 16pt breathing room. The old hard-coded 120pt was
+                // short on devices with a tall bottom safe area, which
+                // bled content like the Cycle card under the nav.
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    // Surface 1.9 — bumped breathing room +16 → +32 so the
+                    // last sliver clears the nav-shadow margin on every
+                    // tested device (iPhone SE → 16 Pro Max).
+                    height: MediaQuery.viewPaddingOf(context).bottom +
+                        56.0 +
+                        32.0,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1131,7 +1155,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       case HomeSection.coachHero:
         return const CoachHeroCard();
       case HomeSection.strainCoach:
-        return const StrainCoachCard();
+        // The standalone "TODAY'S INTENSITY" card was folded into the
+        // Workout hero's meta line as a tier chip. Returning SizedBox
+        // here removes the card from the home scroll without forcing a
+        // migration on `HomeSection.strainCoach` enum values that may be
+        // persisted in a user's section ordering. The chip itself lives
+        // in `_WorkoutHeroBody._metaLine` (see unified_home_widgets.dart).
+        return const SizedBox.shrink();
       case HomeSection.workoutCard:
         return const HomeWorkoutCard();
       case HomeSection.nutritionCard:

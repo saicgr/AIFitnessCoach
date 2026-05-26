@@ -13330,6 +13330,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get foodBrowserPanelFilterByCountry => 'Filter by Country';
 
   @override
+  String get foodBrowserPanelFilterBySource => 'Filter by source';
+
+  @override
   String get foodBrowserPanelHighFat => 'High fat';
 
   @override
@@ -14062,7 +14065,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formComparisonResultAiFormAnalysisIs =>
-      'AI form analysis is for educational purposes only. Consult a qualified trainer for personalized guidance.';
+      'AI form analysis is technique feedback for educational purposes only — not medical advice. If you feel pain or have an injury, stop and consult a qualified trainer or doctor.';
 
   @override
   String get formComparisonResultBeta => 'BETA';
@@ -14106,12 +14109,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get founderNoteDiscord => 'Discord';
 
   @override
+  String get founderNoteRoadmap => 'Roadmap';
+
+  @override
   String get founderNoteFounderSoloStillOn =>
       'Founder, solo, still on version one.';
 
   @override
   String get founderNoteIUsedToLog =>
-      'I\'ve tried every fitness app on the App Store. I\'d log every meal for two weeks straight, feel proud of myself, then quietly stop opening it a few days later. Three weeks later I\'d reinstall a different one, swear this was the time, and run the same loop again. Every app logged my data, none of them noticed when I went silent. They were ledgers, not coaches.';
+      'Whether you\'re starting fresh or coming back from another failed try, the hard part\'s the same: nothing notices when you go quiet. I\'d log for two weeks, then go silent. Three weeks later, reinstall something new. Apps, paper journals, sticky notes, same loop. They were ledgers, not coaches.';
 
   @override
   String get founderNoteInstagram => 'Instagram';
@@ -14128,11 +14134,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get founderNoteSoIBuiltThe =>
-      'So I built the person, not the ledger. Snap any menu, it reads the macros and sorts the options by your goal. Snap your meal, it logs the plate. It builds your workouts, tracks your fasts, logs your water, and pulls you back the morning after you skip without the guilt trip. It learns your foods, your gym, your slip patterns. Less than one session with a real trainer.';
+      'So I built the person, not the ledger. Snap any menu, it reads the macros and picks the right plate, sort and filter for low-carb, high-protein, whatever. Snap your meal, it logs itself. Workouts start you where you are, brand new or training for years, with RPE, RIR, and before-and-after photo comparisons for the ones who want them. They re-plan mid-week when you say your shoulder\'s off or your cycle\'s hitting hard. It tracks your fasts and water, learns your slip patterns, pulls you back the morning after you skip. Less than one session with a real trainer.';
 
   @override
   String get founderNoteTheFriendsWhoActually =>
-      'What I actually needed was the opposite of a ledger: a real coach watching, texting, adjusting. That kind of help, a nutritionist plus a trainer who actually text you back, runs three to five hundred dollars a month. Which is exactly why most of us never have it, and exactly why the gap between tracking and changing stays open for years.';
+      'What I actually needed was a real coach watching, texting, adjusting. A nutritionist plus a trainer who text back runs three hundred a month, often more. Most of us never have it. So the gap between tracking and changing stays open for years.';
 
   @override
   String get freshnessDecayCardAgo => ') ago';
@@ -22548,6 +22554,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minimalHeaderChangeGymProfile => 'Change gym profile';
 
   @override
+  String get minimalHeaderCollapseWeekStrip => 'Collapse week strip';
+
+  @override
   String minimalHeaderD(Object streakDays) {
     return '${streakDays}d';
   }
@@ -22556,13 +22565,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minimalHeaderExpandWeekStrip => 'Expand week strip';
 
   @override
-  String get minimalHeaderHideDayStrip => 'Hide day strip';
+  String get minimalHeaderHideDayStrip => 'Hide week strip';
 
   @override
   String get minimalHeaderMySpace => 'My Space';
 
   @override
-  String get minimalHeaderShowDayStrip => 'Show day strip';
+  String get minimalHeaderShowDayStrip => 'Show week strip';
 
   @override
   String get missedWorkoutBannerDoToday => 'Do Today';
@@ -23623,6 +23632,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navDiscover => 'Discover';
+
+  @override
+  String get bottomNavLeaderboard => 'Leaderboard';
 
   @override
   String get navHome => 'Home';
@@ -27152,7 +27164,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pinnedNutrientsCardFocusThisPhase => 'Focus this phase:';
 
   @override
-  String get pinnedNutrientsCardPinnedNutrients => 'Pinned nutrients';
+  String get pinnedNutrientsCardPinnedNutrients => 'More nutrients';
 
   @override
   String get planAnalyzingBuildingYourPlan => 'Building your plan';
@@ -34830,6 +34842,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareArtifactCardCopyShare => 'Copy & share';
 
   @override
+  String get shareableGallerySortDefault => 'Default';
+
+  @override
+  String get shareableGallerySortFavorites => 'Favorites first';
+
+  @override
+  String get shareableGallerySortRecents => 'Recents first';
+
+  @override
+  String get shareableGallerySortTooltip => 'Sort templates';
+
+  @override
   String get shareArtifactCardCouldNotCreateShare =>
       'Could not create share link.';
 
@@ -39013,7 +39037,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String unifiedHomeWidgetsKcalBurned(Object arg0) {
-    return '$arg0 kcal burned';
+    return '$arg0 kcal total today';
   }
 
   @override

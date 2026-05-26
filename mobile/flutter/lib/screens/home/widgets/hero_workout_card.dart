@@ -70,10 +70,56 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   String? _backgroundImageUrl;
   bool _isLoadingImage = true;
 
+  /// Per-type illustration map. Asset directory is fail-soft — when an
+  /// asset is missing the CachedNetworkImage / Image widget falls through
+  /// to the existing /exercise-images endpoint, then the accent gradient.
+  ///
+  /// Keys lowercased; both `type` and `focusGroup` strings route through
+  /// `_typeIllustrationFor` which normalizes synonyms.
+  static const Map<String, String> _workoutTypeIllustrations = {
+    'upper': 'assets/images/workout_types/upper.png',
+    'lower': 'assets/images/workout_types/lower.png',
+    'push': 'assets/images/workout_types/push.png',
+    'pull': 'assets/images/workout_types/pull.png',
+    'legs': 'assets/images/workout_types/lower.png',
+    'full_body': 'assets/images/workout_types/full_body.png',
+    'cardio': 'assets/images/workout_types/cardio.png',
+    'hiit': 'assets/images/workout_types/hiit.png',
+    'mobility': 'assets/images/workout_types/mobility.png',
+    'yoga': 'assets/images/workout_types/yoga.png',
+    'strength': 'assets/images/workout_types/strength.png',
+    'recovery': 'assets/images/workout_types/mobility.png',
+    'core': 'assets/images/workout_types/core.png',
+  };
+
+  String? _typeIllustrationFor(Workout w) {
+    final candidates = <String?>[w.type];
+    for (final raw in candidates) {
+      if (raw == null || raw.isEmpty) continue;
+      final key = raw.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_');
+      final path = _workoutTypeIllustrations[key];
+      if (path != null) return path;
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
-    // Check cache synchronously to avoid loading flash
+    // Prefer the per-type illustration map (Surface 1.2 / 2.2). The
+    // illustration asset is rendered as the hero background; if the
+    // bundled asset is missing, the build method's Image.asset
+    // errorBuilder falls through to the /exercise-images endpoint, then
+    // to the accent gradient.
+    final typeAsset = _typeIllustrationFor(widget.workout);
+    if (typeAsset != null) {
+      // Mark the type asset path on `_backgroundImageUrl` is wrong because
+      // CachedNetworkImage expects a URL. Instead use a separate flag.
+      _typeAssetPath = typeAsset;
+      _isLoadingImage = false;
+      return;
+    }
+    // Fallback: existing /exercise-images endpoint behavior.
     final exercises = widget.workout.exercises;
     if (exercises.isEmpty) {
       _isLoadingImage = false;
@@ -92,6 +138,11 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       }
     }
   }
+
+  /// When non-null, the hero renders a bundled per-type illustration
+  /// (`assets/images/workout_types/<type>.png`) as the background layer
+  /// instead of fetching the per-exercise image. See `_typeIllustrationFor`.
+  String? _typeAssetPath;
 
   Future<void> _fetchBackgroundImage(String exerciseName) async {
     try {
@@ -190,6 +241,69 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     } catch (_) {
       return 'TODAY';
     }
+  }
+
+  /// Surface 2.2 — single action sheet bound to the ⋯ icon top-right of the
+  /// hero card. Hosts View Details / Regenerate / Skip / Reschedule so the
+  /// card surface itself stays focused on the START button.
+  Future<void> _showHeroActionSheet(BuildContext context) async {
+    HapticService.selection();
+    final workout = widget.workout;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.elevated
+          : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.visibility_outlined),
+                title: Text(AppLocalizations.of(context).heroWorkoutCardViewDetails),
+                onTap: () {
+                  Navigator.of(sheetCtx).pop();
+                  context.push('/workout/${workout.id}', extra: workout);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.refresh),
+                title: Text(AppLocalizations.of(context).workoutActionsRegenerate),
+                onTap: () {
+                  Navigator.of(sheetCtx).pop();
+                  _regenerateWorkout();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.skip_next_rounded),
+                title: Text(AppLocalizations.of(context).workoutOptionsSkipWorkout),
+                onTap: () {
+                  Navigator.of(sheetCtx).pop();
+                  _skipWorkout();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.event_repeat_rounded),
+                title: const Text('Reschedule'),
+                onTap: () {
+                  Navigator.of(sheetCtx).pop();
+                  // Routes through the existing options menu's reschedule
+                  // flow if present; otherwise opens the workout detail
+                  // where the user can reschedule. Fail-soft.
+                  context.push('/workout/${workout.id}', extra: workout);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _regenerateWorkout() async {
@@ -541,96 +655,14 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                 children: [
                   // Spacer replacement - fixed top padding for badges area
                   const SizedBox(height: 4),
-                  // Top row: Date label + Type chip + Menu button
+                  // Top row: ⋯ overflow only — date + type collapsed into the
+                  // single meta line below (Surface 2.2). Action sheet hosts
+                  // View Details / Regenerate / Skip / Reschedule.
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Chip opacity bumped (0.4→0.7 dark, 0.8→0.95 light)
-                          // and font size 12→13 / weight w700→w800 so the
-                          // labels stay legible over light-skeleton hero
-                          // illustrations (the skeleton flesh tones drop the
-                          // contrast on the previous translucent chip).
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.black.withValues(alpha: 0.7)
-                                  : Colors.white.withValues(alpha: 0.95),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.18)
-                                    : Colors.black.withValues(alpha: 0.15),
-                              ),
-                            ),
-                            child: Text(
-                              dateLabel,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                          ),
-                          if (_getWorkoutTypeLabel(workout.type).isNotEmpty) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.black.withValues(alpha: 0.7)
-                                    : Colors.white.withValues(alpha: 0.95),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.18)
-                                      : Colors.black.withValues(alpha: 0.15),
-                                ),
-                              ),
-                              child: Text(
-                                _getWorkoutTypeLabel(workout.type),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                  color: isDark ? Colors.white : Colors.black87,
-                                ),
-                              ),
-                            ),
-                          ],
-                          // Quick workout badge
-                          if (_isQuickWorkout(workout)) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: isDark ? 0.4 : 0.15),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: accentColor.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Text(
-                                AppLocalizations.of(context).quickActionsRowQuick,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.5,
-                                  color: isDark ? accentColor : accentColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      // Overflow menu — bumped 36→44pt to meet WCAG 2.5.8
-                      // touch-target minimum + matching opacity bump.
                       GestureDetector(
-                        onTap: _showOptionsMenu,
+                        onTap: () => _showHeroActionSheet(context),
                         child: Container(
                           width: 44,
                           height: 44,
@@ -727,45 +759,33 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   ],
                   const SizedBox(height: 8),
 
-                  // Stats row
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.timer_outlined,
+                  // Single meta line — Surface 2.2 collapses the dual chip
+                  // pair (TODAY + Upper Body) into one period-separated row
+                  // sitting under the title.
+                  Builder(builder: (_) {
+                    final typeLabel = _getWorkoutTypeLabel(workout.type);
+                    final parts = <String>[
+                      dateLabel.toLowerCase() == 'today'
+                          ? 'Today'
+                          : dateLabel[0].toUpperCase() +
+                              dateLabel.substring(1).toLowerCase(),
+                      if (typeLabel.isNotEmpty) typeLabel,
+                      if ((workout.durationMinutes ?? 0) > 0)
+                        '${workout.durationMinutes}m',
+                      if (workout.exerciseCount > 0)
+                        '${workout.exerciseCount} exercises',
+                    ];
+                    return Text(
+                      parts.join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
                         color: isDark ? Colors.white : Colors.black87,
-                        size: 16,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                       ),
-                      const SizedBox(width: 4),
-                      // Meta-line readability: bumped color opacity 0.85→1.0
-                      // and weight w500→w700 so duration / exercise count
-                      // pass WCAG AA against the hero gradient.
-                      Text(
-                        workout.formattedDurationShort,
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.fitness_center,
-                        color: isDark ? Colors.white : Colors.black87,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        workout.exerciseCount > 0
-                            ? '${workout.exerciseCount} exercises'
-                            : 'Ready to start',
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
+                    );
+                  }),
                   const SizedBox(height: 12),
 
                   // Start button - full width
@@ -791,7 +811,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                               content: Text(
                                 AppLocalizations.of(context).heroWorkoutCardWorkoutIsNotReady,
                               ),
-                              backgroundColor: Colors.orange,
+                              backgroundColor: AppColors.warning,
                               behavior: SnackBarBehavior.floating,
                               margin: const EdgeInsets.only(
                                 bottom: 120,
@@ -839,99 +859,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-
-                  // View Details and Regenerate row
-                  Row(
-                    children: [
-                      // View Details / Regenerate buttons — opacity bumped
-                      // (0.10→0.18 dark / 0.05→0.10 light), font 13→14 +
-                      // weight w500→w700, vertical padding 8→11 so the
-                      // button reaches a 44pt hit region. Icon stays 16pt
-                      // but the label now passes WCAG AA contrast against
-                      // the hero gradient.
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticService.selection();
-                            context.push('/workout/${workout.id}', extra: workout);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.18)
-                                  : Colors.black.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.25)
-                                    : Colors.black.withValues(alpha: 0.18),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.visibility_outlined,
-                                  size: 16,
-                                  color: isDark ? Colors.white : Colors.black87,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  AppLocalizations.of(context).heroWorkoutCardViewDetails,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: _regenerateWorkout,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.18)
-                                  : Colors.black.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.25)
-                                    : Colors.black.withValues(alpha: 0.18),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.refresh,
-                                  size: 16,
-                                  color: isDark ? Colors.white : Colors.black87,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  AppLocalizations.of(context).workoutActionsRegenerate,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark ? Colors.white : Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Surface 2.2 — View Details / Regenerate moved into the
+                  // ⋯ action sheet (top-right). The START button above is
+                  // the sole visible CTA on the card surface.
                 ],
               ),
             ),

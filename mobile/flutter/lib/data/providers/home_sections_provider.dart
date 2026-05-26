@@ -207,15 +207,18 @@ class HomeSectionsState {
       );
 }
 
-/// v29 default — Strain Coach card inserted between Coach Hero and Today
-/// Score (2026-05-24, P5 §12). v28: coach hero hoisted above the score
-/// card. Habits row moved off home into Profile.
+/// v30 default — Minimalist redesign (Surface 1.3): Quick actions row moves
+/// below the Today rings card so the rings card rises above the fold.
+/// v29: Strain Coach card inserted between Coach Hero and Today Score.
+/// v28: coach hero hoisted above the score card. Habits row moved off
+/// home into Profile.
 const List<HomeSection> _defaultOrder = [
-  HomeSection.quickActions,
   HomeSection.weekStrip,
   HomeSection.coachHero,
   HomeSection.strainCoach,
   HomeSection.todayScore,
+  // Quick actions now sit BELOW the rings card (Surface 1.3).
+  HomeSection.quickActions,
   HomeSection.workoutCard,
   HomeSection.nutritionCard,
   // The Cycle card self-hides unless menstrual tracking is enabled, so it is
@@ -241,7 +244,7 @@ const HomeSectionsState _defaultState = HomeSectionsState(
 // v3 order: coach hero inserted above the Today Score; habits moved to Profile.
 // v2 hidden: weekStrip hidden by default. Bumping each key forces a one-time
 // migration to the new default for existing users.
-const String _kOrderKey = 'home_section_order_v4';
+const String _kOrderKey = 'home_section_order_v5';
 const String _kHiddenKey = 'home_section_hidden_v2';
 
 /// Persists the user's "My Space" home-section layout (order + visibility)

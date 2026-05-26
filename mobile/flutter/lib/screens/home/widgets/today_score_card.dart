@@ -87,8 +87,14 @@ class TodayScoreCard extends ConsumerWidget {
             // alone tell a coherent story past that point.
             if (score.isSetupState || score.applicableContributors.length <= 1)
               const TodayScoreSetupCard()
-            else
+            else ...[
+              // Surface 1.4 — single combined Connect prompt above the row
+              // when Health is disconnected. Replaces the per-ring `_ConnectChip`
+              // stack (Sleep / HRV / Recovery / HeartRate would otherwise
+              // each show one).
+              const _CombinedHealthConnectPrompt(),
               _RingRow(score: score, visibleRings: visibleRings),
+            ],
           ],
         ),
       ),
@@ -245,18 +251,32 @@ class _RingRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Sleep-ring parity (plan Option A): when the user has not connected
+    // Apple Health / Health Connect, every health-data-driven ring would
+    // render its own `_ConnectChip` — Sleep, HRV, Recovery, HeartRate all
+    // at once. That stacks 1–4 Connect chips on top of the single combined
+    // Connect prompt the `HomeMetricTrio` below already shows. Hide the
+    // health rings here so there's one connect call-to-action on the
+    // home surface, not five.
+    final healthConnected = ref.watch(healthSyncProvider).isConnected;
+    final List<RingKind> rings = healthConnected
+        ? visibleRings
+        : visibleRings
+            .where((k) => !_healthRingKinds.contains(k))
+            .toList(growable: false);
+
     return SizedBox(
       height: _rowHeight,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: visibleRings.length + 1, // +1 for the Customize cell
+        itemCount: rings.length + 1, // +1 for the Customize cell
         itemBuilder: (context, index) {
-          if (index == visibleRings.length) {
+          if (index == rings.length) {
             return _CustomizeCell(width: _cellWidth, ringSize: _ringSize);
           }
-          final kind = visibleRings[index];
+          final kind = rings[index];
           final spec = kRingCatalog[kind]!;
           final data = _resolveRingData(score, kind);
           return _RingCell(
@@ -526,6 +546,52 @@ class _PillarDeltaChip extends ConsumerWidget {
       default:
         return null;
     }
+  }
+}
+
+/// Combined Connect prompt rendered above the ring row when Health is
+/// not connected (Surface 1.4). One row-level CTA replaces the per-ring
+/// Connect chips that used to stack on Sleep / HRV / Recovery / HeartRate
+/// simultaneously. Self-hides when Health is connected.
+class _CombinedHealthConnectPrompt extends ConsumerWidget {
+  const _CombinedHealthConnectPrompt();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final connected = ref.watch(healthSyncProvider).isConnected;
+    if (connected) return const SizedBox.shrink();
+    final c = ThemeColors.of(context);
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 8),
+      child: GestureDetector(
+        onTap: () => showHealthConnectSheet(context, ref),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            border: Border.all(color: c.cardBorder),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.favorite_border_rounded, size: 14, color: c.textSecondary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Connect Apple Health / Health Connect',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 16, color: c.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

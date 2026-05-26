@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/providers/fasting_provider.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'edit_targets_sheet.dart';
-import 'fasting_saved_row.dart';
+import 'hydration_summary_block.dart';
 import 'pinned_nutrients_card.dart';
 import 'logged_meals_section.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
@@ -42,6 +45,9 @@ class DailyTab extends ConsumerStatefulWidget {
   final void Function(FoodLog meal, {int? itemIndex}) onAddToShoppingList;
   final void Function(FoodLog meal) onShareMeal;
   final void Function(String mealType) onShareMealGroup;
+  /// Share the whole day's nutrition card. Surface 3.1 — share moved off
+  /// the screen header into the calorie card; null hides the in-card icon.
+  final VoidCallback? onShareDay;
   final Future<List<FoodLogEditRecord>> Function(String logId)? onFetchItemEdits;
   final ApiClient? apiClient;
   final VoidCallback? onSwitchToNutrientsTab;
@@ -82,6 +88,7 @@ class DailyTab extends ConsumerStatefulWidget {
     required this.onAddToShoppingList,
     required this.onShareMeal,
     required this.onShareMealGroup,
+    this.onShareDay,
     this.onFetchItemEdits,
     this.apiClient,
     this.onSwitchToNutrientsTab,
@@ -394,21 +401,15 @@ class _DailyTabState extends ConsumerState<DailyTab>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 0. FASTING / SAVED split row — replaces the old
-                //    logging-streak banner. Two equal-width tappable cards:
-                //    a live fasting-state entry point and a shortcut to the
-                //    user's saved recipes/foods. Hidden on historical dates
-                //    to mirror the previous banner's today-only placement.
-                if (widget.userId.isNotEmpty && widget.isViewingToday) ...[
-                  FastingSavedRow(
-                    userId: widget.userId,
-                    isDark: widget.isDark,
-                    tourActive: widget.tourActive,
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                // Surface 3.2 — the Fasting + Saved split row is gone.
+                // Fasting becomes contextual: a slim "Fasting active" bar
+                // appears above the calorie card only while a fast is in
+                // progress; idle = hidden. Saved is reachable via the
+                // Nutrition header kebab and the Recipes sub-tab.
+                if (widget.userId.isNotEmpty && widget.isViewingToday)
+                  const _FastingActiveBar(),
 
-                // 1. PINNED NUTRIENTS - Compact, at the very top
+                // 1. MORE NUTRIENTS (formerly "Pinned nutrients") — Compact, at the very top
                 if (widget.micronutrients != null &&
                     widget.micronutrients!.pinned.isNotEmpty) ...[
                   PinnedNutrientsCard(
@@ -473,11 +474,22 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     consumedCarbs: widget.summary?.totalCarbsG ?? 0,
                     consumedFat: widget.summary?.totalFatG ?? 0,
                     onEditTargets: widget.calmMode ? null : () => _showEditTargetsSheet(context),
+                    onShareDay: widget.onShareDay,
                   );
                 }),
                 const SizedBox(height: 12),
 
-                // Clearance for the floating Daily/Recipes/Patterns/Fuel
+                // Surface 3.6 — Water tile re-mounts here as a slim tile
+                // below the calorie card. The "Fuel" sub-tab is gone, so
+                // hydration lives in Daily for at-a-glance tracking.
+                if (widget.userId.isNotEmpty)
+                  HydrationSummaryBlock(
+                    isDark: widget.isDark,
+                    onTap: () => context.push('/hydration'),
+                  ),
+                if (widget.userId.isNotEmpty) const SizedBox(height: 12),
+
+                // Clearance for the floating Daily / Recipes / Patterns
                 // glass tab bar (sits at viewPadding.bottom + 76, height 56)
                 // plus the MainShell nav below it.
                 SizedBox(
@@ -920,5 +932,70 @@ class _LeftoversCarousel extends ConsumerWidget {
     if (h < 14) return 'lunch';
     if (h < 17) return 'snack';
     return 'dinner';
+  }
+}
+
+/// Surface 3.2 — slim contextual bar shown directly above the calorie card
+/// ONLY while a fast is in progress. Idle state renders nothing (the bar
+/// disappears completely). Tap routes to the full /fasting screen.
+class _FastingActiveBar extends ConsumerWidget {
+  const _FastingActiveBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fasting = ref.watch(fastingProvider);
+    if (!fasting.hasFast) return const SizedBox.shrink();
+
+    final colors = ref.colors(context);
+    final remainingMinutes = fasting.activeFast!.goalDurationMinutes -
+        fasting.activeFast!.elapsedMinutes;
+    final value = remainingMinutes > 0
+        ? '${fasting.remainingTimeFormatted} left'
+        : fasting.elapsedTimeFormatted;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => context.push('/fasting'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.cardBorder),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.timer_outlined, size: 16, color: colors.textSecondary),
+                const SizedBox(width: 8),
+                Text(
+                  'Fasting active',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right_rounded,
+                    size: 18, color: colors.textMuted),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

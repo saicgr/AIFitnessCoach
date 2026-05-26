@@ -283,12 +283,15 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  // Discover tab (W2) — globe icon (world/community leaderboard)
+                  // Leaderboard tab — globe icon retained (the icon is less
+                  // ambiguous than the renamed label, and the screen is the
+                  // same percentile leaderboard surface; route key stays
+                  // `/discover` to avoid breaking deep links).
                   Expanded(
                     child: _ExpandableNavItem(
                       icon: Icons.public_outlined,
                       selectedIcon: Icons.public,
-                      label: AppLocalizations.of(context).navDiscover,
+                      label: AppLocalizations.of(context).bottomNavLeaderboard,
                       isSelected: selectedIndex == 3,
                       onTap: () => onItemTapped(3),
                       accentColor: accentColor,

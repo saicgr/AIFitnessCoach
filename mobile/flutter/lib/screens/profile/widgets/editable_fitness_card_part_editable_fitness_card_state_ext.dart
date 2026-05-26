@@ -11,7 +11,11 @@ String _displayTitleCase(String s) {
 /// Methods extracted from EditableFitnessCardState
 extension _EditableFitnessCardStateExt on EditableFitnessCardState {
 
-  /// Compact 2x4 grid view for fitness settings
+  /// Compact 2x4 grid view for fitness settings.
+  ///
+  /// Surface 5.B.6: no longer rendered. Preserved as a private helper so
+  /// the codebase can resurrect the view if the redesign rolls back.
+  // ignore: unused_element
   Widget _buildGridView({
     required GymProfile? activeGymProfile,
     required bool isDark,

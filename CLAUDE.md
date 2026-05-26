@@ -1,5 +1,35 @@
 # Claude Development Guidelines for Zealova
 
+## Execution Style — Ship Everything Continuously ⚠️
+
+**Once a plan is approved (ExitPlanMode → user says yes), execute every surface and sub-task continuously to completion in a single uninterrupted run.** Do NOT stop after each surface, phase, or commit to ask "want me to continue?" or "ready for the next one?" — the user reads progress checkpoints as needless gating after they already approved the scope. Phases are a *planning* concept, not an *execution* concept.
+
+What this means concretely:
+- **No "shipping Phase N, ready for Phase N+1?" messages.** Plan is approved → ship it all.
+- **No per-surface verification gates with the user.** Run flutter analyze + smoke tests yourself at the end; only surface results, not approval requests.
+- **No "let me know if you want X" mid-execution.** If X is in the approved plan, ship X. If X is genuinely ambiguous, decide and document the call (you can always be redirected on the result, but stalling on a question already covered by the plan wastes a round trip).
+- **The ONLY mid-execution stops allowed:** a blocker the plan doesn't cover (missing API key, unforeseen schema break, file genuinely doesn't exist where the plan says it does). Even then, propose a resolution and proceed — don't ask first.
+- **TaskList is for tracking, not gating.** Update tasks in_progress → completed as you go; do NOT pause between tasks.
+
+This rule has been redirected on TWICE in one session. It supersedes any "phased ship" instinct from `feedback_phase_handoff` (which is about *planning* — don't bundle multiple ExitPlanMode plans). For execution, ship everything in one continuous session.
+
+## Multi-Screen UI Redesigns — File-Level Backup Required
+
+**Before the first edit of any redesign touching ≥3 screens**, take a file-level backup of the entire `mobile/flutter/lib/` tree (and `assets/` if it changes):
+
+```bash
+mkdir -p docs/planning/redesign-$(date +%Y-%m)/backup
+cp -R mobile/flutter/lib docs/planning/redesign-$(date +%Y-%m)/backup/lib
+find docs/planning/redesign-$(date +%Y-%m)/backup -type f \( -name "*.dart" -o -name "*.arb" \) | sort > docs/planning/redesign-$(date +%Y-%m)/backup/MANIFEST.txt
+(cd mobile/flutter && find lib -type f \( -name "*.dart" -o -name "*.arb" \) | sort | xargs shasum -a 256) > docs/planning/redesign-$(date +%Y-%m)/backup/CHECKSUMS-original.txt
+echo "docs/planning/redesign-$(date +%Y-%m)/backup/" >> .gitignore
+git tag <redesign-name>-v0-snapshot HEAD
+```
+
+Belt-and-suspenders: file-level backup is gitignored (143MB of Dart would bloat history); git tag is the shareable rollback ref. Restore: `cp docs/.../backup/lib/<path> mobile/flutter/lib/<path>` for one file, `cp -R docs/.../backup/lib/. mobile/flutter/lib/` for the whole tree, `git reset --hard <tag>` for the repo.
+
+A git tag ALONE is insufficient — the user wants individual files restorable by filename without `git checkout` gymnastics.
+
 ## Critical Development Principles
 
 ### 1. TEST BEFORE DEPLOY ⚠️

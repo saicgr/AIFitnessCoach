@@ -66,7 +66,8 @@ const quickActionRegistry = <String, QuickAction>{
   // "snap your plate" rather than the document-scanner glyph.
   'photo_food': QuickAction(
     id: 'photo_food',
-    label: 'Photo Log',
+    // Surface 1.3 — clearer verb: "Snap Food" reads as the camera action.
+    label: 'Snap Food',
     icon: Icons.lunch_dining_outlined,
     color: Color(0xFF22C55E),
     behavior: QuickActionBehavior.foodPhoto,
@@ -94,10 +95,9 @@ const quickActionRegistry = <String, QuickAction>{
   ),
   'photo': QuickAction(
     id: 'photo',
-    // Keep this label ≤ 8 chars — the quick-actions grid cell (~65dp wide
-    // at fontSize 10) ellipsizes anything longer. Pair with the purple
-    // accessibility-stance icon so the "progress photo" meaning still reads.
-    label: 'Photo',
+    // Surface 1.3 — "Progress Photo" makes the destination unambiguous;
+    // grid cell wraps gracefully at this length on iPhone SE.
+    label: 'Progress Photo',
     icon: Icons.accessibility_new_outlined,
     color: Color(0xFFA855F7),
     behavior: QuickActionBehavior.route,
@@ -278,18 +278,26 @@ const quickActionRegistry = <String, QuickAction>{
 // D3: 'workout' / 'quick_workout' removed from the pinned default — the
 // Workouts tab already covers them. They remain in the catalog below so
 // users can still pin them via the customize sheet / reach them via More.
+//
+// 'chat' removed from the pinned default — the Coach is now reachable via
+// the persistent `FloatingChatBubble` (draggable coach head) rendered by
+// `MainShell` on every main tab. The action itself remains in the catalog
+// above so users who want a second entry point (e.g. as a quick-action
+// shortcut) can re-pin it via the customize sheet.
 const defaultQuickActionOrder = [
   // Default row 1 (single-row mode, slots 1-5; slot 6 = More):
-  //   Coach · Log Food · Scan Menu · Water · Weight
-  'chat', 'food', 'scan_menu', 'water', 'weight',
+  //   Log Food · Scan Menu · Water · Weight · Photo Log
+  'food', 'scan_menu', 'water', 'weight', 'photo_food',
   // Two-row mode fills slots 6-11 from here (slot 12 = More):
-  'photo_food', 'photo', 'mood', 'scan_food', 'barcode_food', 'measure',
+  'photo', 'mood', 'scan_food', 'barcode_food', 'measure', 'hydration',
   // ─── long-tail (More sheet only unless reordered up):
   'quick_workout', 'workout', 'history', 'steps', 'programs',
   'library', 'settings', 'schedule', 'habits',
-  'progress', 'stats', 'achievements', 'hydration', 'summaries',
+  'progress', 'stats', 'achievements', 'summaries',
   // ─── More-only overflow ── never appears in the primary grid:
   'share_plan',
   // Issue 2: discoverable in More sheet only.
   'identify_equipment',
+  // 'chat' kept in the catalog for users who want to re-pin it.
+  'chat',
 ];

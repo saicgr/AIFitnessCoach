@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -69,6 +70,11 @@ class LoggedMealsSection extends StatelessWidget {
   /// Opens the EditTargetsSheet when the hero-row pencil is tapped.
   final VoidCallback? onEditTargets;
 
+  /// Optional in-card share. When non-null AND there is at least one logged
+  /// meal today, a small share icon renders top-right of the calorie ring
+  /// hero. Surface 3.1 — share moved off the header into the calorie card.
+  final VoidCallback? onShareDay;
+
   const LoggedMealsSection({
     super.key,
     required this.meals,
@@ -102,6 +108,7 @@ class LoggedMealsSection extends StatelessWidget {
     this.consumedCarbs = 0,
     this.consumedFat = 0,
     this.onEditTargets,
+    this.onShareDay,
   });
 
   static const _mealTypes = [
@@ -163,14 +170,26 @@ class LoggedMealsSection extends StatelessWidget {
   // Hero summary row (calories remaining + progress + macro chips)
   // ──────────────────────────────────────────────────────────────
 
+  // ──────────────────────────────────────────────────────────────
+  // Surface 3.3 — visual calorie ring hero
+  //
+  // Replaces the previous text-heavy hero (big number + linear progress + 3
+  // linear macro bars). Apple-Health-style: a single large ring at center
+  // with kcal-left in the middle, kcal-eaten/target as the ring fill, and
+  // the three macros below as compact horizontal macro-tinted pills.
+  //
+  // Tap on the ring opens the existing edit-targets sheet so the affordance
+  // is still discoverable without the separate pencil icon.
+  // ──────────────────────────────────────────────────────────────
+
   Widget _buildHeroRow(BuildContext context) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accent = AccentColorScope.of(context).getColor(isDark);
     final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
     final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final orange = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final macroWarm = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
 
     final target = calorieTarget ?? 0;
     final remaining = target - totalCaloriesEaten;
@@ -179,79 +198,121 @@ class LoggedMealsSection extends StatelessWidget {
         ? (totalCaloriesEaten / target).clamp(0.0, 1.0)
         : 0.0;
 
-    // Hero number + eaten/target + edit pencil
-    final heroHeader = Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      target > 0
-                          ? '${remaining.abs()}${isOver ? ' over' : ' left'}'
-                          : '$totalCaloriesEaten eaten',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: isOver ? AppColors.error : textPrimary,
-                        height: 1.1,
-                      ),
-                    ),
+    // Center label for the ring.
+    final String centerNumber;
+    final String centerSubtitle;
+    if (target <= 0) {
+      centerNumber = '$totalCaloriesEaten';
+      centerSubtitle = 'eaten';
+    } else if (isOver) {
+      centerNumber = '${remaining.abs()}';
+      centerSubtitle = 'over';
+    } else {
+      centerNumber = '$remaining';
+      centerSubtitle = 'left';
+    }
+
+    final ring = GestureDetector(
+      onTap: onEditTargets,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 148,
+        height: 148,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CustomPaint(
+              size: const Size.square(148),
+              painter: _CalorieRingPainter(
+                progress: progress,
+                trackColor: textMuted.withValues(alpha: 0.18),
+                fillColor: isOver ? AppColors.error : accent,
+                strokeWidth: 12,
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  centerNumber,
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    height: 1.05,
+                    letterSpacing: -0.5,
+                    color: isOver ? AppColors.error : textPrimary,
                   ),
-                  const SizedBox(width: 6),
-                  // (i) chip — opens the existing detailed calculation sheet
-                  // (BMR formula, TDEE, goal adjustment, macro split). Local
-                  // Consumer so we can stay a StatelessWidget. Shows Edit /
-                  // Recalculate action buttons since the user is on the
-                  // Daily nutrition card, not inside the editor.
-                  Consumer(
-                    builder: (ctx, ref, _) {
-                      return InkWell(
-                        onTap: () {
-                          final prefs = ref
-                              .read(nutritionPreferencesProvider)
-                              .preferences;
-                          if (prefs == null) return;
-                          showNutritionCalculationSheet(
-                            ctx,
-                            prefs: prefs,
-                            isDark: Theme.of(ctx).brightness == Brightness.dark,
-                            onEdit: onEditTargets,
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.info_outline_rounded,
-                            size: 20,
-                            color: accent,
-                          ),
-                        ),
-                      );
-                    },
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  centerSubtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textSecondary,
+                  ),
+                ),
+                if (target > 0) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '$totalCaloriesEaten / $target',
+                    style: TextStyle(fontSize: 11, color: textMuted),
                   ),
                 ],
-              ),
-              const SizedBox(height: 2),
-              if (target > 0)
-                Text(
-                  '$totalCaloriesEaten / $target cal',
-                  style: TextStyle(fontSize: 12, color: textMuted),
-                )
-              else
-                Text(
-                  'Set a calorie target to track remaining',
-                  style: TextStyle(fontSize: 11, color: textMuted),
-                ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
+      ),
+    );
+
+    // Top-right share icon — only when there's something worth sharing.
+    final hasMeals = meals.isNotEmpty;
+    final showShare = onShareDay != null && hasMeals;
+
+    final headerRow = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // (i) info chip — opens BMR / TDEE / goal calculation sheet.
+        // Kept because it explains the ring number; neutral muted color
+        // instead of the previous accent tint.
+        Consumer(
+          builder: (ctx, ref, _) {
+            return InkWell(
+              onTap: () {
+                final prefs = ref
+                    .read(nutritionPreferencesProvider)
+                    .preferences;
+                if (prefs == null) return;
+                showNutritionCalculationSheet(
+                  ctx,
+                  prefs: prefs,
+                  isDark: Theme.of(ctx).brightness == Brightness.dark,
+                  onEdit: onEditTargets,
+                );
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.info_outline_rounded,
+                  size: 18,
+                  color: textMuted,
+                ),
+              ),
+            );
+          },
+        ),
+        const Spacer(),
+        if (showShare)
+          IconButton(
+            onPressed: onShareDay,
+            icon: Icon(Icons.ios_share_rounded, size: 18, color: textMuted),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            tooltip: 'Share day',
+          ),
         if (onEditTargets != null)
           IconButton(
             onPressed: onEditTargets,
@@ -264,54 +325,51 @@ class LoggedMealsSection extends StatelessWidget {
       ],
     );
 
-    // Progress bar
-    Widget progressBar() => ClipRRect(
-          borderRadius: BorderRadius.circular(2),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 4,
-            backgroundColor: elevated == AppColors.elevated
-                ? Colors.white10
-                : Colors.black12,
-            valueColor: AlwaysStoppedAnimation<Color>(isOver ? AppColors.error : accent),
-          ),
-        );
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 10, 12),
+      padding: const EdgeInsets.fromLTRB(14, 10, 10, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          heroHeader,
-          if (target > 0) ...[
-            const SizedBox(height: 10),
-            progressBar(),
-          ],
-          const SizedBox(height: 12),
-          // Three macro mini-bars laid out evenly
+          headerRow,
+          const SizedBox(height: 4),
+          Center(child: ring),
+          if (target <= 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Center(
+                child: Text(
+                  'Set a calorie target to track remaining',
+                  style: TextStyle(fontSize: 11, color: textMuted),
+                ),
+              ),
+            ),
+          const SizedBox(height: 14),
+          // Three macro pills laid out evenly. Each pill carries its
+          // macro-category color (Protein purple, Carbs cyan, Fat warm)
+          // independent of AccentColorScope per feedback_accent_colors.
           Row(
             children: [
-              Expanded(child: _MacroMiniBar(
+              Expanded(child: _MacroPill(
                 label: 'Protein',
                 consumed: consumedProtein,
                 target: proteinTarget,
                 color: purple,
                 isDark: isDark,
               )),
-              const SizedBox(width: 12),
-              Expanded(child: _MacroMiniBar(
+              const SizedBox(width: 8),
+              Expanded(child: _MacroPill(
                 label: 'Carbs',
                 consumed: consumedCarbs,
                 target: carbsTarget,
                 color: cyan,
                 isDark: isDark,
               )),
-              const SizedBox(width: 12),
-              Expanded(child: _MacroMiniBar(
+              const SizedBox(width: 8),
+              Expanded(child: _MacroPill(
                 label: 'Fat',
                 consumed: consumedFat,
                 target: fatTarget,
-                color: orange,
+                color: macroWarm,
                 isDark: isDark,
               )),
             ],
@@ -4085,76 +4143,85 @@ class _MealSectionState extends State<_MealSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header row — tap toggles; + button adds; pills show totals
-        InkWell(
-          onTap: _toggle,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
-            child: Row(
-              children: [
-                AnimatedRotation(
+        // Surface 3.4 — section header: tap-row opens log sheet (single
+        // primary action), chevron toggles expansion. No more accent-tinted
+        // `+` icon. The previous trio of affordances (chevron + label + `+`)
+        // collapses to two with clearer semantics.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: _toggle,
+                icon: AnimatedRotation(
                   duration: const Duration(milliseconds: 180),
                   turns: _isExpanded ? 0.25 : 0,
                   child: Icon(Icons.chevron_right, size: 20, color: textMuted),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // 4 macro pills in daily-summary-bar order (cal · C · P · F).
-                // Horizontal scroll prevents clipping on narrow devices when
-                // all four are present alongside the "+" button.
-                Flexible(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    reverse: true,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
+                tooltip: _isExpanded ? 'Collapse' : 'Expand',
+              ),
+              Expanded(
+                child: InkWell(
+                  onTap: () => owner.onLogMeal(widget.mealId),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (totalCal > 0) _StatPill(label: '$totalCal cal', color: accent),
-                        if (totalCarbs > 0) ...[
-                          const SizedBox(width: 6),
-                          _StatPill(label: '${totalCarbs.round()}g C', color: macroC),
-                        ],
-                        if (totalProtein > 0) ...[
-                          const SizedBox(width: 6),
-                          _StatPill(label: '${totalProtein.round()}g P', color: macroP),
-                        ],
-                        if (totalFat > 0) ...[
-                          const SizedBox(width: 6),
-                          _StatPill(label: '${totalFat.round()}g F', color: macroF),
-                        ],
+                        Text(
+                          widget.label,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Totals in cal · C · P · F order. Macro tints stay
+                        // (category colors, not accent).
+                        Flexible(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            reverse: true,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (totalCal > 0) _StatPill(label: '$totalCal cal', color: accent),
+                                if (totalCarbs > 0) ...[
+                                  const SizedBox(width: 6),
+                                  _StatPill(label: '${totalCarbs.round()}g C', color: macroC),
+                                ],
+                                if (totalProtein > 0) ...[
+                                  const SizedBox(width: 6),
+                                  _StatPill(label: '${totalProtein.round()}g P', color: macroP),
+                                ],
+                                if (totalFat > 0) ...[
+                                  const SizedBox(width: 6),
+                                  _StatPill(label: '${totalFat.round()}g F', color: macroF),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
-                if (widget.typeMeals.isNotEmpty)
-                  IconButton(
-                    onPressed: () => owner.onShareMealGroup(widget.mealId),
-                    icon: Icon(Icons.ios_share_rounded, size: 18, color: accent),
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints(minWidth: 32, minHeight: 36),
-                    tooltip: 'Share ${widget.label}',
-                  ),
+              ),
+              if (widget.typeMeals.isNotEmpty)
                 IconButton(
-                  onPressed: () => owner.onLogMeal(widget.mealId),
-                  icon: Icon(Icons.add_rounded, size: 20, color: accent),
+                  onPressed: () => owner.onShareMealGroup(widget.mealId),
+                  icon: Icon(Icons.ios_share_rounded, size: 18, color: textMuted),
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                  tooltip: 'Log ${widget.label}',
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 36),
+                  tooltip: 'Share ${widget.label}',
                 ),
-              ],
-            ),
+            ],
           ),
         ),
         // Items or empty state
@@ -4165,33 +4232,14 @@ class _MealSectionState extends State<_MealSection> {
               : CrossFadeState.showFirst,
           firstChild: const SizedBox(width: double.infinity, height: 0),
           secondChild: widget.typeMeals.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                  child: Row(
-                    children: [
-                      Text(
-                        'No foods logged',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                      const Spacer(),
-                      TextButton.icon(
-                        onPressed: () => owner.onLogMeal(widget.mealId),
-                        icon: Icon(Icons.add_rounded, size: 16, color: accent),
-                        label: Text(
-                          'Log food',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: accent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    ],
+              ? InkWell(
+                  onTap: () => owner.onLogMeal(widget.mealId),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(40, 0, 14, 12),
+                    child: Text(
+                      'No items yet · tap to add',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
                   ),
                 )
               : Column(
@@ -4265,17 +4313,21 @@ class _StatPill extends StatelessWidget {
 }
 
 // ============================================
-// _MacroMiniBar — hero-row macro progress (P/C/F).
+// _MacroPill — Surface 3.3 compact horizontal macro chip with category-tinted
+// background. Replaces the older linear `_MacroMiniBar`. Shows label,
+// consumed/target grams, and a thin progress underline. Background uses the
+// macro's category tint (Protein purple, Carbs cyan, Fat warm) per
+// feedback_accent_colors — these are NOT routed through AccentColorScope.
 // ============================================
 
-class _MacroMiniBar extends StatelessWidget {
+class _MacroPill extends StatelessWidget {
   final String label;
   final double consumed;
   final int target;
   final Color color;
   final bool isDark;
 
-  const _MacroMiniBar({
+  const _MacroPill({
     required this.label,
     required this.consumed,
     required this.target,
@@ -4285,45 +4337,106 @@ class _MacroMiniBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final progress = target > 0 ? (consumed / target).clamp(0.0, 1.0) : 0.0;
     final showTarget = target > 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500),
+    final valueText = showTarget
+        ? '${consumed.round()}/${target}g'
+        : '${consumed.round()}g';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.16 : 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+              color: color,
             ),
-            const Spacer(),
-            Text(
-              showTarget
-                  ? '${consumed.round()}/${target}g'
-                  : '${consumed.round()}g',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(2),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 3,
-            backgroundColor: color.withValues(alpha: 0.12),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            valueText,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 3,
+              backgroundColor: color.withValues(alpha: 0.18),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
+
+// ============================================
+// _CalorieRingPainter — single-arc ring for the Surface 3.3 calorie hero.
+// Track + filled arc, no gradient (clean Apple-Health-style). Stroke caps
+// rounded so partially-filled rings read as soft.
+// ============================================
+
+class _CalorieRingPainter extends CustomPainter {
+  final double progress;
+  final Color trackColor;
+  final Color fillColor;
+  final double strokeWidth;
+
+  const _CalorieRingPainter({
+    required this.progress,
+    required this.trackColor,
+    required this.fillColor,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = (math.min(size.width, size.height) - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..color = trackColor;
+    canvas.drawCircle(center, radius, track);
+
+    if (progress <= 0) return;
+    final sweep = (progress.clamp(0.0, 1.0)) * 2 * math.pi;
+    final fill = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..color = fillColor;
+    // Start at 12-o'clock (-pi/2), sweep clockwise.
+    canvas.drawArc(rect, -math.pi / 2, sweep, false, fill);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CalorieRingPainter old) =>
+      old.progress != progress ||
+      old.trackColor != trackColor ||
+      old.fillColor != fillColor ||
+      old.strokeWidth != strokeWidth;
 }
 
 // ============================================

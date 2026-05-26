@@ -12,7 +12,6 @@ import '../core/providers/subscription_provider.dart';
 import '../data/services/recipe_notification_router.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
-import '../data/providers/admin_provider.dart';
 import '../data/providers/discover_provider.dart';
 import '../data/providers/fasting_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
@@ -25,11 +24,10 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/onboarding/founder_note_sheet.dart';
 import '../data/repositories/auth_repository.dart' show authStateProvider;
 import '../screens/nutrition/quick_log_overlay.dart';
-import '../screens/workout/widgets/quick_workout_sheet.dart';
 import 'coach_avatar.dart';
 import 'app_tour/app_tour_controller.dart';
 import 'floating_chat/floating_chat_bubble.dart';
-import 'floating_chat/floating_chat_overlay.dart';
+import 'coach_floating_button.dart';
 import 'level_up_dialog.dart';
 import 'streak_saved_dialog.dart';
 import 'offline_banner.dart';
@@ -94,7 +92,10 @@ final edgeHandlePositionProvider =
   return EdgeHandlePositionNotifier();
 });
 
-/// Notifier for edge handle enabled state with persistence
+/// Notifier for the optional draggable floating chat-head bubble. Default
+/// OFF — the primary coach surface is now the `CoachFloatingButton`
+/// "Ask coach" pill at bottom-right. The draggable head remains available
+/// via Settings → AI Coach for users who want the chat-head pattern.
 class EdgeHandleEnabledNotifier extends StateNotifier<bool> {
   static const _key = 'edge_handle_enabled';
 
@@ -204,6 +205,12 @@ class MainShell extends ConsumerWidget {
     if (tourState.isVisible) {
       ref.read(appTourControllerProvider.notifier).abort();
     }
+    // Surface 1.8 — FAB defaults to collapsed; the idle-at-top expansion
+    // timer in `_CoachFabScrollListener` re-extends after 800ms when the
+    // user lands on Home at scroll position 0. Reset to collapsed on every
+    // tab switch so the previous tab's expanded state doesn't leak.
+    final fab = ref.read(coachFabExpandedProvider.notifier);
+    if (fab.state) fab.state = false;
     if (navigationShell != null) {
       navigationShell!.goBranch(index, initialLocation: index == navigationShell!.currentIndex);
       return;
@@ -231,8 +238,6 @@ class MainShell extends ConsumerWidget {
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final isNavBarVisible = ref.watch(floatingNavBarVisibleProvider);
     final isGuestMode = ref.watch(isGuestModeProvider);
-    // Get dynamic accent color from provider
-    final accentColor = ref.colors(context).accent;
 
     // ── Tab prewarm ──────────────────────────────────────────────────
     // Warm every tab's first-paint data providers in the background so
@@ -513,15 +518,34 @@ class MainShell extends ConsumerWidget {
                 const OfflineBanner(),
                 // Verify-your-email nudge (auto-shows/hides; non-blocking)
                 const EmailVerificationBanner(),
-                // Main content fills remaining space
-                Expanded(child: _child),
+                // Main content fills remaining space. Wrapped in a
+                // NotificationListener that drives the Coach FAB's
+                // expand/collapse: when the active tab's scroll view
+                // is at the top, the FAB stays extended; once it
+                // scrolls past 24pt the FAB collapses to icon-only.
+                // Drives the Coach FAB's pill-vs-icon morph on the Home
+                // tab — extended at scroll top, collapses to icon past
+                // 24pt. Other tabs ignore this state (always icon).
+                // setState only on threshold-cross, not per frame.
+                Expanded(
+                  // Surface 1.8 — scroll-aware FAB driver. Any scroll
+                  // collapses the FAB immediately; the FAB re-expands to
+                  // the "Ask coach" pill only after the user has been
+                  // idle at scroll position 0 for 800ms.
+                  child: _CoachFabScrollListener(child: _child),
+                ),
               ],
             ),
           ),
-          // Floating AI Chat bubble (toggled in Settings > AI Coach) —
-          // rendered BELOW the floating nav so the nav always sits on top.
-          if (ref.watch(edgeHandleEnabledProvider))
-            const FloatingChatBubble(),
+          // "Ask coach" FAB above the nav — Home tab only. On Home
+          // there's no sub-tab strip, so the pill+icon morph lives
+          // standalone above the nav. On every other tab, the AI sparkle
+          // action is integrated INTO that tab's `FloatingTabBar` strip
+          // (see `_FloatingTabBarCoachSlot`), so the standalone FAB
+          // would just double up. Hides when the nav hides
+          // (e.g. `/fasting`).
+          if (isNavBarVisible && selectedIndex == 0)
+            const CoachFloatingButton(isHomeTab: true),
           // Nav bar at bottom — wrapped in Material so it participates in
           // Flutter's elevation/z-index system. This ensures OS-level
           // Tooltips (which use the root overlay) render UNDER the nav,
@@ -550,6 +574,12 @@ class MainShell extends ConsumerWidget {
               ),
             ),
           ),
+          // Optional draggable chat-head bubble (Settings → AI Coach
+          // opt-in). Default off — most users get the "Ask coach" FAB
+          // above. Rendered AFTER the nav so its drag-dismiss-zone
+          // overlay paints on top of the nav when active.
+          if (isNavBarVisible && ref.watch(edgeHandleEnabledProvider))
+            const FloatingChatBubble(),
           // Note: Workout mini player is now handled globally in app.dart.
           // App tour overlay is ALSO mounted globally now (in app.dart's
           // MaterialApp.router builder Stack) — covering top-level routes
@@ -568,4 +598,72 @@ Color _getContrastColor(Color background) {
   // Calculate luminance - if > 0.5, use black text, otherwise white
   final luminance = background.computeLuminance();
   return luminance > 0.5 ? Colors.black : Colors.white;
+}
+
+/// Surface 1.8 — scroll-aware driver for the Coach FAB's pill ↔ icon morph.
+///
+/// Default state: collapsed (icon-only). The FAB expands to "Ask coach"
+/// only after the user idles at scroll position 0 for 800ms; any scroll
+/// motion collapses it instantly. Implements the
+/// `coachFabExpandedProvider` writes on behalf of the parent shell.
+class _CoachFabScrollListener extends ConsumerStatefulWidget {
+  final Widget child;
+  const _CoachFabScrollListener({required this.child});
+
+  @override
+  ConsumerState<_CoachFabScrollListener> createState() =>
+      _CoachFabScrollListenerState();
+}
+
+class _CoachFabScrollListenerState
+    extends ConsumerState<_CoachFabScrollListener> {
+  Timer? _idleTimer;
+
+  @override
+  void dispose() {
+    _idleTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleExpand() {
+    _idleTimer?.cancel();
+    _idleTimer = Timer(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      final notifier = ref.read(coachFabExpandedProvider.notifier);
+      if (!notifier.state) notifier.state = true;
+    });
+  }
+
+  void _collapseImmediate() {
+    _idleTimer?.cancel();
+    final notifier = ref.read(coachFabExpandedProvider.notifier);
+    if (notifier.state) notifier.state = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification.depth != 0) return false;
+        final pixels = notification.metrics.pixels;
+        final atTop = pixels < 24;
+        if (notification is ScrollEndNotification) {
+          if (atTop) {
+            _scheduleExpand();
+          } else {
+            _collapseImmediate();
+          }
+        } else if (notification is ScrollUpdateNotification ||
+            notification is ScrollStartNotification ||
+            notification is UserScrollNotification) {
+          // Any scroll motion: collapse immediately and cancel any
+          // pending re-expand timer. The expand only fires after the
+          // user has STOPPED scrolling at the top for 800ms.
+          _collapseImmediate();
+        }
+        return false;
+      },
+      child: widget.child,
+    );
+  }
 }

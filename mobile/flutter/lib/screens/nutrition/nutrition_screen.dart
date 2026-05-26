@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/rating_prompt_service.dart';
 import '../../widgets/rating_prompt_sheet.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
@@ -28,17 +27,19 @@ import '../../widgets/pill_swipe_navigation.dart';
 import 'log_meal_sheet.dart';
 import 'food_history_screen.dart';
 import 'nutrition_settings_screen.dart';
+import 'saved_hub_screen.dart';
 import 'weekly_checkin_sheet.dart';
 import 'widgets/daily_tab.dart';
 import 'widgets/edit_targets_sheet.dart';
 import 'widgets/schedule_meal_sheet.dart';
 import 'widgets/nutrition_error_state.dart';
+// Surface 3.1 — fuel_tab.dart was retired (Fuel sub-tab dropped). Water lives
+// in Daily; Nutrients in the More-nutrients accordion; Fasting is contextual.
 import '../../widgets/date_strip.dart';
 import '../../shareables/shareable_sheet.dart';
 import '../../shareables/shareable_catalog.dart';
 import '../../shareables/adapters/nutrition_adapter.dart';
 import '../../core/theme/accent_color_provider.dart';
-import 'widgets/fuel_tab.dart';
 // `my_foods_sheet.dart` happens to export an internal helper called RecipesTab
 // for the saved-foods grid; alias our real Recipes tab to disambiguate.
 import 'widgets/recipes_tab.dart' as recipes_tab show RecipesTab;
@@ -147,10 +148,15 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     //     tabs are pre-built — the slide is silky because there's no
     //     widget construction happening mid-animation (which was the
     //     actual cause of the perceived lag earlier).
+    // Surface 3.6 — sub-tabs collapse 4 → 3: Daily / Recipes / Patterns.
+    // The "Fuel" sub-tab was dropped. If a deep link still passes
+    // initialTab=3 (legacy Fuel target), clamp it to Daily so the tab
+    // controller never sits on an invalid index.
+    final clampedInitial = widget.initialTab.clamp(0, 2);
     _tabController = TabController(
-      length: 4,
+      length: 3,
       vsync: this,
-      initialIndex: widget.initialTab,
+      initialIndex: clampedInitial,
       animationDuration: const Duration(milliseconds: 260),
     );
     // Hydrate disk-cached micros + recipes BEFORE kicking the network so
@@ -320,7 +326,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // produces a new NutritionScreen widget with the requested tab while
     // the State is preserved by StatefulShellRoute's IndexedStack. Sync the
     // TabController so the user actually lands on the requested tab.
-    final target = widget.initialTab;
+    final target = widget.initialTab.clamp(0, _tabController.length - 1);
     if (target >= 0 && target < _tabController.length && _tabController.index != target) {
       _tabController.animateTo(target);
     }
@@ -810,9 +816,14 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                                 _shareMealGroup(mealType),
                             onFetchItemEdits: _fetchItemEdits,
                             apiClient: ref.read(apiClientProvider),
-                            // Fuel tab (index 3) now hosts both Nutrients and Water pill toggles
-                            onSwitchToNutrientsTab: () => _tabController.animateTo(3),
-                            onSwitchToHydrationTab: () => _tabController.animateTo(3),
+                            // Surface 3.6 — the Fuel sub-tab is retired. The
+                            // "view all nutrients" / "view water details"
+                            // CTAs route to /hydration and the in-card
+                            // "More nutrients" accordion respectively; these
+                            // callbacks are kept as no-ops for back-compat.
+                            onSwitchToNutrientsTab: null,
+                            onSwitchToHydrationTab: null,
+                            onShareDay: () => _shareDailyReport(),
                             isDark: isDark,
                             calmMode: calmMode,
                             ),
@@ -826,21 +837,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                           NutritionPatternsTab(
                             userId: _userId ?? '',
                             isDark: isDark,
-                          ),
-
-                          // Fuel Tab — merged Nutrients + Water with pill toggles
-                          FuelTab(
-                            userId: _userId ?? '',
-                            micronutrients: _micronutrientSummary,
-                            isLoading: _isLoadingMicronutrients,
-                            onRefreshMicronutrients: () {
-                              if (_userId != null) {
-                                final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-                                _loadMicronutrients(_userId!, dateStr);
-                              }
-                            },
-                            isDark: isDark,
-                            initialSection: widget.initialFuelSection,
                           ),
                         ],
                       ),
@@ -869,7 +865,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               NutritionTabItem(label: AppLocalizations.of(context).nutritionDailyTab, icon: Icons.restaurant_menu_rounded),
               NutritionTabItem(label: AppLocalizations.of(context).nutritionRecipesTab, icon: Icons.menu_book_rounded),
               NutritionTabItem(label: AppLocalizations.of(context).nutritionPatternsTab, icon: Icons.insights_outlined),
-              NutritionTabItem(label: AppLocalizations.of(context).nutritionFuel, icon: Icons.bolt_outlined),
             ],
           ),
         ),
@@ -917,20 +912,14 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               ),
             ),
           ),
-          // History
+          // Surface 3.1 — header collapses to title + kebab + gear. History
+          // moves into the kebab. Share moves to an in-card icon on the
+          // calorie ring (only when there is data to share). Bar chart is
+          // gone (Patterns sub-tab already provides this).
           GestureDetector(
-            onTap: () {
-              if (_userId != null) {
-                Navigator.push(
-                  context,
-                  AppPageRoute(
-                    builder: (_) => FoodHistoryScreen(userId: _userId!),
-                  ),
-                );
-              }
-            },
+            onTap: () => _showHeaderOverflowMenu(context, isDark, glassSurface, textSecondary, textPrimary),
             child: Tooltip(
-              message: 'History',
+              message: 'More',
               child: Container(
                 width: 32,
                 height: 32,
@@ -938,73 +927,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                   color: glassSurface,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(Icons.history, size: 18, color: isDark ? AppColors.teal : AppColorsLight.teal),
+                child: Icon(Icons.more_vert_rounded, size: 18, color: textSecondary),
               ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          // (Removed the My Foods bookmark icon — the Daily view's "Saved"
-          // card, alongside the Fasting card, is the single entry point to
-          // saved recipes/foods/menus now.)
-          // Share
-          GestureDetector(
-            onTap: () async {
-              // Route through the unified ShareableSheet (item 13). Pulls a
-              // fresh daily report from the backend so the share gallery
-              // renders with calorie / macro / inflammation / AI summary.
-              try {
-                final api = ref.read(apiClientProvider);
-                final res = await api.dio.post('/nutrition/reports/daily');
-                if (!context.mounted) return;
-                final shareable = NutritionAdapter.fromDailyReport(
-                  ref: ref,
-                  json: res.data as Map<String, dynamic>,
-                );
-                if (shareable == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocalizations.of(context).nutritionLogSomeMealsFirst)),
-                  );
-                  return;
-                }
-                await ShareableSheet.show(context, data: shareable);
-                if (_userId != null && mounted) {
-                  ref
-                      .read(nutritionProvider.notifier)
-                      .loadSummaryForDate(_userId!, _selectedDate);
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Share failed: $e')),
-                  );
-                }
-              }
-            },
-            child: Tooltip(
-              message: 'Share',
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: glassSurface,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(Icons.share_outlined, size: 18, color: textSecondary),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          // Stats
-          GestureDetector(
-            onTap: () => context.push('/stats?tab=4'),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: glassSurface,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(Icons.bar_chart_rounded, size: 18, color: textSecondary),
             ),
           ),
           const SizedBox(width: 6),
@@ -1031,6 +955,65 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Surface 3.1 — collapsed kebab menu in the header. Hosts the destinations
+  /// that previously had dedicated icons (history) plus a Saved hub entry
+  /// (the standalone Saved tile is gone). Share is contextual (in-card)
+  /// so it does not appear here. Stats is removed (Patterns sub-tab covers
+  /// the same ground).
+  void _showHeaderOverflowMenu(
+    BuildContext context,
+    bool isDark,
+    Color glassSurface,
+    Color textSecondary,
+    Color textPrimary,
+  ) {
+    if (_userId == null) return;
+    showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.history, color: textSecondary),
+                title: Text(
+                  'Food history',
+                  style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    AppPageRoute(
+                      builder: (_) => FoodHistoryScreen(userId: _userId!),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.bookmark_outline_rounded, color: textSecondary),
+                title: Text(
+                  'Saved recipes, foods & menus',
+                  style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SavedHubScreen(userId: _userId!, isDark: isDark),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1326,6 +1309,40 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  /// Surface 3.1 — share the whole day's nutrition card. Pulls a fresh
+  /// daily report from the backend so the share gallery renders with
+  /// calorie / macro / inflammation / AI summary. Invoked from the in-card
+  /// share icon on the calorie ring (only when meals exist).
+  Future<void> _shareDailyReport() async {
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.dio.post('/nutrition/reports/daily');
+      if (!mounted) return;
+      final shareable = NutritionAdapter.fromDailyReport(
+        ref: ref,
+        json: res.data as Map<String, dynamic>,
+      );
+      if (shareable == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).nutritionLogSomeMealsFirst)),
+        );
+        return;
+      }
+      await ShareableSheet.show(context, data: shareable);
+      if (_userId != null && mounted) {
+        ref
+            .read(nutritionProvider.notifier)
+            .loadSummaryForDate(_userId!, _selectedDate);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Share failed: $e')),
+        );
+      }
+    }
   }
 
   /// Share one logged food/meal — routes through the unified `ShareableSheet`

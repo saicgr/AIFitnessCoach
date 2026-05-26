@@ -33,11 +33,14 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_service.dart';
 import '../../../data/services/you_overview_prewarmer.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
+import '../../profile/widgets/edit_personal_info_sheet.dart';
 import '../../../widgets/xp_hero_tile.dart';
-import '../../home/widgets/cards/combined_health_card.dart';
-import '../../home/widgets/cards/last_night_sleep_card.dart';
-import '../../home/widgets/cards/todays_health_card.dart';
+import '../../home/widgets/habits_section.dart';
+import '../widgets/health_overview_card.dart';
 import '../widgets/weight_tracking_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -333,128 +336,95 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
       color: accent,
       onRefresh: _manualRefresh,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset),
+        // ListView pads bottom for the floating glass bar; horizontal
+        // padding is 0 so individual sections can manage their own inset
+        // (the user card + gamification grid use 16px, while the health
+        // composite + habits section self-pad internally).
+        padding: EdgeInsets.fromLTRB(0, 16, 0, bottomInset),
         children: [
-          // HEALTH SNAPSHOT — first thing the user sees on the You tab.
-          // Each card auto-hides via SizedBox.shrink when it has nothing
-          // to show (no Health Connect connection, no sleep last night,
-          // no weight log), so first-day users still see a clean Overview
-          // headed by XpHeroTile. The refresh affordance lives inside the
-          // Today's Health card header (see `onRefresh` below) — the You
-          // hub host doesn't give us an AppBar to host it.
-          TodaysHealthCard(
+          // ─── 1. USER CARD — moved from Profile (Surface 5.B.4). The
+          // "you, at a glance" header was a better home for the avatar +
+          // bio than the Profile tab, which now starts straight into the
+          // Training section.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _OverviewUserCard(),
+          ),
+          const SizedBox(height: 16),
+
+          // ─── 2. HEALTH OVERVIEW — single composite card (Surface
+          // 5.A.2). Replaces the previous TodaysHealthCard +
+          // LastNightSleepCard + CombinedHealthCard triple. Each section
+          // self-hides when its data isn't connected.
+          HealthOverviewCard(
             onRefresh: _refreshing ? null : _manualRefresh,
             isRefreshing: _refreshing,
           ),
           const SizedBox(height: 12),
-          const LastNightSleepCard(),
-          const SizedBox(height: 12),
-          // Self-hiding sibling — collapses when Health isn't connected, so
-          // first-day users see no gap. Entry point into the Combined
-          // Health hub (recovery + per-metric history + goals).
-          const CombinedHealthCard(),
-          const SizedBox(height: 12),
-          // WeightTrackingCard has no built-in horizontal padding (unlike
-          // the two health cards above which self-pad for reuse on the
-          // home tile grid). Wrap it here so all three cards inset the
-          // same 32px / side and visually align.
+
+          // Weight tracking (self-pads internally, kept here as a
+          // secondary health-adjacent metric).
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: WeightTrackingCard(),
           ),
           const SizedBox(height: 8),
-          // Permanent Cycle row — opens the dedicated /cycle experience.
-          // Self-hides when menstrual tracking is disabled (the row reads
-          // `hormonalProfileProvider`), so male / opted-out accounts see
-          // no entry, per the gender-gating table.
-          const _CycleHubRow(),
 
-          // Hero XP tile — three rows (weekly XP + sparkline, level +
-          // progress + reward preview, streak + nudge). Reads directly
-          // from `userXpProvider` + `weeklyXpSummaryProvider` +
-          // `nextLevelPreviewProvider` so every surface that renders it
-          // stays in sync with the rest of the app.
-          XpHeroTile(muted: serious),
-          const SizedBox(height: 14),
-          // Recent trophy + active skill side-by-side. Each block silently
-          // hides if there's nothing to show, so new users don't see
-          // "—" chrome with no content underneath.
-          //
-          // `IntrinsicHeight` is required: the Row uses
-          // `CrossAxisAlignment.stretch` so both cards match heights, but
-          // inside a ListView the vertical axis is unbounded. Without
-          // IntrinsicHeight, stretch tries to expand to infinity and
-          // throws `BoxConstraints forces an infinite height`, which
-          // cascades into `parentDataDirty` assertions downstream.
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _RecentTrophyCard(
-                    summary: _trophySummary,
-                    recent: _recentTrophies,
-                    fg: fg,
-                    accent: accent,
-                    isDark: isDark,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActiveSkillCard(
-                    summary: _skillsSummary,
-                    fg: fg,
-                    accent: accent,
-                    isDark: isDark,
-                  ),
-                ),
-              ],
+          // Permanent Cycle row — opens the dedicated /cycle experience.
+          // Self-hides when menstrual tracking is disabled.
+          const _CycleHubRow(),
+          const SizedBox(height: 8),
+
+          // ─── 3. GAMIFICATION 2×2 GRID (Surface 5.A.3). Single grid
+          // replaces the two side-by-side Row + IntrinsicHeight blocks;
+          // consistent tile heights, no IntrinsicHeight gymnastics.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _GamificationGrid(
+              trophySummary: _trophySummary,
+              recentTrophies: _recentTrophies,
+              skillsSummary: _skillsSummary,
+              leaderboardUnlocked: _leaderboardUnlocked,
+              workoutsNeeded: _workoutsNeeded,
+              percentile: _percentile,
+              fg: fg,
+              accent: accent,
+              isDark: isDark,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
+
+          // ─── 4. HABITS heatmap (Surface 5.B.5). Moved off Profile —
+          // habits belong on the "at a glance" surface, not buried in
+          // setup. HabitsSection self-pads internally.
+          const HabitsSection(),
+          const SizedBox(height: 16),
+
+          // ─── 5. WEEKLY RECAP teaser (conditional, Surface 5.A.5).
           if (_latestSummary != null) ...[
-            _WeeklyRecapTeaser(summary: _latestSummary!, fg: fg, accent: accent),
-            const SizedBox(height: 14),
-          ],
-          Row(
-            children: [
-              Expanded(
-                child: _RewardsReadyCard(
-                  fg: fg,
-                  accent: accent,
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _LeaderboardCard(
-                  unlocked: _leaderboardUnlocked,
-                  workoutsNeeded: _workoutsNeeded,
-                  percentile: _percentile,
-                  fg: fg,
-                  accent: accent,
-                  isDark: isDark,
-                ),
-              ),
-            ],
-          ),
-          // Streaks row hidden in Serious Mode — the most game-y surface.
-          if (!serious) ...[
-            const SizedBox(height: 14),
-            _StreaksRow(streaks: _streaks, fg: fg, accent: accent),
-          ],
-          const SizedBox(height: 24),
-          Text(
-            serious
-                ? AppLocalizations.of(context).overviewStatsRewardsTabHas
-                : 'Everything else — full trophy room, achievements, skills, '
-                    'rewards, inventory — lives in Stats & Rewards.',
-            style: TextStyle(
-              color: fg.withValues(alpha: 0.5),
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _WeeklyRecapTeaser(
+                  summary: _latestSummary!, fg: fg, accent: accent),
             ),
+            const SizedBox(height: 16),
+          ],
+
+          // ─── 6. XP HERO TILE (last per composition order in plan).
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: XpHeroTile(muted: serious),
           ),
+
+          // Streaks row hidden in Serious Mode — the most game-y surface.
+          if (!serious && _streaks != null && _streaks!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _StreaksRow(
+                  streaks: _streaks, fg: fg, accent: accent),
+            ),
+          ],
         ],
       ),
     );
@@ -912,15 +882,16 @@ class _HeadlineTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
+            // Surface 5.A.3 — neutral icon area, category-colored glyph.
+            // The previous accent-tinted background tile was visual noise;
+            // the colored glyph alone is enough signal.
+            SizedBox(
+              width: 22,
+              height: 22,
               child: leadingEmoji != null
                   ? Text(leadingEmoji!, style: const TextStyle(fontSize: 18))
-                  : Icon(leadingIcon, color: accent, size: 18),
+                  : Icon(leadingIcon,
+                      color: fg.withValues(alpha: 0.75), size: 20),
             ),
             const SizedBox(height: 10),
             Text(
@@ -956,6 +927,214 @@ class _HeadlineTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// User card at the top of the Overview (Surface 5.B.4). Avatar + name +
+/// email + bio. Tap → edit personal info via the existing /profile/edit
+/// route. Hidden chrome — neutral surface, no accent tint, no "Profile"
+/// label since the user already knows whose profile they're looking at.
+class _OverviewUserCard extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_OverviewUserCard> createState() =>
+      _OverviewUserCardState();
+}
+
+class _OverviewUserCardState extends ConsumerState<_OverviewUserCard> {
+  String? _bio;
+  bool _bioLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadBio());
+  }
+
+  Future<void> _loadBio() async {
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) return;
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('${ApiConstants.users}/$userId');
+      if (response.statusCode == 200 && response.data != null && mounted) {
+        final data = response.data as Map<String, dynamic>;
+        setState(() {
+          _bio = data['bio'] as String?;
+          _bioLoaded = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _bioLoaded = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.user;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final muted = fg.withValues(alpha: 0.55);
+    final surface = fg.withValues(alpha: isDark ? 0.05 : 0.04);
+    final border = fg.withValues(alpha: 0.08);
+    final userName =
+        user?.displayName ?? user?.name ?? user?.username ?? 'You';
+    final userEmail = user?.email ?? '';
+    final photoUrl = user?.photoUrl;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        showGlassSheet(
+          context: context,
+          builder: (_) => const EditPersonalInfoSheet(),
+        ).then((result) {
+          if (result == true) {
+            ref.read(authStateProvider.notifier).refreshUser();
+            _loadBio();
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: border),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: fg.withValues(alpha: 0.08),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: photoUrl != null && photoUrl.isNotEmpty
+                      ? Image.network(
+                          photoUrl,
+                          width: 52,
+                          height: 52,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              Icon(Icons.person, color: muted, size: 28),
+                        )
+                      : Icon(Icons.person, color: muted, size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: fg,
+                        ),
+                      ),
+                      if (userEmail.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          userEmail,
+                          style: TextStyle(fontSize: 13, color: muted),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(Icons.edit_outlined, size: 16, color: muted),
+              ],
+            ),
+            if (_bioLoaded && _bio != null && _bio!.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  _bio!,
+                  style: TextStyle(fontSize: 13, color: fg),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 2×2 GridView replacing the previous side-by-side Row + IntrinsicHeight
+/// stacks (Surface 5.A.3). All four tiles share the same neutral surface;
+/// the category-colored glyph is the only color signal.
+class _GamificationGrid extends ConsumerWidget {
+  final Map<String, dynamic>? trophySummary;
+  final List<dynamic>? recentTrophies;
+  final Map<String, dynamic>? skillsSummary;
+  final bool? leaderboardUnlocked;
+  final int workoutsNeeded;
+  final double? percentile;
+  final Color fg;
+  final Color accent;
+  final bool isDark;
+
+  const _GamificationGrid({
+    required this.trophySummary,
+    required this.recentTrophies,
+    required this.skillsSummary,
+    required this.leaderboardUnlocked,
+    required this.workoutsNeeded,
+    required this.percentile,
+    required this.fg,
+    required this.accent,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      // 1.35 ratio gives a stable tile height across the four cards (no
+      // IntrinsicHeight required). Tested on iPhone SE (smallest target)
+      // through iPad — labels never truncate.
+      childAspectRatio: 1.35,
+      children: [
+        _RecentTrophyCard(
+          summary: trophySummary,
+          recent: recentTrophies,
+          fg: fg,
+          accent: accent,
+          isDark: isDark,
+        ),
+        _ActiveSkillCard(
+          summary: skillsSummary,
+          fg: fg,
+          accent: accent,
+          isDark: isDark,
+        ),
+        _RewardsReadyCard(fg: fg, accent: accent, isDark: isDark),
+        _LeaderboardCard(
+          unlocked: leaderboardUnlocked,
+          workoutsNeeded: workoutsNeeded,
+          percentile: percentile,
+          fg: fg,
+          accent: accent,
+          isDark: isDark,
+        ),
+      ],
     );
   }
 }

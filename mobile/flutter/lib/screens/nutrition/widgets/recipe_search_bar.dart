@@ -114,12 +114,23 @@ class _RecipeSearchBarState extends ConsumerState<RecipeSearchBar> {
             PopupMenuButton<String>(
               tooltip: AppLocalizations.of(context).recipeSearchBarRecentSearches,
               icon: Icon(Icons.history_rounded, size: 20, color: muted),
+              position: PopupMenuPosition.under,
               onSelected: (v) {
                 _controller.text = v;
                 _onChanged(v);
               },
               itemBuilder: (_) => history
-                  .map((h) => PopupMenuItem(value: h, child: Text(h)))
+                  .map((h) => PopupMenuItem(
+                        value: h,
+                        child: SizedBox(
+                          width: 240,
+                          child: Text(
+                            h,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ))
                   .toList(),
             ),
         ],

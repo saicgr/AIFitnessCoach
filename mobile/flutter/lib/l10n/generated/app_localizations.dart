@@ -22726,6 +22726,12 @@ abstract class AppLocalizations {
   /// **'Filter by Country'**
   String get foodBrowserPanelFilterByCountry;
 
+  /// No description provided for @foodBrowserPanelFilterBySource.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by source'**
+  String get foodBrowserPanelFilterBySource;
+
   /// No description provided for @foodBrowserPanelHighFat.
   ///
   /// In en, this message translates to:
@@ -23921,7 +23927,7 @@ abstract class AppLocalizations {
   /// No description provided for @formComparisonResultAiFormAnalysisIs.
   ///
   /// In en, this message translates to:
-  /// **'AI form analysis is for educational purposes only. Consult a qualified trainer for personalized guidance.'**
+  /// **'AI form analysis is technique feedback for educational purposes only — not medical advice. If you feel pain or have an injury, stop and consult a qualified trainer or doctor.'**
   String get formComparisonResultAiFormAnalysisIs;
 
   /// No description provided for @formComparisonResultBeta.
@@ -24002,6 +24008,12 @@ abstract class AppLocalizations {
   /// **'Discord'**
   String get founderNoteDiscord;
 
+  /// No description provided for @founderNoteRoadmap.
+  ///
+  /// In en, this message translates to:
+  /// **'Roadmap'**
+  String get founderNoteRoadmap;
+
   /// No description provided for @founderNoteFounderSoloStillOn.
   ///
   /// In en, this message translates to:
@@ -24011,7 +24023,7 @@ abstract class AppLocalizations {
   /// No description provided for @founderNoteIUsedToLog.
   ///
   /// In en, this message translates to:
-  /// **'I\'ve tried every fitness app on the App Store. I\'d log every meal for two weeks straight, feel proud of myself, then quietly stop opening it a few days later. Three weeks later I\'d reinstall a different one, swear this was the time, and run the same loop again. Every app logged my data, none of them noticed when I went silent. They were ledgers, not coaches.'**
+  /// **'Whether you\'re starting fresh or coming back from another failed try, the hard part\'s the same: nothing notices when you go quiet. I\'d log for two weeks, then go silent. Three weeks later, reinstall something new. Apps, paper journals, sticky notes, same loop. They were ledgers, not coaches.'**
   String get founderNoteIUsedToLog;
 
   /// No description provided for @founderNoteInstagram.
@@ -24035,13 +24047,13 @@ abstract class AppLocalizations {
   /// No description provided for @founderNoteSoIBuiltThe.
   ///
   /// In en, this message translates to:
-  /// **'So I built the person, not the ledger. Snap any menu, it reads the macros and sorts the options by your goal. Snap your meal, it logs the plate. It builds your workouts, tracks your fasts, logs your water, and pulls you back the morning after you skip without the guilt trip. It learns your foods, your gym, your slip patterns. Less than one session with a real trainer.'**
+  /// **'So I built the person, not the ledger. Snap any menu, it reads the macros and picks the right plate, sort and filter for low-carb, high-protein, whatever. Snap your meal, it logs itself. Workouts start you where you are, brand new or training for years, with RPE, RIR, and before-and-after photo comparisons for the ones who want them. They re-plan mid-week when you say your shoulder\'s off or your cycle\'s hitting hard. It tracks your fasts and water, learns your slip patterns, pulls you back the morning after you skip. Less than one session with a real trainer.'**
   String get founderNoteSoIBuiltThe;
 
   /// No description provided for @founderNoteTheFriendsWhoActually.
   ///
   /// In en, this message translates to:
-  /// **'What I actually needed was the opposite of a ledger: a real coach watching, texting, adjusting. That kind of help, a nutritionist plus a trainer who actually text you back, runs three to five hundred dollars a month. Which is exactly why most of us never have it, and exactly why the gap between tracking and changing stays open for years.'**
+  /// **'What I actually needed was a real coach watching, texting, adjusting. A nutritionist plus a trainer who text back runs three hundred a month, often more. Most of us never have it. So the gap between tracking and changing stays open for years.'**
   String get founderNoteTheFriendsWhoActually;
 
   /// No description provided for @freshnessDecayCardAgo.
@@ -38069,6 +38081,12 @@ abstract class AppLocalizations {
   /// **'Change gym profile'**
   String get minimalHeaderChangeGymProfile;
 
+  /// No description provided for @minimalHeaderCollapseWeekStrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse week strip'**
+  String get minimalHeaderCollapseWeekStrip;
+
   /// No description provided for @minimalHeaderD.
   ///
   /// In en, this message translates to:
@@ -38084,7 +38102,7 @@ abstract class AppLocalizations {
   /// No description provided for @minimalHeaderHideDayStrip.
   ///
   /// In en, this message translates to:
-  /// **'Hide day strip'**
+  /// **'Hide week strip'**
   String get minimalHeaderHideDayStrip;
 
   /// No description provided for @minimalHeaderMySpace.
@@ -38096,7 +38114,7 @@ abstract class AppLocalizations {
   /// No description provided for @minimalHeaderShowDayStrip.
   ///
   /// In en, this message translates to:
-  /// **'Show day strip'**
+  /// **'Show week strip'**
   String get minimalHeaderShowDayStrip;
 
   /// No description provided for @missedWorkoutBannerDoToday.
@@ -39880,6 +39898,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discover'**
   String get navDiscover;
+
+  /// No description provided for @bottomNavLeaderboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard'**
+  String get bottomNavLeaderboard;
 
   /// No description provided for @navHome.
   ///
@@ -58982,6 +59006,30 @@ abstract class AppLocalizations {
   /// **'Copy & share'**
   String get shareArtifactCardCopyShare;
 
+  /// No description provided for @shareableGallerySortDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get shareableGallerySortDefault;
+
+  /// No description provided for @shareableGallerySortFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites first'**
+  String get shareableGallerySortFavorites;
+
+  /// No description provided for @shareableGallerySortRecents.
+  ///
+  /// In en, this message translates to:
+  /// **'Recents first'**
+  String get shareableGallerySortRecents;
+
+  /// No description provided for @shareableGallerySortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort templates'**
+  String get shareableGallerySortTooltip;
+
   /// No description provided for @shareArtifactCardCouldNotCreateShare.
   ///
   /// In en, this message translates to:
@@ -66124,7 +66172,7 @@ abstract class AppLocalizations {
   /// No description provided for @unifiedHomeWidgetsKcalBurned.
   ///
   /// In en, this message translates to:
-  /// **'{arg0} kcal burned'**
+  /// **'{arg0} kcal total today'**
   String unifiedHomeWidgetsKcalBurned(Object arg0);
 
   /// No description provided for @unifiedHomeWidgetsKcalLeft.

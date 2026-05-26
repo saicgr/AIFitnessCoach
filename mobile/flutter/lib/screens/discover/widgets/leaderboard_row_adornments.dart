@@ -36,16 +36,18 @@ class RankDeltaChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = delta;
     if (d == null) {
-      // No previous-week data → render a muted em-dash so the slot isn't
-      // empty but doesn't shout "NEW" (which wraps to two lines on narrow
-      // 30dp widths and reads as broken layout). Arrows start appearing
-      // once the weekly archive has at least one prior week of data.
+      // No previous-week data, render a muted middle dot so the slot
+      // isn't empty but doesn't shout "NEW" (which wraps to two lines on
+      // narrow 30dp widths and reads as broken layout). Arrows start
+      // appearing once the weekly archive has at least one prior week
+      // of data. Per Surface 4 copy rules, em/en dashes are banned in
+      // string literals across the Leaderboard tab.
       return Semantics(
         label: AppLocalizations.of(context).leaderboardRowAdornmentsNoPreviousRankData,
         child: SizedBox(
           width: 30,
           child: Text(
-            '—',
+            '·',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.grey.withValues(alpha: 0.55),

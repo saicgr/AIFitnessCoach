@@ -22,6 +22,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/design_system/section_header.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../widgets/xp_hero_tile.dart';
 
@@ -222,24 +223,23 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
   }
 }
 
+/// Section label — wraps the design-system [SectionHeader] so this tab's
+/// existing call-sites (`_SectionLabel(label: 'PROGRESS', fg: fg)`) keep
+/// compiling. Surface 5.C drops the colored / heavy-weight headers in
+/// favor of the muted small-caps single style used everywhere.
 class _SectionLabel extends StatelessWidget {
   final String label;
+  // Retained for call-site compatibility — the actual color comes from
+  // the design-system token (ThemeColors.textMuted).
+  // ignore: unused_element_parameter
   final Color fg;
   const _SectionLabel({required this.label, required this.fg});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: fg.withValues(alpha: 0.5),
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.4,
-        ),
-      ),
+    return SectionHeader(
+      label: label,
+      padding: const EdgeInsets.only(left: 4, top: 0, bottom: 0),
     );
   }
 }

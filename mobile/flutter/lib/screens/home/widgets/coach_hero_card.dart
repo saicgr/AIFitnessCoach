@@ -16,10 +16,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/providers/coach_card_visibility_provider.dart';
+import '../../../data/providers/contextual_nudge_provider.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
+import '../../../widgets/coach/coach_contextual_nudge_row.dart';
 import 'home/unified_home_widgets.dart' show kHomeHPad;
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -35,84 +37,38 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   DateTime? _lastRegenAt;
   bool _regenerating = false;
 
-  // ── Expand/collapse state (plan §1e) ──────────────────────────────
-  // Auto-expanded during the morning bucket (5-10) and evening recap
-  // (20-22); collapsed otherwise. Override per-day via the chevron, keyed
-  // by `coach_hero_expanded_<localDate>` in SharedPreferences so a
-  // chevron flip survives an app restart but rolls over at midnight.
-  // Small-screen rule (height<700 || width<360): auto-rule is forced
-  // collapsed even in morning/evening buckets — the user can still
-  // manually expand. Decision is taken in build() because MediaQuery
-  // isn't safe in initState.
-  bool? _isExpandedToday;       // null = follow auto-rule.
-  String? _hydratedForDate;     // local-date string the override was hydrated for.
-
-  String _todayKey(DateTime now) =>
-      'coach_hero_expanded_${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-
-  Future<void> _hydrateExpansion(DateTime now) async {
-    final key = _todayKey(now);
-    if (_hydratedForDate == key) return;
-    _hydratedForDate = key;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final stored = prefs.getBool(key);
-      if (!mounted) return;
-      setState(() {
-        _isExpandedToday = stored; // null = no override, follow auto rule.
-      });
-    } catch (_) {
-      // SharedPreferences failure is non-fatal — fall back to auto-rule.
-      if (mounted) setState(() => _isExpandedToday = null);
-    }
-  }
-
-  bool _autoExpanded(DateTime now, Size viewport) {
-    // Small-screen override — never auto-expand on iPhone SE class screens.
-    if (viewport.height < 700 || viewport.width < 360) return false;
-    final h = now.hour;
-    final morning = h >= 5 && h <= 10;
-    final evening = h >= 20 && h <= 21;
-    return morning || evening;
-  }
-
-  Future<void> _toggleExpanded(DateTime now) async {
-    final viewport = MediaQuery.of(context).size;
-    final autoExp = _autoExpanded(now, viewport);
-    final currentVisible = _isExpandedToday ?? autoExp;
-    final next = !currentVisible;
-    setState(() => _isExpandedToday = next);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_todayKey(now), next);
-    } catch (_) {
-      // Persist failure is non-fatal — the in-memory toggle still wins for
-      // the session.
-    }
-  }
+  // Visibility (expanded / minimized / dismissedToday) lives in
+  // `coachCardVisibilityProvider` (Riverpod + SharedPreferences keyed by
+  // local date). The notifier outlives this widget's State so the user's
+  // explicit minimize / dismiss survives every tab switch + every cold
+  // start within the same day.
 
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
-    final insightAsync = ref.watch(dailyCoachInsightProvider);
-    final now = DateTime.now();
-    final viewport = MediaQuery.of(context).size;
+    final visibility = ref.watch(coachCardVisibilityProvider);
 
-    // Hydrate the per-day expansion override on first paint (and after
-    // midnight rollover). Cheap fire-and-forget — never blocks UI.
-    if (_hydratedForDate != _todayKey(now)) {
-      // ignore: discarded_futures
-      _hydrateExpansion(now);
+    // Dismissed for today — collapse the card out of the home scroll
+    // entirely. Returning SizedBox.shrink() over Padding() so the
+    // surrounding kHomeGap spacers don't leave an orphan gap.
+    if (visibility == CoachCardVisibility.dismissedToday) {
+      return const SizedBox.shrink();
     }
 
-    final autoExp = _autoExpanded(now, viewport);
-    final isExpanded = _isExpandedToday ?? autoExp;
+    final insightAsync = ref.watch(dailyCoachInsightProvider);
+    final isMinimized = visibility == CoachCardVisibility.minimized;
 
     return Padding(
       padding: kHomeHPad,
       child: GestureDetector(
-        onTap: () => _openChat(context, insightAsync.valueOrNull),
-        onLongPress: _onLongPressRegen,
+        // Whole-card tap is suppressed while minimized — the only
+        // interactive surface in that state is the chevron itself, so
+        // tapping anywhere on the headline area shouldn't accidentally
+        // open chat. Long-press regenerate also off in minimized mode.
+        onTap: isMinimized
+            ? null
+            : () => _openChat(context, insightAsync.valueOrNull),
+        onLongPress: isMinimized ? null : _onLongPressRegen,
         behavior: HitTestBehavior.opaque,
         child: Container(
           decoration: BoxDecoration(
@@ -127,13 +83,11 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
               ],
             ),
           ),
-          // Slightly amplified top padding when expanded so the brief gets
-          // breathing room without redesigning the collapsed footprint.
-          padding: EdgeInsetsDirectional.fromSTEB(16, isExpanded ? 18 : 14, 14, 14),
+          padding: EdgeInsetsDirectional.fromSTEB(16, 14, 10, isMinimized ? 12 : 14),
           child: insightAsync.when(
             data: (insight) =>
-                _content(c, insight, isExpanded: isExpanded, now: now),
-            loading: () => _skeleton(c),
+                _content(c, insight, isMinimized: isMinimized),
+            loading: () => _skeleton(c, isMinimized: isMinimized),
             error: (_, __) => _errorPlaceholder(c),
           ),
         ),
@@ -144,27 +98,49 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   Widget _content(
     ThemeColors c,
     dynamic insightDynamic, {
-    required bool isExpanded,
-    required DateTime now,
+    required bool isMinimized,
   }) {
     final insight = insightDynamic as DailyCoachInsight;
 
-    // Expanded body: split on \n into rows; rows beginning with "• " or
-    // "- " render as bullet rows. Otherwise as paragraph lines. Cap at 5
-    // rows to honour the size budget on small screens.
-    final bodyLines = isExpanded
-        ? _splitBodyLines(insight.body).take(5).toList()
-        : const <String>[];
+    // When minimized, render only the eyebrow + headline so the card
+    // shrinks to a compact summary row the user can re-expand via the
+    // chevron. No body, no CTAs, no nudge stack.
+    if (isMinimized) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _eyebrow(c, insight.isFallback, isMinimized: true),
+          const SizedBox(height: 4),
+          Text(
+            insight.headline.isEmpty
+                ? AppLocalizations.of(context).coachHeroCardYourCoachIsHere
+                : insight.headline,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+              letterSpacing: -0.15,
+              color: c.textPrimary,
+            ),
+          ),
+        ],
+      );
+    }
 
-    // Action chips in expanded mode — primary + secondary + up to 2 extras.
-    // We currently only have ctaPrimary + ctaSecondary on the payload;
-    // additional chips arrive when Agent B wires the rich `chips` array
-    // through `DailyCoachInsight`. Until then expanded reuses the two CTAs
-    // we already have, which is a clean visual upgrade vs collapsed mode.
+    // Expanded — full card. Body always renders bulleted when the server
+    // returned multi-line text; otherwise as a 2-line summary. (The old
+    // "auto-expand-in-morning-bucket" toggle was retired together with the
+    // chevron's previous meaning; the chevron now controls minimize.)
+    final bodyLines = _splitBodyLines(insight.body).take(5).toList();
+    final hasBullets = bodyLines.length > 1;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _eyebrow(c, insight.isFallback, isExpanded: isExpanded, now: now),
+        _eyebrow(c, insight.isFallback, isMinimized: false),
         const SizedBox(height: 6),
         Text(
           insight.headline.isEmpty
@@ -178,7 +154,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             color: c.textPrimary,
           ),
         ),
-        if (isExpanded && bodyLines.isNotEmpty) ...[
+        if (hasBullets) ...[
           const SizedBox(height: 8),
           for (final line in bodyLines)
             Padding(
@@ -188,9 +164,6 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         ] else if (insight.body.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
-            // Collapsed mode strips any embedded newlines so the same
-            // server payload doesn't break the 2-line layout when the
-            // user manually collapses an expanded brief.
             insight.body.replaceAll('\n', ' ').replaceAll('  ', ' '),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -203,7 +176,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           ),
         ],
         if (insight.ctaPrimary != null || insight.ctaSecondary != null) ...[
-          SizedBox(height: isExpanded ? 14 : 12),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -215,6 +188,9 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             ],
           ),
         ],
+        // Tier 2 — stacked contextual nudges. Hidden in minimized mode
+        // (the entire `_content` early-returns above when minimized).
+        const _CoachNudgeStack(),
         if (_regenerating)
           Padding(
             padding: const EdgeInsets.only(top: 10),
@@ -247,8 +223,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   Widget _eyebrow(
     ThemeColors c,
     bool _, {
-    bool isExpanded = false,
-    DateTime? now,
+    bool isMinimized = false,
   }) {
     // OFFLINE chip removed — was a dev-debug indicator visible to end users.
     // The deterministic fallback should read as a normal coach voice; no need
@@ -278,22 +253,28 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           ),
         ),
         const Spacer(),
-        // Chevron — toggles per-day expansion override. Hit area enlarged
-        // beyond the icon for fat-finger tapability without changing the
-        // visual size of the chevron itself.
-        if (now != null)
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _toggleExpanded(now),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: Icon(
-                isExpanded ? Icons.expand_less : Icons.expand_more,
-                size: 18,
-                color: c.textMuted,
-              ),
-            ),
-          ),
+        // Chevron — primary expand/minimize toggle, filled accent so the
+        // common action reads as the affordance (NN/G "Dangerous UX"
+        // inverted-emphasis: benign action gets the visual weight).
+        _CoachChromeIconButton(
+          icon: isMinimized ? Icons.expand_more : Icons.expand_less,
+          tooltip: isMinimized ? 'Expand' : 'Minimize',
+          emphasised: true,
+          onTap: () => ref
+              .read(coachCardVisibilityProvider.notifier)
+              .toggleMinimized(),
+        ),
+        const SizedBox(width: 2),
+        // X — destructive dismiss-for-today. Flat 14pt, no fill, muted
+        // so a tap requires intent rather than reading like a primary
+        // action sitting next to the chevron.
+        _CoachChromeIconButton(
+          icon: Icons.close_rounded,
+          tooltip: 'Dismiss for today',
+          onTap: () => ref
+              .read(coachCardVisibilityProvider.notifier)
+              .setDismissedToday(),
+        ),
       ],
     );
   }
@@ -384,7 +365,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     );
   }
 
-  Widget _skeleton(ThemeColors c) {
+  Widget _skeleton(ThemeColors c, {bool isMinimized = false}) {
     Widget bar(double w, double h) => Container(
           width: w,
           height: h,
@@ -393,6 +374,17 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             borderRadius: BorderRadius.circular(6),
           ),
         );
+    if (isMinimized) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _eyebrow(c, false, isMinimized: true),
+          const SizedBox(height: 6),
+          bar(220, 14),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -460,6 +452,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     }
   }
 
+  // _CoachNudgeStack defined at file scope below.
   void _onLongPressRegen() {
     final now = DateTime.now();
     if (_lastRegenAt != null &&
@@ -490,6 +483,153 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         if (!mounted) return;
         setState(() => _regenerating = false);
       },
+    );
+  }
+}
+
+/// Tier-2 nudge stack rendered inside [CoachHeroCard]. Shows up to 2 rows
+/// by default; when there are 3+ eligible nudges a `+N more ⌄` chip
+/// appears that AnimatedSize-expands the card to reveal the rest.
+///
+/// Expansion state is held in [nudgeStackExpandedProvider] (Riverpod) so
+/// it survives tab-switch rebuilds — local State here would reset when
+/// the home tab unmounts, which the user noticed as "tasks reset on
+/// tab change".
+class _CoachNudgeStack extends ConsumerWidget {
+  const _CoachNudgeStack();
+
+  static const int _kVisibleClamp = 2;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = ThemeColors.of(context);
+    final nudges = ref.watch(contextualNudgeProvider);
+    if (nudges.isEmpty) return const SizedBox.shrink();
+
+    final expanded = ref.watch(nudgeStackExpandedProvider);
+    final overflow = nudges.length > _kVisibleClamp;
+    final visible = expanded || !overflow
+        ? nudges
+        : nudges.take(_kVisibleClamp).toList(growable: false);
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 12),
+          Divider(height: 1, color: c.cardBorder),
+          const SizedBox(height: 10),
+          for (var i = 0; i < visible.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            CoachContextualNudgeRow(
+              key: ValueKey('nudge_${visible[i].id.name}'),
+              nudge: visible[i],
+              ctaColor: ctaColorForNudge(visible[i].id),
+            ),
+          ],
+          if (overflow) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.center,
+              child: TextButton.icon(
+                onPressed: () => ref
+                    .read(nudgeStackExpandedProvider.notifier)
+                    .state = !expanded,
+                icon: Icon(
+                  expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 16,
+                ),
+                label: Text(
+                  expanded
+                      ? 'Show less'
+                      : '+${nudges.length - _kVisibleClamp} more',
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: c.textMuted,
+                  minimumSize: const Size(0, 28),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  textStyle: const TextStyle(
+                      fontSize: 11.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Tiny icon button used in the coach card's eyebrow (chevron + X).
+/// Centralised so both controls share the same tooltip + hit area
+/// treatment. Set [emphasised] to render with a faint red-tinted circular
+/// background — used for the X dismiss button so it reads as a distinct
+/// destructive action rather than fading into another grey icon.
+class _CoachChromeIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool emphasised;
+
+  const _CoachChromeIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.emphasised = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
+    // Emphasised variant — filled accent circle. Used for the primary
+    // chevron toggle so the common (benign) action reads as the
+    // affordance. Per AccentColorScope: never hardcode a hue here, the
+    // user's accent recolors this in step with the rest of the chrome.
+    if (emphasised) {
+      return Tooltip(
+        message: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: c.accent,
+                ),
+                child: Icon(
+                  icon,
+                  size: 16,
+                  color: c.accentContrast,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    // Default variant — flat 14pt destructive/secondary icon, no fill.
+    return Tooltip(
+      message: tooltip,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 18,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Icon(icon, size: 14, color: c.textMuted),
+        ),
+      ),
     );
   }
 }

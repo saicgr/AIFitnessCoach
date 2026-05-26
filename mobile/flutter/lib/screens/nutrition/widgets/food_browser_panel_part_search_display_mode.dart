@@ -132,6 +132,7 @@ class _SourceDropdownPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: PopupMenuButton<String?>(
         onSelected: onChanged,
+        tooltip: AppLocalizations.of(context).foodBrowserPanelFilterBySource,
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         position: PopupMenuPosition.under,

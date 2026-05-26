@@ -187,6 +187,54 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
       );
     }
 
+    // Surface 1.2 / 2.2 — prefer the bundled per-workout-type illustration
+    // when one is mapped for this workout's `type` (Upper / Lower / Cardio /
+    // HIIT / Yoga / etc.). The asset pipeline is fail-soft: a missing PNG
+    // falls through to the per-exercise endpoint URL, then the gradient.
+    if (_typeAssetPath != null) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark
+                    ? [
+                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.1)!,
+                        const Color(0xFF0f0f1a),
+                      ]
+                    : [
+                        Color.lerp(Colors.white, accentColor, 0.05)!,
+                        Color.lerp(const Color(0xFFF0F4F8), accentColor, 0.1)!,
+                      ],
+              ),
+            ),
+          ),
+          Image.asset(
+            _typeAssetPath!,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (_, __, ___) {
+              if (_backgroundImageUrl != null) {
+                return CachedNetworkImage(
+                  imageUrl: _backgroundImageUrl!,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  memCacheWidth: 400,
+                  memCacheHeight: 400,
+                  placeholder: (_, __) => const SizedBox.shrink(),
+                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      );
+    }
+
     if (_backgroundImageUrl != null) {
       // Image with a nice gradient background behind it (accent-tinted)
       return Stack(

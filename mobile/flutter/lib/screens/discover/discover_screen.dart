@@ -37,8 +37,10 @@ import '../../l10n/generated/app_localizations.dart';
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
 
+  // Sub-tab strip labels. "XP" matches the shorter "Volume" / "Streaks"
+  // siblings; the "this week" context is conveyed by the hero card.
   static const _boardOptions = [
-    ('xp', 'XP This Week'),
+    ('xp', 'XP'),
     ('volume', 'Volume'),
     ('streaks', 'Streaks'),
   ];
@@ -331,6 +333,19 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Top reset chip — replaces the old footer italic
+        // "Resets Sun, May 31 · 11:59 PM" with a compact neutral chip.
+        // Local-day-name reset is sufficient context; midnight precision
+        // was over-specific.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _ResetChip(
+            label: _resetLabel(s.weekStart),
+            textMuted: textMuted,
+            border: border,
+          ),
+        ),
+        const SizedBox(height: 10),
         GestureDetector(
           onTap: selfEntry == null
               ? null
@@ -356,95 +371,54 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
             accent: accent,
           ),
         ),
-        const SizedBox(height: 14),
-        // Rising Stars — the header is ALWAYS rendered (keyed as
-        // `discover_v1` step 1) so the first-run tour, which runs exactly
-        // when a new user has no movers yet, still has a spotlight target.
+        const SizedBox(height: 18),
+        // Single consolidated leaderboard list (was: Rising Stars strip
+        // + Near You + Top 10 collapsible — three list-shaped views of
+        // the same data). Rising Stars is now an annotation chip on
+        // the rows that gained 5+ ranks this week (see `_NearYouList`).
+        // Top 10 is accessible via the "View top 10" button rendered at
+        // the bottom of the list (opens a sheet reusing the same row UI).
+        //
+        // Tour anchor wraps BOTH branches so the spotlight target
+        // resolves whether or not the user is on the board yet. The
+        // legacy `discoverRisingStars` anchor is reattached here as a
+        // sibling so first-run tour step 1 still has a hit target post
+        // consolidation.
         KeyedSubtree(
           key: TooltipAnchors.discoverRisingStars,
-          child: _sectionHeader('🚀 Rising Stars', 'This week\'s biggest movers', textColor: textColor, textMuted: textMuted),
-        ),
-        const SizedBox(height: 10),
-        if (s.risingStars.isNotEmpty)
-          _RisingStarsStrip(stars: s.risingStars, elevated: elevated, textColor: textColor, textMuted: textMuted, border: border, accent: accent)
-        else
-          _emptyState(
-            'No movers yet — log a workout this week to climb.',
-            textMuted: textMuted,
-            elevated: elevated,
-            border: border,
-          ),
-        const SizedBox(height: 18),
-        // Near You — step 2 anchor wraps BOTH branches so the spotlight
-        // resolves whether or not the user is on the board yet.
-        KeyedSubtree(
-          key: TooltipAnchors.discoverNearYou,
-          child: s.nearYou.isEmpty
-              ? _emptyState(
-                  'No entries yet — your first workout this week puts you on the board.',
-                  textMuted: textMuted,
-                  elevated: elevated,
-                  border: border,
-                )
-              : _NearYouList(entries: s.nearYou, elevated: elevated, border: border, textColor: textColor, textMuted: textMuted, accent: accent, metricLabel: s.metricLabel),
-        ),
-        const SizedBox(height: 18),
-        _Top10Collapsible(entries: s.top10, elevated: elevated, border: border, textColor: textColor, textMuted: textMuted, metricLabel: s.metricLabel),
-        const SizedBox(height: 14),
-        Center(
-          child: Text(
-            _resetLabel(s.weekStart),
-            style: TextStyle(fontSize: 11, color: textMuted, letterSpacing: 1),
+          child: KeyedSubtree(
+            key: TooltipAnchors.discoverNearYou,
+            child: s.nearYou.isEmpty
+                ? _emptyState(
+                    // Single dot separator — em/en dashes are banned by
+                    // the redesign copy rules.
+                    'No entries yet · Log a workout this week to climb',
+                    textMuted: textMuted,
+                    elevated: elevated,
+                    border: border,
+                  )
+                : _NearYouList(
+                    entries: s.nearYou,
+                    top10: s.top10,
+                    elevated: elevated,
+                    border: border,
+                    textColor: textColor,
+                    textMuted: textMuted,
+                    accent: accent,
+                    metricLabel: s.metricLabel,
+                  ),
           ),
         ),
       ],
     );
   }
 
-  Widget _sectionHeader(String title, String subtitle, {required Color textColor, required Color textMuted}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor)),
-        const SizedBox(height: 2),
-        Text(subtitle, style: TextStyle(fontSize: 12, color: textMuted)),
-      ],
-    );
-  }
-
-  /// Compact segmented control — single row, full width, no overflow.
-  /// Replaces the older double-row chip layout. Matches Strava/Peloton feel.
-  Widget _filterPills(BuildContext context, WidgetRef ref,
-      {required Color textColor, required Color textMuted, required Color border, required Color accent}) {
-    final board = ref.watch(discoverBoardProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          for (final opt in DiscoverScreen._boardOptions)
-            Expanded(
-              child: _SegmentedTab(
-                label: opt.$2,
-                selected: board == opt.$1,
-                accent: accent,
-                textColor: textColor,
-                textMuted: textMuted,
-                onTap: () {
-                  HapticService.light();
-                  ref.read(discoverBoardProvider.notifier).state = opt.$1;
-                },
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  // (Surface 4 redesign removed `_sectionHeader` and `_filterPills` —
+  // the consolidated list no longer renders intra-section headers, and
+  // the segmented in-line filter was always shadowed by the floating
+  // FloatingTabBar at the bottom. Both helpers and the now-orphaned
+  // `_SegmentedTab` widget have been retired with the rest of the
+  // duplicate-leaderboard surfaces.)
 
   Widget _emptyState(String message, {required Color textMuted, required Color elevated, required Color border}) {
     return Container(
@@ -464,19 +438,26 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     );
   }
 
-  /// Footer label: "Resets Sun, Apr 20 · 11:59 PM" — dynamically computed from
-  /// the server-provided `week_start` (Monday) + 6 days so the user sees the
-  /// exact date the board resets, not a generic "Sunday". Falls back to a
-  /// generic string when no snapshot is loaded yet.
+  /// Top-of-screen reset chip label. Localizes the reset day name from the
+  /// server-provided `week_start` (Monday) + 6 days, so users in non-English
+  /// locales see e.g. "Resets domingo" / "Resets dimanche". When weekStart
+  /// is empty (cold load), fall back to the literal "Sunday" — every active
+  /// leaderboard resets on Sunday-local-time so the fallback is accurate.
+  ///
+  /// No specific timestamp ("11:59 PM" or otherwise) by design — the chip
+  /// is informational, not operational, and the timestamp added visual
+  /// noise to the old footer without giving the user any actionable info.
   String _resetLabel(String weekStart) {
-    if (weekStart.isEmpty) return 'Resets Sunday · 11:59 PM';
+    if (weekStart.isEmpty) return 'Resets Sunday';
     try {
       final monday = DateTime.parse(weekStart);
       final resetDate = monday.add(const Duration(days: 6));
-      final formatted = DateFormat('E, MMM d').format(resetDate);
-      return 'Resets $formatted · 11:59 PM';
+      // E.g. "Sunday" / "domingo" / "dimanche" — pulled from current
+      // locale's full weekday name via the EEEE pattern.
+      final dayName = DateFormat('EEEE').format(resetDate);
+      return 'Resets $dayName';
     } catch (_) {
-      return 'Resets Sunday · 11:59 PM';
+      return 'Resets Sunday';
     }
   }
 
@@ -499,63 +480,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
 }
 
-// ─── Segmented tab (single-row filter) ──────────────────────────────────────
-
-class _SegmentedTab extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final Color accent;
-  final Color textColor;
-  final Color textMuted;
-  final VoidCallback onTap;
-
-  const _SegmentedTab({
-    required this.label,
-    required this.selected,
-    required this.accent,
-    required this.textColor,
-    required this.textMuted,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? accent : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : textMuted,
-            letterSpacing: 0.2,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Hero rank card — percentile first ──────────────────────────────────────
+// ─── Hero rank card ─────────────────────────────────────────────────────────
 
 class _RankHeroCard extends ConsumerWidget {
   final DiscoverSnapshot snapshot;
@@ -573,92 +498,37 @@ class _RankHeroCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = snapshot;
     final hasRank = s.yourRank > 0;
-    // If the user has accrued any weekly XP (login streak, meal logs) but
-    // isn't yet ranked (no completed workout this week), soften the pill
-    // from the demanding "JOIN THE BOARD" to "NOT RANKED YET" so it reads
-    // as an in-progress status instead of a blank slate.
-    final String percentileText;
-    if (s.yourPercentile > 0) {
-      percentileText =
-          'TOP ${(100 - s.yourPercentile).clamp(1, 99).toStringAsFixed(0)}%';
-    } else if (!hasRank && s.yourWeeklyXpUnranked > 0) {
-      percentileText = 'NOT RANKED YET';
-    } else {
-      percentileText = 'JOIN THE BOARD';
-    }
 
-    // Lifetime XP + level come from the XP system (user_xp table), not the
-    // weekly leaderboard. We surface them here so the hero doesn't feel
-    // disconnected from the XP Goals screen — e.g. user sees "Lvl 4 · 956 XP"
-    // alongside the week's 754 XP.
-    final userXp = ref.watch(userXpProvider);
+    // XP-purple, independent of the user's accent selection. The "XP this
+    // week" line is a category metric, not a primary action, so it stays
+    // purple even when the user switches their accent to blue / green /
+    // etc. (per the design-system color budget: accent reserved for primary
+    // semantics; macro/XP categories keep their fixed hue).
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final xpPurple =
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
 
+    // Neutral surface — drops the prior accent-tinted gradient + accent
+    // border. Accent is now reserved for the rank number itself (one
+    // focused use) so the hero card no longer competes with the user-row
+    // highlight downstream.
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            accent.withValues(alpha: 0.25),
-            accent.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: elevated,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accent.withValues(alpha: 0.4)),
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: accent,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  percentileText,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              if (hasRank) ...[
-                const SizedBox(width: 8),
-                Text(
-                  '#${s.yourRank} of ${s.totalActive}',
-                  style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ],
-          ),
-          // Hide the lifetime badge when XP hasn't been hydrated yet. The
-          // XPRepository returns UserXP.empty() on error, which has totalXp=0
-          // and currentLevel=1 — rendering that would falsely claim the user
-          // is level 1 with zero lifetime XP. We only show the badge once
-          // we're confident the data is real (totalXp > 0 OR level > 1 OR a
-          // valid userId is attached to the state).
-          if (userXp != null &&
-              (userXp.totalXp > 0 || userXp.currentLevel > 1)) ...[
-            const SizedBox(height: 10),
-            _LifetimeBadge(
-              level: userXp.currentLevel,
-              totalXp: userXp.totalXp,
-              accent: accent,
-              textColor: textColor,
-              textMuted: textMuted,
-            ),
-          ],
-          // Tier-persistence streak nudge — "Week 2 in Top 1% · 3 more for Iron Throne".
-          // Only renders once the user has held a qualifying tier at least
-          // one week. Copy adapts to whether a next milestone exists.
+          // Tier-persistence streak nudge — "Week 2 in Top 1% · 3 more for
+          // Iron Throne". Only renders once the user has held a qualifying
+          // tier at least one week. Copy adapts to whether a next milestone
+          // exists. Lifted to the top of the card now that the TOP-% pill
+          // is gone, so the card still leads with momentum context when it
+          // exists; otherwise the rank line leads.
           if (s.yourTierStreakWeeks >= 1) ...[
-            const SizedBox(height: 8),
             _TierStreakLine(
               weeks: s.yourTierStreakWeeks,
               tier: s.yourTier,
@@ -668,27 +538,44 @@ class _RankHeroCard extends ConsumerWidget {
               textColor: textColor,
               textMuted: textMuted,
             ),
+            const SizedBox(height: 10),
           ],
-          const SizedBox(height: 12),
           // Three states:
-          //  1. On board (hasRank)  → always show metric in big type, even
-          //     if it's 0 (e.g. streaks=0 or volume=0 with logs missing
-          //     duration). "0" beats a misleading "complete a workout" prompt.
-          //  2. Not on board (rank=0) → prompt to complete a workout.
+          //  1. On board (hasRank)  → primary line = rank + delta arrow,
+          //     accent only on the rank number. Secondary = "{n} XP this
+          //     week" in XP-purple.
+          //  2. Not on board, has weekly XP → soft prompt with unranked XP.
+          //  3. Not on board, no weekly XP → complete-a-workout prompt.
           if (hasRank) ...[
+            // Self-entry rankDelta lives on the user's `nearYou` row, not
+            // on the snapshot root. Look it up here so we can render a
+            // delta arrow next to the rank. null when the user just
+            // joined the board this week (no prior rank to compare).
+            Builder(builder: (_) {
+              final selfMatches = s.nearYou.where((e) => e.isCurrentUser);
+              final int? selfDelta = selfMatches.isEmpty
+                  ? null
+                  : selfMatches.first.rankDelta;
+              return _PrimaryRankLine(
+                rank: s.yourRank,
+                totalActive: s.totalActive,
+                rankDelta: selfDelta,
+                accent: accent,
+                textColor: textColor,
+                textMuted: textMuted,
+              );
+            }),
+            const SizedBox(height: 6),
+            // Secondary metric — "{n} XP this week" / "{n} kg this week"
+            // / "{n}-day streak". Always-on, uses XP-purple for visual
+            // category separation from the accent-tinted rank.
             Text(
-              '${s.yourMetric.toStringAsFixed(0)} ${s.metricLabel}',
+              '${s.yourMetric.toStringAsFixed(0)} ${s.metricLabel} this week',
               style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                color: textColor,
-                height: 1.1,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: xpPurple,
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              AppLocalizations.of(context).newTilesPartThisWeek,
-              style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w500),
             ),
           ] else ...[
             // Surface the user's own weekly progress even though they're
@@ -777,6 +664,335 @@ class _RankHeroCard extends ConsumerWidget {
       };
 }
 
+// ─── Hero primary line: rank + delta arrow ──────────────────────────────────
+
+/// Single primary metric line for the slimmed-down rank hero card.
+///
+/// Renders: `[#]{rank}  ▲ {delta}  of {totalActive}` — accent only on the
+/// rank number itself, neutral elsewhere. Delta arrow is green for gains,
+/// red for losses, omitted when null (new joiner with no prior rank).
+///
+/// Replaces the prior multi-line stack of: TOP-% pill + "#X of Y" muted
+/// line + big {metric} {label} + "this week" subtitle. The metric line is
+/// now a sibling beneath this widget, rendered by the caller in XP-purple.
+class _PrimaryRankLine extends StatelessWidget {
+  final int rank;
+  final int totalActive;
+  final int? rankDelta;
+  final Color accent, textColor, textMuted;
+  const _PrimaryRankLine({
+    required this.rank,
+    required this.totalActive,
+    required this.rankDelta,
+    required this.accent,
+    required this.textColor,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final delta = rankDelta;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        // The rank number is the ONE focused accent use on the hero card.
+        Text(
+          '#$rank',
+          style: TextStyle(
+            fontSize: 34,
+            fontWeight: FontWeight.w900,
+            color: accent,
+            height: 1.0,
+          ),
+        ),
+        if (delta != null && delta != 0) ...[
+          const SizedBox(width: 8),
+          Icon(
+            delta > 0 ? Icons.arrow_upward : Icons.arrow_downward,
+            size: 18,
+            color: delta > 0 ? Colors.green : Colors.redAccent,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '${delta.abs()}',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: delta > 0 ? Colors.green : Colors.redAccent,
+            ),
+          ),
+        ],
+        const SizedBox(width: 10),
+        Text(
+          'of $totalActive',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Reset chip (top-of-screen "Resets Sunday") ─────────────────────────────
+
+/// Small neutral chip rendered at the top of the Leaderboard tab. Replaces
+/// the prior italic footer "Resets Sun, May 31 · 11:59 PM" with a less
+/// prominent, non-italic, no-specific-timestamp affordance. Reset day is
+/// computed once in `_resetLabel` and passed in via [label].
+class _ResetChip extends StatelessWidget {
+  final String label;
+  final Color textMuted;
+  final Color border;
+  const _ResetChip({
+    required this.label,
+    required this.textMuted,
+    required this.border,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: textMuted,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Movers chip (row-level annotation) ─────────────────────────────────────
+
+/// Inline "Movers" chip rendered on `_NearYouList` rows whose `rankDelta`
+/// is at least +5 this week. Replaces the standalone Rising Stars strip
+/// that used to live above the Near You list — the same information now
+/// surfaces in-context on the row that earned it, dropping one section
+/// entirely from the screen.
+class _MoversChip extends StatelessWidget {
+  final Color textMuted;
+  const _MoversChip({required this.textMuted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: textMuted.withValues(alpha: 0.35), width: 0.7),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.trending_up, size: 10, color: Colors.green),
+          const SizedBox(width: 3),
+          Text(
+            'Movers',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: textMuted,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── View top 10 button + sheet ─────────────────────────────────────────────
+
+/// Tappable footer button rendered at the bottom of `_NearYouList`. Opens
+/// a glass sheet showing the snapshot's `top10` entries with the same row
+/// chrome as the in-line list. Reuses `_Top10Collapsible` content in an
+/// always-expanded form so the sheet has no chevron / collapse affordance.
+class _ViewTop10Button extends ConsumerWidget {
+  final List<DiscoverEntry> top10;
+  final String metricLabel;
+  final Color textColor, textMuted, border, elevated, accent;
+  const _ViewTop10Button({
+    required this.top10,
+    required this.metricLabel,
+    required this.textColor,
+    required this.textMuted,
+    required this.border,
+    required this.elevated,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        HapticService.light();
+        _openTop10Sheet(context, ref);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: border),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('👑', style: TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(
+              'View top 10',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: textColor,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right, size: 18, color: textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openTop10Sheet(BuildContext context, WidgetRef ref) {
+    // Hide the floating nav while the sheet is up, matching `_openUserPeek`.
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        maxHeightFraction: 0.85,
+        child: _Top10Sheet(
+          entries: top10,
+          metricLabel: metricLabel,
+          textColor: textColor,
+          textMuted: textMuted,
+          border: border,
+          accent: accent,
+        ),
+      ),
+    ).whenComplete(() {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
+  }
+}
+
+class _Top10Sheet extends ConsumerWidget {
+  final List<DiscoverEntry> entries;
+  final String metricLabel;
+  final Color textColor, textMuted, border, accent;
+  const _Top10Sheet({
+    required this.entries,
+    required this.metricLabel,
+    required this.textColor,
+    required this.textMuted,
+    required this.border,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 12,
+        bottom: 24 + MediaQuery.of(context).padding.bottom,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Text('👑', style: TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Text(
+                AppLocalizations.of(context).discoverTopOfTheWeek,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (int i = 0; i < entries.length; i++) ...[
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              onTap: () => _openUserPeek(
+                context,
+                userId: entries[i].userId,
+                name: entries[i].bestName,
+                username: entries[i].username,
+                avatarUrl: entries[i].avatarUrl,
+                rank: entries[i].rank,
+                metricValue: entries[i].metricValue,
+                metricLabel: metricLabel,
+                ref: ref,
+                level: entries[i].currentLevel,
+              ),
+              leading: SizedBox(
+                width: 28,
+                child: Text(
+                  '#${entries[i].rank}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: textMuted,
+                  ),
+                ),
+              ),
+              title: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      entries[i].isCurrentUser
+                          ? AppLocalizations.of(context).navYou
+                          : entries[i].bestName,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _LevelPill(level: entries[i].currentLevel, accent: accent),
+                ],
+              ),
+              trailing: Text(
+                '${entries[i].metricValue.toStringAsFixed(0)} $metricLabel',
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (i < entries.length - 1)
+              Divider(height: 1, color: border),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// Tier-persistence hero nudge.
 ///
 /// Example copy:
@@ -852,42 +1068,11 @@ class _TierStreakLine extends StatelessWidget {
   }
 }
 
-/// Hero sub-row: "Lvl 4 · 956 XP lifetime". Bridges the weekly leaderboard
-/// metric to the lifetime XP shown on the XP Goals screen so the two numbers
-/// don't feel contradictory.
-class _LifetimeBadge extends StatelessWidget {
-  final int level;
-  final int totalXp;
-  final Color accent, textColor, textMuted;
-  const _LifetimeBadge({
-    required this.level,
-    required this.totalXp,
-    required this.accent,
-    required this.textColor,
-    required this.textMuted,
-  });
+// (Surface 4 redesign removed the lifetime XP sub-row from the hero card —
+// it duplicated the XP Goals screen and bloated the hero vertically. The
+// `_LifetimeBadge` widget and its `_formatXp` helper were retired with it.)
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _LevelPill(level: level, accent: accent),
-        const SizedBox(width: 8),
-        Text(
-          '${_formatXp(totalXp)} XP lifetime',
-          style: TextStyle(
-            fontSize: 12,
-            color: textMuted,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Compact "Lvl N" chip used on the hero sub-row and every leaderboard row.
+/// Compact "Lvl N" chip used on every leaderboard row.
 class _LevelPill extends StatelessWidget {
   final int level;
   final Color accent;
@@ -915,126 +1100,25 @@ class _LevelPill extends StatelessWidget {
   }
 }
 
-String _formatXp(int xp) {
-  if (xp >= 1000000) return '${(xp / 1000000).toStringAsFixed(1)}M';
-  if (xp >= 1000) return '${(xp / 1000).toStringAsFixed(1)}K';
-  return xp.toString();
-}
-
-// ─── Rising Stars strip ─────────────────────────────────────────────────────
-
-class _RisingStarsStrip extends ConsumerWidget {
-  final List<DiscoverRisingStar> stars;
-  final Color elevated, textColor, textMuted, border, accent;
-  const _RisingStarsStrip({
-    required this.stars,
-    required this.elevated,
-    required this.textColor,
-    required this.textMuted,
-    required this.border,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return SizedBox(
-      height: 128,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: stars.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, i) {
-          final star = stars[i];
-          return GestureDetector(
-            onTap: () => _openUserPeek(
-              context,
-              userId: star.userId,
-              name: star.bestName,
-              username: star.username,
-              avatarUrl: star.avatarUrl,
-              rank: star.currentRank,
-              metricValue: star.metricValue,
-              metricLabel: 'XP',
-              ref: ref,
-              level: star.currentLevel,
-            ),
-            child: Container(
-            width: 120,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: accent.withValues(alpha: 0.25)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    TierRingAvatar(
-                      url: star.avatarUrl,
-                      fallback: star.bestName,
-                      radius: 20,
-                      accent: accent,
-                      isDark: Theme.of(context).brightness == Brightness.dark,
-                      tier: star.peakTier,
-                      peakTier: star.peakTier,
-                      prHit: star.prThisWeek,
-                      activeNow: star.isActiveNow,
-                    ),
-                    const Spacer(),
-                    _LevelPill(level: star.currentLevel, accent: accent),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  star.bestName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    const Icon(Icons.arrow_upward, color: Colors.green, size: 12),
-                    Text(
-                      '${star.rankDelta}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.green,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'ranks',
-                      style: TextStyle(fontSize: 11, color: textMuted),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          );
-        },
-      ),
-    );
-  }
-}
+// (Surface 4 redesign retired the standalone `_RisingStarsStrip`. The
+// movers signal now renders as an inline `_MoversChip` on `_NearYouList`
+// rows whose `rankDelta >= 5`, so the same information surfaces in
+// context on the row that earned it without claiming its own section.)
 
 // ─── Near You ────────────────────────────────────────────────────────────────
 
 class _NearYouList extends ConsumerWidget {
   final List<DiscoverEntry> entries;
+  /// Top-10 entries from the same snapshot. Used by the "View top 10"
+  /// button at the bottom of the list to open a peek sheet — replaces
+  /// the standalone collapsible Top 10 section that used to live below
+  /// this list. Empty list ⇒ button is hidden.
+  final List<DiscoverEntry> top10;
   final Color elevated, border, textColor, textMuted, accent;
   final String metricLabel;
   const _NearYouList({
     required this.entries,
+    required this.top10,
     required this.elevated,
     required this.border,
     required this.textColor,
@@ -1050,39 +1134,57 @@ class _NearYouList extends ConsumerWidget {
     // row with isCurrentUser=true), no chips render.
     final meIdx = entries.indexWhere((e) => e.isCurrentUser);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        children: [
-          for (int i = 0; i < entries.length; i++) ...[
-            Builder(builder: (ctx) => _row(ctx, ref, entries[i])),
-            if (i < entries.length - 1) ...[
-              // GapChip placement: show only on the divider directly above
-              // OR directly below the current-user row. Shows "+42 XP" above
-              // (distance to catch them) or "−31 XP" below (distance ahead).
-              if (meIdx != -1 && (i == meIdx - 1 || i == meIdx)) ...[
-                Divider(height: 1, color: border),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: GapChip(
-                    delta: i == meIdx - 1
-                        ? entries[i].metricValue - entries[meIdx].metricValue
-                        : entries[meIdx].metricValue - entries[i + 1].metricValue,
-                    metricLabel: metricLabel,
-                    accent: accent,
-                  ),
-                ),
-                Divider(height: 1, color: border),
-              ] else
-                Divider(height: 1, color: border),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: border),
+          ),
+          child: Column(
+            children: [
+              for (int i = 0; i < entries.length; i++) ...[
+                Builder(builder: (ctx) => _row(ctx, ref, entries[i])),
+                if (i < entries.length - 1) ...[
+                  // GapChip placement: only on the divider directly above OR
+                  // directly below the current-user row. Shows "+42 XP" above
+                  // (distance to catch them) or "-31 XP" below.
+                  if (meIdx != -1 && (i == meIdx - 1 || i == meIdx)) ...[
+                    Divider(height: 1, color: border),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: GapChip(
+                        delta: i == meIdx - 1
+                            ? entries[i].metricValue - entries[meIdx].metricValue
+                            : entries[meIdx].metricValue -
+                                entries[i + 1].metricValue,
+                        metricLabel: metricLabel,
+                        accent: accent,
+                      ),
+                    ),
+                    Divider(height: 1, color: border),
+                  ] else
+                    Divider(height: 1, color: border),
+                ],
+              ],
             ],
-          ],
+          ),
+        ),
+        if (top10.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _ViewTop10Button(
+            top10: top10,
+            metricLabel: metricLabel,
+            textColor: textColor,
+            textMuted: textMuted,
+            border: border,
+            elevated: elevated,
+            accent: accent,
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -1208,6 +1310,17 @@ class _NearYouList extends ConsumerWidget {
                   textColor: textMuted,
                   compact: compact,
                 ),
+              ],
+              // Movers annotation — surfaces "this week's biggest movers"
+              // in-line on the row that earned it (replaces the standalone
+              // Rising Stars strip that used to live above this list).
+              // Threshold = +5 ranks gained this week. Hidden on compact
+              // widths to preserve the name's truncation budget.
+              if (!compact &&
+                  e.rankDelta != null &&
+                  e.rankDelta! >= 5) ...[
+                const SizedBox(width: 6),
+                _MoversChip(textMuted: textMuted),
               ],
             ],
           ),

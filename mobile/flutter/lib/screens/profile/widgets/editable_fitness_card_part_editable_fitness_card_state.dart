@@ -196,15 +196,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     // Watch the active gym profile
     final activeGymProfile = ref.watch(activeGymProfileProvider);
 
-    if (!_isEditing) {
-      return _buildGridView(
-        activeGymProfile: activeGymProfile,
-        isDark: isDark,
-        elevated: elevated,
-        textMuted: textMuted,
-      );
-    }
-
+    // Surface 5.B.6: drop the 4×2 view-mode grid. View mode now uses the
+    // same vertical list as edit mode — the grid duplicated content from
+    // the TrainingSetupCard immediately below (Days, Steps both appeared
+    // in both surfaces). Edit-mode rows are interactive when _isEditing
+    // is true and read-only otherwise — same widget, same row shape.
     return Container(
       decoration: BoxDecoration(
         color: elevated,

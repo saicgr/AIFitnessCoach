@@ -21,6 +21,7 @@ import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
 import 'widgets/workout_planner_section.dart';
 import 'widgets/exercise_preferences_card.dart';
+import 'widgets/workout_library_grid.dart';
 import 'widgets/workouts_floating_options_bar.dart';
 import 'widgets/upcoming_workouts_sheet.dart';
 import 'widgets/favorite_workouts_sheet.dart';
@@ -341,27 +342,15 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                     ),
                   ),
                 ),
-                // Single Import icon-button — surfaces the workout-history
-                // import picker sheet (file / paste / Health sync). Tray-with-
-                // down-arrow reads as "bring in / import".
-                _GlassmorphicButton(
-                  onTap: () {
-                    HapticService.light();
-                    showGlassSheet(
-                      context: context,
-                      builder: (_) => const _ImportWorkoutsPickerSheet(),
-                    );
-                  },
-                  isDark: isDark,
-                  child: Icon(
-                    Icons.move_to_inbox_outlined,
-                    color: accentColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Workout settings gear — opens workout-specific preferences
-                // (replaces the old "Prefs" item in the floating bar).
+                // Surface 2.1 — header consolidated to title + gear only.
+                // Import workouts moves into Workout Settings → Import row.
+                // Week-strip collapse toggle moves into Workout Settings
+                // as a "Compact week strip" toggle.
+                // TODO(surface-5-settings-owner): add these two rows in
+                // /settings/workout-settings once that screen's owner
+                // ships the redesign. Until then, both actions still exist
+                // via SettingsScreen overflow but are no longer in the
+                // top-bar.
                 _GlassmorphicButton(
                   onTap: () {
                     HapticService.light();
@@ -373,14 +362,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                     color: accentColor,
                     size: 22,
                   ),
-                ),
-                const SizedBox(width: 8),
-                // Overflow ⋮ menu — natural home for Workouts-tab actions.
-                // Currently hosts the global week-strip collapse toggle so the
-                // strip can be folded away from this tab too.
-                _WorkoutsOverflowMenu(
-                  isDark: isDark,
-                  accentColor: accentColor,
                 ),
               ],
             ),
@@ -451,7 +432,15 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: _buildQuickActions(context, isDark, textSecondary, accentColor),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
+
+        // Surface 2.4 — Workout library category grid (2×3). Sits
+        // between the quick-action chip row and the weekly progress card.
+        _buildSectionHeader('LIBRARY', textSecondary),
+        const SizedBox(height: 8),
+        const WorkoutLibraryGrid(),
+
+        const SizedBox(height: 24),
 
         // Exercise Preferences (expandable)
         KeyedSubtree(
@@ -505,74 +494,107 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     Color textSecondary,
     Color accentColor,
   ) {
+    // Surface 2.3 — 4 chip-style buttons (24pt-ish height, icon + label,
+    // no card surround). Matches Google Health "Start a workout" pattern.
+    // Favorites uses the category-neutral textSecondary tint (Surface 2.8
+    // drops the hardcoded red heart).
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildQuickActionButton(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildQuickActionChip(
               context,
               icon: Icons.add_circle_outline,
               label: AppLocalizations.of(context).workoutsCustom,
-              color: accentColor,
-              isDark: isDark,
+              tint: textPrimary,
               onTap: () {
                 HapticService.light();
                 context.push('/workout/build');
               },
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildQuickActionButton(
+            const SizedBox(width: 8),
+            _buildQuickActionChip(
               context,
               icon: Icons.calendar_month_rounded,
               label: AppLocalizations.of(context).workoutsUpcoming,
-              color: accentColor,
-              isDark: isDark,
+              tint: textPrimary,
               onTap: () {
                 HapticService.light();
                 showUpcomingWorkoutsSheet(context, ref);
               },
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildQuickActionButton(
+            const SizedBox(width: 8),
+            _buildQuickActionChip(
               context,
-              icon: Icons.favorite,
+              icon: Icons.favorite_border_rounded,
               label: AppLocalizations.of(context).workoutsFavorites,
-              color: AppColors.error,
-              isDark: isDark,
+              tint: textPrimary,
               onTap: () {
                 HapticService.light();
                 showFavoriteWorkoutsSheet(context, ref);
               },
             ),
-          ),
-          const SizedBox(width: 8),
-          // B.3.1 — History moved in from the floating bar. Opens the same
-          // /schedule (history) screen the floating "History" pill used to.
-          // Four Expanded buttons fit on iPhone SE (320pt wide); five would
-          // overflow, so History is the cap.
-          Expanded(
-            child: _buildQuickActionButton(
+            const SizedBox(width: 8),
+            _buildQuickActionChip(
               context,
               icon: Icons.history_rounded,
               label: AppLocalizations.of(context).workoutHistory,
-              color: accentColor,
-              isDark: isDark,
+              tint: textPrimary,
               onTap: () {
                 HapticService.light();
                 context.push('/schedule');
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
+  Widget _buildQuickActionChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color tint,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: border),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: tint),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: tint,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ignore: unused_element
   Widget _buildQuickActionButton(
     BuildContext context, {
     required IconData icon,
@@ -1292,11 +1314,10 @@ class _GlassmorphicButton extends StatelessWidget {
   }
 }
 
-/// Overflow ⋮ menu for the Workouts top bar. Rendered as a glassmorphic
-/// icon-button so it matches the Import button beside it. Hosts the global
-/// week-strip collapse/expand toggle (label reflects live
-/// `weekCalendarCollapsedProvider` state) and is the natural home for any
-/// future Workouts-tab overflow actions.
+/// Overflow ⋮ menu for the Workouts top bar. Surface 2.1 removed it from
+/// the header; this widget is retained for the Workout Settings screen
+/// migration which will re-host the week-strip collapse toggle as a row.
+// ignore: unused_element
 class _WorkoutsOverflowMenu extends ConsumerWidget {
   final bool isDark;
   final Color accentColor;
@@ -1309,48 +1330,22 @@ class _WorkoutsOverflowMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isCollapsed = ref.watch(weekCalendarCollapsedProvider);
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
-    return PopupMenuButton<int>(
-      tooltip: AppLocalizations.of(context).workoutsMoreOptions,
-      padding: EdgeInsets.zero,
-      position: PopupMenuPosition.under,
-      onSelected: (value) {
-        if (value == 0) {
-          HapticService.selection();
-          ref.read(weekCalendarCollapsedProvider.notifier).toggle();
-        }
-      },
-      itemBuilder: (_) => [
-        PopupMenuItem<int>(
-          value: 0,
-          child: Row(
-            children: [
-              Icon(
-                isCollapsed
-                    ? Icons.unfold_more_rounded
-                    : Icons.unfold_less_rounded,
-                size: 18,
-                color: textPrimary,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  isCollapsed ? AppLocalizations.of(context).workoutsExpandWeekView : AppLocalizations.of(context).workoutsCollapseWeekView,
-                  style: TextStyle(color: textPrimary),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-      // PopupMenuButton supplies its own tap handling — the inner button
-      // omits `onTap` so the tap reaches the menu.
+    // Single-purpose toggle — was a 1-item PopupMenu; the menu form factor
+    // mis-sold this as multi-option. Direct tap-to-toggle is one fewer
+    // interaction and the icon already encodes the resulting state.
+    return Tooltip(
+      message: isCollapsed
+          ? AppLocalizations.of(context).workoutsExpandWeekView
+          : AppLocalizations.of(context).workoutsCollapseWeekView,
       child: _GlassmorphicButton(
         isDark: isDark,
+        onTap: () {
+          HapticService.selection();
+          ref.read(weekCalendarCollapsedProvider.notifier).toggle();
+        },
         child: Icon(
-          Icons.more_vert_rounded,
+          isCollapsed ? Icons.unfold_more_rounded : Icons.unfold_less_rounded,
           color: accentColor,
           size: 22,
         ),
@@ -1359,10 +1354,10 @@ class _WorkoutsOverflowMenu extends ConsumerWidget {
   }
 }
 
-/// Bottom sheet that lists every supported workout-import path. Surfaces
-/// the existing `WorkoutHistoryImportScreen` and Health Connect / Apple
-/// Health hooks from one entry point so users don't have to dig through
-/// Settings → Training → Import Workout History.
+/// Bottom sheet that lists every supported workout-import path. Surface
+/// 2.1 removed the header import button; this widget is retained for the
+/// Workout Settings screen migration which will re-host import as a row.
+// ignore: unused_element
 class _ImportWorkoutsPickerSheet extends StatelessWidget {
   const _ImportWorkoutsPickerSheet();
 

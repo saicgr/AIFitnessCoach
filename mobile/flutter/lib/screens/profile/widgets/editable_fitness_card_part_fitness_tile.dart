@@ -2,6 +2,11 @@ part of 'editable_fitness_card.dart';
 
 
 /// Compact tile for the 2x4 fitness grid.
+///
+/// Surface 5.B.6: no longer rendered — the view-mode grid was dropped in
+/// favor of the same vertical list used in edit mode. Kept private so the
+/// helper can be revived if the redesign rolls back.
+// ignore: unused_element
 class _FitnessTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;

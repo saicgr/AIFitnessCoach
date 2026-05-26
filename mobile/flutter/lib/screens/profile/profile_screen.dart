@@ -1,3 +1,6 @@
+// `dart:convert` stays — the part-file's custom-equipment manager
+// json-decodes the equipment list. ApiConstants dropped along with the
+// inline bio loader (Surface 5.B.4) since it was the only consumer.
 import 'dart:convert';
 import 'dart:io' show Platform;
 
@@ -6,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/theme_colors.dart';
@@ -17,11 +19,15 @@ import '../../widgets/delete_account_flow.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/dismissed_banners_section.dart';
 import '../../widgets/glass_sheet.dart';
-import '../home/widgets/habits_section.dart';
 import '../settings/sections/logout_section.dart';
+import '../../widgets/design_system/section_header.dart';
 import '../workouts/widgets/exercise_preferences_card.dart';
 import 'widgets/nutrition_fasting_card.dart';
-import 'widgets/widgets.dart';
+// Hide the profile widgets' legacy `SectionHeader` (a colored 13pt
+// section label) so the design-system `SectionHeader` import below wins.
+// The legacy widget is still referenced inside the profile/widgets/
+// package itself (e.g. PrivacySection) — only this file disambiguates.
+import 'widgets/widgets.dart' hide SectionHeader;
 import '../../data/providers/synced_workouts_provider.dart';
 import '../../data/models/workout.dart';
 import '../../core/constants/synced_workout_kinds.dart';
@@ -53,14 +59,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _scrollController = ScrollController();
   final _preferencesKey = GlobalKey();
   final _fitnessCardKey = GlobalKey<EditableFitnessCardState>();
-  String? _bio;
-  bool _bioLoaded = false;
-
-  // Static cache for bio — survives widget rebuilds (tab switches)
-  static String? _cachedBio;
-  static bool _cachedBioLoaded = false;
-  static DateTime? _cachedBioTime;
-  static const _bioCacheTtl = Duration(minutes: 10);
 
   @override
   void initState() {
@@ -78,49 +76,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
       });
     }
-
-    // Load bio from backend
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadBio();
-    });
-  }
-
-  Future<void> _loadBio() async {
-    // Use cached bio if fresh enough
-    if (_cachedBioLoaded &&
-        _cachedBioTime != null &&
-        DateTime.now().difference(_cachedBioTime!) < _bioCacheTtl) {
-      if (mounted && !_bioLoaded) {
-        setState(() {
-          _bio = _cachedBio;
-          _bioLoaded = true;
-        });
-      }
-      return;
-    }
-    try {
-      final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
-      if (userId == null) return;
-      final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.get('${ApiConstants.users}/$userId');
-      if (response.statusCode == 200 && response.data != null) {
-        final userData = response.data as Map<String, dynamic>;
-        if (mounted) {
-          final bio = userData['bio'] as String?;
-          setState(() {
-            _bio = bio;
-            _bioLoaded = true;
-          });
-          _cachedBio = bio;
-          _cachedBioLoaded = true;
-          _cachedBioTime = DateTime.now();
-        }
-      }
-    } catch (e) {
-      debugPrint('Error loading bio: $e');
-      if (mounted) setState(() => _bioLoaded = true);
-    }
+    // Bio loading + avatar header lived here previously; both moved to
+    // the You/Overview tab (Surface 5.B.4) along with the User Card.
   }
 
   @override
@@ -129,235 +86,85 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.dispose();
   }
 
-  // --- Section label (matches settings screen pattern) ---
-  Widget _buildSectionLabel(String label, Color color) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(start: 4),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: color,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-
-  // --- FITNESS section header with inline Edit/Save/Cancel ---
-  Widget _buildFitnessSectionHeader(bool isDark, Color textMuted) {
+  // --- Edit/Save/Cancel trailing actions for the Training section header.
+  // Surface 5.B.1: the rainbow section colors are gone — these inline
+  // controls now use neutral muted text + accent only on the active Save
+  // action, never on the section title itself.
+  Widget _buildFitnessEditAction(Color textMuted) {
+    final c = ThemeColors.of(context);
     final state = _fitnessCardKey.currentState;
     final isEditing = state?.isEditing ?? false;
     final isSaving = state?.isSaving ?? false;
-    const sectionColor = AppColors.info;
 
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(start: 4),
-      child: Row(
+    if (isEditing) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            AppLocalizations.of(context).progressFitness,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: sectionColor,
-              letterSpacing: 0.5,
+          TextButton(
+            onPressed: isSaving
+                ? null
+                : () {
+                    state?.toggleEdit();
+                    setState(() {});
+                  },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              AppLocalizations.of(context).buttonCancel,
+              style: TextStyle(color: textMuted, fontSize: 12),
             ),
           ),
-          const Spacer(),
-          if (isEditing) ...[
-            TextButton(
-              onPressed: isSaving
-                  ? null
-                  : () {
-                      state?.toggleEdit();
-                      setState(() {});
-                    },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: textMuted, fontSize: 12)),
+          TextButton(
+            onPressed: isSaving
+                ? null
+                : () async {
+                    await state?.saveChanges();
+                    if (mounted) setState(() {});
+                  },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            TextButton(
-              onPressed: isSaving
-                  ? null
-                  : () async {
-                      await state?.saveChanges();
-                      if (mounted) setState(() {});
-                    },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: isSaving
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: sectionColor),
-                    )
-                  : Text(AppLocalizations.of(context).buttonSave, style: TextStyle(color: sectionColor, fontWeight: FontWeight.w600, fontSize: 12)),
-            ),
-          ] else
-            TextButton.icon(
-              onPressed: () {
-                state?.toggleEdit();
-                setState(() {});
-              },
-              icon: const Icon(Icons.edit, size: 12, color: sectionColor),
-              label: Text(AppLocalizations.of(context).commonEdit, style: TextStyle(color: sectionColor, fontSize: 12)),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // --- User card (horizontal layout matching settings _buildUserCard) ---
-  Widget _buildUserCard(
-    dynamic user,
-    bool isDark,
-    Color elevated,
-    Color cardBorder,
-    Color textPrimary,
-    Color textMuted,
-  ) {
-    final userName =
-        user?.displayName ?? user?.name ?? user?.username ?? 'User';
-    final userEmail = user?.email ?? '';
-    final photoUrl = user?.photoUrl;
-
-    return GestureDetector(
-      onTap: () => _showEditPersonalInfoSheet(context),
-      child: Container(
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Main user row
-                  Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: photoUrl != null && photoUrl.isNotEmpty
-                            ? Image.network(
-                                photoUrl,
-                                width: 52,
-                                height: 52,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.person,
-                                  color: Color(0xFF06B6D4),
-                                  size: 28,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.person,
-                                color: Color(0xFF06B6D4),
-                                size: 28,
-                              ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              userName,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                              ),
-                            ),
-                            if (userEmail.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                userEmail,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: textMuted,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      // Spacer for the edit icon in the top-right
-                      const SizedBox(width: 28),
-                    ],
+            child: isSaving
+                ? SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: c.accent),
+                  )
+                : Text(
+                    AppLocalizations.of(context).buttonSave,
+                    style: TextStyle(
+                        color: c.accent,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12),
                   ),
-
-                  // Bio display
-                  if (_bioLoaded) ...[
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: Text(
-                        _bio != null && _bio!.isNotEmpty
-                            ? _bio!
-                            : 'Tap to add a bio...',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: _bio != null && _bio!.isNotEmpty
-                              ? textPrimary
-                              : textMuted.withValues(alpha: 0.6),
-                          fontStyle: _bio != null && _bio!.isNotEmpty
-                              ? FontStyle.normal
-                              : FontStyle.italic,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            // Edit pencil icon in top-right corner
-            PositionedDirectional(top: 12,
-              end: 12,
-              child: Container(
-                width: 28,
-                height: 28,
-                      decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.edit_outlined,
-                  color: textMuted,
-                  size: 15,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      );
+    }
+    return TextButton.icon(
+      onPressed: () {
+        state?.toggleEdit();
+        setState(() {});
+      },
+      icon: Icon(Icons.edit, size: 12, color: textMuted),
+      label: Text(
+        AppLocalizations.of(context).commonEdit,
+        style: TextStyle(color: textMuted, fontSize: 12),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }
+
 
   // --- Account group card (settings-style rows with icons) ---
   Widget _buildAccountGroupCard(
@@ -473,7 +280,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       _AccountRowData(
         icon: Icons.history_outlined,
-        iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+        // Neutral muted color per the redesign's accent budget — the
+        // colored row icon was visual noise.
+        iconColor: textMuted,
         title: AppLocalizations.of(context).profileWorkoutHistoryImport,
         onTap: () => context.push('/settings/workout-history-import'),
       ),
@@ -499,19 +308,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // --- Sheet launchers ---
-
-  void _showEditPersonalInfoSheet(BuildContext context) {
-    showGlassSheet(
-      context: context,
-      builder: (context) => const EditPersonalInfoSheet(),
-    ).then((result) {
-      // Force refresh user data and bio when sheet closes
-      if (result == true) {
-        ref.read(authStateProvider.notifier).refreshUser();
-        _loadBio();
-      }
-    });
-  }
+  // _showEditPersonalInfoSheet was removed with the User Card (Surface
+  // 5.B.4). The avatar/name/bio edit flow is reached via the User Card on
+  // the Overview tab.
 
   void _showCustomEquipmentSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -619,36 +418,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // User card
-              _buildUserCard(
-                  user, isDark, elevated, cardBorder, textPrimary, textMuted),
-              const SizedBox(height: 24),
+              // Surface 5.B.4: User Card moved to Overview. Profile leads
+              // directly into the Training section. Surface 5.B.5: Habits
+              // heatmap moved to Overview (below the gamification grid).
+              // Surface 5.B.3: Single PrivacySection consolidated into
+              // Account → "Privacy & Data" entry; the duplicate row is
+              // gone. The Privacy & Data destination screen should host a
+              // "Leaderboard privacy" sub-row.
+              // TODO: surface a "Leaderboard privacy" entry inside the
+              // Settings → Privacy & Data destination (file not in this
+              // surface's ownership — Surface 6 / Settings owner).
 
-              // FITNESS
-              _buildFitnessSectionHeader(isDark, textMuted),
-              const SizedBox(height: 8),
+              // ───────────── TRAINING ─────────────
+              // Replaces FITNESS + TRAINING + SYNCED WORKOUTS. Subgroups:
+              //   A. Training profile (vertical list — no 4×2 grid; the
+              //      grid duplicated the Training Setup card).
+              //   B. Training setup (equipment, environment, days, etc.).
+              //   C. Exercise preferences + Training Focus + Custom Trends.
+              //   D. Synced workouts.
+              SectionHeader(
+                label: AppLocalizations.of(context).progressFitness,
+                padding: const EdgeInsetsDirectional.only(
+                    top: 0, bottom: 8, start: 4),
+                trailing: _buildFitnessEditAction(textMuted),
+              ),
               EditableFitnessCard(key: _fitnessCardKey, user: user),
-              const SizedBox(height: 20),
-
-              // PRIVACY — leaderboard visibility + anonymous + stats controls.
-              // Placed directly below FITNESS because privacy belongs adjacent
-              // to the data it controls.
-              const PrivacySection(),
-              const SizedBox(height: 24),
-
-              // HABITS — moved off Home (2026-05-22) because empty 30-day
-              // grids on day 1 read as churn risk. The widget is self-
-              // contained (its own header + View All affordance) and persists
-              // user ordering via SharedPreferences `habit_order_{userId}`.
-              const HabitsSection(),
-              const SizedBox(height: 24),
-              // Reports, Stats, Wrapped, Trophies, Achievements, Rewards,
-              // Inventory, Leaderboard, Skills — all moved to the You hub's
-              // Stats & Rewards tab. Single source of truth.
-
-              // TRAINING
-              _buildSectionLabel('TRAINING', AppColors.orange),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               TrainingSetupCard(
                 user: user,
                 onCustomEquipment: () {
@@ -657,16 +452,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              // Workout Mode tier toggle now lives inside ExercisePreferencesCard
-              // as the 1st option — single canonical home across Profile,
-              // Workouts, and Settings.
-              ExercisePreferencesCard(key: _preferencesKey, margin: EdgeInsets.zero),
+              // Workout Mode tier toggle now lives inside
+              // ExercisePreferencesCard as the 1st option — single
+              // canonical home across Profile, Workouts, and Settings.
+              ExercisePreferencesCard(
+                  key: _preferencesKey, margin: EdgeInsets.zero),
               const SizedBox(height: 12),
               const _TrainingFocusCard(),
               const SizedBox(height: 12),
               // Custom Trends — also surfaced in the You hub's Stats &
-              // Rewards tab (INSIGHTS). Mirrored here in TRAINING so it's
-              // discoverable from the Profile sub-tab too.
+              // Rewards tab (INSIGHTS). Mirrored here so it's discoverable
+              // from the Profile sub-tab too.
               Container(
                 decoration: BoxDecoration(
                   color: elevated,
@@ -677,7 +473,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: _buildAccountRow(
                   _AccountRowData(
                     icon: Icons.auto_graph_rounded,
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                    // Neutral muted color — drop the orange accent that
+                    // violated the 10% accent budget (Surface 5.B.1).
+                    iconColor: textMuted,
                     title: AppLocalizations.of(context).statsRewardsCustomTrends,
                     onTap: () => context.push('/trends/custom'),
                   ),
@@ -685,14 +483,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   textMuted,
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // SYNCED WORKOUTS
-              _buildSectionLabel('SYNCED WORKOUTS', AppColors.purple),
-              const SizedBox(height: 4),
-              Text(
-                Platform.isIOS ? AppLocalizations.of(context).profileFromAppleHealth : AppLocalizations.of(context).profileFromHealthConnect,
-                style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
+              const SizedBox(height: 16),
+              // Subgroup D: synced workouts (Apple Health / Health
+              // Connect). Kept the source description as a sub-line.
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 4),
+                child: Text(
+                  Platform.isIOS
+                      ? AppLocalizations.of(context).profileFromAppleHealth
+                      : AppLocalizations.of(context).profileFromHealthConnect,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted.withValues(alpha: 0.7)),
+                ),
               ),
               const SizedBox(height: 8),
               _SyncedWorkoutsRow(
@@ -701,29 +504,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 textPrimary: textPrimary,
                 textMuted: textMuted,
               ),
-              const SizedBox(height: 24),
 
-              // Wrapped moved to You hub → Stats & Rewards → Recaps & Perks.
-
-              // NUTRITION
-              _buildSectionLabel('NUTRITION', AppColors.green),
-              const SizedBox(height: 8),
+              // ───────────── NUTRITION ─────────────
+              SectionHeader(
+                label: 'Nutrition',
+                padding: const EdgeInsetsDirectional.only(
+                    top: 24, bottom: 8, start: 4),
+              ),
               const NutritionFastingCard(),
-              const SizedBox(height: 24),
 
-              // ACCOUNT
-              _buildSectionLabel('ACCOUNT', AppColors.cyan),
-              const SizedBox(height: 8),
+              // ───────────── ACCOUNT ─────────────
+              // Surface 5.B.2: ACCOUNT + DATA & PRIVACY consolidated. The
+              // standalone PRIVACY row above FITNESS (PrivacySection) is
+              // gone — Privacy & Data is the single destination.
+              SectionHeader(
+                label: 'Account',
+                padding: const EdgeInsetsDirectional.only(
+                    top: 24, bottom: 8, start: 4),
+              ),
               _buildAccountGroupCard(
                   isDark, elevated, cardBorder, textPrimary, textMuted),
-              const SizedBox(height: 24),
-
-              // DATA & PRIVACY
-              _buildSectionLabel(
-                'DATA & PRIVACY',
-                isDark ? AppColors.info : AppColorsLight.info,
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               _buildYourDataGroupCard(
                   isDark, elevated, cardBorder, textPrimary, textMuted),
               const SizedBox(height: 24),

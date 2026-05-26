@@ -135,9 +135,34 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
                         subtitle: Text(v.editedAt.toLocal().toString().substring(0, 16),
                             style: TextStyle(color: muted, fontSize: 11)),
                         trailing: PopupMenuButton<String>(
+                          tooltip: AppLocalizations.of(context).homeMore,
+                          position: PopupMenuPosition.under,
                           itemBuilder: (_) => [
-                            PopupMenuItem(value: 'compare', child: Text(AppLocalizations.of(context).recipeHistoryCompare)),
-                            if (!isCurrent) PopupMenuItem(value: 'revert', child: Text(AppLocalizations.of(context).workoutDetailRevert)),
+                            PopupMenuItem(
+                              value: 'compare',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.compare_arrows_rounded, size: 18),
+                                  const SizedBox(width: 10),
+                                  Text(AppLocalizations.of(context).recipeHistoryCompare),
+                                ],
+                              ),
+                            ),
+                            if (!isCurrent) const PopupMenuDivider(),
+                            if (!isCurrent)
+                              PopupMenuItem(
+                                value: 'revert',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.history_rounded, size: 18, color: AppColors.warning),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      AppLocalizations.of(context).workoutDetailRevert,
+                                      style: const TextStyle(color: AppColors.warning),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                           onSelected: (action) {
                             if (action == 'revert') _revert(v);

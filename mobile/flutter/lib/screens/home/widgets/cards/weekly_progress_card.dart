@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/providers/week_start_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
-import '../../../../core/utils/safe_num.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 
 /// A card showing weekly workout progress with a progress bar and day indicators
@@ -76,31 +75,16 @@ class WeeklyProgressCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                AppLocalizations.of(context)!.weeklyProgressCardOfWorkouts(completed, total),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              // Large percentage number with animation
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: progress * 100),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeOutCubic,
-                builder: (context, animatedValue, _) {
-                  return Text(
-                    '${safePercent(animatedValue)}%',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: accentColor,
-                      height: 1.0,
-                    ),
-                  );
-                },
-              ),
-            ],
+          // Surface 2.5 — single "X of N done" headline; the "0%" prominent
+          // number was punitive on a fresh week and duplicated the ring row
+          // below. Bold left-aligned, no trailing percent.
+          Text(
+            AppLocalizations.of(context)!.weeklyProgressCardOfWorkouts(completed, total),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.2,
+            ),
           ),
           const SizedBox(height: 12),
           ClipRRect(

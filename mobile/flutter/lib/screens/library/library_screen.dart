@@ -5,6 +5,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../core/services/posthog_service.dart';
+import '../../widgets/coach_floating_button.dart';
 import 'providers/library_providers.dart';
 import 'tabs/discover_tab.dart';
 import 'tabs/exercises_tab.dart';
@@ -263,6 +264,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               ],
             ),
 
+            // Coach access on Library. The screen sits under the Workout tab
+            // but uses its own Material TabBar (3 tabs at the top of the
+            // screen), not a bottom FloatingTabBar — so it never inherits a
+            // coach-sparkle slot. Per the redesign plan's "coach access
+            // universal" directive, mount the CoachFloatingButton in
+            // collapsed (icon-only) form so a 36pt accent circle is always
+            // reachable above the bottom nav. isHomeTab=false forces the
+            // collapsed shape regardless of scroll state.
+            const CoachFloatingButton(),
           ],
         ),
       ),
