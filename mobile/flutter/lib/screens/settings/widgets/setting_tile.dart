@@ -102,6 +102,11 @@ class SettingItemData {
   /// Whether this item is the week start day selector (Mon/Sun).
   final bool isWeekStartSelector;
 
+  /// Whether this item opens the per-day workout overrides sheet (lets the
+  /// user assign focus + duration + intensity to each training day so the
+  /// AI plan generator respects per-day preferences). Added 2026-05-27.
+  final bool isPerDayOverridesSelector;
+
   /// Optional icon color for colored icon backgrounds.
   final Color? iconColor;
 
@@ -140,6 +145,7 @@ class SettingItemData {
     this.isWeightIncrementsSelector = false,
     this.isDailyXPStripToggle = false,
     this.isWeekStartSelector = false,
+    this.isPerDayOverridesSelector = false,
   });
 }
 

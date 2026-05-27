@@ -45,6 +45,28 @@ from services.adaptive_workout_service_helpers_part2 import get_user_set_type_pr
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _parse_workout_day_overrides(raw: Any) -> Optional[Dict[int, Dict[str, Any]]]:
+    """Parse the `workout_day_overrides` JSONB from user prefs into an
+    int-keyed dict for the plan generator. Keys come back from Supabase as
+    strings; coerce + clamp to 0..6. Returns None when empty or malformed
+    so the caller can skip the prompt block entirely.
+    """
+    if not raw or not isinstance(raw, dict):
+        return None
+    out: Dict[int, Dict[str, Any]] = {}
+    for k, v in raw.items():
+        if not isinstance(v, dict):
+            continue
+        try:
+            day_int = int(k)
+        except (ValueError, TypeError):
+            continue
+        if day_int < 0 or day_int > 6:
+            continue
+        out[day_int] = v
+    return out or None
 @router.post("/generate", response_model=Workout)
 @user_limiter.limit("15/minute")
 async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, background_tasks: BackgroundTasks,
@@ -738,6 +760,13 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     body_analyzer_context=body_analyzer_context,
                     training_split=training_split,
                     workout_days=workout_days if workout_days else None,
+                    # Per-day overrides (added 2026-05-27). User-supplied
+                    # JSONB from preferences.workout_day_overrides — each
+                    # weekday's focus + duration + intensity + workout_type
+                    # + equipment + notes. Filtered to ints for the API.
+                    workout_day_overrides=_parse_workout_day_overrides(
+                        preferences.get("workout_day_overrides")
+                    ),
                     # Fitness assessment for smarter workout personalization
                     pushup_capacity=pushup_capacity,
                     pullup_capacity=pullup_capacity,

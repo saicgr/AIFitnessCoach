@@ -17,6 +17,109 @@ from services.split_descriptions import get_split_context
 from services.gemini.workout_generation_helpers_part2 import WorkoutGenerationMixinPart2
 
 logger = logging.getLogger(__name__)
+
+# Mapping for per-day override prompt formatting (added 2026-05-27).
+_WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday",
+                  "Friday", "Saturday", "Sunday"]
+_FOCUS_LABELS = {
+    "upper_body": "UPPER BODY (chest, shoulders, triceps, back, biceps)",
+    "lower_body": "LOWER BODY (quads, hamstrings, glutes, calves)",
+    "full_body": "FULL BODY (balanced compound focus)",
+    "push": "PUSH (chest, shoulders, triceps)",
+    "pull": "PULL (back, biceps, rear delts)",
+    "legs": "LEGS (quads, hamstrings, glutes, calves)",
+    "core": "CORE (abs, obliques, lower back)",
+    "cardio": "CARDIO (steady-state or intervals — user's choice)",
+    "mobility": "MOBILITY (stretches + dynamic range-of-motion work)",
+    "active_recovery": "ACTIVE RECOVERY (light movement, walking, easy mobility)",
+}
+_INTENSITY_LABELS = {
+    "easy": "easy intensity (RPE 5-6, conservative)",
+    "moderate": "moderate intensity (RPE 7-8)",
+    "hard": "hard intensity (RPE 8-9, advanced variants)",
+    "hell": "HELL intensity (RPE 9-10, near failure, see HELL MODE block)",
+}
+
+
+def _build_per_day_overrides_prompt(
+    overrides: Dict[int, Dict[str, Any]],
+    workout_days: List[int],
+) -> str:
+    """Format the user's per-day workout overrides as a Gemini prompt block.
+
+    Returns an empty string when there are no overrides on training days
+    (orphan overrides — keys outside workout_days — are filtered out per
+    plan §3.2 scenario F so the prompt only references days the user
+    actually trains).
+
+    Each weekday with an override emits a line:
+        - <Day>: <FOCUS LABEL>, target N min, <intensity>, <workout_type>.
+          Equipment: <override>. User note: "<notes>".
+
+    Days NOT in the override map fall back to the training-split defaults
+    that are already in the prompt above.
+    """
+    if not overrides:
+        return ""
+
+    training_set = set(workout_days)
+    lines: List[str] = []
+
+    # Sort keys for deterministic output (Monday first → Sunday last).
+    for day_int in sorted(overrides.keys()):
+        # Skip orphans — overrides on days the user no longer trains.
+        if training_set and day_int not in training_set:
+            continue
+        ov = overrides[day_int]
+        # Defensive — only dict payloads are valid. Anything else is a
+        # corrupt/legacy preferences row; skip it silently.
+        if not isinstance(ov, dict):
+            continue
+        focus = ov.get("focus") or "full_body"
+        focus_label = _FOCUS_LABELS.get(focus, focus.upper())
+
+        parts = [f"{_WEEKDAY_NAMES[day_int]}: {focus_label}"]
+
+        dur = ov.get("duration_min")
+        if isinstance(dur, (int, float)) and dur > 0:
+            parts.append(f"target {int(dur)} min")
+
+        intensity = ov.get("intensity")
+        if intensity:
+            parts.append(_INTENSITY_LABELS.get(intensity, f"{intensity} intensity"))
+
+        workout_type = ov.get("workout_type")
+        if workout_type:
+            parts.append(f"{workout_type} focus")
+
+        line = f"- {', '.join(parts)}."
+
+        eq = ov.get("equipment_override")
+        if eq is not None:
+            if not eq:
+                line += "\n  Equipment: bodyweight only (no equipment available this day)."
+            else:
+                line += f"\n  Equipment override: {', '.join(eq)}."
+
+        note = ov.get("notes")
+        if note:
+            # Sanitize: strip newlines so the block stays tight.
+            note_clean = " ".join(note.strip().split())
+            line += f"\n  User note: \"{note_clean}\"."
+
+        lines.append(line)
+
+    if not lines:
+        return ""
+
+    return (
+        "\n\n📌 PER-DAY ASSIGNMENTS (these OVERRIDE training-split + AI "
+        "defaults — respect exactly):\n"
+        + "\n".join(lines)
+        + "\n\nDays NOT in this list fall back to your training-split defaults."
+    )
+
+
 class WorkoutGenerationMixin(WorkoutGenerationMixinPart2):
     """Mixin providing core workout generation methods for GeminiService."""
 
@@ -56,6 +159,13 @@ class WorkoutGenerationMixin(WorkoutGenerationMixinPart2):
         body_analyzer_context: Optional[str] = None,
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
+        # Per-day overrides (added 2026-05-27). User-supplied JSONB from
+        # `user.preferences.workout_day_overrides`. Keys are weekday ints
+        # (0=Mon..6=Sun); values are dicts with `focus`, `duration_min`,
+        # `intensity`, `workout_type`, `equipment_override`, `notes`. When
+        # present, the prompt includes a "PER-DAY ASSIGNMENTS" block that
+        # tells Gemini to respect each weekday's customization.
+        workout_day_overrides: Optional[Dict[int, Dict[str, Any]]] = None,
         # Fitness Assessment fields - for smarter workout personalization
         pushup_capacity: Optional[str] = None,
         pullup_capacity: Optional[str] = None,
@@ -734,6 +844,15 @@ REQUIREMENTS:
 
 Use this split information to guide exercise selection and workout structure."""
 
+        # Per-day overrides block (added 2026-05-27). Built from
+        # `user.preferences.workout_day_overrides`. Takes precedence over the
+        # training split for any day with an override.
+        per_day_overrides_instruction = ""
+        if workout_day_overrides:
+            per_day_overrides_instruction = _build_per_day_overrides_prompt(
+                workout_day_overrides, workout_days or []
+            )
+
         # User-defined AI focus points (priority 1-5, 5 = highest). Loaded
         # from user_ai_settings.focus_areas (added in migration 2074) when
         # we have a user_id and the caller didn't override. The block is
@@ -934,7 +1053,7 @@ This assessment data reflects the user's ACTUAL capabilities - use it to create 
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Available Equipment: {safe_join_list(equipment, 'Bodyweight only')}
 - Focus Areas: {safe_join_list(focus_areas, 'Full body')}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{ai_user_focus_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{progression_pace_instruction}{weekly_variety_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{per_day_overrides_instruction}{ai_user_focus_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{progression_pace_instruction}{weekly_variety_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}

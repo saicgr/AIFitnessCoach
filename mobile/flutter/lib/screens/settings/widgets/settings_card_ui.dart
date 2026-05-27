@@ -184,10 +184,27 @@ extension _SettingsCardExt on SettingsCard {
     final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    final categories = [
-      ('Classic Splits', aiSplitPresets.where((p) => p.category == 'classic').toList()),
-      ('AI-Powered', aiSplitPresets.where((p) => p.category == 'ai_powered').toList()),
-      ('Specialty', aiSplitPresets.where((p) => p.category == 'specialty').toList()),
+    // Each section shows the first 4 presets in a 2-column grid + a
+    // "View all" tile that opens AllSplitsScreen filtered to that category.
+    // Pre-2026-05-27 each section rendered as a horizontal ListView with all
+    // 8+ items, forcing the user to swipe to see what's there — UX-hostile.
+    const _previewLimit = 4;
+    final categories = <({String title, String key, List<AISplitPreset> presets})>[
+      (
+        title: 'Classic Splits',
+        key: 'classic',
+        presets: aiSplitPresets.where((p) => p.category == 'classic').toList(),
+      ),
+      (
+        title: 'AI-Powered',
+        key: 'ai_powered',
+        presets: aiSplitPresets.where((p) => p.category == 'ai_powered').toList(),
+      ),
+      (
+        title: 'Specialty',
+        key: 'specialty',
+        presets: aiSplitPresets.where((p) => p.category == 'specialty').toList(),
+      ),
     ];
 
     showGlassSheet(
@@ -236,11 +253,11 @@ extension _SettingsCardExt on SettingsCard {
                     controller: scrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     children: [
-                      for (final (title, presets) in categories) ...[
+                      for (final cat in categories) ...[
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10, top: 4),
                           child: Text(
-                            title,
+                            cat.title,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -248,32 +265,49 @@ extension _SettingsCardExt on SettingsCard {
                             ),
                           ),
                         ),
-                        SizedBox(
-                          height: 110,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: presets.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 10),
-                            itemBuilder: (context, index) {
-                              final preset = presets[index];
-                              return SizedBox(
-                                width: 160,
-                                child: CompactSplitCard(
-                                  preset: preset,
-                                  onTap: () {
-                                    Navigator.pop(context); // Close split selector
-                                    showGlassSheet(
-                                      context: context,
-                                      useRootNavigator: true,
-                                      builder: (ctx) => AISplitPresetDetailSheet(preset: preset),
-                                    );
-                                  },
+                        // 2-column grid of first 4 presets in this category.
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 1.65,
+                          children: [
+                            for (final preset in cat.presets.take(_previewLimit))
+                              CompactSplitCard(
+                                preset: preset,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  showGlassSheet(
+                                    context: context,
+                                    useRootNavigator: true,
+                                    builder: (ctx) => AISplitPresetDetailSheet(preset: preset),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                        if (cat.presets.length > _previewLimit) ...[
+                          const SizedBox(height: 10),
+                          _ViewAllSplitsTile(
+                            categoryKey: cat.key,
+                            categoryLabel: cat.title,
+                            remaining: cat.presets.length - _previewLimit,
+                            isDark: isDark,
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(
+                                  builder: (_) => AllSplitsScreen(
+                                    initialCategory: cat.key,
+                                  ),
                                 ),
                               );
                             },
                           ),
-                        ),
-                        const SizedBox(height: 12),
+                        ],
+                        const SizedBox(height: 16),
                       ],
                     ],
                   ),
@@ -623,4 +657,62 @@ extension _SettingsCardExt on SettingsCard {
     );
   }
 
+}
+
+/// "View all <category>" tile rendered below each training-split section's
+/// 2x2 grid when more presets exist beyond the first four. Tap routes to
+/// the full-screen AllSplitsScreen pre-filtered to that category.
+class _ViewAllSplitsTile extends StatelessWidget {
+  const _ViewAllSplitsTile({
+    required this.categoryKey,
+    required this.categoryLabel,
+    required this.remaining,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  final String categoryKey;
+  final String categoryLabel;
+  final int remaining;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final textMuted =
+        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: accent.withValues(alpha: 0.22)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.grid_view_rounded, size: 18, color: accent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'View all $categoryLabel ($remaining more)',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: accent,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 18, color: textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

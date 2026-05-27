@@ -235,11 +235,18 @@ def invalidate_workouts_after_schedule_change(
 
     try:
         # Upcoming: only delete rows whose scheduled_date.weekday() was dropped.
+        # Bound to ~180 days ahead. Pre-2026-05-27 this fetch was unbounded and
+        # users with months/years of pre-scheduled rows tripped the Dio 25s
+        # client timeout. Anything further out gets caught by the daily-cleanup
+        # cron / the next schedule-change.
+        upper_bound = (today_dt + timedelta(days=180)).isoformat()
         rows = db.client.table("workouts").select(
             "id, scheduled_date, status"
         ).eq("user_id", user_id).gt(
             "scheduled_date", today_str
-        ).eq("is_completed", False).execute()
+        ).lte(
+            "scheduled_date", upper_bound
+        ).eq("is_completed", False).limit(500).execute()
 
         ids_to_delete = []
         for r in (rows.data or []):

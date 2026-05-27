@@ -49,57 +49,64 @@ class _WorkoutDaysSelectorSheetState
       });
       return;
     }
+    if (_isLoading) return;
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    try {
-      final sortedDays = _selectedDays.toList()..sort();
-      final dayNamesList = sortedDays
-          .map((idx) => _days.firstWhere((d) => d.value == idx).short)
-          .toList();
+    final sortedDays = _selectedDays.toList()..sort();
+    final dayNamesList = sortedDays
+        .map((idx) => _days.firstWhere((d) => d.value == idx).short)
+        .toList();
+    final activeProfileId = widget.activeProfileId;
+    final scaffold = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
 
-      final activeProfileId = widget.activeProfileId;
-      if (activeProfileId != null) {
-        // Save workout days to the active gym profile
-        await ref.read(gymProfilesProvider.notifier).updateProfile(
-          activeProfileId,
-          GymProfileUpdate(workoutDays: sortedDays),
-        );
-      } else {
-        // Fallback: no active gym profile — update global user days
-        final repo = ref.read(workoutRepositoryProvider);
-        await repo.quickDayChange(widget.userId, dayNamesList);
-      }
-
-      // Refresh user data
-      await ref.read(authStateProvider.notifier).refreshUser();
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
+    // Optimistic save. Pre-2026-05-27 this awaited two sequential calls
+    // (updateProfile + refreshUser) and could trip Dio's 25s timeout when
+    // the backend's invalidate_workouts_after_schedule_change cascade was
+    // unbounded. Cascade now runs in BackgroundTasks server-side; the PUT
+    // returns in ~50ms. Even so, we fire the writes as unawaited + pop
+    // immediately so the sheet feels instant on any network speed.
+    unawaited(() async {
+      try {
+        if (activeProfileId != null) {
+          await ref.read(gymProfilesProvider.notifier).updateProfile(
+                activeProfileId,
+                GymProfileUpdate(workoutDays: sortedDays),
+              );
+        } else {
+          final repo = ref.read(workoutRepositoryProvider);
+          await repo.quickDayChange(widget.userId, dayNamesList);
+        }
+        // Refresh user data so the parent settings card subtitle updates
+        // with the new day list. Background — UI already moved on.
+        await ref.read(authStateProvider.notifier).refreshUser();
+      } catch (e) {
+        debugPrint('❌ [WorkoutDays] background save failed: $e');
+        final raw = e.toString();
+        final msg = raw.length > 160 ? '${raw.substring(0, 160)}…' : raw;
+        scaffold.showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).settingsCardWorkoutDaysUpdatedTo(dayNamesList.join(', '))),
-            backgroundColor: AppColors.cyan,
-            duration: const Duration(seconds: 3),
+            content: Text('Failed to update workout days: $msg'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
-    } catch (e) {
-      // Surface the real backend message — silent generic copy hides bugs
-      // like the int-vs-string contract drift we hit on 2026-04-27.
-      debugPrint('❌ [WorkoutDays] save failed: $e');
-      if (mounted) {
-        final raw = e.toString();
-        final msg = raw.length > 160 ? '${raw.substring(0, 160)}…' : raw;
-        setState(() {
-          _errorMessage = 'Failed to update workout days: $msg';
-          _isLoading = false;
-        });
-      }
-    }
+    }());
+
+    if (!mounted) return;
+    Navigator.pop(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(l10n.settingsCardWorkoutDaysUpdatedTo(dayNamesList.join(', '))),
+        backgroundColor: AppColors.cyan,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override

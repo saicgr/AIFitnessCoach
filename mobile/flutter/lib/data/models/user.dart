@@ -370,6 +370,33 @@ class User extends Equatable {
     return days.map((d) => d >= 0 && d < 7 ? dayNames[d] : '').where((s) => s.isNotEmpty).toList();
   }
 
+  /// Per-day workout customization parsed from preferences JSONB. Keys are
+  /// weekday ints (0=Mon..6=Sun, matching `workoutDays`). Values carry the
+  /// user's per-day focus + duration + intensity + workout-type +
+  /// equipment-override + notes. Empty map = "AI decides" everywhere.
+  /// Added 2026-05-27. JSONB shape lives under `workout_day_overrides`.
+  Map<int, WorkoutDayOverride> get workoutDayOverrides {
+    if (preferences == null || preferences!.isEmpty) {
+      return const <int, WorkoutDayOverride>{};
+    }
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is! Map) return const <int, WorkoutDayOverride>{};
+      final raw = decoded['workout_day_overrides'];
+      if (raw is! Map) return const <int, WorkoutDayOverride>{};
+      final out = <int, WorkoutDayOverride>{};
+      raw.forEach((k, v) {
+        final dayInt = k is int ? k : int.tryParse(k.toString());
+        if (dayInt == null || dayInt < 0 || dayInt > 6) return;
+        if (v is! Map) return;
+        out[dayInt] = WorkoutDayOverride.fromJson(Map<String, dynamic>.from(v));
+      });
+      return out;
+    } catch (_) {
+      return const <int, WorkoutDayOverride>{};
+    }
+  }
+
   /// Get workout days as formatted string (e.g., "Mon, Wed, Fri")
   String get workoutDaysFormatted {
     final names = workoutDayNames;
@@ -812,4 +839,97 @@ class GoogleAuthRequest {
   factory GoogleAuthRequest.fromJson(Map<String, dynamic> json) =>
       _$GoogleAuthRequestFromJson(json);
   Map<String, dynamic> toJson() => _$GoogleAuthRequestToJson(this);
+}
+
+/// Per-day AI workout customization. Stored under
+/// `user.preferences.workout_day_overrides.<weekday_int>` as JSONB.
+/// All fields except [focus] are optional — null means "AI decides for this
+/// dimension." Added 2026-05-27.
+class WorkoutDayOverride extends Equatable {
+  /// `upper_body`, `lower_body`, `full_body`, `push`, `pull`, `legs`,
+  /// `core`, `mobility`, `cardio`, `active_recovery`.
+  final String focus;
+
+  /// 15 / 20 / 30 / 45 / 60 / 75 / 90.
+  final int? durationMin;
+
+  /// `easy` (RPE 5-6) / `moderate` (7-8) / `hard` (8-9) / `hell` (9-10).
+  final String? intensity;
+
+  /// `strength`, `hypertrophy`, `endurance`, `hiit`, `liss`, `mobility`, `mixed`.
+  final String? workoutType;
+
+  /// Subset of registered equipment for this day. `[]` = bodyweight only.
+  /// `null` = inherit from user inventory.
+  final List<String>? equipmentOverride;
+
+  /// Free-text user note, ≤140 chars, sent verbatim to the AI prompt.
+  final String? notes;
+
+  const WorkoutDayOverride({
+    required this.focus,
+    this.durationMin,
+    this.intensity,
+    this.workoutType,
+    this.equipmentOverride,
+    this.notes,
+  });
+
+  factory WorkoutDayOverride.fromJson(Map<String, dynamic> json) {
+    final eq = json['equipment_override'];
+    return WorkoutDayOverride(
+      focus: (json['focus'] as String?) ?? 'full_body',
+      durationMin: json['duration_min'] is int
+          ? json['duration_min'] as int
+          : (json['duration_min'] is num
+              ? (json['duration_min'] as num).toInt()
+              : null),
+      intensity: json['intensity'] as String?,
+      workoutType: json['workout_type'] as String?,
+      equipmentOverride:
+          eq is List ? eq.map((e) => e.toString()).toList() : null,
+      notes: json['notes'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'focus': focus,
+        if (durationMin != null) 'duration_min': durationMin,
+        if (intensity != null) 'intensity': intensity,
+        if (workoutType != null) 'workout_type': workoutType,
+        if (equipmentOverride != null)
+          'equipment_override': equipmentOverride,
+        if (notes != null && notes!.isNotEmpty) 'notes': notes,
+      };
+
+  WorkoutDayOverride copyWith({
+    String? focus,
+    int? durationMin,
+    bool clearDurationMin = false,
+    String? intensity,
+    bool clearIntensity = false,
+    String? workoutType,
+    bool clearWorkoutType = false,
+    List<String>? equipmentOverride,
+    bool clearEquipmentOverride = false,
+    String? notes,
+    bool clearNotes = false,
+  }) {
+    return WorkoutDayOverride(
+      focus: focus ?? this.focus,
+      durationMin:
+          clearDurationMin ? null : (durationMin ?? this.durationMin),
+      intensity: clearIntensity ? null : (intensity ?? this.intensity),
+      workoutType:
+          clearWorkoutType ? null : (workoutType ?? this.workoutType),
+      equipmentOverride: clearEquipmentOverride
+          ? null
+          : (equipmentOverride ?? this.equipmentOverride),
+      notes: clearNotes ? null : (notes ?? this.notes),
+    );
+  }
+
+  @override
+  List<Object?> get props =>
+      [focus, durationMin, intensity, workoutType, equipmentOverride, notes];
 }

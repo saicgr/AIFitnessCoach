@@ -906,30 +906,41 @@ async def update_user(user_id: str, user: UserUpdate,
             # removes a day from workout_days, drop today's pending workout
             # if today is no longer scheduled, plus upcoming pre-cached
             # workouts on now-removed days. Mirror of equipment hook above.
+            #
+            # Pre-2026-05-27 this ran synchronously and the unbounded SELECT
+            # in `invalidate_workouts_after_schedule_change` tripped Dio's
+            # 25s timeout for users with months of pre-scheduled rows. Now
+            # queued as a BackgroundTask: PUT returns 200 immediately, the
+            # cascade runs after the response is flushed.
             if schedule_changed:
-                try:
-                    from api.v1.workouts.utils import (
-                        invalidate_workouts_after_schedule_change,
-                    )
-                    from core.timezone_utils import resolve_timezone
+                from api.v1.workouts.utils import (
+                    invalidate_workouts_after_schedule_change,
+                )
+                from core.timezone_utils import resolve_timezone
 
-                    tz = resolve_timezone(existing.get("timezone"))
-                    sched_counts = invalidate_workouts_after_schedule_change(
-                        user_id=user_id,
-                        timezone_str=tz,
-                        new_workout_days=user.workout_days or [],
-                    )
-                    logger.info(
-                        f"[Schedule-Change] User {user_id}: invalidated "
-                        f"{sched_counts['today_deleted']} today + "
-                        f"{sched_counts['upcoming_deleted']} upcoming workouts"
-                    )
-                except Exception as sched_err:
-                    logger.warning(
-                        f"[Schedule-Change] Invalidation failed for user "
-                        f"{user_id}: {sched_err}",
-                        exc_info=True,
-                    )
+                tz = resolve_timezone(existing.get("timezone"))
+                new_days = user.workout_days or []
+
+                def _run_schedule_invalidation():
+                    try:
+                        sched_counts = invalidate_workouts_after_schedule_change(
+                            user_id=user_id,
+                            timezone_str=tz,
+                            new_workout_days=new_days,
+                        )
+                        logger.info(
+                            f"[Schedule-Change BG] User {user_id}: invalidated "
+                            f"{sched_counts['today_deleted']} today + "
+                            f"{sched_counts['upcoming_deleted']} upcoming workouts"
+                        )
+                    except Exception as sched_err:
+                        logger.warning(
+                            f"[Schedule-Change BG] Invalidation failed for user "
+                            f"{user_id}: {sched_err}",
+                            exc_info=True,
+                        )
+
+                background_tasks.add_task(_run_schedule_invalidation)
 
             # NEW: Create gym profile(s) when onboarding is completed
             if user.onboarding_completed and update_data.get("onboarding_completed"):

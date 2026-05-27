@@ -94,6 +94,16 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     isWorkoutDaysSelector: true,
                     iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
                   ),
+                  // Per-day customization — assign focus + duration + intensity
+                  // to each training day so the AI plan generator respects per-day
+                  // preferences. Added 2026-05-27.
+                  SettingItemData(
+                    icon: Icons.tune_rounded,
+                    title: 'Per-day customization',
+                    subtitle: 'Focus, duration, intensity per training day',
+                    isPerDayOverridesSelector: true,
+                    iconColor: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,
+                  ),
                 ],
               ),
 

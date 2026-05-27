@@ -463,11 +463,41 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
 
       // 1. Single canonical backend call: training_split + selected_days +
       //    delete future incomplete workouts + re-index RAG.
+      //
+      // Plumb the preset's aiParams through so AI-powered presets (Hell
+      // Week, Quick Gains, Strength Builder, Deload, etc.) actually do
+      // something — pre-2026-05-27 these collapsed to `full_body` and the
+      // intensity_preference / duration_minutes_max / etc. metadata was
+      // silently dropped.
+      final aiParams = widget.preset.aiParams ?? const <String, dynamic>{};
+      final presetIntensity = aiParams['intensity_preference'] as String?;
+      final presetDurationMax = aiParams['duration_minutes_max'] as int?;
+      final presetMaxRpe = aiParams['max_rpe'] as int?;
+      final presetMinSets = aiParams['min_sets'] as int?;
+      // Derive a difficulty signal from the strongest available cue.
+      String? difficultyToSend = presetIntensity;
+      if (difficultyToSend == null && presetMaxRpe != null) {
+        if (presetMaxRpe <= 6) {
+          difficultyToSend = 'easy';
+        } else if (presetMaxRpe <= 8) {
+          difficultyToSend = 'medium';
+        } else if (presetMaxRpe <= 9) {
+          difficultyToSend = 'hard';
+        } else {
+          difficultyToSend = 'hell';
+        }
+      }
+      debugPrint('🎯 [Preset] $splitValue → '
+          'difficulty=$difficultyToSend, durationMax=$presetDurationMax, '
+          'minSets=$presetMinSets, aiParams=$aiParams');
+
       final repo = ref.read(workoutRepositoryProvider);
       await repo.updateProgramAndRegenerate(
         userId: userId,
         workoutType: splitValue,
         workoutDays: workoutDays,
+        difficulty: difficultyToSend,
+        durationMinutes: presetDurationMax,
       );
 
       // 2. Mirror the split onto the active gym profile (per-profile field).

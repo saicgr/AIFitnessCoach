@@ -1,4 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+// AllSplitsScreen — landed when the Training Split selector got compacted
+// to 4 cards + a "View all" tile per category (2026-05-27).
+// ignore: unused_import
+import '../../library/screens/all_splits_screen.dart';
+import 'per_day_workout_overrides_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -276,6 +283,20 @@ class SettingsCard extends ConsumerWidget {
           userId: user?.id ?? '',
           activeProfileId: activeProfile?.id,
         ),
+      ),
+    );
+  }
+
+  /// Per-day workout customization (focus + duration + intensity per
+  /// training day). The sheet reads / writes via `auth_repository
+  /// .updateUserProfile({'preferences': {...workout_day_overrides...}})`,
+  /// which is already optimistic. Added 2026-05-27.
+  void _showPerDayOverridesSheet(BuildContext context) {
+    showGlassSheet(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => const GlassSheet(
+        child: PerDayWorkoutOverridesSheet(),
       ),
     );
   }
@@ -731,6 +752,37 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => _showWorkoutDaysSelector(context, ref);
+          } else if (item.isPerDayOverridesSelector) {
+            // Per-day customization: short summary of any existing overrides
+            // ("Tue·Up, Thu·Lo, Sat·Full") or "AI decides" when empty.
+            const _focusAbbr = {
+              'upper_body': 'Up', 'lower_body': 'Lo', 'full_body': 'Full',
+              'push': 'Push', 'pull': 'Pull', 'legs': 'Legs', 'core': 'Core',
+              'cardio': 'Cardio', 'mobility': 'Mob', 'active_recovery': 'Rec',
+            };
+            const _dayAbbr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            final overrides = currentUser?.workoutDayOverrides ?? const {};
+            final summary = overrides.isEmpty
+                ? 'AI decides'
+                : (overrides.entries.toList()..sort((a, b) => a.key.compareTo(b.key)))
+                    .map((e) => '${_dayAbbr[e.key]}·${_focusAbbr[e.value.focus] ?? e.value.focus}')
+                    .take(4)
+                    .join(', ');
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    summary,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right, color: textMuted, size: 20),
+              ],
+            );
+            onTap = () => _showPerDayOverridesSheet(context);
           } else if (item.isProgressChartsScreen) {
             trailing = Row(
               mainAxisSize: MainAxisSize.min,
