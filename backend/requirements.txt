@@ -124,3 +124,6 @@ yt-dlp>=2024.5.27              # IG/TikTok video + caption fetcher (NOT YouTube)
 youtube-transcript-api>=0.6.2  # Captions via the official YT caption endpoint
 google-api-python-client>=2.130 # YouTube Data API v3 client
 webvtt-py>=0.5.1               # WebVTT caption parsing (yt-dlp subtitle path)
+
+# --- Analytics ------------------------------------------------------------
+posthog>=3.5.0                 # Product analytics + lifecycle event capture
