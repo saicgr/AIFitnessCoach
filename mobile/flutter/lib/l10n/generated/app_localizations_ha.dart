@@ -25087,6 +25087,9 @@ class AppLocalizationsHa extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Abubuwan da ke haifar da alerji';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => 'Manufar tsarin jiki';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28216,6 +28219,9 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Mayar da hankali kan horo';
+
+  @override
+  String get profileSessionDetails => 'Bayanan zama';
 
   @override
   String get profileWorkoutHistoryImport => 'Shigo da tarihin motsa jiki';
@@ -44617,21 +44623,125 @@ class AppLocalizationsHa extends AppLocalizations {
       'An kasa sharewa - sake gwadawa daga baya.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Matsayi';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Sake saiti Lahadi';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Babu shigarwa har yanzu · Yi rajistar motsa jiki wannan makon don hawa';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Duba 10 mafi kyau';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Masu motsi';
+
+  @override
+  String get heroModesPillLoading => 'ANA ƊAUKARWA';
+
+  @override
+  String get heroModesBodyLoading => 'Muna shirya shirin yau…';
+
+  @override
+  String get heroModesPillOffline => 'BABU INTANET';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Ba a iya ɗaukar motsa jiki na yau ba. Danna don sake gwadawa.';
+
+  @override
+  String get heroModesActionRetry => 'SAKE';
+
+  @override
+  String get heroModesPillLive => 'AKAN AIKI';
+
+  @override
+  String get heroModesPillPaused => 'AN DAKATAR';
+
+  @override
+  String get heroModesBodyPaused =>
+      'An dakatar da shirin. Ci gaba lokacin da ka shirya.';
+
+  @override
+  String get heroModesPillWindDown => 'GOBE · HUTAWA';
+
+  @override
+  String get heroModesBodyWindDown => 'Yi bacci da farko. Zaman gobe zai jira.';
+
+  @override
+  String get heroModesPillLighter => 'MAI SAUƘI';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Bacci bai yi kyau ba. A gwada bambancin mai sauƙi yau?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'RASA KAYAN AIKI';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Wasu kayan aiki ba sa cikin bayanin gymɗinka na yanzu.';
+
+  @override
+  String get heroModesPillFasted => 'AZUMI';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Motsa jiki cikin azumi yana da kyau. Kiyaye matsakaicin ƙarfi; cika makamashi cikin minti 30.';
+
+  @override
+  String get heroModesPillFuelGap => 'RASHIN MAKAMASHI';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Cin abinci na ƙarshe ya daɗe. A ci ~200 kcal na carbohydrates?';
+
+  @override
+  String get heroModesPillComeback => 'DAWOWA';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Zama na farko ga wannan ƙungiyar tsoka da ya daɗe. A fara a hankali.';
+
+  @override
+  String get heroModesPillPrWindow => 'TAGAN PR';
+
+  @override
+  String get heroModesBodyPrWindow =>
+      'Kana kusa da rikodin yau. Mu je mu gwada?';
+
+  @override
+  String get heroModesActionStart => 'FARA';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'JIKI YANA SO HUTAWA';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      'Kwanaki 5 masu wahala, bacci yana raguwa. Yau saka jari ne na mako mai zuwa.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'TAGAN CIKA MAKAMASHI';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'Tagan minti 30: furotin + carbohydrates suna ƙarfafa aiki.';
+
+  @override
+  String get heroModesPillBonus => 'KARIN';
+
+  @override
+  String get heroModesBodyBonus => 'Akwai minti 20? Shigar da zaman gaggawa.';
+
+  @override
+  String get heroModesPillYesterday => 'JIYA';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Zaman jiya har yanzu yana buɗe. A matsa shi zuwa yau?';
 }

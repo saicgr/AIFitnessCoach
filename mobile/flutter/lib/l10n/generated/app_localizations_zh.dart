@@ -23710,6 +23710,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionFastingCardAllergens => '过敏原';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => '身体成分目标';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories 卡路里';
   }
@@ -26674,6 +26677,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => '训练重点';
+
+  @override
+  String get profileSessionDetails => '会话详情';
 
   @override
   String get profileWorkoutHistoryImport => '训练历史导入';
@@ -42256,21 +42262,113 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importsPrivacyClearFailedSnack => '无法清除 - 请稍后再试。';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => '排行';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => '周日重置';
 
   @override
-  String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+  String get discoverNoEntriesYet => '还没有记录 · 本周记录一次训练以爬升';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => '查看前 10 名';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => '上升者';
+
+  @override
+  String get heroModesPillLoading => '加载中';
+
+  @override
+  String get heroModesBodyLoading => '正在为你准备今天的计划…';
+
+  @override
+  String get heroModesPillOffline => '离线';
+
+  @override
+  String get heroModesBodyOffline => '无法加载今日训练。点击重试。';
+
+  @override
+  String get heroModesActionRetry => '重试';
+
+  @override
+  String get heroModesPillLive => '进行中';
+
+  @override
+  String get heroModesPillPaused => '已暂停';
+
+  @override
+  String get heroModesBodyPaused => '计划已暂停。准备好后继续。';
+
+  @override
+  String get heroModesPillWindDown => '明天 · 放松';
+
+  @override
+  String get heroModesBodyWindDown => '先休息。明天的训练会等你。';
+
+  @override
+  String get heroModesPillLighter => '建议更轻';
+
+  @override
+  String get heroModesBodyLighter => '睡眠不佳。今天试试更轻的版本？';
+
+  @override
+  String get heroModesPillEquipmentGap => '器械不足';
+
+  @override
+  String get heroModesBodyEquipmentGap => '当前健身房资料中缺少部分器械。';
+
+  @override
+  String get heroModesPillFasted => '空腹中';
+
+  @override
+  String get heroModesBodyFasted => '空腹训练没问题。强度适中；训练后 30 分钟内补给。';
+
+  @override
+  String get heroModesPillFuelGap => '燃料不足';
+
+  @override
+  String get heroModesBodyFuelGap => '上一餐已经很久了。吃约 200 大卡碳水？';
+
+  @override
+  String get heroModesPillComeback => '回归训练';
+
+  @override
+  String get heroModesBodyComeback => '久违的肌群第一次训练。慢慢来。';
+
+  @override
+  String get heroModesPillPrWindow => 'PR 窗口';
+
+  @override
+  String get heroModesBodyPrWindow => '今天接近个人纪录。要试试吗？';
+
+  @override
+  String get heroModesActionStart => '开始';
+
+  @override
+  String get heroModesPillBodyAsksRest => '身体需要休息';
+
+  @override
+  String get heroModesBodyBodyAsksRest => '5 个艰苦日，睡眠下降。今天是为下周做的投资。';
+
+  @override
+  String get heroModesPillRefuelWindow => '补给窗口';
+
+  @override
+  String get heroModesBodyRefuelWindow => '30 分钟补给窗口：蛋白质 + 碳水锁定成果。';
+
+  @override
+  String get heroModesPillBonus => '加场';
+
+  @override
+  String get heroModesBodyBonus => '有 20 分钟？挤进一段快速训练。';
+
+  @override
+  String get heroModesPillYesterday => '昨天';
+
+  @override
+  String get heroModesBodyYesterday => '昨天的训练还开着。挪到今天？';
 }

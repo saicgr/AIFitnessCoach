@@ -24985,6 +24985,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Alerjenler';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Vücut kompozisyonu hedefi';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories kal';
   }
@@ -28116,6 +28120,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Antrenman Odağı';
+
+  @override
+  String get profileSessionDetails => 'Oturum ayrıntıları';
 
   @override
   String get profileWorkoutHistoryImport => 'Antrenman Geçmişi İçe Aktarma';
@@ -44479,21 +44486,126 @@ class AppLocalizationsTr extends AppLocalizations {
       'Temizlenemedi; daha sonra tekrar deneyin.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Sıralamalar';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Pazar günü sıfırlanır';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Henüz giriş yok · Tırmanmak için bu hafta antrenman kaydet';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'İlk 10\'u gör';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Yükselenler';
+
+  @override
+  String get heroModesPillLoading => 'YÜKLENİYOR';
+
+  @override
+  String get heroModesBodyLoading => 'Bugünün planı hazırlanıyor…';
+
+  @override
+  String get heroModesPillOffline => 'ÇEVRİMDIŞI';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Bugünün antrenmanı yüklenemedi. Tekrar denemek için dokunun.';
+
+  @override
+  String get heroModesActionRetry => 'YENİDEN';
+
+  @override
+  String get heroModesPillLive => 'CANLI';
+
+  @override
+  String get heroModesPillPaused => 'DURDURULDU';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Plan duraklatıldı. Hazır olduğunda devam et.';
+
+  @override
+  String get heroModesPillWindDown => 'YARIN · SAKİNLEŞME';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'Önce uyu. Yarınki seans seni bekleyecek.';
+
+  @override
+  String get heroModesPillLighter => 'DAHA HAFİF ÖNERİLDİ';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Uyku iyi değildi. Bugün daha hafif bir versiyon deneyelim mi?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'EKİPMAN EKSİK';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Mevcut salon profilinde bazı ekipmanlar yok.';
+
+  @override
+  String get heroModesPillFasted => 'AÇ KARNINA';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Aç antrenman tamam. Şiddeti orta tut; 30 dk içinde yakıt al.';
+
+  @override
+  String get heroModesPillFuelGap => 'YAKIT EKSİK';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Son öğün üzerinden zaman geçti. ~200 kcal karbonhidrat ye?';
+
+  @override
+  String get heroModesPillComeback => 'GERİ DÖNÜŞ';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Bu kas grubu için uzun zaman sonraki ilk seans. Yavaş başla.';
+
+  @override
+  String get heroModesPillPrWindow => 'REKOR PENCERESİ';
+
+  @override
+  String get heroModesBodyPrWindow => 'Bugün rekora yakınsın. Deneyelim mi?';
+
+  @override
+  String get heroModesActionStart => 'BAŞLAT';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'VÜCUT DİNLENME İSTİYOR';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 zor gün, uyku düşüyor. Bugün gelecek haftaya yatırım.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'DOLDURMA PENCERESİ';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30 dk pencere: protein + karbonhidrat işi kilitler.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus =>
+      '20 dakikan var mı? Hızlı bir seans sıkıştır.';
+
+  @override
+  String get heroModesPillYesterday => 'DÜN';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Dünkü seans hâlâ açık. Bugüne taşıyalım mı?';
 }

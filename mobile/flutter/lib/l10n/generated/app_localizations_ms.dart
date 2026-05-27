@@ -25046,6 +25046,10 @@ class AppLocalizationsMs extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Alergen';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Sasaran komposisi badan';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories kal';
   }
@@ -28188,6 +28192,9 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Fokus Latihan';
+
+  @override
+  String get profileSessionDetails => 'Butiran sesi';
 
   @override
   String get profileWorkoutHistoryImport => 'Import Sejarah Senaman';
@@ -44577,21 +44584,124 @@ class AppLocalizationsMs extends AppLocalizations {
       'Tidak dapat mengosongkan — cuba lagi kemudian.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Kedudukan';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Set semula Ahad';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Tiada entri lagi · Log latihan minggu ini untuk naik';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Lihat 10 teratas';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Pendaki';
+
+  @override
+  String get heroModesPillLoading => 'MEMUATKAN';
+
+  @override
+  String get heroModesBodyLoading => 'Menyediakan rancangan hari ini…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Gagal memuatkan latihan hari ini. Ketik untuk cuba lagi.';
+
+  @override
+  String get heroModesActionRetry => 'CUBA';
+
+  @override
+  String get heroModesPillLive => 'LANGSUNG';
+
+  @override
+  String get heroModesPillPaused => 'DIJEDA';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Rancangan dijeda. Sambung apabila bersedia.';
+
+  @override
+  String get heroModesPillWindDown => 'ESOK · PENYEJUKAN';
+
+  @override
+  String get heroModesBodyWindDown => 'Tidur dahulu. Sesi esok akan menunggu.';
+
+  @override
+  String get heroModesPillLighter => 'LEBIH RINGAN';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Tidur tidak cukup. Cuba variasi lebih ringan hari ini?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'PERALATAN KURANG';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Sebahagian peralatan tiada dalam profil gim semasa anda.';
+
+  @override
+  String get heroModesPillFasted => 'BERPUASA';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Latihan berpuasa boleh. Intensiti sederhana; isi semula dalam 30 minit selepas.';
+
+  @override
+  String get heroModesPillFuelGap => 'KURANG BAHAN API';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Hidangan terakhir sudah lama. Makan ~200 kcal karbohidrat?';
+
+  @override
+  String get heroModesPillComeback => 'KEMBALI';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Sesi pertama untuk kumpulan otot ini sejak lama. Mula perlahan.';
+
+  @override
+  String get heroModesPillPrWindow => 'TETINGKAP PR';
+
+  @override
+  String get heroModesBodyPrWindow => 'Hari ini hampir rekod peribadi. Cuba?';
+
+  @override
+  String get heroModesActionStart => 'MULA';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'BADAN MAHU REHAT';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 hari berat, tidur menurun. Hari ini pelaburan untuk minggu hadapan.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'TETINGKAP ISI SEMULA';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'Tetingkap 30 minit: protein + karbohidrat mengukuhkan hasil.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus => 'Ada 20 minit? Selit sesi pantas.';
+
+  @override
+  String get heroModesPillYesterday => 'SEMALAM';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Sesi semalam masih terbuka. Pindah ke hari ini?';
 }

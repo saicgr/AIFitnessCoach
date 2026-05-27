@@ -25107,6 +25107,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Аллергены';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => 'Цель состава тела';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories кал';
   }
@@ -28250,6 +28253,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Фокус тренировок';
+
+  @override
+  String get profileSessionDetails => 'Детали сессии';
 
   @override
   String get profileWorkoutHistoryImport => 'Импорт истории тренировок';
@@ -44681,21 +44687,125 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось очистить — повторите попытку позже.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Рейтинги';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Сброс в воскресенье';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Записей пока нет · Запиши тренировку на этой неделе, чтобы подняться';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Смотреть топ-10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Растущие';
+
+  @override
+  String get heroModesPillLoading => 'ЗАГРУЗКА';
+
+  @override
+  String get heroModesBodyLoading => 'Готовим план на сегодня…';
+
+  @override
+  String get heroModesPillOffline => 'ОФЛАЙН';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Не удалось загрузить тренировку. Нажмите, чтобы повторить.';
+
+  @override
+  String get heroModesActionRetry => 'ПОВТОР';
+
+  @override
+  String get heroModesPillLive => 'В ПРОЦЕССЕ';
+
+  @override
+  String get heroModesPillPaused => 'ПРИОСТАНОВЛЕНО';
+
+  @override
+  String get heroModesBodyPaused =>
+      'План приостановлен. Возобновите, когда будете готовы.';
+
+  @override
+  String get heroModesPillWindDown => 'ЗАВТРА · ОТДЫХ';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'Сначала сон. Завтрашняя тренировка подождёт.';
+
+  @override
+  String get heroModesPillLighter => 'ЛЕГЧЕ РЕКОМЕНДОВАНО';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Сон был плохим. Попробовать сегодня более лёгкий вариант?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'НЕХВАТКА ИНВЕНТАРЯ';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'В текущем профиле зала не хватает инвентаря.';
+
+  @override
+  String get heroModesPillFasted => 'НА ГОЛОДНЫЙ';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Тренировка на голодный желудок — ок. Интенсивность умеренная; восполни в течение 30 мин.';
+
+  @override
+  String get heroModesPillFuelGap => 'НЕХВАТКА ТОПЛИВА';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Последний приём пищи давно. Съесть ~200 ккал углеводов?';
+
+  @override
+  String get heroModesPillComeback => 'ВОЗВРАЩЕНИЕ';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Первая тренировка этой группы мышц за долгое время. Начни мягко.';
+
+  @override
+  String get heroModesPillPrWindow => 'ОКНО РЕКОРДА';
+
+  @override
+  String get heroModesBodyPrWindow => 'Сегодня близко к рекорду. Попробуем?';
+
+  @override
+  String get heroModesActionStart => 'СТАРТ';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'ТЕЛО ПРОСИТ ОТДЫХА';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 тяжёлых дней, сон падает. Сегодня — вклад в следующую неделю.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'ОКНО ВОССТАНОВЛЕНИЯ';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30-минутное окно: белок + углеводы закрепляют работу.';
+
+  @override
+  String get heroModesPillBonus => 'БОНУС';
+
+  @override
+  String get heroModesBodyBonus => 'Есть 20 минут? Втисни быструю тренировку.';
+
+  @override
+  String get heroModesPillYesterday => 'ВЧЕРА';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Вчерашняя тренировка ещё открыта. Перенести на сегодня?';
 }

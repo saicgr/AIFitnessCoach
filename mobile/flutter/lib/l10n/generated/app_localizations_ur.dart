@@ -25014,6 +25014,9 @@ class AppLocalizationsUr extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'الرجینز';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => 'جسمانی ساخت کا ہدف';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories کیلوریز';
   }
@@ -28144,6 +28147,9 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'ٹریننگ فوکس';
+
+  @override
+  String get profileSessionDetails => 'سیشن کی تفصیلات';
 
   @override
   String get profileWorkoutHistoryImport => 'ورزش کی تاریخ درآمد کریں';
@@ -44511,21 +44517,123 @@ class AppLocalizationsUr extends AppLocalizations {
       'صاف نہیں ہو سکا — بعد میں دوبارہ کوشش کریں۔';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'درجہ بندی';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'اتوار کو ری سیٹ';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'ابھی کوئی اندراج نہیں · اوپر چڑھنے کے لیے اس ہفتے ورزش لاگ کریں';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'ٹاپ 10 دیکھیں';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'آگے بڑھنے والے';
+
+  @override
+  String get heroModesPillLoading => 'لوڈ ہو رہا ہے';
+
+  @override
+  String get heroModesBodyLoading => 'آج کا منصوبہ تیار ہو رہا ہے…';
+
+  @override
+  String get heroModesPillOffline => 'آف لائن';
+
+  @override
+  String get heroModesBodyOffline =>
+      'آج کی ورزش لوڈ نہیں ہوسکی۔ دوبارہ کوشش کے لیے ٹیپ کریں۔';
+
+  @override
+  String get heroModesActionRetry => 'دوبارہ';
+
+  @override
+  String get heroModesPillLive => 'براہ راست';
+
+  @override
+  String get heroModesPillPaused => 'روکا گیا';
+
+  @override
+  String get heroModesBodyPaused =>
+      'منصوبہ روک دیا گیا ہے۔ تیار ہونے پر دوبارہ شروع کریں۔';
+
+  @override
+  String get heroModesPillWindDown => 'کل · سکون';
+
+  @override
+  String get heroModesBodyWindDown => 'پہلے سو لیں۔ کل کا سیشن انتظار کرے گا۔';
+
+  @override
+  String get heroModesPillLighter => 'ہلکی تجویز';
+
+  @override
+  String get heroModesBodyLighter => 'نیند خراب تھی۔ آج ہلکا ورژن آزمائیں؟';
+
+  @override
+  String get heroModesPillEquipmentGap => 'سامان کی کمی';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'آپ کے موجودہ جم پروفائل میں کچھ سامان موجود نہیں۔';
+
+  @override
+  String get heroModesPillFasted => 'روزے میں';
+
+  @override
+  String get heroModesBodyFasted =>
+      'روزے میں ٹریننگ ٹھیک ہے۔ شدت معتدل رکھیں؛ 30 منٹ کے اندر ایندھن بھریں۔';
+
+  @override
+  String get heroModesPillFuelGap => 'ایندھن کی کمی';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'آخری کھانا کافی پہلے تھا۔ ~200 کیلوریز کاربز کھائیں؟';
+
+  @override
+  String get heroModesPillComeback => 'واپسی';
+
+  @override
+  String get heroModesBodyComeback =>
+      'اس عضلاتی گروپ کا کافی عرصے بعد پہلا سیشن۔ آہستہ شروع کریں۔';
+
+  @override
+  String get heroModesPillPrWindow => 'PR ونڈو';
+
+  @override
+  String get heroModesBodyPrWindow => 'آج آپ ریکارڈ کے قریب ہیں۔ کوشش کریں؟';
+
+  @override
+  String get heroModesActionStart => 'شروع';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'جسم آرام چاہتا ہے';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 سخت دن، نیند کم ہو رہی ہے۔ آج اگلے ہفتے میں سرمایہ کاری ہے۔';
+
+  @override
+  String get heroModesPillRefuelWindow => 'ری فیول ونڈو';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30 منٹ کی ونڈو: پروٹین + کاربز کام کو پکا کرتے ہیں۔';
+
+  @override
+  String get heroModesPillBonus => 'بونس';
+
+  @override
+  String get heroModesBodyBonus => '20 منٹ ہیں؟ ایک تیز سیشن گھسیڑیں۔';
+
+  @override
+  String get heroModesPillYesterday => 'کل';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'کل کا سیشن ابھی کھلا ہے۔ آج پر منتقل کریں؟';
 }

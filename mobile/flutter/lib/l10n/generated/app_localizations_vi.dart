@@ -25029,6 +25029,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Chất gây dị ứng';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Mục tiêu thành phần cơ thể';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28162,6 +28166,9 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Trọng tâm tập luyện';
+
+  @override
+  String get profileSessionDetails => 'Chi tiết buổi tập';
 
   @override
   String get profileWorkoutHistoryImport => 'Nhập lịch sử tập luyện';
@@ -44548,21 +44555,123 @@ class AppLocalizationsVi extends AppLocalizations {
       'Không thể xóa - hãy thử lại sau.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Bảng xếp hạng';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Đặt lại vào Chủ Nhật';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Chưa có mục nào · Ghi nhận bài tập tuần này để thăng hạng';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Xem top 10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Vươn lên';
+
+  @override
+  String get heroModesPillLoading => 'ĐANG TẢI';
+
+  @override
+  String get heroModesBodyLoading => 'Đang chuẩn bị kế hoạch hôm nay…';
+
+  @override
+  String get heroModesPillOffline => 'NGOẠI TUYẾN';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Không thể tải bài tập hôm nay. Chạm để thử lại.';
+
+  @override
+  String get heroModesActionRetry => 'THỬ LẠI';
+
+  @override
+  String get heroModesPillLive => 'TRỰC TIẾP';
+
+  @override
+  String get heroModesPillPaused => 'TẠM DỪNG';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Kế hoạch đã tạm dừng. Tiếp tục khi sẵn sàng.';
+
+  @override
+  String get heroModesPillWindDown => 'NGÀY MAI · THƯ GIÃN';
+
+  @override
+  String get heroModesBodyWindDown => 'Ngủ trước đã. Buổi mai sẽ chờ.';
+
+  @override
+  String get heroModesPillLighter => 'NHẸ HƠN';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Ngủ không ngon. Thử phiên bản nhẹ hơn hôm nay?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'THIẾU THIẾT BỊ';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Một số thiết bị không có trong hồ sơ phòng tập hiện tại.';
+
+  @override
+  String get heroModesPillFasted => 'NHỊN ĂN';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Tập khi nhịn ăn ổn. Cường độ vừa phải; nạp lại trong vòng 30 phút.';
+
+  @override
+  String get heroModesPillFuelGap => 'THIẾU NHIÊN LIỆU';
+
+  @override
+  String get heroModesBodyFuelGap => 'Bữa ăn cuối đã lâu. Ăn ~200 kcal carbs?';
+
+  @override
+  String get heroModesPillComeback => 'TRỞ LẠI';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Buổi đầu tiên cho nhóm cơ này sau thời gian dài. Bắt đầu nhẹ nhàng.';
+
+  @override
+  String get heroModesPillPrWindow => 'CỬA SỔ PR';
+
+  @override
+  String get heroModesBodyPrWindow => 'Hôm nay bạn gần kỷ lục. Thử không?';
+
+  @override
+  String get heroModesActionStart => 'BẮT ĐẦU';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'CƠ THỂ CẦN NGHỈ';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 ngày khó, giấc ngủ giảm. Hôm nay là đầu tư cho tuần sau.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'CỬA SỔ NẠP LẠI';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'Cửa sổ 30 phút: protein + carbs khóa kết quả.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus => 'Còn 20 phút? Chèn một buổi nhanh.';
+
+  @override
+  String get heroModesPillYesterday => 'HÔM QUA';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Buổi hôm qua vẫn mở. Chuyển sang hôm nay?';
 }

@@ -24972,6 +24972,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'ਐਲਰਜੀਨ';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => 'ਸਰੀਰ ਬਣਤਰ ਟੀਚਾ';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories ਕੈਲੋਰੀ';
   }
@@ -28101,6 +28104,9 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'ਸਿਖਲਾਈ ਦਾ ਫੋਕਸ';
+
+  @override
+  String get profileSessionDetails => 'ਸੈਸ਼ਨ ਵੇਰਵੇ';
 
   @override
   String get profileWorkoutHistoryImport => 'ਕਸਰਤ ਇਤਿਹਾਸ ਇੰਪੋਰਟ';
@@ -44463,21 +44469,124 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਸਾਫ਼ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ — ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'ਰੈਂਕ';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'ਐਤਵਾਰ ਨੂੰ ਰੀਸੈੱਟ';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'ਅਜੇ ਕੋਈ ਐਂਟਰੀ ਨਹੀਂ · ਉਪਰ ਜਾਣ ਲਈ ਇਸ ਹਫ਼ਤੇ ਵਰਕਆਊਟ ਲਾਗ ਕਰੋ';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'ਟੌਪ 10 ਦੇਖੋ';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'ਅੱਗੇ ਵਧਣ ਵਾਲੇ';
+
+  @override
+  String get heroModesPillLoading => 'ਲੋਡ ਹੋ ਰਿਹਾ';
+
+  @override
+  String get heroModesBodyLoading => 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਤਿਆਰ ਹੋ ਰਹੀ ਹੈ…';
+
+  @override
+  String get heroModesPillOffline => 'ਆਫਲਾਈਨ';
+
+  @override
+  String get heroModesBodyOffline =>
+      'ਅੱਜ ਦੀ ਕਸਰਤ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਲਈ ਟੈਪ ਕਰੋ।';
+
+  @override
+  String get heroModesActionRetry => 'ਫਿਰ';
+
+  @override
+  String get heroModesPillLive => 'ਲਾਈਵ';
+
+  @override
+  String get heroModesPillPaused => 'ਰੁਕੀ';
+
+  @override
+  String get heroModesBodyPaused =>
+      'ਯੋਜਨਾ ਰੁਕੀ ਹੈ। ਤਿਆਰ ਹੋਣ \'ਤੇ ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ।';
+
+  @override
+  String get heroModesPillWindDown => 'ਕੱਲ੍ਹ · ਠੰਡਾ ਹੋਣਾ';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'ਪਹਿਲਾਂ ਸੌਂਵੋ। ਕੱਲ੍ਹ ਦਾ ਸੈਸ਼ਨ ਉਡੀਕ ਕਰੇਗਾ।';
+
+  @override
+  String get heroModesPillLighter => 'ਹਲਕਾ ਸੁਝਾਅ';
+
+  @override
+  String get heroModesBodyLighter => 'ਨੀਂਦ ਠੀਕ ਨਹੀਂ ਸੀ। ਅੱਜ ਹਲਕਾ ਰੂਪ ਕਰੋ?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'ਉਪਕਰਨ ਘਾਟ';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'ਕੁਝ ਉਪਕਰਨ ਤੁਹਾਡੇ ਮੌਜੂਦਾ ਜਿਮ ਪ੍ਰੋਫਾਈਲ ਵਿੱਚ ਨਹੀਂ ਹਨ।';
+
+  @override
+  String get heroModesPillFasted => 'ਵਰਤ ਵਿੱਚ';
+
+  @override
+  String get heroModesBodyFasted =>
+      'ਵਰਤ ਵਿੱਚ ਟ੍ਰੇਨਿੰਗ ਠੀਕ ਹੈ। ਮੱਧਮ ਤੀਬਰਤਾ; 30 ਮਿੰਟ ਅੰਦਰ ਮੁੜ ਭਰੋ।';
+
+  @override
+  String get heroModesPillFuelGap => 'ਬਾਲਣ ਘਾਟ';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'ਆਖਰੀ ਖਾਣਾ ਕਾਫੀ ਪਹਿਲਾਂ ਸੀ। ~200 ਕੈਲੋਰੀ ਕਾਰਬ ਖਾਓ?';
+
+  @override
+  String get heroModesPillComeback => 'ਵਾਪਸੀ';
+
+  @override
+  String get heroModesBodyComeback =>
+      'ਇਸ ਮਾਸਪੇਸ਼ੀ ਸਮੂਹ ਦਾ ਲੰਮੇ ਅਰਸੇ ਬਾਅਦ ਪਹਿਲਾ ਸੈਸ਼ਨ। ਹੌਲੀ ਸ਼ੁਰੂ ਕਰੋ।';
+
+  @override
+  String get heroModesPillPrWindow => 'PR ਵਿੰਡੋ';
+
+  @override
+  String get heroModesBodyPrWindow => 'ਅੱਜ ਤੁਸੀਂ ਰਿਕਾਰਡ ਨੇੜੇ ਹੋ। ਕੋਸ਼ਿਸ਼ ਕਰੋ?';
+
+  @override
+  String get heroModesActionStart => 'ਸ਼ੁਰੂ';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'ਸਰੀਰ ਆਰਾਮ ਮੰਗਦਾ';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 ਔਖੇ ਦਿਨ, ਨੀਂਦ ਘਟ ਰਹੀ। ਅੱਜ ਅਗਲੇ ਹਫ਼ਤੇ ਲਈ ਨਿਵੇਸ਼ ਹੈ।';
+
+  @override
+  String get heroModesPillRefuelWindow => 'ਰੀਫਿਊਲ ਵਿੰਡੋ';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30 ਮਿੰਟ ਵਿੰਡੋ: ਪ੍ਰੋਟੀਨ + ਕਾਰਬ ਕੰਮ ਪੱਕਾ ਕਰਦੇ ਹਨ।';
+
+  @override
+  String get heroModesPillBonus => 'ਬੋਨਸ';
+
+  @override
+  String get heroModesBodyBonus => '20 ਮਿੰਟ ਹਨ? ਇੱਕ ਤੇਜ਼ ਸੈਸ਼ਨ ਘੁਸੇੜੋ।';
+
+  @override
+  String get heroModesPillYesterday => 'ਕੱਲ੍ਹ';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'ਕੱਲ੍ਹ ਦਾ ਸੈਸ਼ਨ ਅਜੇ ਖੁੱਲ੍ਹਾ ਹੈ। ਅੱਜ \'ਤੇ ਲਿਆਓ?';
 }

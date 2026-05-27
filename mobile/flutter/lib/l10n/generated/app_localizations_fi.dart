@@ -25039,6 +25039,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Allergeenit';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Kehonkoostumustavoite';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories kcal';
   }
@@ -28183,6 +28187,9 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Treenin painopiste';
+
+  @override
+  String get profileSessionDetails => 'Istunnon tiedot';
 
   @override
   String get profileWorkoutHistoryImport => 'Treenihistorian tuonti';
@@ -44555,21 +44562,125 @@ class AppLocalizationsFi extends AppLocalizations {
       'Ei voitu tyhjentää – yritä myöhemmin uudelleen.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Sijoitukset';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Nollautuu sunnuntaina';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Ei vielä merkintöjä · Kirjaa treeni tällä viikolla noustaksesi';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Näytä top 10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Nousijat';
+
+  @override
+  String get heroModesPillLoading => 'LADATAAN';
+
+  @override
+  String get heroModesBodyLoading => 'Rakennetaan päivän suunnitelmaa…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Päivän treenin lataus epäonnistui. Yritä uudelleen.';
+
+  @override
+  String get heroModesActionRetry => 'YRITÄ';
+
+  @override
+  String get heroModesPillLive => 'KÄYNNISSÄ';
+
+  @override
+  String get heroModesPillPaused => 'TAUOLLA';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Suunnitelma tauolla. Jatka, kun olet valmis.';
+
+  @override
+  String get heroModesPillWindDown => 'HUOMENNA · RAUHOITTUMINEN';
+
+  @override
+  String get heroModesBodyWindDown => 'Nuku ensin. Huomisen treeni odottaa.';
+
+  @override
+  String get heroModesPillLighter => 'KEVYEMPI SUOSITELTU';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Uni oli huono. Kokeile kevyempää varianttia tänään?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'VÄLINE PUUTTUU';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Joitain välineitä ei ole nykyisessä saliprofiilissa.';
+
+  @override
+  String get heroModesPillFasted => 'PAASTOLLA';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Paastotreenaus on ok. Pidä intensiteetti maltillisena; täytä energia 30 min sisällä.';
+
+  @override
+  String get heroModesPillFuelGap => 'ENERGIAVAJE';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Edellisestä ateriasta on aikaa. Syö ~200 kcal hiilihydraatteja?';
+
+  @override
+  String get heroModesPillComeback => 'PALUU';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Ensimmäinen treeni tälle lihasryhmälle pitkään aikaan. Aloita rauhassa.';
+
+  @override
+  String get heroModesPillPrWindow => 'PR-IKKUNA';
+
+  @override
+  String get heroModesBodyPrWindow =>
+      'Olet lähellä ennätystä tänään. Yritetäänkö?';
+
+  @override
+  String get heroModesActionStart => 'ALOITA';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'KEHO PYYTÄÄ LEPOA';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 kovaa päivää, uni laskee. Tänään on sijoitus ensi viikkoon.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'TÄYTTÖIKKUNA';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30 min ikkuna: proteiini + hiilihydraatit lukitsevat työn.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus => 'Onko 20 min? Pujahda nopea treeni.';
+
+  @override
+  String get heroModesPillYesterday => 'EILEN';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Eilinen treeni on yhä auki. Siirretäänkö tähän päivään?';
 }

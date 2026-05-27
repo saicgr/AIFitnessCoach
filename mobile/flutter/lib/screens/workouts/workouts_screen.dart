@@ -162,15 +162,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   }
 
   @override
-  void initState() {
-    super.initState();
-    // Collapse nav bar labels on this secondary page
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(navBarLabelsExpandedProvider.notifier).state = false;
-    });
-  }
-
-  @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();

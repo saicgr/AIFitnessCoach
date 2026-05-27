@@ -24936,6 +24936,10 @@ class AppLocalizationsSv extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Allergener';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Mål för kroppssammansättning';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories kcal';
   }
@@ -28039,6 +28043,9 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Träningsfokus';
+
+  @override
+  String get profileSessionDetails => 'Sessionsdetaljer';
 
   @override
   String get profileWorkoutHistoryImport => 'Importera träningshistorik';
@@ -44372,21 +44379,124 @@ class AppLocalizationsSv extends AppLocalizations {
       'Det gick inte att rensa – försök igen senare.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Rankningar';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Återställs söndag';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Inga poster ännu · Logga ett pass denna vecka för att stiga';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Visa topp 10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Klättrare';
+
+  @override
+  String get heroModesPillLoading => 'LADDAR';
+
+  @override
+  String get heroModesBodyLoading => 'Bygger dagens plan…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Kunde inte ladda dagens träning. Tryck för att försöka igen.';
+
+  @override
+  String get heroModesActionRetry => 'FÖRSÖK';
+
+  @override
+  String get heroModesPillLive => 'LIVE';
+
+  @override
+  String get heroModesPillPaused => 'PAUSAD';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Planen är pausad. Återuppta när du är redo.';
+
+  @override
+  String get heroModesPillWindDown => 'IMORGON · NEDVARVNING';
+
+  @override
+  String get heroModesBodyWindDown => 'Sov först. Morgondagens pass väntar.';
+
+  @override
+  String get heroModesPillLighter => 'LÄTTARE FÖRESLAGEN';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Sömnen var dålig. Prova en lättare variant idag?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'UTRUSTNING SAKNAS';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Viss utrustning saknas i din nuvarande gymprofil.';
+
+  @override
+  String get heroModesPillFasted => 'FASTANDE';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Fastande träning är ok. Måttlig intensitet; fyll på inom 30 min.';
+
+  @override
+  String get heroModesPillFuelGap => 'BRÄNSLEBRIST';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Senaste målet var länge sen. Ät ~200 kcal kolhydrater?';
+
+  @override
+  String get heroModesPillComeback => 'COMEBACK';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Första passet för denna muskelgrupp på länge. Starta lugnt.';
+
+  @override
+  String get heroModesPillPrWindow => 'PR-FÖNSTER';
+
+  @override
+  String get heroModesBodyPrWindow => 'Idag nära ett rekord. Försöka?';
+
+  @override
+  String get heroModesActionStart => 'STARTA';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'KROPPEN VILL VILA';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 tuffa dagar, sömnen sjunker. Idag är en investering för nästa vecka.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'ÅTERFYLLNADSFÖNSTER';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30-min fönster: protein + kolhydrater låser arbetet.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus => 'Har du 20 min? Klämmer in ett snabbt pass.';
+
+  @override
+  String get heroModesPillYesterday => 'IGÅR';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Gårdagens pass är fortfarande öppet. Flytta till idag?';
 }

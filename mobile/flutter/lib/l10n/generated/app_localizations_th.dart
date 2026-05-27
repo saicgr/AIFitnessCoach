@@ -24945,6 +24945,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'สารก่อภูมิแพ้';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'เป้าหมายองค์ประกอบร่างกาย';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories แคล';
   }
@@ -28066,6 +28070,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'จุดเน้นการฝึก';
+
+  @override
+  String get profileSessionDetails => 'รายละเอียดเซสชัน';
 
   @override
   String get profileWorkoutHistoryImport => 'นำเข้าประวัติการออกกำลังกาย';
@@ -44385,21 +44392,122 @@ class AppLocalizationsTh extends AppLocalizations {
       'ไม่สามารถล้างได้ โปรดลองอีกครั้งในภายหลัง';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'อันดับ';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'รีเซ็ตวันอาทิตย์';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'ยังไม่มีรายการ · บันทึกการออกกำลังกายสัปดาห์นี้เพื่อไต่อันดับ';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'ดู 10 อันดับแรก';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'ผู้ขยับขึ้น';
+
+  @override
+  String get heroModesPillLoading => 'กำลังโหลด';
+
+  @override
+  String get heroModesBodyLoading => 'กำลังเตรียมแผนวันนี้…';
+
+  @override
+  String get heroModesPillOffline => 'ออฟไลน์';
+
+  @override
+  String get heroModesBodyOffline =>
+      'โหลดการออกกำลังกายวันนี้ไม่สำเร็จ แตะเพื่อลองใหม่';
+
+  @override
+  String get heroModesActionRetry => 'ลองใหม่';
+
+  @override
+  String get heroModesPillLive => 'สด';
+
+  @override
+  String get heroModesPillPaused => 'หยุดชั่วคราว';
+
+  @override
+  String get heroModesBodyPaused => 'แผนหยุดชั่วคราว กลับมาเมื่อพร้อม';
+
+  @override
+  String get heroModesPillWindDown => 'พรุ่งนี้ · ผ่อนคลาย';
+
+  @override
+  String get heroModesBodyWindDown => 'นอนก่อน เซสชันพรุ่งนี้รออยู่';
+
+  @override
+  String get heroModesPillLighter => 'เบากว่าแนะนำ';
+
+  @override
+  String get heroModesBodyLighter => 'นอนไม่ดี ลองเวอร์ชันเบากว่าวันนี้ไหม?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'อุปกรณ์ขาด';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'อุปกรณ์บางอย่างไม่อยู่ในโปรไฟล์ยิมปัจจุบัน';
+
+  @override
+  String get heroModesPillFasted => 'อดอาหาร';
+
+  @override
+  String get heroModesBodyFasted =>
+      'ฝึกตอนอดอาหารได้ ความหนักปานกลาง เติมพลังภายใน 30 นาทีหลัง';
+
+  @override
+  String get heroModesPillFuelGap => 'พลังงานต่ำ';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'มื้อล่าสุดผ่านมานานแล้ว กินคาร์บ ~200 แคลไหม?';
+
+  @override
+  String get heroModesPillComeback => 'กลับมาฝึก';
+
+  @override
+  String get heroModesBodyComeback =>
+      'เซสชันแรกของกลุ่มกล้ามนี้หลังจากนาน เริ่มแบบเบา';
+
+  @override
+  String get heroModesPillPrWindow => 'หน้าต่าง PR';
+
+  @override
+  String get heroModesBodyPrWindow => 'วันนี้ใกล้สถิติ ลองดูไหม?';
+
+  @override
+  String get heroModesActionStart => 'เริ่ม';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'ร่างกายต้องการพัก';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 วันหนัก นอนลด วันนี้คือการลงทุนสำหรับสัปดาห์หน้า';
+
+  @override
+  String get heroModesPillRefuelWindow => 'หน้าต่างเติมพลัง';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'หน้าต่าง 30 นาที: โปรตีน + คาร์บ ตรึงผลลัพธ์';
+
+  @override
+  String get heroModesPillBonus => 'โบนัส';
+
+  @override
+  String get heroModesBodyBonus => 'มี 20 นาทีไหม? แทรกเซสชันเร็ว';
+
+  @override
+  String get heroModesPillYesterday => 'เมื่อวาน';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'เซสชันเมื่อวานยังเปิดอยู่ ย้ายมาวันนี้?';
 }

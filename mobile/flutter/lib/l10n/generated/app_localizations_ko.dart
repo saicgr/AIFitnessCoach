@@ -24025,6 +24025,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionFastingCardAllergens => '알레르기 유발 물질';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => '체성분 목표';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -27026,6 +27029,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => '훈련 집중 부위';
+
+  @override
+  String get profileSessionDetails => '세션 세부정보';
 
   @override
   String get profileWorkoutHistoryImport => '운동 기록 가져오기';
@@ -42791,21 +42797,113 @@ class AppLocalizationsKo extends AppLocalizations {
   String get importsPrivacyClearFailedSnack => '삭제할 수 없습니다. 나중에 다시 시도해 주세요.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => '랭킹';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => '일요일 초기화';
 
   @override
-  String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+  String get discoverNoEntriesYet => '아직 기록 없음 · 이번 주 운동을 기록해 올라가세요';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'TOP 10 보기';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => '상승세';
+
+  @override
+  String get heroModesPillLoading => '로딩 중';
+
+  @override
+  String get heroModesBodyLoading => '오늘의 계획을 준비하고 있어요…';
+
+  @override
+  String get heroModesPillOffline => '오프라인';
+
+  @override
+  String get heroModesBodyOffline => '오늘의 운동을 불러올 수 없어요. 다시 시도하려면 탭하세요.';
+
+  @override
+  String get heroModesActionRetry => '재시도';
+
+  @override
+  String get heroModesPillLive => '라이브';
+
+  @override
+  String get heroModesPillPaused => '일시중지';
+
+  @override
+  String get heroModesBodyPaused => '계획이 일시중지되었어요. 준비되면 다시 시작하세요.';
+
+  @override
+  String get heroModesPillWindDown => '내일 · 마무리';
+
+  @override
+  String get heroModesBodyWindDown => '먼저 자세요. 내일 세션이 기다릴게요.';
+
+  @override
+  String get heroModesPillLighter => '더 가볍게 권장';
+
+  @override
+  String get heroModesBodyLighter => '잠을 잘 못 잤어요. 오늘은 가벼운 버전을 시도할까요?';
+
+  @override
+  String get heroModesPillEquipmentGap => '장비 부족';
+
+  @override
+  String get heroModesBodyEquipmentGap => '현재 짐 프로필에 없는 장비가 있어요.';
+
+  @override
+  String get heroModesPillFasted => '공복 상태';
+
+  @override
+  String get heroModesBodyFasted => '공복 트레이닝 괜찮아요. 강도는 중간으로, 30분 안에 보충하세요.';
+
+  @override
+  String get heroModesPillFuelGap => '연료 부족';
+
+  @override
+  String get heroModesBodyFuelGap => '마지막 식사가 오래됐어요. 탄수화물 ~200kcal 드실래요?';
+
+  @override
+  String get heroModesPillComeback => '복귀';
+
+  @override
+  String get heroModesBodyComeback => '이 근육군의 첫 세션이 오랜만이에요. 천천히 시작해요.';
+
+  @override
+  String get heroModesPillPrWindow => 'PR 윈도우';
+
+  @override
+  String get heroModesBodyPrWindow => '오늘 기록에 가까워요. 도전할까요?';
+
+  @override
+  String get heroModesActionStart => '시작';
+
+  @override
+  String get heroModesPillBodyAsksRest => '몸이 휴식을 원해요';
+
+  @override
+  String get heroModesBodyBodyAsksRest => '힘든 5일, 수면 감소. 오늘은 다음 주를 위한 투자예요.';
+
+  @override
+  String get heroModesPillRefuelWindow => '재충전 윈도우';
+
+  @override
+  String get heroModesBodyRefuelWindow => '30분 재충전 창: 단백질 + 탄수화물이 성과를 굳혀요.';
+
+  @override
+  String get heroModesPillBonus => '보너스';
+
+  @override
+  String get heroModesBodyBonus => '20분 있어요? 빠른 세션을 끼워 넣어요.';
+
+  @override
+  String get heroModesPillYesterday => '어제';
+
+  @override
+  String get heroModesBodyYesterday => '어제 세션이 아직 열려 있어요. 오늘로 옮길까요?';
 }

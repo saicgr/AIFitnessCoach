@@ -41927,6 +41927,12 @@ abstract class AppLocalizations {
   /// **'Allergens'**
   String get nutritionFastingCardAllergens;
 
+  /// Profile / Nutrition card row label — disambiguates from the higher-level Training goal
+  ///
+  /// In en, this message translates to:
+  /// **'Body composition target'**
+  String get nutritionFastingCardBodyCompositionTarget;
+
   /// No description provided for @nutritionFastingCardCal.
   ///
   /// In en, this message translates to:
@@ -47220,6 +47226,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Training Focus'**
   String get profileScreenPartTrainingFocus;
+
+  /// Profile section header for warmup, stretch, duration, injuries — the per-session particulars complementary to Training Setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Session details'**
+  String get profileSessionDetails;
 
   /// No description provided for @profileWorkoutHistoryImport.
   ///
@@ -74892,6 +74904,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Movers'**
   String get discoverMovers;
+
+  /// No description provided for @heroModesPillLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'LOADING'**
+  String get heroModesPillLoading;
+
+  /// No description provided for @heroModesBodyLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Building today\'s plan…'**
+  String get heroModesBodyLoading;
+
+  /// No description provided for @heroModesPillOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'OFFLINE'**
+  String get heroModesPillOffline;
+
+  /// No description provided for @heroModesBodyOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load today\'s workout. Tap to retry.'**
+  String get heroModesBodyOffline;
+
+  /// No description provided for @heroModesActionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get heroModesActionRetry;
+
+  /// No description provided for @heroModesPillLive.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE'**
+  String get heroModesPillLive;
+
+  /// No description provided for @heroModesPillPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'PAUSED'**
+  String get heroModesPillPaused;
+
+  /// No description provided for @heroModesBodyPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan paused. Resume when you\'re ready.'**
+  String get heroModesBodyPaused;
+
+  /// No description provided for @heroModesPillWindDown.
+  ///
+  /// In en, this message translates to:
+  /// **'TOMORROW · WIND-DOWN'**
+  String get heroModesPillWindDown;
+
+  /// No description provided for @heroModesBodyWindDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep first. Tomorrow\'s session will be waiting.'**
+  String get heroModesBodyWindDown;
+
+  /// No description provided for @heroModesPillLighter.
+  ///
+  /// In en, this message translates to:
+  /// **'LIGHTER SUGGESTED'**
+  String get heroModesPillLighter;
+
+  /// No description provided for @heroModesBodyLighter.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep was rough. Try a lighter variant today?'**
+  String get heroModesBodyLighter;
+
+  /// No description provided for @heroModesPillEquipmentGap.
+  ///
+  /// In en, this message translates to:
+  /// **'EQUIPMENT GAP'**
+  String get heroModesPillEquipmentGap;
+
+  /// No description provided for @heroModesBodyEquipmentGap.
+  ///
+  /// In en, this message translates to:
+  /// **'Some equipment isn\'t in your current gym profile.'**
+  String get heroModesBodyEquipmentGap;
+
+  /// No description provided for @heroModesPillFasted.
+  ///
+  /// In en, this message translates to:
+  /// **'FASTED'**
+  String get heroModesPillFasted;
+
+  /// No description provided for @heroModesBodyFasted.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasted training is fine. Keep intensity moderate; refuel within 30 min after.'**
+  String get heroModesBodyFasted;
+
+  /// No description provided for @heroModesPillFuelGap.
+  ///
+  /// In en, this message translates to:
+  /// **'FUEL GAP'**
+  String get heroModesPillFuelGap;
+
+  /// No description provided for @heroModesBodyFuelGap.
+  ///
+  /// In en, this message translates to:
+  /// **'Last meal was a while ago. Eat ~200kcal carbs?'**
+  String get heroModesBodyFuelGap;
+
+  /// No description provided for @heroModesPillComeback.
+  ///
+  /// In en, this message translates to:
+  /// **'COMEBACK'**
+  String get heroModesPillComeback;
+
+  /// No description provided for @heroModesBodyComeback.
+  ///
+  /// In en, this message translates to:
+  /// **'First session for this muscle group in a while. Ease in.'**
+  String get heroModesBodyComeback;
+
+  /// No description provided for @heroModesPillPrWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'PR WINDOW'**
+  String get heroModesPillPrWindow;
+
+  /// No description provided for @heroModesBodyPrWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re close on a top lift today. Push for it?'**
+  String get heroModesBodyPrWindow;
+
+  /// No description provided for @heroModesActionStart.
+  ///
+  /// In en, this message translates to:
+  /// **'START'**
+  String get heroModesActionStart;
+
+  /// No description provided for @heroModesPillBodyAsksRest.
+  ///
+  /// In en, this message translates to:
+  /// **'BODY ASKS REST'**
+  String get heroModesPillBodyAsksRest;
+
+  /// No description provided for @heroModesBodyBodyAsksRest.
+  ///
+  /// In en, this message translates to:
+  /// **'5 hard days, sleep dropping. Today\'s an investment in next week.'**
+  String get heroModesBodyBodyAsksRest;
+
+  /// No description provided for @heroModesPillRefuelWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'REFUEL WINDOW'**
+  String get heroModesPillRefuelWindow;
+
+  /// No description provided for @heroModesBodyRefuelWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'30-min refuel window: protein + carbs locks in the work.'**
+  String get heroModesBodyRefuelWindow;
+
+  /// No description provided for @heroModesPillBonus.
+  ///
+  /// In en, this message translates to:
+  /// **'BONUS'**
+  String get heroModesPillBonus;
+
+  /// No description provided for @heroModesBodyBonus.
+  ///
+  /// In en, this message translates to:
+  /// **'Got 20 min? Squeeze in a quick session.'**
+  String get heroModesBodyBonus;
+
+  /// No description provided for @heroModesPillYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'YESTERDAY'**
+  String get heroModesPillYesterday;
+
+  /// No description provided for @heroModesBodyYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday\'s session is still open. Move it to today?'**
+  String get heroModesBodyYesterday;
 }
 
 class _AppLocalizationsDelegate

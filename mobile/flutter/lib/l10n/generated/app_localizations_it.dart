@@ -25179,6 +25179,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Allergeni';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Obiettivo composizione corporea';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28333,6 +28337,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Focus allenamento';
+
+  @override
+  String get profileSessionDetails => 'Dettagli sessione';
 
   @override
   String get profileWorkoutHistoryImport => 'Importa cronologia allenamenti';
@@ -44819,21 +44826,125 @@ class AppLocalizationsIt extends AppLocalizations {
       'Impossibile cancellare: riprova più tardi.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Classifiche';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Reset domenica';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Nessuna voce ancora · Registra un allenamento questa settimana per salire';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Vedi top 10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'In risalita';
+
+  @override
+  String get heroModesPillLoading => 'CARICAMENTO';
+
+  @override
+  String get heroModesBodyLoading => 'Stiamo preparando il piano di oggi…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Impossibile caricare l\'allenamento di oggi. Tocca per riprovare.';
+
+  @override
+  String get heroModesActionRetry => 'RIPROVA';
+
+  @override
+  String get heroModesPillLive => 'IN CORSO';
+
+  @override
+  String get heroModesPillPaused => 'IN PAUSA';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Piano in pausa. Riprendi quando sei pronto.';
+
+  @override
+  String get heroModesPillWindDown => 'DOMANI · DEFATICAMENTO';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'Prima dormi. La sessione di domani ti aspetterà.';
+
+  @override
+  String get heroModesPillLighter => 'PIÙ LEGGERO';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Sonno scarso. Provare una variante più leggera oggi?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'ATTREZZATURA MANCANTE';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Manca dell\'attrezzatura nel profilo palestra attuale.';
+
+  @override
+  String get heroModesPillFasted => 'A DIGIUNO';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Allenarsi a digiuno va bene. Intensità moderata; rifornisci entro 30 min.';
+
+  @override
+  String get heroModesPillFuelGap => 'POCO CARBURANTE';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Ultimo pasto un po\' di tempo fa. Mangia ~200 kcal di carboidrati?';
+
+  @override
+  String get heroModesPillComeback => 'RIENTRO';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Prima sessione per questo gruppo muscolare dopo tanto. Inizia con calma.';
+
+  @override
+  String get heroModesPillPrWindow => 'FINESTRA PR';
+
+  @override
+  String get heroModesBodyPrWindow => 'Oggi sei vicino a un record. Tentiamo?';
+
+  @override
+  String get heroModesActionStart => 'INIZIA';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'IL CORPO CHIEDE RIPOSO';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 giorni duri, sonno in calo. Oggi è un investimento per la prossima settimana.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'FINESTRA DI RECUPERO';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'Finestra di 30 min: proteine + carboidrati fissano il lavoro.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus => 'Hai 20 min? Infila una sessione veloce.';
+
+  @override
+  String get heroModesPillYesterday => 'IERI';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'La sessione di ieri è ancora aperta. La sposti a oggi?';
 }

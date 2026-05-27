@@ -1,30 +1,33 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/providers/serious_mode_provider.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/haptic_service.dart';
-import 'components/components.dart';
-import 'manage_gym_profiles_sheet.dart';
-import '../../../core/providers/user_provider.dart';
-import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
+import 'components/components.dart';
 import 'streak_explainer_sheet.dart';
-import 'week_calendar_strip.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Clean, minimal header for the "Minimalist" home screen preset.
 ///
-/// Layout:
+/// Layout (May 2026 redesign — replaces the prior 5-element chrome row):
 /// ```
-/// [Gym Profile Switcher - collapsed tabs]  [Lvl+Streak pill] [bell] [⋮]
+/// [Avatar] Good evening,        [bell] [gear]
+///          Sai · 2d 🔥
 /// ```
 ///
-/// Edit-home and Settings moved into the overflow (⋮) menu — they are
-/// weekly-frequency actions, not daily. The level ring + streak pill and
-/// notifications bell remain visible because they are glanceable status
-/// and time-sensitive respectively.
+/// - Avatar (36pt) → `/profile` (You hub).
+/// - Greeting + inline streak chip under name (gamification stays glanceable
+///   without competing with primary CTAs).
+/// - Level ring removed from Home; lives on `/you/overview` next to the
+///   XP hero tile (gamification belongs in the gamification surface).
+/// - Bell stays (notifications are universal).
+/// - Settings gear replaces the kebab `⋮` and goes straight to `/settings`.
+///   The kebab's prior items (change gym, toggle week strip, edit home
+///   layout) all live inside Settings already; one tap to reach them is
+///   acceptable for weekly-frequency actions.
 class MinimalHeader extends ConsumerWidget {
   const MinimalHeader({super.key});
 
@@ -37,19 +40,95 @@ class MinimalHeader extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
+          const _HomeAvatarButton(),
+          const SizedBox(width: 12),
           const Expanded(child: _Greeting()),
-          const _LevelStreakPill(),
-          const SizedBox(width: 4),
           NotificationBellButton(isDark: isDark),
-          _OverflowMenuButton(isDark: isDark),
+          _SettingsButton(isDark: isDark),
         ],
       ),
     );
   }
 }
 
-/// Time-of-day greeting + the user's first name. Replaces the gym-profile
-/// switcher in the header — switching gyms moved into the ⋮ menu.
+/// 36pt circular avatar at the left of the header. Tap → `/profile` (the
+/// You hub). The avatar is the canonical "go to me" affordance — matches
+/// Google Health / Strava / Instagram header patterns. Falls back to a
+/// neutral person glyph when the user has no photo URL or the network
+/// image fails to load.
+class _HomeAvatarButton extends ConsumerWidget {
+  const _HomeAvatarButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final user = ref.watch(currentUserProvider).valueOrNull;
+    final photoUrl = user?.photoUrl;
+    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final muted = fg.withValues(alpha: 0.55);
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        // ?tab=profile lands on the Profile sub-tab inside the You hub
+        // instead of the default Overview tab. Route handler parses this
+        // query param in `app_router_main_shell_routes.dart` and passes
+        // `initialTabIndex: 1` to YouHubScreen.
+        context.go('/profile?tab=profile');
+      },
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: fg.withValues(alpha: 0.08),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: photoUrl != null && photoUrl.isNotEmpty
+            ? Image.network(
+                photoUrl,
+                width: 36,
+                height: 36,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    Icon(Icons.person, color: muted, size: 20),
+              )
+            : Icon(Icons.person, color: muted, size: 20),
+      ),
+    );
+  }
+}
+
+/// Settings gear button. Replaces the prior overflow kebab — every item
+/// the kebab used to host (change gym, toggle week strip, edit home
+/// layout) is reachable from `/settings` in one extra tap, and the user
+/// confirmed they want a global gear on Home alongside the per-tab gears
+/// that other tabs already render.
+class _SettingsButton extends StatelessWidget {
+  final bool isDark;
+  const _SettingsButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = isDark ? Colors.white70 : Colors.black54;
+    return IconButton(
+      icon: Icon(Icons.settings_outlined, size: 22, color: iconColor),
+      tooltip: AppLocalizations.of(context).settingsTitle,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      onPressed: () {
+        HapticService.light();
+        context.push('/settings');
+      },
+    );
+  }
+}
+
+/// Time-of-day greeting + the user's first name + inline streak chip.
+/// The streak chip moved here from the right side of the header so the
+/// streak's daily-motivation hook stays glanceable without occupying its
+/// own chrome slot. Hidden in Serious Mode (where gamification chrome is
+/// suppressed) and when the streak is zero.
 class _Greeting extends ConsumerWidget {
   const _Greeting();
 
@@ -67,6 +146,10 @@ class _Greeting extends ConsumerWidget {
         ? name.trim().split(' ').first
         : 'there';
 
+    final serious = ref.watch(seriousModeProvider);
+    final streakDays = ref.watch(xpCurrentStreakProvider);
+    final showStreak = !serious && streakDays > 0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -80,319 +163,55 @@ class _Greeting extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 1),
-        Text(
-          firstName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-            color: isDark ? Colors.white : const Color(0xFF0A0A0A),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 3-dot overflow menu holding secondary header actions (Edit home, Settings).
-class _OverflowMenuButton extends ConsumerWidget {
-  final bool isDark;
-  const _OverflowMenuButton({required this.isDark});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final iconColor = isDark ? Colors.white70 : Colors.black54;
-    final weekCollapsed = ref.watch(weekCalendarCollapsedProvider);
-    final weekHidden = ref.watch(weekCalendarHiddenProvider);
-    return PopupMenuButton<String>(
-      tooltip: AppLocalizations.of(context).homeMore,
-      icon: Icon(Icons.more_vert, size: 22, color: iconColor),
-      position: PopupMenuPosition.under,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-      onOpened: HapticService.light,
-      onSelected: (value) {
-        HapticService.light();
-        switch (value) {
-          case 'change_gym':
-            showGlassSheet(
-              context: context,
-              builder: (_) => const ManageGymProfilesSheet(),
-            );
-            break;
-          case 'toggle_week':
-            ref.read(weekCalendarCollapsedProvider.notifier).toggle();
-            break;
-          case 'toggle_week_hidden':
-            ref.read(weekCalendarHiddenProvider.notifier).toggle();
-            break;
-          case 'my_space':
-            context.push('/settings/homescreen');
-            break;
-          case 'settings':
-            context.push('/settings');
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem<String>(
-          value: 'change_gym',
-          child: Row(
-            children: [
-              Icon(Icons.swap_horiz_rounded, size: 20, color: iconColor),
-              const SizedBox(width: 12),
-              Text(AppLocalizations.of(context).minimalHeaderChangeGymProfile),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        // Collapse: show single-line summary pill instead of the 7-day strip.
-        // Only meaningful when the strip is visible at all.
-        if (!weekHidden)
-          PopupMenuItem<String>(
-            value: 'toggle_week',
-            child: Row(
-              children: [
-                Icon(
-                  weekCollapsed ? Icons.expand_more : Icons.expand_less,
-                  size: 20,
-                  color: iconColor,
-                ),
-                const SizedBox(width: 12),
-                Text(weekCollapsed
-                    ? AppLocalizations.of(context).minimalHeaderExpandWeekStrip
-                    : AppLocalizations.of(context).minimalHeaderCollapseWeekStrip),
-              ],
-            ),
-          ),
-        // Hide: remove the strip entirely (no collapsed pill either).
-        PopupMenuItem<String>(
-          value: 'toggle_week_hidden',
-          child: Row(
-            children: [
-              Icon(
-                weekHidden
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                size: 20,
-                color: iconColor,
-              ),
-              const SizedBox(width: 12),
-              Text(weekHidden ? AppLocalizations.of(context).minimalHeaderShowDayStrip : AppLocalizations.of(context).minimalHeaderHideDayStrip),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          value: 'my_space',
-          child: Row(
-            children: [
-              Icon(Icons.dashboard_customize_outlined,
-                  size: 20, color: iconColor),
-              const SizedBox(width: 12),
-              Text(AppLocalizations.of(context).programMenuButtonMySpace),
-            ],
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'settings',
-          child: Row(
-            children: [
-              Icon(Icons.settings_outlined, size: 20, color: iconColor),
-              const SizedBox(width: 12),
-              Text(AppLocalizations.of(context).settingsTitle),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Paired level ring + active-streak pill.
-///
-/// Taps jump to the You → Overview tab (single source of truth for both
-/// level trajectory and streaks). Streak number is fetched lazily on
-/// mount; if the fetch fails or returns 0, only the level ring renders.
-class _LevelStreakPill extends ConsumerStatefulWidget {
-  const _LevelStreakPill();
-
-  @override
-  ConsumerState<_LevelStreakPill> createState() => _LevelStreakPillState();
-}
-
-// Imported above; declared down here so the diff stays local. The streak
-// explainer sheet lives in widgets/streak_explainer_sheet.dart.
-
-class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
-  // Source of truth for streak = the XP login streak (same as the XP Goals
-  // screen's "Login Streak" banner), read directly from xpProvider. Prior
-  // revision fetched the workout streak from /achievements/streaks which
-  // disagreed with the XP Goals number (home said 9, XP Goals said 12).
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final xpState = ref.watch(xpProvider);
-    final progress = xpState.progressFraction.clamp(0.0, 1.0);
-    final serious = ref.watch(seriousModeProvider);
-
-    // Streak segment = XP login streak. Matches the XP Goals screen's
-    // banner exactly. Hidden in Serious Mode (less game-y chrome).
-    final streakDays = ref.watch(xpCurrentStreakProvider);
-    final showStreak = !serious && streakDays > 0;
-
-    // Level ring + level-number text both render in neutral (textPrimary)
-    // rather than the user's accent. Per the 2026-05 minimalist redesign
-    // (Surface 1.7 color budget): the accent is reserved for primary CTA
-    // chrome (Coach surface, FAB, active nav). The level ring is a passive
-    // status indicator — it should not compete with the primary action.
-    final levelStroke =
-        isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final levelRing = SizedBox(
-      width: 36,
-      height: 36,
-      child: CustomPaint(
-        painter: _LevelRingPainter(
-          progress: progress,
-          accentColor: levelStroke,
-          trackColor: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : Colors.black.withValues(alpha: 0.08),
-        ),
-        child: Center(
-          child: Text(
-            '${xpState.currentLevel}',
-            style: TextStyle(
-              color: levelStroke,
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-              height: 1,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // Two distinct chips with explicit tap-targets — the previous unified
-    // pill rendered `3 · 5🔥` which users couldn't decode (was 3 the level?
-    // the streak? the score?). Now: level ring tappable to /xp-goals;
-    // streak chip labeled "5d 🔥" tappable to a new explainer sheet that
-    // shows the streak rule + remaining freezes.
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Level chip — the existing CustomPaint ring tappable on its own.
-        GestureDetector(
-          onTap: () {
-            HapticService.light();
-            context.push('/xp-goals');
-          },
-          behavior: HitTestBehavior.opaque,
-          child: levelRing,
-        ),
-        if (showStreak) ...[
-          const SizedBox(width: 6),
-          // Streak chip — labeled "Nd 🔥" so the number reads as days.
-          GestureDetector(
-            onTap: () {
-              HapticService.light();
-              showStreakExplainerSheet(context);
-            },
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.06)
-                    : Colors.black.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  // Neutral border per the 2026-05 minimalist redesign —
-                  // the fire emoji carries the streak's warm-hue meaning
-                  // on its own. The chip border was previously
-                  // 0xFFEC8B2C (hardcoded orange) which fought with both
-                  // the user's selected accent and the surrounding chrome.
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
-                      : Colors.black.withValues(alpha: 0.14),
-                  width: 1,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                firstName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                  color: isDark ? Colors.white : const Color(0xFF0A0A0A),
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${streakDays}d',
-                    style: TextStyle(
-                      color:
-                          isDark ? Colors.white : const Color(0xFF0A0A0A),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      height: 1,
+            ),
+            if (showStreak) ...[
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  showStreakExplainerSheet(context);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '· ${streakDays}d',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.70)
+                            : Colors.black.withValues(alpha: 0.55),
+                        height: 1.0,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Text('🔥', style: TextStyle(fontSize: 12)),
-                ],
+                    const SizedBox(width: 3),
+                    const Text('🔥', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          ],
+        ),
       ],
     );
   }
 }
 
-/// Paints a circular progress ring around the level number.
-class _LevelRingPainter extends CustomPainter {
-  final double progress;
-  final Color accentColor;
-  final Color trackColor;
-
-  _LevelRingPainter({
-    required this.progress,
-    required this.accentColor,
-    required this.trackColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.shortestSide / 2) - 2;
-    const strokeWidth = 3.0;
-
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(center, radius, trackPaint);
-
-    if (progress > 0) {
-      final progressPaint = Paint()
-        ..color = accentColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round;
-
-      final sweepAngle = 2 * math.pi * progress;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        -math.pi / 2,
-        sweepAngle,
-        false,
-        progressPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_LevelRingPainter oldDelegate) =>
-      oldDelegate.progress != progress ||
-      oldDelegate.accentColor != accentColor ||
-      oldDelegate.trackColor != trackColor;
-}

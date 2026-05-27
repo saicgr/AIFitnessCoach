@@ -25193,6 +25193,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Allergene';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Körperzusammensetzung';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28340,6 +28344,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Trainingsfokus';
+
+  @override
+  String get profileSessionDetails => 'Sitzungsdetails';
 
   @override
   String get profileWorkoutHistoryImport => 'Workout-Verlauf importieren';
@@ -44803,21 +44810,127 @@ class AppLocalizationsDe extends AppLocalizations {
       'Fehler konnte nicht gelöscht werden. Versuchen Sie es später noch einmal.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Ränge';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Reset am Sonntag';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Noch keine Einträge · Logge diese Woche ein Workout und steig auf';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Top 10 ansehen';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Aufsteiger';
+
+  @override
+  String get heroModesPillLoading => 'WIRD GELADEN';
+
+  @override
+  String get heroModesBodyLoading => 'Wir bereiten den heutigen Plan vor…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Heutiges Workout konnte nicht geladen werden. Zum Wiederholen tippen.';
+
+  @override
+  String get heroModesActionRetry => 'ERNEUT';
+
+  @override
+  String get heroModesPillLive => 'LIVE';
+
+  @override
+  String get heroModesPillPaused => 'PAUSIERT';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Plan ist pausiert. Wieder aufnehmen, sobald du bereit bist.';
+
+  @override
+  String get heroModesPillWindDown => 'MORGEN · ENTSPANNUNG';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'Erst schlafen. Die morgige Einheit wartet.';
+
+  @override
+  String get heroModesPillLighter => 'LEICHTERE EMPFOHLEN';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Schlaf war schlecht. Heute eine leichtere Variante probieren?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'AUSRÜSTUNG FEHLT';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Etwas Ausrüstung ist nicht in deinem aktuellen Gym-Profil.';
+
+  @override
+  String get heroModesPillFasted => 'NÜCHTERN';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Nüchtern trainieren ist okay. Intensität mäßig halten; innerhalb 30 min danach essen.';
+
+  @override
+  String get heroModesPillFuelGap => 'ENERGIELÜCKE';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Letzte Mahlzeit ist eine Weile her. ~200 kcal Kohlenhydrate essen?';
+
+  @override
+  String get heroModesPillComeback => 'COMEBACK';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Erste Einheit für diese Muskelgruppe seit Längerem. Locker einsteigen.';
+
+  @override
+  String get heroModesPillPrWindow => 'PR-FENSTER';
+
+  @override
+  String get heroModesBodyPrWindow =>
+      'Heute bist du nah an einem persönlichen Rekord. Versuchen?';
+
+  @override
+  String get heroModesActionStart => 'START';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'KÖRPER WILL RUHE';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 harte Tage, Schlaf sinkt. Heute zahlt sich für nächste Woche aus.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'REFUEL-FENSTER';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30-Min-Fenster: Eiweiß + Kohlenhydrate sichern die Arbeit.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus =>
+      'Hast du 20 Min? Schiebe eine schnelle Einheit ein.';
+
+  @override
+  String get heroModesPillYesterday => 'GESTERN';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Gestrige Einheit ist offen. Auf heute verschieben?';
 }

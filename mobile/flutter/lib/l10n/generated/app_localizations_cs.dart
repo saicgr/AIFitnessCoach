@@ -24982,6 +24982,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Alergeny';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => 'Cíl složení těla';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28106,6 +28109,9 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Zaměření tréninku';
+
+  @override
+  String get profileSessionDetails => 'Podrobnosti relace';
 
   @override
   String get profileWorkoutHistoryImport => 'Import historie tréninků';
@@ -44463,21 +44469,125 @@ class AppLocalizationsCs extends AppLocalizations {
       'Nelze vymazat – zkuste to znovu později.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Žebříčky';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Reset v neděli';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Zatím žádné záznamy · Zaloguj tento týden trénink a posuň se výš';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Zobrazit top 10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Postupy';
+
+  @override
+  String get heroModesPillLoading => 'NAČÍTÁNÍ';
+
+  @override
+  String get heroModesBodyLoading => 'Připravujeme dnešní plán…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Nepodařilo se načíst dnešní trénink. Klepněte pro nový pokus.';
+
+  @override
+  String get heroModesActionRetry => 'ZNOVU';
+
+  @override
+  String get heroModesPillLive => 'AKTIVNÍ';
+
+  @override
+  String get heroModesPillPaused => 'POZASTAVENO';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Plán je pozastaven. Pokračujte, až budete připraveni.';
+
+  @override
+  String get heroModesPillWindDown => 'ZÍTRA · ÚTLUM';
+
+  @override
+  String get heroModesBodyWindDown => 'Nejprve spěte. Zítřejší trénink počká.';
+
+  @override
+  String get heroModesPillLighter => 'LEHČÍ VARIANTA';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Spánek nebyl ideální. Zkusit dnes lehčí variantu?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'CHYBÍ VYBAVENÍ';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Některé vybavení není v aktuálním profilu posilovny.';
+
+  @override
+  String get heroModesPillFasted => 'NALAČNO';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Trénink nalačno je v pořádku. Mírná intenzita; do 30 min po tréninku doplň energii.';
+
+  @override
+  String get heroModesPillFuelGap => 'PRÁZDNÝ ŽALUDEK';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Poslední jídlo bylo dávno. Dej si ~200 kcal sacharidů?';
+
+  @override
+  String get heroModesPillComeback => 'NÁVRAT';
+
+  @override
+  String get heroModesBodyComeback =>
+      'První trénink této svalové skupiny po delší době. Začni opatrně.';
+
+  @override
+  String get heroModesPillPrWindow => 'PR OKNO';
+
+  @override
+  String get heroModesBodyPrWindow =>
+      'Dnes jsi blízko osobnímu rekordu. Jdi do toho?';
+
+  @override
+  String get heroModesActionStart => 'START';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'TĚLO CHCE ODPOČINEK';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 těžkých dní, spánek klesá. Dnešek je investice do příštího týdne.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'OKNO PRO DOPLNĚNÍ';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30 min okno: bílkoviny + sacharidy upevní výsledek.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus => 'Máš 20 min? Vměstnej rychlou jednotku.';
+
+  @override
+  String get heroModesPillYesterday => 'VČERA';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Včerejší trénink je stále otevřený. Přesunout na dnešek?';
 }

@@ -24835,6 +24835,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Allergens';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Body composition target';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -27934,6 +27938,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Training Focus';
+
+  @override
+  String get profileSessionDetails => 'Session details';
 
   @override
   String get profileWorkoutHistoryImport => 'Workout History Import';
@@ -44198,4 +44205,108 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discoverMovers => 'Movers';
+
+  @override
+  String get heroModesPillLoading => 'LOADING';
+
+  @override
+  String get heroModesBodyLoading => 'Building today\'s plan…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Couldn\'t load today\'s workout. Tap to retry.';
+
+  @override
+  String get heroModesActionRetry => 'RETRY';
+
+  @override
+  String get heroModesPillLive => 'LIVE';
+
+  @override
+  String get heroModesPillPaused => 'PAUSED';
+
+  @override
+  String get heroModesBodyPaused => 'Plan paused. Resume when you\'re ready.';
+
+  @override
+  String get heroModesPillWindDown => 'TOMORROW · WIND-DOWN';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'Sleep first. Tomorrow\'s session will be waiting.';
+
+  @override
+  String get heroModesPillLighter => 'LIGHTER SUGGESTED';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Sleep was rough. Try a lighter variant today?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'EQUIPMENT GAP';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Some equipment isn\'t in your current gym profile.';
+
+  @override
+  String get heroModesPillFasted => 'FASTED';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Fasted training is fine. Keep intensity moderate; refuel within 30 min after.';
+
+  @override
+  String get heroModesPillFuelGap => 'FUEL GAP';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Last meal was a while ago. Eat ~200kcal carbs?';
+
+  @override
+  String get heroModesPillComeback => 'COMEBACK';
+
+  @override
+  String get heroModesBodyComeback =>
+      'First session for this muscle group in a while. Ease in.';
+
+  @override
+  String get heroModesPillPrWindow => 'PR WINDOW';
+
+  @override
+  String get heroModesBodyPrWindow =>
+      'You\'re close on a top lift today. Push for it?';
+
+  @override
+  String get heroModesActionStart => 'START';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'BODY ASKS REST';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 hard days, sleep dropping. Today\'s an investment in next week.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'REFUEL WINDOW';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30-min refuel window: protein + carbs locks in the work.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus => 'Got 20 min? Squeeze in a quick session.';
+
+  @override
+  String get heroModesPillYesterday => 'YESTERDAY';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Yesterday\'s session is still open. Move it to today?';
 }

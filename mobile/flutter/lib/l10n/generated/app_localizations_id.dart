@@ -25019,6 +25019,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Alergen';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Target komposisi tubuh';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories kal';
   }
@@ -28150,6 +28154,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Fokus Latihan';
+
+  @override
+  String get profileSessionDetails => 'Detail sesi';
 
   @override
   String get profileWorkoutHistoryImport => 'Impor Riwayat Latihan';
@@ -44527,21 +44534,123 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak dapat menghapus — coba lagi nanti.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Peringkat';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Reset Minggu';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Belum ada entri · Catat latihan minggu ini untuk naik';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Lihat 10 teratas';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Penggerak';
+
+  @override
+  String get heroModesPillLoading => 'MEMUAT';
+
+  @override
+  String get heroModesBodyLoading => 'Menyusun rencana hari ini…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Tidak bisa memuat latihan hari ini. Ketuk untuk coba lagi.';
+
+  @override
+  String get heroModesActionRetry => 'COBA LAGI';
+
+  @override
+  String get heroModesPillLive => 'LIVE';
+
+  @override
+  String get heroModesPillPaused => 'DIJEDA';
+
+  @override
+  String get heroModesBodyPaused => 'Rencana dijeda. Lanjutkan saat siap.';
+
+  @override
+  String get heroModesPillWindDown => 'BESOK · PENDINGINAN';
+
+  @override
+  String get heroModesBodyWindDown => 'Tidur dulu. Sesi besok menunggu.';
+
+  @override
+  String get heroModesPillLighter => 'LEBIH RINGAN';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Tidur kurang. Coba variasi lebih ringan hari ini?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'PERALATAN KURANG';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Beberapa peralatan tidak ada di profil gym Anda saat ini.';
+
+  @override
+  String get heroModesPillFasted => 'PUASA';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Latihan saat puasa tidak masalah. Intensitas sedang; isi ulang dalam 30 menit setelahnya.';
+
+  @override
+  String get heroModesPillFuelGap => 'KEKURANGAN BAHAN BAKAR';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Makan terakhir sudah lama. Makan ~200 kkal karbo?';
+
+  @override
+  String get heroModesPillComeback => 'KEMBALI';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Sesi pertama untuk grup otot ini setelah lama. Mulai pelan.';
+
+  @override
+  String get heroModesPillPrWindow => 'JENDELA PR';
+
+  @override
+  String get heroModesBodyPrWindow => 'Hari ini dekat rekor pribadi. Coba?';
+
+  @override
+  String get heroModesActionStart => 'MULAI';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'TUBUH MINTA ISTIRAHAT';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 hari berat, tidur menurun. Hari ini investasi untuk minggu depan.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'JENDELA ISI ULANG';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'Jendela 30 menit: protein + karbo mengunci hasil.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus => 'Punya 20 menit? Selipkan sesi cepat.';
+
+  @override
+  String get heroModesPillYesterday => 'KEMARIN';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Sesi kemarin masih terbuka. Pindahkan ke hari ini?';
 }

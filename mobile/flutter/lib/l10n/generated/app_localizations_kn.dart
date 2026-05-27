@@ -25212,6 +25212,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'ಅಲರ್ಜಿನ್ಗಳು';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => 'ದೇಹ ಸಂಯೋಜನೆ ಗುರಿ';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories ಕ್ಯಾಲೋರಿ';
   }
@@ -28368,6 +28371,9 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'ತರಬೇತಿಯ ಗಮನ';
+
+  @override
+  String get profileSessionDetails => 'ಸೆಷನ್ ವಿವರಗಳು';
 
   @override
   String get profileWorkoutHistoryImport => 'ವರ್ಕೌಟ್ ಇತಿಹಾಸ ಆಮದು';
@@ -44878,21 +44884,126 @@ class AppLocalizationsKn extends AppLocalizations {
       'ತೆರವುಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ - ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'ಶ್ರೇಯಾಂಕ';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'ಭಾನುವಾರ ರೀಸೆಟ್';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'ಇನ್ನೂ ಪ್ರವೇಶಗಳಿಲ್ಲ · ಮೇಲೇರಲು ಈ ವಾರ ವ್ಯಾಯಾಮ ದಾಖಲಿಸಿ';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'ಟಾಪ್ 10 ನೋಡಿ';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'ಚಲನೆಗಳು';
+
+  @override
+  String get heroModesPillLoading => 'ಲೋಡ್ ಆಗುತ್ತಿದೆ';
+
+  @override
+  String get heroModesBodyLoading => 'ಇಂದಿನ ಯೋಜನೆ ಸಿದ್ಧಪಡಿಸುತ್ತಿದ್ದೇವೆ…';
+
+  @override
+  String get heroModesPillOffline => 'ಆಫ್‌ಲೈನ್';
+
+  @override
+  String get heroModesBodyOffline =>
+      'ಇಂದಿನ ವ್ಯಾಯಾಮ ಲೋಡ್ ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ.';
+
+  @override
+  String get heroModesActionRetry => 'ಮರುಪ್ರಯತ್ನ';
+
+  @override
+  String get heroModesPillLive => 'ಲೈವ್';
+
+  @override
+  String get heroModesPillPaused => 'ವಿರಾಮ';
+
+  @override
+  String get heroModesBodyPaused =>
+      'ಯೋಜನೆ ವಿರಾಮದಲ್ಲಿದೆ. ಸಿದ್ಧವಾದಾಗ ಪುನರಾರಂಭಿಸಿ.';
+
+  @override
+  String get heroModesPillWindDown => 'ನಾಳೆ · ಶಾಂತತೆ';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'ಮೊದಲು ನಿದ್ರೆ. ನಾಳೆಯ ಸೆಷನ್ ಕಾಯುತ್ತಿರುತ್ತದೆ.';
+
+  @override
+  String get heroModesPillLighter => 'ಹಗುರ ಸಲಹೆ';
+
+  @override
+  String get heroModesBodyLighter =>
+      'ನಿದ್ರೆ ಕಷ್ಟವಾಗಿತ್ತು. ಇಂದು ಹಗುರ ರೂಪಾಂತರ ಪ್ರಯತ್ನಿಸಬೇಕೇ?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'ಸಲಕರಣೆ ಕೊರತೆ';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಜಿಮ್ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ಕೆಲವು ಸಲಕರಣೆಗಳಿಲ್ಲ.';
+
+  @override
+  String get heroModesPillFasted => 'ಉಪವಾಸ';
+
+  @override
+  String get heroModesBodyFasted =>
+      'ಉಪವಾಸದಲ್ಲಿ ತರಬೇತಿ ಸರಿ. ಮಿತ ತೀವ್ರತೆ; 30 ನಿಮಿಷದೊಳಗೆ ಮರುಭರ್ತಿ ಮಾಡಿ.';
+
+  @override
+  String get heroModesPillFuelGap => 'ಇಂಧನ ಕೊರತೆ';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'ಕೊನೆಯ ಊಟ ಬಹಳ ಸಮಯ ಹಿಂದೆ. ~200 ಕ್ಯಾಲರಿ ಕಾರ್ಬ್ಸ್ ತಿನ್ನಿರಾ?';
+
+  @override
+  String get heroModesPillComeback => 'ಪುನರಾಗಮನ';
+
+  @override
+  String get heroModesBodyComeback =>
+      'ಈ ಸ್ನಾಯು ಗುಂಪಿಗೆ ಬಹಳ ದಿನಗಳ ನಂತರ ಮೊದಲ ಸೆಷನ್. ನಿಧಾನವಾಗಿ ಪ್ರಾರಂಭಿಸಿ.';
+
+  @override
+  String get heroModesPillPrWindow => 'ಪಿಆರ್ ವಿಂಡೋ';
+
+  @override
+  String get heroModesBodyPrWindow =>
+      'ಇಂದು ನೀವು ದಾಖಲೆಗೆ ಹತ್ತಿರ. ಪ್ರಯತ್ನಿಸುತ್ತೀರಾ?';
+
+  @override
+  String get heroModesActionStart => 'ಪ್ರಾರಂಭ';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'ದೇಹ ವಿಶ್ರಾಂತಿ ಬಯಸುತ್ತಿದೆ';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 ಕಠಿಣ ದಿನಗಳು, ನಿದ್ರೆ ಇಳಿಯುತ್ತಿದೆ. ಇಂದು ಮುಂದಿನ ವಾರಕ್ಕೆ ಹೂಡಿಕೆ.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'ಮರುಭರ್ತಿ ವಿಂಡೋ';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30 ನಿಮಿಷ ವಿಂಡೋ: ಪ್ರೋಟೀನ್ + ಕಾರ್ಬ್ಸ್ ಕೆಲಸವನ್ನು ಸ್ಥಿರಗೊಳಿಸುತ್ತದೆ.';
+
+  @override
+  String get heroModesPillBonus => 'ಬೋನಸ್';
+
+  @override
+  String get heroModesBodyBonus => '20 ನಿಮಿಷ ಇದೆಯೇ? ತ್ವರಿತ ಸೆಷನ್ ಸೇರಿಸಿ.';
+
+  @override
+  String get heroModesPillYesterday => 'ನಿನ್ನೆ';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'ನಿನ್ನೆಯ ಸೆಷನ್ ಇನ್ನೂ ತೆರೆದಿದೆ. ಇಂದು ಸ್ಥಳಾಂತರಿಸಬೇಕೇ?';
 }

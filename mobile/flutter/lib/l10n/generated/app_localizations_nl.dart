@@ -25053,6 +25053,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Allergenen';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Lichaamssamenstelling-doel';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28186,6 +28190,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Trainingsfocus';
+
+  @override
+  String get profileSessionDetails => 'Sessiedetails';
 
   @override
   String get profileWorkoutHistoryImport => 'Trainingsgeschiedenis importeren';
@@ -44549,21 +44556,126 @@ class AppLocalizationsNl extends AppLocalizations {
       'Kan niet wissen. Probeer het later opnieuw.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Ranglijsten';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Reset op zondag';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Nog geen items · Log deze week een workout om te stijgen';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Top 10 bekijken';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Stijgers';
+
+  @override
+  String get heroModesPillLoading => 'LADEN';
+
+  @override
+  String get heroModesBodyLoading => 'We bouwen het plan van vandaag…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Workout van vandaag kon niet laden. Tik om opnieuw te proberen.';
+
+  @override
+  String get heroModesActionRetry => 'OPNIEUW';
+
+  @override
+  String get heroModesPillLive => 'LIVE';
+
+  @override
+  String get heroModesPillPaused => 'GEPAUZEERD';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Plan gepauzeerd. Hervat wanneer je klaar bent.';
+
+  @override
+  String get heroModesPillWindDown => 'MORGEN · AFKOELEN';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'Eerst slapen. De sessie van morgen wacht.';
+
+  @override
+  String get heroModesPillLighter => 'LICHTER VOORGESTELD';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Slaap was slecht. Vandaag een lichtere variant proberen?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'MATERIAAL ONTBREEKT';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Er ontbreekt materiaal in je huidige gym-profiel.';
+
+  @override
+  String get heroModesPillFasted => 'NUCHTER';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Nuchter trainen is prima. Houd de intensiteit gematigd; tank binnen 30 min bij.';
+
+  @override
+  String get heroModesPillFuelGap => 'WEINIG BRANDSTOF';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Laatste maaltijd is al even geleden. Eet ~200 kcal koolhydraten?';
+
+  @override
+  String get heroModesPillComeback => 'COMEBACK';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Eerste sessie voor deze spiergroep in tijden. Begin rustig.';
+
+  @override
+  String get heroModesPillPrWindow => 'PR-VENSTER';
+
+  @override
+  String get heroModesBodyPrWindow => 'Vandaag dicht bij een record. Wagen?';
+
+  @override
+  String get heroModesActionStart => 'START';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'LICHAAM VRAAGT RUST';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 zware dagen, slaap daalt. Vandaag is een investering voor volgende week.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'BIJTANK-VENSTER';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'Venster van 30 min: eiwit + koolhydraten zekeren het werk.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus =>
+      'Heb je 20 min? Stop er een snelle sessie tussen.';
+
+  @override
+  String get heroModesPillYesterday => 'GISTEREN';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Sessie van gisteren staat nog open. Verplaatsen naar vandaag?';
 }

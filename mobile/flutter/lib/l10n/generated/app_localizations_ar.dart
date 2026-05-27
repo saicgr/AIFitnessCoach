@@ -24749,6 +24749,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'مسببات الحساسية';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => 'هدف تكوين الجسم';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories سعرة حرارية';
   }
@@ -27848,6 +27851,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'التركيز التدريبي';
+
+  @override
+  String get profileSessionDetails => 'تفاصيل الجلسة';
 
   @override
   String get profileWorkoutHistoryImport => 'استيراد سجل التمارين';
@@ -44034,21 +44040,122 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذر المسح — حاول مرة أخرى لاحقًا.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'الترتيب';
 
   @override
-  String get discoverBoardXp => 'XP';
+  String get discoverBoardXp => 'نقاط الخبرة';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'يُعاد كل أحد';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'لا توجد إدخالات بعد · سجّل تمريناً هذا الأسبوع للصعود';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'عرض أفضل 10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'المتحركون';
+
+  @override
+  String get heroModesPillLoading => 'جارٍ التحميل';
+
+  @override
+  String get heroModesBodyLoading => 'نُعدّ خطة اليوم…';
+
+  @override
+  String get heroModesPillOffline => 'غير متصل';
+
+  @override
+  String get heroModesBodyOffline =>
+      'تعذّر تحميل تمرين اليوم. اضغط لإعادة المحاولة.';
+
+  @override
+  String get heroModesActionRetry => 'إعادة';
+
+  @override
+  String get heroModesPillLive => 'مباشر';
+
+  @override
+  String get heroModesPillPaused => 'متوقّف';
+
+  @override
+  String get heroModesBodyPaused => 'الخطة متوقفة. استأنف عندما تكون جاهزاً.';
+
+  @override
+  String get heroModesPillWindDown => 'غداً · تهدئة';
+
+  @override
+  String get heroModesBodyWindDown => 'النوم أولاً. جلسة الغد ستنتظرك.';
+
+  @override
+  String get heroModesPillLighter => 'نسخة أخف مقترحة';
+
+  @override
+  String get heroModesBodyLighter => 'النوم كان سيئاً. جرّب نسخة أخف اليوم؟';
+
+  @override
+  String get heroModesPillEquipmentGap => 'نقص في المعدات';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'بعض المعدات غير متوفرة في ملف صالتك الحالي.';
+
+  @override
+  String get heroModesPillFasted => 'صائم';
+
+  @override
+  String get heroModesBodyFasted =>
+      'التمرين على الريق جيد. حافظ على شدة متوسطة وأعد التغذية خلال 30 دقيقة بعده.';
+
+  @override
+  String get heroModesPillFuelGap => 'نقص في الوقود';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'آخر وجبة كانت قبل فترة. تناول ~200 سعرة من الكربوهيدرات؟';
+
+  @override
+  String get heroModesPillComeback => 'عودة';
+
+  @override
+  String get heroModesBodyComeback =>
+      'أول جلسة لهذه المجموعة العضلية منذ فترة. ابدأ بهدوء.';
+
+  @override
+  String get heroModesPillPrWindow => 'فرصة رقم قياسي';
+
+  @override
+  String get heroModesBodyPrWindow => 'أنت قريب من رقم قياسي اليوم. حاول كسره؟';
+
+  @override
+  String get heroModesActionStart => 'ابدأ';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'الجسم يطلب الراحة';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 أيام شاقة، النوم يتراجع. اليوم استثمار للأسبوع القادم.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'نافذة التغذية';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'نافذة 30 دقيقة للتغذية: البروتين والكربوهيدرات تُثبّت العمل.';
+
+  @override
+  String get heroModesPillBonus => 'إضافي';
+
+  @override
+  String get heroModesBodyBonus => 'لديك 20 دقيقة؟ اعصر جلسة سريعة.';
+
+  @override
+  String get heroModesPillYesterday => 'أمس';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'جلسة الأمس لا تزال مفتوحة. ننقلها لليوم؟';
 }

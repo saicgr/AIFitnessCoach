@@ -578,15 +578,29 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     // modes (`scheduledNotStarted`, `completedToday`, `noPlan`,
     // `nextWorkoutInFuture`, `nothingScheduled`, `restDayWithCoach`) fall
     // through to the existing, shipped, polished layout below.
+    //
+    // Gated on date: `workoutCardModeProvider` is a singleton that reads
+    // *today's* signals (intensity, fasting, fuel gap, cycle phase). Past
+    // / future carousel cards do NOT share today's context, so applying
+    // the override to every card produced "5 LUTEAL cards in a row" — one
+    // for each upcoming day. Carousel cards (`inCarousel: true`) that
+    // aren't today fall through to the default illustrated layout; global
+    // modes (loading / error / vacation / overtraining) still apply.
+    final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
+    final isTodayCard = dateLabel == 'TODAY';
     final smartMode = ref.watch(workoutCardModeProvider);
-    final smartOverride = buildSmartCardOverride(context, smartMode);
-    if (smartOverride != null) return smartOverride;
+    final isGlobalMode = smartMode == WorkoutCardMode.loading ||
+        smartMode == WorkoutCardMode.error ||
+        smartMode == WorkoutCardMode.vacationOrPaused ||
+        smartMode == WorkoutCardMode.overtrainingAlert;
+    if (isTodayCard || isGlobalMode) {
+      final smartOverride = buildSmartCardOverride(context, smartMode);
+      if (smartOverride != null) return smartOverride;
+    }
 
     // Get accent color from provider
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
-
-    final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
 
     // Phase D — phase chip on the day card. Reuses the existing
     // `cyclePhaseProvider` (wraps `GET /cycle-phase/{user_id}`), so no new

@@ -25242,6 +25242,10 @@ class AppLocalizationsTl extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Mga Allergen';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Target sa komposisyon ng katawan';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28405,6 +28409,9 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Pokus sa Pagsasanay';
+
+  @override
+  String get profileSessionDetails => 'Mga detalye ng session';
 
   @override
   String get profileWorkoutHistoryImport => 'Pag-import ng Workout History';
@@ -44911,21 +44918,126 @@ class AppLocalizationsTl extends AppLocalizations {
       'Hindi ma-clear — subukang muli sa ibang pagkakataon.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Mga Ranggo';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Nagre-reset Linggo';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Wala pang entry · Mag-log ng workout ngayong linggo para umakyat';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Tingnan ang top 10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Mga umakyat';
+
+  @override
+  String get heroModesPillLoading => 'NAGLO-LOAD';
+
+  @override
+  String get heroModesBodyLoading => 'Inihahanda ang plano ngayon…';
+
+  @override
+  String get heroModesPillOffline => 'OFFLINE';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Hindi na-load ang workout ngayon. I-tap para subukan ulit.';
+
+  @override
+  String get heroModesActionRetry => 'ULITIN';
+
+  @override
+  String get heroModesPillLive => 'LIVE';
+
+  @override
+  String get heroModesPillPaused => 'NAKA-PAUSE';
+
+  @override
+  String get heroModesBodyPaused =>
+      'Naka-pause ang plano. Ipagpatuloy kapag handa na.';
+
+  @override
+  String get heroModesPillWindDown => 'BUKAS · PAGPAPAHINGA';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'Matulog muna. Maghihintay ang session bukas.';
+
+  @override
+  String get heroModesPillLighter => 'MAS MAGAAN';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Hindi maganda ang tulog. Subukan ang magaan na variant ngayon?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'KULANG NA KAGAMITAN';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'May kagamitang wala sa kasalukuyang gym profile mo.';
+
+  @override
+  String get heroModesPillFasted => 'NAG-AAYUNO';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Ok lang mag-workout habang nag-aayuno. Katamtaman ang lakas; mag-refuel sa loob ng 30 min.';
+
+  @override
+  String get heroModesPillFuelGap => 'KULANG NA ENERGY';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Matagal na ang huling kain. Kumain ng ~200 kcal carbs?';
+
+  @override
+  String get heroModesPillComeback => 'PAGBABALIK';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Unang session para sa muscle group na ito matapos ang ilang araw. Dahan-dahan.';
+
+  @override
+  String get heroModesPillPrWindow => 'PR WINDOW';
+
+  @override
+  String get heroModesBodyPrWindow => 'Malapit ka sa record ngayon. Subukan?';
+
+  @override
+  String get heroModesActionStart => 'SIMULAN';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'GUSTONG MAGPAHINGA';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 mahirap na araw, bumababa ang tulog. Ngayon ay puhunan para sa susunod na linggo.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'REFUEL WINDOW';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30 min window: protina + carbs ang nagpapatibay ng resulta.';
+
+  @override
+  String get heroModesPillBonus => 'BONUS';
+
+  @override
+  String get heroModesBodyBonus =>
+      'May 20 min ka? Magsingit ng mabilis na session.';
+
+  @override
+  String get heroModesPillYesterday => 'KAHAPON';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Bukas pa rin ang session kahapon. Ilipat sa ngayon?';
 }

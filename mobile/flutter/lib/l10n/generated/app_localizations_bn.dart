@@ -25062,6 +25062,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'অ্যালার্জেন';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget => 'শরীরের গঠন লক্ষ্য';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28196,6 +28199,9 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'ট্রেনিং ফোকাস';
+
+  @override
+  String get profileSessionDetails => 'সেশনের বিস্তারিত';
 
   @override
   String get profileWorkoutHistoryImport => 'ওয়ার্কআউট হিস্ট্রি ইমপোর্ট';
@@ -44591,21 +44597,124 @@ class AppLocalizationsBn extends AppLocalizations {
       'পরিষ্কার করা যায়নি — পরে আবার চেষ্টা করুন।';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'র‍্যাঙ্ক';
 
   @override
-  String get discoverBoardXp => 'XP';
+  String get discoverBoardXp => 'এক্সপি';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'রবিবার রিসেট';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'এখনো এন্ট্রি নেই · এই সপ্তাহে ওয়ার্কআউট লগ করে উপরে উঠুন';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'শীর্ষ 10 দেখুন';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'মুভার্স';
+
+  @override
+  String get heroModesPillLoading => 'লোড হচ্ছে';
+
+  @override
+  String get heroModesBodyLoading => 'আজকের প্ল্যান তৈরি হচ্ছে…';
+
+  @override
+  String get heroModesPillOffline => 'অফলাইন';
+
+  @override
+  String get heroModesBodyOffline =>
+      'আজকের ওয়ার্কআউট লোড করা যায়নি। আবার চেষ্টা করতে ট্যাপ করুন।';
+
+  @override
+  String get heroModesActionRetry => 'আবার চেষ্টা';
+
+  @override
+  String get heroModesPillLive => 'চলমান';
+
+  @override
+  String get heroModesPillPaused => 'বিরতি';
+
+  @override
+  String get heroModesBodyPaused =>
+      'প্ল্যান বিরতিতে। প্রস্তুত হলে আবার শুরু করুন।';
+
+  @override
+  String get heroModesPillWindDown => 'আগামীকাল · ওয়াইন্ড-ডাউন';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'আগে ঘুম। আগামীকালের সেশন অপেক্ষায় থাকবে।';
+
+  @override
+  String get heroModesPillLighter => 'হালকা পরামর্শ';
+
+  @override
+  String get heroModesBodyLighter =>
+      'ঘুম ভালো হয়নি। আজ হালকা ভ্যারিয়েন্ট চেষ্টা করুন?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'সরঞ্জামের ঘাটতি';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'কিছু সরঞ্জাম আপনার বর্তমান জিম প্রোফাইলে নেই।';
+
+  @override
+  String get heroModesPillFasted => 'উপবাসে';
+
+  @override
+  String get heroModesBodyFasted =>
+      'উপবাসে ট্রেনিং ঠিক আছে। মাঝারি তীব্রতা রাখুন; পরে 30 মিনিটের মধ্যে রিফুয়েল করুন।';
+
+  @override
+  String get heroModesPillFuelGap => 'জ্বালানি গ্যাপ';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'শেষ খাবার অনেক আগে। ~200 ক্যালরি কার্ব খাবেন?';
+
+  @override
+  String get heroModesPillComeback => 'কামব্যাক';
+
+  @override
+  String get heroModesBodyComeback =>
+      'এই পেশী গ্রুপের জন্য অনেকদিন পর প্রথম সেশন। সহজে শুরু করুন।';
+
+  @override
+  String get heroModesPillPrWindow => 'পিআর উইন্ডো';
+
+  @override
+  String get heroModesBodyPrWindow => 'আজ একটি টপ লিফটে আপনি কাছাকাছি। যাবেন?';
+
+  @override
+  String get heroModesActionStart => 'শুরু';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'শরীর বিশ্রাম চায়';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      '5 কঠিন দিন, ঘুম কমছে। আজ পরের সপ্তাহের জন্য বিনিয়োগ।';
+
+  @override
+  String get heroModesPillRefuelWindow => 'রিফুয়েল উইন্ডো';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      '30 মিনিটের রিফুয়েল উইন্ডো: প্রোটিন + কার্ব কাজটি স্থির করে।';
+
+  @override
+  String get heroModesPillBonus => 'বোনাস';
+
+  @override
+  String get heroModesBodyBonus => '20 মিনিট আছে? দ্রুত একটি সেশন করুন।';
+
+  @override
+  String get heroModesPillYesterday => 'গতকাল';
+
+  @override
+  String get heroModesBodyYesterday => 'গতকালের সেশন এখনও খোলা। আজকে সরাবেন?';
 }

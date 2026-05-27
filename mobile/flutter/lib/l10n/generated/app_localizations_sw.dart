@@ -25086,6 +25086,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get nutritionFastingCardAllergens => 'Vichocheo vya mzio';
 
   @override
+  String get nutritionFastingCardBodyCompositionTarget =>
+      'Lengo la muundo wa mwili';
+
+  @override
   String nutritionFastingCardCal(Object currentCalories) {
     return '$currentCalories cal';
   }
@@ -28227,6 +28231,9 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get profileScreenPartTrainingFocus => 'Lengo la Mafunzo';
+
+  @override
+  String get profileSessionDetails => 'Maelezo ya kipindi';
 
   @override
   String get profileWorkoutHistoryImport => 'Ingiza Historia ya Mazoezi';
@@ -44636,21 +44643,124 @@ class AppLocalizationsSw extends AppLocalizations {
       'Haikuweza kufuta - jaribu tena baadaye.';
 
   @override
-  String get bottomNavLeaderboard => 'Leaderboard';
+  String get bottomNavLeaderboard => 'Vyeo';
 
   @override
   String get discoverBoardXp => 'XP';
 
   @override
-  String get discoverResetsSunday => 'Resets Sunday';
+  String get discoverResetsSunday => 'Reseti Jumapili';
 
   @override
   String get discoverNoEntriesYet =>
-      'No entries yet · Log a workout this week to climb';
+      'Bado hakuna ingizo · Ingiza mazoezi wiki hii ili kupanda';
 
   @override
-  String get discoverViewTop10 => 'View top 10';
+  String get discoverViewTop10 => 'Tazama bora 10';
 
   @override
-  String get discoverMovers => 'Movers';
+  String get discoverMovers => 'Wasonga';
+
+  @override
+  String get heroModesPillLoading => 'INAPAKIA';
+
+  @override
+  String get heroModesBodyLoading => 'Tunaandaa mpango wa leo…';
+
+  @override
+  String get heroModesPillOffline => 'NJE YA MTANDAO';
+
+  @override
+  String get heroModesBodyOffline =>
+      'Imeshindwa kupakia mazoezi ya leo. Gusa kujaribu tena.';
+
+  @override
+  String get heroModesActionRetry => 'JARIBU';
+
+  @override
+  String get heroModesPillLive => 'MUBASHARA';
+
+  @override
+  String get heroModesPillPaused => 'IMESITISHWA';
+
+  @override
+  String get heroModesBodyPaused => 'Mpango umesitishwa. Endelea ukiwa tayari.';
+
+  @override
+  String get heroModesPillWindDown => 'KESHO · KUPUMZIKA';
+
+  @override
+  String get heroModesBodyWindDown =>
+      'Lala kwanza. Kipindi cha kesho kitasubiri.';
+
+  @override
+  String get heroModesPillLighter => 'NYEPESI ZAIDI';
+
+  @override
+  String get heroModesBodyLighter =>
+      'Usingizi haukuwa mzuri. Jaribu toleo nyepesi leo?';
+
+  @override
+  String get heroModesPillEquipmentGap => 'VIFAA HAVITOSHI';
+
+  @override
+  String get heroModesBodyEquipmentGap =>
+      'Baadhi ya vifaa havipo katika wasifu wako wa sasa wa mazoezi.';
+
+  @override
+  String get heroModesPillFasted => 'KUFUNGA';
+
+  @override
+  String get heroModesBodyFasted =>
+      'Mazoezi ya kufunga ni sawa. Nguvu ya wastani; jaza tena ndani ya dakika 30.';
+
+  @override
+  String get heroModesPillFuelGap => 'UPUNGUFU WA NISHATI';
+
+  @override
+  String get heroModesBodyFuelGap =>
+      'Mlo wa mwisho ulikuwa zamani. Kula kalori ~200 za kabohaidreti?';
+
+  @override
+  String get heroModesPillComeback => 'KURUDI';
+
+  @override
+  String get heroModesBodyComeback =>
+      'Kipindi cha kwanza cha kundi hili la misuli baada ya muda mrefu. Anza polepole.';
+
+  @override
+  String get heroModesPillPrWindow => 'DIRISHA LA REKODI';
+
+  @override
+  String get heroModesBodyPrWindow => 'Leo uko karibu na rekodi. Tujaribu?';
+
+  @override
+  String get heroModesActionStart => 'ANZA';
+
+  @override
+  String get heroModesPillBodyAsksRest => 'MWILI UNAHITAJI MAPUMZIKO';
+
+  @override
+  String get heroModesBodyBodyAsksRest =>
+      'Siku 5 ngumu, usingizi unapungua. Leo ni uwekezaji kwa wiki ijayo.';
+
+  @override
+  String get heroModesPillRefuelWindow => 'DIRISHA LA KUJAZA';
+
+  @override
+  String get heroModesBodyRefuelWindow =>
+      'Dirisha la dakika 30: protini + kabohaidreti zinathibitisha kazi.';
+
+  @override
+  String get heroModesPillBonus => 'BONASI';
+
+  @override
+  String get heroModesBodyBonus => 'Una dakika 20? Ingiza kipindi cha haraka.';
+
+  @override
+  String get heroModesPillYesterday => 'JANA';
+
+  @override
+  String get heroModesBodyYesterday =>
+      'Kipindi cha jana bado kiko wazi. Hamisha leo?';
 }
