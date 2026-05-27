@@ -696,43 +696,57 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   Future<void> _handleSaveAsFavorite() async {
     if (_isSaving || _analyzedResponse == null) return;
 
-    setState(() => _isSaving = true);
+    // Star fills instantly; persistence runs in background.
+    setState(() {
+      _isSaving = true;
+      _isSaved = true;
+    });
 
-    try {
-      final repository = ref.read(nutritionRepositoryProvider);
-      final description = _descriptionController.text.trim();
+    final repository = ref.read(nutritionRepositoryProvider);
+    final description = _descriptionController.text.trim();
+    final request = SaveFoodRequest.fromLogResponse(
+      _analyzedResponse!,
+      description.length > 50
+          ? '${description.substring(0, 50)}...'
+          : description,
+      description: description,
+      sourceType: _sourceType,
+    );
 
-      final request = SaveFoodRequest.fromLogResponse(
-        _analyzedResponse!,
-        description.length > 50 ? '${description.substring(0, 50)}...' : description,
-        description: description,
-        sourceType: _sourceType,
-      );
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(children: [
+          const Icon(Icons.star, color: Colors.white, size: 20),
+          const SizedBox(width: 8),
+          Text(AppLocalizations.of(context).logMealSheetSavedToFavorites)
+        ]),
+        backgroundColor: AppColors.textMuted,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: EdgeInsets.only(left: 16, right: 16, bottom: bottomPadding + 100),
+      ),
+    );
+    if (mounted) setState(() => _isSaving = false);
 
-      await repository.saveFood(userId: widget.userId, request: request);
-
-      if (mounted) {
-        setState(() { _isSaved = true; _isSaving = false; });
-        final bottomPadding = MediaQuery.of(context).padding.bottom;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(children: [const Icon(Icons.star, color: Colors.white, size: 20), const SizedBox(width: 8), Text(AppLocalizations.of(context).logMealSheetSavedToFavorites)]),
-            backgroundColor: AppColors.textMuted,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            margin: EdgeInsets.only(left: 16, right: 16, bottom: bottomPadding + 100),
-          ),
-        );
+    unawaited(() async {
+      try {
+        await repository.saveFood(userId: widget.userId, request: request);
+      } catch (e) {
+        debugPrint('❌ [SaveFood] Error: $e');
+        if (mounted) {
+          // Roll back the star so the user sees it didn't persist.
+          setState(() => _isSaved = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)
+                  .logMealSheetFailedToSaveError(e.toString())),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
-    } catch (e) {
-      debugPrint('❌ [SaveFood] Error: $e');
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).logMealSheetFailedToSaveError(e.toString())), backgroundColor: Colors.red),
-        );
-      }
-    }
+    }());
   }
 
 

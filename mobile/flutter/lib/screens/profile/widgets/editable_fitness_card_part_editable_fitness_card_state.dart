@@ -103,22 +103,22 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     try {
       final apiClient = ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
-
       if (userId == null) throw Exception('User not found');
 
-      // Save user fitness settings
-      await apiClient.put(
-        '${ApiConstants.users}/$userId',
-        data: {
+      // Save user fitness settings via the optimistic auth notifier — state
+      // updates synchronously, backend persist + refresh runs in background.
+      unawaited(
+        ref.read(authStateProvider.notifier).updateUserProfile({
           'fitness_level': _selectedLevel,
           'goals': _selectedGoal,
           'days_per_week': _selectedDays.length,
           'workout_days': _selectedDays,
           'active_injuries': _selectedInjuries,
-        },
+        }),
       );
 
-      // Update gym profile duration range if changed
+      // Update gym profile duration range if changed (background; provider
+      // mutation should make this near-instant for the gym card too).
       final activeProfile = ref.read(activeGymProfileProvider);
       if (activeProfile != null) {
         final oldMin = activeProfile.durationMinutesMin ?? activeProfile.durationMinutes;
@@ -129,32 +129,37 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             durationMinutesMin: _selectedDurationMin.round(),
             durationMinutesMax: _selectedDurationMax.round(),
           );
-          await ref.read(gymProfilesProvider.notifier).updateProfile(
-            activeProfile.id,
-            update,
+          unawaited(
+            ref.read(gymProfilesProvider.notifier).updateProfile(
+                  activeProfile.id,
+                  update,
+                ),
           );
         }
       }
 
-      // Update warmup and stretch durations if changed
+      // Update warmup and stretch durations if changed (background).
       final warmupState = ref.read(warmupDurationProvider);
       if (warmupState.warmupDurationMinutes != _selectedWarmupDuration ||
           warmupState.stretchDurationMinutes != _selectedStretchDuration) {
-        await ref.read(warmupDurationProvider.notifier).setBothDurations(
-          warmupMinutes: _selectedWarmupDuration,
-          stretchMinutes: _selectedStretchDuration,
+        unawaited(
+          ref.read(warmupDurationProvider.notifier).setBothDurations(
+                warmupMinutes: _selectedWarmupDuration,
+                stretchMinutes: _selectedStretchDuration,
+              ),
         );
       }
 
-      // Update daily steps goal if changed.
+      // Update daily steps goal if changed (background).
       final currentStepGoal = ref.read(stepGoalProvider);
       if (currentStepGoal != _selectedStepGoal) {
-        await ref.read(neatProvider.notifier).updateStepGoal(_selectedStepGoal);
+        unawaited(
+          ref.read(neatProvider.notifier).updateStepGoal(_selectedStepGoal),
+        );
       }
 
-      await ref.read(authStateProvider.notifier).refreshUser();
-
-      // Refresh workout providers silently (no loading flash)
+      // Workout list providers refresh silently — fire and forget; no
+      // loading flash because they already have cached data.
       ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
       ref.read(workoutsProvider.notifier).silentRefresh();
 
@@ -193,7 +198,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    // Watch the active gym profile
+    // Watch the active gym profile (restored — Active Gym row below uses it).
     final activeGymProfile = ref.watch(activeGymProfileProvider);
 
     // Surface 5.B.6: drop the 4×2 view-mode grid. View mode now uses the
@@ -208,7 +213,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
       ),
       child: Column(
         children: [
-          // Active Gym (tappable to switch/manage gyms)
+          // Active Gym (restored — tappable to switch/manage gyms)
           _buildGymRow(
             profile: activeGymProfile,
             isDark: isDark,
@@ -256,7 +261,12 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
-          // Goal
+          // Goal — restored. The Primary Goal pill at the top of the
+          // Profile is a read-only summary; this row is the only post-
+          // onboarding EDIT path for user.goals. fitness_assessment_screen
+          // only fires in onboarding, so removing this row orphaned the
+          // field. Pill + row coexist — the pill is the glance summary,
+          // the row is the editor.
           _buildEditableRow(
             icon: Icons.flag,
             iconColor: AppColors.green,
@@ -282,7 +292,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           ),
           Divider(height: 1, color: cardBorder, indent: 56),
 
-          // Workout Days
+          // Workout Days (restored)
           _buildEditableRow(
             icon: Icons.calendar_today,
             iconColor: AppColors.yellow,
@@ -452,6 +462,9 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     );
   }
 
+  /// 4-chip selector for the user.goals field. Restored after the row was
+  /// briefly deleted — Primary Goal pill displays current value, this is
+  /// the only edit surface post-onboarding.
   Widget _buildGoalSelector(Color purple, Color cardBorder, Color textSecondary) {
     return Wrap(
       spacing: 6,
@@ -680,6 +693,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     );
   }
 
+  /// 7-day selector restored — taps toggle a day in/out of _selectedDays.
   Widget _buildDaysSelector(Color cyan, Color cardBorder, Color textSecondary) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -702,7 +716,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: isSelected ? cyan.withOpacity(0.2) : Colors.transparent,
+              color: isSelected ? cyan.withValues(alpha: 0.2) : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isSelected ? cyan : cardBorder,
@@ -820,7 +834,10 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     );
   }
 
-  /// Build the gym row with profile color dot and tap to manage
+  /// Build the gym row with profile color dot and tap to manage. Restored
+  /// after a brief deletion — Active Gym row provides quick switch/manage
+  /// access; TrainingSetupCard's header only EDITS the current gym, doesn't
+  /// switch between them.
   Widget _buildGymRow({
     required GymProfile? profile,
     required bool isDark,
@@ -847,7 +864,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: gymColor.withOpacity(0.2),
+                color: gymColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(gymIcon, color: gymColor, size: 16),

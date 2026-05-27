@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -73,25 +74,30 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
 
   Future<void> _handleSave() async {
     if (_selectedDays.isEmpty) return;
-
+    if (_isSaving) return;
     setState(() => _isSaving = true);
 
-    try {
-      await widget.onSave(_selectedDays.toList()..sort());
-      if (mounted) {
-        Navigator.pop(context);
+    // Fire the parent's save callback as unawaited so the sheet pops in the
+    // same frame as the tap. Parent typically calls
+    // `authStateProvider.notifier.updateUserProfile({'workout_days': ...})`
+    // which is now optimistic (state updates synchronously). Failure
+    // surfaces through the parent's own error toast.
+    unawaited(() async {
+      try {
+        await widget.onSave(_selectedDays.toList()..sort());
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update workout days: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update workout days: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
+    }());
+
+    if (mounted) Navigator.pop(context);
   }
 
   String _getSelectedDaysSummary() {

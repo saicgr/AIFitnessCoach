@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/measurements_repository.dart';
 import '../../data/services/api_client.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -648,59 +650,68 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
       return;
     }
 
+    if (_isSaving) return;
     setState(() => _isSaving = true);
 
-    try {
-      final measurement = BodyMeasurement(
-        userId: widget.userId,
-        measuredAt: _selectedDate,
-        waistCm: _toMetricCm(_parseDouble(_waistController.text)),
-        chestCm: _toMetricCm(_parseDouble(_chestController.text)),
-        hipsCm: _toMetricCm(_parseDouble(_hipsController.text)),
-        neckCm: _toMetricCm(_parseDouble(_neckController.text)),
-        leftBicepCm: _toMetricCm(_parseDouble(_leftBicepController.text)),
-        rightBicepCm: _toMetricCm(_parseDouble(_rightBicepController.text)),
-        leftForearmCm: _toMetricCm(_parseDouble(_leftForearmController.text)),
-        rightForearmCm: _toMetricCm(_parseDouble(_rightForearmController.text)),
-        leftThighCm: _toMetricCm(_parseDouble(_leftThighController.text)),
-        rightThighCm: _toMetricCm(_parseDouble(_rightThighController.text)),
-        leftCalfCm: _toMetricCm(_parseDouble(_leftCalfController.text)),
-        rightCalfCm: _toMetricCm(_parseDouble(_rightCalfController.text)),
-        shouldersCm: _toMetricCm(_parseDouble(_shouldersController.text)),
-        bodyFatPercentage: _parseDouble(_bodyFatController.text),
-        notes: _notesController.text.isEmpty ? null : _notesController.text,
-      );
+    final measurement = BodyMeasurement(
+      userId: widget.userId,
+      measuredAt: _selectedDate,
+      waistCm: _toMetricCm(_parseDouble(_waistController.text)),
+      chestCm: _toMetricCm(_parseDouble(_chestController.text)),
+      hipsCm: _toMetricCm(_parseDouble(_hipsController.text)),
+      neckCm: _toMetricCm(_parseDouble(_neckController.text)),
+      leftBicepCm: _toMetricCm(_parseDouble(_leftBicepController.text)),
+      rightBicepCm: _toMetricCm(_parseDouble(_rightBicepController.text)),
+      leftForearmCm: _toMetricCm(_parseDouble(_leftForearmController.text)),
+      rightForearmCm: _toMetricCm(_parseDouble(_rightForearmController.text)),
+      leftThighCm: _toMetricCm(_parseDouble(_leftThighController.text)),
+      rightThighCm: _toMetricCm(_parseDouble(_rightThighController.text)),
+      leftCalfCm: _toMetricCm(_parseDouble(_leftCalfController.text)),
+      rightCalfCm: _toMetricCm(_parseDouble(_rightCalfController.text)),
+      shouldersCm: _toMetricCm(_parseDouble(_shouldersController.text)),
+      bodyFatPercentage: _parseDouble(_bodyFatController.text),
+      notes: _notesController.text.isEmpty ? null : _notesController.text,
+    );
 
-      final apiClient = ref.read(apiClientProvider);
-      await apiClient.post(
-        '/body-measurements',
-        data: measurement.toJson(),
-      );
+    // XP award is purely local — fire synchronously so the +XP toast shows
+    // on the same frame as the sheet pop.
+    ref.read(xpProvider.notifier).markBodyMeasurementsLogged();
 
-      // Award XP for logging body measurements (+20 XP daily, +50 XP first time)
-      ref.read(xpProvider.notifier).markBodyMeasurementsLogged();
-
-      if (mounted) {
-        Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).logMeasurementMeasurementsSaved),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
+    // Background persist + refresh. Pop immediately so the user doesn't
+    // sit on a spinner. The measurements card re-renders the moment
+    // forceRefresh completes (~300-800ms typical).
+    final apiClient = ref.read(apiClientProvider);
+    unawaited(() async {
+      try {
+        await apiClient.post('/body-measurements', data: measurement.toJson());
+        // Pull the freshly-persisted measurement back into local state so
+        // every surface that reads `measurementsProvider` updates without
+        // the user having to pull-to-refresh.
+        await ref
+            .read(measurementsProvider.notifier)
+            .forceRefresh(widget.userId);
+      } catch (e) {
+        debugPrint('Error saving measurement: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to save: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
-    } catch (e) {
-      debugPrint('Error saving measurement: $e');
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    }
+    }());
+
+    if (!mounted) return;
+    Navigator.pop(context, true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            AppLocalizations.of(context).logMeasurementMeasurementsSaved),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+    );
   }
 
   double? _parseDouble(String value) {

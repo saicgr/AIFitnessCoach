@@ -37,12 +37,21 @@ void main() {
           gender: 'male',
         );
 
-        // Rest day with adjustments enabled = -100 cal
-        expect(result.targetCalories, 2400);
+        // Rest day with adjustments enabled = -100 cal from 2500 baseline.
+        // After reconciliation the headline equals the macro sum exactly
+        // (P*4 + C*4 + F*9), absorbing rounding into carbs. Allow ±5 cal.
+        expect(result.targetCalories, closeTo(2400, 5));
         expect(result.targetProteinG, 150);
         expect(result.isRestDay, true);
         expect(result.isFastingDay, false);
         expect(result.adjustmentReason, 'rest_day');
+        // Invariant: headline == macro sum.
+        expect(
+          result.targetCalories,
+          result.targetProteinG * 4 +
+              result.targetCarbsG * 4 +
+              result.targetFatG * 9,
+        );
       });
 
       test('should return unadjusted base targets when rest adjustments disabled',
@@ -57,8 +66,17 @@ void main() {
           gender: 'male',
         );
 
-        expect(result.targetCalories, 2500);
+        // Baseline has its own P*4+C*4+F*9 rounding drift (2485 vs declared
+        // 2500). Reconciliation now snaps the headline to the real macro
+        // sum, so allow a small band around the declared baseline.
+        expect(result.targetCalories, closeTo(2500, 20));
         expect(result.adjustmentReason, 'base_targets');
+        expect(
+          result.targetCalories,
+          result.targetProteinG * 4 +
+              result.targetCarbsG * 4 +
+              result.targetFatG * 9,
+        );
       });
 
       test('should add calories for high-intensity workout', () {
@@ -98,8 +116,14 @@ void main() {
           gender: 'male',
         );
 
-        // Low intensity adds 50 cal
-        expect(result.targetCalories, 2550);
+        // Low intensity adds 50 cal — reconciliation snaps to macro sum.
+        expect(result.targetCalories, closeTo(2550, 5));
+        expect(
+          result.targetCalories,
+          result.targetProteinG * 4 +
+              result.targetCarbsG * 4 +
+              result.targetFatG * 9,
+        );
       });
 
       test('should increase carbs on training days', () {
@@ -174,6 +198,124 @@ void main() {
         );
 
         expect(result.targetCalories, greaterThanOrEqualTo(1500));
+      });
+
+      // ──────────────────────────────────────────────────────────────
+      // Reconciliation invariant — the user-reported "ring says 1700 but
+      // pills sum to 1630" bug. After reconciliation, headline calories
+      // must always equal P*4 + C*4 + F*9. Exercise every code path.
+      // ──────────────────────────────────────────────────────────────
+      group('macro/calorie reconciliation invariant', () {
+        // Helper: assert headline == macro sum and return the drift for logs.
+        void assertNoMacroDrift(DynamicTargetsResult r, String label) {
+          final macroSum =
+              r.targetProteinG * 4 + r.targetCarbsG * 4 + r.targetFatG * 9;
+          expect(
+            r.targetCalories,
+            macroSum,
+            reason: '$label: headline ${r.targetCalories} != macro sum '
+                '$macroSum (P${r.targetProteinG}/C${r.targetCarbsG}/'
+                'F${r.targetFatG})',
+          );
+        }
+
+        test('rest day reconciles', () {
+          final r = service.calculateTodaysTargets(
+            preferences: basePreferences,
+            todaysWorkout: null,
+            gender: 'male',
+          );
+          assertNoMacroDrift(r, 'rest day');
+        });
+
+        test('training day (low) reconciles', () {
+          final r = service.calculateTodaysTargets(
+            preferences: basePreferences,
+            todaysWorkout: _createMockWorkout(difficulty: 'low'),
+            gender: 'male',
+          );
+          assertNoMacroDrift(r, 'training low');
+        });
+
+        test('training day (moderate) reconciles', () {
+          final r = service.calculateTodaysTargets(
+            preferences: basePreferences,
+            todaysWorkout: _createMockWorkout(difficulty: 'moderate'),
+            gender: 'male',
+          );
+          assertNoMacroDrift(r, 'training moderate');
+        });
+
+        test('training day (high) reconciles', () {
+          final r = service.calculateTodaysTargets(
+            preferences: basePreferences,
+            todaysWorkout: _createMockWorkout(difficulty: 'high'),
+            gender: 'male',
+          );
+          assertNoMacroDrift(r, 'training high');
+        });
+
+        test('training day (very_high) reconciles', () {
+          final r = service.calculateTodaysTargets(
+            preferences: basePreferences,
+            todaysWorkout: _createMockWorkout(difficulty: 'very_high'),
+            gender: 'male',
+          );
+          assertNoMacroDrift(r, 'training very_high');
+        });
+
+        test("user's exact case: 1500 baseline lose-fat + high training", () {
+          // The screenshot from the user: baseline 1500 cal with P93/C168/F50
+          // (high-protein cut preset, 100kg male, Lose Fat moderate). Daily
+          // ring was showing 1700 (training-day bump) while macros summed to
+          // 1630 — the bug. Confirm reconciliation closes the gap.
+          final cutPrefs = basePreferences.copyWith(
+            nutritionGoal: 'lose_fat',
+            targetCalories: 1500,
+            targetProteinG: 93,
+            targetCarbsG: 168,
+            targetFatG: 50,
+            adjustCaloriesForTraining: true,
+          );
+          final r = service.calculateTodaysTargets(
+            preferences: cutPrefs,
+            todaysWorkout: _createMockWorkout(difficulty: 'high'),
+            gender: 'male',
+          );
+
+          // Headline reflects +200 high-intensity bump, ±a few cal for the
+          // reconciliation top-up that absorbs multiplier rounding.
+          expect(r.targetCalories, closeTo(1700, 10));
+          // Macros sum to the headline exactly.
+          expect(
+            r.targetCalories,
+            r.targetProteinG * 4 + r.targetCarbsG * 4 + r.targetFatG * 9,
+          );
+          // Protein bumped 1.10 → 102g (matches the user's screenshot).
+          expect(r.targetProteinG, 102);
+          // Fat untouched on training day.
+          expect(r.targetFatG, 50);
+          // Carbs absorb the bump (multiplier 1.20 + reconciliation top-up).
+          expect(r.targetCarbsG, greaterThanOrEqualTo(193));
+          expect(r.isTrainingDay, true);
+          expect(r.adjustmentReason, 'training_day');
+        });
+
+        test('reconciliation absorbs negative drift on rest day', () {
+          // Rest day: baseCalories -= 100, baseCarbs *= 0.9. Drift could be
+          // positive or negative depending on baseline; reconciliation must
+          // pin headline to macro sum either direction.
+          final r = service.calculateTodaysTargets(
+            preferences: basePreferences,
+            todaysWorkout: null,
+            gender: 'male',
+          );
+          expect(r.adjustmentReason, 'rest_day');
+          // Negative drift not allowed.
+          final macroSum =
+              r.targetProteinG * 4 + r.targetCarbsG * 4 + r.targetFatG * 9;
+          expect(r.targetCalories - macroSum, 0);
+        });
       });
     });
 

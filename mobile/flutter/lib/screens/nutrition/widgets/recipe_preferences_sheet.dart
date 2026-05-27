@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -53,29 +54,51 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
   }
 
   Future<void> _savePreferences() async {
+    if (_isSaving) return;
     setState(() => _isSaving = true);
-    try {
-      final user = await ref.read(authRepositoryProvider).getCurrentUser();
-      if (user != null) {
-        final success = await ref.read(recipeSuggestionProvider.notifier).updatePreferences(
-          userId: user.id,
-          bodyType: _selectedBodyType.value,
-          favoriteCuisines: _selectedCuisines.toList(),
-          spiceTolerance: _selectedSpiceTolerance.value,
-        );
 
-        if (success && mounted) {
-          Navigator.pop(context);
+    final user = await ref.read(authRepositoryProvider).getCurrentUser();
+    if (user == null) {
+      if (mounted) setState(() => _isSaving = false);
+      return;
+    }
+
+    // Fire-and-forget. The provider returns a bool today but we don't gate
+    // the pop on it — failure surfaces via a toast below, and any UI that
+    // depends on the saved prefs reads from the recipe feed which re-fetches
+    // after this completes. Sheet pops in the same frame as the tap.
+    unawaited(() async {
+      try {
+        final success = await ref
+            .read(recipeSuggestionProvider.notifier)
+            .updatePreferences(
+              userId: user.id,
+              bodyType: _selectedBodyType.value,
+              favoriteCuisines: _selectedCuisines.toList(),
+              spiceTolerance: _selectedSpiceTolerance.value,
+            );
+        if (!success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context).recipePreferencesPreferencesSaved)),
+            const SnackBar(content: Text("Couldn't save recipe preferences.")),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save: $e')),
           );
         }
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
-    }
+    }());
+
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)
+            .recipePreferencesPreferencesSaved),
+      ),
+    );
   }
 
   @override

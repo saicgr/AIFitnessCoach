@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/hormonal_health.dart';
@@ -20,7 +22,6 @@ class HormonalHealthSettingsScreen extends ConsumerStatefulWidget {
 
 class _HormonalHealthSettingsScreenState
     extends ConsumerState<HormonalHealthSettingsScreen> {
-  bool _isSaving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -244,22 +245,26 @@ class _HormonalHealthSettingsScreenState
     );
   }
 
+  /// Fire-and-forget profile update. Returns Future<void> for caller-side
+  /// `await` compatibility, but the returned future completes the instant
+  /// the background task is *scheduled* — not when the network actually
+  /// finishes. Toggles/pickers feel instant. Failure surfaces as a toast
+  /// and invalidates the provider so the UI re-reads the server truth.
   Future<void> _updateProfile(
       String userId, Map<String, dynamic> updates) async {
-    setState(() => _isSaving = true);
-    try {
-      final repository = ref.read(hormonalHealthRepositoryProvider);
-      await repository.upsertProfile(userId, updates);
-      ref.invalidate(hormonalProfileProvider);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
-        );
+    final repository = ref.read(hormonalHealthRepositoryProvider);
+    unawaited(() async {
+      try {
+        await repository.upsertProfile(userId, updates);
+        if (mounted) ref.invalidate(hormonalProfileProvider);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update: $e')),
+          );
+        }
       }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+    }());
   }
 
   void _showGenderPicker(

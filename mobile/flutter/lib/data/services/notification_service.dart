@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
@@ -477,11 +478,33 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   final NotificationService _notificationService;
   PreferencesSyncCallback? _onPreferencesChanged;
 
+  // Coalesce rapid toggle bursts so the OS reschedule (which can rebuild
+  // dozens of pending notifications) and the backend sync (network) only
+  // run once per ~300ms instead of once per tap. UI state still flips per
+  // tap because state mutation is synchronous in every setter.
+  Timer? _rescheduleDebounce;
+  Timer? _syncDebounce;
+  static const _rescheduleDebounceDelay = Duration(milliseconds: 300);
+  static const _syncDebounceDelay = Duration(milliseconds: 500);
+
   NotificationPreferencesNotifier(
     this._prefs,
     this._notificationService,
   ) : super(const NotificationPreferences()) {
     _loadPreferences();
+  }
+
+  @override
+  void dispose() {
+    // Flush any pending background work before tearing down so the user's
+    // last toggle isn't lost if they switch screens immediately.
+    _rescheduleDebounce?.cancel();
+    _syncDebounce?.cancel();
+    unawaited(_notificationService.scheduleAllNotifications(state));
+    if (_onPreferencesChanged != null) {
+      unawaited(_onPreferencesChanged!(state));
+    }
+    super.dispose();
   }
 
   /// Set the callback to sync preferences to backend
@@ -590,9 +613,25 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
     _rescheduleNotifications();
   }
 
-  /// Reschedule all notifications based on current state
+  /// Reschedule all notifications based on current state.
+  ///
+  /// Now debounced + fire-and-forget so toggle setters never block the UI:
+  /// rapid taps coalesce into a single trailing reschedule ~300ms after the
+  /// last tap. The returned Future completes immediately — the actual OS
+  /// work happens asynchronously and any errors are logged (NOT rolled back
+  /// — per the plan's edge-case rule, OS reschedule failure must not
+  /// revert the user's preference; only the OS plumbing failed).
   Future<void> _rescheduleNotifications() async {
-    await _notificationService.scheduleAllNotifications(state);
+    _rescheduleDebounce?.cancel();
+    _rescheduleDebounce = Timer(_rescheduleDebounceDelay, () {
+      unawaited(() async {
+        try {
+          await _notificationService.scheduleAllNotifications(state);
+        } catch (e) {
+          debugPrint('⚠️ [Notification] Reschedule failed: $e');
+        }
+      }());
+    });
   }
 
   /// Public method to trigger rescheduling (e.g., after restoring onboarding flag)
@@ -600,11 +639,24 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
     await _rescheduleNotifications();
   }
 
-  /// Sync notification preferences to backend
+  /// Sync notification preferences to backend.
+  ///
+  /// Same shape as [_rescheduleNotifications]: debounced + fire-and-forget so
+  /// the network roundtrip never blocks a Switch flip. Errors are logged but
+  /// the local state stays — the user's preference is recorded locally and
+  /// will sync on the next successful call.
   Future<void> _syncPreferencesToBackend() async {
-    if (_onPreferencesChanged != null) {
-      await _onPreferencesChanged!(state);
-    }
+    if (_onPreferencesChanged == null) return;
+    _syncDebounce?.cancel();
+    _syncDebounce = Timer(_syncDebounceDelay, () {
+      unawaited(() async {
+        try {
+          await _onPreferencesChanged!(state);
+        } catch (e) {
+          debugPrint('⚠️ [Notification] Backend sync failed: $e');
+        }
+      }());
+    });
   }
 
   Future<void> setWorkoutReminders(bool value) async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -50,6 +52,16 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
   // short-circuits that. Only the OTHER controllers are ever rewritten —
   // never the field the user is actively editing (preserves their cursor).
   bool _balancing = false;
+
+  // Per-macro debounced commit timers. When the user types in a macro field
+  // we schedule a commit ~600ms after the last keystroke, so the lock-calories
+  // rebalance of the OTHER two macros fires without requiring the user to
+  // dismiss the keyboard or tap away.
+  final Map<_MacroField, Timer?> _macroCommitTimers = {
+    _MacroField.protein: null,
+    _MacroField.carbs: null,
+    _MacroField.fat: null,
+  };
 
   // B1: inline warning shown when a single macro's calories alone exceed the
   // calorie target (the other two macros are forced to 0g). Null = no warning.
@@ -144,9 +156,9 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     // the OTHER two macros runs on COMMIT — see `_onMacroFocusChange` and the
     // `onEditingComplete` hook on each macro field.
     _caloriesController.addListener(_onCaloriesChanged);
-    _proteinController.addListener(_onMacroTyping);
-    _carbsController.addListener(_onMacroTyping);
-    _fatController.addListener(_onMacroTyping);
+    _proteinController.addListener(() => _onMacroChanged(_MacroField.protein));
+    _carbsController.addListener(() => _onMacroChanged(_MacroField.carbs));
+    _fatController.addListener(() => _onMacroChanged(_MacroField.fat));
 
     _computeRecommended();
     _recalculate();
@@ -172,6 +184,9 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
 
   @override
   void dispose() {
+    for (final t in _macroCommitTimers.values) {
+      t?.cancel();
+    }
     _caloriesController.dispose();
     _proteinController.dispose();
     _carbsController.dispose();
@@ -359,15 +374,29 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     _recalculate();
   }
 
-  /// Fired on EVERY keystroke in any macro field. Per spec, typing must NOT
-  /// trigger the lock-calories rebalance — clearing "150" to retype it would
-  /// momentarily read 0g and explode the other macros. So while typing we
-  /// only refresh the live display (calculated kcal + split bar). The actual
-  /// rebalance happens on commit (`_commitMacro`).
-  void _onMacroTyping() {
-    // A programmatic rewrite from a balance pass still needs the display to
-    // refresh, but must not itself re-balance — `_recalculate` is safe.
+  /// Fired on EVERY keystroke in macro field [m]. Per spec, typing must NOT
+  /// immediately trigger the lock-calories rebalance — clearing "150" to
+  /// retype it would momentarily read 0g and explode the other macros. So we
+  /// (a) refresh the live display now and (b) schedule a debounced commit
+  /// ~600ms after the last keystroke so the rebalance fires without requiring
+  /// the user to dismiss the keyboard or tap away.
+  void _onMacroChanged(_MacroField m) {
+    // Programmatic rewrite from a balance pass still needs the display to
+    // refresh, but must not itself re-balance — also skip the debounce
+    // scheduling (the value isn't user-typed).
     _recalculate();
+    if (_balancing) return;
+
+    _macroCommitTimers[m]?.cancel();
+    _macroCommitTimers[m] = Timer(const Duration(milliseconds: 600), () {
+      if (!mounted) return;
+      // Skip empty/zero — the user is mid-edit (e.g., cleared the field to
+      // retype). A real commit happens on focus-loss / onEditingComplete in
+      // that case.
+      final v = int.tryParse(_controllerFor(m).text);
+      if (v == null || v <= 0) return;
+      _commitMacro(m);
+    });
   }
 
   /// B-rebalance-on-commit: focus-loss path. When a macro field loses focus
@@ -739,49 +768,44 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       fatG = int.tryParse(_fatController.text);
     }
 
+    // Fire analytics + the (now-optimistic) provider update. Both are
+    // synchronous on the foreground frame — the provider applies the new
+    // targets to state immediately and persists in the background. Pop
+    // straight after so the user never sees a spinner on save.
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'nutrition_targets_updated',
+      properties: <String, Object>{'calories': calories},
+    );
+    // No await — provider now updates state synchronously and persists in
+    // the background. Holding _isSaving briefly suppresses double-taps.
     setState(() => _isSaving = true);
-    try {
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'nutrition_targets_updated',
-        properties: <String, Object>{'calories': calories},
-      );
-      await ref.read(nutritionPreferencesProvider.notifier).updateTargets(
-        userId: widget.userId,
-        targetCalories: calories,
-        targetProteinG: proteinG,
-        targetCarbsG: carbsG,
-        targetFatG: fatG,
-        customProteinPercent: customProteinPct,
-        customCarbPercent: customCarbPct,
-        customFatPercent: customFatPct,
-        rateOfChange: _selectedRate,
-      );
+    unawaited(
+      ref.read(nutritionPreferencesProvider.notifier).updateTargets(
+            userId: widget.userId,
+            targetCalories: calories,
+            targetProteinG: proteinG,
+            targetCarbsG: carbsG,
+            targetFatG: fatG,
+            customProteinPercent: customProteinPct,
+            customCarbPercent: customCarbPct,
+            customFatPercent: customFatPct,
+            rateOfChange: _selectedRate,
+          ),
+    );
 
-      if (mounted) {
-        Navigator.pop(context);
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).editTargetsTargetsUpdated),
-            backgroundColor: teal,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        widget.onSaved();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+    if (!mounted) return;
+    Navigator.pop(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:
+            Text(AppLocalizations.of(context).editTargetsTargetsUpdated),
+        backgroundColor: teal,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    widget.onSaved();
   }
 
   @override
@@ -822,7 +846,13 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         top: 4,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
-      child: Column(
+      // The form is taller than the glass-sheet's max height (~715 px) once
+      // the goal banner + recalc row + macros sliders + timeline + save row
+      // all render. Wrap the column in a scroll view so it pages instead of
+      // overflowing — keyboard avoidance still works via viewInsets above.
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Title row
@@ -851,6 +881,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           // sheet is framed by what they're working toward.
           _buildGoalBanner(textPrimary, textMuted, accent),
           const SizedBox(height: 8),
+
+          // Baseline-vs-today banner. When today's dynamic target differs
+          // from the stored baseline (training/rest/fasting day), tell the
+          // user they're editing the BASELINE and what today's adjusted
+          // value is — otherwise the 1500 / 1700 mismatch reads as a bug.
+          _buildBaselineTodayBanner(textMuted, accent),
 
           // Recalculate from profile + current weight context. Showing the
           // weight here (a) gives the user the anchor for the per-kg slider
@@ -1159,6 +1195,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           SizedBox(height: MediaQuery.of(context).padding.bottom + 4),
         ],
       ),
+      ),
     );
   }
 
@@ -1194,6 +1231,98 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   : (onTap != null
                       ? textPrimary.withValues(alpha: 0.6)
                       : textPrimary.withValues(alpha: 0.3)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Shown when today's adjusted target (training/rest/fasting day bump)
+  /// differs from the user's stored baseline. The Edit sheet always edits
+  /// the BASELINE — without this banner the user sees 1500 here vs 1700 on
+  /// the Daily ring and reads it as a bug. Tap → opens the BMR/TDEE/goal
+  /// calculation sheet for the full breakdown.
+  Widget _buildBaselineTodayBanner(Color textMuted, Color accent) {
+    final state = ref.watch(nutritionPreferencesProvider);
+    final dyn = state.dynamicTargets;
+    final reason = dyn?.adjustmentReason ?? 'base_targets';
+    final delta = dyn?.calorieAdjustment ?? 0;
+    if (reason == 'base_targets' || delta.abs() < 10) {
+      return const SizedBox.shrink();
+    }
+
+    final baseline = state.preferences?.targetCalories ?? 0;
+    final todays = dyn?.targetCalories ?? baseline;
+
+    final tag = switch (reason) {
+      'training_day' => 'training',
+      'rest_day' => 'rest',
+      'fasting_day' => 'fasting',
+      _ => 'today',
+    };
+    final signed = delta > 0 ? '+$delta' : '$delta';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () {
+            final prefs = ref.read(nutritionPreferencesProvider).preferences;
+            if (prefs == null) return;
+            showNutritionCalculationSheet(
+              context,
+              prefs: prefs,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            );
+          },
+          child: Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: textMuted.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border:
+                  Border.all(color: textMuted.withValues(alpha: 0.22)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded,
+                    size: 14, color: textMuted),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: textMuted,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Editing your '),
+                        const TextSpan(
+                          text: 'baseline',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        TextSpan(text: ' ($baseline cal). Today: '),
+                        TextSpan(
+                          text: '$todays cal',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: accent,
+                          ),
+                        ),
+                        TextSpan(text: '  ($signed $tag).'),
+                      ],
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    size: 16, color: textMuted),
+              ],
             ),
           ),
         ),
@@ -1499,8 +1628,17 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     }
 
     // Current g/kg derived from whatever's in the protein field.
+    // MUST be clamped to the Slider's [min, max] (0.8..2.4) below — passing
+    // a value outside that range trips Slider's `value >= min && value <= max`
+    // assertion. Users on a very low-protein target can legitimately sit
+    // below 0.8 g/kg; we pin the thumb to the floor of the visible scale
+    // (the protein grams field itself stays untouched).
     final currentGrams = int.tryParse(_proteinController.text) ?? 0;
-    final currentRatio = (currentGrams / weightKg).clamp(0.5, 3.0).toDouble();
+    // Guard weightKg<=0 — onboarding edge case can leave it 0/null, and
+    // `n / 0` → NaN, which .clamp() preserves, tripping Slider's range assert.
+    final currentRatio = weightKg > 0
+        ? (currentGrams / weightKg).clamp(0.8, 2.4).toDouble()
+        : 1.6;
 
     final stops = const [0.8, 1.2, 1.6, 2.0, 2.4];
     final fmt = NumberFormat.decimalPattern();
@@ -1663,6 +1801,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                       max: 2.4,
                       divisions: 16, // 0.1 g/kg granularity
                       onChanged: (v) {
+                        if (!mounted) return;
                         final grams = (v * weightKg).round();
                         _proteinController.text = grams.toString();
                         _proteinController.selection =
@@ -1670,7 +1809,23 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                           TextPosition(
                               offset: _proteinController.text.length),
                         );
+                        // Live display refresh while dragging — calories
+                        // bar updates per-tick. The actual rebalance of
+                        // carbs/fat happens on release (`onChangeEnd`),
+                        // matching the typing → commit-on-focus-loss
+                        // pattern so dragging doesn't twitch the other
+                        // macros every 0.1 g/kg.
                         _recalculate();
+                      },
+                      onChangeEnd: (_) {
+                        // Commit on release — fires `_commitMacro` which
+                        // runs the lock-calories rebalance (carbs/fat
+                        // absorb the calorie delta in proportion to their
+                        // current kcal share). Previously the slider only
+                        // called `_recalculate()` and skipped the commit
+                        // entirely, so dragging protein up never adjusted
+                        // carbs/fat even though Lock calories was on.
+                        _commitMacro(_MacroField.protein);
                       },
                     ),
                   ),
@@ -1708,7 +1863,10 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                     setState(() {
                       _proteinController.text = grams.toString();
                     });
-                    _recalculate();
+                    // Tap-to-snap is a single atomic commit (no drag
+                    // intermediate state), so fire the rebalance
+                    // immediately. Same fix as the slider's onChangeEnd.
+                    _commitMacro(_MacroField.protein);
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
@@ -2009,8 +2167,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             Padding(
               padding: const EdgeInsets.only(top: 2, left: 18),
               child: Text(
-                'Capped at safe minimum ($cappedMinimum kcal) \u2014 '
-                'timeline reflects the actual deficit.',
+                'Capped at safe minimum ($cappedMinimum kcal). '
+                'Timeline reflects the actual deficit.',
                 style: const TextStyle(fontSize: 10, color: Colors.orange),
                 maxLines: 2,
               ),
@@ -2244,40 +2402,67 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           ),
         ),
         const SizedBox(height: 6),
-        // Wrap so the four chips never overflow on an iPhone SE.
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: presets.map((entry) {
-            final selected = _selectedPreset == entry.$1;
-            return GestureDetector(
-              onTap: () => _onPresetSelected(entry.$1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? accent.withValues(alpha: 0.15)
-                      : elevated,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: selected
-                        ? accent
-                        : textMuted.withValues(alpha: 0.3),
+        // Horizontally scrollable row so all chips sit on a single line —
+        // adding a future preset (e.g. "Carb-Cycle") would otherwise
+        // wrap to a second row. Right-edge fade hints at scrollability;
+        // chips have intrinsic width so each label stays on one line.
+        SizedBox(
+          height: 32,
+          child: ShaderMask(
+            shaderCallback: (bounds) {
+              return LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: const [
+                  Colors.black,
+                  Colors.black,
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.92, 1.0],
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.dstIn,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: presets.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemBuilder: (_, i) {
+                final entry = presets[i];
+                final selected = _selectedPreset == entry.$1;
+                return GestureDetector(
+                  onTap: () => _onPresetSelected(entry.$1),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? accent.withValues(alpha: 0.15)
+                          : elevated,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: selected
+                            ? accent
+                            : textMuted.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        entry.$2,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: selected ? accent : textPrimary,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  entry.$2,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: selected ? accent : textPrimary,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+                );
+              },
+            ),
+          ),
         ),
       ],
     );

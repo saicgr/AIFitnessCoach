@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -353,7 +355,9 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
   }
 
   Future<void> _saveMoodReview(Color teal) async {
-    // Resolve foodLogId — may still be in-flight if sheet was shown optimistically
+    // Resolve foodLogId — may still be in-flight if sheet was shown
+    // optimistically. We can't avoid waiting for the underlying log ID since
+    // the PATCH needs it, but every other path is fire-and-forget.
     String? logId = widget.foodLogId;
     if (logId == null && widget.saveFuture != null) {
       setState(() => _isSaving = true);
@@ -368,22 +372,24 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
       return;
     }
 
-    setState(() => _isSaving = true);
+    final apiClient = ref.read(apiClientProvider);
+    final payload = <String, dynamic>{
+      if (_moodBefore != null) 'mood_before': _moodBefore!.value,
+      if (_moodAfter != null) 'mood_after': _moodAfter!.value,
+      'energy_level': _energyLevel,
+    };
 
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      await apiClient.patch(
-        '/nutrition/food-logs/$logId/mood',
-        data: {
-          if (_moodBefore != null) 'mood_before': _moodBefore!.value,
-          if (_moodAfter != null) 'mood_after': _moodAfter!.value,
-          'energy_level': _energyLevel,
-        },
-      );
-      debugPrint('✅ [PostMealReview] Mood saved for log $logId');
-    } catch (e) {
-      debugPrint('❌ [PostMealReview] Failed to save mood: $e');
-    }
+    unawaited(() async {
+      try {
+        await apiClient.patch(
+          '/nutrition/food-logs/$logId/mood',
+          data: payload,
+        );
+        debugPrint('✅ [PostMealReview] Mood saved for log $logId');
+      } catch (e) {
+        debugPrint('❌ [PostMealReview] Failed to save mood: $e');
+      }
+    }());
 
     if (!mounted) return;
     Navigator.pop(context);

@@ -700,6 +700,13 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
 
   /// Update nutrition targets (calories and macros)
   /// This allows users to manually edit their calorie/macro goals
+  /// Save new daily targets with optimistic UI. The local state updates
+  /// synchronously so the Edit sheet can close instantly and the Daily ring
+  /// reflects the new baseline in the same frame. Persistence (PUT) + the
+  /// dynamic-targets refresh (GET) run in the background; on failure the
+  /// state rolls back to the previous values and the error surfaces via
+  /// [state.error]. Previously this awaited both network calls before
+  /// returning, blocking the UI for 1-6+ seconds on a slow backend.
   Future<void> updateTargets({
     required String userId,
     int? targetCalories,
@@ -716,43 +723,111 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       return;
     }
 
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      debugPrint('📝 [NutritionPrefsProvider] Updating targets: cal=$targetCalories, p=$targetProteinG, c=$targetCarbsG, f=$targetFatG');
+    final previousPreferences = state.preferences!;
+    final previousDynamicTargets = state.dynamicTargets;
 
-      // Create updated preferences with new target values
-      final updatedPreferences = state.preferences!.copyWith(
-        targetCalories: targetCalories ?? state.preferences!.targetCalories,
-        targetProteinG: targetProteinG ?? state.preferences!.targetProteinG,
-        targetCarbsG: targetCarbsG ?? state.preferences!.targetCarbsG,
-        targetFatG: targetFatG ?? state.preferences!.targetFatG,
-        customProteinPercent: customProteinPercent ?? state.preferences!.customProteinPercent,
-        customCarbPercent: customCarbPercent ?? state.preferences!.customCarbPercent,
-        customFatPercent: customFatPercent ?? state.preferences!.customFatPercent,
-        rateOfChange: rateOfChange ?? state.preferences!.rateOfChange,
+    // Build the optimistic preferences value.
+    final updatedPreferences = previousPreferences.copyWith(
+      targetCalories: targetCalories ?? previousPreferences.targetCalories,
+      targetProteinG: targetProteinG ?? previousPreferences.targetProteinG,
+      targetCarbsG: targetCarbsG ?? previousPreferences.targetCarbsG,
+      targetFatG: targetFatG ?? previousPreferences.targetFatG,
+      customProteinPercent:
+          customProteinPercent ?? previousPreferences.customProteinPercent,
+      customCarbPercent:
+          customCarbPercent ?? previousPreferences.customCarbPercent,
+      customFatPercent:
+          customFatPercent ?? previousPreferences.customFatPercent,
+      rateOfChange: rateOfChange ?? previousPreferences.rateOfChange,
+    );
+
+    // Apply the same calorie/macro delta to the cached dynamic targets so
+    // the Daily ring keeps showing today's training/rest adjustment instead
+    // of flickering back to the bare baseline while the GET refresh is in
+    // flight. Falls back to null when there's no prior dynamic snapshot —
+    // the UI will read the baseline directly via currentCalorieTarget.
+    DynamicNutritionTargets? optimisticDynamic;
+    if (previousDynamicTargets != null) {
+      final calDelta =
+          (targetCalories ?? previousPreferences.targetCalories ?? 0) -
+              (previousPreferences.targetCalories ?? 0);
+      final proteinDelta =
+          (targetProteinG ?? previousPreferences.targetProteinG ?? 0) -
+              (previousPreferences.targetProteinG ?? 0);
+      final carbsDelta =
+          (targetCarbsG ?? previousPreferences.targetCarbsG ?? 0) -
+              (previousPreferences.targetCarbsG ?? 0);
+      final fatDelta = (targetFatG ?? previousPreferences.targetFatG ?? 0) -
+          (previousPreferences.targetFatG ?? 0);
+      optimisticDynamic = DynamicNutritionTargets(
+        targetCalories: previousDynamicTargets.targetCalories + calDelta,
+        targetProteinG: previousDynamicTargets.targetProteinG + proteinDelta,
+        targetCarbsG: previousDynamicTargets.targetCarbsG + carbsDelta,
+        targetFatG: previousDynamicTargets.targetFatG + fatDelta,
+        targetFiberG: previousDynamicTargets.targetFiberG,
+        isTrainingDay: previousDynamicTargets.isTrainingDay,
+        isFastingDay: previousDynamicTargets.isFastingDay,
+        isRestDay: previousDynamicTargets.isRestDay,
+        adjustmentReason: previousDynamicTargets.adjustmentReason,
+        calorieAdjustment: previousDynamicTargets.calorieAdjustment,
       );
-
-      // Save to backend
-      final saved = await _repository.savePreferences(
-        userId: userId,
-        preferences: updatedPreferences,
-      );
-
-      // Refresh dynamic targets as well (pass local date to avoid timezone mismatch)
-      final dynamicTargets = await _repository.getDynamicTargets(userId: userId, date: DateTime.now());
-
-      state = state.copyWith(
-        preferences: saved,
-        dynamicTargets: dynamicTargets,
-        isLoading: false,
-      );
-      _nutritionPrefsInMemoryCache = state;
-      unawaited(_NutritionPrefsDiskCache.write(userId, saved));
-      debugPrint('✅ [NutritionPrefsProvider] Targets updated');
-    } catch (e) {
-      debugPrint('❌ [NutritionPrefsProvider] Update targets error: $e');
-      state = state.copyWith(isLoading: false, error: e.toString());
     }
+
+    // Synchronous optimistic state update — Edit sheet sees this in the
+    // same frame and can close immediately. No `isLoading: true` flash.
+    state = state.copyWith(
+      preferences: updatedPreferences,
+      dynamicTargets: optimisticDynamic,
+      isLoading: false,
+      clearError: true,
+    );
+    _nutritionPrefsInMemoryCache = state;
+    unawaited(_NutritionPrefsDiskCache.write(userId, updatedPreferences));
+
+    debugPrint(
+        '📝 [NutritionPrefsProvider] Optimistic update applied: cal=$targetCalories, p=$targetProteinG, c=$targetCarbsG, f=$targetFatG');
+
+    // Background persistence + dynamic-targets refresh. The Edit sheet has
+    // already closed by the time these complete; the UI re-renders on the
+    // confirmed server values.
+    unawaited(() async {
+      try {
+        final saved = await _repository.savePreferences(
+          userId: userId,
+          preferences: updatedPreferences,
+        );
+        // Pull the real dynamic targets (backend re-runs the full
+        // training/rest/fasting calc against the just-saved baseline).
+        DynamicNutritionTargets? confirmedDynamic;
+        try {
+          confirmedDynamic = await _repository.getDynamicTargets(
+            userId: userId,
+            date: DateTime.now(),
+          );
+        } catch (e) {
+          debugPrint(
+              '⚠️ [NutritionPrefsProvider] Dynamic refresh failed: $e (keeping optimistic)');
+        }
+        state = state.copyWith(
+          preferences: saved,
+          dynamicTargets: confirmedDynamic ?? state.dynamicTargets,
+        );
+        _nutritionPrefsInMemoryCache = state;
+        unawaited(_NutritionPrefsDiskCache.write(userId, saved));
+        debugPrint('✅ [NutritionPrefsProvider] Targets persisted to backend');
+      } catch (e) {
+        debugPrint('❌ [NutritionPrefsProvider] Persist failed, rolling back: $e');
+        // Rollback to pre-edit values + surface the error so the UI can
+        // toast.
+        state = state.copyWith(
+          preferences: previousPreferences,
+          dynamicTargets: previousDynamicTargets,
+          error: e.toString(),
+        );
+        _nutritionPrefsInMemoryCache = state;
+        unawaited(_NutritionPrefsDiskCache.write(userId, previousPreferences));
+      }
+    }());
   }
 
   /// Record that weekly check-in was completed

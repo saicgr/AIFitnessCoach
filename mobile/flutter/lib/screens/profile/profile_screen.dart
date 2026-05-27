@@ -1,6 +1,7 @@
 // `dart:convert` stays — the part-file's custom-equipment manager
 // json-decodes the equipment list. ApiConstants dropped along with the
 // inline bio loader (Surface 5.B.4) since it was the only consumer.
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 
@@ -35,7 +36,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
-import '../../widgets/liquid_glass_action_bar.dart';
+import '../you/you_hub_screen.dart' show kYouHubBodyBottomInset;
 import 'synced_workout_detail_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -147,20 +148,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       );
     }
+    // 48dp minimum tap target (M3 + iOS HIG). The visible pill stays
+    // compact via tight padding, but the hit-rect is comfortably tappable.
     return TextButton.icon(
       onPressed: () {
         state?.toggleEdit();
         setState(() {});
       },
-      icon: Icon(Icons.edit, size: 12, color: textMuted),
+      icon: Icon(Icons.edit, size: 14, color: textMuted),
       label: Text(
         AppLocalizations.of(context).commonEdit,
-        style: TextStyle(color: textMuted, fontSize: 12),
+        style: TextStyle(color: textMuted, fontSize: 13),
       ),
       style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: const Size(48, 48),
       ),
     );
   }
@@ -410,40 +412,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             16,
             16,
             16,
-            MediaQuery.of(context).viewPadding.bottom +
-                76 +
-                kLiquidGlassActionBarHeight +
-                16,
+            // Reserve room for the stacked floating chrome (sub-tab pill +
+            // gap + main nav + breathing). kYouHubBodyBottomInset is the
+            // single source of truth shared by every You-hub sub-tab body.
+            MediaQuery.of(context).viewPadding.bottom + kYouHubBodyBottomInset,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Surface 5.B.4: User Card moved to Overview. Profile leads
-              // directly into the Training section. Surface 5.B.5: Habits
-              // heatmap moved to Overview (below the gamification grid).
-              // Surface 5.B.3: Single PrivacySection consolidated into
-              // Account → "Privacy & Data" entry; the duplicate row is
-              // gone. The Privacy & Data destination screen should host a
-              // "Leaderboard privacy" sub-row.
-              // TODO: surface a "Leaderboard privacy" entry inside the
-              // Settings → Privacy & Data destination (file not in this
-              // surface's ownership — Surface 6 / Settings owner).
+              // ───────────── USER CARD ─────────────
+              // Same `UserCard` widget the Overview tab renders. Surface 5.B.4
+              // had moved this off the Profile tab; restored per user request
+              // so name/bio/avatar/email/height/weight/age/sex/units are
+              // editable from both sub-tabs. One shared widget — edits in
+              // either place fire the same EditPersonalInfoSheet and refresh
+              // the same auth-state user.
+              const UserCard(),
+              const SizedBox(height: 16),
+
+              // ───────────── PRIMARY GOAL PILL ─────────────
+              // Single source-of-truth chip at the top of the Profile body.
+              // Sourced from user.fitnessGoal (the user's first selected
+              // goal). Downstream cards (Training Focus, Nutrition's "Body
+              // composition target") read from the same goal field but are
+              // labeled in their own scoped terms — no more 3-way "Goal:"
+              // collision across the page.
+              if ((user?.fitnessGoal ?? '').isNotEmpty) ...[
+                _PrimaryGoalPill(
+                  label: user!.fitnessGoal!,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // ───────────── TRAINING ─────────────
-              // Replaces FITNESS + TRAINING + SYNCED WORKOUTS. Subgroups:
-              //   A. Training profile (vertical list — no 4×2 grid; the
-              //      grid duplicated the Training Setup card).
-              //   B. Training setup (equipment, environment, days, etc.).
-              //   C. Exercise preferences + Training Focus + Custom Trends.
-              //   D. Synced workouts.
-              SectionHeader(
-                label: AppLocalizations.of(context).progressFitness,
-                padding: const EdgeInsetsDirectional.only(
-                    top: 0, bottom: 8, start: 4),
-                trailing: _buildFitnessEditAction(textMuted),
-              ),
-              EditableFitnessCard(key: _fitnessCardKey, user: user),
-              const SizedBox(height: 16),
+              // Restructured per UX review:
+              //   1. Primary Goal pill (above, single source of truth)
+              //   2. Training Setup — equipment, environment, days, split,
+              //      variety (the high-level "what gym, what plan")
+              //   3. Session Details — duration, warmup, stretch, level,
+              //      injuries, daily steps (the "session-level particulars",
+              //      complementary to Setup not duplicative)
+              //   4. Exercise Preferences, Training Focus, Custom Trends
+              //   5. Synced workouts
               TrainingSetupCard(
                 user: user,
                 onCustomEquipment: () {
@@ -451,6 +462,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _showCustomEquipmentSheet(context);
                 },
               ),
+              const SizedBox(height: 20),
+              SectionHeader(
+                // Renamed from "Fitness" → "Session details" so the section
+                // reads as a complement to "Training Setup" above rather
+                // than a competing version of the same data.
+                label: AppLocalizations.of(context).profileSessionDetails,
+                padding: const EdgeInsetsDirectional.only(
+                    top: 0, bottom: 8, start: 4),
+                trailing: _buildFitnessEditAction(textMuted),
+              ),
+              EditableFitnessCard(key: _fitnessCardKey, user: user),
               const SizedBox(height: 12),
               // Workout Mode tier toggle now lives inside
               // ExercisePreferencesCard as the 1st option — single
@@ -559,4 +581,78 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 }
+
+/// Top-of-Profile chip declaring the user's primary fitness goal.
+/// Single source of truth so the downstream Training Focus + Nutrition
+/// "Body composition target" rows don't read like three competing answers.
+class _PrimaryGoalPill extends StatelessWidget {
+  final String label;
+  final bool isDark;
+  const _PrimaryGoalPill({required this.label, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final bg = isDark
+        ? accent.withValues(alpha: 0.16)
+        : accent.withValues(alpha: 0.10);
+    final border = accent.withValues(alpha: isDark ? 0.42 : 0.32);
+    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: border, width: 1),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: isDark ? 0.30 : 0.22),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.flag_rounded, size: 18, color: accent),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  // Lowercase eyebrow — distinguishes the pill role
+                  // ("Primary goal") from the value below ("Build Muscle").
+                  'PRIMARY GOAL',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    letterSpacing: 0.8,
+                    fontWeight: FontWeight.w800,
+                    color: fg.withValues(alpha: 0.55),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: fg,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 

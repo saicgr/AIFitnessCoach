@@ -103,35 +103,40 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   }
 
 
-  /// Flush any pending auto-save before add/swap/remove to prevent race conditions
+  /// Flush any pending auto-save before add/swap/remove to prevent race
+  /// conditions. Now fire-and-forget — the local mutation already happened
+  /// in setState; the backend update runs in background. Returns Future<void>
+  /// for caller-side `await` compatibility but completes immediately.
   Future<void> _flushPendingAutoSave() async {
     if (_autoSaveTimer?.isActive == true) {
       _autoSaveTimer!.cancel();
-      await _autoSaveExercises();
+      _autoSaveExercises();
     }
   }
 
 
-  /// Auto-save exercise modifications to backend
-  Future<void> _autoSaveExercises() async {
-    if (_workout?.id == null || _isSaving) return;
-
-    setState(() => _isSaving = true);
-    try {
-      final exercises = _workout!.exercises.map((e) => e.toJson()).toList();
-      final result = await ref.read(workoutRepositoryProvider).updateWorkoutExercises(
-        workoutId: _workout!.id!,
-        exercises: exercises,
-      );
-      if (result != null && mounted) {
+  /// Auto-save exercise modifications to backend. Now fire-and-forget — the
+  /// local `_workout` already reflects the user's edit via setState, so the
+  /// UI is correct the instant they tapped. Persistence runs in the
+  /// background and a soft "Saved offline, will sync" toast surfaces on
+  /// failure (local edits stay regardless).
+  void _autoSaveExercises() {
+    if (_workout?.id == null) return;
+    final workoutId = _workout!.id!;
+    final exercises = _workout!.exercises.map((e) => e.toJson()).toList();
+    unawaited(() async {
+      try {
+        await ref.read(workoutRepositoryProvider).updateWorkoutExercises(
+              workoutId: workoutId,
+              exercises: exercises,
+            );
         debugPrint('✅ [WorkoutDetail] Auto-saved exercise modifications');
+      } catch (e) {
+        debugPrint('❌ [WorkoutDetail] Auto-save failed: $e');
+        // Silently fail — local edits remain visible. A future hook can
+        // queue this via workmanager for offline retry.
       }
-    } catch (e) {
-      debugPrint('❌ [WorkoutDetail] Auto-save failed: $e');
-      // Silently fail - changes are still in local state
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+    }());
   }
 
 

@@ -1617,64 +1617,153 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Update user profile fields
   /// [updates] - Map of field names to new values (e.g., {'weight_unit': 'lbs'})
+  /// Optimistic profile update. Applies [updates] to local user state
+  /// synchronously so every screen reading `currentUserProvider` rebuilds
+  /// on the same frame as the tap. Persistence + the post-write refresh run
+  /// in the background. On failure the local state rolls back to the
+  /// pre-update user and the error is logged (callers can listen on
+  /// `state.errorMessage` for a toast).
+  ///
+  /// The returned Future completes the instant the background work is
+  /// *scheduled*, not when the network finishes, so the caller's
+  /// `await updateUserProfile(...)` is non-blocking. Throws synchronously
+  /// only if no user is logged in (callers can still try/catch around the
+  /// await for that case).
   Future<void> updateUserProfile(Map<String, dynamic> updates) async {
     if (state.user == null) {
       throw Exception('No user logged in');
     }
+    final previousUser = state.user!;
+    final userId = previousUser.id;
 
-    try {
-      final userId = state.user!.id;
-      await _repository._apiClient.put(
-        '${ApiConstants.users}/$userId',
-        data: updates,
-      );
+    // Apply locally first so the UI reflects the change immediately.
+    state =
+        state.copyWith(user: _applyOverrides(previousUser, updates));
 
-      // Refresh user data from server, BUT re-apply the fields we just
-      // wrote so a lagging /users GET (read-after-write inconsistency on
-      // the backend) doesn't revert the value the user just picked.
-      await refreshUser();
-      if (state.user != null) {
-        state = state.copyWith(user: _applyOverrides(state.user!, updates));
+    unawaited(() async {
+      try {
+        await _repository._apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: updates,
+        );
+        // Refresh from server, BUT re-apply the fields we just wrote so a
+        // lagging /users GET (read-after-write inconsistency) doesn't
+        // revert the value the user just picked.
+        await refreshUser();
+        if (state.user != null) {
+          state = state.copyWith(user: _applyOverrides(state.user!, updates));
+        }
+        debugPrint('✅ [Auth] Updated user profile: $updates');
+      } catch (e) {
+        debugPrint('❌ [Auth] Update user profile error, rolling back: $e');
+        state = state.copyWith(
+          user: previousUser,
+          errorMessage: 'Failed to update profile: $e',
+        );
       }
-      debugPrint('✅ [Auth] Updated user profile: $updates');
-    } catch (e) {
-      debugPrint('❌ [Auth] Update user profile error: $e');
-      rethrow;
-    }
+    }());
   }
 
   /// Re-apply outgoing `updates` on top of a freshly-fetched user so the
   /// user's just-toggled preference isn't clobbered by stale server data.
-  /// Only handles keys the UI toggles inline; extend as new toggles need it.
+  /// Also drives the optimistic-update path in [updateUserProfile] —
+  /// every key the UI can edit should be mapped here so the local state
+  /// reflects the change synchronously.
   app_user.User _applyOverrides(
     app_user.User u,
     Map<String, dynamic> updates,
   ) {
     var next = u;
+    String? asStr(Object? v) => v?.toString();
+    double? asDouble(Object? v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v);
+      return null;
+    }
+    int? asInt(Object? v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
+    String? asJson(Object? v) {
+      if (v == null) return null;
+      if (v is String) return v;
+      return jsonEncode(v);
+    }
+
+    // ── Unit / vacation toggles (original set) ─────────────────────────
     if (updates.containsKey('workout_weight_unit')) {
-      next = next.copyWith(
-          workoutWeightUnit: updates['workout_weight_unit'] as String?);
+      next = next.copyWith(workoutWeightUnit: asStr(updates['workout_weight_unit']));
     }
     if (updates.containsKey('weight_unit')) {
-      next = next.copyWith(weightUnit: updates['weight_unit'] as String?);
+      next = next.copyWith(weightUnit: asStr(updates['weight_unit']));
     }
     if (updates.containsKey('measurement_unit')) {
-      next = next.copyWith(
-          measurementUnit: updates['measurement_unit'] as String?);
+      next = next.copyWith(measurementUnit: asStr(updates['measurement_unit']));
     }
     if (updates.containsKey('in_vacation_mode')) {
-      next = next.copyWith(
-          inVacationMode: updates['in_vacation_mode'] as bool?);
+      next = next.copyWith(inVacationMode: updates['in_vacation_mode'] as bool?);
     }
     if (updates.containsKey('vacation_start_date')) {
-      final raw = updates['vacation_start_date'] as String?;
-      next = next.copyWith(
-          vacationStartDate: (raw == null || raw.isEmpty) ? null : raw);
+      final raw = asStr(updates['vacation_start_date']);
+      next = next.copyWith(vacationStartDate: (raw == null || raw.isEmpty) ? null : raw);
     }
     if (updates.containsKey('vacation_end_date')) {
-      final raw = updates['vacation_end_date'] as String?;
-      next = next.copyWith(
-          vacationEndDate: (raw == null || raw.isEmpty) ? null : raw);
+      final raw = asStr(updates['vacation_end_date']);
+      next = next.copyWith(vacationEndDate: (raw == null || raw.isEmpty) ? null : raw);
+    }
+    // ── Personal info (edit_personal_info_sheet) ───────────────────────
+    if (updates.containsKey('name')) {
+      next = next.copyWith(name: asStr(updates['name']));
+    }
+    if (updates.containsKey('username')) {
+      next = next.copyWith(username: asStr(updates['username']));
+    }
+    if (updates.containsKey('photo_url')) {
+      next = next.copyWith(photoUrl: asStr(updates['photo_url']));
+    }
+    if (updates.containsKey('height_cm')) {
+      next = next.copyWith(heightCm: asDouble(updates['height_cm']));
+    }
+    if (updates.containsKey('weight_kg')) {
+      next = next.copyWith(weightKg: asDouble(updates['weight_kg']));
+    }
+    if (updates.containsKey('target_weight_kg')) {
+      next = next.copyWith(targetWeightKg: asDouble(updates['target_weight_kg']));
+    }
+    if (updates.containsKey('date_of_birth')) {
+      next = next.copyWith(dateOfBirth: asStr(updates['date_of_birth']));
+    }
+    if (updates.containsKey('age')) {
+      next = next.copyWith(age: asInt(updates['age']));
+    }
+    if (updates.containsKey('gender')) {
+      next = next.copyWith(gender: asStr(updates['gender']));
+    }
+    // ── Fitness profile (editable_fitness_card + workout_days_sheet) ───
+    if (updates.containsKey('fitness_level')) {
+      next = next.copyWith(fitnessLevel: asStr(updates['fitness_level']));
+    }
+    if (updates.containsKey('goals')) {
+      // Goals come in as either a plain string or a JSON array — store as JSON.
+      next = next.copyWith(goals: asJson(updates['goals']));
+    }
+    if (updates.containsKey('primary_goal')) {
+      next = next.copyWith(primaryGoal: asStr(updates['primary_goal']));
+    }
+    if (updates.containsKey('active_injuries')) {
+      next = next.copyWith(activeInjuries: asJson(updates['active_injuries']));
+    }
+    if (updates.containsKey('activity_level')) {
+      next = next.copyWith(activityLevel: asStr(updates['activity_level']));
+    }
+    // workout_days + equipment are stored as JSON inside `preferences`.
+    // For instant UI we update the `equipment` mirror field too.
+    if (updates.containsKey('equipment')) {
+      next = next.copyWith(equipment: asJson(updates['equipment']));
     }
     return next;
   }

@@ -166,6 +166,25 @@ class DynamicNutritionService {
       adjustmentNotes.add('Adjusted to safe minimum of $minCalories cal');
     }
 
+    // Reconcile calorie/macro drift: the calorie adjustment (+200 training,
+    // -100 rest) and the per-macro multipliers (P × 1.10, C × 1.20, ...) are
+    // computed independently, so the macro-derived total drifts from the
+    // headline target by ~50-70 kcal. Pin the macros to the target by topping
+    // up (or trimming) carbs — carbs absorb training-day bonuses (glycogen
+    // replenishment) and rest-day cuts (least essential macro on a non-
+    // training day), per ACSM joint position stand on nutrition for athletic
+    // performance.
+    final macroDerivedKcal = baseProtein * 4 + baseCarbs * 4 + baseFat * 9;
+    final macroDrift = baseCalories - macroDerivedKcal;
+    if (macroDrift.abs() >= 4) {
+      // 1g carbs = 4 kcal, so drifts under 4 kcal can't be expressed in whole
+      // grams — leave them as rounding.
+      final carbAdjustG = (macroDrift / 4).round();
+      baseCarbs = (baseCarbs + carbAdjustG).clamp(0, 1000);
+      // Recompute the headline so macros and ring always agree.
+      baseCalories = baseProtein * 4 + baseCarbs * 4 + baseFat * 9;
+    }
+
     debugPrint('✅ [DynamicNutrition] Result: $baseCalories cal, reason: $adjustmentReason');
 
     return DynamicTargetsResult(

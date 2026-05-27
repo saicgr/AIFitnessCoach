@@ -380,27 +380,32 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
 
   Future<void> _save() async {
     if (!_isValid) return;
-
+    if (_isSaving) return;
     setState(() => _isSaving = true);
 
-    final success = await ref.read(linkedExercisesProvider.notifier).createLink(
-      primaryExerciseName: widget.primaryExerciseName,
-      linkedExerciseName: _exerciseController.text.trim(),
-      strengthMultiplier: _multiplier,
-      relationshipType: _relationshipType,
+    final linkedName = _exerciseController.text.trim();
+    // Fire-and-forget. createLink optimistically writes to its provider
+    // state (linkedExercisesProvider is a notifier — its UI rebuilds on the
+    // same frame as the call). Sheet pops in the same frame.
+    unawaited(
+      ref.read(linkedExercisesProvider.notifier).createLink(
+            primaryExerciseName: widget.primaryExerciseName,
+            linkedExerciseName: linkedName,
+            strengthMultiplier: _multiplier,
+            relationshipType: _relationshipType,
+          ),
     );
 
-    setState(() => _isSaving = false);
-
-    if (success && mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.my1rmsScreenPartOneRMCardLinkedTo(_exerciseController.text.trim(), widget.primaryExerciseName)),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!
+            .my1rmsScreenPartOneRMCardLinkedTo(
+                linkedName, widget.primaryExerciseName)),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   void _selectSuggestion(ExerciseLinkSuggestion suggestion) {
@@ -698,16 +703,20 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
 
   Future<void> _save() async {
     if (!_isValid) return;
-
+    if (_isSaving) return;
     setState(() => _isSaving = true);
 
-    await widget.onSave(
-      _exerciseController.text.trim(),
-      double.parse(_weightController.text),
-      _selectedSource,
+    // Parent's onSave invokes the 1RM provider, which we expect to apply
+    // its state mutation synchronously. Fire and unblock.
+    unawaited(
+      widget.onSave(
+        _exerciseController.text.trim(),
+        double.parse(_weightController.text),
+        _selectedSource,
+      ),
     );
 
-    setState(() => _isSaving = false);
+    if (mounted) setState(() => _isSaving = false);
   }
 
   @override

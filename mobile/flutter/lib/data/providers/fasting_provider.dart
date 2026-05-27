@@ -577,24 +577,33 @@ class FastingNotifier extends StateNotifier<FastingState> {
     }
   }
 
-  /// Save fasting preferences
+  /// Save fasting preferences with optimistic UI. State updates synchronously
+  /// so any sheet bound to it can pop in the same frame; persistence runs in
+  /// the background and rolls back on failure.
   Future<void> savePreferences({
     required String userId,
     required FastingPreferences preferences,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      debugPrint('💾 [FastingProvider] Saving preferences');
-      final saved = await _repository.savePreferences(
-        userId: userId,
-        preferences: preferences,
-      );
-      state = state.copyWith(preferences: saved, isLoading: false);
-      debugPrint('✅ [FastingProvider] Preferences saved');
-    } catch (e) {
-      debugPrint('❌ [FastingProvider] Save preferences error: $e');
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
+    final previous = state.preferences;
+    state = state.copyWith(preferences: preferences, clearError: true);
+    debugPrint('💾 [FastingProvider] Optimistic preferences update applied');
+
+    unawaited(() async {
+      try {
+        final saved = await _repository.savePreferences(
+          userId: userId,
+          preferences: preferences,
+        );
+        state = state.copyWith(preferences: saved);
+        debugPrint('✅ [FastingProvider] Preferences persisted to backend');
+      } catch (e) {
+        debugPrint('❌ [FastingProvider] Save failed, rolling back: $e');
+        state = state.copyWith(
+          preferences: previous,
+          error: e.toString(),
+        );
+      }
+    }());
   }
 
   /// Complete fasting onboarding

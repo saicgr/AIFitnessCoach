@@ -104,32 +104,29 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
     }
   }
 
-  Future<void> _saveCustomEquipment() async {
+  /// Local list (`_customEquipment`) already reflects the user's edits via
+  /// setState — sheet/UI shows the new state synchronously. Persistence is
+  /// fire-and-forget so the user doesn't sit on a spinner. Failure surfaces
+  /// as a toast.
+  void _saveCustomEquipment() {
     if (_userId == null) return;
-
-    setState(() => _isSaving = true);
     debugPrint(
         '💾 [CustomEquipment] Saving ${_customEquipment.length} items...');
-
-    try {
-      final apiClient = widget.ref.read(apiClientProvider);
-      await apiClient.put(
-        '/users/$_userId',
-        data: {
-          'custom_equipment': _customEquipment,
-        },
-      );
-      debugPrint('✅ [CustomEquipment] Saved successfully');
-    } catch (e) {
-      debugPrint('❌ [CustomEquipment] Error saving: $e');
-      if (mounted) {
-        AppSnackBar.error(context, 'Failed to save: $e');
+    final apiClient = widget.ref.read(apiClientProvider);
+    unawaited(() async {
+      try {
+        await apiClient.put(
+          '/users/$_userId',
+          data: {'custom_equipment': _customEquipment},
+        );
+        debugPrint('✅ [CustomEquipment] Saved successfully');
+      } catch (e) {
+        debugPrint('❌ [CustomEquipment] Error saving: $e');
+        if (mounted) {
+          AppSnackBar.error(context, 'Failed to save: $e');
+        }
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
-    }
+    }());
   }
 
   Future<void> _addEquipment(String name) async {
@@ -146,7 +143,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
     });
     _textController.clear();
 
-    await _saveCustomEquipment();
+    _saveCustomEquipment();
 
     if (mounted) {
       AppSnackBar.success(context, 'Added "$trimmed" to your equipment');
@@ -158,7 +155,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
       _customEquipment.remove(name);
     });
 
-    await _saveCustomEquipment();
+    _saveCustomEquipment();
 
     if (mounted) {
       AppSnackBar.info(context, 'Removed "$name"');

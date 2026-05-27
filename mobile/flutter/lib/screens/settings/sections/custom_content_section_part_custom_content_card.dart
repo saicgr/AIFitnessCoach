@@ -333,37 +333,33 @@ class _CustomEquipmentManagerState
     }
   }
 
-  Future<void> _saveCustomEquipment() async {
+  /// Local list already reflects the change via setState; persistence is
+  /// fire-and-forget so the user doesn't see a spinner on save. Failure
+  /// surfaces as a toast.
+  void _saveCustomEquipment() {
     if (_userId == null) return;
-
-    setState(() => _isSaving = true);
     debugPrint('💾 [CustomEquipment] Saving ${_customEquipment.length} items...');
-
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      await apiClient.put(
-        '/users/$_userId',
-        data: {
-          'custom_equipment': _customEquipment,
-        },
-      );
-      debugPrint('✅ [CustomEquipment] Saved successfully');
-    } catch (e) {
-      debugPrint('❌ [CustomEquipment] Error saving: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.red,
-          ),
+    final apiClient = ref.read(apiClientProvider);
+    unawaited(() async {
+      try {
+        await apiClient.put(
+          '/users/$_userId',
+          data: {'custom_equipment': _customEquipment},
         );
+        debugPrint('✅ [CustomEquipment] Saved successfully');
+      } catch (e) {
+        debugPrint('❌ [CustomEquipment] Error saving: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to save: $e'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
-    }
+    }());
   }
 
   Future<void> _addEquipment(String name) async {
@@ -385,8 +381,8 @@ class _CustomEquipmentManagerState
     });
     _textController.clear();
 
-    // Save to backend
-    await _saveCustomEquipment();
+    // Save to backend (fire-and-forget)
+    _saveCustomEquipment();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -404,8 +400,8 @@ class _CustomEquipmentManagerState
       _customEquipment.remove(name);
     });
 
-    // Save to backend
-    await _saveCustomEquipment();
+    // Save to backend (fire-and-forget)
+    _saveCustomEquipment();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

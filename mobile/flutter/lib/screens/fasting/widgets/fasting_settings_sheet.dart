@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -70,10 +71,14 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
         notifyFastStartReminder: _notifyFastStartReminder,
       );
 
-      await ref.read(fastingProvider.notifier).savePreferences(
-            userId: userId,
-            preferences: updatedPrefs,
-          );
+      // Provider applies the update synchronously; persistence runs in the
+      // background and rolls back on failure. Sheet pops in the same frame.
+      unawaited(
+        ref.read(fastingProvider.notifier).savePreferences(
+              userId: userId,
+              preferences: updatedPrefs,
+            ),
+      );
 
       if (mounted) {
         Navigator.pop(context);

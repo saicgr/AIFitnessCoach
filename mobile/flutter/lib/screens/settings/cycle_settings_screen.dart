@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +38,6 @@ class CycleSettingsScreen extends ConsumerStatefulWidget {
 
 class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
   bool _photoReminderEnabled = false;
-  bool _photoSaving = false;
   bool _trackingSaving = false;
 
   /// Master enable/disable for cycle tracking — writes
@@ -73,22 +74,24 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
     }
   }
 
-  Future<void> _togglePhotoReminders(bool v) async {
-    setState(() {
-      _photoReminderEnabled = v;
-      _photoSaving = true;
-    });
-    try {
-      await ref.read(menstrualCycleRepositoryProvider).setCycleAwareReminders(v);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save: $e')),
-      );
-      setState(() => _photoReminderEnabled = !v);
-    } finally {
-      if (mounted) setState(() => _photoSaving = false);
-    }
+  /// Switch flips synchronously; persistence runs in the background. On
+  /// failure the toggle reverts and a toast surfaces (Switch is not gated
+  /// during the network call, so rapid tap mashing doesn't lock the UI).
+  void _togglePhotoReminders(bool v) {
+    setState(() => _photoReminderEnabled = v);
+    unawaited(() async {
+      try {
+        await ref
+            .read(menstrualCycleRepositoryProvider)
+            .setCycleAwareReminders(v);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+        setState(() => _photoReminderEnabled = !v);
+      }
+    }());
   }
 
   @override
@@ -344,7 +347,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
               child: SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 value: _photoReminderEnabled,
-                onChanged: _photoSaving ? null : _togglePhotoReminders,
+                onChanged: _togglePhotoReminders,
                 activeThumbColor: accent,
                 title: Text(AppLocalizations.of(context).cycleSettingsCycleAwarePhotoReminders,
                     style: TextStyle(

@@ -186,7 +186,6 @@ class LoggedMealsSection extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = AccentColorScope.of(context).getColor(isDark);
     final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
     final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
     final macroWarm = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
@@ -194,9 +193,6 @@ class LoggedMealsSection extends StatelessWidget {
     final target = calorieTarget ?? 0;
     final remaining = target - totalCaloriesEaten;
     final isOver = remaining < 0;
-    final progress = target > 0
-        ? (totalCaloriesEaten / target).clamp(0.0, 1.0)
-        : 0.0;
 
     // Center label for the ring.
     final String centerNumber;
@@ -212,6 +208,24 @@ class LoggedMealsSection extends StatelessWidget {
       centerSubtitle = 'left';
     }
 
+    // Pre-compute arc weights for the segmented macro ring. Each macro's
+    // weight = its caloric contribution to the daily target (P*4 + C*4 +
+    // F*9 ≈ total kcal target). When targets aren't set yet, the painter
+    // falls back to a single muted track.
+    final proteinKcal = proteinTarget * 4;
+    final carbsKcal = carbsTarget * 4;
+    final fatKcal = fatTarget * 9;
+
+    final proteinProgress = proteinTarget > 0
+        ? (consumedProtein / proteinTarget).clamp(0.0, 1.0).toDouble()
+        : 0.0;
+    final carbsProgress = carbsTarget > 0
+        ? (consumedCarbs / carbsTarget).clamp(0.0, 1.0).toDouble()
+        : 0.0;
+    final fatProgress = fatTarget > 0
+        ? (consumedFat / fatTarget).clamp(0.0, 1.0).toDouble()
+        : 0.0;
+
     final ring = GestureDetector(
       onTap: onEditTargets,
       behavior: HitTestBehavior.opaque,
@@ -224,9 +238,16 @@ class LoggedMealsSection extends StatelessWidget {
             CustomPaint(
               size: const Size.square(148),
               painter: _CalorieRingPainter(
-                progress: progress,
+                proteinProgress: proteinProgress,
+                carbsProgress: carbsProgress,
+                fatProgress: fatProgress,
+                proteinWeight: proteinKcal.toDouble(),
+                carbsWeight: carbsKcal.toDouble(),
+                fatWeight: fatKcal.toDouble(),
+                proteinColor: isOver ? AppColors.error : purple,
+                carbsColor: isOver ? AppColors.error : cyan,
+                fatColor: isOver ? AppColors.error : macroWarm,
                 trackColor: textMuted.withValues(alpha: 0.18),
-                fillColor: isOver ? AppColors.error : accent,
                 strokeWidth: 12,
               ),
             ),
@@ -332,6 +353,11 @@ class LoggedMealsSection extends StatelessWidget {
         children: [
           headerRow,
           const SizedBox(height: 4),
+          // Surfaces today's automatic calorie adjustment (training/rest/
+          // fasting bump) so the ring's headline doesn't mysteriously
+          // disagree with the baseline shown in the Edit Daily Targets
+          // sheet. Hidden on baseline days.
+          const _AdjustmentChip(),
           Center(child: ring),
           if (target <= 0)
             Padding(
@@ -4389,21 +4415,61 @@ class _MacroPill extends StatelessWidget {
 }
 
 // ============================================
-// _CalorieRingPainter — single-arc ring for the Surface 3.3 calorie hero.
-// Track + filled arc, no gradient (clean Apple-Health-style). Stroke caps
-// rounded so partially-filled rings read as soft.
+// _CalorieRingPainter — segmented macro ring (Yazio pattern + Apple Activity
+// Rings behavioral mechanic). Three arc segments — Protein, Carbs, Fat —
+// share one ring. Each segment's *length* is proportional to that macro's
+// share of total calorie target (e.g. Protein 25%, Carbs 45%, Fat 30% would
+// occupy 25% / 45% / 30% of the ring). Each segment's *fill* is that macro's
+// individual progress (consumed / target). At 0% logged, the ring still
+// shows three distinct muted-tinted track segments — visually informative
+// instead of a blank gray loop.
+//
+// Why this and not Apple's nested-rings pattern:
+//   * Nutrition macros are PROPORTIONS of one budget (calories), not three
+//     independent metrics like Move/Exercise/Stand. A single segmented ring
+//     surfaces that proportional relationship; nested rings hide it.
+//   * Yazio / Lifesum / MFP's 2026 Today screen all use ring-with-macro
+//     variants. Industry direction validates this shape.
+//   * Single ring at 148pt is more legible than 3-4 nested arcs at the same
+//     diameter, where each inner arc compresses.
 // ============================================
 
 class _CalorieRingPainter extends CustomPainter {
-  final double progress;
+  /// Progress of each macro within its allocated arc segment (0.0 → 1.0).
+  /// Clamped during paint.
+  final double proteinProgress;
+  final double carbsProgress;
+  final double fatProgress;
+
+  /// Weight of each macro arc — proportional to that macro's contribution
+  /// to total calorie target. Pre-computed at the call site so this painter
+  /// stays free of macro-math constants.
+  final double proteinWeight;
+  final double carbsWeight;
+  final double fatWeight;
+
+  final Color proteinColor;
+  final Color carbsColor;
+  final Color fatColor;
   final Color trackColor;
-  final Color fillColor;
   final double strokeWidth;
 
+  /// Angular gap (radians) between adjacent macro segments. Visual breathing
+  /// room so the three arcs read as distinct rather than a single ring.
+  /// ≈ 4.6° per gap, 3 gaps = ~14° total of the 360° circle.
+  static const double _gapAngle = 0.08;
+
   const _CalorieRingPainter({
-    required this.progress,
+    required this.proteinProgress,
+    required this.carbsProgress,
+    required this.fatProgress,
+    required this.proteinWeight,
+    required this.carbsWeight,
+    required this.fatWeight,
+    required this.proteinColor,
+    required this.carbsColor,
+    required this.fatColor,
     required this.trackColor,
-    required this.fillColor,
     required this.strokeWidth,
   });
 
@@ -4413,29 +4479,86 @@ class _CalorieRingPainter extends CustomPainter {
     final radius = (math.min(size.width, size.height) - strokeWidth) / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
 
+    final totalWeight = proteinWeight + carbsWeight + fatWeight;
+    if (totalWeight <= 0) {
+      // No macro targets set yet. Fall back to a single muted track ring so
+      // the layout doesn't collapse — the "Set a calorie target" copy below
+      // the ring carries the call to action.
+      final track = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round
+        ..color = trackColor;
+      canvas.drawCircle(center, radius, track);
+      return;
+    }
+
+    // Total angular budget = full circle minus the three gaps between arcs.
+    final totalArcAngle = 2 * math.pi - 3 * _gapAngle;
+
+    final pArc = totalArcAngle * (proteinWeight / totalWeight);
+    final cArc = totalArcAngle * (carbsWeight / totalWeight);
+    final fArc = totalArcAngle * (fatWeight / totalWeight);
+
+    // Start at 12 o'clock and sweep clockwise. Order: Protein → Carbs → Fat.
+    // Half a gap before the first arc so the gaps sit symmetrically around
+    // the 12 o'clock position.
+    double cursor = -math.pi / 2 + _gapAngle / 2;
+
+    _paintSegment(canvas, rect, cursor, pArc, proteinColor, proteinProgress);
+    cursor += pArc + _gapAngle;
+    _paintSegment(canvas, rect, cursor, cArc, carbsColor, carbsProgress);
+    cursor += cArc + _gapAngle;
+    _paintSegment(canvas, rect, cursor, fArc, fatColor, fatProgress);
+  }
+
+  /// Paint one macro arc: a muted-tinted track for the full segment length,
+  /// then a saturated fill stroke for the progress portion. Stroke caps are
+  /// rounded so partial fills read as soft.
+  void _paintSegment(
+    Canvas canvas,
+    Rect rect,
+    double start,
+    double sweep,
+    Color color,
+    double progress,
+  ) {
+    if (sweep <= 0) return;
+
+    // Track = muted version of the macro color so even empty arcs are
+    // visually identifiable as belonging to a specific macro. Goes against
+    // a fully-neutral track but reads as the segment-belongs-to-protein
+    // affordance the Apple Rings pattern relies on.
     final track = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
-      ..color = trackColor;
-    canvas.drawCircle(center, radius, track);
+      ..color = color.withValues(alpha: 0.18);
+    canvas.drawArc(rect, start, sweep, false, track);
 
-    if (progress <= 0) return;
-    final sweep = (progress.clamp(0.0, 1.0)) * 2 * math.pi;
+    final clamped = progress.clamp(0.0, 1.0);
+    if (clamped <= 0) return;
+
     final fill = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
-      ..color = fillColor;
-    // Start at 12-o'clock (-pi/2), sweep clockwise.
-    canvas.drawArc(rect, -math.pi / 2, sweep, false, fill);
+      ..color = color;
+    canvas.drawArc(rect, start, sweep * clamped, false, fill);
   }
 
   @override
   bool shouldRepaint(covariant _CalorieRingPainter old) =>
-      old.progress != progress ||
+      old.proteinProgress != proteinProgress ||
+      old.carbsProgress != carbsProgress ||
+      old.fatProgress != fatProgress ||
+      old.proteinWeight != proteinWeight ||
+      old.carbsWeight != carbsWeight ||
+      old.fatWeight != fatWeight ||
+      old.proteinColor != proteinColor ||
+      old.carbsColor != carbsColor ||
+      old.fatColor != fatColor ||
       old.trackColor != trackColor ||
-      old.fillColor != fillColor ||
       old.strokeWidth != strokeWidth;
 }
 
@@ -4869,6 +4992,104 @@ class _GlFodmapChip extends StatelessWidget {
               const SizedBox(width: 4),
               Icon(Icons.info_outline, size: 12, color: color.withValues(alpha: 0.7)),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Slim chip rendered above the calorie ring when today's target differs from
+/// the user's stored baseline because of a training/rest/fasting adjustment.
+/// Hidden on plain baseline days. Tap → opens the BMR/TDEE/goal calculation
+/// sheet so the user can see exactly where the delta came from.
+class _AdjustmentChip extends ConsumerWidget {
+  const _AdjustmentChip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(nutritionPreferencesProvider);
+    final dyn = state.dynamicTargets;
+    final reason = dyn?.adjustmentReason ?? 'base_targets';
+    final delta = dyn?.calorieAdjustment ?? 0;
+
+    if (reason == 'base_targets' || delta.abs() < 10) {
+      return const SizedBox.shrink();
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final (String label, IconData icon, Color tone) = switch (reason) {
+      'training_day' => (
+        'Training day  ${delta > 0 ? '+' : ''}$delta cal',
+        Icons.fitness_center_rounded,
+        isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs,
+      ),
+      'rest_day' => (
+        'Rest day  $delta cal',
+        Icons.bedtime_outlined,
+        muted,
+      ),
+      'fasting_day' => (
+        'Fasting day  $delta cal',
+        Icons.timer_outlined,
+        isDark ? AppColors.macroFat : AppColorsLight.macroFat,
+      ),
+      _ => (
+        '${delta > 0 ? '+' : ''}$delta cal today',
+        Icons.tune_rounded,
+        muted,
+      ),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 8),
+      child: Align(
+        alignment: Alignment.center,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: () {
+              final prefs = ref.read(nutritionPreferencesProvider).preferences;
+              if (prefs == null) return;
+              showNutritionCalculationSheet(
+                context,
+                prefs: prefs,
+                isDark: isDark,
+              );
+            },
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: tone.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: tone.withValues(alpha: 0.28)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 12, color: tone),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: tone,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 12,
+                    color: tone.withValues(alpha: 0.7),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

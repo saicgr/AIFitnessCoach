@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,36 +66,30 @@ class _FastingScheduleEditorSheetState
     if (userId == null) return;
     setState(() => _isSaving = true);
     HapticService.medium();
-    try {
-      // Empty schedule → clear it so the screen falls back to defaultProtocol.
-      final updated = _schedule.isEmpty
-          ? widget.preferences.copyWith(clearWeeklySchedule: true)
-          : widget.preferences.copyWith(weeklySchedule: _schedule);
-      await ref.read(fastingProvider.notifier).savePreferences(
+
+    // Empty schedule → clear it so the screen falls back to defaultProtocol.
+    final updated = _schedule.isEmpty
+        ? widget.preferences.copyWith(clearWeeklySchedule: true)
+        : widget.preferences.copyWith(weeklySchedule: _schedule);
+
+    // Provider applies the update synchronously; persistence + rollback run
+    // in the background. Sheet pops in the same frame.
+    unawaited(
+      ref.read(fastingProvider.notifier).savePreferences(
             userId: userId,
             preferences: updated,
-          );
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).fastingScheduleEditorWeeklyFastingScheduleSaved),
-            duration: Duration(seconds: 2),
           ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save schedule: $e'),
-            backgroundColor: ThemeColors.of(context).error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)
+            .fastingScheduleEditorWeeklyFastingScheduleSaved),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _pickForDay(int weekday) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -258,89 +259,78 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isSaving) return;
+
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) {
+      AppSnackBar.error(context, 'User not found');
+      return;
+    }
+
+    final data = <String, dynamic>{
+      'name': _nameController.text.trim(),
+      'gender': _selectedGender,
+      'activity_level': _selectedActivityLevel,
+      'bio': _bioController.text.trim(),
+    };
+    if (_heightCm != null) data['height_cm'] = _heightCm;
+    if (_weightKg != null) data['weight_kg'] = _weightKg;
+    if (_targetWeightKg != null) data['target_weight_kg'] = _targetWeightKg;
+    if (_ageController.text.isNotEmpty) {
+      data['age'] = int.tryParse(_ageController.text);
+    }
 
     setState(() => _isSaving = true);
 
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-
-      if (userId == null) {
-        throw Exception('User not found');
-      }
-
-      // Auto-upload photo if user picked one but hasn't uploaded yet
-      if (_selectedPhotoFile != null) {
-        debugPrint('🔍 [EditProfile] Auto-uploading photo before save...');
-        final uploadSuccess = await _uploadPhoto();
-        if (!uploadSuccess) {
-          debugPrint('⚠️ [EditProfile] Photo upload failed, continuing with profile save');
-        }
-      }
-
-      final data = <String, dynamic>{
-        'name': _nameController.text.trim(),
-        'gender': _selectedGender,
-        'activity_level': _selectedActivityLevel,
-        'bio': _bioController.text.trim(),
-      };
-
-      if (_heightCm != null) {
-        data['height_cm'] = _heightCm;
-      }
-      if (_weightKg != null) {
-        data['weight_kg'] = _weightKg;
-      }
-      if (_targetWeightKg != null) {
-        data['target_weight_kg'] = _targetWeightKg;
-      }
-      if (_ageController.text.isNotEmpty) {
-        data['age'] = int.tryParse(_ageController.text);
-      }
-
-      await apiClient.put(
-        '${ApiConstants.users}/$userId',
-        data: data,
-      );
-
-      // If email changed, update via Supabase Auth (sends confirmation link)
-      bool emailChanged = false;
-      final newEmail = _emailController.text.trim();
-      if (newEmail.isNotEmpty && newEmail != _email) {
-        try {
-          await Supabase.instance.client.auth.updateUser(
-            UserAttributes(email: newEmail),
-          );
-          emailChanged = true;
-          debugPrint('✅ [EditProfile] Email update requested, confirmation link sent');
-        } catch (e) {
-          debugPrint('❌ [EditProfile] Email update failed: $e');
-          if (mounted) {
-            AppSnackBar.error(context, 'Email update failed: $e');
-          }
-        }
-      }
-
-      await ref.read(authStateProvider.notifier).refreshUser();
-      debugPrint('✅ [EditProfile] Profile saved and user refreshed');
-
-      if (mounted) {
-        // Show snackbar BEFORE popping so it attaches to a valid scaffold
-        AppSnackBar.success(
-          context,
-          emailChanged
-              ? 'Profile updated. Check your new email for a confirmation link.'
-              : 'Profile updated successfully',
-        );
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
-      debugPrint('❌ [EditProfile] Save profile error: $e');
-      if (mounted) {
-        setState(() => _isSaving = false);
-        AppSnackBar.error(context, 'Failed to update profile: $e');
+    // Photo upload (multipart) and email change (Supabase Auth flow) are
+    // legitimately awaited — the user expects progress feedback for the
+    // photo and a confirmation link for the email. They run BEFORE the
+    // optimistic pop so failures still keep the sheet open.
+    if (_selectedPhotoFile != null) {
+      debugPrint('🔍 [EditProfile] Uploading photo before save...');
+      final uploadSuccess = await _uploadPhoto();
+      if (!uploadSuccess) {
+        debugPrint(
+            '⚠️ [EditProfile] Photo upload failed, continuing with profile save');
       }
     }
+
+    bool emailChanged = false;
+    final newEmail = _emailController.text.trim();
+    if (newEmail.isNotEmpty && newEmail != _email) {
+      try {
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(email: newEmail),
+        );
+        emailChanged = true;
+        debugPrint(
+            '✅ [EditProfile] Email update requested, confirmation link sent');
+      } catch (e) {
+        debugPrint('❌ [EditProfile] Email update failed: $e');
+        if (mounted) {
+          AppSnackBar.error(context, 'Email update failed: $e');
+          setState(() => _isSaving = false);
+        }
+        return;
+      }
+    }
+
+    // Text-field update via the optimistic auth notifier method. State
+    // mutates synchronously; backend persist + refresh runs in background;
+    // rollback on failure with an error toast surfaced via authState.error.
+    unawaited(
+      ref.read(authStateProvider.notifier).updateUserProfile(data),
+    );
+
+    if (!mounted) return;
+    AppSnackBar.success(
+      context,
+      emailChanged
+          ? 'Profile updated. Check your new email for a confirmation link.'
+          : 'Profile updated successfully',
+    );
+    Navigator.pop(context, true);
   }
 
   @override
