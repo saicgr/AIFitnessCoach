@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/plan_portability_badge.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Trial Progress Widget — Onboarding v5
@@ -161,6 +162,11 @@ class _TrialProgressWidgetState extends ConsumerState<TrialProgressWidget> {
               ],
             ),
           ],
+          const SizedBox(height: 12),
+          // Plan-portability reassurance — shown DURING the trial so users
+          // don't churn at trial-end thinking they'll lose what they built.
+          // Compact variant fits the trial card without dominating it.
+          const PlanPortabilityBadge(size: PortabilitySize.compact),
         ],
       ),
     );

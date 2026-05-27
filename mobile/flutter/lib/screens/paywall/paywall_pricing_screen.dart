@@ -26,6 +26,7 @@ import 'widgets/credibility_strip.dart';
 import 'paywall_experiments.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/plan_portability_badge.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
@@ -591,6 +592,12 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 if (!isSubscribed) ...[
                   const SizedBox(height: 12),
                   _TrustStrip(colors: colors),
+                  const SizedBox(height: 12),
+                  // Plan-portability guarantee. Anchors the App-Store
+                  // description claim "your plan is yours forever" \u2014 has to
+                  // be visible on the paywall to honour 2.3.1 (no claims the
+                  // build doesn't deliver). Banner variant.
+                  const PlanPortabilityBadge(size: PortabilitySize.banner),
                 ],
 
                 // Maybe later (de-emphasized skip)
