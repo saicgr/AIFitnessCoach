@@ -355,13 +355,16 @@ class _RankEmblemPainter extends CustomPainter {
     }
     path.close();
 
-    // Fill
+    // Fill — use Alignment (not AlignmentDirectional) inside a CustomPainter.
+    // The painter paints without a Directionality ancestor so
+    // AlignmentDirectional.resolve() trips "No TextDirection found"; the
+    // emblem doesn't need RTL mirroring anyway.
     canvas.drawPath(
       path,
       Paint()
         ..shader = LinearGradient(
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [
             glowColor.withValues(alpha: 0.4),
             glowColor.withValues(alpha: 0.15),

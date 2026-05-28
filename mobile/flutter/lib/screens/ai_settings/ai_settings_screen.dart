@@ -17,6 +17,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
 import '../../data/services/tts_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'nudge_priority_section.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 part 'ai_settings_screen_part_a_i_header_card.dart';
@@ -902,6 +903,10 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
                 onChanged: (v) => _setExpanded('response', v),
                 child: _ResponsePreferencesSection(settings: settings, ref: ref),
               ),
+
+              // Coach card sub-card priorities — drag to reorder.
+              // Drives the SubCardRanker on the home Coach card.
+              const NudgePrioritySection(),
 
               const SizedBox(height: 8),
               _AdvancedToggleRow(

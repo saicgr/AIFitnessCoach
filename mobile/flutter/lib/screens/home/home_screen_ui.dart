@@ -37,8 +37,6 @@ extension __HomeScreenStateExt on _HomeScreenState {
       // Eagerly trigger todayWorkoutProvider so it starts loading before build()
       // If bootstrap already pre-seeded the cache, this returns instantly
       ref.read(todayWorkoutProvider);
-      // Reset nav bar labels to expanded when on Home screen
-      ref.read(navBarLabelsExpandedProvider.notifier).state = true;
       // M4: Run critical initialization tasks first, then non-critical ones
       // Nutrition/hydration loads in parallel with workouts so the Nutrition
       // tab has data ready before the user can tap it.

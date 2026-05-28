@@ -202,7 +202,7 @@ class _FastingHeroCard extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           HapticService.light();
-          context.go('/fasting');
+          context.push('/fasting');
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -1098,7 +1098,7 @@ class _FastGridActionItem extends ConsumerWidget {
       isDark: isDark,
       onTap: () {
         HapticService.light();
-        context.go('/fasting');
+        context.push('/fasting');
       },
       label: label,
       iconColor: fastColor,

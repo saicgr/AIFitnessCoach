@@ -1645,3 +1645,232 @@ def _parse_habit_suggestions(response: str) -> List[Dict]:
         logger.debug(f"Failed to parse AI habit response: {e}")
 
     return _fallback_habit_suggestions()
+
+
+# ====================================================================
+# Home pattern insights — F3.74 weekday-skip + F3.76 macro-pattern.
+#
+# Both endpoints are read-only aggregates over `workouts` / `food_logs`
+# the home cards consume directly (DayOfWeekSkipCard + MacroPatternCallout).
+# Self-collapsing on null payloads — never return placeholder/mock data.
+# ====================================================================
+
+_WEEKDAY_NAMES = [
+    "Sunday", "Monday", "Tuesday", "Wednesday",
+    "Thursday", "Friday", "Saturday",
+]
+# Postgres EXTRACT(DOW) returns 0=Sunday..6=Saturday; matches index above.
+
+
+class DayOfWeekSkipResponse(BaseModel):
+    weekday: Optional[int] = None
+    weekday_name: Optional[str] = None
+    miss_rate: Optional[float] = None
+    weeks_observed: int = 0
+
+
+@router.get("/day-of-week-skip", response_model=DayOfWeekSkipResponse)
+async def get_day_of_week_skip(
+    current_user: dict = Depends(get_current_user),
+) -> DayOfWeekSkipResponse:
+    """
+    Weekday skip pattern over the last 8 weeks (56 days).
+
+    Groups scheduled workouts by EXTRACT(DOW FROM scheduled_date), counts
+    missed (scheduled but `is_completed=false`) vs total scheduled per
+    weekday. Returns the worst weekday when its miss rate is >= 60%, else
+    all-nulls (self-collapsing card).
+    """
+    user_id = current_user.get("id") or current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Missing user id")
+
+    try:
+        db = get_supabase_db()
+        cutoff_date = (datetime.utcnow().date() - timedelta(days=56)).isoformat()
+        today_iso = datetime.utcnow().date().isoformat()
+
+        resp = (
+            db.client.table("workouts")
+            .select("scheduled_date,is_completed")
+            .eq("user_id", user_id)
+            .gte("scheduled_date", cutoff_date)
+            .lte("scheduled_date", today_iso)
+            .not_.is_("scheduled_date", "null")
+            .execute()
+        )
+        rows = resp.data or []
+
+        # Aggregate per weekday: total scheduled + missed counts.
+        per_dow: Dict[int, Dict[str, int]] = {}
+        observed_weeks: set = set()
+        for row in rows:
+            sd_raw = row.get("scheduled_date")
+            if not sd_raw:
+                continue
+            try:
+                sd = datetime.fromisoformat(str(sd_raw)[:10]).date()
+            except Exception:
+                continue
+            # Python weekday(): 0=Mon..6=Sun. Convert to PG DOW (0=Sun..6=Sat).
+            dow = (sd.weekday() + 1) % 7
+            bucket = per_dow.setdefault(dow, {"total": 0, "missed": 0})
+            bucket["total"] += 1
+            if not row.get("is_completed"):
+                bucket["missed"] += 1
+            iso_year, iso_week, _ = sd.isocalendar()
+            observed_weeks.add((iso_year, iso_week))
+
+        weeks_observed = len(observed_weeks)
+
+        # Pick worst weekday with at least 2 scheduled entries; threshold 60%.
+        worst_dow: Optional[int] = None
+        worst_rate: Optional[float] = None
+        for dow, agg in per_dow.items():
+            if agg["total"] < 2:
+                continue
+            rate = agg["missed"] / agg["total"]
+            if rate >= 0.60 and (worst_rate is None or rate > worst_rate):
+                worst_rate = rate
+                worst_dow = dow
+
+        if worst_dow is None:
+            return DayOfWeekSkipResponse(weeks_observed=weeks_observed)
+
+        return DayOfWeekSkipResponse(
+            weekday=worst_dow,
+            weekday_name=_WEEKDAY_NAMES[worst_dow],
+            miss_rate=round(worst_rate or 0.0, 3),
+            weeks_observed=weeks_observed,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"day-of-week-skip failed user={user_id}: {e}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"day_of_week_skip_failed: {e.__class__.__name__}",
+        )
+
+
+class MacroPatternResponse(BaseModel):
+    low_weekdays: List[int] = []
+    weekday_names: List[str] = []
+    avg_protein_g: Optional[float] = None
+    target_protein_g: float = 0.0
+
+
+@router.get("/macro-pattern", response_model=MacroPatternResponse)
+async def get_macro_pattern(
+    current_user: dict = Depends(get_current_user),
+) -> MacroPatternResponse:
+    """
+    Detect 1-2 weekdays where protein intake is consistently low over 3+ weeks.
+
+    Sums `food_logs.protein_g` per (user_id, log_date) over the last 21 days,
+    buckets by weekday, and flags weekdays whose 3-week average sits below
+    `0.7 × target_protein_g`. Target is read from `users.daily_protein_target_g`.
+    Returns all-null if no pattern (self-collapses the card).
+    """
+    user_id = current_user.get("id") or current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Missing user id")
+
+    try:
+        db = get_supabase_db()
+
+        # Pull protein target from users table (single source of truth).
+        target_resp = (
+            db.client.table("users")
+            .select("daily_protein_target_g")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        target = 0.0
+        if target_resp.data:
+            raw_target = target_resp.data[0].get("daily_protein_target_g")
+            try:
+                target = float(raw_target or 0.0)
+            except (TypeError, ValueError):
+                target = 0.0
+
+        # No target → cannot evaluate "low protein"; collapse silently.
+        if target <= 0:
+            return MacroPatternResponse(target_protein_g=0.0)
+
+        cutoff = (datetime.utcnow().date() - timedelta(days=21)).isoformat()
+        today_iso = datetime.utcnow().date().isoformat()
+
+        # Pull food_logs in window. Columns vary across migrations — request
+        # the minimum needed; if `log_date` is missing fall back to consumed_at.
+        log_resp = (
+            db.client.table("food_logs")
+            .select("protein_g,log_date,consumed_at")
+            .eq("user_id", user_id)
+            .gte("log_date", cutoff)
+            .lte("log_date", today_iso)
+            .execute()
+        )
+        rows = log_resp.data or []
+
+        # Sum protein per date.
+        per_date: Dict[str, float] = {}
+        for row in rows:
+            date_str = row.get("log_date") or (row.get("consumed_at") or "")[:10]
+            if not date_str:
+                continue
+            try:
+                protein = float(row.get("protein_g") or 0.0)
+            except (TypeError, ValueError):
+                protein = 0.0
+            per_date[date_str] = per_date.get(date_str, 0.0) + protein
+
+        # Bucket by weekday (Sun=0 .. Sat=6 to match PG DOW).
+        per_dow_totals: Dict[int, List[float]] = {}
+        for date_str, total in per_date.items():
+            try:
+                d = datetime.fromisoformat(date_str[:10]).date()
+            except Exception:
+                continue
+            dow = (d.weekday() + 1) % 7
+            per_dow_totals.setdefault(dow, []).append(total)
+
+        low_cutoff = 0.7 * target
+        # A weekday qualifies as "low" when:
+        #   - observed at least 3 distinct weeks (3+ samples), AND
+        #   - average daily protein < 0.7 × target.
+        candidates: List[tuple] = []  # (dow, avg)
+        for dow, totals in per_dow_totals.items():
+            if len(totals) < 3:
+                continue
+            avg = sum(totals) / len(totals)
+            if avg < low_cutoff:
+                candidates.append((dow, avg))
+
+        if not candidates:
+            return MacroPatternResponse(target_protein_g=round(target, 1))
+
+        # Surface up to 2 worst weekdays.
+        candidates.sort(key=lambda x: x[1])
+        chosen = candidates[:2]
+        low_weekdays = [c[0] for c in chosen]
+        weekday_names = [_WEEKDAY_NAMES[c[0]] for c in chosen]
+        overall_avg = sum(c[1] for c in chosen) / len(chosen)
+
+        return MacroPatternResponse(
+            low_weekdays=low_weekdays,
+            weekday_names=weekday_names,
+            avg_protein_g=round(overall_avg, 1),
+            target_protein_g=round(target, 1),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"macro-pattern failed user={user_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"macro_pattern_failed: {e.__class__.__name__}",
+        )

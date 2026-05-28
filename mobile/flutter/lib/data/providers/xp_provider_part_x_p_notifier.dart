@@ -12,6 +12,35 @@ class XPNotifier extends StateNotifier<XPState> {
   /// Lives on the host class because Dart extensions can't declare instance fields.
   Future<CrateRewardResult>? pendingCrateClaim;
 
+  /// SharedPreferences key prefix for the per-user "highest celebrated level"
+  /// guard. Persisted so the level-up dialog can't fire on every hot restart
+  /// — the in-memory `lastLevelUp` was nulled on dismiss but rebuilt from a
+  /// stale cached-vs-server delta on the next `loadUserXP()`. With this key
+  /// present, the dialog only fires when the server's `currentLevel` is
+  /// strictly greater than what we've already celebrated locally.
+  static const _kCelebratedLevelKeyPrefix = 'xp_celebrated_level_';
+
+  String _celebratedLevelKey(String uid) => '$_kCelebratedLevelKeyPrefix$uid';
+
+  Future<int?> _readCelebratedLevel(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt(_celebratedLevelKey(uid));
+    } catch (e) {
+      debugPrint('[XPProvider] _readCelebratedLevel failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> _writeCelebratedLevel(String uid, int level) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_celebratedLevelKey(uid), level);
+    } catch (e) {
+      debugPrint('[XPProvider] _writeCelebratedLevel failed: $e');
+    }
+  }
+
   XPNotifier(this._repository, this._posthog)
       : super(_xpInMemoryCache ?? const XPState());
 
@@ -93,9 +122,25 @@ class XPNotifier extends StateNotifier<XPState> {
 
       final userXp = await _repository.getUserXP(uid);
 
-      // Detect level-up by comparing old vs new level
+      // Detect level-up by comparing old vs new level.
+      //
+      // Guarded by a persisted `celebratedLevel` so the dialog can't refire on
+      // hot restart. Flow:
+      //   • First run for this user (key absent): quietly initialise
+      //     `celebratedLevel = currentLevel` and DO NOT fire the dialog —
+      //     existing users shouldn't get a surprise confetti for a level they
+      //     already crossed before this fix.
+      //   • Subsequent runs: only fire when `newLevel > celebratedLevel`.
+      //   • On dismiss (`clearLevelUp`) we advance `celebratedLevel`.
       LevelUpEvent? levelUp;
-      if (oldLevel != null && userXp.currentLevel > oldLevel) {
+      final celebratedLevel = await _readCelebratedLevel(uid);
+      if (celebratedLevel == null) {
+        // First-run quiet init for this user. No confetti for the current
+        // level, just snapshot it.
+        await _writeCelebratedLevel(uid, userXp.currentLevel);
+      } else if (oldLevel != null &&
+          userXp.currentLevel > oldLevel &&
+          userXp.currentLevel > celebratedLevel) {
         levelUp = LevelUpEvent(
           oldLevel: oldLevel,
           newLevel: userXp.currentLevel,
@@ -104,7 +149,15 @@ class XPNotifier extends StateNotifier<XPState> {
           totalXp: userXp.totalXp,
         );
         debugPrint(
-            '🎯 [XPProvider] Level-up detected! $oldLevel → ${userXp.currentLevel}');
+            '🎯 [XPProvider] Level-up detected! $oldLevel → ${userXp.currentLevel} '
+            '(celebrated was $celebratedLevel)');
+      } else if (oldLevel != null && userXp.currentLevel > oldLevel) {
+        // Cached old vs server new shows a delta, but `celebratedLevel`
+        // already covers `currentLevel` — suppress and keep persistence
+        // monotonic.
+        debugPrint(
+            '🎯 [XPProvider] Level-up delta suppressed (already celebrated '
+            '$celebratedLevel ≥ ${userXp.currentLevel})');
       }
 
       state = state.copyWith(
@@ -271,8 +324,18 @@ class XPNotifier extends StateNotifier<XPState> {
     await loadAll(userId: userId);
   }
 
-  /// Clear level up event (after showing celebration)
+  /// Clear level up event (after showing celebration). Also advances the
+  /// persisted `celebratedLevel` so the dialog can't refire on hot restart
+  /// or a stale cached-vs-server level delta later this session.
   void clearLevelUp() {
+    final levelToCelebrate =
+        state.lastLevelUp?.newLevel ?? state.userXp?.currentLevel;
+    final uid = _currentUserId;
+    if (uid != null && levelToCelebrate != null) {
+      // Fire-and-forget: SharedPreferences write is async but the in-memory
+      // state flip below should not block on disk I/O.
+      unawaited(_writeCelebratedLevel(uid, levelToCelebrate));
+    }
     state = state.copyWith(clearLevelUp: true);
   }
 

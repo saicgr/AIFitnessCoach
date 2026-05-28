@@ -18,10 +18,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/providers/ai_settings_provider.dart';
 import '../../../data/providers/coach_card_visibility_provider.dart';
 import '../../../data/providers/contextual_nudge_provider.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
+import '../../../data/providers/sub_card_shown_today_provider.dart';
 import '../../../widgets/coach/coach_contextual_nudge_row.dart';
+import '../../../widgets/coach/sub_card_ranker.dart';
 import 'home/unified_home_widgets.dart' show kHomeHPad;
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -163,10 +166,13 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             ),
         ] else if (insight.body.isNotEmpty) ...[
           const SizedBox(height: 4),
+          // No maxLines / ellipsis — the Coach card is the headline surface
+          // on Home; truncating the insight body to 2 lines made the daily
+          // recommendation read as "Focus on hitting your 93.0g protein…"
+          // which lost the actual recommendation. Server prompt already
+          // bounds the body to ~3-5 sentences; let it wrap.
           Text(
             insight.body.replaceAll('\n', ' ').replaceAll('  ', ' '),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -253,6 +259,15 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           ),
         ),
         const Spacer(),
+        // ⋮ — opens the coach options sheet (change persona / open AI
+        // Settings / hide for today). Subtle, sits before the chevron so
+        // the primary expand/minimize action keeps trailing emphasis.
+        _CoachChromeIconButton(
+          icon: Icons.more_vert,
+          tooltip: 'Coach options',
+          onTap: () => _showCoachOptionsSheet(context, ref),
+        ),
+        const SizedBox(width: 2),
         // Chevron — primary expand/minimize toggle, filled accent so the
         // common action reads as the affordance (NN/G "Dangerous UX"
         // inverted-emphasis: benign action gets the visual weight).
@@ -395,6 +410,13 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         bar(double.infinity, 12),
         const SizedBox(height: 4),
         bar(180, 12),
+        // Contextual nudges (morning hydration / breakfast / etc.) do NOT
+        // depend on the daily coach insight — they read nutrition +
+        // hydration + workout providers directly. Mounting the stack inside
+        // the skeleton means sub-cards paint on the first frame after cold
+        // start instead of waiting 1–3 s for the Gemini insight call.
+        // Foreground-cycle workaround for the same bug is no longer needed.
+        const _CoachNudgeStack(),
       ],
     );
   }
@@ -418,6 +440,11 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           AppLocalizations.of(context).coachHeroCardTapToOpenChat,
           style: TextStyle(fontSize: 12, color: c.textSecondary),
         ),
+        // Same reasoning as the skeleton — nudges shouldn't disappear when
+        // the Gemini insight fetch errors. Backend deterministic fallback
+        // can populate the insight on its own retry; meanwhile the
+        // user-actionable sub-cards stay visible.
+        const _CoachNudgeStack(),
       ],
     );
   }
@@ -485,81 +512,181 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       },
     );
   }
+
+  /// Bottom-sheet menu opened by the ⋮ button. Three actions:
+  /// (1) open AI Settings, (2) change coach persona (deep-link into the
+  /// persona section), (3) hide the card for the rest of today.
+  void _showCoachOptionsSheet(BuildContext context, WidgetRef ref) {
+    final c = ThemeColors.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: c.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        Widget row(IconData icon, String label, VoidCallback onTap) {
+          return ListTile(
+            leading: Icon(icon, size: 22, color: c.textPrimary),
+            title: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+            onTap: onTap,
+          );
+        }
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: c.cardBorder,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              row(Icons.tune, 'AI Settings', () {
+                Navigator.of(sheetCtx).pop();
+                context.push('/ai-settings');
+              }),
+              row(Icons.face_retouching_natural, 'Change coach personality',
+                  () {
+                Navigator.of(sheetCtx).pop();
+                context.push('/ai-settings');
+              }),
+              row(Icons.visibility_off_outlined, 'Hide coach card today', () {
+                Navigator.of(sheetCtx).pop();
+                ref
+                    .read(coachCardVisibilityProvider.notifier)
+                    .setDismissedToday();
+              }),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
-/// Tier-2 nudge stack rendered inside [CoachHeroCard]. Shows up to 2 rows
-/// by default; when there are 3+ eligible nudges a `+N more ⌄` chip
-/// appears that AnimatedSize-expands the card to reveal the rest.
+/// Tier-2 sub-card stack rendered inside [CoachHeroCard].
 ///
-/// Expansion state is held in [nudgeStackExpandedProvider] (Riverpod) so
-/// it survives tab-switch rebuilds — local State here would reset when
-/// the home tab unmounts, which the user noticed as "tasks reset on
-/// tab change".
+/// F4 layout: horizontal `PageView`, **2 sub-cards per page**, with dot
+/// indicators below. Swipe to next pair. Capped at 8 eligible per day via
+/// [SubCardRanker]; de-duplicated against the per-day `shownTodayDedupKeys`
+/// set so a card the user has dismissed or acted on doesn't resurface
+/// later the same day.
 class _CoachNudgeStack extends ConsumerWidget {
   const _CoachNudgeStack();
 
-  static const int _kVisibleClamp = 2;
+  /// One page = up to this many stacked sub-cards.
+  static const int _kCardsPerPage = 2;
+
+  /// Pixel budget for one stacked pair (≈ 2 × row height + gap). Used as the
+  /// fixed PageView height — Flutter requires a bounded child in an
+  /// unbounded scrolling container.
+  static const double _kPageHeight = 184;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ThemeColors.of(context);
-    final nudges = ref.watch(contextualNudgeProvider);
-    if (nudges.isEmpty) return const SizedBox.shrink();
+    final raw = ref.watch(contextualNudgeProvider);
+    if (raw.isEmpty) return const SizedBox.shrink();
 
-    final expanded = ref.watch(nudgeStackExpandedProvider);
-    final overflow = nudges.length > _kVisibleClamp;
-    final visible = expanded || !overflow
-        ? nudges
-        : nudges.take(_kVisibleClamp).toList(growable: false);
+    final settings = ref.watch(coachUiSettingsProvider);
+    final shownToday = ref.watch(subCardShownTodayProvider);
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutCubic,
-      alignment: Alignment.topCenter,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 12),
-          Divider(height: 1, color: c.cardBorder),
-          const SizedBox(height: 10),
-          for (var i = 0; i < visible.length; i++) ...[
-            if (i > 0) const SizedBox(height: 8),
-            CoachContextualNudgeRow(
-              key: ValueKey('nudge_${visible[i].id.name}'),
-              nudge: visible[i],
-              ctaColor: ctaColorForNudge(visible[i].id),
-            ),
-          ],
-          if (overflow) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.center,
-              child: TextButton.icon(
-                onPressed: () => ref
-                    .read(nudgeStackExpandedProvider.notifier)
-                    .state = !expanded,
-                icon: Icon(
-                  expanded ? Icons.expand_less : Icons.expand_more,
-                  size: 16,
-                ),
-                label: Text(
-                  expanded
-                      ? 'Show less'
-                      : '+${nudges.length - _kVisibleClamp} more',
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: c.textMuted,
-                  minimumSize: const Size(0, 28),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  textStyle: const TextStyle(
-                      fontSize: 11.5, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-          ],
+    final ranked = rankWithCoachUiSettings(
+      candidates: raw,
+      settings: settings,
+      shownTodayDedupKeys: shownToday,
+    );
+    if (ranked.isEmpty) return const SizedBox.shrink();
+
+    final pageCount = (ranked.length / _kCardsPerPage).ceil();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 12),
+        Divider(height: 1, color: c.cardBorder),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: _kPageHeight,
+          child: PageView.builder(
+            itemCount: pageCount,
+            physics: const PageScrollPhysics(),
+            itemBuilder: (ctx, page) {
+              final start = page * _kCardsPerPage;
+              final end =
+                  (start + _kCardsPerPage).clamp(0, ranked.length);
+              final slice = ranked.sublist(start, end);
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < slice.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 8),
+                    CoachContextualNudgeRow(
+                      key: ValueKey(
+                          'nudge_${slice[i].effectiveDedupKey}'),
+                      nudge: slice[i],
+                      ctaColor: ctaColorForNudge(slice[i].id),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+        if (pageCount > 1) ...[
+          const SizedBox(height: 8),
+          _PageDots(
+            pageCount: pageCount,
+            color: c.textMuted,
+          ),
         ],
-      ),
+      ],
+    );
+  }
+}
+
+/// Simple page-dot indicator. Riverpod-free — the parent PageView re-
+/// drives this by passing the active index via a controller. We don't
+/// hook controller state here (extra rebuild surface for a low-value
+/// visual) — instead we render passive equal dots that hint "more pages
+/// available" without tracking which one is current. Active-page hilite
+/// can land in a follow-up if the design calls for it.
+class _PageDots extends StatelessWidget {
+  final int pageCount;
+  final Color color;
+  const _PageDots({required this.pageCount, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < pageCount; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.35),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -13,6 +13,8 @@
 /// 61px overflow).
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +24,7 @@ import '../../core/providers/user_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/contextual_nudge.dart';
 import '../../data/providers/nudge_snooze_provider.dart';
+import '../../data/providers/sub_card_shown_today_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/services/haptic_service.dart';
@@ -198,7 +201,42 @@ class CoachContextualNudgeRow extends ConsumerWidget {
         // intent clear.
         if (!context.mounted) return;
         context.push('/chat?source=wind_down');
+      case ContextualNudgeActionKind.logMood:
+        if (!context.mounted) return;
+        // Mood logging surface ships later — open a chat thread tagged
+        // with the source so the user still has somewhere to go.
+        context.push('/chat?source=mood_checkin');
+      case ContextualNudgeActionKind.startBreathwork:
+        if (!context.mounted) return;
+        // Breathwork player ships later — chat fallback for now.
+        context.push('/chat?source=breathwork');
+      case ContextualNudgeActionKind.openTomorrowPreview:
+        if (!context.mounted) return;
+        // Show tomorrow's workout (or the broader workouts list).
+        context.go('/workouts');
+      case ContextualNudgeActionKind.openDailyLesson:
+        if (!context.mounted) return;
+        // Lesson rotation is content-managed; route to /discover for now.
+        context.push('/discover?source=daily_lesson');
+      case ContextualNudgeActionKind.openAiSettings:
+        if (!context.mounted) return;
+        context.push('/ai-settings');
+      case ContextualNudgeActionKind.navigateRoute:
+        final route = (action.args['route'] as String?) ?? '';
+        if (route.isEmpty || !context.mounted) return;
+        // Use push so users can pop back to home.
+        context.push(route);
+      case ContextualNudgeActionKind.acknowledge:
+        // No-op — the snooze below marks it shown for the day.
+        break;
     }
+    // Mark this dedupKey as "acted on" for the rest of the local day so
+    // the ranker doesn't resurrect it after the user has dealt with it.
+    unawaited(
+      ref
+          .read(subCardShownTodayProvider.notifier)
+          .markShown(nudge.effectiveDedupKey),
+    );
   }
 }
 
@@ -237,16 +275,35 @@ class _CtaPill extends StatelessWidget {
 /// Re-export so callers can pick a meaningful tint per nudge id without
 /// re-declaring the mapping every call site.
 Color ctaColorForNudge(NudgeId id) {
-  switch (id) {
-    case NudgeId.hydration:
-      return AppColors.cyan;
-    case NudgeId.breakfast:
-    case NudgeId.lunch:
-    case NudgeId.dinner:
-      return AppColors.macroCarbs;
-    case NudgeId.workout:
-      return AppColors.macroProtein;
-    case NudgeId.windDown:
-      return AppColors.macroFat;
+  // Names containing these substrings inherit the macro / hydration tint
+  // so the expanded enum stays exhaustive without listing every id.
+  final n = id.name.toLowerCase();
+  if (n.contains('hydration') || n.contains('electrolyte')) {
+    return AppColors.cyan;
   }
+  if (n.contains('breakfast') ||
+      n.contains('lunch') ||
+      n.contains('dinner') ||
+      n.contains('meal') ||
+      n.contains('snack') ||
+      n.contains('refuel') ||
+      n.contains('protein') ||
+      n.contains('fiber')) {
+    return AppColors.macroCarbs;
+  }
+  if (n.contains('workout') ||
+      n.contains('warmup') ||
+      n.contains('strain') ||
+      n.contains('readiness')) {
+    return AppColors.macroProtein;
+  }
+  if (n.contains('sleep') ||
+      n.contains('bedtime') ||
+      n.contains('wind') ||
+      n.contains('breath') ||
+      n.contains('mood') ||
+      n.contains('mindful')) {
+    return AppColors.macroFat;
+  }
+  return AppColors.macroCarbs;
 }

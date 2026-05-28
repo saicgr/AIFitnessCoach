@@ -11,6 +11,7 @@ enum BannerType {
   contextual,
   wrapped,
   healthCoaching,  // Phase C3: proactive readiness briefing / anomaly / activity nudge
+  streakAtRisk,    // F3.2 streak-at-risk pre-warning / last-chance
 }
 
 /// Unified data model for all home screen banner cards.

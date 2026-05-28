@@ -66,6 +66,10 @@ import '../data/providers/nutrition_preferences_provider.dart'
     show nutritionPreferencesProvider;
 import '../data/providers/food_patterns_provider.dart'
     show foodPatternsMoodProvider, patternsSettingsProvider;
+import '../data/providers/daily_coach_insight_provider.dart'
+    show dailyCoachInsightProvider;
+import '../data/providers/contextual_nudge_provider.dart'
+    show contextualNudgeProvider;
 
 part 'main_shell_part_edge_panel_handle.dart';
 part 'main_shell_part_guest_mode_banner.dart';
@@ -76,7 +80,6 @@ final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
 
 /// Provider to control whether nav bar labels are expanded
 /// Set to false when on secondary pages (Workouts, Nutrition, Fasting)
-final navBarLabelsExpandedProvider = StateProvider<bool>((ref) => true);
 
 /// Provider to control edge handle visibility (can be toggled in settings)
 /// Persisted to SharedPreferences
@@ -171,12 +174,13 @@ class MainShell extends ConsumerWidget {
   /// Fallback child widget for non-tab usages (e.g. progress_screen wrapping).
   final Widget? child;
 
-  const MainShell({super.key, this.navigationShell, this.child})
-      : assert(navigationShell != null || child != null,
-            'Either navigationShell or child must be provided');
+  const MainShell({super.key, this.navigationShell, this.child});
 
-  /// The widget to display as the main content area.
-  Widget get _child => navigationShell ?? child!;
+  /// The widget to display as the main content area. Falls back to an empty
+  /// SizedBox during router teardown when both args briefly resolve to null —
+  /// release builds strip the prior assert, so we'd otherwise hit
+  /// `child!` and crash with NoSuchMethodError.
+  Widget get _child => navigationShell ?? child ?? const SizedBox.shrink();
 
   int _calculateSelectedIndex(BuildContext context) {
     if (navigationShell != null) return navigationShell!.currentIndex;
@@ -236,7 +240,16 @@ class MainShell extends ConsumerWidget {
     final selectedIndex = _calculateSelectedIndex(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final isNavBarVisible = ref.watch(floatingNavBarVisibleProvider);
+    // Path-based hide for fasting full screens. The fasting screens live
+    // inside the Nutrition StatefulShellBranch — switching branches via
+    // context.go('/home') keeps them alive in the IndexedStack, so any
+    // provider state they set in initState() would never be restored on
+    // dispose. Decide nav-bar visibility from the current path directly.
+    final currentPath = GoRouter.of(context)
+        .routerDelegate.currentConfiguration.uri.path;
+    final pathWantsHidden = currentPath.startsWith('/fasting');
+    final providerWantsHidden = !ref.watch(floatingNavBarVisibleProvider);
+    final isNavBarVisible = !(pathWantsHidden || providerWantsHidden);
     final isGuestMode = ref.watch(isGuestModeProvider);
 
     // ── Tab prewarm ──────────────────────────────────────────────────
@@ -259,6 +272,13 @@ class MainShell extends ConsumerWidget {
     ref.read(hydrationProvider);
     ref.read(timelineProvider);
     ref.read(consistencyProvider);
+    // YOUR COACH hero card — Gemini insight + the contextual nudge stack
+    // (Overnight reset, Breakfast suggestion, etc). Without prewarming, the
+    // skeleton shows for 1–3s on cold start before nudges paint. Prewarm
+    // also pulls the contextual nudges' dependency chain (nutrition +
+    // hydration + workout) into evaluation immediately.
+    ref.read(dailyCoachInsightProvider);
+    ref.read(contextualNudgeProvider);
     // Workouts tab — screen summary header + synced-workout history.
     ref.read(workoutScreenSummaryProvider);
     ref.read(syncedWorkoutsProvider);

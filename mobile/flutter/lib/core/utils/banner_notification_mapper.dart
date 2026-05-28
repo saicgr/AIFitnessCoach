@@ -42,6 +42,8 @@ class BannerNotificationMapper {
         return 'wrapped';
       case BannerType.healthCoaching:
         return healthCoachingType;
+      case BannerType.streakAtRisk:
+        return 'streak_at_risk';
     }
   }
 

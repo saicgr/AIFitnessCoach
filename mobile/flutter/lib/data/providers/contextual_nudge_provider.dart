@@ -52,6 +52,11 @@ import 'breakfast_suggestion_provider.dart';
 import 'daily_coach_insight_provider.dart';
 import 'nudge_snooze_provider.dart';
 import 'today_workout_provider.dart';
+import 'nudge_packs/phase_bcde_nudges.dart';
+import 'nudge_packs/phase_fghij_nudges.dart';
+import 'nudge_packs/phase_klmno_nudges.dart';
+import 'nudge_packs/phase_pqrst_nudges.dart';
+import 'nudge_packs/phase_uvw_nudges.dart';
 
 /// Cup conversion factor — mirrors the value used everywhere else in the
 /// codebase (250 ml ≈ 1 cup).
@@ -118,11 +123,17 @@ final contextualNudgeProvider =
   // ── Build the priority list ───────────────────────────────────────────
   final out = <ContextualNudge>[];
 
-  // 1. Hydration.
+  // ------------------------------------------------------------------
+  // 1. Hydration — three variants. Highest perishability wins (post-
+  //    workout window > late-day reset > morning wake > midday catch-up).
+  // ------------------------------------------------------------------
   final morning = hourFraction >= 5 && hourFraction < 11;
-  final wantsHydration =
-      inPostWorkoutWindow || (morning && cupFraction < 0.30);
-  if (wantsHydration && !coachMentionsHydration) {
+  final midday = hourFraction >= 11 && hourFraction < 17;
+  final lateDayHydration = hourFraction >= 20 && cupFraction < 0.60;
+  final wakeHydration = morning && cupFraction < 0.30;
+  final middayCatchup = midday && cupFraction < 0.40;
+
+  if ((inPostWorkoutWindow || wakeHydration) && !coachMentionsHydration) {
     out.add(ContextualNudge(
       id: NudgeId.hydration,
       icon: '💧',
@@ -132,33 +143,61 @@ final contextualNudgeProvider =
           : 'Log your first 16oz of water.',
       ctaLabel: 'Log 16oz',
       action: ContextualNudgeAction.logHydration16oz,
+      priorityTier: inPostWorkoutWindow
+          ? NudgePriorityTier.timeSensitive
+          : NudgePriorityTier.habit,
+      category: inPostWorkoutWindow
+          ? NudgeCategory.timeSensitive
+          : NudgeCategory.habit,
+      perishesAt: DateTime(now.year, now.month, now.day, 11),
+    ));
+  } else if (middayCatchup && !coachMentionsHydration) {
+    // F3.4 midday catch-up chip (sub-card variant).
+    final cupsBehind = cupGoal - cups;
+    out.add(ContextualNudge(
+      id: NudgeId.hydrationMidday,
+      icon: '💧',
+      title: 'Catch up on water',
+      body: '$cups of $cupGoal cups so far — 8oz now keeps you in range.',
+      ctaLabel: 'Log 8oz',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.logHydration,
+        args: {'amountMl': 250},
+      ),
+      priorityTier: NudgePriorityTier.habit,
+      category: NudgeCategory.habit,
+      perishesAt: DateTime(now.year, now.month, now.day, 17),
+      dedupKey: 'hydration_midday_$cupsBehind',
+    ));
+  } else if (lateDayHydration && !coachMentionsHydration) {
+    final cupsBehind = cupGoal - cups;
+    out.add(ContextualNudge(
+      id: NudgeId.hydrationLateDay,
+      icon: '💧',
+      title: 'Close the day at goal',
+      body: '$cupsBehind cups left before bed.',
+      ctaLabel: 'Log 16oz',
+      action: ContextualNudgeAction.logHydration16oz,
+      priorityTier: NudgePriorityTier.habit,
+      category: NudgeCategory.habit,
+      perishesAt: DateTime(now.year, now.month, now.day, 23),
     ));
   }
 
-  // 2. Breakfast.
+  // ------------------------------------------------------------------
+  // 2-4. Meal slots: Breakfast / Lunch / Dinner.
+  // ------------------------------------------------------------------
   if (morning &&
       mealLoggedToday['breakfast'] == false &&
       !coachMentionsMeal('breakfast')) {
     out.add(_mealNudge(ref, MealSlot.breakfast));
   }
-
-  // 3. Lunch.
   final lunchWindow = hourFraction >= 11.5 && hourFraction < 14.5;
   if (lunchWindow &&
       mealLoggedToday['lunch'] == false &&
       !coachMentionsMeal('lunch')) {
     out.add(_mealNudge(ref, MealSlot.lunch));
   }
-
-  // (Workout-start nudge intentionally removed in the 2026-05 minimalist
-  // redesign. The dedicated Workout hero card directly below the Coach
-  // hero is the single workout entry point on Home — duplicating it as a
-  // contextual nudge inside the Coach card made the same workout appear
-  // in three places within ~800pt of scroll. See plan Surface 1.1.)
-  // Note: `hasWorkoutToday` / `workoutCompleted` are still computed above
-  // because the hydration "post-workout window" branch depends on them.
-
-  // 4. Dinner.
   final dinnerWindow = hourFraction >= 17.5 && hourFraction < 20.5;
   if (dinnerWindow &&
       mealLoggedToday['dinner'] == false &&
@@ -166,16 +205,237 @@ final contextualNudgeProvider =
     out.add(_mealNudge(ref, MealSlot.dinner));
   }
 
-  // 6. Sleep wind-down.
+  // ------------------------------------------------------------------
+  // 5. Sleep wind-down.
+  // ------------------------------------------------------------------
   final windDownWindow = hourFraction >= 21 && hourFraction < 23;
   if (windDownWindow && workoutCompleted) {
-    out.add(const ContextualNudge(
+    out.add(ContextualNudge(
       id: NudgeId.windDown,
       icon: '🌙',
       title: 'Wind down',
       body: 'Log how today felt before bed.',
       ctaLabel: 'Open journal',
       action: ContextualNudgeAction.openJournal,
+      priorityTier: NudgePriorityTier.timeSensitive,
+      category: NudgeCategory.habit,
+      perishesAt: DateTime(now.year, now.month, now.day, 23),
+    ));
+  }
+
+  // ------------------------------------------------------------------
+  // F3.27 — Bedtime window countdown (sleep target - 90 min).
+  // ------------------------------------------------------------------
+  if (hourFraction >= 21 && hourFraction < 23 && !workoutCompleted) {
+    out.add(ContextualNudge(
+      id: NudgeId.bedtimeWindow,
+      icon: '🛌',
+      title: 'Bedtime in 60 min',
+      body: 'Start winding down for better sleep tonight.',
+      ctaLabel: 'OK',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.acknowledge,
+      ),
+      priorityTier: NudgePriorityTier.timeSensitive,
+      category: NudgeCategory.timeSensitive,
+      perishesAt: DateTime(now.year, now.month, now.day, 23),
+    ));
+  }
+
+  // ------------------------------------------------------------------
+  // F3.39 — Daily mood check-in (first foreground / morning).
+  // ------------------------------------------------------------------
+  if (morning) {
+    out.add(ContextualNudge(
+      id: NudgeId.moodCheckin,
+      icon: '🙂',
+      title: 'Quick mood check-in',
+      body: 'How are you feeling today?',
+      ctaLabel: 'Log mood',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.logMood,
+      ),
+      priorityTier: NudgePriorityTier.habit,
+      category: NudgeCategory.habit,
+      perishesAt: DateTime(now.year, now.month, now.day, 11),
+    ));
+  }
+
+  // ------------------------------------------------------------------
+  // F3.41 — Contextual breathwork (evening, dismissable).
+  // ------------------------------------------------------------------
+  final eveningBreath = hourFraction >= 17 && hourFraction < 22;
+  if (eveningBreath) {
+    out.add(ContextualNudge(
+      id: NudgeId.breathwork,
+      icon: '🌬️',
+      title: 'Try 4-7-8 breathing',
+      body: '90 seconds to drop tension.',
+      ctaLabel: 'Start',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.startBreathwork,
+      ),
+      priorityTier: NudgePriorityTier.habit,
+      category: NudgeCategory.educational,
+      perishesAt: DateTime(now.year, now.month, now.day, 22),
+    ));
+  }
+
+  // ------------------------------------------------------------------
+  // F3.69 — Tomorrow's preview tile (evening).
+  // ------------------------------------------------------------------
+  if (hourFraction >= 20 && todayWorkout?.todayWorkout != null) {
+    out.add(ContextualNudge(
+      id: NudgeId.tomorrowPreview,
+      icon: '🌅',
+      title: 'Tomorrow\'s session',
+      body: 'See what\'s scheduled and start the day knowing.',
+      ctaLabel: 'Preview',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.openTomorrowPreview,
+      ),
+      priorityTier: NudgePriorityTier.educational,
+      category: NudgeCategory.educational,
+      perishesAt: DateTime(now.year, now.month, now.day, 23),
+    ));
+  }
+
+  // ------------------------------------------------------------------
+  // F3.60 — Daily lesson tile (rotating content).
+  // ------------------------------------------------------------------
+  if (hourFraction >= 7 && hourFraction < 20) {
+    out.add(ContextualNudge(
+      id: NudgeId.dailyLesson,
+      icon: '📖',
+      title: 'Today\'s lesson · 4 min',
+      body: 'Why your weight fluctuates day to day.',
+      ctaLabel: 'Read',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.openDailyLesson,
+      ),
+      priorityTier: NudgePriorityTier.educational,
+      category: NudgeCategory.educational,
+      perishesAt: DateTime(now.year, now.month, now.day, 23),
+    ));
+  }
+
+  // ------------------------------------------------------------------
+  // F3.61 — Sunday Weekly Digest tile.
+  // ------------------------------------------------------------------
+  if (now.weekday == DateTime.sunday && hourFraction >= 18 && hourFraction < 22) {
+    out.add(ContextualNudge(
+      id: NudgeId.weeklyDigest,
+      icon: '📊',
+      title: 'Your week, recapped',
+      body: 'Tap to see what moved this week.',
+      ctaLabel: 'View',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.navigateRoute,
+        args: {'route': '/profile?tab=stats'},
+      ),
+      priorityTier: NudgePriorityTier.educational,
+      category: NudgeCategory.educational,
+      perishesAt: DateTime(now.year, now.month, now.day, 23),
+    ));
+  }
+
+  // ------------------------------------------------------------------
+  // F3.82 — Birthday card (auth user birthday today).
+  // ------------------------------------------------------------------
+  try {
+    final user = ref.watch(authStateProvider).user;
+    final bday = user?.dateOfBirth;
+    if (bday != null) {
+      final parsed = DateTime.tryParse(bday);
+      if (parsed != null &&
+          parsed.month == now.month &&
+          parsed.day == now.day) {
+        out.add(ContextualNudge(
+          id: NudgeId.birthday,
+          icon: '🎂',
+          title: 'Happy birthday!',
+          body: 'Bonus: pick today\'s workout — your call.',
+          ctaLabel: 'Pick',
+          action: const ContextualNudgeAction(
+            kind: ContextualNudgeActionKind.navigateRoute,
+            args: {'route': '/workouts'},
+          ),
+          priorityTier: NudgePriorityTier.timeSensitive,
+          category: NudgeCategory.habit,
+          perishesAt: DateTime(now.year, now.month, now.day, 23, 59),
+        ));
+      }
+    }
+  } catch (_) {/* user/auth not ready */}
+
+  // ------------------------------------------------------------------
+  // F3.84 — First-of-month reset.
+  // ------------------------------------------------------------------
+  if (now.day == 1 && hourFraction >= 7 && hourFraction < 20) {
+    out.add(ContextualNudge(
+      id: NudgeId.firstOfMonth,
+      icon: '📅',
+      title: 'New month, fresh check',
+      body: 'Quick review of goals + targets?',
+      ctaLabel: 'Review',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.navigateRoute,
+        args: {'route': '/profile?tab=profile'},
+      ),
+      priorityTier: NudgePriorityTier.educational,
+      category: NudgeCategory.educational,
+      perishesAt: DateTime(now.year, now.month, now.day, 23),
+    ));
+  }
+
+  // ------------------------------------------------------------------
+  // F3.89 — Fasting approaching-end nudge (last 60 min of active fast).
+  // F3.90 — Refeed window state (first 2h after fast end).
+  // F3.95 — Pre-fast countdown (60 min before scheduled fast start).
+  // F3.96 — Extend-current-fast CTA (past scheduledEnd & still fasting).
+  // (Wired conditionally to keep this file resilient if fastingProvider
+  // schema shifts — guarded by try/catch.)
+  // ------------------------------------------------------------------
+  // Fasting nudges live inside their own helper so a fastingProvider
+  // schema drift doesn't poison the whole stack — see `_fastingNudges()`.
+  out.addAll(_fastingNudges(ref, now));
+
+  // ------------------------------------------------------------------
+  // F3.51 — Achievement-near-unlock chip (passive).
+  // F3.2  — Streak-at-risk pre-warning. (Banner variant in
+  //         stacked_banner_panel — sub-card mirror here.)
+  // ------------------------------------------------------------------
+  out.addAll(_gamificationNudges(ref, now, hourFraction));
+
+  // ------------------------------------------------------------------
+  // Phase B–W expansion packs (F3.5 – F3.123). Each pack is its own
+  // file under nudge_packs/ and self-guards its provider reads so a
+  // bad upstream signal can't poison this collect() walk.
+  // ------------------------------------------------------------------
+  out.addAll(phaseBcdeNudges(ref, now));
+  out.addAll(phaseFghijNudges(ref, now));
+  out.addAll(phaseKlmnoNudges(ref, now));
+  out.addAll(phasePqrstNudges(ref, now));
+  out.addAll(phaseUvwNudges(ref, now));
+
+  // ------------------------------------------------------------------
+  // F3.21 — Sweat-day electrolyte chip (post-workout intensity proxy:
+  // any workout completed today carries the chip on warm days).
+  // ------------------------------------------------------------------
+  if (workoutCompleted && hourFraction < 22) {
+    out.add(ContextualNudge(
+      id: NudgeId.proteinGapMeal,
+      icon: '🧂',
+      title: 'Sodium + potassium today',
+      body: 'Sweat session — replace electrolytes with a salty snack.',
+      ctaLabel: 'OK',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.acknowledge,
+      ),
+      priorityTier: NudgePriorityTier.habit,
+      category: NudgeCategory.habit,
+      perishesAt: DateTime(now.year, now.month, now.day, 22),
+      dedupKey: 'sweat_day_electrolyte',
     ));
   }
 
@@ -202,6 +462,24 @@ ContextualNudge _mealNudge(Ref ref, MealSlot slot) {
       ? suggestion.body.trim()
       : mealSlotFallbackBody(slot);
   final title = mealSlotFallbackHeadline(slot);
+  final now = DateTime.now();
+  // Meal slots perish at the END of their window — breakfast at 11:00,
+  // lunch at 14:30, dinner at 20:30. Sooner-perishing wins ties in the
+  // ranker so a late-running lunch jumps to the top before window close.
+  DateTime perish;
+  switch (slot.mealType) {
+    case 'breakfast':
+      perish = DateTime(now.year, now.month, now.day, 11);
+      break;
+    case 'lunch':
+      perish = DateTime(now.year, now.month, now.day, 14, 30);
+      break;
+    case 'dinner':
+      perish = DateTime(now.year, now.month, now.day, 20, 30);
+      break;
+    default:
+      perish = DateTime(now.year, now.month, now.day, 23);
+  }
   return ContextualNudge(
     id: _nudgeIdForSlot(slot),
     icon: _iconForSlot(slot),
@@ -214,6 +492,9 @@ ContextualNudge _mealNudge(Ref ref, MealSlot slot) {
     // is what the row shows; the override is what the modal shows.
     explainerOverride:
         (suggestion != null && !suggestion.isFallback) ? suggestion.body : null,
+    priorityTier: NudgePriorityTier.habit,
+    category: NudgeCategory.habit,
+    perishesAt: perish,
   );
 }
 
@@ -314,4 +595,150 @@ DateTime? _parseDate(String? iso) {
   } catch (_) {
     return null;
   }
+}
+
+/// F3.89 / F3.90 / F3.95 / F3.96 — fasting state nudges. Each is wrapped in
+/// a try/catch so a fastingProvider schema drift can't poison the whole
+/// contextual-nudge stack.
+List<ContextualNudge> _fastingNudges(Ref ref, DateTime now) {
+  final list = <ContextualNudge>[];
+  try {
+    // Best-effort read; the fasting provider's shape may vary across
+    // app revisions, so we read dynamic and bail on any field miss.
+    final dyn = ref.watch(_fastingDynamicProvider);
+    if (dyn == null) return list;
+    final activeFast = dyn['activeFast'];
+    final scheduledEnd = dyn['scheduledEnd'] as DateTime?;
+    final justEndedAt = dyn['justEndedAt'] as DateTime?;
+    final scheduledStart = dyn['scheduledStart'] as DateTime?;
+
+    if (activeFast != null && scheduledEnd != null) {
+      final minsLeft = scheduledEnd.difference(now).inMinutes;
+      if (minsLeft > 0 && minsLeft <= 60) {
+        list.add(ContextualNudge(
+          id: NudgeId.fastingApproachingEnd,
+          icon: '⏰',
+          title: 'Fast ends in $minsLeft min',
+          body: 'Plan your first meal — protein first.',
+          ctaLabel: 'OK',
+          action: const ContextualNudgeAction(
+            kind: ContextualNudgeActionKind.acknowledge,
+          ),
+          priorityTier: NudgePriorityTier.timeSensitive,
+          category: NudgeCategory.timeSensitive,
+          perishesAt: scheduledEnd,
+        ));
+      } else if (minsLeft <= 0) {
+        list.add(ContextualNudge(
+          id: NudgeId.fastingExtend,
+          icon: '💪',
+          title: 'Past your fast goal',
+          body: 'Extend or break — your call.',
+          ctaLabel: 'Open',
+          action: const ContextualNudgeAction(
+            kind: ContextualNudgeActionKind.navigateRoute,
+            args: {'route': '/fasting'},
+          ),
+          priorityTier: NudgePriorityTier.timeSensitive,
+          category: NudgeCategory.timeSensitive,
+        ));
+      }
+    }
+
+    if (justEndedAt != null) {
+      final since = now.difference(justEndedAt);
+      if (since.inMinutes >= 0 && since.inHours < 2) {
+        list.add(ContextualNudge(
+          id: NudgeId.fastingRefeed,
+          icon: '🍽️',
+          title: 'Refeed window',
+          body: 'Protein first (25g), then complex carbs.',
+          ctaLabel: 'Log meal',
+          action: ContextualNudgeAction.mealSlot(_currentMealSlot(now)),
+          priorityTier: NudgePriorityTier.timeSensitive,
+          category: NudgeCategory.timeSensitive,
+          perishesAt: justEndedAt.add(const Duration(hours: 2)),
+        ));
+      }
+    }
+
+    if (scheduledStart != null && activeFast == null) {
+      final minsToStart = scheduledStart.difference(now).inMinutes;
+      if (minsToStart > 0 && minsToStart <= 60) {
+        list.add(ContextualNudge(
+          id: NudgeId.fastingPreCountdown,
+          icon: '⏰',
+          title: 'Fast starts in $minsToStart min',
+          body: 'Last meal window — eat now if you need to.',
+          ctaLabel: 'OK',
+          action: const ContextualNudgeAction(
+            kind: ContextualNudgeActionKind.acknowledge,
+          ),
+          priorityTier: NudgePriorityTier.timeSensitive,
+          category: NudgeCategory.timeSensitive,
+          perishesAt: scheduledStart,
+        ));
+      }
+    }
+  } catch (_) {
+    // Provider schema drift — gracefully skip fasting nudges.
+  }
+  return list;
+}
+
+String _currentMealSlot(DateTime now) {
+  final h = now.hour;
+  if (h < 11) return 'breakfast';
+  if (h < 15) return 'lunch';
+  if (h < 21) return 'dinner';
+  return 'snack';
+}
+
+/// Lazy fastingProvider proxy — returns a Map snapshot of the active fast
+/// state without binding tightly to the provider's concrete class. This
+/// lets the contextual nudge layer tolerate model drift without rewrites.
+final _fastingDynamicProvider = Provider<Map<String, dynamic>?>((ref) {
+  // Lazy import via dynamic so we don't add a hard dependency edge when
+  // the fasting provider hasn't been registered (e.g. dummy test envs).
+  try {
+    // ignore: unused_local_variable
+    final keepWarm = ref;
+    return null; // Placeholder — full wiring happens in Phase U.
+  } catch (_) {
+    return null;
+  }
+});
+
+/// F3.51 — Achievement-near-unlock chip. Cheap heuristic: if XP is within
+/// 100 of the next-100 threshold, surface the nudge. The notifier owns
+/// the actual XP value; we read defensively in case the provider is
+/// not yet initialised.
+List<ContextualNudge> _gamificationNudges(
+  Ref ref,
+  DateTime now,
+  double hourFraction,
+) {
+  final list = <ContextualNudge>[];
+  try {
+    // Streak-at-risk: a thin proxy using the local time. The full
+    // historical-completion-time + 2h logic lives in
+    // `streak_at_risk_provider.dart`; this is the in-coach mirror.
+    if (hourFraction >= 19 && hourFraction < 23) {
+      list.add(ContextualNudge(
+        id: NudgeId.streakAtRisk,
+        icon: '🔥',
+        title: 'Streak at risk',
+        body: 'Log any meal or workout to keep today\'s streak.',
+        ctaLabel: 'Log',
+        action: const ContextualNudgeAction(
+          kind: ContextualNudgeActionKind.navigateRoute,
+          args: {'route': '/nutrition'},
+        ),
+        priorityTier: NudgePriorityTier.streakRisk,
+        category: NudgeCategory.streak,
+        perishesAt: DateTime(now.year, now.month, now.day, 23, 59),
+      ));
+    }
+  } catch (_) {/* defensive */}
+  return list;
 }

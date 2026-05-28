@@ -12,6 +12,7 @@ import '../../../data/providers/billing_reminder_provider.dart';
 import '../../../data/providers/discover_provider.dart';
 import '../../../data/providers/health_insight_provider.dart';
 import '../../../data/providers/scheduling_provider.dart';
+import '../../../data/providers/streak_at_risk_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/providers/week1_tips_provider.dart';
 import '../../../data/providers/weekly_plan_provider.dart';
@@ -247,6 +248,30 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         onAction: () {
           HapticService.light();
           context.push('/settings/subscription');
+        },
+      ));
+    }
+
+    // 1b. Streak-at-risk (F3.2) — pre-warning at historical-median + 2h,
+    // last-chance after 22:00. Dismiss-per-day handled by the underlying
+    // streakAtRiskProvider state (refreshes every 15 min).
+    final streakRisk = ref.watch(streakAtRiskProvider);
+    if (streakRisk.isAtRisk) {
+      banners.add(BannerCardData(
+        type: BannerType.streakAtRisk,
+        id: 'streak_at_risk',
+        icon: Icons.local_fire_department_rounded,
+        title: streakRisk.lastChance
+            ? 'Streak ends at midnight'
+            : 'Streak at risk tonight',
+        subtitle: streakRisk.lastChance
+            ? 'Log anything to keep your streak alive.'
+            : 'A quick log keeps the fire burning.',
+        accentColor: AppColors.orange,
+        actionLabel: 'Log now',
+        onAction: () {
+          HapticService.light();
+          context.push('/nutrition');
         },
       ));
     }

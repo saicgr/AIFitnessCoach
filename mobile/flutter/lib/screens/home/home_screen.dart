@@ -43,6 +43,8 @@ import 'widgets/daily_activity_card.dart';
 import 'widgets/edit_tracking_sheet.dart';
 import 'widgets/stacked_banner_panel.dart';
 import 'widgets/calibration_banner.dart';
+import 'widgets/cards/setup_checklist_card.dart';
+import 'widgets/extended_home_cards_stack.dart';
 import '../../widgets/rating_prompt_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/today_score_card.dart';
@@ -1053,6 +1055,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 // user dismisses.
                 const SliverToBoxAdapter(child: CalibrationBanner()),
 
+                // F3.1 Setup Checklist — self-collapses when complete, past
+                // day 7, or dismissed for the week.
+                const SliverToBoxAdapter(child: SetupChecklistCard()),
+
                 // One-time cycle-tracking setup invitation for existing
                 // eligible users (Phase E). Self-collapses to zero height
                 // when the user is ineligible, already set up, or has
@@ -1104,7 +1110,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// scrolls it into the viewport. Section order and content are unchanged;
   /// each below-the-fold section still gets its trailing [kHomeGap].
   List<Widget> _homeSectionSlivers(HomeSectionsState sections) {
-    final visible = sections.visibleInOrder;
+    // Drop sections that render to zero — strainCoach was folded into the
+    // workout hero (returns SizedBox.shrink) but stays in persisted orderings
+    // for migration safety. If we kept it in `visible`, the eager loop would
+    // emit a wrapper sliver + a trailing kHomeGap for it, producing an empty
+    // ~28px void between the cards that surround it.
+    final visible = sections.visibleInOrder
+        .where((s) => s != HomeSection.strainCoach)
+        .toList(growable: false);
     final slivers = <Widget>[];
 
     // Above-the-fold: eager adapters, preserving the per-section gap.
@@ -1138,6 +1151,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       );
     }
+
+    // Phase B–W expansion: 80 self-collapsing contextual cards. Each
+    // returns SizedBox.shrink() unless its gate fires, so this Column
+    // is cheap even with all 80 imports present.
+    slivers.add(const SliverToBoxAdapter(child: ExtendedHomeCardsStack()));
 
     return slivers;
   }

@@ -21,12 +21,152 @@ import 'package:flutter/foundation.dart';
 /// the per-nudge snooze key. Names map 1:1 to keys in
 /// `kNudgeExplainerStrings` in `coach_nudge_explainer_sheet.dart`.
 enum NudgeId {
+  // Core meal + hydration set.
   hydration,
+  hydrationMidday,
+  hydrationLateDay,
   breakfast,
   lunch,
   dinner,
   workout,
   windDown,
+  // Pre-workout band.
+  preWorkoutFuel,
+  preWorkoutHydrate,
+  preWorkoutWarmup,
+  // Post-workout band.
+  postWorkoutRefuel,
+  // Mood / mental.
+  moodCheckin,
+  breathwork,
+  gratitudePrompt,
+  sleepStory,
+  // Movement.
+  hourlyStand,
+  walkBreak,
+  // Sleep.
+  bedtimeWindow,
+  blueLightCutoff,
+  // Schedule / planning.
+  tomorrowPreview,
+  missedMealCatchup,
+  // Fasting band.
+  fastingApproachingEnd,
+  fastingRefeed,
+  fastingPreCountdown,
+  fastingExtend,
+  // Nutrition gaps.
+  proteinGapMeal,
+  fiberGapMeal,
+  sodiumWatch,
+  hiddenSugar,
+  caffeineCutoff,
+  lateSnackAlternative,
+  // Recovery / wearable advanced.
+  readinessAlert,
+  hrvDrop,
+  rhrAnomaly,
+  sleepEfficiencyDrop,
+  // Cycle / hormonal.
+  pmsPrep,
+  ovulationPeak,
+  periodPredict,
+  periodSymptom,
+  // Habit / gamification.
+  habitStack,
+  achievementNearUnlock,
+  // Streak.
+  streakAtRisk,
+  // Goal / milestone.
+  goalHalfway,
+  goalSlipping,
+  raceCountdown,
+  // Travel.
+  jetLag,
+  hotelGym,
+  // Social.
+  friendActivity,
+  partnerCheckin,
+  // Subscription.
+  usageBasedUpsell,
+  // Educational.
+  dailyLesson,
+  weeklyDigest,
+  discoveryInsight,
+  // Wearable status.
+  wearableBatteryLow,
+  scaleSyncPrompt,
+  // Cooking / pantry.
+  leftoverCountdown,
+  groceryGeofence,
+  // Calendar.
+  meetingHeavyLighter,
+  freeWindowHold,
+  // Misc.
+  weighInReminder,
+  birthday,
+  appAnniversary,
+  firstOfMonth,
+  // Phase U/V/W — fasting, pre-workout, post-workout extensions.
+  fastingPostFastGuidance,    // F3.91
+  fastedTrainingWarning,      // F3.94
+  fastDayProteinShift,        // F3.97
+  fastBrokeEarlyAck,          // F3.98
+  preWorkoutVariantSwap,      // F3.103
+  preWorkoutMoodCheckin,      // F3.104
+  preWorkoutCaffeineTiming,   // F3.105
+  preWorkoutHydration,        // F3.106
+  preWorkoutDurationPreview,  // F3.107
+  preWorkoutFuelMacro,        // F3.109
+  postWorkoutProteinGrams,    // F3.113
+  postWorkoutPrChip,          // F3.115
+  postWorkoutKudosLoop,       // F3.117
+  // Phase B/C/D/E — recovery + circadian + nutrition + movement extensions.
+  respRateAnomaly,            // F3.8
+  remDeepLow,                 // F3.11
+  skinTempShift,              // F3.13
+  adaptiveCalorieAdjust,      // F3.15
+  postWorkoutProtein,         // F3.17
+  refeedDay,                  // F3.19
+  activeCalorieRingClose,     // F3.25
+  longSitWalk,                // F3.26
+  chronotypeMorning,          // F3.31a
+  chronotypeEvening,          // F3.31b
+  // Phase F/G/H/I/J pack additions.
+  ovulationStrengthWindow,    // F3.35
+  pregnancyModeGuard,         // F3.37
+  perimenopauseCue,           // F3.38
+  hydrationHeat,              // F3.45
+  electrolyteTile,            // F3.46
+  kudosBadge,                 // F3.53
+}
+
+/// Priority tier for the SubCardRanker pyramid (F4).
+///   1 — Health alerts (anomalies, illness)
+///   2 — Time-sensitive (refuel window, bedtime, pre-workout)
+///   3 — Streak-at-risk (loss aversion)
+///   4 — Habit nudges (water, meals, stand)
+///   5 — Educational (passive learning)
+///   6 — Social (lowest perishability)
+enum NudgePriorityTier {
+  healthAlert,
+  timeSensitive,
+  streakRisk,
+  habit,
+  educational,
+  social,
+}
+
+/// Coarse category used to apply user-override re-weighting from AI Settings.
+/// Maps roughly 1:1 onto the priority tiers but stays a separate enum so we
+/// can re-rank without redefining priority entirely.
+enum NudgeCategory {
+  healthAlert,
+  timeSensitive,
+  streak,
+  habit,
+  educational,
+  social,
 }
 
 /// Action verbs the row knows how to dispatch. Keep this list small — every
@@ -46,6 +186,28 @@ enum ContextualNudgeActionKind {
   /// `/journal` — placeholder until the journal feature ships; until then
   /// it falls back to `/chat`.
   openJournal,
+
+  /// Open the mood-checkin sheet.
+  logMood,
+
+  /// Start an in-app breathwork session (4-7-8 / box-breathing).
+  startBreathwork,
+
+  /// Tomorrow's workout preview overlay.
+  openTomorrowPreview,
+
+  /// Open the daily-lesson reader.
+  openDailyLesson,
+
+  /// Open AI Settings (used by usage-based-upsell, AI Coach 3-dot menu).
+  openAiSettings,
+
+  /// Generic deep-link CTA. `args['route']` required.
+  navigateRoute,
+
+  /// No-op CTA — just dismisses the card. Used for informational cards
+  /// where the only action is dismissal.
+  acknowledge,
 }
 
 /// Discriminated CTA descriptor. Kept as a sealed-style data class instead of
@@ -118,6 +280,24 @@ class ContextualNudge {
   /// When null, the row falls back to the local string keyed by [id].
   final String? explainerOverride;
 
+  /// Priority tier — drives ordering inside the F4 SubCardRanker pyramid.
+  /// Default `habit` if a nudge omits it (back-compat with older call sites).
+  final NudgePriorityTier priorityTier;
+
+  /// Coarse category used by AI Settings user-override re-weighting.
+  final NudgeCategory category;
+
+  /// When this nudge stops being relevant. Used by the ranker to break
+  /// ties within a priority tier (sooner-perishing first). For non-
+  /// perishable nudges (educational, social, etc.) use `DateTime` of end-of-
+  /// day or far-future.
+  final DateTime? perishesAt;
+
+  /// Per-day de-duplication key. Defaults to `id.name`. Set this explicitly
+  /// when the same nudge id can fire with multiple distinct dedup contexts
+  /// (e.g. `protein_gap_meal_breakfast` vs `protein_gap_meal_lunch`).
+  final String? dedupKey;
+
   const ContextualNudge({
     required this.id,
     required this.icon,
@@ -126,7 +306,13 @@ class ContextualNudge {
     required this.ctaLabel,
     required this.action,
     this.explainerOverride,
+    this.priorityTier = NudgePriorityTier.habit,
+    this.category = NudgeCategory.habit,
+    this.perishesAt,
+    this.dedupKey,
   });
+
+  String get effectiveDedupKey => dedupKey ?? id.name;
 
   ContextualNudge copyWith({
     String? icon,
@@ -135,6 +321,10 @@ class ContextualNudge {
     String? ctaLabel,
     ContextualNudgeAction? action,
     String? explainerOverride,
+    NudgePriorityTier? priorityTier,
+    NudgeCategory? category,
+    DateTime? perishesAt,
+    String? dedupKey,
   }) {
     return ContextualNudge(
       id: id,
@@ -144,6 +334,10 @@ class ContextualNudge {
       ctaLabel: ctaLabel ?? this.ctaLabel,
       action: action ?? this.action,
       explainerOverride: explainerOverride ?? this.explainerOverride,
+      priorityTier: priorityTier ?? this.priorityTier,
+      category: category ?? this.category,
+      perishesAt: perishesAt ?? this.perishesAt,
+      dedupKey: dedupKey ?? this.dedupKey,
     );
   }
 }

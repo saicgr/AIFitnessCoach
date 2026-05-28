@@ -124,6 +124,8 @@ from api.v1 import workouts_overhaul_extras  # Phase 4 + Phase 6 grab-bag (movem
 from api.v1 import buddy  # Phase 6 #15 — buddy synchronized workouts via Supabase Realtime
 from api.v1.ai_tools import physique_analyzer as ai_tools_physique  # Public physique analyzer + 4-week program
 from api.v1.ai_tools import form_check as ai_tools_form_check  # Public AI form check — video lift analysis
+from api.v1 import home_insights  # Micro gap + workout-sleep + strain-recovery + discovery insight
+from api.v1 import home_insights_v2  # Jet-lag, busy-week, refeed, electrolyte, kudos, weigh-in-day
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -193,6 +195,13 @@ router.include_router(summaries.router, prefix="/summaries", tags=["Summaries"])
 
 # User insights and weekly progress
 router.include_router(insights.router, tags=["Insights"])
+
+# Home-screen insight cards: micro gap, workout-sleep correlation,
+# strain-recovery mismatch, discovery insight.
+router.include_router(home_insights.nutrition_router, tags=["Home Insights"])
+router.include_router(home_insights.insights_router, tags=["Home Insights"])
+router.include_router(home_insights_v2.insights_router, tags=["Home Insights"])
+router.include_router(home_insights_v2.social_router, tags=["Home Insights"])
 
 # Push notification endpoints
 router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
@@ -507,6 +516,16 @@ router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 # Home screen bootstrap (single-request aggregated data for home screen)
 router.include_router(home.router, prefix="/home", tags=["Home"])
 
+# Home-screen secondary signal endpoints — data-gaps chip, training-effect
+# card, RHR-delta card. Three small routers in one module mounted under
+# their respective prefixes.
+from api.v1 import home_signals  # noqa: E402
+router.include_router(home_signals.home_router, prefix="/home", tags=["Home"])
+router.include_router(home_signals.workouts_router, prefix="/workouts", tags=["Workouts"])
+router.include_router(home_signals.health_router, prefix="/health", tags=["Health"])
+router.include_router(home_signals.users_router, prefix="/users", tags=["Users"])
+router.include_router(home_signals.wearables_router, prefix="/wearables", tags=["Wearables"])
+
 # MCP integrations — list/revoke external AI assistants connected to this user
 router.include_router(
     mcp_integrations_router,
@@ -601,3 +620,10 @@ from . import share_orchestrator as _share_orch_module; router.include_router(_s
 
 # Imports — saved_tips persistence + list (tip_save intent target).
 from . import saved_tips as _saved_tips_module; router.include_router(_saved_tips_module.router, tags=["Imports"])
+
+# Content catalogs — daily lessons, knowledge cards, meditations, sleep stories,
+# premium-preview rotation. Backed by migrations 2201..2204 (author-curated
+# seed data, no LLM). Routes carry absolute paths (/discover/*, /meditation/*,
+# /sleep-stories/*, /home/premium-preview-rotation) so no prefix is set here.
+from . import content_catalogs as _content_catalogs_module
+router.include_router(_content_catalogs_module.router, tags=["Content Catalogs"])
