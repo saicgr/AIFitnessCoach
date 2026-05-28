@@ -1,0 +1,2581 @@
+https://www.youtube.com/watch?v=fF_Gk9v7GNU
+The Fitbit Air is deceptively simple. It
+is a screen-free band that tracks your
+workout, your steps, your sleep, all
+behind the scenes without you having to
+do anything. It is $99 with an optional
+subscription, but it's not really about
+the hardware. It is all about the
+software and the AI layout that is
+helping you interpret all of this data
+behind the scenes. So, if you don't know
+it by now, the Fitbit Air is compatible
+with Android and iOS. I've been testing
+across both ecosystems and I can say
+that the experience is almost identical.
+The exception to this is if you pair the
+Fitbit Air with an Android device and
+you're also using it with a Pixel Watch.
+Now, that will only work if you are on
+Android because the Pixel Watch is not
+compatible with iOS. If you're new to my
+channel, my name is Lexi and I make
+videos testing tech in the real world as
+you can see. So, if you like that,
+please feel free to subscribe. The
+Fitbit Air itself is actually this
+really small tracker and it snaps in and
+out to different bands. I was sent the
+performance loop in both the standard
+finish. This is the berry color and I
+also have the Stephen Curry limited
+edition as well. The difference between
+those two bands is that the Stephen
+Curry version has a little bit of I
+guess extra grip on the inside and the
+band itself is more water resistant than
+the regular Berry version that I've got.
+The two that I have been wearing have
+been incredibly comfortable in
+comparison to other wearables that
+you're probably thinking of in this
+particular screenfree category. In
+particular, the Whoop and the Amaze Fit
+Helio Strap, which are two that I've
+also tested and reviewed. You can check
+those out on my channel as well. The
+Fitbit Air is leaps and bounds more
+comfortable to wear during workouts and
+especially for sleep. There's been times
+that I've kept having to look down at my
+wrist to check it's still there cuz it's
+so comfortable. It really does blend
+into the background and I honestly
+forget that I'm wearing it half the
+time. If you're deciding if a screenfree
+band is right for you compared to a
+smartwatch, the one thing that I would
+say from my experience over the past two
+weeks is that I've definitely found
+myself able to push myself a little bit
+further on workouts, especially ones
+that are cardiobased, like runs and bike
+rides specifically because I'm not
+distracted by looking down at my wrist
+and seeing my metrics right there in
+real time. It might be something that's
+important to you obviously if you're
+training for a specific goal. But if you
+are someone that just wants to kind of
+get more into the zone and just go for a
+run, go for a walk, then a screenfree
+band like the Air has actually been a
+super refreshing change for me. The
+Fitbit Air can calculate V2 max, but you
+have to do it with a run. And sometimes
+it can take to up to three outdoor runs
+of at least 10 minutes to actually show
+up within the app. And you're probably
+wondering what I'm actually doing at a
+track. Well, I'm not going to test out
+V2 Max specifically, although that's a
+nice byproduct. I'm actually going to do
+a heart rate comparison of the Fitbit
+Air on one wrist versus the Helio strap
+on the other. And as kind of my gold
+standard metric, my Northstar, I have a
+chest strap right there. I'm not going
+to flash you and show you awkwardly. Uh,
+but that's what I'm going to plot it
+against to see how accurate these two
+are. So, let's get running.
+Running against the wind sucks.
+Let's go back and check the results. So,
+looking at the average BPM from the
+heart rate strap, that's the gold
+standard that I'm comparing against,
+that was 152 BPM. The Fitbit Air was 148
+and the Helio strap was 149 according to
+their respective apps. So, a variance of
+3 to 4 BPM is actually pretty good from
+these straps. And if you take a look at
+the graph, they actually do both a
+really good job of keeping up with that
+steadystate cardio. It is really at the
+end when I did those sprints that you
+can see that both of the trackers do lag
+quite a bit. The Helio Strap finally got
+the message and caught up, but the
+Fitbit Air did not. While we're here,
+let's also take a quick look at sleep
+tracking because I did compare both of
+these two trackers against the eight
+sleep. Not a gold standard necessarily,
+it's just something that I know my
+baseline pretty accurately against
+because I've used it pretty much every
+night. So, the Fitbit Air does a really
+great job of breaking down all of your
+sleep stages and presenting that
+information in a really easy to
+understand format. The Helio Strap, not
+as much. I also feel the Fitbit Air is
+more accurate at tracking sleep stages,
+specifically awake time through the
+night, compared to the Helio Strap. I
+know this because I timed it when I was
+awake at night to work out exactly which
+one was tracking it more accurately. And
+a quick note on women's health tracking.
+You can log periods on the Fitbit Air,
+but it's not actually going to take into
+account the skin temperature
+fluctuations that the skin temperature
+sensor can track. So, this means things
+like your fertile windows and
+predictions such as ovulation might not
+be as accurate as other trackers. Back
+to the outdoor studio. So, the Air can
+automatically detect a number of
+different activities in the background.
+So, you won't actually need to open up
+the app on your phone and manually start
+an activity. So, the ones that it can
+auto detect at the moment include things
+like runs, walks, and there's a full
+list within the Google Health app. You
+can also go in and adjust the thresholds
+for automatic detection. If you're
+finding that it's not automatically
+giving you credit for the activity, if
+you are someone that does a lot of
+outdoor activities like I do, including
+runs and bike rides and walks, you will
+probably end up wanting to start your
+activity from the app itself rather than
+using that automatic workout detection.
+Why? Well, because this doesn't have GPS
+in it, right? So, if you go out and you
+go on a run and you're like, "Great,
+that was amazing. I love it. I want to
+see exactly where I ran so I can do that
+route again." You're out of luck because
+it's not going to track that map data
+for you without you actually starting it
+from the app. Can this give you
+reminders to move? No. The only things
+that the Fitbit Air can actually buzz
+and vibrate for are alarms and a low
+battery notification when it hits about
+20%. But this is one of the areas where
+I found that the hardware. Look, I just
+wish that the vibration motor was a
+little bit more effective on the Fitbit
+Air because at its lowest intensity, I
+can't feel it at all. I have to keep it
+on the highest for pretty much
+everything, including alarms. And if
+you're a heavy sleeper, I think you
+might be able to sleep through this.
+It's just not that strong. And if you
+hadn't guessed it by now, there is no
+way to get this to buzz for
+notifications on your phone, like calls
+and things like that coming through.
+You'll have to check your phone or rely
+on a smartwatch if you want that
+functionality. Battery life has actually
+been surprisingly great. I have met and
+then slightly exceeded Google's claims
+of up to 7 days. I was able to push it
+to just on 8 days before it went flat
+and I needed to charge. But again, if I
+wasn't checking the app, I wouldn't have
+been able to tell if the Fitbit Air
+needed charging because it just didn't
+give me that 20% buzz on my wrist. At
+least there is a light indicator on it
+as well. So, if you do do a double tap
+on the side of the device, it can give
+you that battery status. So, the red
+will mean it's under 20% and needs to
+charge, and the white means it's over
+20% and it does have enough battery.
+Okay, so let's talk about the Google
+Health app because that is really the
+key that ties all of this together. And
+the interface looks very different from
+the previous Fitbit app that you might
+be familiar with. I really do like the
+interface, though there are a couple of
+elements that I wish I could customize a
+little bit more. You can use the Fitbit
+Air with or without a subscription. So
+that $99 that you pay for the device, at
+least in the US, just gets you the
+hardware itself. You'll get a free
+3month trial of the Google Health
+Premium subscription. But really the key
+is that AI powered health coach. Now
+you'll see when you open the app,
+there's this thing called Ask Coach down
+here. This is where you can have a
+conversational back and forth with the
+coach, kind of like you would a real
+trainer, for example, but it is using a
+version of Gemini that is basically an
+LLM. So, you are going to have very
+textbased conversations with it. You're
+not going to be able to hear any audio
+from the coach when it's giving you
+advice. And you're also not really going
+to be able to see visualizations. So,
+for example, I went in one day and I was
+like, "Oh, like I want to do this
+specific workout. Can you help me give
+me some visual guides?" and instead it
+doesn't really generate any imagery or
+anything like that within the actual
+coach. It will push you to a different
+workout plan that you can start from the
+app. Some of the things I really do like
+about the coach is that it takes into
+account things like the weather. Uh the
+UV index specifically as well has been
+very handy for me cuz it's told me,
+okay, so you've had a fairly rough
+night's sleep. If you do want to do a
+workout, maybe keep it kind of easy and
+don't go out between the hours of say
+like 10 and 2:00 p.m. which is when the
+UV is going to be particularly high. But
+I also found over the past two weeks,
+the coach has been very kind to me, more
+so than other AI based training tools on
+other wearables that I've used. But I
+think I want someone who's like a real
+coach who's like shouting at me a lot of
+the time to get me to do stuff cuz
+that's the thing that motivates me, not
+that kind, warm, and fuzzy thing. Hey
+coach, I really like the options of
+training and things like that you're
+giving me, but can you kind of give me a
+bit more of a tough love approach? Let's
+see what it says.
+You respond to high stakes and zero
+excuses. And honestly, that's where the
+real gains usually hide. I mean, again,
+typical LLM. It's using a lot of filler
+words to get to the actual point. Are
+you ready to actually push the pace or
+are we just going to keep talking about
+wanting more variety with a boxing glove
+emoji?
+Quick update on that hard talk. Yeah,
+it's really thrashing me now. It's like
+your pace is falling apart cuz I changed
+it after I recorded that segment. One of
+the key differences when you are using
+the Google Health app on iOS is the
+integration with Apple Health. Now, know
+that this is a one-way connection. So,
+it's going to be pulling in the data
+that you have tracked from other
+wearables and on on Apple Health into
+Google Health. It's not actually going
+to be doing any kind of output into
+Apple Health. So, for example, by that I
+mean it's not going to do things like
+fill in your activity rings if you're
+wearing the Fitbit Air on iOS. Now, when
+you're giving a lot of your personal
+data over to a third party, you always
+have to think about the privacy
+implications, or at least I do. I think
+a lot about that. And so, especially
+with things like integrating medical
+records, that's an option that you have
+if you are a premium subscriber in the
+US, as well as integrating all of the
+different data points from, say,
+previous wearables, the previous data
+that you have from the Fitbit app, maybe
+even from Apple Health, and pulling all
+of that together into one unified
+source. you have to think about where
+that data is going. Now, I have to give
+kudos to Google for actually doing a
+pretty good job of communicating what
+all these data points are that it's
+collecting within the app. There is ways
+that you can go in. You can actually
+decide to delete individual items of
+data one by one. You can also do things
+like wipe your complete history and so
+on. And Google has specifically said
+that it is committed to not using health
+and wellness data from Google Health to
+serve ads. But that's the here and now.
+That may change. I have no insider
+information. The other thing I will say
+about that is you can actually turn off
+the coach as well if you want. Even if
+you have a premium subscription and you
+don't like that AI level of coaching,
+you can deactivate it, but it's not
+really easy to find. So, you go into
+your profile picture. Let's see if I can
+remember how to do it. Your data in
+Google Health
+and then
+feature privacy controls.
+Google Health Coach
+and then turn off. So, when it comes to
+the AI health coach, I'm really torn
+because I think in so many cases, it can
+be so valuable, especially for people
+that don't have access to having someone
+to help them, coach them, and work
+towards the either fitness or health
+goals that they're looking for. But
+also, the other side of things is that
+it's still an LLM. It still can make
+mistakes. It still can hallucinate. Yes,
+there is that little tag at the bottom
+of every conversation that says, "Yes,
+it can make mistakes. It's not a health
+tool." But still, there have been times
+where I have been having a conversation
+with it, and it's been telling me random
+data points that are actually wrong.
+They're actually just completely wrong.
+And I've had to kind of have long
+conversations with it to be like, "Where
+did you get this from?" For example, I
+went out on a walk and then I came back
+and it said, "Your heart rate was spiked
+at 184 BPM." I was like, "That's pretty
+much impossible unless something was
+going very, very wrong with my heart at
+the time." because it was a pretty
+casual stroll. So, I had to dive in
+deeper, ask it more follow-up questions.
+Where did you get that from? Eventually,
+after pushing it enough, it told me that
+this was just an anomaly and it was a
+sensor blip. So, if you didn't go in and
+have that more in-depth conversation
+with it, you could have just taken that
+as gospel and thought, "Oh, no,
+something's actually pretty wrong." So,
+as always, take it with a grain of salt.
+It is AI. It can absolutely make
+mistakes. Okay, so in short, Fitbit Air,
+absolutely love the hardware. It is
+incredibly lightweight, especially
+compared to the competition. I love that
+there is an option of using it without a
+subscription and the experience. I even
+though I don't actually have the option
+to turn off the subscription, you can
+see a screenshot here of what it would
+actually look like. And I think for most
+people who don't want AI coaching, this
+is actually just going to be a total
+steal at $99 to be able to track all
+this information and not have that added
+AI layer. It's going to be a perfect
+basic fitness tracker for most people
+who also just want to keep an eye on
+their overall sleep and activity and not
+go to any additional fuss.
+
+https://www.youtube.com/watch?v=1oPgReW21uM
+Today is a pretty exciting day because
+we're at the launch event for the brand
+new Fitbit Air. We're going to hear from
+Steph Curry, [music] do a workout with a
+celebrity trainer, and basically spend
+the entire day testing out the new
+Google Health app in real [music] life.
+So, let's see if the Fitbit Air is
+actually worth the hype. Now, I actually
+got the Steph [music] Curry edition and
+both the blue and pink bands.
+We're going to be doing some workouts
+today and using the Google Health app
+for the very first time together.
+[music] I'm very excited for the day.
+It's absolutely stunning and beautiful
+outside. Let's go have an amazing day
+together and test this out.
+>> [music]
+[music]
+[music]
+[music]
+[music]
+[music]
+>> Okay, we just finished our workout and
+these are my stats. So, it says cardio
+load 38, heart rate at 122, energy
+burned 227 calories, and it was a
+27-minute
+workout. So, you also don't need to
+actually
+log that you're doing it. It's going to
+know that you're doing the workout, but
+I just want to see what it looks like
+cuz it's my first time.
+What I noticed, especially when I was
+doing like burpees and push-ups, is that
+the Fitbit Air doesn't hurt my wrist at
+all. Like it's so light, I barely even
+feel like I have it on my wrist. I'm so
+impressed with this so far. Workout one
+complete. So I really like that we can
+actually check our heart rate zone. So
+it says that I've spent 8 minutes in the
+moderate zone and 20 minutes in the
+vigorous and peak. So I like this cuz I
+can look back and be like, oh I actually
+tried on that workout.
+Um yeah, this is really fun. Really
+liking it so far. It is so lightweight,
+I barely realize that it's on my wrist.
+I feel like when I have a hair tie
+around my wrist, I can feel it more than
+this Fitbit Air. This is really great.
+Now let's hear what Steph Curry had to
+say. He is the new performance advisor
+at Google and has his own limited
+edition band. Well, what's up everybody?
+How y'all doing?
+Uh it's a it's a very surreal feeling
+for sure.
+We're just talking to
+our team in the back and not even a year
+ago
+you know, all the all the kind of
+conversations and and I deal with this
+partnership would look like, you know,
+envisioning a day like today where
+uh all the work Google health team, you
+know, myself and Carl integrated this
+into, you know, our daily
+uh practice when it comes to preparing
+me on and off the court to be my best
+self and to have this product that I'm
+super proud of and um and happy to share
+with the world. I I I couldn't even
+envision a day like today and the
+feedback we've been getting already um
+the fact that
+you know, see a lot of people have it on
+their wrists as well and starting to
+really understand the power of what this
+product can do along with the the
+platform and and the the personalized
+health coach. All those things that I've
+been experiencing for the last
+6-plus months. Um I'm just excited to
+share with the world. So it's been a a
+great journey so far. We're Steph talked
+about how every morning he speaks with
+his health coach in the app to set his
+morning off and set his day off on the
+right foot. He also stressed the
+importance of a good sleep schedule,
+especially because he's flying all over
+the place, different time zones. He said
+he's napping on the bus, napping on
+planes, and
+he thinks that this is an incredible
+advancement and is helping him as a pro
+athlete get better every single day.
+Having those conversations first thing
+in the morning when you're kind of
+setting yourself up, one, it keeps your
+health at the front of mind.
+Um and allowing, you know, the as you're
+that the algorithm and and the personal
+health coach to learn uh with you as
+well.
+Those that interaction is really fun
+just cuz,
+you know, it's something new. It's
+really cool because he actually said
+that he put #lockin
+on the inside of his band because he
+used to tweet that before every game.
+So, that's a fun little
+hidden Easter egg you might not know.
+I'm going to show you guys right now.
+Cuz my performance and and making sure
+that I have the data behind me to
+understand where my body's at from time
+to time. So, working through that's been
+been pretty awesome.
+The uh the changes over this this this
+time frame have uh paid off. I love
+that. He also said how it's so seamless
+and versatile, and he actually has a
+huge tan line from this because he's
+been wearing it every single day for the
+past 6 months. So,
+I think Steph and I are besties now with
+our matching Fitbit Air. Now, I want to
+run through and talk about the new
+Google Health app. If you guys know me,
+you know I love Google Gemini. So, now
+having an AI health coach that's
+integrated with Google Gemini, it just
+makes me so much more excited to work
+out, fix my sleep schedule, and just be
+overall more healthy and active. So, we
+have four sections: today, fitness,
+sleep, and health. Now, if you have the
+premium version, which I think you get 3
+months free by signing up, you can click
+on ask coach, and that is our AI coach.
+Now, earlier when I set this up, I
+actually went through a little
+questionnaire, and the health coach
+learned some of my goals. But, you can
+always add to it. I was kind of in a
+rush, so I just said like I want to do
+more consistent cardio and
+you know, get some help with my sleep
+schedule. So, that's what it knows right
+now. It's adjusted for me. It knows that
+um it's refining the stats to keep my
+cardio load tracking. It kind of gave me
+a week workout plan and
+goals to hit without me even having to
+put in that much information, which I'm
+really happy about. Before I used to go
+and chat with Gemini and try to make the
+best plan, but now it's all integrated
+right here. So, as you can see, we can
+ask our coach anything. So, I can say
+something like
+um I want to do more hit workouts like I
+did earlier today.
+Help me figure out what time of day I
+should do them based on my schedule. I'm
+always traveling, so I really want to
+consistently add more information and
+teach the AI coach more about me and my
+schedule, so we can work together to
+make the best workout plan possible.
+Maybe I should do a long-term video
+about this.
+Yes, I absolutely should. Then we have
+our fitness
+tab. So, that is going to be more
+in-depth of our fitness. We can actually
+click What is this? Oh, there's
+workouts. I actually didn't know this.
+Okay, there's tons of workouts you can
+choose from. Abs and core, total body,
+um yoga. Okay, this is amazing.
+We can also see all of our recent
+activities.
+And then our sleep section. Now, I
+haven't gone to sleep with this yet, but
+I'm very intrigued on how this is going
+to work and how it's going to compare to
+other sleep trackers.
+Because when I'm on flights, I take
+naps. When I travel across the world, my
+sleep schedule is messed up because the
+time change is different. So, I'm very
+excited to see how the sleep section is
+going to work. I'm going to wear it to
+sleep tonight, and then tomorrow morning
+we'll talk a little bit about what we
+get from our day one sleep score. But
+yeah, now that I have a coach that can
+help me with sleep, that's also really
+awesome. Next is our health section. The
+health section basically shows
+everything. I have to set this up still.
+I have to, you know,
+get in the groove of this. After a few
+weeks, I'm sure it'll know a lot more
+information about me, but that's what we
+have so far. Now,
+a feature
+that I think is insanely awesome is you
+can log things. So, say you're not
+wearing it, you can log your workouts,
+right? But we can also log what we ate.
+So, I just took a picture of the lunch I
+ate, and
+I'm just sending it in.
+So, now my coach is going to have what I
+ate for lunch. I've logged a meal for
+you, seafood salad, 350 calories,
+25 g of protein, and it even saw my
+coffee on the side.
+Cheers. I drink a lot of coffee. So, now
+in the health section, you can click on
+your calorie intake. And just because I
+sent it a photo, it estimated that it
+was 410 calories, and that I have
+1,948
+calories left. Amazing. I never put a
+target for myself, but I think they just
+have that already. But if you go more in
+depth, then you say like, "Hey, I want
+to
+shed some body fat, gain some muscle.
+Maybe my protein goals are 100 g of
+protein." It's going to track that in
+there for you, so you can focus on your
+fitness goals and nutrition goals
+without, you know, wasting time on apps
+inputting things or searching things up
+and seeing how many calories it has. So,
+this is really helpful for me. I'm
+excited to get into the groove of it and
+try this out more day by day. Now, I
+didn't log my breakfast today because I
+got this after. So, let's actually tell
+the coach verbally what I ate and see
+what it says. Today for breakfast, I ate
+two eggs sunny side up,
+a chicken sausage, and one piece of
+English muffin.
+I also had a cappuccino.
+And at around noon, I had a
+coconut water. Easily with just my
+voice, I was able to log what I ate for
+breakfast.
+It estimated everything. We're going to
+head back home, maybe go on a walk, and
+I'm going to tell you guys how the sleep
+tracking is and if it's comfortable to
+go to sleep with.
+>> [music]
+>> Hey guys, I'm back at home. I've worn
+this now for two nights, and I've worn
+it on one flight. So, let me tell you a
+little bit about the stats that I'm
+getting initially. So, the first night I
+had 7 1/2 hours of sleep, and I got an
+81%, which is good. I like that it's
+able to tell me
+all the time I'm awake, my REM sleep,
+light sleep, deep deep sleep, and how
+many times I woke up. I also kind of
+like that it has this
+little meter of sleep quality to show me
+that,
+you know, I fell asleep at a reasonable
+time. I had a
+good sound sleep for 3 hours and 20
+minutes, and it's within a range. So,
+it's giving me a lot of really great
+information.
+And I can just go and click on the coach
+to chat with it about my sleeping
+patterns. So, after the first night, I
+said to it like, "Hey,
+in the morning I'm waking up. I'm going
+to go on an airplane.
+What time should I try to go to sleep
+tonight so that I can have a nice
+restful sleep?" It told me these
+specific time I should try to go to
+sleep and not to have coffee at a
+certain time. So, I tried to listen, but
+I didn't listen to where it said
+not to sleep a lot on the flight. That
+kind of messed me up. So, I kind of wish
+I listened to the coach on that because
+my sleep last night
+was not good. It was 4 hours and 52
+minutes and I got a 62% sleep score.
+It's a lot lower than usual. It says
+lower than usual.
+And these are what my stats are. So, I'm
+sure after it tracks me for a longer
+periods of time, it's going to be able
+to have more personalized
+insights.
+Cuz right now it only knows two nights.
+I really hope it doesn't think last
+night is a normal night for me because
+it definitely wasn't trying to beat jet
+lag. But, I'm really liking it so far.
+And in terms of comfort when I'm
+sleeping, okay, it is very thin, but
+sometimes if I sleep on my stomach and
+put my wrist down,
+it can bother me a little bit. So, I did
+change it to my right wrist when I went
+to sleep and it doesn't bother me cuz I
+think I sleep exactly the same every
+single night. And sometimes I sleep like
+this
+and it's kind of on my face. Now, a
+problem that I've had with other sleep
+tracking rings or watches is that I see
+that light. Like, you know on the bottom
+of like a ring they'll have like the red
+light or the green light.
+I will see that sometimes
+and it wakes me up or I just don't like
+seeing a light when I'm sleeping. But,
+this one you do not see it at all. It's
+tucked underneath
+the band. You don't see the lights, so
+it hasn't woken me up, and I really like
+that. Very comfortable to sleep in.
+Also, I recommend
+to get more than one band because I went
+in the shower with the band the first
+night, and then it was wet, and I was
+going to sleep, so I had to change it to
+a different color. So, I'd recommend
+getting two. So, I'm actually going to
+Tokyo tomorrow. I have a flight tomorrow
+early morning, and about a 15-hour
+flight to Tokyo. So, I'm going to ask
+Coach, "When should I go to bed tonight?
+What should I eat on the flight? What
+should I How many times should I nap on
+the flight?" I really want to ask the
+Coach a lot of in-depth questions so
+that I can be prepared, try to beat jet
+lag, and just be my best self when I
+land in Tokyo. So, if you guys want to
+see more content testing out
+my new Google Fitbit Air, leave a
+comment down below, and I will make sure
+to film that for you guys. I'm super
+excited. I feel like this is going to
+kick me back into health, wellness, um
+better sleep cycles, and just get me on
+top of my game physically, mentally, and
+just be my better self. So, if you guys
+enjoyed this video,
+give me a thumbs up. I will see you guys
+very soon. Thanks for watching. Bye.
+
+https://www.youtube.com/watch?v=EF334IUApzE
+I've been wearing the Google Fitbit Air
+every minute of every day for the past
+week. I'm going from a full-blown
+smartwatch to this screenless fitness
+tracker. This is the deep dive review
+that you need if you plan to buy it.
+Curious how it works, which features
+require a subscription, which features
+don't. I'm going to break down
+everything.
+>> [music]
+>> Tech it before you wreck it. What's up,
+geeks? I'm Kirk. So, I've been wearing
+the Fitbit Air alongside my Google Pixel
+Watch 4. So, I'm going to break down
+what I've learned so far about the
+Google Fitbit Air. And stick around to
+the B-side because, frankly, there is a
+massive hidden cost to this band that
+nobody explains ahead of time and you
+need to know about. So, let's get right
+to it. First and foremost, inside the
+box, you get the band, the actual Fitbit
+Air device, which is pretty tiny and it
+snaps into the band. You also get a
+charging cable and a basic instruction
+manual. I [music] dive deeper into my
+unboxing and my initial impressions in
+my previous video, which I'll link right
+here and down [music] in the
+description. Let's talk about the band
+itself. It's a very basic structure.
+This is the one that's included. I
+wouldn't say it feels cheap, but I don't
+think it feels specifically high-end. It
+certainly serves the purpose and it does
+feel like it's sturdy enough. This thing
+will probably hold up over time. And
+there's a little plastic area inside
+where you clip the actual Fitbit device
+into the strap. This makes it really
+easy to swap to different straps [music]
+with the same Air device. It uses Velcro
+to easily strap this on and off your
+wrist quickly. Now, take a look right
+there. There's actually a small buckle
+that's made out of stainless steel. On
+my strap, it almost looks plastic
+because it matches the rest of the black
+band, but it looks pretty cool on some
+of the other bands that have polished
+silver or champagne gold buckles. By the
+way, these straps can be replaced for 35
+bucks. There's also two other options.
+This is the active band. It's silicone.
+It attaches more like a classic watch.
+It's designed to wear when you're
+jogging or you're at the gym. This one
+is called the elevated modern band. It's
+made of polyurethane. It's designed to
+be a more higher-end option. This one's
+going to cost $50. A lot of people have
+asked me about different ways to wear
+the Fitbit Ace, specifically if you can
+wear this on your bicep. Apparently,
+that's a popular way to wear other
+fitness bands, and perhaps third-party
+straps might allow that in the future,
+but right now these straps only work
+with wearing it on your wrist. In fact,
+you're supposed to wear it slightly
+above your wrist. So, the actual Fitbit
+Ace tracker is this tiny little plastic
+module. It's designed, as I said, to
+click in and out of those bands. This
+really is the heart of it all. Inside,
+you have an optical heart rate monitor,
+an accelerometer, a gyroscope, an oxygen
+saturation monitoring sensor, a
+temperature sensors, a vibration motor
+for alarms, and of course, somewhere
+inside of there there's also a battery.
+And Google promises 7 days on a single
+charge, 90 minutes to charge this thing
+up from 0% up to 100%, but you can get a
+day's worth of usage, they say, by just
+charging it for 5 minutes. I will say in
+my testing, 7 days seems realistic,
+although I was usually plopping it on
+the charger every 2 or 3 days just to
+keep it above 50%. I usually put it on
+the charger while I was in the shower,
+and by the time I got out, this thing
+was charged back up. I want to jump over
+to the Fitbit app, although it's not
+called the Fitbit app anymore. They've
+now renamed it Google Health, and it's
+been reimagined, if you will. It's the
+same app fundamentally, but it does a
+lot of cool new things. I tested it on
+Android, but it's going to work just the
+same on iPhone as well. You get mostly
+what you'd expect. All of your basic
+fitness statistics, your steps, your
+sleep tracking, a readiness score, your
+heart rate over the course of your day.
+It automatically detects and tracks
+various fitness activities. You can see
+on my app where I played golf, where I
+played badminton in my backyard, and
+then the stats related to those
+activities. All of this was really cool,
+and honestly, it worked just as you'd
+expect, almost seamless, short of a
+couple of times when it did pop up on my
+phone and say, "Hey, we saw you were
+active. What exactly were you doing?"
+and I simply tapped one of the options.
+But I will say the real magic is when
+you add Google's Gemini AI into the mix,
+which is ingrained into this new Google
+Health app. Daily notifications that I
+found super useful not only updated me
+on activity and my sleep, but also added
+context based on my previous activity
+and previous sleep, noting a few times
+that my longer sleep times were helping
+me make up for shorter sleep sessions
+during the week. It was really cool and
+felt very personal. And check this out,
+it even knows the weather. Of course it
+does, right? Suggesting I might want to
+get outside and do some outside activity
+early since rain is going to be moving
+in around 2:00 in the afternoon. How
+cool is that? It is clear that Google
+wants to become your personal health
+coach. That's exactly what it feels like
+with this app, and that's just after a
+week of tracking me. I can't wait to see
+how well Google tracks my health after a
+month or 2 months of tracking my health
+and my sleep. This is the B-side of the
+video, and I want to break down what
+they call Fitbit Premium and your
+personal health coach, some of the stuff
+I was just talking about. So, it costs
+$10 per month or $100 per year, and you
+have to consider that cost in addition
+to the $100 for the strap itself when
+considering the overall cost of this
+thing. You do get a lot of cool
+features. Think of it this way, without
+the subscription, you get basic tracking
+of health stats, workouts, your sleep.
+It's going to show you in the Google
+Health app that you can store your
+medical records. In addition to tracking
+all this information, you also get the
+Google-generated sleep score, you get
+the Google-generated readiness score. If
+you want the basics, you'll get that for
+free with this strap. What you're going
+to pay for with Google Fitbit Premium is
+anything more than that. Weekly fitness
+plans generated specifically for you,
+detailed sleep insights designed to help
+you understand and improve your sleep,
+AI-generated summaries of your medical
+records instead of just storing them, a
+library of workouts from trainers, and
+most importantly, that new AI coach from
+Google, which uses Gemini to answer
+questions specifically about your health
+records and your health stats and your
+sleep stats. And honestly, it is super
+cool how amazingly detailed it can get.
+[music] So, I think it's important to
+point out that those paid options are
+really, really cool, although not
+required. And at 100 bucks per year, you
+got to factor that into the cost of this
+strap. You buy the strap for 100 bucks,
+you pay for 3 years of tracking and
+health coach, we're at $400. That
+changes the price of this altogether.
+And I told you I've been wearing both my
+Google Watch and this strap, the stats
+are almost identical. I will say the app
+is really cool. It lets you switch
+between which stats you want to view,
+and it'll automatically figure out which
+data to use even if you're wearing two
+trackers or maybe just wearing this one
+when you sleep, it'll figure all that
+out, you don't have to worry about it.
+So, the question is, who should buy the
+Fitbit Air? Well, I think it depends. I
+really dig it. I've had a lot of fun
+testing this thing out. Google did an
+awesome job with this. Frankly, the
+Fitbit Air is exactly what Google needed
+to do. But, if you already have a smart
+watch and you're perfectly happy with
+the watch, you don't mind wearing it to
+bed to track your sleep and charging it
+up every day or two, why would you need
+a fitness tracking band? You really
+don't. And frankly, it would be
+redundant unless you're not happy with
+that watch. And remember, this is a
+fitness tracking band. That is it. It's
+not a watch. You can set alarms to
+vibrate the band, but otherwise, it
+doesn't tell time. It doesn't notify you
+about a text message, an email, it
+doesn't buzz when you get a call. It
+does one task very well. But, if you
+can't wear a watch to bed, this is a
+great way to track your sleep. And if
+you'd rather wear a regular watch, an
+analog old-school watch, this would be a
+great addition to that. Or maybe you
+just don't do watches at all and you
+still want to track your fitness, that's
+exactly who this would be perfect for.
+So, this isn't the first fitness
+tracking band, it certainly will not be
+the last, but I do think at this point
+the Google Fitbit Air is the one to
+beat. I think other companies are going
+to be chasing Google right now, and I
+can't wait to see what other companies
+come up with. But for now, 100 bucks,
+you get a lot for that price. I think
+you can't go wrong whether you're an
+iPhone user or an Android user with the
+Google Fitbit Air. I can't wait to hear
+what you guys have to say. Throw your
+comments below. I read every single one.
+If you've got questions about the Fitbit
+Air, I'll try to answer them. I'd love
+to hear if you've already purchased it,
+what you think so far, and do me a huge
+favor. It helps me grow here on YouTube,
+and it'll make sure that you guys see
+new videos as I post them. Subscribe to
+my channel. I got a lot more coming
+right here on YouTube. Tech it before
+you wreck it. I'm Kirk.
+>> [music]
+
+https://www.youtube.com/watch?v=npRkqxPt_9E
+So, this is the Google Fitbit Air and
+today we'll be unboxing it and I'll be
+giving my first impressions of the
+newest screenless Google Fitbit Air,
+which is going to be the next thing that
+might kill Whoop forever. And I know
+that might be a hot take, but yeah, here
+we are. Let's take a look at it. So, the
+box itself just comes with basically
+nothing. You open it looks like from the
+back here, which is what we're going to
+do. Yeah, here it is. This is the Google
+Fitbit Air right here. And it's a pretty
+small band. Honestly, I'm kind of
+shocked at how small it is. So, this is
+the puck and this is going to be the
+activity tracker itself. Now, it's all
+integrated right into the band and it's
+super lightweight, which is something
+that I really do like so far. Now, it
+also comes with a USBC charger, it looks
+like. So, yeah, this is really about it.
+The Fitbit Air doesn't really come with
+anything else besides the chip for the
+Fitbit Air and also the charging magnet
+which is pretty simple. All you got to
+do is click it on the back and it snaps
+right into place which is super
+convenient. Now, how to activate this? I
+have no idea. I genuinely have no idea.
+So, let's look go through the manual
+right here. So, first things first, we
+need to download the Google Health app
+to start, which is what we'll do right
+now. Now, keep in mind, I am actually a
+Apple user with the Apple Watch Ultra.
+That's my preferred activity tracker of
+choice. But I definitely do want to
+switch to something that makes a little
+bit more sense, which is the Fitbit Air.
+Because while I do love the Apple Watch
+Ultra, it is quite bulky and it's quite
+heavy sometimes. Whereas this is super
+unobtrusive, doesn't really protrude out
+of your wrist, and it's very
+lightweight, which is something that I
+really like. So, I'm really curious how
+this is going to be compared to the
+Apple Watch Ultra. Now, another thing
+that I definitely have some concerns
+about is what it's like for Apple users
+using the Google Fitbit Air. So, for
+people who don't want to use the Apple
+Watch Ultra, they might want to refer to
+something like the Fitbit Air or maybe
+they're Whoop users on the iPhone. So,
+it's going to be really cool to see what
+it's like using the Fitbit Air for the
+iPhones. So, that's going to be a video
+that I'm going to be doing as well. And
+I'm also going to compare it to the
+Apple Watch as well. So, make sure you
+subscribe if you don't want to miss
+those videos. With that being said,
+let's uh let's get started. So, I got
+everything under control. I got to sign
+in with Google. I got to sign in with
+Google. You can also sign in with Fitbit
+if you choose to. If you have a Fitbit
+account, it's all going to be deleted
+permanently after March 2nd. So, make
+sure you move it to the Google account,
+which is something that you'll be able
+to do when you move your Fitbit account
+to directly to Google Health when you're
+signing in with the uh Google Health
+app. Okay. So, finally, after creating a
+new account, because my previous one was
+a work Gmail account, which doesn't
+work, you will need to make a new one,
+which I just did. Now, we finally can
+use it. Now, going through the setup
+process, it's going to ask you other
+questions like, do you are you okay with
+them using your data, your weight, your
+height? So on the Fitbit Air, you can
+actually connect your Fitbit smartwatch
+tracker or a scale and you can also see
+data from your held ads in Google. And
+looks like all I have to do is power it
+up. So to power it up, I have to keep my
+Fitbit Air charging near the phone.
+Okay, let's let's do that then. Now, you
+can't use the Fitbit Air right out the
+box. You actually need to do an update,
+which is what I'm doing right now. And
+in order to do the update, you must keep
+the Fitbit Air plugged in to the
+charging puck. So, we're updating right
+now and um let's let's see what happens.
+Okay, so finally after charging it and
+updating for roughly about 3 to 5
+minutes, we can finally use it. Now, the
+app itself is going to tell you if you
+want to get to know the Fitbit Air,
+which I do. Now, if you double tap the
+device, you get to see the status light.
+So, I'm just going to put it on my wrist
+right now. And already, I kind of do
+like the fact that it's very
+lightweight, but I don't love the
+material. The con, it feels really
+cheap, but it's a bit of a trade-off,
+right? You get something lightweight and
+you do get something that's a little
+cheaper feeling, but it's only $129, so
+we really can't complain too much. Now,
+if you want to check the battery, it
+looks like you have to double tap the
+device. And once you double tap it, you
+get a status light. Now, if it's white,
+that means it's over 20%. If it's
+blinking red, that means below 20%. And
+if it's solid red, that means you get no
+battery. And of course, you want to make
+sure that the little puck is actually on
+the top of your wrist and not on the
+bottom. So, make sure that when you have
+the Google Air or the Fitbit Air, just
+make sure that it's I would say wrapped
+pretty pretty tight around your wrist.
+And it also tells you to give your wrist
+a rest, which totally makes sense cuz
+even with my Apple Watch, I switch it
+over to my right side at night time just
+so that I can give my wrist, you know, a
+bit of a rest and I don't get that itchy
+feeling. A lot of that bacteria stays
+under the wash from all the sweat. So,
+that's something that I do recommend.
+But now that I'm testing both at the
+same time, I don't know what that's
+going to look like. Now, it does mention
+that you can get 3 months of health
+coaching on them, which is powered by
+their AI Gemini. Now, that is super
+smart because with Apple Health at the
+moment, their app, it gives you very
+little data and it gives you no AR to AI
+to work off of. Whereas the Google
+Fitbit Air will now use their, you know,
+Google Fitbit Health app and use it with
+Gemini to give you the best um coaching
+possible, which is very similar to what
+Bevel AI is doing right now. So, not
+only do I think this is going to kill
+Whoop, but it might kill Bevel AI as
+well. So, if you get the Google Fitbit
+Air, you do get a three-month free
+trial. And if you go over the free
+trial, the annual price is $140 per
+year, which isn't too bad. So, when you
+give it a shot, we'll test it for a
+little while. And uh make sure you stay
+around for that video cuz I'm going to
+give you my thoughts on everything. Now,
+I personally think this is a really good
+deal compared to Whoop because again,
+you don't need a subscription to use it.
+Okay, so so far my first impressions is
+that the box doesn't come with anything,
+which is fine. But the Google Fit Air
+itself is quite nice cuz it's really
+light and it's very unobtrusive, which
+is something that I really do
+appreciate. I don't love the feeling of
+it on my wrist. I don't love the
+material so far. So, there are pros and
+cons. I love the fact that it works with
+the Google Health app itself. And the
+just from my first impressions from the
+Google Health app, it is quite nice and
+simple to use. And it definitely offers
+a lot more than the Apple Health app cuz
+I feel like, you know, leave a comment
+down below, but you guys got to agree
+with me like the Apple Health app is
+actual garbage. It gives you very little
+data and I just don't feel like it's
+very optimized for the Apple Watch
+considering all the data that your Apple
+Watch picks up. So, I'm really excited
+to give this a shot. One thing that I do
+want to mention is that because it
+doesn't have a screen, you can't see the
+time. You can't see a lot of data. But
+most people have their phone on them
+anyways. So, you'll probably get a lot
+of that data like the time, the date,
+the temperature outside, what the
+weather is like, all from your phone
+anyways. While it is more convenient to
+do it from maybe my Apple Watch, just to
+glance over, it's just as easy to pull
+out my phone. So, maybe this is a really
+good time to switch to something like
+the Fitbit Air where you don't need a
+screen anymore. However, there is one
+thing that I want to talk about, and
+it's the fact that you can't start a
+workout from your watch. So, or from the
+Fitbit Air. You actually have to start
+it from your phone instead. So, that's
+going to be really interesting to see.
+I'm really curious to know um how well
+this is going to track my activities
+considering I do a lot of lifting and
+biking. So, yeah, want to see how this
+integrates into everything. And u I'll
+give you my thoughts on everything when
+the time comes. So, want to do videos
+like my Apple Watch Ultra compared to
+the Fitbit Air. Want to see what it's
+like for a Apple user to use the Fitbit
+Air. And of course, want to see how
+accurate the Fitbit Air is. So, I'll be
+producing a lot of videos about it. If
+you guys are interested, make sure you
+subscribe cuz I don't want you to miss
+those videos. I also have tons of videos
+talking about fitness apps and
+everything else related to improve your
+lifestyle. So, make sure you guys check
+those out. I'll see you on the next one.
+Peace.
+
+https://www.youtube.com/watch?v=_DqrBMCp2gw
+Hey, what's up guys? So, in this video I
+want to talk about Fitbit Air and Google
+Health features that are actually useful
+and people might use them in their
+day-to-day life. So, let's get started.
+The first thing that I want to talk
+about is that you can set an alarm on
+Fitbit Air and it will vibrate to wake
+you up. And this can be done by going in
+the Fitbit app. Then tap on this icon
+here. Go in Fitbit Air and you will see
+this alarm button here. Just tap on it
+and here you can add an alarm. Here it
+also tells you how you can actually
+cancel it which is something that I
+really like and it is very
+straightforward. So all you have to do
+is firmly double tap your Fitbit Air and
+the alarm will be cancelled. So you can
+just tap on add on new alarm and here
+you can select the time. So let's select
+something that will just go off.
+Press okay here and then you can select
+the days that you want this alarm to go
+off. You can also select repeat alarm.
+So it will repeat after 9 minutes if it
+is not dismissed by a double tap and
+then just save it and after that we'll
+just see how it works. So there you go.
+The alarm has gone off. It's vibrating
+now and all I have to do is double tap
+it and it will become silent. The next
+feature I want to talk about is that you
+can build customized health plans with
+the AI coach on this app which is
+something that I found to be really
+useful. So here you can see that it has
+some insights on my sleep that I didn't
+sleep enough last night and today is
+going to be warm so I should keep my
+movement light to avoid overtaxing my
+system and all that. And then it also
+gives me this suggestion to go to bed by
+10:30 p.m. So what I did was I asked it
+to build me a health plan and you can
+actually go in coach and then from here
+you can go in history and here you can
+find all your previous chat histories.
+This is the one that I'm talking about.
+So here I asked it to build me a health
+plan and it started asking me a few
+questions and after a bit of back and
+forth it built me a health plan. So here
+it gave me a strategy what I should do
+when I should work out how much I should
+work out in order to improve my sleep
+and it is calling this strategy
+sicardian align movement. So it gave me
+a plan and then I thought okay I need to
+follow this plan but eventually I came
+back and when I went into fitness I
+realized that the plan was actually
+already incorporated in the app. So I
+can see what it is talking about what I
+should be doing. I can also make changes
+log activity and go to history from here
+and then my plan is already here. So I
+have to complete six exercises this week
+and it gives me workout suggestions
+which workouts I can do to complete
+these six exercises this week and then
+tells me to cover 20 kilometers. Again
+workout suggestions are here. Now I can
+select any one of them. So let's say
+I'll go with this one. Now I can again
+go in adjust workout and ask it to
+adjust few things if I don't like them.
+But if I find that everything is all
+right, I can just go down and now my
+plan is right here. So the first section
+is warm up which is 5 minutes and then
+it also mentions what should be the
+heart rate target. Then there is the
+steady state walk which is 30 minutes
+long. Tells me the speed to follow. And
+then there's cool down and recovery
+which is again 5 minutes. Now because it
+knows that I'm consistently doing around
+40 minutes of walks every day on
+treadmill, it has built a 40-minute
+plan. So it is intelligent enough to
+know that. I didn't tell it that. It
+just knows it from my workout history
+and then I can just edit the workout if
+I want. If everything is good, I can
+just start the workout and it will start
+the workout and I can track it on the
+app. There is a video to go along with
+it. I can see all the details in the app
+and obviously the tracking will be done
+by the Fitbit Air. Now, if I go back
+from here, I can actually see all the
+stages of this workout. And from here I
+can see the time, duration, heart rate,
+cardio load, the distance I've walked.
+And I can also add exercises and end
+workout. So I've got full control of
+this workout. It's not like it's a fixed
+thing that I have to follow. I can
+control everything. I can control the
+duration and all that stuff on this
+workout. And I really like the idea that
+you can build a complete workout plan by
+just conversing with the AI coach and
+then it doesn't just come back with
+words. It actually builds the plan for
+you which you can follow along in the
+app. It's really streamlined and I tend
+to like things if they are streamlined.
+Next, you can also connect Fitbit Air to
+external fitness and exercise equipment.
+So, you'll get more accurate heart rate
+data on that equipment. And that can be
+done by going in this icon here. Go in
+Fitbit here and then go in share heart
+rate. You can see that you can connect
+it to compatible equipment so that you
+can track your real-time heart rate on
+your connected equipment screen or app.
+So from here you can get started and
+find the equipment connected and get to
+work. Moving on, if you go in the health
+tab here and scroll down, you can
+actually set up some alerts. So here you
+can set up high heart rate alert, low
+heart rate alert or irregular rhythm,
+which will look for atrial fibrillation
+in your heart rate or heartbeat. Now
+obviously it tells you right here that
+this can diagnose atrial fibrillation.
+It can let you know if there are signs
+of atrial fibrillation. So if you don't
+get a notification, it's possible to
+still have atrial fibrillation. This is
+not meant to diagnose your condition or
+anything. It's just supposed to let you
+know if there are any signs. So treat it
+as a wellness thing and not for medical
+diagnostic purposes. You can also read
+and understand what atrial fibrillation
+is and how it affects you and all that
+stuff. And below that, it also tells you
+that there is 98.2% positive predictive
+value which is based on their
+proprietary algorithm which has been
+tested in clinical study with nearly
+half a million participants. They do not
+link the study here, but it tells you
+here that it has a 98.2% positive
+predictive value. Moving on, let's talk
+about somewhat of a controversial topic,
+which is that you can actually connect
+your medical records with the Google
+Health app. So, this can be done by
+going in the settings here and then tap
+on medical records and from here you can
+go in manage connections and tap on add
+more providers and start looking for
+your provider. Here in Canada, I cannot
+find any healthcare providers because
+this is US only. So what kind of data
+can then sync up with the Google health
+app? And for that we need to go in the
+health tab here. Scroll down and here
+you can see your medical details. So
+things like allergies, conditions,
+medications, lab results, pregnancy
+details, any procedures, visits, social
+history, vaccines and vital signs. All
+of that will be available to the Google
+health app. And then if you want you can
+use the health coach to understand your
+lab results or your conditions or
+whatever that you want to know about
+your health. Now if you come back in
+here and go in medical records, you can
+actually manage your data here. So you
+can export your data. You can also
+delete it if you want. And you can also
+read about their data and privacy here.
+So what are their privacy policies when
+it comes to your irregular rhythm
+notifications, your medical records,
+Google health and health connect and
+Google health code. So you can read all
+about that. Moving on, let's talk about
+healthy recipes that you can also find
+in the Google health app. And for that
+you need to go in fitness, then tap on
+see all. And here you will find recipes
+section. Go in here and you will see
+quite a few recipes available in the
+Google Health app. Here you will see
+snacks. You can tap on see all to see
+all of them. Then we've got some
+breakfast options, some lunch options
+and dinner options. So here you can see
+what this recipe is and tap on play to
+play the video and see how to make this
+recipe. Now it would have been much
+nicer if they put all the ingredients in
+a list somewhere. So you can just copy
+them and go ahead and buy these
+ingredients, but for some reason that
+feature is not here. I hope they'll
+update in the future and make it more
+convenient for people to copy these
+ingredients somehow. And finally, the
+last feature that I want to talk about
+in this video is the food logging
+feature. Now food logging is fantastic.
+What you can do here is that you can tap
+on this log button and then you can tap
+on this food button and it gives you
+search bar here and you can search for
+whatever you ate or you can tap on this
+barcode button and then scan the barcode
+from the packaging. But there is an even
+better and easier way to log your food
+and calories for the day. So tap on the
+log button. You can go in camera or you
+can go in gallery and if you had taken a
+picture of your food, you can select
+that image and then ask the AI coach to
+tell you how many calories are there in
+that food. And then you can also ask it
+to log it as your meal, breakfast, lunch
+or dinner. So that's very simple and
+straightforward. But what I did was I
+gave it two different photos. So if I go
+in health coach, go in history and go in
+this history here. I gave it couple of
+photos. One is a mixed grill tray. The
+other is a plate of baklawa with four
+pieces in it. And I told it to add the
+food tray calories as last night meal
+and sweets as yesterday's evening
+snacks. So, it did exactly that. It
+added the mixed grill platter and its
+calories to my last night's dinner and
+then the baklava as a snack and provided
+me with the food log. So, I can go in
+here. I can see how many calories would
+be in the mixed grilled platter. There's
+a breakdown of carbs, fats, and
+proteins. And then same for baklava. I
+can see how many calories are there in
+four pieces and the breakdown of carbs,
+fat and protein. Now another thing here
+is that it didn't just log the calories
+and the meals. If you come here,
+here you will see that in the food there
+are no calories logged for today because
+I added them for yesterday. So if I go
+back to yesterday, you'll see that I
+exceeded the calorie target and the
+calorie intake was this. Active energy
+burn was this. carbs, fat and proteins.
+How much I took and then there it is my
+breakfast, dinner and other items. So
+dinner is mixed grilled platter. I can
+tap on it to see the exact same details
+that I saw in the AI coach and same for
+the baklava. Go in here and exact same
+details are available. So it has logged
+the food for me. It has logged the
+calories for me and it has all happened
+through the AI coach. I didn't need to
+do anything myself except for giving it
+couple of images. So that is fantastic
+and very convenient for people to now
+track their calories using the AI coach.
+And I think people would be more
+inclined to use this feature as compared
+to logging calories in manually by
+themselves. So that's about it from this
+video guys. These were some really
+useful features that I found up until
+now after using Fitbit Air and the new
+Google Health app. If you have any
+questions, let me know in the comments.
+I'll see you in the next one. Till then,
+take care. provide.
+
+https://www.youtube.com/watch?v=v0V9XgGeJNI
+Hi guys, Ireina here. Welcome back to my
+channel. So, the Google Fitbit Air is
+here. I'm super excited to share my
+thoughts on this device with you guys.
+So, let's get into it. Let's start with
+design. And as usual, some people like
+the new design and some didn't. If you
+ask me, I like the simplicity and
+minimalism of this device. And most
+importantly, how lightweight this
+fitness tracker is, especially with this
+band. I completely forget that I have it
+on my wrist throughout the day. Also, I
+can comfortably sleep with this thing
+on. I'll be honest, I could never track
+my sleep with smart watches. I love to
+sleep completely free of anything, if
+you know what I mean. And smart watches
+are just too bulky for me. That's why I
+normally use my Luna Ring for sleep
+tracking. And honestly, I don't mind
+wearing the Fitbit Air at night. It
+feels very comfortable. By the way, the
+coolest thing is that you could pair
+both the Pixel Watch and the Fitbit Air
+to your phone and switch between them,
+which is perfect for people like me. You
+could wear your Pixel Watch and stay on
+top of notifications and have all the
+other features you usually need
+throughout the day, but switch for
+comfort at night. It's important to note
+that you can use the Fitbit Air with
+Android as well as iOS, which is
+amazing. I love the flexibility. The
+price of the Fitbit Air is $100. It also
+includes 3 months of Google Health
+Premium, so you can try it out and
+decide for yourself if you need it. So,
+let's talk about features and what the
+Fitbit Air can actually do. To give you
+a better idea, let's open the health
+app, which was previously called the
+Fitbit app. You will see four tabs here.
+Today is like a summary of the day. You
+can customize it and put the metrics
+that are most important to you. Also,
+here you get quick access to log a
+workout or start one. The fitness tab is
+all about your activity. Here you can
+start a workout. There is a workout
+library with so many videos to choose
+from and you can create your own
+workouts and you can do it yourself by
+adding different types of exercise or
+you could ask the Google health coach to
+do it for you. And we'll talk about the
+coach in detail later in this video. The
+thing I don't like about customized
+workouts is that not every exercise has
+a video for it. Some just have a name
+and sometimes I have no idea what I'm
+supposed to do. You have to read the
+instructions and waste your time. I hope
+they will gradually add videos to every
+single exercise. In the fitness tab, you
+can also find your workout trends and
+some key metrics. The Fitbit Air has
+automatic activity detection, which
+works pretty well. It can detect common
+activities like walking, running,
+biking, team sports, and others. You can
+always start a workout manually. During
+your workout, you can see some of your
+vitals and metrics depending on the type
+of workout. The Fitbit Air is water
+resistant up to 50 meters, so you can
+take it for a swim. If you forgot to
+start a workout, you can always log your
+activity later. You can do it manually
+or once again, you can ask the coach to
+do it. You can even send a photo of what
+exercises you did. Now, let's talk about
+the coach. So basically, it's an AI tool
+that helps you with your fitness and
+wellness goals. For example, my goal was
+to build a consistent workout routine
+and build muscle strength because even
+though I love working out and sports, I
+struggle with staying consistent. Well,
+I feel like most of us do. So, I told
+the coach about my goals and
+preferences, we discussed the best time
+for me to work out and analyze all of my
+daily activity and sleep. And based on
+that, we moved forward with a workout
+plan. So the key thing is that you can
+train the coach just like you would any
+AI tool and make it work for you. So at
+first you need to spend some time with
+it. The coolest thing is that the coach
+doesn't just give you advice but
+actually does things for you. For
+example, after setting up the workout
+plan, the coach actually created these
+modules in the fitness tab to help me
+track my progress. So we agreed on four
+walking sessions and three strength
+workouts a week. It also gave me workout
+suggestions with some ready to go
+workouts considering everything we
+discussed before. But of course, you can
+do any workout. On some days, I wanted
+to try some of those video workouts from
+the library. So, every workout counts.
+You can always ask the coach to adjust
+your weekly plan, make it harder, change
+it completely, or just delete it. By the
+way, you can always ask the coach about
+the app, say if you can't find something
+or just don't know how to do something.
+It also analyzes your activities, health
+metrics, and sleep and gives you
+detailed insights. Moving on to the
+sleep tab. Here you get insights about
+your sleep with the sleep stages and key
+metrics such as sleep duration,
+restlessness, and others. As someone who
+uses a smart ring to track my sleep, I
+can say that the sleep insights in the
+health app are not as deep. But at the
+same time, the most important metrics
+are here. And I actually like the
+simplicity. Sometimes the abundance of
+metrics and trends can feel a bit
+overwhelming. So far, the sleep ratings
+on the Fitbit Air have been quite
+accurate, similar to my Luna Ring and
+Apple Watch. These are the devices I've
+been using altogether to track my sleep
+for the test. That was mentally hard.
+Too much stuff. If you take a look at
+these stats, you will see they're very
+similar with some slight deviations.
+From my experience, there is no device
+that would be 100% accurate, but they're
+very close. The trickiest part is the
+awake stage because every device has its
+own approach. Sometimes my
+three-year-old wakes me up in the middle
+of the night because she wants me to
+tuck her in. That's her new quirk. I
+quickly get up, do the job, and go
+straight back to bed. It takes me just
+10 seconds. And sometimes the Fitbit Air
+doesn't show that I was awake even
+though I was. But it always detects
+movement and it gets added to the
+restlessness metric. Google states that
+brief awakenings are now classified as
+restlessness, keeping the awake data
+more accurate, but all the devices are
+quite accurate in terms of when you fall
+asleep and sleep duration. So, the
+biggest takeaway is that the Fitbit Air
+is good enough to track your sleep. By
+the way, you can set an alarm on your
+Fitbit Air and wake up to vibrations on
+your wrist. Moving on to the health tab,
+and here we have a variety of metrics.
+All of it is customizable. The Fitbit
+Air can measure your heart rate, HRV,
+blood oxygen, skin temperature, and
+breathing rate. All of these vitals,
+except for heart rate, are measured at
+night. You can't measure them on demand.
+When it comes to heart rate, it monitors
+your resting heart rate. It can also
+detect irregular rhythm and send you
+notifications if your heart rate is too
+high or low after being inactive for 10
+minutes. You can track your cycle with
+the option of logging symptoms. There
+are also some metrics dedicated to
+mental well-being. You can log your
+moods and you'll find some meditations
+and breathing exercises here. You can
+also connect other meditation apps. By
+the way, you can ask the coach to add
+meditations or breathing sessions to
+your weekly plan if you want to be more
+consistent with this. It's important to
+know that when you first start using the
+Fitbit Air, it needs some time to
+calibrate your metrics. Some of them may
+not be available for a while, so give it
+a few days. By the way, the health app
+also has nutrition tracking with some
+dedicated metrics for that. You can log
+food by scanning barcodes, manually
+adding it, or my favorite, just tell the
+coach what you had, or send a photo of
+your meal, and it will do all the work
+for you. If you're in the US, you can
+also connect a health provider, log
+medical records, and ask the coach to
+analyze it. So, let's talk about what's
+included in the Google Health app right
+away with no subscription. And I'd say
+almost everything is included except for
+the health coach with its personalized
+fitness plans and detailed sleep and
+fitness insights, a workout library, and
+mindfulness sessions. Other than that,
+you can track your fitness activity,
+sleep, and health metrics with no
+subscription. Now, let's talk about
+battery life. It lasts up to 7 days,
+just like Google promised. The battery
+life will depend on your lifestyle,
+enabled features, and many other
+factors. If you double tap the tracker,
+it will show you the battery status. I
+don't know if it's just my device, but
+it doesn't work well. More often than
+not, I have to double tap multiple times
+until it shows the battery status. So,
+yeah, it's been annoying. Your device
+will also notify you with a vibration
+when you have less than 20% battery
+remaining. It takes about 90 minutes to
+fully charge the Fitbit Air from zero to
+100. But even if you charge it for just
+5 minutes, it will get you one day of
+battery life. So far, I've been really
+enjoying the Fitbit Air. I think it fits
+perfectly into a minimal
+notification-free lifestyle, which I
+feel is getting more popular as many of
+us feel a bit overwhelmed by all the
+information overload. I love that it's
+so slim and comfortable, but at the same
+time gives you lots of data. Ask away if
+you have any questions about this
+device. That's all for this video, guys.
+See you in the next one.
+
+https://www.youtube.com/watch?v=eC5vfEq-Aq0
+Yo yo, what up, YouTube? We got an
+unboxing today. I just picked this up. I
+pre-ordered it last week. This is the
+Google Fitbit Air. What's good about
+this is you do not need a subscription.
+You can just use it out the box. We're
+going to unbox it and see what that's
+like, and it only costs $99.
+So, we might be getting rid of the Apple
+Watch and rocking with the Google Fitbit
+Air. I don't know. Let's see. Let's see
+what it looks like. See if we like it.
+All right, here we go. We got ourselves
+the Google Fitbit Air.
+So, let's open this thing up
+and see what it's rocking with.
+Okay, yeah, we're not We're We're just
+We're just going to rip it open.
+Definitely ripping it open. I don't plan
+on returning, so it's all good.
+All right, this is it. This is it, the
+Google Fitbit Air.
+It's a single strap.
+Comes with a USB-C
+connector dock.
+Yep, this is the dock.
+This is how you charge it right there.
+I'm assuming
+rip this off.
+And you connect this here to charge it.
+Cool, easy,
+very simple.
+Could probably 3D print something to put
+this on.
+And uh let's see what it looks like on
+the wrist cuz that's the important part.
+The important part here is what it looks
+like on wrist.
+Is it bulky? Is it chill?
+I think Oh, this hides. Oh,
+so it is kind of chill.
+Oh, it's super chill.
+It just looks like a like chill ass
+bracelet.
+Kind of like it, dude.
+I like it a lot.
+All right, let's see. Let's see what
+it's like on app. Um I guess we're going
+to have to pull it up.
+Scan the QR code, pull it up, and we'll
+see what we got.
+All right, let's scan the QR code.
+Bring this thing up.
+And see what we got to do to connect it.
+Looks like we're going to have to
+sign in to our account. All right, looks
+like we're going to need the Google
+Health app. We got the Google Health
+app.
+Uh, let's sign in with Google. Let me do
+all my stuff.
+All right, we're in the app. Here we go.
+Uh, putting in the weight, 240 these
+days.
+6'3".
+Sure, agree to everything, right?
+Because what does it even matter
+anymore?
+Stay updated, no thanks.
+How would you like us to track your
+health?
+Connect the Fitbit.
+Fitbit Aria, here do Here she is.
+Start set up, agree to everything.
+An error occurred.
+Here we go.
+Power up and let's start. All right, how
+do we power it?
+Keep your Fitbit Aria by charge near
+phone until the setup is done. Okay, so
+now we got to
+We got to get it on the charger. All
+right, here we go. Let's Let's charge
+her up. All right, she's charging.
+We got a light.
+Continue.
+Now, the reason I bought this Fitbit,
+uh,
+just to try it. I mean, it was only
+$100. I'm not going to lie to you. I
+bought it because it's $100. That's
+literally what happened.
+Uh, location. I guess we got to give it
+some location access.
+Let's do while using the app.
+All right, get notifications. Sure,
+whatever.
+I don't to do notifications, but okay,
+we'll try them.
+Let's do banners.
+All right.
+United States, continue, update.
+Update out the box, it's usually how
+these things are. All right, folks,
+while this is updating, I'd like to take
+this time to say let's go Knicks. The
+Knicks are in the finals for the first
+time in 26 years. I got all kinds of
+merch over here. We got hats on deck.
+All the hats, different colors, I'm
+ready to go. So, we're going to test
+this Fitbit out when the Knicks win the
+championship and we're running through
+the parade. All right, I'll have the
+Fitbit on me for that. How about that?
+Can't wait.
+Here we go, here we go. Your Fitbit Air
+is ready.
+Continue to know Fitbit Air. Firmly
+double tap the device to see the status.
+White over 20%, blinking red below 20%.
+All right, so it's
+blinking white, we should be good,
+right? Yeah, we should be good.
+I also heard this thing, "Oh, you can
+switch the band." I was 100% wrong.
+Hold the device sides and gently push
+against the fabric to pop out the bands.
+Hold the device sides.
+These things are always look way harder
+than they seem.
+Yeah, that's not going to work.
+Oh, yeah, oh, dude.
+Oh, so you could swap bands. Oh, now
+this is great.
+All right, I'm
+I'm more pumped now.
+That's actually great.
+Sometimes you just got to look at the
+instructions. All right, let's place
+this thing on the hand.
+Let's see what we got here. Hold on.
+Sure, I don't want it to be too tight.
+There we go. That's good. That feels
+nice.
+All right, don't wear it too tight.
+There you go. Keep it clean and dry.
+Fair enough. You can wash it regularly,
+it says, with fresh water and some
+hypoallergenic soap. Sure, sure.
+Give your wrist a rest, also fair.
+Thank you for letting us know. Uh 3
+months of health coaching, no, thank
+you.
+Uh I'm not interested in that. I just
+want to lock and go.
+All right, syncing my data.
+And I think we're ready to rock. All
+right, that's it. We're done.
+Oh, you can also connect it to Apple
+Health.
+Oh, interesting. Sure, sync that up.
+Uh
+turn on all that. Yeah, whatever. I
+don't know.
+>> [snorts]
+>> I guess.
+All right, cool. Connect medical
+records. Oh, See the new sleep
+score experience.
+All right, these are a lot of things I'm
+going to have to dabble with.
+But I think for now we're just going to
+leave it as is. All right, 84% charge. I
+heard it charges super quick and lasts
+for a very long time.
+Uh I'm not sure the exact specs. I guess
+I could Google it real quick. For 5
+minutes will get you a full day,
+but in 90 minutes will get you to 100%,
+which is for 7 days. I mean, that's
+pretty legit. That's pretty legit.
+All right, cool. Awesome.
+All right, I think W. I think W in the
+chat
+for the Google Fitbit Air.
+Uh I'm excited to get it rocking and
+compare it to the Apple Watch, which is
+a little bit too big sometimes. This I
+feel like would be way better.
+Also, I've been having issues uh Apple
+Watch touches the tattoos
+and will pause my workouts. So, I'm
+interested to see if this will do the
+same thing, if it touches the tattoos
+and pause the workouts or it doesn't. If
+it doesn't,
+that means it's better than Apple Watch.
+So, I will let you know how that goes. I
+will work out with it this week and I
+will write it in the comments. All
+right, that's it for now. Google Fitbit
+Air, $100, not sponsored.
+See you next time. Don't forget to like
+and subscribe.
+
+https://www.youtube.com/watch?v=jvnWmdoOT-E
+J
+receipts sitting on the last thing I
+wrote you. Now I'm scrolling through the
+thread hoping I get closer. J Williams
+and smartphone conversations. It's a
+digital romance. A new kind of
+sensation. J Williams and smartphone
+conversations. Oh smartphone
+conversations.
+Williams,
+but the signals glitching is you
+ghosting now. Read receipts are on. So I
+know you got the message somehow. Living
+our whole life through these smartphone
+conversations. Lost inside the static of
+digital translations. It's J Williams
+with the heartbreak navigations. living
+in these smartphone conversations.
+>> All right, guys. Welcome back to another
+video with Shaman J. It is release day
+and tons of people are getting their
+products. I didn't think this would sell
+this well, or I guess I'll say I didn't
+think that many people would be at the
+store picking it up when I was picking
+it up. The pre-orders at the store were
+insane, man. There were there was a line
+of people uh and then also there was so
+many pre-orders. They had them like on
+this cart uh and they were just finding
+your name and I got there and I thought,
+"Wow, uh this is a lot of pre-o." She
+said, "Oh, we've gone through a whole
+bunch." And some of the things were sold
+out. But at my store, I decided to go
+ahead and pick mine up there. I didn't
+want to wait on shipping cuz I really
+wanted to get this going because whether
+you know it or not, I've been on the
+hunt to get away from using a
+smartwatch. The notifications are
+annoying most of the time. I don't even
+It's not something important. And so I
+find that a distraction. If you remember
+at the beginning, I was not really a
+smartwatch person anyway. Now I do like
+smartwatches, but fitness is all I use
+it for. That's all I use my smartwatch
+for. So I grabbed the Fitbit Air on
+pre-order. And then I chose when I got
+to the store, like when you get to the
+store, they're going to tell you that
+like before you when you pre-order, it
+tells you that you'll get your credit
+for $35 if you pre-order within 24 hours
+on your account. Well, for me, when I
+walked into the store, I think they
+realized, Google realized right away
+that's going to be a hassle and people
+are not going to want to come back up
+here or order, so let's knock this out
+in one session. So, what they did was as
+soon as you pick up your pre-order,
+you'll get an email right away saying,
+"Hey, you've got a $35 credit." Cuz she
+told me right away, she said, "Look in
+your email, you'll have a $35 credit uh
+since you pre-ordered." And I was
+thinking, I was going to ask that
+question anyway. Do I have to drive 40
+minutes way back over here to this
+store? And she said, "Nope, you can use
+your credit right now. just go in your
+email and as soon as you go in there,
+click on that and it'll come to me and
+then boom, boom, boom, that was it. And
+then I spent the rest of the time just
+kind of trying to figure out which one I
+wanted to get. And so I went with this
+uh fog color. I looked at the uh
+lavender and the berry. The berry is
+really bright in person, fellas. I don't
+know that you'd like that one. Uh but
+like my running shoes and stuff, I like
+a I like a bright running shoe. Like so
+I have a lime green running shoe. Uh but
+however, if I'm wearing it on my wrist,
+I don't want to wear a lime green or I
+guess I should say that berry one. I
+probably would rock a lime green one. I
+probably would. Uh but they don't have
+that band yet. They have fog and fog is
+like a minty looking color and I think
+it's really this looks really good in
+person. I think people are really going
+to love this one in person. U but I went
+with obsidian as my daily. Uh so I got
+it all set up set up. There's the health
+app. The health app is something that
+wasn't released initially. It came out
+today with the release of the product.
+And so I have the Fitbit app and the
+health app. And the health app is where
+it works with the actual um watch
+itself. Now, it'll work with the Fitbit
+app, it says, but uh cuz my Apple Watch
+is what I've been using with the Fitbit
+app. Uh and it didn't pull over any of
+the information from the Fitbit app yet.
+Uh, but it is pulling over just my
+regular health stuff like my weight and
+stuff like that and a few calories
+burned, but I haven't really started
+using it yet. Now, like the Hume Band,
+this Obsidian, this um obsidian, this
+Fitbit Air will need to be used for
+about 7 days before it logs all
+information. So, you need to wear it
+straight through for 7 days. Now, with
+the Hume band, it was a little annoying
+because the band wasn't long enough.
+With this watch, the band is definitely
+long enough. So, this is going to be
+good for me. I work out um every day. I
+track my food and um it's just cool. So,
+if you decide you want to get this, it
+costs $99 a year, right? Uh for the
+fitness coach, for the Gemini AI coach
+or whatever. So, that's that's cool.
+But, and when you first start it up,
+it's going to give you 3 months free.
+And then, but they want to they want to
+put a hold for $99, I believe it is. And
+they're not going to charge you until,
+but they lock you in cuz they want you
+to like it. So, I don't use a paid
+fitness coach. Now, folks, I use Gemini.
+I use Gemini for my fitness coach, and
+it's been working great for months. I
+never really like did a video on this or
+how I use uh um Gemini as my fitness
+coach, but you just go in there and
+you'll see. I've been logging for the
+last 6 months. I've been using Gemini to
+log all my meals and everything. And she
+I have a female voice, so it uh stores
+everything and it can remember
+everything. This thing can tell me what
+I was doing 6 months ago. I like that.
+And there's no charge for it. Now, I do
+have Gemini Flash or the Pro model, I
+guess, the paid one. I do have that one.
+Uh, so I don't know if there's a
+difference between the regular Gemini,
+so to speak, but I think you can still
+get basic information from Gemini once
+you go live or you go, you start to log
+all your food. I log my food, my
+calories, my protein. I log everything.
+And I've been doing this for the last
+six months with Gemini. So, it has not
+been a problem with me. Now, I'm about
+to start my journey with this Fitbit
+Air. And either way, this I mean now I
+I've never used Woop before or whatever
+it's called. Whoop. Uh and I cuz I don't
+want to pay for a ban that as soon as
+you stop paying it's just a blank slate.
+Like it's nothing. It doesn't work. And
+I'm pretty sure Google knows what
+they're doing by bringing out the Fitbit
+Air. You don't need to pay for this if
+you don't want to. And some huge pluses,
+man, is that it does the basics and it
+can last you for up to a week on a
+charge. This band feels better. Uh it
+looks good. It's got the the one size
+fits all is actually long enough to fit
+all. And that was pretty much my main
+complaint with the Hume band, but with
+the Fitbit Air, it's no longer. So,
+after my 7 days is complete, I'm going
+to wear them both. Obviously, I'm going
+to transition to to just using the
+Fitbit Air cuz I don't have to have um
+the Apple Watch or the Samsung. I don't
+have any I have to have a smartwatch at
+all and I really like it that way. So,
+there it is. Uh unboxing and my
+impressions of this band. They it is
+going to be I I can already tell you if
+you didn't pre-order, you kind of just
+missed the freebie because you get a
+free band. And I chose this band, like I
+said, but they have two other bands you
+can choose from. And I think the
+pre-order was a success for the Fitbit
+Air. Based on what I saw at the store,
+this thing is going like hot cakes. I'll
+see you in the next video. Take care.
+
+https://www.youtube.com/watch?v=ifZmGf7yr8g
+I've been wearing the Fitbit Air for
+almost 2 weeks now, and all the review
+embargos are up, so I can finally tell
+you everything about it. The problem,
+though, is that I'm a tech guy, not a
+fitness guy. I don't run. I don't have a
+gym membership, and I only know the
+basics about what's going on in the
+world of fitness trackers. At first, I
+thought that would make my review
+completely irrelevant among a sea of
+Fitbit Air reviews from super active,
+sporty people, but then I realized that
+it's actually a strength. If you're not
+an athlete either, but want something
+like this to help you get in shape or
+just keep an eye on your health data,
+then let me, a guy who would rather be
+on the couch playing video games right
+now, tell you about my experience.
+Here's how this is going to work. I have
+three major things I want to talk about.
+The Fitbit Air's hardware, the Google
+Health app, and who I think should
+actually buy this fitness tracker. So,
+the first thing I need to say about the
+Fitbit Air's hardware is that Google
+knocked it out of the park. It's so
+lightweight that I constantly forgot it
+was even on my wrist. There are so many
+strap options and it's so easy to swap
+between them, which allows me to wear
+the Moonstone Elegant Band most of the
+time and then easily swap to the Berry
+Active Band during one of the few things
+I do that keeps me active, which is
+riding my bike. And it's important to
+note that I'm basing this only on the
+first party straps Google provided to
+me. There will be so many third-party
+accessories for this which will give you
+essentially limitless options to match
+not only your personal preferences for
+workouts, but your personal preferences
+for specific kinds of workouts. After
+all, what you want for hiking might be
+different from what you want for cycling
+or hey, you know, playing video games on
+the couch. The one problem here is that
+I really am not a huge fan of the strap
+that comes in the box. The material
+feels like the same thing seat belts are
+made out of. And the edges are very
+stiff to the point where I feel like it
+digs into my skin a little bit. Also,
+since it connects with Velcro, it was
+easy for the hair on my arms to get
+stuck in it, which doesn't feel great.
+Now, to be clear, the strap isn't bad.
+It's just that all the other straps
+Google offers are much better, which
+isn't ideal. Another thing I love about
+this is how simple it is to use.
+Obviously, there's no screen on the
+Fitbit Air, but there's also no buttons,
+no speakers, nothing. All you've got is
+this tiny little LED light on the side.
+This is helpful for alerting you if your
+tracker is running low on battery. You
+can manually check on that by simply
+doubletapping the top of the tracker.
+One other thing the tracker has is a
+vibration motor. This will vibrate when
+you're tracking activities, like when
+you need to switch from one workout to
+another. It will also vibrate
+periodically if your battery is getting
+low. And it's also used as a silent
+alarm, which is helpful for making sure
+you wake up in the morning, but anyone
+else in the room doesn't get woken up,
+too. There are two settings for the
+vibration, high and low. I found the low
+setting to be fine for my needs, but if
+you want something more intense to make
+sure you don't miss them, you can always
+bump up the power. You can also just
+turn off vibration altogether if you
+want, which will help to conserve
+battery life. One thing I want to
+emphasize here is that your Fitbit Air
+will not vibrate for typical smartphone
+notifications. This isn't something you
+need to manually turn off. This is
+literally not possible to do. This makes
+the Fitbit Air a perfect fit for someone
+who wants to track their health, but
+doesn't want to be annoyed by smartphone
+notifications all day. But I'll talk
+more about who should buy this later on.
+The gist here is that I love the simple
+functionality of the Fitbit Air. But one
+thing I'm not a fan of is the fact that
+in order for alarms to work on your
+tracker, you need to set the alarms in
+the Google Health app. In other words,
+you can't go into the clock app on your
+Android phone and set an alarm that will
+go off on your Fitbit. You need to have
+a specific alarm set in the Google
+Health app. This is how Fitbit trackers
+have always been, but Pixel watches have
+the ability to sync alarms created by
+your phone and the ones created by the
+watch. I was hoping that would work with
+the Fitbit Air, but it doesn't. This
+also means you can't ask Gemini to set
+an alarm for you. If you do, it will
+just set the alarm on your phone, not on
+your Fitbit. Google did bring in a
+recurring alarm system inside Google
+Health, so you can set up to eight
+specific alarms, which is nice. There's
+even a recurring alarm feature that will
+continuously buzz you every 9 minutes
+until you actually get out of bed, which
+is great for those of you out there with
+17 alarms set on your phone right now.
+That's right, I see you. But yeah, it
+would be nice if the alarm features
+worked better with the phone, but I
+think this is a roadblock from the
+Fitbit Air's need to work on both
+Android phones and iPhones. So, it
+probably can't be helped. Maybe this
+will get smoother in the future. Who
+knows? So, I have some complaints about
+alarms, but one thing I have absolutely
+zero complaints about is battery life.
+In the press materials Google provided
+to me before the launch of the Fitbit
+Air, it told me you could get 7 days out
+of it before you need a charge. Well,
+that's actually not accurate as I had
+the Fitbit Air on for 7 days and still
+had about 20% battery left. That means
+if I pushed it, I could get eight or
+possibly even nine days out of it, which
+is pretty incredible. Obviously, your
+battery life is going to be different
+depending on how you use the device. If
+you're tracking tons of workouts, have
+the vibration motor set to high, and
+have eight alarms going off each day,
+you're probably not going to get
+anywhere near 7 days of battery life.
+However, if you're just looking for a
+simple tracker that keeps a log of your
+steps, your heart rate, and sleep,
+you'll need to charge this once a week
+at the max. That's awesome. Okay, and
+the final hardware thing I want to talk
+about is the charger. All in all, it's
+fine. It's very simple with a magnetic
+pad for connecting to the back of the
+Pebble and then a USBC connector on the
+other end. The problem though is that
+it's so slow. The battery in the Fitbit
+Air is minuscule at just 34.5 milliamp.
+Using the provided charger, it takes 90
+minutes to go from zero to full, which
+is just crazy slow. Granted, there is a
+quick charge element. If you put the
+Fitbit Air on the charger for just five
+minutes, it should give you enough juice
+for a full day. But yeah, 90 minutes to
+charge this little thing, that's not
+great. I will hand it to Google for
+including an alert on your phone that
+the Air is fully charged. I love to see
+that. But even if you ignore the
+slowness, it's also not great that I
+have yet another proprietary charger
+that I need to pack up with me when I
+travel and yet another charger that
+eventually will end up in a landfill
+when the Fitbit Air breaks or becomes
+obsolete. I know that getting a USBC
+port on this small of a device would be
+impractical, but believe me when I say
+that I'm so sick of proprietary chargers
+that only work with one specific device.
+All right, let's move on to the tracker
+aspect of this fitness tracker. Once you
+put it on your wrist, it's literally a
+set it and forget it situation. In other
+words, you don't need to tell the
+tracker you're going to bed. Just go to
+bed and it will start tracking your
+sleep. This also works for naps, too. If
+you're going for a walk, it will
+autotrack that as well. When you're done
+with the walk, the Google Health app
+will send you a notification asking you
+to confirm the walk. Just approve it and
+boom, you tracked your walk. This works
+for lots of different activities such as
+running, cycling, and more. However, if
+you want to get more accurate tracking
+and get the tracker to learn more about
+you and how you do a certain workout,
+you should take your phone with you and
+start and stop the activity manually.
+Google Health will learn from these and
+get better over time. The one thing to
+note here that makes this different from
+a lot of other Fitbits is that there's
+no built-in GPS. This means if you want
+a detailed map of your bike ride or your
+run, you're going to need to have your
+phone with you to act as the GPS. If you
+don't care about the GPS map, though,
+you can safely leave your phone behind.
+I know what you're thinking. What if the
+activity isn't automatically tracked?
+All you need to do there is manually
+enter it in the Google Health app.
+Everyone can do this by logging to the
+today tab, tapping log, and then tapping
+activity. Just enter in as much
+information as you can, and then save
+it. The process is even easier if you
+pay for a Google Health Premium
+subscription. Instead of manually
+filling out that form, you would just
+hit this blue coach button that appears
+on every page of the app and then
+verbally say what you just did. The
+coach will log that activity for you,
+which certainly is nice. All right, so
+let's talk about this coach thing. This
+is an AI service powered by Google
+Gemini for paying users only and it's
+the star feature of the new Google
+Health app and a big selling point for
+the Fitbit Air. It allows you to have
+relaxed verbal or typed conversations
+with Gemini and it will act as your
+personal trainer, nutritionist, and
+motivator allin-one. Like any AI based
+system, I found it to be very helpful
+some of the time and comically terrible
+the rest of the time. Let's start with
+the good stuff. what I just showed you
+about verbally logging an activity.
+That's really easy and is a great way
+for you to keep up on your health goals,
+especially if you are trying to stick to
+daily routines. It's also great if you
+just have a simple question about your
+health journey. For example, I can say,
+"How many steps am I averaging each
+day?" And it will pull together that
+info for me. It's also very motivating.
+Every morning, it tells me how I slept
+and whether or not I should push myself
+that day, stick to my usual routine, or
+take a rest day. This is all really
+useful stuff, but it also can be tricky
+to use and in some cases flatout wrong.
+One thing it can do is make a workout
+routine for you. I travel a lot as a
+tech YouTuber, so I'm constantly in and
+out of hotels. If I'm in a hotel, but
+want to make sure I stay active, I can
+ask the coach to make me a workout
+routine for a hotel room. It then
+produces this very helpful workout list
+complete with videos showing me how to
+do certain things. But you'll notice
+there's no video for shoulder taps. Does
+it want me to do shoulder taps like this
+or do them like this? I've seen both
+online, so I don't know what to do. And
+I don't even know what a torso twist is.
+These are minor examples, but if you're
+someone who's just getting started on a
+fitness journey, things like this could
+be a roadblock to your success. Another
+thing the coach can do is analyze what
+you're eating and log your calories.
+This is helpful if you're trying to
+watch what you eat or doing a strict
+calories in, calories out routine. Of
+course, for it to be helpful, it needs
+to be accurate, and it's just not.
+Here's a time that I asked it for the
+calorie content of half a cup of
+peanuts, and it logged 420 to 430
+calories when my scale says it should
+have been 394 calories. 30 calories
+might not seem like a huge different for
+some peanuts, but if there are 30
+calorie discrepancies at each meal for a
+full week, that adds up fast. Things get
+even wonkier with more complicated
+meals, like this dinner I made. It
+logged this as between 360 and 440
+calories when I know for certain that it
+should be 543 calories because I used
+the Lose It app to log all the
+ingredients as I was cooking. So yeah,
+I'm not super sold on the AI Coach quite
+yet. The thing is though that this is
+the main reason to pay money for Google
+Health Premium. So it's kind of good
+news that the coach isn't terrific
+because that means you don't need to
+sign up for premium to get what you
+really need from the Fitbit Air. And
+hey, who really needs an extra paid
+subscription in their lives? Not me,
+that's for sure. Okay, so now I need to
+tell you who I think should buy this
+tracker. The buyer who I would highly
+suggest this to is the person who
+doesn't want a smartwatch. Maybe you
+don't want to charge your watch every
+day. Or maybe you don't like the idea of
+getting smartphone notifications on your
+wrist. Maybe you have an analog watch
+you love, or maybe you just don't like
+the idea of having a big bulky thing on
+your wrist all the time. If that's you,
+but you still want a way to track your
+health, this is now one of the best
+options you've got. At $99, it's cheaper
+than most other options, including most
+smart rings. It doesn't require a
+subscription, and it will fit in your
+life perfectly thanks to all the strap
+options that are available now and the
+thousands more that are coming soon. And
+what if you've already got a smartwatch?
+Is there any reason to get this? Yes, I
+would still recommend this to smartwatch
+owners because this can be a dedicated
+sleep tracker. What I'm going to start
+doing now that the review period is over
+is taking my Pixel Watch off at night
+and resting it on the charger and then
+putting on the Fitbit Air to track my
+sleep. This will mean I'll always have a
+100% full watch every day and make my
+sleep more comfortable since the Air is
+less obtrusive than the watch. I can
+also see myself wearing the Fitbit Air
+and leaving my watch behind when I do
+things like camping trips as I won't
+need to worry about charging the Air.
+Honestly, I feel like this is the
+perfect tracker for so many people out
+there. As long as you know what it's
+designed to be used for, I can't imagine
+you won't be happy with it. Anyway, if
+you are on the fence between this and a
+smartwatch, check out my full review of
+the Pixel Watch 4. And if you enjoyed
+this, liking and subscribing would be an
+amazing thing to do. I'll see you all
+down in the comments.
+

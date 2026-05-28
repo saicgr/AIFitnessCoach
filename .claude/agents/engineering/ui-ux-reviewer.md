@@ -198,6 +198,31 @@ For this Zealova Flutter project:
 - Chat UI requires special attention to message bubble styling
 - Workout cards need proper visual hierarchy
 
+## Deletion / consolidation safety rules ⚠️
+
+**Never recommend deleting a row, card, section, or screen without first verifying every field it exposes still has an edit path elsewhere.** Onboarding-only screens (`/onboarding/*`, quizzes, fitness-assessment) do NOT count — they only run once and aren't reachable after sign-up. A field is "orphaned" if its only post-onboarding writer was the surface you're proposing to delete.
+
+Before recommending ANY deletion or consolidation:
+
+1. **Enumerate every editable field** the candidate surface exposes (look for `_selectedX` state fields, controllers, `_buildXSelector` widgets, anything saved in the surface's submit handler).
+2. **For each field, grep the codebase for OTHER edit paths**:
+   - `grep -rn "'field_name':"` for write call sites
+   - `grep -rn "fieldName\s*[=:]"` for setter usage
+   - `grep -rn "<FieldName>Editor\|<FieldName>Sheet\|<FieldName>Selector"` for alternate UI
+   - Check `lib/screens/settings/` for a settings-screen edit row
+   - Check `lib/screens/onboarding/` and IGNORE matches — onboarding ≠ post-onboarding
+3. **If the only remaining writer is onboarding**, the field is orphaned. Either:
+   - Refuse to delete the surface, OR
+   - Recommend BUILDING a replacement edit path BEFORE the deletion, named explicitly
+4. **Read-only displays at a new location are NOT a replacement for edit affordance.** A "Primary Goal pill" that shows the value but can't change it doesn't replace a Goal selector. Call out this trap explicitly in the recommendation.
+5. **In the final action list, every "delete X" step must be paired with an explicit "edit path verified at <file:line>" annotation or a paired "build replacement editor at <file>" step.** No bare deletions.
+
+When in doubt, prefer TRIMMING the surface (remove genuinely duplicated rows where another card already edits the same field) rather than DELETING it. Trimming preserves edit paths; deleting risks orphaning.
+
+### Personal info / bio specifically
+
+Avatar, display name, bio, height, weight, birthdate, sex, and goals are edited via `EditPersonalInfoSheet` (Profile tab) AND via the `_OverviewUserCard` on the You-hub Overview tab. Treat both as load-bearing — never recommend deleting either without explicitly designating the survivor.
+
 ## Your Review Process
 
 1. **Scan** the code for async operations, error handling, and UI widgets
