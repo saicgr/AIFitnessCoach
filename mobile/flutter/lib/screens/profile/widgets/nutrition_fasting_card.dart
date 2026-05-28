@@ -135,7 +135,11 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           _buildInfoRow(
             icon: Icons.flag_outlined,
             iconColor: AppColors.cyan,
-            label: AppLocalizations.of(context).challengeCreateFieldGoal,
+            // Renamed from generic "Goal" → "Body composition target" to
+            // disambiguate from the higher-level Training goal pill at the
+            // top of the Profile screen. UX review found a 3-way "Goal"
+            // collision (Fitness card / Nutrition card / Training Focus).
+            label: AppLocalizations.of(context).nutritionFastingCardBodyCompositionTarget,
             value: prefs?.primaryGoalEnum.displayName ?? AppLocalizations.of(context).nutritionFastingCardMaintainWeight,
             isDark: isDark,
             textPrimary: textPrimary,

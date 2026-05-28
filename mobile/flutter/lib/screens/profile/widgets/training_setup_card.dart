@@ -306,20 +306,34 @@ class _SetupRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // crossAxisAlignment.start so a 2-line value (long German/Telugu
+    // translation) tops out flush with the label icon instead of pushing
+    // the icon downward as the row grows.
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: iconColor ?? textSecondary),
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(icon, size: 18, color: iconColor ?? textSecondary),
+        ),
         const SizedBox(width: 10),
-        Expanded(
+        // Label gets a smaller flex weight so the value (which is the
+        // user-customised content) wins the layout when both compete.
+        Flexible(
+          flex: 4,
           child: Text(
             label,
             style: TextStyle(
               fontSize: 14,
               color: textSecondary,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
+        const SizedBox(width: 8),
         Flexible(
+          flex: 6,
           child: Text(
             value,
             style: TextStyle(
@@ -328,6 +342,7 @@ class _SetupRow extends StatelessWidget {
               color: textPrimary,
             ),
             textAlign: TextAlign.right,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ),
