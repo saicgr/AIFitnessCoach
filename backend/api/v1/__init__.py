@@ -204,6 +204,11 @@ router.include_router(home_insights.insights_router, tags=["Home Insights"])
 router.include_router(home_insights_v2.insights_router, tags=["Home Insights"])
 router.include_router(home_insights_v2.social_router, tags=["Home Insights"])
 
+# Specific-slug pattern insights (day-of-week-skip, macro-pattern) declared on
+# insights.py but on a dedicated router so they are NOT shadowed by the
+# `/insights/{user_id}` catch-all below. Same ordering requirement as above.
+router.include_router(insights.pattern_router, tags=["Insights"])
+
 # User insights and weekly progress (catch-all `/insights/{user_id}` lives here)
 router.include_router(insights.router, tags=["Insights"])
 

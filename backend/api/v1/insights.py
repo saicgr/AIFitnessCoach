@@ -27,6 +27,15 @@ from core.timezone_utils import user_today_date, resolve_timezone
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/insights", tags=["insights"])
 
+# Specific-slug insight endpoints (day-of-week-skip, macro-pattern) live on a
+# SEPARATE router that MUST be included before `router` in api/v1/__init__.py.
+# `router` declares a catch-all `/insights/{user_id}` (see get_user_insights);
+# FastAPI matches routes in registration order, so any specific `/insights/<slug>`
+# declared on `router` AFTER the catch-all is shadowed (the slug is parsed as a
+# user_id → 22P02 invalid-uuid 500). Keeping these on their own router that is
+# registered first guarantees the slugs win — mirrors the home_insights pattern.
+pattern_router = APIRouter(prefix="/insights", tags=["insights"])
+
 
 # ==================== MODELS ====================
 
@@ -1669,7 +1678,7 @@ class DayOfWeekSkipResponse(BaseModel):
     weeks_observed: int = 0
 
 
-@router.get("/day-of-week-skip", response_model=DayOfWeekSkipResponse)
+@pattern_router.get("/day-of-week-skip", response_model=DayOfWeekSkipResponse)
 async def get_day_of_week_skip(
     current_user: dict = Depends(get_current_user),
 ) -> DayOfWeekSkipResponse:
@@ -1762,14 +1771,14 @@ class MacroPatternResponse(BaseModel):
     target_protein_g: float = 0.0
 
 
-@router.get("/macro-pattern", response_model=MacroPatternResponse)
+@pattern_router.get("/macro-pattern", response_model=MacroPatternResponse)
 async def get_macro_pattern(
     current_user: dict = Depends(get_current_user),
 ) -> MacroPatternResponse:
     """
     Detect 1-2 weekdays where protein intake is consistently low over 3+ weeks.
 
-    Sums `food_logs.protein_g` per (user_id, log_date) over the last 21 days,
+    Sums `food_logs.protein_g` per (user_id, logged_at::date) over the last 21 days,
     buckets by weekday, and flags weekdays whose 3-week average sits below
     `0.7 × target_protein_g`. Target is read from `users.daily_protein_target_g`.
     Returns all-null if no pattern (self-collapses the card).
@@ -1802,24 +1811,26 @@ async def get_macro_pattern(
             return MacroPatternResponse(target_protein_g=0.0)
 
         cutoff = (datetime.utcnow().date() - timedelta(days=21)).isoformat()
-        today_iso = datetime.utcnow().date().isoformat()
+        # food_logs.logged_at is timestamptz — bound the upper end at the start
+        # of tomorrow (exclusive) so all of today's logs are included, not just
+        # those at midnight.
+        end_exclusive = (datetime.utcnow().date() + timedelta(days=1)).isoformat()
 
-        # Pull food_logs in window. Columns vary across migrations — request
-        # the minimum needed; if `log_date` is missing fall back to consumed_at.
+        # Pull food_logs in window. The timestamp column is `logged_at`.
         log_resp = (
             db.client.table("food_logs")
-            .select("protein_g,log_date,consumed_at")
+            .select("protein_g,logged_at")
             .eq("user_id", user_id)
-            .gte("log_date", cutoff)
-            .lte("log_date", today_iso)
+            .gte("logged_at", cutoff)
+            .lt("logged_at", end_exclusive)
             .execute()
         )
         rows = log_resp.data or []
 
-        # Sum protein per date.
+        # Sum protein per date (local-day prefix of logged_at).
         per_date: Dict[str, float] = {}
         for row in rows:
-            date_str = row.get("log_date") or (row.get("consumed_at") or "")[:10]
+            date_str = (row.get("logged_at") or "")[:10]
             if not date_str:
                 continue
             try:

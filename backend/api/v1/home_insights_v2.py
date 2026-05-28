@@ -270,7 +270,7 @@ async def get_refeed_proposal(
         start_dt = datetime.combine(window_start, datetime.min.time(), tzinfo=timezone.utc)
         f_res = (
             db.client.table("food_logs")
-            .select("logged_at, calories")
+            .select("logged_at, total_calories")
             .eq("user_id", user_id)
             .gte("logged_at", start_dt.isoformat())
             .execute()
@@ -282,7 +282,7 @@ async def get_refeed_proposal(
         by_day: dict[str, float] = {}
         for r in rows:
             ts = r.get("logged_at")
-            cal = r.get("calories") or 0
+            cal = r.get("total_calories") or 0
             if not ts:
                 continue
             day = str(ts)[:10]

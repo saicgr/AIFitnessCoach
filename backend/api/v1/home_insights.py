@@ -287,6 +287,19 @@ async def get_workout_sleep_correlation(
 
 # ─── Strain / recovery mismatch ──────────────────────────────────────────────
 
+# Bounds on how far a single session's volume load may swing its intensity
+# factor away from the user's median session. A heavy day counts at most 1.5×
+# its minutes, a light day at least 0.5× — wide enough to register real
+# progressive overload, tight enough that one outlier PR can't dominate the
+# 7-day rolling trend. Tuning parameter, not measured data.
+_INTENSITY_FACTOR_MIN = 0.5
+_INTENSITY_FACTOR_MAX = 1.5
+# Applied when a session carries no load signal (bodyweight / cardio: no
+# weight_kg) or there is no median to normalise against. Neutral, not zero —
+# the session's minutes still count; we just don't claim to know its intensity.
+_NEUTRAL_INTENSITY_FACTOR = 1.0
+
+
 class StrainRecoveryMismatchResponse(BaseModel):
     strain_trend: str  # "up" | "flat" | "down"
     recovery_trend: str
@@ -316,6 +329,43 @@ def _trend(values: List[float]) -> str:
     return "flat"
 
 
+def _session_tonnage(sets_json: Any) -> float:
+    """Total volume load (tonnage) of a logged session in kg = Σ(reps × weight).
+
+    ``workout_logs.sets_json`` is the real per-session load record and appears in
+    two shapes:
+      * aggregated per exercise: ``{"reps", "sets", "weight_kg"}`` →
+        reps × sets × weight_kg
+      * per-set rows: ``{"reps", "weight_kg", "set_number", "completed"}`` →
+        reps × weight_kg, counting only sets not explicitly marked incomplete.
+
+    Bodyweight / cardio sessions (no ``weight_kg``) yield 0.0 — the caller treats
+    a zero-tonnage session as "no load signal" and weights it at the neutral
+    factor rather than zero strain.
+    """
+    if not isinstance(sets_json, list):
+        return 0.0
+    total = 0.0
+    for s in sets_json:
+        if not isinstance(s, dict):
+            continue
+        if s.get("completed") is False:
+            continue
+        try:
+            reps = float(s.get("reps") or 0)
+            weight = float(s.get("weight_kg") or 0)
+        except (TypeError, ValueError):
+            continue
+        # `sets` is a per-exercise multiplier in the aggregated shape; absent
+        # (per-set shape) it defaults to 1.
+        try:
+            nsets = float(s.get("sets") or 1)
+        except (TypeError, ValueError):
+            nsets = 1.0
+        total += reps * weight * nsets
+    return total
+
+
 @insights_router.get(
     "/strain-recovery-mismatch",
     response_model=StrainRecoveryMismatchResponse,
@@ -326,8 +376,15 @@ async def get_strain_recovery_mismatch(
 ) -> StrainRecoveryMismatchResponse:
     """21-day strain trend vs recovery trend; recommend a deload on mismatch.
 
-    Strain proxy = sum(duration_minutes × (intensity_score/100 OR 0.5))
-                    per day from `workout_logs`.
+    Strain proxy = sum over sessions of (duration_minutes × intensity_factor)
+                    per local-day from `workout_logs`. ``intensity_factor`` is
+                    the session's volume load (tonnage = Σ reps×weight from
+                    `sets_json`) divided by the user's OWN median session
+                    tonnage over the window, clamped to [0.5, 1.5]; sessions
+                    with no weighted sets (bodyweight/cardio) use the neutral
+                    1.0. So a user who holds session length constant but keeps
+                    adding weight registers as rising strain — duration alone
+                    would miss that.
     Recovery proxy = mean sleep_minutes per day from `daily_activity`
                     (sleep_score column isn't on the table per schema audit).
     """
@@ -337,9 +394,12 @@ async def get_strain_recovery_mismatch(
         today = user_today_date(request, db, user_id)
         start_day = today - timedelta(days=21)
 
+        # sets_json is the real per-session load record (reps × weight_kg) —
+        # workout_logs has no intensity/RPE column (performance_data is empty in
+        # practice), so tonnage is the honest intensity signal.
         w_res = (
             db.client.table("workout_logs")
-            .select("completed_at, duration_minutes, intensity_score")
+            .select("completed_at, duration_minutes, sets_json")
             .eq("user_id", user_id)
             .gte("completed_at", start_day.isoformat())
             .execute()
@@ -353,22 +413,34 @@ async def get_strain_recovery_mismatch(
             .execute()
         )
 
-        # Aggregate strain per local-day (using date prefix of completed_at).
+        sessions = list(w_res.data or [])
+
+        # Pass 1: per-session tonnage → the user's median over weighted sessions
+        # is the reference for "a normal session". Median (not mean) so one
+        # outlier PR day doesn't flatten everyone else's factor.
+        tonnages = [_session_tonnage(w.get("sets_json")) for w in sessions]
+        weighted = [t for t in tonnages if t > 0]
+        median_tonnage = statistics.median(weighted) if weighted else 0.0
+
+        def _intensity_factor(tonnage: float) -> float:
+            # No load data (bodyweight/cardio) or no reference → neutral.
+            if tonnage <= 0 or median_tonnage <= 0:
+                return _NEUTRAL_INTENSITY_FACTOR
+            return max(
+                _INTENSITY_FACTOR_MIN,
+                min(_INTENSITY_FACTOR_MAX, tonnage / median_tonnage),
+            )
+
+        # Pass 2: aggregate intensity-weighted minutes per local-day.
         strain_by_day: Dict[str, float] = {}
-        for w in (w_res.data or []):
+        for w, tonnage in zip(sessions, tonnages):
             ts = w.get("completed_at")
             if not ts:
                 continue
             day = str(ts)[:10]
             dur = w.get("duration_minutes") or 0
-            intensity = w.get("intensity_score")
-            # intensity_score may be 0..100 or null; treat null as moderate.
-            intensity_norm = (
-                float(intensity) / 100.0 if isinstance(intensity, (int, float))
-                else 0.5
-            )
             strain_by_day[day] = strain_by_day.get(day, 0.0) + (
-                float(dur) * intensity_norm
+                float(dur) * _intensity_factor(tonnage)
             )
 
         # Build dense daily series so 7-day rolling means are well-defined.
@@ -483,7 +555,7 @@ async def get_discovery_insight(
         )
         f_res = (
             db.client.table("food_logs")
-            .select("logged_at, calories")
+            .select("logged_at, total_calories")
             .eq("user_id", user_id)
             .gte("logged_at", start_day.isoformat())
             .execute()
@@ -506,7 +578,7 @@ async def get_discovery_insight(
             if not ts:
                 continue
             day = str(ts)[:10]
-            cal = f.get("calories") or 0
+            cal = f.get("total_calories") or 0
             calories_by_day[day] = calories_by_day.get(day, 0.0) + float(cal)
 
         # ── Candidate A: sleep on workout vs rest days ─────────────────────
