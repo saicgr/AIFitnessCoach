@@ -6,6 +6,7 @@ Provides:
 - POST /generate-stream - SSE streaming workout generation
 """
 from core.db import get_supabase_db
+from api.v1.workouts.generation_endpoints import _parse_workout_day_overrides
 import json
 import asyncio
 from datetime import datetime
@@ -545,6 +546,12 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "user_id": body.user_id,
                     "training_split": training_split,
                     "workout_days": workout_days if workout_days else None,
+                    # Per-day overrides — focus/duration/intensity per
+                    # weekday from user.preferences.workout_day_overrides
+                    # JSONB. Added 2026-05-27.
+                    "workout_day_overrides": _parse_workout_day_overrides(
+                        preferences.get("workout_day_overrides") if preferences else None
+                    ),
                 }
 
                 generator_kwargs["strength_history"] = strength_history

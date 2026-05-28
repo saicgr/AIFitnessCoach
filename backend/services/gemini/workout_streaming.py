@@ -7,7 +7,7 @@ import logging
 import time
 import re
 import hashlib
-from typing import List, Dict, Optional
+from typing import Any, List, Dict, Optional
 from datetime import datetime
 
 from google.genai import types
@@ -59,6 +59,10 @@ class WorkoutStreamingMixin:
         strength_history: Optional[Dict] = None,
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
+        # Per-day overrides — added 2026-05-27. Source:
+        # user.preferences.workout_day_overrides JSONB. See
+        # _build_per_day_overrides_prompt for the format the prompt expects.
+        workout_day_overrides: Optional[Dict[int, Dict[str, Any]]] = None,
         workout_weight_unit: Optional[str] = None,
         # RAG-first refactor (2026-05-08): if provided, constrains Gemini to
         # use ONLY these pre-filtered library exercises (no hallucinations).
@@ -201,6 +205,18 @@ STRENGTH HISTORY:
 
 Use this split information to guide exercise selection and workout structure."""
 
+            # Per-day overrides — focus/duration/intensity per weekday.
+            # Added 2026-05-27. Source: user.preferences.workout_day_overrides
+            # JSONB. See _build_per_day_overrides_prompt for the format.
+            per_day_overrides_instruction = ""
+            if workout_day_overrides:
+                from services.gemini.workout_generation_helpers import (
+                    _build_per_day_overrides_prompt,
+                )
+                per_day_overrides_instruction = _build_per_day_overrides_prompt(
+                    workout_day_overrides, workout_days or []
+                )
+
             # Per-focus muscle whitelist injection. Production focus_validation
             # repeatedly logs mismatches like "Hamstrings does not match glutes
             # focus", "upper back does not match shoulders focus", etc. The
@@ -260,7 +276,7 @@ Use this split information to guide exercise selection and workout structure."""
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Equipment: {safe_join_list(equipment, 'Bodyweight only')}
-- Focus: {safe_join_list(focus_areas, 'Full body')}{focus_muscle_constraint}{age_activity_context}{training_split_instruction}{preference_constraints}{library_block}{library_constraint}
+- Focus: {safe_join_list(focus_areas, 'Full body')}{focus_muscle_constraint}{age_activity_context}{training_split_instruction}{per_day_overrides_instruction}{preference_constraints}{library_block}{library_constraint}
 
 Return ONLY valid JSON (no markdown):
 {{
@@ -508,6 +524,10 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         user_id: Optional[str] = None,
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
+        # Per-day overrides — added 2026-05-27. Source:
+        # user.preferences.workout_day_overrides JSONB. See
+        # _build_per_day_overrides_prompt for the format the prompt expects.
+        workout_day_overrides: Optional[Dict[int, Dict[str, Any]]] = None,
         workout_weight_unit: Optional[str] = None,
         library_exercises: Optional[List[Dict]] = None,  # RAG-first
     ):
@@ -751,6 +771,10 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         user_dob: Optional[str] = None,
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
+        # Per-day overrides — added 2026-05-27. Source:
+        # user.preferences.workout_day_overrides JSONB. See
+        # _build_per_day_overrides_prompt for the format the prompt expects.
+        workout_day_overrides: Optional[Dict[int, Dict[str, Any]]] = None,
         workout_weight_unit: Optional[str] = None,
         library_exercises: Optional[List[Dict]] = None,
     ) -> str:
@@ -795,6 +819,17 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             user_context_parts.append("## TRAINING SPLIT CONTEXT (Research-Backed)")
             user_context_parts.append(split_context)
             user_context_parts.append("Use this split information to guide exercise selection and workout structure.")
+
+        # Per-day overrides (added 2026-05-27).
+        if workout_day_overrides:
+            from services.gemini.workout_generation_helpers import (
+                _build_per_day_overrides_prompt,
+            )
+            _per_day_block = _build_per_day_overrides_prompt(
+                workout_day_overrides, workout_days or []
+            )
+            if _per_day_block:
+                user_context_parts.append(_per_day_block)
 
         # User preferences section
         user_context_parts.append("")

@@ -166,6 +166,20 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
                 except Exception as ai_pref_err:
                     logger.debug(f"AI settings lookup failed: {ai_pref_err}")
 
+                # Pull per-day overrides from user prefs JSONB so the
+                # plan generator respects per-weekday focus/duration/intensity
+                # the user assigned in Settings → Per-day customization.
+                # Added 2026-05-27.
+                from api.v1.workouts.generation_endpoints import (
+                    _parse_workout_day_overrides,
+                )
+                _prefs_raw = (user or {}).get("preferences") or {}
+                if isinstance(_prefs_raw, str):
+                    try:
+                        import json as _json
+                        _prefs_raw = _json.loads(_prefs_raw)
+                    except (ValueError, TypeError):
+                        _prefs_raw = {}
                 workout_data = await gemini_service.generate_workout_plan(
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
@@ -177,6 +191,9 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
                     user_dob=user_dob,
                     user_id=body.user_id,
                     training_split=ai_training_split,
+                    workout_day_overrides=_parse_workout_day_overrides(
+                        _prefs_raw.get("workout_day_overrides")
+                    ),
                 )
 
                 workout_data = ensure_workout_data_dict(workout_data, context="generate")
