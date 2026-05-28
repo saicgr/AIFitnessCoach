@@ -16,9 +16,7 @@ import '../../data/services/data_cache_service.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
-import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
-import '../../widgets/main_shell.dart';
 import 'widgets/fasting_ai_insight_card.dart';
 import 'widgets/fasting_date_strip.dart';
 import 'widgets/fasting_edit_sheet.dart';
@@ -92,7 +90,6 @@ class _FastingScreenRedesignedState
   /// Captured ProviderContainer — used in [dispose] to safely restore the
   /// floating nav bar. Reading the container off `context` in `dispose()`
   /// throws ("deactivated widget"), so we grab it in didChangeDependencies.
-  ProviderContainer? _container;
 
   @override
   void initState() {
@@ -105,10 +102,12 @@ class _FastingScreenRedesignedState
     // screen never blocks on a spinner.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'fasting_viewed');
-      ref.read(navBarLabelsExpandedProvider.notifier).state = false;
-      // Fix #2: hide the floating bottom nav bar while this pushed
-      // full screen is open.
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+      // Nav-bar visibility is now derived from the current path in MainShell
+      // (path-based hide for /fasting). Toggling global providers here
+      // leaked state across StatefulShellBranch switches — when the user
+      // went /fasting → /home via context.go, fasting was kept alive in the
+      // IndexedStack, dispose() never fired, and the nav bar stayed hidden
+      // on the home tab.
       _initializeInBackground();
     });
   }
@@ -181,28 +180,9 @@ class _FastingScreenRedesignedState
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Capture the container now so dispose() can safely restore the nav bar
-    // even after this widget is deactivated.
-    _container = ProviderScope.containerOf(context, listen: false);
-  }
-
-  @override
   void dispose() {
-    // Fix #2: restore the floating nav bar on exit. Setting provider state
-    // SYNCHRONOUSLY here throws StateNotifierListenerError — dispose() runs
-    // during the locked finalizeTree phase and MainShell listens to this
-    // provider. Defer to a microtask: the captured container outlives this
-    // widget, and the restore then runs after the tree is unlocked.
-    final container = _container;
-    if (container != null) {
-      Future.microtask(() {
-        try {
-          container.read(floatingNavBarVisibleProvider.notifier).state = true;
-        } catch (_) {/* container torn down — nav bar already moot */}
-      });
-    }
+    // Nav-bar visibility is now derived from the current route path in
+    // MainShell — no provider state to restore here.
     super.dispose();
   }
 
@@ -313,10 +293,19 @@ class _FastingScreenRedesignedState
               ],
             ),
             // ── Floating glass back button ──────────────────────────
+            // Pop the route if there's history (the typical case — user came
+            // from /nutrition or /home via push); otherwise fall back to
+            // /home for deep-link entries where pop would exit the app.
             Positioned(
               top: 8,
               left: 12,
-              child: GlassBackButton(onTap: () => context.go('/home')),
+              child: GlassBackButton(onTap: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/home');
+                }
+              }),
             ),
           ],
         ),
@@ -1451,7 +1440,13 @@ class _FastingScreenRedesignedState
                 ),
                 const SizedBox(height: 16),
                 TextButton(
-                  onPressed: () => context.go('/home'),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/home');
+                    }
+                  },
                   child: Text(
                     'Back to Home',
                     style:

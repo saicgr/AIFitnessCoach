@@ -33,11 +33,8 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_service.dart';
 import '../../../data/services/you_overview_prewarmer.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../../data/repositories/auth_repository.dart';
-import '../../../widgets/glass_sheet.dart';
-import '../../../widgets/liquid_glass_action_bar.dart';
-import '../../profile/widgets/edit_personal_info_sheet.dart';
+import '../you_hub_screen.dart' show kYouHubBodyBottomInset;
+import '../../profile/widgets/user_card.dart';
 import '../../../widgets/xp_hero_tile.dart';
 import '../../home/widgets/habits_section.dart';
 import '../widgets/health_overview_card.dart';
@@ -325,12 +322,10 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
 
     final serious = ref.watch(seriousModeProvider);
 
-    // Bottom padding must clear the floating Overview/Profile/Stats glass
-    // bar so the last card isn't hidden under it.
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom +
-        76 +
-        kLiquidGlassActionBarHeight +
-        16;
+    // Bottom padding must clear BOTH the floating sub-tab pill AND the
+    // main nav bar underneath. `kYouHubBodyBottomInset` bundles both.
+    final bottomInset =
+        MediaQuery.of(context).viewPadding.bottom + kYouHubBodyBottomInset;
 
     return RefreshIndicator(
       color: accent,
@@ -346,9 +341,11 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
           // "you, at a glance" header was a better home for the avatar +
           // bio than the Profile tab, which now starts straight into the
           // Training section.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _OverviewUserCard(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            // Shared widget — same UserCard now also renders at the top of
+            // the Profile sub-tab. See lib/screens/profile/widgets/user_card.dart.
+            child: UserCard(),
           ),
           const SizedBox(height: 16),
 
@@ -453,10 +450,8 @@ class _OverviewSkeleton extends StatelessWidget {
           ),
         );
 
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom +
-        76 +
-        kLiquidGlassActionBarHeight +
-        16;
+    final bottomInset =
+        MediaQuery.of(context).viewPadding.bottom + kYouHubBodyBottomInset;
 
     return ListView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset),
@@ -915,14 +910,22 @@ class _HeadlineTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
-            Text(
-              sub,
-              style: TextStyle(
-                color: fg.withValues(alpha: 0.55),
-                fontSize: 11,
+            // Flexible so the 2-line sub-text shrinks to whatever vertical
+            // space remains in the GridView tile after the icon + title +
+            // headline take their natural heights. Without Flexible the
+            // Column tried to render both sub lines at their natural
+            // height and overflowed the tile by ~1.7pt on some content
+            // lengths.
+            Flexible(
+              child: Text(
+                sub,
+                style: TextStyle(
+                  color: fg.withValues(alpha: 0.55),
+                  fontSize: 11,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -931,147 +934,6 @@ class _HeadlineTile extends StatelessWidget {
   }
 }
 
-/// User card at the top of the Overview (Surface 5.B.4). Avatar + name +
-/// email + bio. Tap → edit personal info via the existing /profile/edit
-/// route. Hidden chrome — neutral surface, no accent tint, no "Profile"
-/// label since the user already knows whose profile they're looking at.
-class _OverviewUserCard extends ConsumerStatefulWidget {
-  @override
-  ConsumerState<_OverviewUserCard> createState() =>
-      _OverviewUserCardState();
-}
-
-class _OverviewUserCardState extends ConsumerState<_OverviewUserCard> {
-  String? _bio;
-  bool _bioLoaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadBio());
-  }
-
-  Future<void> _loadBio() async {
-    try {
-      final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
-      if (userId == null) return;
-      final api = ref.read(apiClientProvider);
-      final response = await api.get('${ApiConstants.users}/$userId');
-      if (response.statusCode == 200 && response.data != null && mounted) {
-        final data = response.data as Map<String, dynamic>;
-        setState(() {
-          _bio = data['bio'] as String?;
-          _bioLoaded = true;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _bioLoaded = true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
-    final user = authState.user;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final muted = fg.withValues(alpha: 0.55);
-    final surface = fg.withValues(alpha: isDark ? 0.05 : 0.04);
-    final border = fg.withValues(alpha: 0.08);
-    final userName =
-        user?.displayName ?? user?.name ?? user?.username ?? 'You';
-    final userEmail = user?.email ?? '';
-    final photoUrl = user?.photoUrl;
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        showGlassSheet(
-          context: context,
-          builder: (_) => const EditPersonalInfoSheet(),
-        ).then((result) {
-          if (result == true) {
-            ref.read(authStateProvider.notifier).refreshUser();
-            _loadBio();
-          }
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: fg.withValues(alpha: 0.08),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: photoUrl != null && photoUrl.isNotEmpty
-                      ? Image.network(
-                          photoUrl,
-                          width: 52,
-                          height: 52,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              Icon(Icons.person, color: muted, size: 28),
-                        )
-                      : Icon(Icons.person, color: muted, size: 28),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        userName,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: fg,
-                        ),
-                      ),
-                      if (userEmail.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          userEmail,
-                          style: TextStyle(fontSize: 13, color: muted),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Icon(Icons.edit_outlined, size: 16, color: muted),
-              ],
-            ),
-            if (_bioLoaded && _bio != null && _bio!.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  _bio!,
-                  style: TextStyle(fontSize: 13, color: fg),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 /// 2×2 GridView replacing the previous side-by-side Row + IntrinsicHeight
 /// stacks (Surface 5.A.3). All four tiles share the same neutral surface;

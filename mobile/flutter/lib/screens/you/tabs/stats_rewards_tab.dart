@@ -23,7 +23,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/design_system/section_header.dart';
-import '../../../widgets/liquid_glass_action_bar.dart';
+import '../you_hub_screen.dart' show kYouHubBodyBottomInset;
 import '../../../widgets/xp_hero_tile.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -135,14 +135,12 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
       return Center(child: CircularProgressIndicator(color: accent));
     }
 
-    // Bottom padding must clear the floating Overview/Profile/Stats glass
-    // bar (positioned at `viewPadding.bottom + 76` with height
-    // `kLiquidGlassActionBarHeight`). Otherwise the last cards (Rewards /
-    // Social) sit under the bar and the user can't scroll them clear.
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom +
-        76 +
-        kLiquidGlassActionBarHeight +
-        16;
+    // Bottom padding must clear BOTH the floating sub-tab pill AND the
+    // main nav bar underneath it. `kYouHubBodyBottomInset` bundles both
+    // heights + breathing room — single source of truth shared by every
+    // You-hub sub-tab body.
+    final bottomInset =
+        MediaQuery.of(context).viewPadding.bottom + kYouHubBodyBottomInset;
 
     return RefreshIndicator(
       color: accent,

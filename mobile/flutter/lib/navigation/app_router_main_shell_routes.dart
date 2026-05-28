@@ -70,12 +70,16 @@ List<RouteBase> _mainShellRoutes() => [
                 );
               },
             ),
-            GoRoute(
-              path: '/fasting',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: FastingScreenRedesigned(),
-              ),
-            ),
+            // NOTE: `/fasting` lived here as a Nutrition-branch route, which
+            // meant the StatefulShellBranch remembered it as the branch's
+            // "current" page. After visiting `/fasting`, tapping the
+            // Nutrition tab restored Branch 2 to `/fasting` instead of
+            // `/nutrition` — the user-reported "I have to tap Nutrition
+            // twice" bug. Moved out to a top-level route below (sibling to
+            // `/fasting/guide` and `/fasting/body-status`), which means
+            // pushing /fasting is a normal navigator push and pop returns to
+            // the actual referrer (Home or Nutrition) rather than corrupting
+            // the branch state.
             GoRoute(
               path: '/social',
               pageBuilder: (context, state) => const NoTransitionPage(
@@ -177,6 +181,14 @@ List<RouteBase> _mainShellRoutes() => [
         builder: (context, state) => const LiveChatScreen(),
       ),
 
+      // Fasting main screen (full screen, no bottom nav). Moved out of the
+      // Nutrition StatefulShellBranch so visiting fasting doesn't corrupt
+      // that branch's last-route memory — see comment above the Nutrition
+      // branch where it used to live.
+      GoRoute(
+        path: '/fasting',
+        builder: (context, state) => const FastingScreenRedesigned(),
+      ),
       // Fasting → Body Status stage journey (full screen, no bottom nav).
       GoRoute(
         path: '/fasting/body-status',

@@ -278,9 +278,13 @@ class _SaturationBrightnessPainter extends CustomPainter {
 
     final baseColor = HSVColor.fromAHSV(1.0, hue, 1.0, 1.0).toColor();
 
+    // Alignment (not AlignmentDirectional) — CustomPainter paints without
+    // a Directionality ancestor, and AlignmentDirectional.resolve() trips
+    // "No TextDirection found" at paint time. The saturation gradient is
+    // not direction-aware so this is purely a safety swap.
     final saturationGradient = LinearGradient(
-      begin: AlignmentDirectional.centerStart,
-      end: AlignmentDirectional.centerEnd,
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
       colors: [Colors.white, baseColor],
     );
 

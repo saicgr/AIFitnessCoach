@@ -74,7 +74,11 @@ class ProgramLibraryCardTile extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  // Tightened from 16 to 12 — 147×164 grid cells can't
+                  // afford 32px lost to padding on each axis. Pulls the
+                  // chip Wrap back to a single row (was overflowing by
+                  // 20 px on SE / iPad-Mini cells).
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -103,7 +107,7 @@ class ProgramLibraryCardTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       // Program name — the hero text.
                       Text(
                         data.programName,
@@ -117,10 +121,13 @@ class ProgramLibraryCardTile extends StatelessWidget {
                         ),
                       ),
                       if ((data.description ?? '').trim().isNotEmpty) ...[
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
+                        // 1 line only on narrow grid cells — the 164 px
+                        // height budget can't fit eyebrow + 2-line title
+                        // + 2-line description + chips without overflow.
                         Text(
                           data.description!.trim(),
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
@@ -129,12 +136,13 @@ class ProgramLibraryCardTile extends StatelessWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 12),
-                      // Stat chips. Wrap so they never overflow on a narrow
-                      // iPhone SE grid cell.
+                      const SizedBox(height: 8),
+                      // Stat chips. Wrap so they never overflow horizontally
+                      // on a narrow iPhone SE grid cell; vertical overflow
+                      // is prevented by trimming the rest of the card above.
                       Wrap(
                         spacing: 6,
-                        runSpacing: 6,
+                        runSpacing: 4,
                         children: [
                           if ((data.difficultyLevel ?? '').isNotEmpty)
                             _StatChip(

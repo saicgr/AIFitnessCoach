@@ -8,6 +8,7 @@ import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/providers/fasting_provider.dart';
+import '../../fasting/widgets/fasting_stage_model.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/nutrition_repository.dart';
@@ -938,20 +939,81 @@ class _LeftoversCarousel extends ConsumerWidget {
 /// Surface 3.2 — slim contextual bar shown directly above the calorie card
 /// ONLY while a fast is in progress. Idle state renders nothing (the bar
 /// disappears completely). Tap routes to the full /fasting screen.
+/// Fasting entry surface on the Nutrition Daily tab. Two visual states:
+///
+/// * **Inactive** — slim "Start a fast →" row. Discoverable entry point for
+///   users who haven't started yet. Tap → `/fasting` picker.
+/// * **Active** — protocol + current biological stage + dotted progress +
+///   elapsed/remaining counters. Tap → `/fasting` for the full timeline,
+///   long-press → quick actions sheet (Stop / Extend / Pause).
+///
+/// The biological stage label and tint come from `FastingStage` (the same
+/// model that powers the Fasting Guide — 7 live metabolic stages from Fed
+/// through Deep Autophagy). Resolving the stage is a const-table lookup
+/// against `elapsedHours`; no network call.
 class _FastingActiveBar extends ConsumerWidget {
   const _FastingActiveBar();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final fasting = ref.watch(fastingProvider);
-    if (!fasting.hasFast) return const SizedBox.shrink();
-
     final colors = ref.colors(context);
-    final remainingMinutes = fasting.activeFast!.goalDurationMinutes -
-        fasting.activeFast!.elapsedMinutes;
-    final value = remainingMinutes > 0
-        ? '${fasting.remainingTimeFormatted} left'
-        : fasting.elapsedTimeFormatted;
+
+    if (!fasting.hasFast) {
+      // ── Inactive state ─────────────────────────────────────────────
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.push('/fasting'),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colors.cardBorder),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.timer_outlined,
+                      size: 16, color: colors.textSecondary),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Start a fast',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.arrow_forward_rounded,
+                      size: 18, color: colors.textMuted),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Active state ────────────────────────────────────────────────
+    final active = fasting.activeFast!;
+    final elapsedHours = active.elapsedMinutes / 60.0;
+    final goalHours = active.goalDurationMinutes ~/ 60;
+    final stage = FastingStage.forElapsedHours(elapsedHours);
+    final progressFraction = goalHours == 0
+        ? 0.0
+        : (elapsedHours / goalHours).clamp(0.0, 1.0).toDouble();
+
+    final remainingMinutes = active.goalDurationMinutes - active.elapsedMinutes;
+    final isOvertime = remainingMinutes <= 0;
+    final remainingLabel = isOvertime
+        ? '${fasting.elapsedTimeFormatted} (overtime)'
+        : '${fasting.remainingTimeFormatted} left';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -967,35 +1029,151 @@ class _FastingActiveBar extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: colors.cardBorder),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.timer_outlined, size: 16, color: colors.textSecondary),
-                const SizedBox(width: 8),
-                Text(
-                  'Fasting active',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: colors.textPrimary,
-                  ),
+                // Row 1: protocol · stage name
+                Row(
+                  children: [
+                    Icon(stage.icon, size: 16, color: stage.color),
+                    const SizedBox(width: 8),
+                    Text(
+                      _shortProtocolLabel(active.protocol, goalHours),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      ' · ',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                    Flexible(
+                      child: Text(
+                        stage.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: stage.color,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 18, color: colors.textMuted),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textSecondary,
-                  ),
+                const SizedBox(height: 8),
+                // Row 2: dotted progress (1 dot per goal-hour, capped at 18
+                // so it never overflows on iPhone SE at 320pt wide).
+                _FastingProgressDots(
+                  goalHours: goalHours,
+                  fraction: progressFraction,
+                  fillColor: stage.color,
+                  trackColor: colors.cardBorder,
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right_rounded,
-                    size: 18, color: colors.textMuted),
+                const SizedBox(height: 6),
+                // Row 3: elapsed / remaining
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${fasting.elapsedTimeFormatted} elapsed',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    Text(
+                      remainingLabel,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isOvertime
+                            ? stage.color
+                            : colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// Compact protocol label like "16:8" / "18:6" / "OMAD". Falls back to
+  /// the goal hours when the protocol string is custom or empty.
+  String _shortProtocolLabel(String protocol, int goalHours) {
+    if (protocol.isEmpty) return '${goalHours}h';
+    // Already in "Nh" or "N:M" shape from the fasting picker → keep.
+    if (protocol.contains(':') || protocol.endsWith('h')) return protocol;
+    // Heuristic mapping for common goals when only a free-form name is set.
+    switch (goalHours) {
+      case 14:
+        return '14:10';
+      case 16:
+        return '16:8';
+      case 18:
+        return '18:6';
+      case 20:
+        return '20:4';
+      case 23:
+      case 24:
+        return 'OMAD';
+      default:
+        return '${goalHours}h';
+    }
+  }
+}
+
+/// Dotted progress strip: one dot per goal-hour. Filled dots use the
+/// current stage's color; remaining dots use the neutral card border. Caps
+/// at 18 dots so the row fits on iPhone SE (320pt) without overflow — long
+/// fasts (24h+) compress to 18 dots evenly.
+class _FastingProgressDots extends StatelessWidget {
+  final int goalHours;
+  final double fraction;
+  final Color fillColor;
+  final Color trackColor;
+
+  const _FastingProgressDots({
+    required this.goalHours,
+    required this.fraction,
+    required this.fillColor,
+    required this.trackColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dotCount = goalHours.clamp(8, 18);
+    final filledDots = (fraction * dotCount).floor();
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      children: List.generate(dotCount, (i) {
+        final filled = i < filledDots;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 1.5),
+            child: Container(
+              height: 6,
+              decoration: BoxDecoration(
+                color: filled ? fillColor : trackColor.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

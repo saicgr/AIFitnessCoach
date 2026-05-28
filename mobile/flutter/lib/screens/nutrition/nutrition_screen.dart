@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../data/services/rating_prompt_service.dart';
 import '../../widgets/rating_prompt_sheet.dart';
 import 'package:intl/intl.dart';
@@ -168,9 +169,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'nutrition_screen_viewed');
     });
-    // Collapse nav bar labels on this secondary page
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(navBarLabelsExpandedProvider.notifier).state = false;
       // Listen for preferences to become available, then check for weekly check-in
       _setupWeeklyCheckinListener();
       // Auto-refresh Vitamins & Minerals when a meal is logged/edited.
@@ -1011,6 +1010,13 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                   );
                 },
               ),
+              // Fasting is NOT in the kebab — it lives as a contextual
+              // bar on the Daily tab (`_FastingActiveBar` in daily_tab.dart).
+              // The bar shows "Start a fast →" when inactive and
+              // protocol + stage + progress + remaining when active, so
+              // there's no reason to duplicate the entry point here.
+              // Single source of truth = the bar; kebab keeps only the
+              // genuinely-overflow items (Food history, Saved).
             ],
           ),
         ),

@@ -78,8 +78,12 @@ class DiscoverSnapshotNotifier
         // network-error UI with a retry — an empty-data state would wrongly
         // read as "nothing here" when the truth is "couldn't load".
         if (!mounted) return;
-        if (state.valueOrNull == null) {
-          state = AsyncValue.error(e, st);
+        try {
+          if (state.valueOrNull == null) {
+            state = AsyncValue.error(e, st);
+          }
+        } catch (_) {
+          // Notifier disposed between the mounted check and the state read.
         }
       },
     );
