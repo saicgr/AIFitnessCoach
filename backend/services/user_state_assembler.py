@@ -245,19 +245,19 @@ def assemble_user_state(user_id: str, supabase, force: bool = False) -> UserStat
     try:
         since_7 = (_utcnow() - timedelta(days=7)).isoformat()
         meals = (
-            supabase.table("food_log")
-            .select("calories_kcal,protein_g,carbs_g,eaten_at")
+            supabase.table("food_logs")
+            .select("total_calories,protein_g,carbs_g,logged_at")
             .eq("user_id", user_id)
-            .gte("eaten_at", since_7)
+            .gte("logged_at", since_7)
             .execute()
         )
         if meals.data:
-            tot_kcal = sum((m.get("calories_kcal") or 0) for m in meals.data)
+            tot_kcal = sum((m.get("total_calories") or 0) for m in meals.data)
             tot_protein = sum((m.get("protein_g") or 0) for m in meals.data)
             tot_carbs_today = sum(
                 (m.get("carbs_g") or 0)
                 for m in meals.data
-                if (m.get("eaten_at") or "").startswith(date.today().isoformat())
+                if (m.get("logged_at") or "").startswith(date.today().isoformat())
             )
             state.protein_avg_7d_g = tot_protein / 7.0
             state.carbs_today_g = tot_carbs_today

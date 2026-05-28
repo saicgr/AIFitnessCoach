@@ -214,8 +214,8 @@ async def _aggregate_stats(db, user_id: str, period_key: str) -> Dict[str, Any]:
 
     def _query_nutrition_logs():
         return (
-            db.client.table("nutrition_logs")
-            .select("calories, protein_g")
+            db.client.table("food_logs")
+            .select("total_calories, protein_g")
             .eq("user_id", user_id)
             .gte("logged_at", start_str)
             .lt("logged_at", end_str)
@@ -224,7 +224,7 @@ async def _aggregate_stats(db, user_id: str, period_key: str) -> Dict[str, Any]:
 
     def _query_social_activities():
         return (
-            db.client.table("social_activities")
+            db.client.table("activity_feed")
             .select("id, activity_type")
             .eq("user_id", user_id)
             .gte("created_at", start_str)
@@ -349,7 +349,7 @@ async def _aggregate_stats(db, user_id: str, period_key: str) -> Dict[str, Any]:
 
     # --- Process nutrition ---
     nutrition_logs = nutrition_result.data or []
-    total_calories = sum(n.get("calories") or 0 for n in nutrition_logs)
+    total_calories = sum(n.get("total_calories") or 0 for n in nutrition_logs)
     total_protein = sum(n.get("protein_g") or 0 for n in nutrition_logs)
     avg_protein = round(total_protein / len(nutrition_logs), 1) if nutrition_logs else 0
 
@@ -364,7 +364,7 @@ async def _aggregate_stats(db, user_id: str, period_key: str) -> Dict[str, Any]:
     if user_activity_ids:
         def _query_social_reactions():
             return (
-                db.client.table("social_reactions")
+                db.client.table("activity_reactions")
                 .select("id", count="exact")
                 .in_("activity_id", user_activity_ids)
                 .execute()

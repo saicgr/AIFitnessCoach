@@ -25,6 +25,7 @@ import '../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../data/providers/sub_card_shown_today_provider.dart';
 import '../../../widgets/coach/coach_contextual_nudge_row.dart';
 import '../../../widgets/coach/sub_card_ranker.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'home/unified_home_widgets.dart' show kHomeHPad;
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -518,12 +519,8 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   /// persona section), (3) hide the card for the rest of today.
   void _showCoachOptionsSheet(BuildContext context, WidgetRef ref) {
     final c = ThemeColors.of(context);
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: c.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetCtx) {
         Widget row(IconData icon, String label, VoidCallback onTap) {
           return ListTile(
@@ -540,20 +537,10 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           );
         }
 
-        return SafeArea(
+        return GlassSheet(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: c.cardBorder,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 12),
               row(Icons.tune, 'AI Settings', () {
                 Navigator.of(sheetCtx).pop();
                 context.push('/ai-settings');
@@ -569,7 +556,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
                     .read(coachCardVisibilityProvider.notifier)
                     .setDismissedToday();
               }),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
             ],
           ),
         );

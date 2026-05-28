@@ -210,10 +210,15 @@ async def get_hr_zones(
         # Fall back to health metrics if no cardio metrics
         if resting_hr is None:
             try:
-                health_response = db.client.table("health_metrics").select(
+                # Schema-drift fix: the resting_heart_rate value lives on
+                # `daily_activity`, ordered by `activity_date`. The phantom
+                # `health_metrics` table never existed in production.
+                health_response = db.client.table("daily_activity").select(
                     "resting_heart_rate"
-                ).eq("user_id", user_id).order(
-                    "recorded_at", desc=True
+                ).eq("user_id", user_id).not_.is_(
+                    "resting_heart_rate", "null"
+                ).order(
+                    "activity_date", desc=True
                 ).limit(1).maybe_single().execute()
             except Exception:
                 health_response = None

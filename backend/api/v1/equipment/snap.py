@@ -145,7 +145,7 @@ async def _check_quota_and_tier(db, user_id: str) -> None:
     tier = "free"
     try:
         sub_row = (
-            db.client.table("subscriptions")
+            db.client.table("user_subscriptions")
             .select("tier,is_lifetime")
             .eq("user_id", user_id)
             .limit(1)

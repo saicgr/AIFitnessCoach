@@ -40,7 +40,7 @@ insights_router = APIRouter(prefix="/insights", tags=["Home Insights"])
 _RDA: Dict[str, float] = {
     "iron_mg": 12.0,        # NIH ODS adult avg (men 8, women 18)
     "calcium_mg": 1000.0,   # NIH ODS adult 19-50
-    "vitamin_d_mcg": 15.0,  # NIH ODS adult 19-70
+    "vitamin_d_iu": 600.0,  # NIH ODS 15 mcg = 600 IU (food_logs stores in IU)
     "magnesium_mg": 400.0,  # NIH ODS adult midpoint
     "potassium_mg": 3400.0, # FDA DV
     "vitamin_c_mg": 80.0,   # FDA DV midpoint (men 90, women 75)
@@ -51,7 +51,7 @@ _RDA: Dict[str, float] = {
 _MICRO_LABELS: Dict[str, str] = {
     "iron_mg": "Iron",
     "calcium_mg": "Calcium",
-    "vitamin_d_mcg": "Vitamin D",
+    "vitamin_d_iu": "Vitamin D",
     "magnesium_mg": "Magnesium",
     "potassium_mg": "Potassium",
     "vitamin_c_mg": "Vitamin C",
@@ -64,7 +64,7 @@ _MICRO_LABELS: Dict[str, str] = {
 _EXAMPLE_FOODS: Dict[str, List[str]] = {
     "iron_mg": ["Spinach", "Lentils", "Lean beef"],
     "calcium_mg": ["Greek yogurt", "Sardines", "Kale"],
-    "vitamin_d_mcg": ["Salmon", "Egg yolks", "Fortified milk"],
+    "vitamin_d_iu": ["Salmon", "Egg yolks", "Fortified milk"],
     "magnesium_mg": ["Almonds", "Black beans", "Dark chocolate"],
     "potassium_mg": ["Banana", "Sweet potato", "White beans"],
     "vitamin_c_mg": ["Bell pepper", "Strawberries", "Orange"],

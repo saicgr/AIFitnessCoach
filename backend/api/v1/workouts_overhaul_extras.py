@@ -325,25 +325,25 @@ async def unified_journal(
     # Food
     try:
         fl = (
-            db.client.table("food_log")
-            .select("id,eaten_at,name,calories_kcal")
+            db.client.table("food_logs")
+            .select("id,logged_at,food_name,total_calories")
             .eq("user_id", user_id)
-            .order("eaten_at", desc=True)
+            .order("logged_at", desc=True)
             .limit(limit)
             .execute()
         )
         for r in (fl.data or []):
-            name = (r.get("name") or "").lower()
+            name = (r.get("food_name") or "").lower()
             if needle and needle not in name:
                 continue
             items.append({
                 "kind": "meal",
                 "id": r["id"],
-                "at": r["eaten_at"],
-                "summary": f"{r.get('name')} — {int(r.get('calories_kcal') or 0)} kcal",
+                "at": r["logged_at"],
+                "summary": f"{r.get('food_name')} — {int(r.get('total_calories') or 0)} kcal",
             })
     except Exception as e:
-        logger.debug(f"[journal] food_log skipped: {e}")
+        logger.debug(f"[journal] food_logs skipped: {e}")
 
     # Progress photos
     try:
@@ -570,10 +570,14 @@ async def morning_recovery_nudge():
         # delivery pipeline is plumbed via push_notifications elsewhere — we
         # write the queue row and let it ship.)
         try:
-            db.client.table("notifications").insert({
+            # Real queue is `notification_queue` (no `type`/`title` columns —
+            # use `notification_type`, fold the title into `subject`, default
+            # channel to push).
+            db.client.table("notification_queue").insert({
                 "user_id": user_id,
-                "type": "morning_recovery_nudge",
-                "title": "Take it easy today",
+                "notification_type": "morning_recovery_nudge",
+                "channel": "push",
+                "subject": "Take it easy today",
                 "body": (
                     f"Readiness is {r.get('readiness_level','low')}. "
                     f"Reducing today's volume — open the app to regenerate."
@@ -581,6 +585,7 @@ async def morning_recovery_nudge():
                 "data": {"recommended_intensity": intensity,
                           "hooper_index": r.get("hooper_index")},
                 "scheduled_for": datetime.now(timezone.utc).isoformat(),
+                "status": "pending",
             }).execute()
             sent += 1
         except Exception as e:

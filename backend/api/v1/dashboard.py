@@ -253,10 +253,25 @@ async def _query_measurements(db, user_id: str):
 async def _query_goals(db, user_id: str):
     """Get active personal goals."""
     try:
-        response = db.client.table("personal_goals").select(
-            "id, title, target_value, current_value, unit, status, deadline"
+        # Real table is `weekly_personal_goals`; `title` doesn't exist — use
+        # `exercise_name` as the human label and `week_end` as the deadline.
+        response = db.client.table("weekly_personal_goals").select(
+            "id, exercise_name, goal_type, target_value, current_value, unit, status, week_end"
         ).eq("user_id", user_id).eq("status", "active").execute()
-        return response.data or []
+        rows = response.data or []
+        # Adapt the row shape to the dashboard contract (title + deadline).
+        return [
+            {
+                "id": r.get("id"),
+                "title": r.get("exercise_name") or r.get("goal_type") or "Goal",
+                "target_value": r.get("target_value"),
+                "current_value": r.get("current_value"),
+                "unit": r.get("unit"),
+                "status": r.get("status"),
+                "deadline": r.get("week_end"),
+            }
+            for r in rows
+        ]
     except Exception as e:
         logger.warning(f"Dashboard goals query failed: {e}", exc_info=True)
         return []

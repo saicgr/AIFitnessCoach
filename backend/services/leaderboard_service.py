@@ -343,7 +343,7 @@ class LeaderboardService:
 
     def _get_friend_ids(self, user_id: str) -> List[str]:
         """Get list of user's friend IDs."""
-        result = self.supabase.table("connections").select("friend_id").eq(
+        result = self.supabase.table("user_friends").select("friend_id").eq(
             "user_id", user_id
         ).eq("status", "accepted").execute()
 

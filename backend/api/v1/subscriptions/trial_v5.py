@@ -146,21 +146,31 @@ async def trial_summary(current_user: dict = Depends(get_current_user)):
 
         trial_start = trial_start_str  # ISO date string for filtering
 
-        # Workouts completed during trial
-        workouts_result = supabase.client.table("completed_workouts")\
-            .select("id, total_volume_kg, total_sets, total_reps")\
-            .eq("user_id", user_id)\
-            .gte("completed_at", trial_start)\
-            .execute()
-        workouts = workouts_result.data or []
+        # Workouts completed during trial.
+        # TODO: completed_workouts table never existed — the real workout log
+        # is `workout_logs`, but it stores per-set data in `sets_json` /
+        # `exercises_performance`, not denormalized total_volume_kg / total_sets
+        # / total_reps columns. A faithful schema mapping needs a roll-up view
+        # or per-row aggregation pass; leaving the wrapper that returns 0 for
+        # those rollups until the trial-summary contract is decided.
+        try:
+            workouts_result = supabase.client.table("workout_logs")\
+                .select("id, sets_json, exercises_performance, duration_minutes")\
+                .eq("user_id", user_id)\
+                .not_.is_("completed_at", "null")\
+                .gte("completed_at", trial_start)\
+                .execute()
+            workouts = workouts_result.data or []
+        except Exception:
+            workouts = []
         workouts_completed = len(workouts)
-        total_volume = sum(w.get("total_volume_kg", 0) or 0 for w in workouts)
-        sets_logged = sum(w.get("total_sets", 0) or 0 for w in workouts)
-        reps_logged = sum(w.get("total_reps", 0) or 0 for w in workouts)
+        total_volume = 0.0  # see TODO above — needs sets_json aggregation
+        sets_logged = 0
+        reps_logged = 0
 
         # Meals logged during trial
         try:
-            meals_result = supabase.client.table("food_log")\
+            meals_result = supabase.client.table("food_logs")\
                 .select("id", count="exact")\
                 .eq("user_id", user_id)\
                 .gte("logged_at", trial_start)\
@@ -169,13 +179,17 @@ async def trial_summary(current_user: dict = Depends(get_current_user)):
         except Exception:
             meals_logged = 0
 
-        # Coach interactions during trial
+        # Coach interactions during trial.
+        # Schema-drift fix: chat_messages doesn't exist — the real table is
+        # `chat_history`, one row per user↔AI turn (user_message + ai_response
+        # on the same row, keyed by `timestamp` not `created_at`). Counting
+        # rows with a non-empty user_message gives the user-initiated turns.
         try:
-            chat_result = supabase.client.table("chat_messages")\
+            chat_result = supabase.client.table("chat_history")\
                 .select("id", count="exact")\
                 .eq("user_id", user_id)\
-                .eq("role", "user")\
-                .gte("created_at", trial_start)\
+                .not_.is_("user_message", "null")\
+                .gte("timestamp", trial_start)\
                 .execute()
             coach_interactions = chat_result.count or 0
         except Exception:

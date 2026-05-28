@@ -28,10 +28,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Request
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
+from core.timezone_utils import user_today_date
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 
@@ -525,7 +526,10 @@ async def get_sleep_target(current_user: dict = Depends(get_current_user)) -> Di
 # 5) GET /api/v1/workouts/today/schedule
 # ----------------------------------------------------------------------------
 @workouts_router.get("/today/schedule", tags=["Workouts"])
-async def get_today_schedule(current_user: dict = Depends(get_current_user)) -> Dict[str, Any]:
+async def get_today_schedule(
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+) -> Dict[str, Any]:
     """
     Lightweight companion to /workouts/today — returns just the scheduled
     local-time HH:MM for today's workout so pre-workout cards can compute
@@ -536,14 +540,14 @@ async def get_today_schedule(current_user: dict = Depends(get_current_user)) -> 
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        # Pick today's scheduled workout for this user. Mirrors the selector in
-        # workouts/today.py (scheduled_for_date == user's local today), but we
-        # avoid importing the timezone helper to keep this surface tiny.
-        today_iso = datetime.now(timezone.utc).date().isoformat()
+        # Pick today's scheduled workout in the user's local day (UTC was
+        # producing tomorrow's date for CST users overnight). Column is
+        # `scheduled_date` — `scheduled_for_date` doesn't exist on workouts.
+        today_iso = user_today_date(request, db, user_id).isoformat()
         res = db.client.table("workouts") \
-            .select("id,scheduled_local_time,scheduled_for_date") \
+            .select("id,scheduled_local_time,scheduled_date") \
             .eq("user_id", user_id) \
-            .eq("scheduled_for_date", today_iso) \
+            .eq("scheduled_date", today_iso) \
             .limit(1).execute()
 
         if not res.data:
@@ -720,18 +724,19 @@ async def get_proposed_reschedule_slot(
         end = today + timedelta(days=7)
 
         # Pull the next-7-day plan window. Use a generous select so we can
-        # detect rest days via either an explicit type marker or absence.
+        # detect rest days. `workouts.is_rest_day` doesn't exist — only `type`
+        # carries the rest marker (type == "rest").
         plan_res = db.client.table("workouts") \
-            .select("id,scheduled_for_date,type,is_rest_day") \
+            .select("id,scheduled_date,type") \
             .eq("user_id", user_id) \
-            .gte("scheduled_for_date", today.isoformat()) \
-            .lte("scheduled_for_date", end.isoformat()) \
+            .gte("scheduled_date", today.isoformat()) \
+            .lte("scheduled_date", end.isoformat()) \
             .execute()
 
         rows = plan_res.data or []
         by_date: Dict[str, List[Dict[str, Any]]] = {}
         for r in rows:
-            d = r.get("scheduled_for_date")
+            d = r.get("scheduled_date")
             if not d:
                 continue
             by_date.setdefault(str(d)[:10], []).append(r)
@@ -742,15 +747,9 @@ async def get_proposed_reschedule_slot(
             day = (today + timedelta(days=i)).isoformat()
             day_rows = by_date.get(day, [])
             # Rest-day preference — score 0 best.
-            is_rest = any(
-                bool(r.get("is_rest_day")) or (r.get("type") == "rest")
-                for r in day_rows
-            )
+            is_rest = any(r.get("type") == "rest" for r in day_rows)
             # Low-volume: <2 workouts already on that day (rest days excluded).
-            non_rest = [
-                r for r in day_rows
-                if not (r.get("is_rest_day") or r.get("type") == "rest")
-            ]
+            non_rest = [r for r in day_rows if r.get("type") != "rest"]
             count = len(non_rest)
             if is_rest:
                 score = 0

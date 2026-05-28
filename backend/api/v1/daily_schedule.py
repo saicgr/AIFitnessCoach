@@ -511,8 +511,8 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest, cur
 
         # --- Include Workouts ---
         if request.include_workouts:
-            workouts = db.client.table("workout_plans").select(
-                "id, title, scheduled_date, duration_minutes"
+            workouts = db.client.table("workouts").select(
+                "id, name, scheduled_date, duration_minutes"
             ).eq("user_id", user_id).eq(
                 "scheduled_date", target_date
             ).execute()
@@ -520,7 +520,7 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest, cur
             for w in workouts.data or []:
                 item_data = {
                     "user_id": user_id,
-                    "title": w.get("title", "Workout"),
+                    "title": w.get("name", "Workout"),
                     "item_type": "workout",
                     "scheduled_date": target_date,
                     "start_time": "09:00",

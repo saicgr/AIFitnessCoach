@@ -193,15 +193,19 @@ router.include_router(share_caption.router, tags=["Share Templates"])
 # Weekly summaries and notification preferences
 router.include_router(summaries.router, prefix="/summaries", tags=["Summaries"])
 
-# User insights and weekly progress
-router.include_router(insights.router, tags=["Insights"])
-
 # Home-screen insight cards: micro gap, workout-sleep correlation,
-# strain-recovery mismatch, discovery insight.
+# strain-recovery mismatch, discovery insight, jet-lag, busy-week, etc.
+# MUST be registered BEFORE insights.router — that router declares a catch-all
+# `/insights/{user_id}` which otherwise swallows every specific slug path
+# (busy-week-density, jet-lag, macro-pattern, …) and tries to parse the slug
+# as a UUID, producing 22P02 errors.
 router.include_router(home_insights.nutrition_router, tags=["Home Insights"])
 router.include_router(home_insights.insights_router, tags=["Home Insights"])
 router.include_router(home_insights_v2.insights_router, tags=["Home Insights"])
 router.include_router(home_insights_v2.social_router, tags=["Home Insights"])
+
+# User insights and weekly progress (catch-all `/insights/{user_id}` lives here)
+router.include_router(insights.router, tags=["Insights"])
 
 # Push notification endpoints
 router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
@@ -223,7 +227,7 @@ router.include_router(stats.router, tags=["Stats"])
 router.include_router(social.router, tags=["Social"])
 
 # Saved and scheduled workouts from social feed
-router.include_router(saved_workouts.router, prefix="/saved-workouts", tags=["Saved Workouts"])
+router.include_router(saved_workouts.router, tags=["Saved Workouts"])  # router already declares prefix=/saved-workouts
 
 # Workout challenges (friend-to-friend)
 router.include_router(challenges.router, tags=["Challenges"])
@@ -588,7 +592,7 @@ from . import training_load_endpoints; router.include_router(training_load_endpo
 from . import cardio_autotag_endpoints; router.include_router(cardio_autotag_endpoints.router, tags=["Cardio Tags"])
 
 # SLICE_VO2MAX — GET /vo2max/history + /vo2max/latest (reads cardio_metrics).
-from . import vo2max_endpoints; router.include_router(vo2max_endpoints.router, prefix="/vo2max", tags=["VO2max"])
+from . import vo2max_endpoints; router.include_router(vo2max_endpoints.router, tags=["VO2max"])  # router already declares prefix=/vo2max
 
 # SLICE_GPS — POST /cardio-logs/{id}/route (S3 polyline upload).
 from . import cardio_route; router.include_router(cardio_route.router, tags=["Cardio Route"])

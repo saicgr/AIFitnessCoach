@@ -44,16 +44,16 @@ async def get_user_readiness_score(user_id: str) -> Optional[int]:
     try:
         db = get_supabase_db()
 
-        result = db.client.table("readiness") \
-            .select("score, created_at") \
+        result = db.client.table("readiness_scores") \
+            .select("readiness_score, submitted_at") \
             .eq("user_id", user_id) \
-            .order("created_at", desc=True) \
+            .order("submitted_at", desc=True) \
             .limit(1) \
             .execute()
 
         if result.data and len(result.data) > 0:
-            score = result.data[0].get("score")
-            created_at = result.data[0].get("created_at", "")
+            score = result.data[0].get("readiness_score")
+            created_at = result.data[0].get("submitted_at", "")
 
             if created_at:
                 try:

@@ -422,19 +422,22 @@ async def _log_fasting_event(db, user_id: str, event: FastingEventRequest, devic
     event_at = datetime.fromtimestamp(event.event_at / 1000)
 
     if event.event_type == "START":
-        # Create new fasting session
-        db.table("fasting_sessions").insert({
+        # Create new fasting session.
+        # Schema-drift fix: the real table is `fasting_records` (active_fasts is
+        # the view); column names there are start_time/goal_duration_minutes —
+        # NOT started_at/target_duration_minutes.
+        db.table("fasting_records").insert({
             "user_id": user_id,
             "protocol": event.protocol,
-            "target_duration_minutes": event.target_duration_minutes,
-            "started_at": event_at.isoformat(),
+            "goal_duration_minutes": event.target_duration_minutes,
+            "start_time": event_at.isoformat(),
             "status": "active",
             "device_source": device_source
         }).execute()
     elif event.event_type == "END" and event.session_id:
-        # End existing session
-        db.table("fasting_sessions").update({
-            "ended_at": event_at.isoformat(),
+        # End existing session — fasting_records uses end_time (not ended_at).
+        db.table("fasting_records").update({
+            "end_time": event_at.isoformat(),
             "actual_duration_minutes": event.elapsed_minutes,
             "status": "completed"
         }).eq("id", event.session_id).execute()

@@ -222,7 +222,7 @@ def _user_tier(user_id: str) -> str:
     try:
         db = get_supabase_db()
         sub = (
-            db.client.table("subscriptions")
+            db.client.table("user_subscriptions")
             .select("tier, status")
             .eq("user_id", user_id)
             .maybe_single()
