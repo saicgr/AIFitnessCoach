@@ -572,7 +572,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
 /// [SubCardRanker]; de-duplicated against the per-day `shownTodayDedupKeys`
 /// set so a card the user has dismissed or acted on doesn't resurface
 /// later the same day.
-class _CoachNudgeStack extends ConsumerWidget {
+class _CoachNudgeStack extends ConsumerStatefulWidget {
   const _CoachNudgeStack();
 
   /// One page = up to this many stacked sub-cards.
@@ -584,7 +584,34 @@ class _CoachNudgeStack extends ConsumerWidget {
   static const double _kPageHeight = 184;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_CoachNudgeStack> createState() => _CoachNudgeStackState();
+}
+
+class _CoachNudgeStackState extends ConsumerState<_CoachNudgeStack> {
+  late final PageController _controller;
+  int _activePage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController()..addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_controller.hasClients || _controller.page == null) return;
+    final p = _controller.page!.round();
+    if (p != _activePage) setState(() => _activePage = p);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onScroll);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
     final raw = ref.watch(contextualNudgeProvider);
     if (raw.isEmpty) return const SizedBox.shrink();
@@ -599,7 +626,21 @@ class _CoachNudgeStack extends ConsumerWidget {
     );
     if (ranked.isEmpty) return const SizedBox.shrink();
 
-    final pageCount = (ranked.length / _kCardsPerPage).ceil();
+    final pageCount =
+        (ranked.length / _CoachNudgeStack._kCardsPerPage).ceil();
+
+    // The ranked list can shrink mid-view (a nudge is snoozed / hidden /
+    // muted / expires). Clamp the active index for display, and if the
+    // controller is now parked past the last page, snap it back next frame.
+    final activeIndex = _activePage.clamp(0, pageCount - 1);
+    if (_controller.hasClients &&
+        (_controller.page ?? 0) > pageCount - 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _controller.hasClients) {
+          _controller.jumpToPage(pageCount - 1);
+        }
+      });
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -608,14 +649,15 @@ class _CoachNudgeStack extends ConsumerWidget {
         Divider(height: 1, color: c.cardBorder),
         const SizedBox(height: 10),
         SizedBox(
-          height: _kPageHeight,
+          height: _CoachNudgeStack._kPageHeight,
           child: PageView.builder(
+            controller: _controller,
             itemCount: pageCount,
             physics: const PageScrollPhysics(),
             itemBuilder: (ctx, page) {
-              final start = page * _kCardsPerPage;
-              final end =
-                  (start + _kCardsPerPage).clamp(0, ranked.length);
+              final start = page * _CoachNudgeStack._kCardsPerPage;
+              final end = (start + _CoachNudgeStack._kCardsPerPage)
+                  .clamp(0, ranked.length);
               final slice = ranked.sublist(start, end);
               return Column(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -636,9 +678,14 @@ class _CoachNudgeStack extends ConsumerWidget {
         ),
         if (pageCount > 1) ...[
           const SizedBox(height: 8),
-          _PageDots(
-            pageCount: pageCount,
-            color: c.textMuted,
+          Semantics(
+            label: 'Page ${activeIndex + 1} of $pageCount',
+            child: _PageDots(
+              pageCount: pageCount,
+              activeIndex: activeIndex,
+              color: c.textMuted,
+              activeColor: c.accent,
+            ),
           ),
         ],
       ],
@@ -646,16 +693,20 @@ class _CoachNudgeStack extends ConsumerWidget {
   }
 }
 
-/// Simple page-dot indicator. Riverpod-free — the parent PageView re-
-/// drives this by passing the active index via a controller. We don't
-/// hook controller state here (extra rebuild surface for a low-value
-/// visual) — instead we render passive equal dots that hint "more pages
-/// available" without tracking which one is current. Active-page hilite
-/// can land in a follow-up if the design calls for it.
+/// Page-dot indicator that highlights the current page. The active dot is a
+/// wider accent-coloured pill; inactive dots are small muted circles. The
+/// parent drives [activeIndex] from its `PageController` listener.
 class _PageDots extends StatelessWidget {
   final int pageCount;
+  final int activeIndex;
   final Color color;
-  const _PageDots({required this.pageCount, required this.color});
+  final Color activeColor;
+  const _PageDots({
+    required this.pageCount,
+    required this.activeIndex,
+    required this.color,
+    required this.activeColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -664,12 +715,16 @@ class _PageDots extends StatelessWidget {
       children: [
         for (var i = 0; i < pageCount; i++) ...[
           if (i > 0) const SizedBox(width: 6),
-          Container(
-            width: 6,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            width: i == activeIndex ? 16 : 6,
             height: 6,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.35),
-              shape: BoxShape.circle,
+              color: i == activeIndex
+                  ? activeColor
+                  : color.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
         ],

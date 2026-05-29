@@ -59,6 +59,14 @@ class SubCardShownTodayNotifier extends StateNotifier<Set<String>> {
     await _persist();
   }
 
+  /// Un-hide a dedupKey hidden earlier today. Backs the "Undo" action on the
+  /// swipe-to-hide snackbar so an accidental swipe is recoverable.
+  Future<void> removeShown(String dedupKey) async {
+    if (!state.contains(dedupKey)) return;
+    state = {...state}..remove(dedupKey);
+    await _persist();
+  }
+
   Future<void> clearAll() async {
     state = <String>{};
     await _persist();

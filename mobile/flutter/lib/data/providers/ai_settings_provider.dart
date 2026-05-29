@@ -14,7 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/contextual_nudge.dart' show NudgeCategory;
+import '../models/contextual_nudge.dart' show NudgeCategory, NudgeId;
 import '../repositories/auth_repository.dart' show authStateProvider;
 
 /// Default priority order for sub-card nudge categories. Mirrors the
@@ -46,6 +46,13 @@ class CoachUiSettings {
   final bool aiMealScanEnabled;
   final bool voiceCoachEnabled;
 
+  /// Nudge types the user permanently muted ("Always hide this"). Stored as
+  /// [NudgeId] `name` strings so the set survives enum reordering and any
+  /// id no longer in the enum is simply ignored on load. The
+  /// `contextualNudgeProvider` filters these out before ranking, so a muted
+  /// type never appears and never consumes a daily sub-card slot.
+  final Set<String> mutedNudgeIds;
+
   const CoachUiSettings({
     this.categoryOrder = const [],
     this.coachCardHidden = false,
@@ -54,6 +61,7 @@ class CoachUiSettings {
     this.aiFormAnalysisEnabled = true,
     this.aiMealScanEnabled = true,
     this.voiceCoachEnabled = true,
+    this.mutedNudgeIds = const {},
   });
 
   /// Effective category order — caller-facing helper. If the user has
@@ -76,6 +84,7 @@ class CoachUiSettings {
     bool? aiFormAnalysisEnabled,
     bool? aiMealScanEnabled,
     bool? voiceCoachEnabled,
+    Set<String>? mutedNudgeIds,
   }) {
     return CoachUiSettings(
       categoryOrder: categoryOrder ?? this.categoryOrder,
@@ -86,6 +95,7 @@ class CoachUiSettings {
           aiFormAnalysisEnabled ?? this.aiFormAnalysisEnabled,
       aiMealScanEnabled: aiMealScanEnabled ?? this.aiMealScanEnabled,
       voiceCoachEnabled: voiceCoachEnabled ?? this.voiceCoachEnabled,
+      mutedNudgeIds: mutedNudgeIds ?? this.mutedNudgeIds,
     );
   }
 
@@ -97,6 +107,7 @@ class CoachUiSettings {
         'aiFormAnalysisEnabled': aiFormAnalysisEnabled,
         'aiMealScanEnabled': aiMealScanEnabled,
         'voiceCoachEnabled': voiceCoachEnabled,
+        'mutedNudgeIds': mutedNudgeIds.toList(),
       };
 
   static CoachUiSettings fromJson(Map<String, dynamic> json) {
@@ -107,6 +118,15 @@ class CoachUiSettings {
         .map((s) => byName[s])
         .whereType<NudgeCategory>()
         .toList(growable: false);
+    // Muted ids default to empty for users whose stored JSON predates the
+    // field. Keep only names that still map to a live NudgeId so a renamed
+    // or removed enum value can't strand a permanently-hidden nudge.
+    final validIds = {for (final id in NudgeId.values) id.name};
+    final mutedRaw = json['mutedNudgeIds'] as List<dynamic>? ?? const [];
+    final muted = mutedRaw
+        .whereType<String>()
+        .where(validIds.contains)
+        .toSet();
     return CoachUiSettings(
       categoryOrder: order,
       coachCardHidden: json['coachCardHidden'] as bool? ?? false,
@@ -115,6 +135,7 @@ class CoachUiSettings {
       aiFormAnalysisEnabled: json['aiFormAnalysisEnabled'] as bool? ?? true,
       aiMealScanEnabled: json['aiMealScanEnabled'] as bool? ?? true,
       voiceCoachEnabled: json['voiceCoachEnabled'] as bool? ?? true,
+      mutedNudgeIds: muted,
     );
   }
 }
@@ -189,6 +210,30 @@ class CoachUiSettingsNotifier extends StateNotifier<CoachUiSettings> {
 
   Future<void> setVoiceCoachEnabled(bool v) async {
     state = state.copyWith(voiceCoachEnabled: v);
+    await _persist();
+  }
+
+  /// Permanently hide a nudge type ("Always hide this"). No-op if already
+  /// muted so we don't churn state or persistence.
+  Future<void> muteNudge(NudgeId id) async {
+    if (state.mutedNudgeIds.contains(id.name)) return;
+    state = state.copyWith(mutedNudgeIds: {...state.mutedNudgeIds, id.name});
+    await _persist();
+  }
+
+  /// Restore a single muted nudge type.
+  Future<void> unmuteNudge(NudgeId id) async {
+    if (!state.mutedNudgeIds.contains(id.name)) return;
+    state = state.copyWith(
+      mutedNudgeIds: {...state.mutedNudgeIds}..remove(id.name),
+    );
+    await _persist();
+  }
+
+  /// Restore every muted nudge type.
+  Future<void> clearMutedNudges() async {
+    if (state.mutedNudgeIds.isEmpty) return;
+    state = state.copyWith(mutedNudgeIds: const {});
     await _persist();
   }
 }

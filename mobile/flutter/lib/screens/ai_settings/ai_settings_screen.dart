@@ -17,6 +17,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
 import '../../data/services/tts_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'muted_nudges_section.dart';
 import 'nudge_priority_section.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -907,6 +908,10 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
               // Coach card sub-card priorities — drag to reorder.
               // Drives the SubCardRanker on the home Coach card.
               const NudgePrioritySection(),
+
+              // Permanently-hidden nudge types ("Always hide this"). Renders
+              // nothing until the user mutes at least one type.
+              const MutedNudgesSection(),
 
               const SizedBox(height: 8),
               _AdvancedToggleRow(

@@ -23,6 +23,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/contextual_nudge.dart';
+import '../../data/providers/ai_settings_provider.dart';
 import '../../data/providers/nudge_snooze_provider.dart';
 import '../../data/providers/sub_card_shown_today_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
@@ -45,15 +46,56 @@ class CoachContextualNudgeRow extends ConsumerWidget {
     this.ctaColor,
   });
 
+  /// Red used for the swipe-to-hide background. Fixed (not theme-derived) so
+  /// it reads as destructive in both light and dark; matches the delete tint
+  /// used elsewhere in the app.
+  static const Color _kDeleteRed = Color(0xFFE5484D);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ThemeColors.of(context);
     final tint = ctaColor ?? c.accent;
+    // Capture the messenger now so the swipe-to-hide snackbar uses a live
+    // context rather than this row's (which is deactivated as it dismisses).
+    final messenger = ScaffoldMessenger.of(context);
+    // Health alerts can be hidden for today but never permanently muted.
+    final canMute = nudge.priorityTier != NudgePriorityTier.healthAlert;
 
     return Dismissible(
       key: ValueKey('nudge_${nudge.id.name}'),
-      direction: DismissDirection.endToStart,
+      direction: DismissDirection.horizontal,
+      // Raise the right-swipe (hide) threshold a touch so a small horizontal
+      // drag on a row still pages the carousel instead of deleting.
+      dismissThresholds: const {
+        DismissDirection.startToEnd: 0.45,
+        DismissDirection.endToStart: 0.40,
+      },
+      // Right swipe (startToEnd) → hide for today.
       background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 18),
+        decoration: BoxDecoration(
+          color: _kDeleteRed.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.delete_outline, size: 16, color: _kDeleteRed),
+            SizedBox(width: 6),
+            Text(
+              'Hide today',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: _kDeleteRed,
+              ),
+            ),
+          ],
+        ),
+      ),
+      // Left swipe (endToStart) → snooze 4h (unchanged behaviour).
+      secondaryBackground: Container(
         // Non-directional alignment/padding: the Dismissible captures its
         // background widget and re-renders it during the dismiss
         // animation in a context that doesn't always carry Directionality.
@@ -81,8 +123,19 @@ class CoachContextualNudgeRow extends ConsumerWidget {
           ],
         ),
       ),
-      onDismissed: (_) {
-        ref.read(nudgeSnoozeProvider.notifier).snooze(nudge.id);
+      onDismissed: (direction) {
+        if (direction == DismissDirection.endToStart) {
+          // Left swipe → snooze for 4h.
+          ref.read(nudgeSnoozeProvider.notifier).snooze(nudge.id);
+        } else {
+          // Right swipe → hide for the rest of today, then offer to mute the
+          // type permanently (and to undo the hide).
+          HapticService.light();
+          ref
+              .read(subCardShownTodayProvider.notifier)
+              .markShown(nudge.effectiveDedupKey);
+          _showHiddenSnack(messenger, ref, canMute);
+        }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
@@ -151,6 +204,53 @@ class CoachContextualNudgeRow extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Confirmation snackbar for swipe-to-hide. Offers `Undo` (un-hide for
+  /// today) and, unless this is a health alert, `Always hide` (permanent
+  /// per-type mute). Replaces any current snackbar so rapid swipes don't
+  /// stack.
+  void _showHiddenSnack(
+    ScaffoldMessengerState messenger,
+    WidgetRef ref,
+    bool canMute,
+  ) {
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        content: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '"${nudge.title}" hidden for today',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                ref
+                    .read(subCardShownTodayProvider.notifier)
+                    .removeShown(nudge.effectiveDedupKey);
+                messenger.hideCurrentSnackBar();
+              },
+              child: const Text('Undo'),
+            ),
+          ],
+        ),
+        // The escalation to a permanent mute lives in the action slot. Health
+        // alerts omit it so a safety signal can always resurface.
+        action: canMute
+            ? SnackBarAction(
+                label: 'Always hide',
+                onPressed: () =>
+                    ref.read(coachUiSettingsProvider.notifier).muteNudge(nudge.id),
+              )
+            : null,
       ),
     );
   }

@@ -48,6 +48,7 @@ import '../repositories/auth_repository.dart';
 import '../repositories/hydration_repository.dart';
 import '../repositories/nutrition_repository.dart';
 import '../services/notification_service.dart';
+import 'ai_settings_provider.dart';
 import 'breakfast_suggestion_provider.dart';
 import 'daily_coach_insight_provider.dart';
 import 'nudge_snooze_provider.dart';
@@ -444,8 +445,13 @@ final contextualNudgeProvider =
   // happens — we want the nudge to re-evaluate against fresh data, not
   // stay suppressed by a stale 4h timer.
   final snoozed = ref.watch(nudgeSnoozeProvider);
+  // Permanently-muted nudge types ("Always hide this"). Filtered here, before
+  // the SubCardRanker truncates to the daily cap, so a muted type never shows
+  // and never consumes one of the limited sub-card slots.
+  final muted = ref.watch(coachUiSettingsProvider).mutedNudgeIds;
   final now2 = DateTime.now();
   return out.where((n) {
+    if (muted.contains(n.id.name)) return false;
     final until = snoozed[n.id];
     if (until == null) return true;
     return until.isBefore(now2);
