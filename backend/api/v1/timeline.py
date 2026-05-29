@@ -266,6 +266,12 @@ async def get_timeline(
     date: Optional[str] = Query(None, description="YYYY-MM-DD, user-local. Defaults to today."),
     days: int = Query(1, ge=1, le=30, description="How many consecutive days to return (going back from `date`)."),
     limit: int = Query(200, ge=1, le=500, description="Max entries per day"),
+    metrics_only: bool = Query(
+        False,
+        description="When true, omit each day's `entries` array and return only "
+        "`date`/`day_label`/`summary`/`insights`. Used by the Home trend rail "
+        "(a 14-day fetch) so the payload stays tiny.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     db = get_supabase_db()
@@ -273,7 +279,7 @@ async def get_timeline(
     target_date = date or get_user_today(user_tz)
 
     # Cache lookup
-    cached = await get_timeline_cache(user_id, target_date, days)
+    cached = await get_timeline_cache(user_id, target_date, days, metrics_only)
     if cached:
         return cached
 
@@ -599,7 +605,9 @@ async def get_timeline(
             "day_label": day_label,
             "summary": summary,
             "insights": insights,
-            "entries": entries,
+            # summaries-only mode drops the (potentially large) entries array;
+            # the summary above is still computed from the full entry set.
+            "entries": [] if metrics_only else entries,
         })
 
     payload = {
@@ -609,5 +617,5 @@ async def get_timeline(
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    await set_timeline_cache(user_id, target_date, payload, days)
+    await set_timeline_cache(user_id, target_date, payload, days, metrics_only)
     return payload

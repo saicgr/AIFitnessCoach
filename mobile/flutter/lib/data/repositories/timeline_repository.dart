@@ -24,6 +24,7 @@ class TimelineRepository {
     String? date,
     int days = 1,
     int limit = 200,
+    bool metricsOnly = false,
   }) async {
     try {
       final params = <String, dynamic>{
@@ -34,6 +35,11 @@ class TimelineRepository {
       if (date != null) {
         params['date'] = date;
       }
+      if (metricsOnly) {
+        // Summaries-only: backend omits per-day `entries`, returning just the
+        // `summary` rollups the Home trend rail needs over a 14-day window.
+        params['metrics_only'] = true;
+      }
       final response = await _apiClient.dio.get(
         ApiConstants.timeline,
         queryParameters: params,
@@ -43,7 +49,7 @@ class TimelineRepository {
         return TimelineResponse.fromJson(data);
       }
       throw Exception('Unexpected timeline payload shape');
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     }
   }
