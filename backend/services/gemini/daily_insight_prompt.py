@@ -225,6 +225,38 @@ delay_workout_until_fast_ends, accept_pr_target.
 """
 
 
+_WORKOUT_STATS_BRANCH_INSTRUCTION = """SOURCE = workout_stats (training-trend insight for the Stats tab)
+You are writing the coach insight that sits atop the Stats tab's training
+section. The payload's today_score_snapshot carries a TRAINING TREND
+snapshot (not the daily pillar snapshot) with these fields:
+
+- volume_4wk_kg / volume_prev_4wk_kg : total external load (kg) for the
+  most recent 4 ISO weeks vs the 4 weeks before that.
+- volume_delta_pct                   : signed percent change between them
+  (null when the prior block was empty. Say "no prior baseline" then).
+- push_sets / pull_sets              : completed set counts over the last
+  4 weeks, split by movement force. push_pull_ratio is push/pull (null if
+  pull is 0).
+- acwr / acwr_state                  : acute:chronic workload ratio and its
+  classification (detraining | balanced | loading | overreaching |
+  calibration). Speak to the STATE in plain language, never the bare number
+  unless it appears in the snapshot.
+- pr_count_30d                       : personal records set in the last 30
+  days.
+- current_streak                     : current workout-day streak (0 means
+  the streak is broken / no recent training).
+
+Write a headline (≤ 8 words) naming the single most notable trend, and a
+1 to 2 sentence body that interprets it and gives ONE concrete next move.
+Prefer the most actionable signal: a big volume swing, a lopsided
+push/pull ratio (flag if push_pull_ratio > 1.5 or < 0.67), an
+overreaching/detraining ACWR state, a fresh PR, or a broken streak. Every
+number you cite MUST appear verbatim in the snapshot. cta_primary should
+route to /workouts (start/plan a session) or /pillar/train (see the full
+trend). cta_secondary defaults to /chat.
+"""
+
+
 # Cycle-phase guidance — appended to the system instruction when the
 # snapshot carries a cycle_phase value. Subtle phase awareness across
 # every surface. Per CLAUDE.md no numeric fabrication — guidance is
@@ -284,6 +316,8 @@ def _build_system_instruction(source: str, cycle_phase: str | None = None) -> st
         branch = _NUTRITION_CARD_DINNER_BRANCH_INSTRUCTION
     elif source == "workout_card":
         branch = _WORKOUT_CARD_BRANCH_INSTRUCTION
+    elif source == "workout_stats":
+        branch = _WORKOUT_STATS_BRANCH_INSTRUCTION
     else:
         # Default to home for any unknown source — keeps the contract safe
         # rather than throwing inside a hot Gemini call.

@@ -20,6 +20,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
 import 'widgets/workout_planner_section.dart';
+import 'widgets/workout_stats/workout_stats_section.dart';
 import 'widgets/exercise_preferences_card.dart';
 import 'widgets/workout_library_grid.dart';
 import 'widgets/workouts_floating_options_bar.dart';
@@ -457,6 +458,12 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             scheduledDayIndices: scheduledDayIndices,
           ),
         ),
+        const SizedBox(height: 24),
+
+        // Training stats — full analytics section (AI insight, scalar strip,
+        // trend chart, muscle balance, fueling split, strength, timing,
+        // activity heatmap, recent PRs, custom trends).
+        const WorkoutStatsSection(),
         const SizedBox(height: 24),
 
         // Synced Workouts (Health Connect / Apple Health) — same rich

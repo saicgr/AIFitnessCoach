@@ -89,6 +89,20 @@ class ApiConstants {
   static const String timeline = '/timeline';
   static const String wellnessMood = '/wellness/mood';
 
+  // Stats tab — training/fueling trend surfaces (2026-05-28).
+  // Volume trend: GET /scores/volume-trend?user_id=&weeks=12 — Σ(weight×reps)
+  // per ISO week, zero-filled. Fueling split: GET
+  // /nutrition/training-vs-rest/{user_id}?days=30&tz= — avg protein/calories on
+  // training vs rest days. Training insight reuses /coach/daily-insight with
+  // source=workout_stats (see coachDailyInsight below).
+  static const String scoresVolumeTrend = '/scores/volume-trend';
+  static const String nutritionTrainingVsRest = '/nutrition/training-vs-rest';
+  static const String coachDailyInsight = '/coach/daily-insight';
+  // Per-muscle estimated-1RM trend (next-PR ETA): GET
+  // /scores/strength/e1rm-trend?user_id=&weeks=12 — best e1RM per ISO week per
+  // muscle, null-filled, only muscles with >=1 non-null week.
+  static const String scoresE1rmTrend = '/scores/strength/e1rm-trend';
+
   // Hormonal / cycle tracking (Phase B — 2026-05-22).
   // Base router prefix mounted by `backend/api/v1/hormonal_health.py`.
   static const String hormonalHealth = '/hormonal-health';

@@ -157,6 +157,21 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
     ]);
   }
 
+  /// Whether an ROI-metrics load has already been requested this tab lifetime,
+  /// so the post-frame callback in build() doesn't spam the endpoint.
+  bool _roiRequested = false;
+
+  /// Prime the real ROI metrics (total recorded workout time) once. These are
+  /// not loaded by ComprehensiveStatsScreen, so the "Total Duration" stat needs
+  /// to request them itself rather than estimating from completed-workout count.
+  Future<void> _ensureRoiLoaded() async {
+    if (_roiRequested || !mounted) return;
+    _roiRequested = true;
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null || !mounted) return;
+    ref.read(milestonesProvider.notifier).loadROIMetrics(userId: userId);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -190,9 +205,27 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
           if (day.status == 'completed' || day.status == 'missed') thisWeekTotal++;
         }
       }
-      // Estimate total duration: ~45 min per completed workout
-      final totalMin = completedCount * 45;
-      totalDurationStr = totalMin >= 60 ? '${(totalMin / 60).toStringAsFixed(1)}h' : '${totalMin}m';
+    }
+
+    // Total Duration: use REAL recorded workout time from ROI metrics, not a
+    // fabricated `completedCount * 45` estimate. ROI metrics are not loaded by
+    // ComprehensiveStatsScreen (it only calls loadMilestoneProgress), so prime
+    // them once here. If the real value isn't available yet, show "--" rather
+    // than a fake number (per the no-fabricated-data rule).
+    final roi = ref.watch(milestonesProvider.select((s) => s.roiMetrics));
+    if (roi == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _ensureRoiLoaded());
+      totalDurationStr = '--';
+    } else {
+      final hours = roi.totalWorkoutTimeHours;
+      if (hours <= 0) {
+        totalDurationStr = '0m';
+      } else {
+        final totalMin = (hours * 60).round();
+        totalDurationStr = totalMin >= 60
+            ? '${(totalMin / 60).toStringAsFixed(1)}h'
+            : '${totalMin}m';
+      }
     }
 
     // Update highlighted dates when search query changes
