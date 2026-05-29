@@ -139,21 +139,65 @@ hormonal_health, mood_history, achievements, trophy_room, leaderboard,
 rewards, summaries, settings, workout_settings, ai_coach, appearance,
 sound_notifications, equipment, offline_mode, privacy, subscription
 
-DIRECTLY TOGGLEABLE SETTINGS (action: "change_setting", setting_value: true/false):
-- dark_mode / theme_mode: Toggle dark mode (true=dark, false=light)
-- sounds / sound_effects / mute: Toggle ALL workout sounds
-- countdown_sounds: Toggle countdown beeps (3, 2, 1)
-- rest_timer_sounds: Toggle rest timer end chime
-- voice_announcements / tts / text_to_speech: Toggle voice coach during workouts
-- background_music: Allow/block background music apps during workouts
-- haptics: Toggle vibration feedback
+DIRECTLY TOGGLEABLE SETTINGS — boolean (action: "change_setting", setting_value: true/false).
+These are flipped instantly in-app WITHOUT leaving the chat. Prefer these over telling
+the user to open a settings page.
 
-SETTINGS THAT OPEN SETTINGS PAGE (action: "change_setting"):
-- notifications: Opens Sound & Notifications settings
+  Display / appearance:
+  - dark_mode: Toggle dark mode (true=dark, false=light)
+  - reduce_animations: Reduce motion / animations (accessibility)
+  - high_contrast: High-contrast mode (accessibility)
+  - serious_mode: Turn OFF celebrations/confetti/level-up popups (true=serious/quiet, false=normal)
+
+  Workout sounds & audio:
+  - sounds / sound_effects / mute: Toggle ALL workout sounds at once
+  - countdown_sounds: Countdown beeps (3, 2, 1)
+  - rest_timer_sounds: Rest timer end chime
+  - exercise_completion_sounds: Chime when an exercise is completed
+  - workout_completion_sounds: Chime when the whole workout is completed
+  - voice_announcements / tts / text_to_speech: Voice coach during workouts
+  - background_music: Allow/block other music apps during workouts
+  - audio_ducking: Lower background music while the voice coach speaks
+  - mute_during_video: Mute the voice coach while an exercise demo video plays
+  - haptics: Vibration feedback (on=medium, off=none)
+
+  Notifications & reminders (each is an independent in-app toggle):
+  - workout_reminders, hydration_reminders, nutrition_reminders, movement_reminders,
+    habit_reminders, post_workout_meal_reminder, daily_briefing
+  - streak_alerts, achievement_alerts, weekly_summary, ai_coach_messages
+  - guilt_notifications: "you missed your workout" guilt-tone nudges (usually set false)
+
+  Nutrition UI:
+  - nutrition_ai_tips: AI tips on the nutrition screen
+  - nutrition_compact_view: Compact food-log layout
+  - nutrition_quick_log: Quick-log mode
+  - show_macros_on_log: Show macros when logging food
+
+  Workout behavior:
+  - week_starts_sunday: Week starts Sunday (false=Monday)
+  - fatigue_alerts: Mid-workout fatigue alerts
+  - pre_set_insight: Pre-set coaching insight
+  - voice_set_logging: Log sets by voice
+  - show_synced_workouts: Show wearable-synced workouts in the home carousel
+  - ble_heart_rate: Bluetooth heart-rate monitor support
+  - ble_auto_connect: Auto-connect to the last HR monitor
+  - vacation_mode: Pause streaks/reminders while away
+  - barbell_per_side: Enter barbell weight as per-side plates
+
+ENUM / CHOICE SETTINGS (action: "change_setting", put the choice in setting_value_text):
+  - theme_mode: "light" | "dark" | "system"  (use this when the user says "match my phone"/"auto")
+  - haptic_level: "off" | "light" | "medium" | "strong"
+  - sound_volume: "low" | "medium" | "high"
+  - accent_color: "monochrome" | "cyan" | "purple" | "orange" | "green" | "blue" | "red" | "pink" | "teal" | "indigo" | "amber" | "lime"
+  - font_size: "small" | "normal" | "large" | "extra_large"
+  - workout_weight_unit: "lbs" | "kg"   (weights you lift)
+  - body_weight_unit: "lbs" | "kg"      (your body weight — SEPARATE from lifting units; never change both unless asked)
+  - increment_unit: "lbs" | "kg"        (plate/dumbbell increment unit — also separate)
+
+SETTINGS THAT OPEN A SETTINGS PAGE (action: "change_setting", no direct toggle):
 - equipment: Opens Equipment settings
 - workout_days / training_split: Opens Workout Settings
 - ai_coach_style / coaching_style: Opens AI Coach settings
-- font_size: Opens Appearance settings
 
 ADDITIONAL ACTIONS:
 - action: "log_hydration", amount: N - Log N glasses of water
@@ -362,14 +406,20 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
     if intent == CoachIntent.CHANGE_SETTING:
         setting_name = state.get("setting_name")
         setting_value = state.get("setting_value")
+        setting_value_text = state.get("setting_value_text")
         if setting_name is not None:
             action_data = {
                 "action": "change_setting",
                 "setting_name": setting_name,
                 "setting_value": setting_value,
+                # Enum/string-valued settings (theme_mode='system',
+                # haptic_level='light', accent_color='blue', font_size='large',
+                # unit toggles) ride this field; boolean toggles leave it null.
+                "setting_value_text": setting_value_text,
                 "success": True,
             }
-            action_context = f"Changed setting '{setting_name}' to {setting_value}"
+            applied = setting_value_text if setting_value_text is not None else setting_value
+            action_context = f"Changed setting '{setting_name}' to {applied}"
 
     elif intent == CoachIntent.NAVIGATE:
         destination = state.get("destination")
@@ -883,6 +933,17 @@ def _build_coach_response_prompt(state: CoachAgentState):
         context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
         context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
 
+    # === Long-term coach memory (migration 2217) ===
+    # Durable facts the user told the coach (injuries/pain, dietary prefs,
+    # goals, constraints) + open loops to follow up on — pre-fetched and ranked
+    # in langgraph_service so recall is cross-session and cross-day. Empty
+    # string when the user has no memory or disabled it. Kept identical in both
+    # the streaming (_build_coach_response_prompt) and buffered
+    # (coach_response_node) paths — edit both together.
+    memory_context = state.get("memory_context")
+    if memory_context:
+        context_parts.append(f"\n{memory_context}")
+
     if state.get("workout_schedule"):
         context_parts.append(format_workout_context(state["workout_schedule"]))
 
@@ -1040,6 +1101,17 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
         context_parts.append(f"\nUSER PROFILE:")
         context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
         context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
+
+    # === Long-term coach memory (migration 2217) ===
+    # Durable facts the user told the coach (injuries/pain, dietary prefs,
+    # goals, constraints) + open loops to follow up on — pre-fetched and ranked
+    # in langgraph_service so recall is cross-session and cross-day. Empty
+    # string when the user has no memory or disabled it. Kept identical in both
+    # the streaming (_build_coach_response_prompt) and buffered
+    # (coach_response_node) paths — edit both together.
+    memory_context = state.get("memory_context")
+    if memory_context:
+        context_parts.append(f"\n{memory_context}")
 
     if state.get("workout_schedule"):
         context_parts.append(format_workout_context(state["workout_schedule"]))

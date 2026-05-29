@@ -49,6 +49,8 @@ import 'widgets/report_message_sheet.dart';
 import 'widgets/chat_quick_pills.dart';
 import 'widgets/chat_features_info_sheet.dart';
 import 'widgets/enhanced_empty_state.dart';
+import 'widgets/coach_briefing_card.dart';
+import 'widgets/coach_greeting_view.dart';
 import 'widgets/voice_message_widget.dart';
 import 'widgets/chat_message_bubble.dart';
 import 'widgets/chat_media_widgets.dart';
@@ -158,6 +160,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   bool _initialMessageSent = false;
   bool _showScrollFAB = false;
   String? _highlightedMessageId;
+
+  // ── Ask Coach "living open state" ────────────────────────────────────
+  // The greeting/briefing insight fetched when the user organically opens a
+  // NEW/empty chat (no deep-link insight, no initialMessage). Null until the
+  // open-ladder resolves. When it's a RICH briefing we ALSO seed a coach turn
+  // via appendSeededCoachTurn (so the conversation reads "coach spoke");
+  // when it's a light greeting we render the living empty state from it.
+  DailyCoachInsight? _openStateInsight;
+  // The insight_id we seeded into chat on this open (briefing path), used so
+  // the briefing card + its chips render below the seeded turn and dedupe.
+  String? _seededOpenInsightId;
+  // Guard so the open-ladder runs at most once per screen mount.
+  bool _openLadderAttempted = false;
 
   // C4 — mirrors whether the notifier currently has a streaming bubble
   // (live OR dropped). Only flips on null↔non-null transitions, so the
@@ -300,8 +315,138 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       // sends a reply that persists it).
       if (widget.insightId != null && widget.insightId!.isNotEmpty) {
         _seedInsightCoachTurn();
+      } else {
+        // Organic open of Ask Coach — run the "living open state" ladder
+        // (rich briefing → light greeting) once history has had a chance to
+        // settle. Deep-link opens (insightId set above) are excluded so we
+        // never double-seed alongside the coach-hero seed.
+        unawaited(_runOpenStateLadder());
       }
     });
+  }
+
+  /// Ask Coach "living open state" ladder. Runs only on an ORGANIC open of a
+  /// NEW/empty chat (no deep-link insight, no initialMessage). Decides:
+  ///   * RICH briefing (morning_brief / evening_recap with a real body) →
+  ///     seed a coach turn via appendSeededCoachTurn (carrying insightId +
+  ///     sourceSurface) and render the briefing card + its chips below it.
+  ///   * otherwise (greeting, or briefing unavailable) → render the Living
+  ///     Greeting empty state from the greeting payload.
+  ///
+  /// Dedupe / guards:
+  ///   * runs at most once per mount (`_openLadderAttempted`).
+  ///   * skips entirely when this is NOT a brand-new chat — i.e. a real
+  ///     session is active (`currentChatSessionProvider != null`) OR the chat
+  ///     already has messages. We only ever decorate the empty open state.
+  ///   * skips if the same insight_id was already seeded today (existing
+  ///     message carries it in `insightId` or the legacy `intent` marker).
+  Future<void> _runOpenStateLadder() async {
+    if (_openLadderAttempted || !mounted) return;
+    _openLadderAttempted = true;
+
+    // Only the empty open state gets decorated. A real session OR any existing
+    // message means this is a continuing conversation — never inject there.
+    final activeSession = ref.read(currentChatSessionProvider);
+    final existing = ref.read(chatMessagesProvider).valueOrNull ?? const [];
+    if (activeSession != null || existing.isNotEmpty) return;
+
+    final DailyCoachInsight insight;
+    try {
+      insight = await ref.read(chatOpenInsightProvider.future);
+    } catch (e) {
+      // No fabricated copy — leave the default EnhancedEmptyState in place.
+      debugPrint('🤖 [Chat] open-state ladder fetch failed: $e');
+      return;
+    }
+    if (!mounted) return;
+
+    // Re-check the guards after the await — the user may have started typing /
+    // a session may have been adopted while the fetch was in flight.
+    final activeSessionNow = ref.read(currentChatSessionProvider);
+    final existingNow = ref.read(chatMessagesProvider).valueOrNull ?? const [];
+    if (activeSessionNow != null) return;
+    // Allow the seeded-turn dedupe below to run even if a prior seed exists,
+    // but bail if there's any NON-seeded message (a real conversation).
+    final hasRealMessage = existingNow.any((m) =>
+        (m.source == null || !m.source!.startsWith('seeded_')) &&
+        m.role != 'system');
+    if (hasRealMessage) return;
+
+    if (insight.isRichBriefing) {
+      final id = insight.insightId;
+      // Dedupe: if this insight was already seeded today, just render the
+      // card over the existing seeded turn (don't append twice).
+      final marker = id != null ? 'insight:$id' : null;
+      final alreadySeeded = existingNow.any((m) =>
+          (id != null && m.insightId == id) ||
+          (marker != null && m.intent == marker));
+      if (!alreadySeeded) {
+        final headline = insight.headline.trim();
+        final body = insight.body.trim();
+        final content =
+            [headline, body].where((s) => s.isNotEmpty).join('\n\n');
+        if (content.isNotEmpty) {
+          ref.read(chatMessagesProvider.notifier).appendSeededCoachTurn(
+                content: content,
+                intent: marker ?? 'insight:open_brief',
+                sourceSurface: 'chat_open',
+                insightId: id,
+              );
+        }
+      }
+      setState(() {
+        _openStateInsight = insight;
+        _seededOpenInsightId = insight.insightId ?? 'open_brief';
+      });
+    } else {
+      // Light greeting (or briefing unavailable) — render the living empty
+      // state. Only honour an ACTUAL greeting payload; a 'home' fallback
+      // insight falls through to EnhancedEmptyState (no fabricated greeting).
+      if (insight.isGreeting) {
+        setState(() => _openStateInsight = insight);
+      }
+    }
+  }
+
+  /// Build the chip strip for a briefing seeded on organic open. Renders the
+  /// briefing card's own chips (route / action / label-only) below the seeded
+  /// coach turn, dispatched through the same paths as the deep-link strip.
+  Widget _buildOpenBriefingChips(DailyCoachInsight insight) {
+    return CoachBriefingCard(
+      insight: insight,
+      coach: _resolvedCoachForChips(),
+      onMessageTap: (label) {
+        _textController.text = label;
+        _sendMessage();
+      },
+      onActionTap: (kind, p) {
+        unawaited(
+          ref
+              .read(chatMessagesProvider.notifier)
+              .dispatchWorkoutCardAction(kind, p),
+        );
+      },
+      onRouteTap: (route) {
+        try {
+          context.push(route);
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!
+                    .chatScreenRouteNotRegistered(route)),
+              ),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  CoachPersona _resolvedCoachForChips() {
+    final aiSettings = ref.read(aiSettingsProvider);
+    return CoachPersona.findById(aiSettings.coachPersonaId) ??
+        CoachPersona.defaultCoach;
   }
 
   /// Build the chip strip rendered below a seeded coach turn. Maps the
@@ -384,6 +529,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         content: content,
         intent: marker,
         sourceSurface: widget.source,
+        insightId: widget.insightId,
       );
     } catch (e) {
       debugPrint('🤖 [Chat] seedInsightCoachTurn failed: $e');
@@ -636,6 +782,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 },
                 data: (messages) {
                   if (messages.isEmpty) {
+                    // Living open state — when the open-ladder resolved a
+                    // light greeting payload, render the time-aware greeting
+                    // view. Otherwise fall back to the organic empty state.
+                    final greeting = _openStateInsight;
+                    if (greeting != null && greeting.isGreeting) {
+                      return CoachGreetingView(
+                        key: const ValueKey('greeting'),
+                        greeting: greeting,
+                        coach: coach,
+                        onSuggestionTap: (suggestion) {
+                          _textController.text = suggestion;
+                          _sendMessage();
+                        },
+                        onRouteTap: (route) {
+                          try {
+                            context.push(route);
+                          } catch (_) {}
+                        },
+                      );
+                    }
                     return EnhancedEmptyState(
                       key: const ValueKey('empty'),
                       coach: coach,
@@ -757,6 +923,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         onEquipmentMatchTap: _handleEquipmentMatchTap,
                         onCreateCustomFromEquipment: _handleCreateCustomFromEquipment,
                         onStartWorkoutWithEquipment: _handleStartWorkoutWithEquipment,
+                        // SuggestedActionsCard's "Check my form" chip → reuse
+                        // the existing pill video-picker bridge (record path).
+                        onAttachFormVideo: () => _handleMediaFromPill(
+                          ChatMediaMode.recordVideo,
+                          'Can you check my form?',
+                        ),
                       ).animate().fadeIn(duration: 200.ms);
 
                       // Highlight animation for scroll-to-message
@@ -770,6 +942,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               child: bubble,
                             )
                           : bubble;
+
+                      // Ask Coach living open state — when this turn is the
+                      // briefing we seeded on organic open, render the RICH
+                      // briefing card (headline + body + chips) IN PLACE of
+                      // the plain bubble so it reads distinctly from a normal
+                      // coach message.
+                      final openInsight = _openStateInsight;
+                      final isSeededOpenBriefingTurn = openInsight != null &&
+                          openInsight.isRichBriefing &&
+                          _seededOpenInsightId != null &&
+                          (message.source == 'seeded_chat_open') &&
+                          (message.intent ==
+                                  'insight:${openInsight.insightId}' ||
+                              message.intent == 'insight:open_brief');
+                      if (isSeededOpenBriefingTurn) {
+                        final card = _buildOpenBriefingChips(openInsight)
+                            .animate()
+                            .fadeIn(duration: 200.ms);
+                        if (dateSeparator != null) {
+                          return Column(children: [dateSeparator, card]);
+                        }
+                        return card;
+                      }
 
                       // Plan §1c.5 — render the suggested-reply chip
                       // strip directly below the seeded coach turn so
@@ -850,9 +1045,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             );
           }),
 
-          // Medical disclaimer
-          const MedicalDisclaimerBanner(),
-
           // Quick action pills
           ChatQuickPills(
             onSendPrompt: (prompt) {
@@ -876,6 +1068,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             isOffline: offlineChatState.isAvailable,
             modelName: offlineChatState.modelName,
           ),
+
+          // Medical disclaimer — sits at the very bottom under the input bar
+          // (moved here from above the quick pills to match the reference).
+          const MedicalDisclaimerBanner(),
         ],
       ),
 
@@ -1075,6 +1271,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Icon(
                         Icons.search_rounded,
+                        color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 20,
+                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                  ),
+                  // History (all sessions) — distinct from search (within the
+                  // current chat). Opens the ChatGPT/Gemini-style conversation
+                  // list.
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      context.push('/chat/sessions');
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(
+                        Icons.history_rounded,
                         color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
                         size: 20,
                       ),

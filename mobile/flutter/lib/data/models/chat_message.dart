@@ -175,6 +175,17 @@ class ChatMessage extends Equatable {
   /// Null for legacy messages (pre-tagging).
   final String? source;
 
+  /// Which app surface seeded/originated this turn (e.g. 'coach_hero',
+  /// 'workout_card'). Persisted on `chat_history` as `source_surface` so the
+  /// next phase can dedupe seeded coach turns across reopens.
+  @JsonKey(name: 'source_surface')
+  final String? sourceSurface;
+
+  /// Originating daily-insight id (UUID) when this turn mirrors a coach
+  /// insight card. Persisted as `insight_id` for the same dedupe purpose.
+  @JsonKey(name: 'insight_id')
+  final String? insightId;
+
   const ChatMessage({
     this.id,
     this.userId,
@@ -197,6 +208,8 @@ class ChatMessage extends Equatable {
     this.uploadProgress,
     this.responseTimeMs,
     this.source,
+    this.sourceSurface,
+    this.insightId,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -245,7 +258,7 @@ class ChatMessage extends Equatable {
       actionData?['form_check_result'] as Map<String, dynamic>?;
 
   @override
-  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId, responseTimeMs, source];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId, responseTimeMs, source, sourceSurface, insightId];
 
   /// Check if this is a voice message
   bool get isVoiceMessage => audioUrl != null && audioUrl!.isNotEmpty;
@@ -274,6 +287,8 @@ class ChatMessage extends Equatable {
       uploadProgress: progress,
       responseTimeMs: responseTimeMs,
       source: source,
+      sourceSurface: sourceSurface,
+      insightId: insightId,
     );
   }
 
@@ -298,6 +313,8 @@ class ChatMessage extends Equatable {
     String? coachPersonaId,
     int? responseTimeMs,
     String? source,
+    String? sourceSurface,
+    String? insightId,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -319,6 +336,8 @@ class ChatMessage extends Equatable {
       coachPersonaId: coachPersonaId ?? this.coachPersonaId,
       responseTimeMs: responseTimeMs ?? this.responseTimeMs,
       source: source ?? this.source,
+      sourceSurface: sourceSurface ?? this.sourceSurface,
+      insightId: insightId ?? this.insightId,
     );
   }
 
@@ -403,6 +422,28 @@ class ChatMessage extends Equatable {
   bool get hasFormComparison =>
       actionData != null &&
       actionData!['action'] == 'compare_exercise_form';
+
+  /// Launcher-chip IDs the coach surfaced for this message
+  /// (`action_data['suggested_actions']`). Rides ALONGSIDE any primary action
+  /// (e.g. food_analysis) or stands alone — so it is read independently of the
+  /// `action` value. Backend + frontend both filter to the allowlist; this
+  /// getter just normalizes the raw list to `List<String>`.
+  List<String> get suggestedActionIds {
+    final raw = actionData?['suggested_actions'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Object>()
+        .map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  /// Optional backend-supplied lead-in line for the suggestion chips.
+  String? get suggestedActionsPrompt =>
+      actionData?['suggested_actions_prompt'] as String?;
+
+  /// True when there is at least one suggested launcher chip to render.
+  bool get hasSuggestedActions => suggestedActionIds.isNotEmpty;
 }
 
 /// Chat request model
@@ -442,6 +483,13 @@ class ChatRequest {
   @JsonKey(name: 'agent_override')
   final String? agentOverride;
 
+  /// Active conversation/session id. Null on a brand-new chat — the server
+  /// then creates a session and returns its id (in the /send JSON response
+  /// and the /send-stream terminal `done` event), which the client adopts
+  /// for all subsequent turns in the same conversation.
+  @JsonKey(name: 'session_id')
+  final String? sessionId;
+
   const ChatRequest({
     required this.message,
     required this.userId,
@@ -457,6 +505,7 @@ class ChatRequest {
     this.videoFrames,
     this.mediaUrl,
     this.agentOverride,
+    this.sessionId,
   });
 
   factory ChatRequest.fromJson(Map<String, dynamic> json) =>

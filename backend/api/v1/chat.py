@@ -44,6 +44,8 @@ from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from services.consent_guard import require_ai_processing_consent, should_save_chat_history
+from services.coach.memory.pipeline import extract_and_store
+from services.coach.session_title import generate_and_store_title
 from core.logger import get_logger, set_log_context
 from core.supabase_client import get_supabase
 from core.rate_limiter import limiter
@@ -100,7 +102,7 @@ def get_rag_service() -> RAGService:
     return rag_service
 
 
-def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, coach_persona_id: Optional[str] = None, media_url: Optional[str] = None, media_type: Optional[str] = None, assistant_message_id: Optional[str] = None):
+def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, coach_persona_id: Optional[str] = None, media_url: Optional[str] = None, media_type: Optional[str] = None, assistant_message_id: Optional[str] = None, session_id: Optional[str] = None):
     """Background task: Save chat message to database for persistence.
 
     `assistant_message_id` (when provided) is used as the row PK so the
@@ -134,7 +136,15 @@ def _save_chat_to_db(user_id: str, message: str, response_message: str, response
             chat_data["media_url"] = media_url
         if media_type:
             chat_data["media_type"] = media_type
+        if session_id:
+            chat_data["session_id"] = session_id
         db.create_chat_message(chat_data)
+        # Keep the session's activity timestamp + count fresh (migration 2218).
+        if session_id:
+            try:
+                db.sessions.touch_session(session_id, user_id)
+            except Exception as e:
+                logger.warning(f"[Background] touch_session failed: {e}")
         logger.debug(f"[Background] Chat message saved to database for user {user_id}, intent={response_intent}, agent={response_agent_type}")
     except Exception as db_error:
         logger.warning(f"[Background] Failed to save chat to database: {db_error}", exc_info=True)
@@ -611,6 +621,23 @@ async def send_message(
             _media_type = chat_request.media_ref.media_type
         elif chat_request.media_refs:
             _media_type = chat_request.media_refs[0].media_type
+        # Resolve the Ask-Coach session (migration 2218). If the client sent a
+        # session_id we use it; otherwise we create a new session synchronously
+        # (one insert) so we can return its id for the client to adopt, and the
+        # first message of a brand-new session schedules a title-generation job.
+        _session_id = getattr(chat_request, "session_id", None)
+        _is_new_session = False
+        if should_save_chat_history(consent_flags) and not _session_id:
+            try:
+                _new_sess = get_supabase_db().sessions.create_session(chat_request.user_id)
+                if _new_sess:
+                    _session_id = _new_sess.get("id")
+                    _is_new_session = True
+            except Exception as e:
+                logger.warning(f"create chat session failed (continuing unscoped): {e}")
+        # Echo the session id back so a client that sent none adopts it.
+        response.session_id = _session_id
+
         # Only persist the transcript when the user has opted into chat
         # history. `consent_flags` was loaded at the top of this handler so
         # we already have the authoritative value — no extra DB round-trip.
@@ -629,7 +656,28 @@ async def send_message(
                 _media_url,
                 _media_type,
                 assistant_message_id,
+                _session_id,
                 task_name="save_chat_to_db",
+            )
+            # First message of a new session → generate a 3-5 word title.
+            if _is_new_session and _session_id:
+                background_tasks.add_task(
+                    generate_and_store_title,
+                    user_id=chat_request.user_id,
+                    session_id=_session_id,
+                    first_message=chat_request.message,
+                )
+            # Extract durable memory from this exchange (migration 2217). Runs
+            # AFTER the reply is sent so it never adds latency; gates internally
+            # on the memory master-toggle + chat consent. source_message_id ties
+            # each memory back to the turn that created it (provenance).
+            background_tasks.add_task(
+                extract_and_store,
+                user_id=chat_request.user_id,
+                user_message=chat_request.message,
+                ai_response=response.message,
+                source_message_id=assistant_message_id,
+                source_session_id=_session_id,
             )
         else:
             logger.info(f"save_chat_history disabled for user {chat_request.user_id} — skipping transcript write")
@@ -1073,10 +1121,24 @@ async def send_message_stream(
                 if hasattr(final_intent, "value")
                 else (str(final_intent) if final_intent else "question")
             )
+            # Resolve the Ask-Coach session (migration 2218) before the done
+            # frame so the client can adopt a server-created session id.
+            _stream_session_id = getattr(chat_request, "session_id", None)
+            _stream_is_new_session = False
+            if should_save_chat_history(consent_flags) and not _stream_session_id:
+                try:
+                    _new_sess = get_supabase_db().sessions.create_session(chat_request.user_id)
+                    if _new_sess:
+                        _stream_session_id = _new_sess.get("id")
+                        _stream_is_new_session = True
+                except Exception as e:
+                    logger.warning(f"create chat session failed (stream, continuing): {e}")
+
             done_evt = {
                 "type": "done",
                 "message_id": assistant_message_id,
                 "content": full_message,
+                "session_id": _stream_session_id,
                 "metadata": {
                     "intent": _intent_str,
                     "agent_type": _agent_type_str,
@@ -1152,7 +1214,25 @@ async def send_message_stream(
                     _stream_media_url,
                     _stream_media_type,
                     assistant_message_id,
+                    _stream_session_id,
                     task_name="save_chat_to_db",
+                )
+                # First message of a new session → generate a 3-5 word title.
+                if _stream_is_new_session and _stream_session_id:
+                    background_tasks.add_task(
+                        generate_and_store_title,
+                        user_id=chat_request.user_id,
+                        session_id=_stream_session_id,
+                        first_message=chat_request.message,
+                    )
+                # Memory extraction (migration 2217) — see /chat/send for notes.
+                background_tasks.add_task(
+                    extract_and_store,
+                    user_id=chat_request.user_id,
+                    user_message=chat_request.message,
+                    ai_response=full_message,
+                    source_message_id=assistant_message_id,
+                    source_session_id=_stream_session_id,
                 )
             else:
                 logger.info(f"save_chat_history disabled for user {chat_request.user_id} — skipping transcript write (stream)")

@@ -1,9 +1,10 @@
 """Daily/weekly nutrition summaries and targets endpoints."""
 from core.db import get_supabase_db
-from datetime import datetime, timedelta
-from typing import List, Optional
+from datetime import datetime, timedelta, date, timezone
+from typing import List, Optional, Set
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, get_user_today, to_utc_iso
 from core.auth import get_current_user, verify_user_ownership
@@ -276,5 +277,178 @@ async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargets
 
     except Exception as e:
         logger.error(f"Failed to update nutrition targets: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+# ============================================================================
+# Training-vs-Rest nutrition split
+# ============================================================================
+# Compares average protein + calories on TRAINING days vs REST days over a
+# rolling window. Answers "do I eat differently when I lift?" Feeds the
+# Stats-tab "Fueling: Training vs Rest" card.
+
+class FuelingGroupResponse(BaseModel):
+    """Averages for one day-group (training or rest)."""
+    avg_protein_g: float
+    avg_calories: float
+    days: int  # number of LOGGED days in this group (days with >=1 food log)
+
+
+class TrainingVsRestResponse(BaseModel):
+    training: FuelingGroupResponse
+    rest: FuelingGroupResponse
+
+
+def _completed_workout_local_dates(
+    db, user_id: str, start_iso: str, tz_name: str
+) -> Set[str]:
+    """Return the set of user-local ISO dates (YYYY-MM-DD) on which the user
+    completed at least one logged set.
+
+    Source of truth: `performance_logs` (the per-set table used by the volume
+    trend + PR pipeline). A day is a "training day" if it has >=1 completed
+    set with reps_completed > 0. recorded_at is UTC timestamptz; we convert to
+    the user's local date so a late-night session lands on the right calendar
+    day. NO fabrication — a user with no logged sets gets an empty set and
+    every day is classified as rest.
+    """
+    from zoneinfo import ZoneInfo
+
+    tz = ZoneInfo(tz_name) if tz_name and tz_name != "UTC" else timezone.utc
+    # Pad the lower bound by 1 day so a UTC timestamp just before the local
+    # window start still gets considered (re-bucketed by local date below).
+    cutoff = (
+        datetime.fromisoformat(f"{start_iso}T00:00:00")
+        .replace(tzinfo=tz) - timedelta(days=1)
+    ).astimezone(timezone.utc)
+
+    rows = (
+        db.client.table("performance_logs")
+        .select("recorded_at, reps_completed, is_completed")
+        .eq("user_id", user_id)
+        .gte("recorded_at", cutoff.isoformat())
+        .execute()
+    )
+
+    out: Set[str] = set()
+    for row in (rows.data or []):
+        if row.get("is_completed") is False:
+            continue
+        reps = row.get("reps_completed")
+        if not isinstance(reps, (int, float)) or reps <= 0:
+            continue
+        ra = row.get("recorded_at")
+        if not ra:
+            continue
+        try:
+            ts = datetime.fromisoformat(str(ra).replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            out.add(ts.astimezone(tz).date().isoformat())
+        except Exception:
+            continue
+    return out
+
+
+@router.get("/training-vs-rest/{user_id}", response_model=TrainingVsRestResponse)
+@router.get("/training-vs-rest", response_model=TrainingVsRestResponse)
+async def get_training_vs_rest(
+    request: Request,
+    user_id: Optional[str] = None,
+    days: int = Query(30, ge=1, le=180, description="Rolling window size in days"),
+    tz: Optional[str] = Query(default=None, description="IANA tz fallback (e.g. America/Chicago)"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Average protein + calories on training days vs rest days.
+
+    For each of the last `days` calendar days in the user's local timezone:
+      - Classify the day as TRAINING (>=1 completed logged set that date) or
+        REST (no completed set that date).
+      - Pull that day's nutrition totals via get_daily_nutrition_summary
+        (timezone-aware, the same helper the daily summary card uses).
+      - Only days that actually have food logged (total_calories>0 OR
+        meal_count>0) are averaged — unlogged days would drag both averages
+        toward zero and lie about intake. `days` in each group reflects the
+        count of LOGGED days, so the client can show "n=X days".
+
+    Volume is irrelevant here; calories are kcal and protein is grams, both as
+    stored. NO fabrication: groups with no logged days return zeros + days=0.
+    """
+    # Path param wins; query param `user_id` is not accepted (path-only here).
+    if user_id is None:
+        raise HTTPException(status_code=422, detail="user_id is required")
+    try:
+        verify_user_ownership(current_user, user_id)
+        db = get_supabase_db()
+
+        user_tz = resolve_timezone(request, db, user_id)
+        if user_tz == "UTC" and tz:
+            from core.timezone_utils import _is_valid_tz  # type: ignore[attr-defined]
+            if _is_valid_tz(tz):
+                user_tz = tz
+
+        today_local = date.fromisoformat(get_user_today(user_tz))
+        # Inclusive window: today and the previous (days-1) days.
+        start_local = today_local - timedelta(days=days - 1)
+
+        training_dates = _completed_workout_local_dates(
+            db, user_id, start_local.isoformat(), user_tz
+        )
+
+        train_cal = train_protein = 0.0
+        train_days = 0
+        rest_cal = rest_protein = 0.0
+        rest_days = 0
+
+        cursor = start_local
+        while cursor <= today_local:
+            d_iso = cursor.isoformat()
+            summary = db.get_daily_nutrition_summary(
+                user_id, d_iso, timezone_str=user_tz
+            )
+            calories = float(summary.get("total_calories") or 0)
+            protein = float(summary.get("total_protein_g") or 0)
+            meal_count = int(summary.get("meal_count") or 0)
+
+            # Skip days with nothing logged — they are not "0 calorie days",
+            # they are simply unobserved. Including them would understate both
+            # averages and mislead the user. (feedback_no_silent_fallbacks +
+            # feedback_no_dashboard_deferral: surface only honest observations.)
+            if meal_count > 0 or calories > 0:
+                if d_iso in training_dates:
+                    train_cal += calories
+                    train_protein += protein
+                    train_days += 1
+                else:
+                    rest_cal += calories
+                    rest_protein += protein
+                    rest_days += 1
+
+            cursor += timedelta(days=1)
+
+        def _avg(total: float, n: int) -> float:
+            return round(total / n, 1) if n > 0 else 0.0
+
+        logger.info(
+            f"🥗 [training-vs-rest] user={user_id} days={days} "
+            f"train_days={train_days} rest_days={rest_days}"
+        )
+
+        return TrainingVsRestResponse(
+            training=FuelingGroupResponse(
+                avg_protein_g=_avg(train_protein, train_days),
+                avg_calories=_avg(train_cal, train_days),
+                days=train_days,
+            ),
+            rest=FuelingGroupResponse(
+                avg_protein_g=_avg(rest_protein, rest_days),
+                avg_calories=_avg(rest_cal, rest_days),
+                days=rest_days,
+            ),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get training-vs-rest split: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 

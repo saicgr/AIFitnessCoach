@@ -31,8 +31,8 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import date, datetime, timezone
-from typing import Any, Dict, Optional, Tuple
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from google.genai import types
@@ -71,6 +71,117 @@ _VALID_ROUTES = {
 }
 _VALID_PILLARS = {"train", "nourish", "move", "sleep", "all_done"}
 
+# Chip action kinds the client knows how to dispatch (mirror of the prompt's
+# MORNING_ACTION_KINDS + evening kinds). A chip with an unknown action is
+# downgraded to a label-only reply chip rather than dropped.
+_VALID_CHIP_ACTIONS = {
+    "log_water_now", "log_breakfast", "plan_tomorrow_meals",
+    "start_wind_down", "start_workout_now",
+}
+
+
+def _greeting_word(bucket: str) -> str:
+    if bucket == "morning":
+        return "Good morning"
+    if bucket in ("midday", "afternoon"):
+        return "Good afternoon"
+    if bucket in ("evening", "late"):
+        return "Good evening"
+    return "Hi"  # quiet hours / fallback
+
+
+# Variant pools (>=4 each) so the open state reads human-written and rotates
+# every open — per feedback_dynamic_copy_not_robotic.
+_GREETING_TAILS = (
+    "what's on your mind?",
+    "what can I help with?",
+    "where should we start?",
+    "what are we working on?",
+)
+_GREETING_BODIES = (
+    "This is your health and fitness journey, tailored to you. Ask me anything, or try one of these:",
+    "I've got your training, nutrition, and recovery in one place. Pick a starting point:",
+    "Your plan adapts to your life, not the other way around. Want to:",
+    "Coaching that actually remembers you. Here's where we could go:",
+)
+
+
+def _build_greeting(
+    *, first_name: str, bucket: str, snapshot: Dict[str, Any],
+    next_workout: Optional[Dict[str, Any]], local_date_iso: str, rotate: int,
+) -> Dict[str, Any]:
+    """Deterministic, context-weighted light greeting (no LLM, no cost) — the
+    Ask-Coach open state when there's no heavy briefing to show. `rotate` is a
+    caller-supplied integer (e.g. minute-of-day) so suggestions vary per open
+    without server randomness leaking into tests."""
+    word = _greeting_word(bucket)
+    tail = _GREETING_TAILS[rotate % len(_GREETING_TAILS)]
+    body = _GREETING_BODIES[rotate % len(_GREETING_BODIES)]
+    headline = f"{word}, {first_name}! {tail[0].upper()}{tail[1:]}"
+
+    # Context-weighted suggestion pool — each entry is a label-only reply chip
+    # (sends the label as a coach message). Ordered by relevance, rotated, top 3.
+    pool: List[Dict[str, Any]] = []
+    has_workout_today = bool(next_workout)
+    if has_workout_today:
+        pool.append({"label": "🏋️ What's my workout today?"})
+    else:
+        pool.append({"label": "🏋️ Build me a workout for today"})
+    pool.append({"label": "🍎 What should I eat after my workout?"})
+    pool.append({"label": "🍽️ Log what I ate and break down its nutrition"})
+    pool.append({"label": "🎯 Set up a health goal that fits my life"})
+    pool.append({"label": "😴 How was my recovery last night?"})
+    pool.append({"label": "📸 Scan a menu and tell me what to order"})
+    pool.append({"label": "💬 I have a question about my plan"})
+
+    # Rotate the non-first entries so the trio changes per open while keeping
+    # the most contextual suggestion (index 0) pinned first.
+    rest = pool[1:]
+    if rest:
+        off = rotate % len(rest)
+        rest = rest[off:] + rest[:off]
+    chips = [pool[0]] + rest
+    chips = chips[:3]
+
+    return {
+        "headline": headline[:90],
+        "body": body,
+        "chips": chips,
+        "cta_primary": {"label": "Ask coach", "route": "/chat"},
+        "leading_pillar": None,
+    }
+
+
+def _sanitize_chips(raw: Any) -> Optional[List[Dict[str, Any]]]:
+    """Validate Gemini-emitted chips. Each becomes {label, route?, action?}:
+    a valid route, a known action, or label-only (a plain reply chip — used by
+    memory check-ins like 'Back feels better'). Returns None when empty."""
+    if not isinstance(raw, list):
+        return None
+    out: List[Dict[str, Any]] = []
+    for c in raw[:4]:
+        if not isinstance(c, dict):
+            continue
+        label = (c.get("label") or "").strip()
+        if not label:
+            continue
+        chip: Dict[str, Any] = {"label": label[:40]}
+        # Gemini sometimes packs the destination under a single "route_or_action"
+        # key — disambiguate by shape: a leading "/" means a route, else an
+        # action kind. Explicit route/action keys win when present.
+        combo = c.get("route_or_action")
+        route = c.get("route") or (combo if isinstance(combo, str) and combo.startswith("/") else None)
+        action = c.get("action") or c.get("kind") or (
+            combo if isinstance(combo, str) and not combo.startswith("/") else None
+        )
+        if isinstance(route, str) and route in _VALID_ROUTES:
+            chip["route"] = route
+        elif isinstance(action, str) and action in _VALID_CHIP_ACTIONS:
+            chip["action"] = action
+        # else: label-only reply chip (no route/action) — valid.
+        out.append(chip)
+    return out or None
+
 
 # ---------------------------------------------------------------------------
 # Response model
@@ -78,6 +189,15 @@ _VALID_PILLARS = {"train", "nourish", "move", "sleep", "all_done"}
 class CtaModel(BaseModel):
     label: str
     route: str
+
+
+class ChipModel(BaseModel):
+    """A quick-reply / action chip under a rich briefing. Exactly one of route
+    or action is set; a label-only chip is a plain reply (sends label as a
+    message — used for memory check-ins like "Back feels better")."""
+    label: str
+    route: Optional[str] = None
+    action: Optional[str] = None
 
 
 class DailyInsightResponse(BaseModel):
@@ -88,6 +208,7 @@ class DailyInsightResponse(BaseModel):
     body: str
     cta_primary: Optional[CtaModel] = None
     cta_secondary: Optional[CtaModel] = None
+    chips: Optional[List[ChipModel]] = None
     leading_pillar: Optional[str] = None
     generated_at: Optional[str] = None
     # "gemini" on the happy path, "deterministic_fallback" otherwise.
@@ -467,6 +588,317 @@ def _deterministic_fallback(
 
 
 # ---------------------------------------------------------------------------
+# Workout-stats snapshot (source=workout_stats) — training-trend ground truth
+# ---------------------------------------------------------------------------
+# Deterministic push/pull classifier. The DB's exercise_library.force_type is
+# the preferred signal, but many logged exercises are stored under canonical
+# slug ids that don't join by name, so we keep a keyword fallback. This is
+# DETERMINISTIC classification, not LLM safety classification — allowed per
+# feedback_no_llm_for_safety_classification (that rule bans LLM SAFETY tagging,
+# not deterministic movement bucketing).
+_PUSH_KEYWORDS = (
+    "bench", "press", "push", "dip", "fly", "flye", "pushdown", "extension",
+    "tricep", "crossover", "raise",  # lateral/front raises are press-pattern delts
+    "squat", "leg press", "lunge", "calf", "thruster",
+)
+_PULL_KEYWORDS = (
+    "row", "pull", "pulldown", "pullup", "pull-up", "chin", "curl", "deadlift",
+    "rdl", "romanian", "face pull", "pullover", "shrug", "leg curl",
+)
+
+
+def _classify_push_pull(name: str, force_type: Optional[str]) -> Optional[str]:
+    """Return "push" | "pull" | None for one exercise.
+
+    force_type from the DB wins when present (push/pull/static). Otherwise a
+    keyword scan on the name. Returns None for unclassifiable / static moves
+    so they don't pollute the ratio.
+    """
+    ft = (force_type or "").strip().lower()
+    if ft in ("push", "pull"):
+        return ft
+    if ft == "static":
+        return None
+    low = (name or "").lower()
+    # Pull keywords first — "leg curl" / "face pull" must not match push "raise".
+    for kw in _PULL_KEYWORDS:
+        if kw in low:
+            return "pull"
+    for kw in _PUSH_KEYWORDS:
+        if kw in low:
+            return "push"
+    return None
+
+
+def _collect_workout_stats_snapshot(
+    sb, user_id: str, today_local: date
+) -> Dict[str, Any]:
+    """Assemble the training-trend snapshot for source=workout_stats.
+
+    All values are REAL aggregates. Fields:
+      volume_4wk_kg, volume_prev_4wk_kg, volume_delta_pct,
+      push_sets, pull_sets, push_pull_ratio,
+      acwr, acwr_state, pr_count_30d, current_streak.
+
+    Every block is wrapped so one failing table omits its field rather than
+    500ing the insight. NO fabrication — empty history yields zeros/nulls.
+    """
+    snap: Dict[str, Any] = {
+        "volume_4wk_kg": 0.0,
+        "volume_prev_4wk_kg": 0.0,
+        "volume_delta_pct": None,
+        "push_sets": 0,
+        "pull_sets": 0,
+        "push_pull_ratio": None,
+        "acwr": None,
+        "acwr_state": "calibration",
+        "pr_count_30d": 0,
+        "current_streak": 0,
+    }
+
+    # --- Volume: this 4wk vs prior 4wk + push/pull split over last 4wk -----
+    # Window in user-local dates. recorded_at is UTC; we compare on date only,
+    # which is adequate at the 4-week granularity (a handful of boundary sets
+    # never move the aggregate meaningfully).
+    try:
+        cur_start = today_local - timedelta(days=27)        # last 28 days incl today
+        prev_start = today_local - timedelta(days=55)        # 28 days before that
+        prev_end = today_local - timedelta(days=28)
+        pull_cutoff = datetime.combine(
+            prev_start, datetime.min.time(), tzinfo=timezone.utc
+        )
+
+        rows = sb.client.table("performance_logs").select(
+            "exercise_name, reps_completed, weight_kg, recorded_at, is_completed"
+        ).eq("user_id", user_id).gte(
+            "recorded_at", pull_cutoff.isoformat()
+        ).execute()
+
+        # Preload force_type for the distinct exercise names in one query.
+        names = sorted({
+            (r.get("exercise_name") or "").strip()
+            for r in (rows.data or [])
+            if r.get("exercise_name")
+        })
+        force_by_name: Dict[str, str] = {}
+        if names:
+            try:
+                # Case-insensitive match is not available via in_(); fetch the
+                # whole small set by name and key case-insensitively.
+                fl = sb.client.table("exercise_library").select(
+                    "exercise_name, force_type"
+                ).in_("exercise_name", names).execute()
+                for r in (fl.data or []):
+                    nm = (r.get("exercise_name") or "").strip().lower()
+                    if nm and r.get("force_type"):
+                        force_by_name[nm] = r["force_type"]
+            except Exception as e:
+                logger.debug(f"[workout_stats] force_type lookup skipped: {e}")
+
+        cur_vol = prev_vol = 0.0
+        push_sets = pull_sets = 0
+        for r in (rows.data or []):
+            if r.get("is_completed") is False:
+                continue
+            reps = r.get("reps_completed")
+            if not isinstance(reps, (int, float)) or reps <= 0:
+                continue
+            ra = r.get("recorded_at")
+            if not ra:
+                continue
+            try:
+                ts = datetime.fromisoformat(str(ra).replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                d = ts.astimezone(timezone.utc).date()
+            except Exception:
+                continue
+
+            w = r.get("weight_kg")
+            wkg = float(w) if isinstance(w, (int, float)) and w > 0 else 0.0
+            vol = wkg * float(reps)
+
+            if cur_start <= d <= today_local:
+                cur_vol += vol
+                bucket = _classify_push_pull(
+                    r.get("exercise_name") or "",
+                    force_by_name.get((r.get("exercise_name") or "").strip().lower()),
+                )
+                if bucket == "push":
+                    push_sets += 1
+                elif bucket == "pull":
+                    pull_sets += 1
+            elif prev_start <= d <= prev_end:
+                prev_vol += vol
+
+        snap["volume_4wk_kg"] = round(cur_vol, 1)
+        snap["volume_prev_4wk_kg"] = round(prev_vol, 1)
+        if prev_vol > 0:
+            snap["volume_delta_pct"] = round((cur_vol - prev_vol) / prev_vol * 100.0, 1)
+        snap["push_sets"] = push_sets
+        snap["pull_sets"] = pull_sets
+        if pull_sets > 0:
+            snap["push_pull_ratio"] = round(push_sets / pull_sets, 2)
+    except Exception as e:
+        logger.warning(f"[workout_stats] volume/split block failed: {e}")
+
+    # --- ACWR state (training_load_service) -------------------------------
+    try:
+        from services.training_load_service import current_state
+        st = current_state(sb, user_id)
+        snap["acwr"] = st.acwr
+        snap["acwr_state"] = st.state
+    except Exception as e:
+        logger.warning(f"[workout_stats] ACWR block failed: {e}")
+
+    # --- PR count last 30 days --------------------------------------------
+    try:
+        cutoff_30 = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        # personal_records is the curated PR table the Stats tab reads.
+        pr = sb.client.table("personal_records").select(
+            "id", count="exact"
+        ).eq("user_id", user_id).gte("achieved_at", cutoff_30).execute()
+        snap["pr_count_30d"] = int(pr.count or 0) if pr.count is not None else len(pr.data or [])
+    except Exception as e:
+        logger.warning(f"[workout_stats] PR-count block failed: {e}")
+
+    # --- Current workout streak -------------------------------------------
+    # user_streaks holds the stored streak, but it is only "current" if the
+    # last activity was within 1 day of today. A stale streak (last activity
+    # weeks ago) is BROKEN — reporting the stored number would be a lie.
+    try:
+        us = sb.client.table("user_streaks").select(
+            "current_streak, last_activity_date"
+        ).eq("user_id", user_id).eq("streak_type", "workout").maybe_single().execute()
+        if us and us.data:
+            last = us.data.get("last_activity_date")
+            stored = int(us.data.get("current_streak") or 0)
+            if last:
+                try:
+                    last_d = date.fromisoformat(str(last)[:10])
+                    if (today_local - last_d).days <= 1:
+                        snap["current_streak"] = stored
+                    else:
+                        snap["current_streak"] = 0  # streak broken
+                except Exception:
+                    snap["current_streak"] = 0
+    except Exception as e:
+        logger.debug(f"[workout_stats] streak block skipped: {e}")
+
+    return snap
+
+
+def _workout_stats_fallback(
+    snapshot: Dict[str, Any],
+    first_name: str,
+    local_date_iso: str,
+) -> Dict[str, Any]:
+    """Deterministic fallback for source=workout_stats.
+
+    Headline + body are derived from the REAL snapshot — no fabricated
+    numbers. Picks the single most notable signal in priority order. Stable
+    per-day variant selection so the line doesn't flip-flop on re-open.
+    """
+    seed = abs(hash((first_name, local_date_iso))) % 4
+
+    vol = snapshot.get("volume_4wk_kg") or 0.0
+    prev = snapshot.get("volume_prev_4wk_kg") or 0.0
+    delta = snapshot.get("volume_delta_pct")
+    push = int(snapshot.get("push_sets") or 0)
+    pull = int(snapshot.get("pull_sets") or 0)
+    ratio = snapshot.get("push_pull_ratio")
+    acwr_state = snapshot.get("acwr_state") or "calibration"
+    prs = int(snapshot.get("pr_count_30d") or 0)
+    streak = int(snapshot.get("current_streak") or 0)
+
+    headline = "Your training trend"
+    body = ""
+
+    # Priority 1: overreaching / detraining ACWR.
+    if acwr_state == "overreaching":
+        headline = "Load is running hot"
+        body = (
+            f"{first_name}, your recent training load is well above baseline. "
+            f"Take an easy day or a full rest day to let it settle."
+        )
+    elif acwr_state == "detraining":
+        headline = "Load has dropped off"
+        body = (
+            f"{first_name}, your recent load is below your baseline. "
+            f"A moderate session this week keeps your fitness from slipping."
+        )
+    # Priority 2: lopsided push/pull.
+    elif ratio is not None and (ratio > 1.5 or ratio < 0.67) and (push + pull) >= 6:
+        if ratio > 1.5:
+            headline = "Push is outpacing pull"
+            body = (
+                f"{first_name}, last 4 weeks ran {push} push sets to {pull} pull sets. "
+                f"Add a row or pulldown to balance your shoulders."
+            )
+        else:
+            headline = "Pull is outpacing push"
+            body = (
+                f"{first_name}, last 4 weeks ran {pull} pull sets to {push} push sets. "
+                f"Add a press to even out the ratio."
+            )
+    # Priority 3: notable volume swing.
+    elif delta is not None and delta >= 10:
+        headline = "Volume is trending up"
+        body = (
+            f"{first_name}, your 4-week volume rose {abs(delta):.0f} percent. "
+            f"Keep progressing while recovery holds up."
+        )
+    elif delta is not None and delta <= -10:
+        headline = "Volume is trending down"
+        body = (
+            f"{first_name}, your 4-week volume fell {abs(delta):.0f} percent. "
+            f"One extra set per lift this week nudges it back up."
+        )
+    # Priority 4: fresh PRs.
+    elif prs > 0:
+        headline = "New ground this month"
+        body = (
+            f"{first_name}, you set {prs} personal "
+            f"record{'s' if prs != 1 else ''} in the last 30 days. "
+            f"Strong work, keep the bar moving."
+        )
+    # Priority 5: streak signal.
+    elif streak >= 2:
+        headline = "Streak is alive"
+        body = (
+            f"{first_name}, you are on a {streak}-day training streak. "
+            f"Get one more session in to extend it."
+        )
+    elif streak == 0 and vol == 0 and prev == 0:
+        headline = "Let's start building data"
+        body = (
+            f"{first_name}, log a few sessions and your training trends will "
+            f"start to show here. The first workout is the hardest to start."
+        )
+    else:
+        # Neutral, honest default — references real volume if present.
+        pools = [
+            f"{first_name}, your last 4 weeks totalled {vol:.0f} kg of volume. "
+            f"Steady work builds the base.",
+            f"{first_name}, training is ticking along. Pick one lift to push a "
+            f"little harder this week.",
+            f"{first_name}, your volume is holding steady. Consistency is the "
+            f"engine here.",
+            f"{first_name}, nothing alarming in the trend. Keep showing up and "
+            f"the numbers follow.",
+        ]
+        body = pools[seed % len(pools)]
+
+    return {
+        "headline": headline,
+        "body": body,
+        "cta_primary": {"label": "Open workouts", "route": "/workouts"},
+        "cta_secondary": {"label": "Ask coach", "route": "/chat"},
+        "leading_pillar": "train",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Gemini call
 # ---------------------------------------------------------------------------
 def _robust_parse_json_object(text: str) -> Optional[Dict[str, Any]]:
@@ -538,6 +970,8 @@ async def _call_gemini_for_insight(
             if isinstance(cta, dict) and cta.get("route") not in _VALID_ROUTES:
                 # Reject silently — fallback CTA gets stamped in by caller.
                 parsed[k] = None
+        # Quick-reply / action chips (morning_brief / evening_recap).
+        parsed["chips"] = _sanitize_chips(parsed.get("chips"))
         return parsed
     except Exception as e:
         logger.warning(f"[daily_insight] Gemini call failed: {e}")
@@ -595,6 +1029,7 @@ async def daily_insight(
             "pillar_stat",
             "morning_brief",
             "evening_recap",
+            "greeting",
             "morning_brief_onboarding",
             "nutrition_card_morning",
             # Phase 2 of the contextual-nudge merge: lunch + dinner each get
@@ -604,6 +1039,10 @@ async def daily_insight(
             "nutrition_card_lunch",
             "nutrition_card_dinner",
             "workout_card",
+            # Stats-tab training-trend insight: volume deltas, push/pull split,
+            # ACWR state, recent PR count, current streak. Same Gemini +
+            # number-guardrail + deterministic-fallback path; dedicated snapshot.
+            "workout_stats",
         }
         if source not in _ALLOWED_SOURCES:
             raise HTTPException(
@@ -635,6 +1074,7 @@ async def daily_insight(
                         body=row["body"],
                         cta_primary=row.get("cta_primary"),
                         cta_secondary=row.get("cta_secondary"),
+                        chips=row.get("chips"),
                         leading_pillar=row.get("leading_pillar"),
                         generated_at=row.get("generated_at"),
                         delivery="gemini",  # cached rows are only stored on success
@@ -657,7 +1097,14 @@ async def daily_insight(
             user_row = {}
         first_name = _first_name(user_row)
 
-        snapshot, next_workout = _collect_snapshot(sb, user_id, local_date_iso)
+        # source=workout_stats uses a dedicated TRAINING-TREND snapshot instead
+        # of the daily-pillar snapshot. It carries no next_workout / cycle /
+        # goal blocks — the prompt branch + fallback read its own field set.
+        if source == "workout_stats":
+            snapshot = _collect_workout_stats_snapshot(sb, user_id, local_date)
+            next_workout = None
+        else:
+            snapshot, next_workout = _collect_snapshot(sb, user_id, local_date_iso)
 
         from zoneinfo import ZoneInfo
         now_local = datetime.now(ZoneInfo(tz_resolved if tz_resolved else "UTC"))
@@ -673,6 +1120,48 @@ async def daily_insight(
         }
         if source == "pillar_stat":
             ctx["pillar_stat_context"] = stat_context
+
+        # Long-term coach memory (migration 2217) — only the rich daily
+        # briefings weave it in (durable facts + open loops -> tailored plan +
+        # check-in question). Best-effort: empty/absent on any failure.
+        _surfaced_loop_ids: list = []
+        if source in ("morning_brief", "evening_recap"):
+            try:
+                from services.coach.memory.injector import build_memory_block_for_briefing
+                ctx["coach_memory"] = build_memory_block_for_briefing(user_id)
+                _surfaced_loop_ids = [
+                    l.get("id")
+                    for l in (ctx["coach_memory"].get("open_loops") or [])
+                    if l.get("id")
+                ]
+            except Exception as e:
+                logger.warning(f"[daily_insight] memory block failed: {e}")
+
+        # ---- Light greeting (deterministic, no LLM, no cost) --------------
+        # The Ask-Coach open state when there's no heavy briefing to show.
+        # Returns immediately — never persisted, never cached, rotates per open.
+        if source == "greeting":
+            g = _build_greeting(
+                first_name=first_name,
+                bucket=_time_of_day_bucket(now_local),
+                snapshot=snapshot,
+                next_workout=next_workout,
+                local_date_iso=local_date_iso,
+                rotate=now_local.hour * 60 + now_local.minute,
+            )
+            return DailyInsightResponse(
+                insight_id=None,
+                local_date=local_date_iso,
+                source=source,
+                headline=g["headline"],
+                body=g["body"],
+                cta_primary=g.get("cta_primary"),
+                cta_secondary=None,
+                chips=g.get("chips"),
+                leading_pillar=None,
+                generated_at=datetime.now(timezone.utc).isoformat(),
+                delivery="deterministic",
+            )
 
         # ---- Cost cap check -----------------------------------------------
         delivery = "gemini"
@@ -695,13 +1184,20 @@ async def daily_insight(
 
         # ---- Build final payload ------------------------------------------
         if delivery == "deterministic_fallback":
-            payload = _deterministic_fallback(
-                snapshot=snapshot,
-                next_workout=next_workout,
-                first_name=first_name,
-                local_date_iso=local_date_iso,
-                source=source,
-            )
+            if source == "workout_stats":
+                payload = _workout_stats_fallback(
+                    snapshot=snapshot,
+                    first_name=first_name,
+                    local_date_iso=local_date_iso,
+                )
+            else:
+                payload = _deterministic_fallback(
+                    snapshot=snapshot,
+                    next_workout=next_workout,
+                    first_name=first_name,
+                    local_date_iso=local_date_iso,
+                    source=source,
+                )
         else:
             payload = gemini_payload or {}
             # Stamp safe defaults for any missing CTA so the client never NPEs.
@@ -723,6 +1219,7 @@ async def daily_insight(
                     "cta_primary": payload.get("cta_primary"),
                     "cta_secondary": payload.get("cta_secondary"),
                     "leading_pillar": payload.get("leading_pillar"),
+                    "chips": payload.get("chips"),
                     "source": source,
                     "stat_context": stat_context,
                     "generated_at": generated_at_iso,
@@ -738,6 +1235,18 @@ async def daily_insight(
                 # Persist failure is non-fatal — still return the payload.
                 logger.warning(f"[daily_insight] persist failed: {e}")
 
+        # Advance the open-loop nag budget for any loops this fresh briefing
+        # surfaced (migration 2217). Cache hits + the greeting path return
+        # earlier, so this fires at most once/day per source: it bumps
+        # follow_up_count + pushes follow_up_after out, and auto-retires a loop
+        # once it's been surfaced its budget (so the coach never nags forever).
+        if _surfaced_loop_ids:
+            try:
+                from services.coach.memory.pipeline import mark_loops_surfaced
+                mark_loops_surfaced(user_id, _surfaced_loop_ids)
+            except Exception as e:
+                logger.warning(f"[daily_insight] mark_loops_surfaced failed: {e}")
+
         return DailyInsightResponse(
             insight_id=insight_id,
             local_date=local_date_iso,
@@ -746,6 +1255,7 @@ async def daily_insight(
             body=payload["body"],
             cta_primary=payload.get("cta_primary"),
             cta_secondary=payload.get("cta_secondary"),
+            chips=payload.get("chips"),
             leading_pillar=payload.get("leading_pillar"),
             generated_at=generated_at_iso,
             delivery=delivery,

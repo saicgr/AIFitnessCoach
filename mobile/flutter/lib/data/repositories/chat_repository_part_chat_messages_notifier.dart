@@ -79,6 +79,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   // Phase F — invalidates the cycle providers after a cycle-agent action so
   // a live Cycle screen / home card repaints with the new data.
   final void Function() _refreshCycleData;
+  // Captured provider container ref — used by _handleSettingChange to read the
+  // many setting notifiers (notifications, nutrition UI, accent, accessibility,
+  // units, etc.) lazily at action time. Read-only at action time; never
+  // retains a subscription, matching the getSoundPrefs/getAudioPrefs pattern.
+  final Ref _ref;
   bool _isLoading = false;
   Future<void>? _loadHistoryFuture;
 
@@ -319,7 +324,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'train like a fighter', 'want to fight',
   ];
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout, this._refreshCycleData)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout, this._refreshCycleData, this._ref)
       : super(const AsyncValue.data([])) {
     _instances.add(this);
     _restoreFromCache();
@@ -352,6 +357,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       n._currentOffset = 0;
       n._hasMoreMessages = true;
       n._initialHistoryLoaded = false;
+      n._currentSessionId = null;
       n._pendingOfflineMessages.clear();
       // Drop any in-flight streaming bubble so the previous user's partial
       // reply can't flash before the next user's history loads.
@@ -387,8 +393,33 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     state = AsyncValue.data(updated);
   }
 
-  /// Build the cache key for chat history for a given user
-  static String _cacheKey(String userId) => 'cache_chat_history_$userId';
+  // ── Session scoping (Ask Coach conversation threads) ──────────────────
+  // The active session id. null = a brand-new, not-yet-sent chat — the
+  // session is created server-side on the first /send and ADOPTED here.
+  // Kept in lockstep with [currentChatSessionProvider]; the notifier is NOT
+  // rebuilt when it changes so the message list survives a switch.
+  String? _currentSessionId;
+
+  /// Callback into the provider tree so the notifier can publish an adopted /
+  /// switched session id to [currentChatSessionProvider] and refresh the
+  /// sessions list. Wired by the provider factory.
+  void Function(String? sessionId)? _onSessionChanged;
+  void Function()? _refreshSessions;
+
+  /// The active session id (null = brand-new unsent chat).
+  String? get currentSessionId => _currentSessionId;
+
+  /// Build the cache key for chat history for a given user, scoped to the
+  /// active session. A null session (brand-new chat) uses the 'current'
+  /// suffix so its draft list doesn't collide with a real session's cache.
+  static String _cacheKeyFor(String userId, String? sessionId) =>
+      'cache_chat_history_${userId}_${sessionId ?? 'current'}';
+
+  /// Instance helper: cache key for the CURRENT session.
+  String _cacheKey(String userId) => _cacheKeyFor(userId, _currentSessionId);
+
+  /// In-memory mirror key (user + session scoped).
+  String _memKey(String userId) => '$userId::${_currentSessionId ?? 'current'}';
 
   /// Module-level in-memory mirror of the disk cache. Survives provider
   /// recreation so opening /chat for the second (or fiftieth) time in a
@@ -401,13 +432,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   /// Synchronous accessor for the in-memory cache. Returns null when nothing
   /// has been hydrated yet for [userId] (first cold-start of the app or
   /// first-ever chat view). Used by [loadHistory] to paint immediately.
-  static List<ChatMessage>? memCacheFor(String userId) => _memCache[userId];
+  /// Session-scoped via [_memKey].
+  List<ChatMessage>? memCacheFor(String userId) => _memCache[_memKey(userId)];
 
   /// Load cached chat messages from DataCacheService. Populates the in-memory
   /// mirror so subsequent calls (within the session) can skip the disk read.
   Future<List<ChatMessage>> _loadFromCache(String userId) async {
+    final memKey = _memKey(userId);
     // Fast path — in-memory hit, no disk awaits.
-    final mem = _memCache[userId];
+    final mem = _memCache[memKey];
     if (mem != null && mem.isNotEmpty) {
       debugPrint('⚡ [Chat] Loaded ${mem.length} messages from in-memory cache');
       return mem;
@@ -416,7 +449,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final cached = await DataCacheService.instance.getCachedList(_cacheKey(userId));
       if (cached != null && cached.isNotEmpty) {
         final messages = cached.map((json) => ChatMessage.fromJson(json)).toList();
-        _memCache[userId] = messages;
+        _memCache[memKey] = messages;
         debugPrint('💾 [Chat] Loaded ${messages.length} messages from disk cache');
         return messages;
       }
@@ -435,7 +468,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           : messages;
       // Keep the in-memory mirror in sync — every save updates the fast path
       // so the next screen entry is instant.
-      _memCache[userId] = List<ChatMessage>.unmodifiable(trimmed);
+      _memCache[_memKey(userId)] = List<ChatMessage>.unmodifiable(trimmed);
       final jsonList = trimmed.map((m) => m.toJson()).toList();
       await DataCacheService.instance.cacheList(_cacheKey(userId), jsonList);
       debugPrint('💾 [Chat] Saved ${trimmed.length} messages to cache');
@@ -475,7 +508,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       //    already have. Awaiting the disk read still happens below — but
       //    on every entry after the first cold-start hit the user sees
       //    messages instantly.
-      final memCached = _memCache[userId];
+      final memCached = _memCache[_memKey(userId)];
       if (memCached != null && memCached.isNotEmpty && mounted) {
         state = AsyncValue.data(memCached);
       }
@@ -490,9 +523,21 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         state = const AsyncValue.loading();
       }
 
-      // 2. Fetch fresh data from API in background
+      // 2. Fetch fresh data from API in background.
+      //    - A null session = a brand-new, not-yet-sent chat → start empty
+      //      (the open/empty state); no server round-trip and no session
+      //      exists yet to fetch from.
+      //    - A set session → fetch THAT session's messages.
+      if (_currentSessionId == null) {
+        if (!mounted) return;
+        if (cachedMessages.isEmpty) {
+          state = const AsyncValue.data([]);
+        }
+        return;
+      }
       try {
-        final messages = await _repository.getChatHistory(userId);
+        final messages =
+            await _repository.getSessionMessages(_currentSessionId!);
         if (!mounted) return;
 
         // If sendMessage is in-flight, don't replace state — the send
@@ -712,10 +757,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         aiSettings: currentAISettings.toJson(),
         unifiedContext: unifiedContext,
         mediaRefs: mediaRefs,
+        sessionId: _currentSessionId,
       );
       final response = sendResult.response;
       final assistantMessageId = sendResult.messageId;
       if (!mounted) return;
+
+      if (_currentSessionId == null && sendResult.sessionId != null) {
+        await _adoptSessionId(sendResult.sessionId!, userId);
+      }
 
       await _processActionData(response.actionData);
       if (!mounted) return;
@@ -775,19 +825,102 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     }
   }
 
-  /// Clear history and notify server
+  /// Clear the CURRENT conversation. If a real session is active it is
+  /// deleted server-side (cascading its messages); then we drop into a
+  /// brand-new empty chat. For a not-yet-sent draft this is just a reset.
   Future<void> clearHistory() async {
-    state = const AsyncValue.data([]);
     final userId = await _apiClient.getUserId();
+    final sessionId = _currentSessionId;
+    // Invalidate the current session's local cache.
     if (userId != null) {
       await DataCacheService.instance.invalidate(_cacheKey(userId));
-      // Clear on server too
+    }
+    if (sessionId != null) {
       try {
-        await _repository.clearChatHistory(userId);
+        await _repository.deleteSession(sessionId);
+        _refreshSessions?.call();
       } catch (e) {
-        debugPrint('❌ [Chat] Failed to clear history on server: $e');
+        debugPrint('❌ [Chat] Failed to delete session on server: $e');
       }
     }
+    // Reset to a fresh, unsent chat.
+    startNewChat();
+  }
+
+  // ── Session hooks + lifecycle ─────────────────────────────────────────
+
+  /// Wire the provider-side callbacks (publish session id + refresh list).
+  void bindSessionHooks({
+    required void Function(String? sessionId) onSessionChanged,
+    required void Function() refreshSessions,
+  }) {
+    _onSessionChanged = onSessionChanged;
+    _refreshSessions = refreshSessions;
+  }
+
+  /// Seed the active session id at construction WITHOUT firing the change
+  /// hook (the provider value is already this id). Does not load messages —
+  /// loadHistory() runs from the screen.
+  void primeSessionId(String? sessionId) {
+    _currentSessionId = sessionId;
+  }
+
+  /// Start a brand-new chat: clear the message list to empty and forget the
+  /// active session. Does NOT hit the server — the session is created on the
+  /// first /send and adopted from the response.
+  void startNewChat() {
+    _currentSessionId = null;
+    state = const AsyncValue.data([]);
+    _currentOffset = 0;
+    _hasMoreMessages = true;
+    _initialHistoryLoaded = false;
+    _loadHistoryFuture = null;
+    streamingBubble.value = null;
+    _onSessionChanged?.call(null);
+    debugPrint('🆕 [Chat] Started a new chat (session cleared)');
+  }
+
+  /// Switch to an existing session: set the active id and load that session's
+  /// messages (cache-first, then server). Used by the history screen.
+  Future<void> switchToSession(String sessionId) async {
+    if (sessionId == _currentSessionId) {
+      // Already on it — just ensure it's loaded.
+      return loadHistory(force: true);
+    }
+    _currentSessionId = sessionId;
+    // Reset list + pagination so the new session's history loads cleanly.
+    state = const AsyncValue.data([]);
+    _currentOffset = 0;
+    _hasMoreMessages = true;
+    _initialHistoryLoaded = false;
+    _loadHistoryFuture = null;
+    streamingBubble.value = null;
+    _onSessionChanged?.call(sessionId);
+    debugPrint('🔀 [Chat] Switched to session $sessionId');
+    await loadHistory(force: true);
+  }
+
+  /// Adopt a server-created session id on the FIRST send of a new chat.
+  /// Migrates the in-memory + disk cache from the 'current' (draft) key to
+  /// the real session key, publishes the id, and refreshes the sessions list
+  /// so the new conversation appears (with its soon-to-be-generated title).
+  Future<void> _adoptSessionId(String sessionId, String userId) async {
+    if (_currentSessionId == sessionId) return;
+    debugPrint('🪪 [Chat] Adopting server session id=$sessionId');
+    // Snapshot the draft list under the OLD ('current') key before switching.
+    final draft = state.valueOrNull ?? const <ChatMessage>[];
+    final oldMemKey = _memKey(userId);
+    final oldCacheKey = _cacheKey(userId);
+    // Switch the active id, then migrate caches under the new key.
+    _currentSessionId = sessionId;
+    _memCache.remove(oldMemKey);
+    _memCache[_memKey(userId)] = List<ChatMessage>.unmodifiable(draft);
+    try {
+      await DataCacheService.instance.invalidate(oldCacheKey);
+    } catch (_) {}
+    await _saveToCache(userId, draft);
+    _onSessionChanged?.call(sessionId);
+    _refreshSessions?.call();
   }
 
   /// Add a system notification message (e.g., coach changed)
@@ -814,6 +947,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     required String content,
     required String intent,
     String? sourceSurface,
+    String? insightId,
   }) {
     final seeded = ChatMessage(
       role: 'assistant',
@@ -823,6 +957,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       // existing chat-history dedup migration in this notifier already
       // uses `source` to filter auto-coach-tips, so we reuse the slot.
       source: sourceSurface == null ? 'seeded_insight' : 'seeded_$sourceSurface',
+      // Carry the real insight_id + source surface so reopening the chat can
+      // dedupe via the dedicated ChatMessage fields, not just the intent marker.
+      insightId: insightId,
+      sourceSurface: sourceSurface,
       createdAt: DateTime.now().toIso8601String(),
     );
     final currentMessages = state.valueOrNull ?? [];
@@ -1133,6 +1271,12 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   /// Load older messages for infinite scroll (#16)
   Future<void> loadOlderMessages() {
+    // Session-scoped chats load the whole thread (up to 200) up-front via
+    // getSessionMessages, so there is no global-history pagination to do —
+    // and getChatHistory is NOT session-scoped, so paginating it here would
+    // bleed other sessions' messages into the view. No-op when a session is
+    // active.
+    if (_currentSessionId != null) return Future.value();
     if (!_hasMoreMessages || _isLoading) return Future.value();
     // Don't paginate until the initial history fetch has settled — otherwise
     // a user who scrolls during cold-start races loadHistory with a parallel
@@ -1305,10 +1449,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         aiSettings: currentAISettings.toJson(),
         unifiedContext: unifiedContext,
         mediaRef: mediaRef,
+        sessionId: _currentSessionId,
       );
       final response = sendResult.response;
       final assistantMessageId = sendResult.messageId;
       if (!mounted) return;
+
+      if (_currentSessionId == null && sendResult.sessionId != null) {
+        await _adoptSessionId(sendResult.sessionId!, userId);
+      }
 
       // Mark user message as delivered
       _updateMessageStatus(updatedUserMessage, MessageStatus.delivered);
@@ -1552,6 +1701,20 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       case 'suggest_phase_meals':
         await _handleCycleAction(actionData);
         break;
+      // Suggested-action launcher chips are render-only — the
+      // SuggestedActionsCard in the chat bubble carries the user interaction
+      // (each chip launches its flow with a live BuildContext). Nothing to
+      // process here; explicit no-op so the 'unknown action' warning stays
+      // clean (mirrors open_swap_or_add). Note: when suggestions ride
+      // alongside a primary action (e.g. generate_quick_workout), `action`
+      // is that primary value and is handled by its own case above — this
+      // case only fires for the standalone suggestions payload.
+      case 'suggest_actions':
+        debugPrint(
+          '💡 [Chat] Suggested-action chips rendered '
+          '(${(actionData['suggested_actions'] as List?)?.length ?? 0})',
+        );
+        break;
       default:
         debugPrint('🤖 [Chat] Unknown action: $action');
     }
@@ -1605,64 +1768,301 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   Future<void> _handleSettingChange(Map<String, dynamic> actionData) async {
     final settingName = actionData['setting_name'] as String?;
     final settingValue = actionData['setting_value'] as bool?;
+    // Enum/string-valued settings (theme_mode, haptic_level, accent_color,
+    // font_size, unit toggles) carry their choice here. Boolean toggles leave
+    // it null and read `settingValue` instead.
+    final settingText = (actionData['setting_value_text'] as String?)?.trim().toLowerCase();
 
-    debugPrint('🤖 [Chat] Changing setting: $settingName = $settingValue');
+    debugPrint('🤖 [Chat] Changing setting: $settingName = ${settingText ?? settingValue}');
+
+    // Default for a plain on/off toggle when the model omits a value: treat as
+    // "turn it on". Each notification/guilt case overrides the default where a
+    // different default makes sense.
+    final on = settingValue ?? true;
 
     switch (settingName) {
+      // ── Theme / appearance ──────────────────────────────────────────────
       case 'dark_mode':
+        _themeNotifier.setTheme(on ? ThemeMode.dark : ThemeMode.light);
+        debugPrint('🌙 [Chat] ${on ? "Dark" : "Light"} mode via AI');
+        break;
       case 'theme_mode':
-        if (settingValue == true) {
-          _themeNotifier.setTheme(ThemeMode.dark);
-          debugPrint('🌙 [Chat] Dark mode enabled via AI');
-        } else if (settingValue == false) {
-          _themeNotifier.setTheme(ThemeMode.light);
-          debugPrint('☀️ [Chat] Light mode enabled via AI');
+        // Enum: light | dark | system. Falls back to the boolean if no text.
+        final mode = switch (settingText) {
+          'system' || 'auto' || 'device' => ThemeMode.system,
+          'dark' => ThemeMode.dark,
+          'light' => ThemeMode.light,
+          _ => (settingValue == false ? ThemeMode.light : ThemeMode.dark),
+        };
+        _themeNotifier.setTheme(mode);
+        debugPrint('🎨 [Chat] Theme mode → ${mode.name} via AI');
+        break;
+      case 'accent_color':
+        final accent = _parseAccentColor(settingText);
+        if (accent != null) {
+          await _ref.read(accentColorProvider.notifier).setAccent(accent);
+          debugPrint('🎨 [Chat] Accent color → ${accent.name} via AI');
+        } else {
+          _router.push('/settings/appearance');
+          debugPrint('🎨 [Chat] Unknown accent "$settingText" — opened appearance');
         }
         break;
+      case 'font_size':
+        // Enum text → font scale. If the model gave no choice, open the page.
+        final scale = switch (settingText) {
+          'small' || 'smaller' => 0.9,
+          'normal' || 'default' || 'medium' => 1.0,
+          'large' || 'big' || 'bigger' => 1.2,
+          'extra_large' || 'extra large' || 'largest' || 'huge' => 1.4,
+          _ => null,
+        };
+        if (scale != null) {
+          await _ref.read(accessibilityProvider.notifier).setFontScale(scale);
+          debugPrint('🔤 [Chat] Font scale → $scale via AI');
+        } else {
+          _router.push('/settings/appearance');
+          debugPrint('🔤 [Chat] No font size given — opened appearance');
+        }
+        break;
+      case 'reduce_animations':
+        if (_ref.read(accessibilityProvider).reduceAnimations != on) {
+          await _ref.read(accessibilityProvider.notifier).toggleReduceAnimations();
+        }
+        debugPrint('🎬 [Chat] Reduce animations → $on via AI');
+        break;
+      case 'high_contrast':
+        if (_ref.read(accessibilityProvider).highContrast != on) {
+          await _ref.read(accessibilityProvider.notifier).toggleHighContrast();
+        }
+        debugPrint('🌗 [Chat] High contrast → $on via AI');
+        break;
+      case 'serious_mode':
+        await _ref.read(seriousModeProvider.notifier).setEnabled(on);
+        debugPrint('🧘 [Chat] Serious mode (celebrations off) → $on via AI');
+        break;
 
-      // === DIRECT SOUND CONTROLS ===
+      // ── Workout sounds ──────────────────────────────────────────────────
       case 'sounds':
       case 'sound_effects':
       case 'mute':
-        final enable = settingValue ?? true;
         final soundPrefs = _getSoundPrefs();
-        await soundPrefs.setCountdownEnabled(enable);
-        await soundPrefs.setRestTimerEnabled(enable);
-        await soundPrefs.setExerciseCompletionEnabled(enable);
-        await soundPrefs.setWorkoutCompletionEnabled(enable);
-        debugPrint('🔊 [Chat] All sounds ${enable ? "enabled" : "disabled"} via AI');
+        await soundPrefs.setCountdownEnabled(on);
+        await soundPrefs.setRestTimerEnabled(on);
+        await soundPrefs.setExerciseCompletionEnabled(on);
+        await soundPrefs.setWorkoutCompletionEnabled(on);
+        debugPrint('🔊 [Chat] All sounds ${on ? "enabled" : "disabled"} via AI');
         break;
-
       case 'countdown_sounds':
-        await _getSoundPrefs().setCountdownEnabled(settingValue ?? true);
-        debugPrint('🔊 [Chat] Countdown sounds ${settingValue == true ? "enabled" : "disabled"} via AI');
+        await _getSoundPrefs().setCountdownEnabled(on);
+        debugPrint('🔊 [Chat] Countdown sounds → $on via AI');
         break;
-
       case 'rest_timer_sounds':
-        await _getSoundPrefs().setRestTimerEnabled(settingValue ?? true);
-        debugPrint('🔊 [Chat] Rest timer sounds ${settingValue == true ? "enabled" : "disabled"} via AI');
+        await _getSoundPrefs().setRestTimerEnabled(on);
+        debugPrint('🔊 [Chat] Rest timer sounds → $on via AI');
+        break;
+      case 'exercise_completion_sounds':
+        await _getSoundPrefs().setExerciseCompletionEnabled(on);
+        debugPrint('🔊 [Chat] Exercise completion chime → $on via AI');
+        break;
+      case 'workout_completion_sounds':
+        await _getSoundPrefs().setWorkoutCompletionEnabled(on);
+        debugPrint('🔊 [Chat] Workout completion chime → $on via AI');
+        break;
+      case 'sound_volume':
+        final vol = switch (settingText) {
+          'low' || 'quiet' || 'soft' => 0.3,
+          'medium' || 'normal' || 'mid' => 0.6,
+          'high' || 'loud' || 'max' => 1.0,
+          _ => null,
+        };
+        if (vol != null) {
+          await _getSoundPrefs().setVolume(vol);
+          debugPrint('🔊 [Chat] Sound volume → $vol via AI');
+        }
         break;
 
-      // === DIRECT AUDIO/TTS CONTROLS ===
+      // ── Voice / audio ───────────────────────────────────────────────────
       case 'voice_announcements':
       case 'tts':
       case 'text_to_speech':
         final userId = _user?.id;
         if (userId != null) {
-          await _getAudioPrefs().setTtsVolume(userId, settingValue == true ? 1.0 : 0.0);
-          debugPrint('🗣️ [Chat] TTS ${settingValue == true ? "enabled" : "disabled"} via AI');
+          await _getAudioPrefs().setTtsVolume(userId, on ? 1.0 : 0.0);
+          debugPrint('🗣️ [Chat] TTS → $on via AI');
         }
         break;
-
       case 'background_music':
         final userId = _user?.id;
         if (userId != null) {
-          await _getAudioPrefs().setAllowBackgroundMusic(userId, settingValue ?? true);
-          debugPrint('🎵 [Chat] Background music ${settingValue == true ? "allowed" : "blocked"} via AI');
+          await _getAudioPrefs().setAllowBackgroundMusic(userId, on);
+          debugPrint('🎵 [Chat] Background music → $on via AI');
+        }
+        break;
+      case 'audio_ducking':
+        final userId = _user?.id;
+        if (userId != null) {
+          await _getAudioPrefs().setAudioDucking(userId, on);
+          debugPrint('🎚️ [Chat] Audio ducking → $on via AI');
+        }
+        break;
+      case 'mute_during_video':
+        final userId = _user?.id;
+        if (userId != null) {
+          await _getAudioPrefs().setMuteDuringVideo(userId, on);
+          debugPrint('🔇 [Chat] Mute-during-video → $on via AI');
+        }
+        break;
+      case 'haptics':
+        await HapticService.setLevel(on ? HapticLevel.medium : HapticLevel.off);
+        debugPrint('📳 [Chat] Haptics → $on via AI');
+        break;
+      case 'haptic_level':
+        final level = switch (settingText) {
+          'off' || 'none' => HapticLevel.off,
+          'light' || 'low' || 'soft' => HapticLevel.light,
+          'medium' || 'normal' || 'mid' => HapticLevel.medium,
+          'strong' || 'high' || 'heavy' || 'max' => HapticLevel.strong,
+          _ => null,
+        };
+        if (level != null) {
+          await HapticService.setLevel(level);
+          debugPrint('📳 [Chat] Haptic level → ${level.name} via AI');
         }
         break;
 
-      // === NAVIGATE-TO-SETTINGS FALLBACKS ===
+      // ── Notifications & reminders (direct toggles) ──────────────────────
+      case 'workout_reminders':
+        await _notifPrefs().setWorkoutReminders(on);
+        debugPrint('🔔 [Chat] Workout reminders → $on via AI');
+        break;
+      case 'hydration_reminders':
+        await _notifPrefs().setHydrationReminders(on);
+        debugPrint('🔔 [Chat] Hydration reminders → $on via AI');
+        break;
+      case 'nutrition_reminders':
+        await _notifPrefs().setNutritionReminders(on);
+        debugPrint('🔔 [Chat] Nutrition reminders → $on via AI');
+        break;
+      case 'movement_reminders':
+        await _notifPrefs().setMovementReminders(on);
+        debugPrint('🔔 [Chat] Movement reminders → $on via AI');
+        break;
+      case 'habit_reminders':
+        await _notifPrefs().setHabitReminders(on);
+        debugPrint('🔔 [Chat] Habit reminders → $on via AI');
+        break;
+      case 'post_workout_meal_reminder':
+        await _notifPrefs().setPostWorkoutMealReminder(on);
+        debugPrint('🔔 [Chat] Post-workout meal reminder → $on via AI');
+        break;
+      case 'daily_briefing':
+        await _notifPrefs().setDailyBriefingNudge(on);
+        debugPrint('🔔 [Chat] Daily briefing → $on via AI');
+        break;
+      case 'streak_alerts':
+        await _notifPrefs().setStreakAlerts(on);
+        debugPrint('🔔 [Chat] Streak alerts → $on via AI');
+        break;
+      case 'achievement_alerts':
+        await _notifPrefs().setMilestoneCelebration(on);
+        debugPrint('🔔 [Chat] Achievement alerts → $on via AI');
+        break;
+      case 'weekly_summary':
+        await _notifPrefs().setWeeklySummary(on);
+        debugPrint('🔔 [Chat] Weekly summary → $on via AI');
+        break;
+      case 'ai_coach_messages':
+        await _notifPrefs().setAiCoachMessages(on);
+        debugPrint('🔔 [Chat] AI coach messages → $on via AI');
+        break;
+      case 'guilt_notifications':
+        // "you missed your workout" guilt-tone nudges — default OFF when no
+        // value is given, since users asking about these usually want them off.
+        await _notifPrefs().setGuiltNotifications(settingValue ?? false);
+        debugPrint('🔔 [Chat] Guilt notifications → ${settingValue ?? false} via AI');
+        break;
+
+      // ── Nutrition UI ────────────────────────────────────────────────────
+      case 'nutrition_ai_tips':
+        // toggleAiTips takes `disabled`; "tips on" => disabled=false.
+        await _withNutritionPrefs((n) => n.toggleAiTips(!on));
+        debugPrint('🍽️ [Chat] Nutrition AI tips → $on via AI');
+        break;
+      case 'nutrition_compact_view':
+        await _withNutritionPrefs((n) => n.setCompactView(on));
+        debugPrint('🍽️ [Chat] Nutrition compact view → $on via AI');
+        break;
+      case 'nutrition_quick_log':
+        await _withNutritionPrefs((n) => n.setQuickLogMode(on));
+        debugPrint('🍽️ [Chat] Nutrition quick-log → $on via AI');
+        break;
+      case 'show_macros_on_log':
+        await _withNutritionPrefs((n) => n.setShowMacrosOnLog(on));
+        debugPrint('🍽️ [Chat] Show macros on log → $on via AI');
+        break;
+
+      // ── Workout behavior ────────────────────────────────────────────────
+      case 'week_starts_sunday':
+        await _ref.read(weekStartsSundayProvider.notifier).setStartsSunday(on);
+        debugPrint('📅 [Chat] Week starts Sunday → $on via AI');
+        break;
+      case 'fatigue_alerts':
+        await _ref.read(fatigueAlertsEnabledProvider.notifier).setEnabled(on);
+        debugPrint('😮‍💨 [Chat] Fatigue alerts → $on via AI');
+        break;
+      case 'pre_set_insight':
+        await _ref.read(preSetInsightEnabledProvider.notifier).setEnabled(on);
+        debugPrint('💡 [Chat] Pre-set insight → $on via AI');
+        break;
+      case 'voice_set_logging':
+        await _ref.read(voiceSetLoggingEnabledProvider.notifier).setEnabled(on);
+        debugPrint('🎙️ [Chat] Voice set logging → $on via AI');
+        break;
+      case 'show_synced_workouts':
+        await _ref.read(showSyncedInCarouselProvider.notifier).setVisible(on);
+        debugPrint('⌚ [Chat] Show synced workouts → $on via AI');
+        break;
+      case 'ble_heart_rate':
+        await _ref.read(bleHrEnabledProvider.notifier).setEnabled(on);
+        debugPrint('❤️ [Chat] BLE heart-rate → $on via AI');
+        break;
+      case 'ble_auto_connect':
+        await _ref.read(bleHrAutoConnectProvider.notifier).setEnabled(on);
+        debugPrint('❤️ [Chat] BLE auto-connect → $on via AI');
+        break;
+      case 'barbell_per_side':
+        await _ref.read(weightIncrementsProvider.notifier).setBarbellPerSide(on);
+        debugPrint('🏋️ [Chat] Barbell per-side → $on via AI');
+        break;
+
+      // ── Units (three SEPARATE settings — never collapse) ────────────────
+      case 'workout_weight_unit':
+        final unit = _parseWeightUnit(settingText);
+        if (unit != null) {
+          await _updateProfile({'workout_weight_unit': unit});
+          debugPrint('⚖️ [Chat] Workout weight unit → $unit via AI');
+        }
+        break;
+      case 'body_weight_unit':
+        final unit = _parseWeightUnit(settingText);
+        if (unit != null) {
+          await _updateProfile({'weight_unit': unit});
+          debugPrint('⚖️ [Chat] Body weight unit → $unit via AI');
+        }
+        break;
+      case 'increment_unit':
+        final unit = _parseWeightUnit(settingText);
+        if (unit != null) {
+          await _ref.read(weightIncrementsProvider.notifier).setUnit(unit);
+          debugPrint('⚖️ [Chat] Increment unit → $unit via AI');
+        }
+        break;
+      case 'vacation_mode':
+        await _updateProfile({'in_vacation_mode': on});
+        debugPrint('🏖️ [Chat] Vacation mode → $on via AI');
+        break;
+
+      // ── Settings-page fallbacks (no clean programmatic toggle) ──────────
       case 'notifications':
         _router.push('/settings/sound-notifications');
         debugPrint('🔔 [Chat] Opening notifications settings via AI');
@@ -1681,20 +2081,66 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         _router.push('/settings/ai-coach');
         debugPrint('🤖 [Chat] Opening AI coach settings via AI');
         break;
-      case 'font_size':
-        _router.push('/settings/appearance');
-        debugPrint('🔤 [Chat] Opening appearance settings via AI');
-        break;
-      case 'haptics':
-        await HapticService.setLevel(
-          settingValue == true ? HapticLevel.medium : HapticLevel.off,
-        );
-        debugPrint('📳 [Chat] Haptics ${settingValue == true ? "enabled" : "disabled"} via AI');
-        break;
 
       default:
         _router.push('/settings');
         debugPrint('🤖 [Chat] Setting "$settingName" not directly changeable, opening settings');
+    }
+  }
+
+  /// Notification-preferences notifier, read fresh at action time.
+  NotificationPreferencesNotifier _notifPrefs() =>
+      _ref.read(notificationPreferencesProvider.notifier);
+
+  /// Run a mutation against the nutrition-UI prefs, ensuring they're loaded
+  /// first (every setter early-returns while `preferences` is null).
+  Future<void> _withNutritionPrefs(
+    Future<void> Function(NutritionUIPreferencesNotifier) mutate,
+  ) async {
+    final userId = _user?.id;
+    if (userId == null) {
+      _router.push('/nutrition-settings');
+      return;
+    }
+    final notifier = _ref.read(nutritionUIPreferencesProvider.notifier);
+    if (_ref.read(nutritionUIPreferencesProvider).preferences == null) {
+      await notifier.load(userId);
+    }
+    await mutate(notifier);
+  }
+
+  /// Update fields on the user profile (auth notifier → backend PUT).
+  Future<void> _updateProfile(Map<String, dynamic> updates) =>
+      _ref.read(authStateProvider.notifier).updateUserProfile(updates);
+
+  /// Normalize a free-text weight unit to the canonical 'lbs' / 'kg'.
+  String? _parseWeightUnit(String? text) {
+    if (text == null) return null;
+    if (text.startsWith('lb') || text.contains('pound')) return 'lbs';
+    if (text.startsWith('kg') || text.contains('kilo')) return 'kg';
+    return null;
+  }
+
+  /// Map a free-text color name to an [AccentColor]. Returns null if unknown.
+  AccentColor? _parseAccentColor(String? text) {
+    if (text == null) return null;
+    switch (text) {
+      case 'monochrome':
+      case 'mono':
+      case 'black':
+      case 'white':
+      case 'grey':
+      case 'gray':
+        return AccentColor.black;
+      case 'gold':
+      case 'amber':
+        return AccentColor.amber;
+      default:
+        try {
+          return AccentColor.values.byName(text);
+        } catch (_) {
+          return null;
+        }
     }
   }
 

@@ -196,7 +196,7 @@ class WorkoutMetricChart extends StatelessWidget {
       height: height,
       child: Center(
         child: Text(
-          AppLocalizations.of(context)!.workoutMetricChartNotEnoughDataTo(label),
+          AppLocalizations.of(context).workoutMetricChartNotEnoughDataTo(label),
           style: TextStyle(fontSize: 12, color: textMuted),
         ),
       ),

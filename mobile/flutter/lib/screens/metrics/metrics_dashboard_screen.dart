@@ -15,6 +15,8 @@ import '../../data/repositories/auth_repository.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/trends/trend_correlation.dart' show TrendPoint;
 import '../../l10n/generated/app_localizations.dart';
+import 'widgets/key_metrics_grid.dart';
+import 'widgets/health_checks_section.dart';
 
 class MetricsDashboardScreen extends ConsumerStatefulWidget {
   const MetricsDashboardScreen({super.key});
@@ -107,6 +109,46 @@ class _MetricsDashboardScreenState
                   ),
                 ).animate().fadeIn(delay: 100.ms),
               ),
+
+              // Key metrics grid — Google-Health-style at-a-glance cards
+              // (weight, energy, intake, macros, steps, exercise days,
+              // mindfulness). Sources from data we already collect; each card
+              // has a true No-data state. The interactive trends (period
+              // selector + per-metric chart) live below as a deeper dive.
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: const KeyMetricsGrid(),
+                ).animate().fadeIn(delay: 130.ms),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: const HealthChecksSection(),
+                ).animate().fadeIn(delay: 160.ms),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    l10n.metricsDashboardTrends,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
               // Period selector
               SliverToBoxAdapter(
@@ -474,8 +516,14 @@ class _MetricsDashboardScreenState
       return FlSpot(entry.key.toDouble(), entry.value.value);
     }).toList();
 
-    final minY = spots.map((s) => s.y).reduce((a, b) => a < b ? a : b) * 0.95;
-    final maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.05;
+    var minY = spots.map((s) => s.y).reduce((a, b) => a < b ? a : b) * 0.95;
+    var maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.05;
+    // Guard a degenerate range (all values equal, e.g. all 0) — a zero
+    // horizontalInterval makes fl_chart assert / NaN (edge case C).
+    if (maxY - minY < 1e-6) {
+      minY -= 1;
+      maxY += 1;
+    }
 
     return LineChart(
       LineChartData(

@@ -72,6 +72,7 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
         conversationHistory: history,
         aiSettings: aiSettings.toJson(),
         unifiedContext: unifiedContext,
+        sessionId: currentSessionId,
       );
 
       await for (final ev in stream) {
@@ -124,6 +125,13 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
             // Ensure the user bubble shows delivered even if the backend
             // jumped straight to `done` without emitting any token events.
             markUserDelivered();
+            // Session adoption — on a brand-new chat the server created a
+            // session and returns its id here; adopt it (migrate cache,
+            // publish id, refresh list) BEFORE committing so the committed
+            // reply is cached under the real session key.
+            if (currentSessionId == null && ev.sessionId != null) {
+              await _adoptSessionId(ev.sessionId!, userId);
+            }
             await _commitStreamedReply(
               userId: userId,
               messageId: ev.messageId,
@@ -551,11 +559,18 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
         conversationHistory: history,
         aiSettings: currentAISettings.toJson(),
         unifiedContext: unifiedContext,
+        sessionId: currentSessionId,
       );
       final response = sendResult.response;
       final assistantMessageId = sendResult.messageId;
       responseStopwatch.stop();
       if (!mounted) return;
+
+      // Session adoption — adopt the server-created session id on a brand-new
+      // chat so subsequent turns thread into the same conversation.
+      if (currentSessionId == null && sendResult.sessionId != null) {
+        await _adoptSessionId(sendResult.sessionId!, userId);
+      }
 
       // Build the assistant bubble and commit it to state IMMEDIATELY, before
       // any further awaits. Previously the tail order was
@@ -809,11 +824,15 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
             conversationHistory: history, aiSettings: currentAISettings.toJson(),
             unifiedContext: unifiedContext, imageBase64: imageBase64,
             mediaRef: imageMediaRef, mediaUrl: publicUrl,
+            sessionId: currentSessionId,
           ),
         ]);
-        final sendResult = results[1] as ({ChatResponse response, String? messageId});
+        final sendResult = results[1] as ({ChatResponse response, String? messageId, String? sessionId});
         response = sendResult.response;
         assistantMessageId = sendResult.messageId;
+        if (currentSessionId == null && sendResult.sessionId != null) {
+          await _adoptSessionId(sendResult.sessionId!, userId);
+        }
 
       } else {
         // Video: upload to backend which handles S3 + Gemini in parallel
@@ -858,9 +877,13 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
           conversationHistory: history, aiSettings: currentAISettings.toJson(),
           unifiedContext: unifiedContext, mediaRef: mediaRef,
           mediaUrl: publicUrl,
+          sessionId: currentSessionId,
         );
         response = sendResult.response;
         assistantMessageId = sendResult.messageId;
+        if (currentSessionId == null && sendResult.sessionId != null) {
+          await _adoptSessionId(sendResult.sessionId!, userId);
+        }
       }
 
       if (!mounted) return;

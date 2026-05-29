@@ -19,11 +19,18 @@ class HealthGoals {
   /// Target bedtime as a `HH:MM` user-local time string, or null when unset.
   final String? bedtimeGoal;
 
+  /// Resting-HR alert overrides (bpm), or null to use the clinical defaults
+  /// (low &lt; 40 / high &gt; 100) applied by the health check.
+  final int? lowHrThreshold;
+  final int? highHrThreshold;
+
   const HealthGoals({
     this.stepGoal = 10000,
     this.activeMinutesGoal = 30,
     this.sleepDurationGoalMinutes = 480,
     this.bedtimeGoal,
+    this.lowHrThreshold,
+    this.highHrThreshold,
   });
 
   /// The contract defaults — also what every read falls back to on error so
@@ -37,6 +44,8 @@ class HealthGoals {
         sleepDurationGoalMinutes:
             (json['sleep_duration_goal_minutes'] as num?)?.toInt() ?? 480,
         bedtimeGoal: json['bedtime_goal'] as String?,
+        lowHrThreshold: (json['low_hr_threshold'] as num?)?.toInt(),
+        highHrThreshold: (json['high_hr_threshold'] as num?)?.toInt(),
       );
 
   HealthGoals copyWith({
@@ -44,6 +53,8 @@ class HealthGoals {
     int? activeMinutesGoal,
     int? sleepDurationGoalMinutes,
     String? bedtimeGoal,
+    int? lowHrThreshold,
+    int? highHrThreshold,
   }) =>
       HealthGoals(
         stepGoal: stepGoal ?? this.stepGoal,
@@ -51,6 +62,8 @@ class HealthGoals {
         sleepDurationGoalMinutes:
             sleepDurationGoalMinutes ?? this.sleepDurationGoalMinutes,
         bedtimeGoal: bedtimeGoal ?? this.bedtimeGoal,
+        lowHrThreshold: lowHrThreshold ?? this.lowHrThreshold,
+        highHrThreshold: highHrThreshold ?? this.highHrThreshold,
       );
 
   @override
@@ -59,11 +72,13 @@ class HealthGoals {
       other.stepGoal == stepGoal &&
       other.activeMinutesGoal == activeMinutesGoal &&
       other.sleepDurationGoalMinutes == sleepDurationGoalMinutes &&
-      other.bedtimeGoal == bedtimeGoal;
+      other.bedtimeGoal == bedtimeGoal &&
+      other.lowHrThreshold == lowHrThreshold &&
+      other.highHrThreshold == highHrThreshold;
 
   @override
-  int get hashCode => Object.hash(
-      stepGoal, activeMinutesGoal, sleepDurationGoalMinutes, bedtimeGoal);
+  int get hashCode => Object.hash(stepGoal, activeMinutesGoal,
+      sleepDurationGoalMinutes, bedtimeGoal, lowHrThreshold, highHrThreshold);
 }
 
 /// Thin client for the `health_goals` endpoints.
@@ -92,6 +107,8 @@ class HealthGoalsService {
     int? activeMinutesGoal,
     int? sleepDurationGoalMinutes,
     String? bedtimeGoal,
+    int? lowHrThreshold,
+    int? highHrThreshold,
   }) async {
     final body = <String, dynamic>{};
     if (stepGoal != null) body['step_goal'] = stepGoal;
@@ -102,6 +119,8 @@ class HealthGoalsService {
       body['sleep_duration_goal_minutes'] = sleepDurationGoalMinutes;
     }
     if (bedtimeGoal != null) body['bedtime_goal'] = bedtimeGoal;
+    if (lowHrThreshold != null) body['low_hr_threshold'] = lowHrThreshold;
+    if (highHrThreshold != null) body['high_hr_threshold'] = highHrThreshold;
 
     final response = await _apiClient.put(
       '/activity/health-goals/$userId',

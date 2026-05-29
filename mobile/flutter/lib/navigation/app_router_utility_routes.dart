@@ -40,6 +40,33 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const BodyAnalyzerScreen(),
       ),
 
+      // Mindfulness session player — guided breathing/meditation timer that
+      // logs a real mindfulness_sessions row on completion (backs the
+      // "Mindfulness minutes" key metric). Reached from the home mindful ring
+      // (breathwork) and the daily meditation tile (meditation + audio).
+      // Query params: source, slug, title, duration (min), audio.
+      GoRoute(
+        path: '/mindfulness/session',
+        builder: (context, state) {
+          final q = state.uri.queryParameters;
+          final source =
+              q['source'] == 'meditation' ? 'meditation' : 'breathwork';
+          final duration = int.tryParse(q['duration'] ?? '') ?? 5;
+          final slug = (q['slug'] ?? '').isEmpty ? null : q['slug'];
+          final audio = (q['audio'] ?? '').isEmpty ? null : q['audio'];
+          final title = (q['title'] ?? '').isEmpty
+              ? (source == 'breathwork' ? 'Box breathing' : 'Daily meditation')
+              : q['title']!;
+          return MindfulnessSessionScreen(
+            source: source,
+            slug: slug,
+            title: title,
+            durationMinutes: duration,
+            audioUrl: audio,
+          );
+        },
+      ),
+
       // Sleep detail — date strip, hypnogram, sleep score, debt/regularity,
       // 7-night + 30-day charts, monthly summary, coaching, sleep goal.
       // Reached by tapping the "Last Night's Sleep" card.

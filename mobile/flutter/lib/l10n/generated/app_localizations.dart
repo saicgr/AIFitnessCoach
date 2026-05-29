@@ -75090,6 +75090,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yesterday\'s session is still open. Move it to today?'**
   String get heroModesBodyYesterday;
+
+  /// No description provided for @metricsDashboardKeyMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'KEY METRICS'**
+  String get metricsDashboardKeyMetrics;
+
+  /// No description provided for @metricsDashboardTrends.
+  ///
+  /// In en, this message translates to:
+  /// **'TRENDS'**
+  String get metricsDashboardTrends;
+
+  /// No description provided for @metricsDashboardEnergyBurned.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy burned'**
+  String get metricsDashboardEnergyBurned;
+
+  /// No description provided for @metricsDashboardCalorieIntake.
+  ///
+  /// In en, this message translates to:
+  /// **'Calorie intake'**
+  String get metricsDashboardCalorieIntake;
+
+  /// No description provided for @metricsDashboardSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps'**
+  String get metricsDashboardSteps;
+
+  /// No description provided for @metricsDashboardMindfulnessMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Mindful minutes'**
+  String get metricsDashboardMindfulnessMinutes;
+
+  /// No description provided for @metricsDashboardGoalMet.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal met'**
+  String get metricsDashboardGoalMet;
+
+  /// No description provided for @metricsDashboardExerciseDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise days'**
+  String get metricsDashboardExerciseDays;
+
+  /// No description provided for @metricsDashboardThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'this week'**
+  String get metricsDashboardThisWeek;
+
+  /// No description provided for @metricsDashboardNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data'**
+  String get metricsDashboardNoData;
+
+  /// No description provided for @metricsDashboardMacros.
+  ///
+  /// In en, this message translates to:
+  /// **'Macros'**
+  String get metricsDashboardMacros;
+
+  /// No description provided for @metricsDashboardCarbs.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbs'**
+  String get metricsDashboardCarbs;
+
+  /// No description provided for @metricsDashboardFat.
+  ///
+  /// In en, this message translates to:
+  /// **'Fat'**
+  String get metricsDashboardFat;
+
+  /// No description provided for @metricsDashboardProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein'**
+  String get metricsDashboardProtein;
+
+  /// No description provided for @metricsDashboardHealthChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'HEALTH CHECKS'**
+  String get metricsDashboardHealthChecks;
+
+  /// No description provided for @metricsDashboardConnectWearable.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a wearable'**
+  String get metricsDashboardConnectWearable;
+
+  /// No description provided for @metricsDashboardHrLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get metricsDashboardHrLow;
+
+  /// No description provided for @metricsDashboardHrLowNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Low-normal'**
+  String get metricsDashboardHrLowNormal;
+
+  /// No description provided for @metricsDashboardHrNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get metricsDashboardHrNormal;
+
+  /// No description provided for @metricsDashboardHrHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get metricsDashboardHrHigh;
+
+  /// No description provided for @metricsDashboardHrDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Informational only, not medical advice. Talk to a clinician about any concerns.'**
+  String get metricsDashboardHrDisclaimer;
+
+  /// No description provided for @metricsDashboardCustomizeThresholds.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize thresholds'**
+  String get metricsDashboardCustomizeThresholds;
+
+  /// No description provided for @metricsDashboardHrThresholdOrderError.
+  ///
+  /// In en, this message translates to:
+  /// **'Low must be below high.'**
+  String get metricsDashboardHrThresholdOrderError;
+
+  /// No description provided for @metricsDashboardSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save. Please try again.'**
+  String get metricsDashboardSaveFailed;
+
+  /// No description provided for @metricsDashboardOfGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'of {goal}'**
+  String metricsDashboardOfGoal(String goal);
+
+  /// No description provided for @metricsDashboardHrRangeExplainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal resting heart rate is {low}–{high} bpm. Below {low} or above {high} bpm is flagged for awareness.'**
+  String metricsDashboardHrRangeExplainer(int low, int high);
+
+  /// No description provided for @metricsDashboardGetStartedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start tracking'**
+  String get metricsDashboardGetStartedTitle;
+
+  /// No description provided for @metricsDashboardGetStartedCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a wearable or log a meal to see your metrics.'**
+  String get metricsDashboardGetStartedCta;
 }
 
 class _AppLocalizationsDelegate

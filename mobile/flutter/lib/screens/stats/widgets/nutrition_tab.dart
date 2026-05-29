@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/stat_typography.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/nutrition_preferences.dart';
@@ -11,6 +10,11 @@ import '../../../data/providers/nutrition_stats_provider.dart';
 import '../../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../../../widgets/nutrition/health_metrics_card.dart';
 import '../../../widgets/nutrition/food_mood_analytics_card.dart';
+import '../../../widgets/nutrition_stats/weekly_overview_card.dart';
+import '../../../widgets/nutrition_stats/calorie_trend_card.dart';
+import '../../../widgets/nutrition_stats/macro_breakdown_card.dart';
+import '../../../widgets/nutrition_stats/tdee_card.dart';
+import '../../../widgets/nutrition_stats/adherence_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'nutrition_tab_part_weekly_overview_card.dart';
@@ -65,7 +69,7 @@ class NutritionTab extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Card 1: Weekly Overview Summary
-            _WeeklyOverviewCard(
+            WeeklyOverviewCard(
             weeklySummary: weeklySummary,
             cardColor: cardColor,
             textPrimary: textPrimary,
@@ -76,7 +80,7 @@ class NutritionTab extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Card 2: Calorie Trend Chart
-          _CalorieTrendCard(
+          CalorieTrendCard(
             weeklyNutrition: weeklyNutrition,
             cardColor: cardColor,
             textPrimary: textPrimary,
@@ -87,7 +91,7 @@ class NutritionTab extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Card 3: Macro Breakdown
-          _MacroBreakdownCard(
+          MacroBreakdownCard(
             weeklyNutrition: weeklyNutrition,
             cardColor: cardColor,
             textPrimary: textPrimary,
@@ -98,7 +102,7 @@ class NutritionTab extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Card 4: TDEE & Energy Balance
-          _TDEECard(
+          TDEECard(
             detailedTDEE: detailedTDEE,
             weeklySummary: weeklySummary,
             cardColor: cardColor,
@@ -125,7 +129,7 @@ class NutritionTab extends ConsumerWidget {
           ],
 
           // Card 5: Adherence & Consistency
-          _AdherenceCard(
+          AdherenceCard(
             adherence: adherence,
             cardColor: cardColor,
             textPrimary: textPrimary,

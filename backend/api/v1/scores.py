@@ -769,6 +769,152 @@ async def get_all_strength_scores(
     )
 
 
+# NOTE: this literal-path route MUST be declared before the dynamic
+# `/strength/{muscle_group}` route below, otherwise FastAPI captures
+# "e1rm-trend" as a muscle_group path param.
+@router.get("/strength/e1rm-trend", response_model=E1rmTrendResponse, tags=["Strength"])
+async def get_e1rm_trend(
+    http_request: Request,
+    user_id: str = Query(...),
+    weeks: int = Query(12, ge=1, le=52, description="Number of ISO weeks to return"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-muscle estimated-1RM trend for the last `weeks` ISO weeks.
+
+    Source of truth: `performance_logs` (the same per-set table the volume
+    trend + strength scorer read). For each completed set we compute estimated
+    1RM from real `weight_kg` + `reps_completed` via the SAME 3-formula average
+    the strength scorer uses (StrengthCalculatorService.calculate_1rm_average:
+    Brzycki+Epley+Lombardi mean), then take the MAX per (muscle, ISO week).
+
+    Exercise→muscle attribution reuses the strength scorer's
+    `get_exercise_muscle_groups` (static EXERCISE_MUSCLE_GROUPS map keyed on the
+    normalized name) — identical to /scores/strength. A set attributes to every
+    muscle the exercise targets (so a bench-press 1RM lifts chest, triceps, and
+    shoulders), matching how the strength scores already credit volume.
+
+    Output: one entry per muscle group that has >=1 non-null week, each
+    zero/null-filled to exactly `weeks` buckets (oldest→newest, local-Monday
+    weeks). Capped to the strength scorer's MuscleGroup vocabulary. Bodyweight
+    sets (weight_kg=0) yield 0 estimated 1RM and never set a week's max above a
+    real loaded set, so they don't fabricate a load signal. NO fabricated data:
+    a user with no logged sets gets `{"muscles": []}`.
+    """
+    verify_user_ownership(current_user, user_id)
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, user_id)
+
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(user_tz) if user_tz else timezone.utc
+
+        today_local = date.fromisoformat(get_user_today(user_tz))
+        current_week_monday = today_local - timedelta(days=today_local.weekday())
+        oldest_monday = current_week_monday - timedelta(weeks=weeks - 1)
+
+        # 1-day pad guards tz-boundary rows whose UTC ts precedes local Monday.
+        cutoff_utc = (
+            datetime.combine(oldest_monday, datetime.min.time(), tzinfo=tz)
+            - timedelta(days=1)
+        ).astimezone(timezone.utc)
+
+        rows = db.client.table("performance_logs").select(
+            "exercise_name, reps_completed, weight_kg, recorded_at, is_completed"
+        ).eq("user_id", user_id).gte(
+            "recorded_at", cutoff_utc.isoformat()
+        ).execute()
+
+        # Ordered list of week-start ISO keys (oldest→newest).
+        bucket_order: List[str] = [
+            (oldest_monday + timedelta(weeks=i)).isoformat() for i in range(weeks)
+        ]
+        bucket_index = {key: i for i, key in enumerate(bucket_order)}
+
+        # Cap to the muscle groups the strength endpoint scores.
+        allowed_muscles = {mg.value for mg in MuscleGroup}
+
+        # muscle -> [best_e1rm_or_None] aligned to bucket_order.
+        per_muscle: Dict[str, List[Optional[float]]] = {}
+
+        for row in (rows.data or []):
+            if row.get("is_completed") is False:
+                continue
+            reps = row.get("reps_completed")
+            if not isinstance(reps, (int, float)) or reps <= 0:
+                continue
+            w = row.get("weight_kg")
+            weight_kg = float(w) if isinstance(w, (int, float)) and w > 0 else 0.0
+            # Bodyweight sets (no external load) have no meaningful estimated
+            # 1RM — skip them so an unloaded week never shows a phantom number.
+            if weight_kg <= 0:
+                continue
+
+            recorded_at = row.get("recorded_at")
+            if not recorded_at:
+                continue
+            try:
+                ts = datetime.fromisoformat(str(recorded_at).replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                local_d = ts.astimezone(tz).date()
+            except Exception:
+                continue
+
+            monday = local_d - timedelta(days=local_d.weekday())
+            key = monday.isoformat()
+            idx = bucket_index.get(key)
+            if idx is None:
+                continue
+
+            # Estimated 1RM via the strength scorer's canonical 3-formula mean.
+            e1rm = StrengthCalculatorService.calculate_1rm_average(
+                weight_kg, int(reps)
+            )
+            if e1rm <= 0:
+                continue
+
+            muscles = StrengthCalculatorService.get_exercise_muscle_groups(
+                row.get("exercise_name") or ""
+            )
+            for m in muscles:
+                mg = (m or "").strip().lower()
+                if mg not in allowed_muscles:
+                    continue
+                series = per_muscle.get(mg)
+                if series is None:
+                    series = [None] * weeks
+                    per_muscle[mg] = series
+                prev = series[idx]
+                if prev is None or e1rm > prev:
+                    series[idx] = round(e1rm, 2)
+
+        # Only emit muscles with >=1 non-null week; sort for stable output.
+        muscles_out: List[MuscleE1rmTrend] = []
+        for mg in sorted(per_muscle.keys()):
+            series = per_muscle[mg]
+            if not any(v is not None for v in series):
+                continue
+            muscles_out.append(
+                MuscleE1rmTrend(
+                    muscle_group=mg,
+                    weeks=[
+                        E1rmWeek(week_start=bucket_order[i], best_e1rm_kg=series[i])
+                        for i in range(weeks)
+                    ],
+                )
+            )
+
+        logger.info(
+            f"🏋️ [e1rm-trend] user={user_id} weeks={weeks} "
+            f"muscles={[m.muscle_group for m in muscles_out]}"
+        )
+        return E1rmTrendResponse(muscles=muscles_out)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "e1rm_trend")
+
+
 @router.get("/strength/{muscle_group}", response_model=StrengthDetailResponse, tags=["Strength"])
 async def get_strength_detail(
     muscle_group: str,
@@ -1025,6 +1171,131 @@ async def get_personal_records(
         recent_prs=recent_prs,
     )
 
+
+
+# =============================================================================
+# Weekly Volume Trend — Σ(weight × reps) per ISO week, zero-filled.
+# Feeds the Flutter Stats-tab "Weekly Volume Trend" bar chart.
+# =============================================================================
+
+@router.get("/volume-trend", response_model=VolumeTrendResponse, tags=["Strength"])
+async def get_volume_trend(
+    http_request: Request,
+    user_id: str = Query(...),
+    weeks: int = Query(12, ge=1, le=52, description="Number of ISO weeks to return"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Weekly training volume trend for the last `weeks` ISO weeks.
+
+    Source of truth: `performance_logs` — the per-set table that already
+    powers PR detection and the strength scorer. Each completed set carries
+    `reps_completed` + `weight_kg` + `workout_log_id` + `recorded_at`
+    (verified columns, see backend/core/db/exercise_db.py:148).
+
+    Aggregation per ISO week (Monday-start, computed in the user's local tz so
+    a Sunday-night session lands in the right bucket):
+      - volume_kg = sum(weight_kg * reps_completed) over completed sets
+      - sets      = count of completed sets (reps_completed > 0)
+      - workouts  = distinct workout_log_id values that week
+
+    Bodyweight sets (weight_kg = 0) still count toward `sets` and `workouts`
+    but contribute 0 to volume — honest, since external load is what volume
+    measures. Empty weeks are zero-filled so the series is exactly `weeks`
+    long, oldest to newest. NO fabricated data: a user with no logs gets all
+    zeros, never invented numbers.
+    """
+    verify_user_ownership(current_user, user_id)
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, user_id)
+
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(user_tz) if user_tz else timezone.utc
+
+        # Anchor the window to the Monday of the user's current local ISO week.
+        today_local = date.fromisoformat(get_user_today(user_tz))
+        current_week_monday = today_local - timedelta(days=today_local.weekday())
+        oldest_monday = current_week_monday - timedelta(weeks=weeks - 1)
+
+        # Pull only completed sets recorded on/after the oldest visible Monday.
+        # A small look-back pad of 1 day guards against tz-boundary rows whose
+        # UTC timestamp precedes the local Monday midnight; they get correctly
+        # re-bucketed below by the user-local date.
+        cutoff_utc = (
+            datetime.combine(oldest_monday, datetime.min.time(), tzinfo=tz)
+            - timedelta(days=1)
+        ).astimezone(timezone.utc)
+
+        rows = db.client.table("performance_logs").select(
+            "reps_completed, weight_kg, workout_log_id, recorded_at, is_completed"
+        ).eq("user_id", user_id).gte(
+            "recorded_at", cutoff_utc.isoformat()
+        ).execute()
+
+        # Build the zero-filled bucket scaffold keyed on each week's Monday ISO.
+        buckets: Dict[str, Dict[str, Any]] = {}
+        bucket_order: List[str] = []
+        for i in range(weeks):
+            monday = oldest_monday + timedelta(weeks=i)
+            key = monday.isoformat()
+            buckets[key] = {"volume_kg": 0.0, "sets": 0, "_workout_ids": set()}
+            bucket_order.append(key)
+
+        for row in (rows.data or []):
+            # Only completed sets with real reps contribute. is_completed may be
+            # None on legacy rows — treat None as completed (the PR pipeline
+            # does the same) but require reps_completed > 0 to count a set.
+            if row.get("is_completed") is False:
+                continue
+            reps = row.get("reps_completed")
+            if not isinstance(reps, (int, float)) or reps <= 0:
+                continue
+
+            recorded_at = row.get("recorded_at")
+            if not recorded_at:
+                continue
+            try:
+                ts = datetime.fromisoformat(str(recorded_at).replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                local_d = ts.astimezone(tz).date()
+            except Exception:
+                continue
+
+            monday = local_d - timedelta(days=local_d.weekday())
+            key = monday.isoformat()
+            bucket = buckets.get(key)
+            if bucket is None:
+                # Row outside the visible window (the 1-day pad can drag one in).
+                continue
+
+            weight = row.get("weight_kg")
+            weight_kg = float(weight) if isinstance(weight, (int, float)) and weight > 0 else 0.0
+            bucket["volume_kg"] += weight_kg * float(reps)
+            bucket["sets"] += 1
+            wlid = row.get("workout_log_id")
+            if wlid is not None:
+                bucket["_workout_ids"].add(wlid)
+
+        series = [
+            VolumeTrendWeek(
+                week_start=key,
+                volume_kg=round(buckets[key]["volume_kg"], 2),
+                sets=buckets[key]["sets"],
+                workouts=len(buckets[key]["_workout_ids"]),
+            )
+            for key in bucket_order
+        ]
+
+        logger.info(
+            f"🏋️ [volume-trend] user={user_id} weeks={weeks} "
+            f"non_empty={sum(1 for w in series if w.sets > 0)}"
+        )
+        return VolumeTrendResponse(weeks=series)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "volume_trend")
 
 
 # =============================================================================

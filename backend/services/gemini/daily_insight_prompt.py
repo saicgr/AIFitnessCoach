@@ -148,6 +148,14 @@ MORNING_ACTION_KINDS (use as action on chip entries):
 - plan_tomorrow_meals     : open the nutrition planner
 - start_wind_down         : (evening only) flip the wind-down state
 - start_workout_now       : open today's workout
+
+COACH MEMORY: if a `coach_memory` block is present, use it. Tailor the 3
+bullets to its `facts` (e.g. an active injury -> swap a risky lift for a safe
+alternative; a dietary fact -> phrase nutrition asks accordingly). If
+`open_loops` is non-empty, make the LAST line a short check-in question drawn
+from the loop's content (e.g. "How's the lower back this morning?") and add a
+matching chip set so the user can answer in one tap. Treat memory as recall,
+never invent details beyond it, and never cite memory as a tracked number.
 """
 
 _EVENING_RECAP_BRANCH_INSTRUCTION = """SOURCE = evening_recap (end-of-day recap)
@@ -225,6 +233,38 @@ delay_workout_until_fast_ends, accept_pr_target.
 """
 
 
+_WORKOUT_STATS_BRANCH_INSTRUCTION = """SOURCE = workout_stats (training-trend insight for the Stats tab)
+You are writing the coach insight that sits atop the Stats tab's training
+section. The payload's today_score_snapshot carries a TRAINING TREND
+snapshot (not the daily pillar snapshot) with these fields:
+
+- volume_4wk_kg / volume_prev_4wk_kg : total external load (kg) for the
+  most recent 4 ISO weeks vs the 4 weeks before that.
+- volume_delta_pct                   : signed percent change between them
+  (null when the prior block was empty. Say "no prior baseline" then).
+- push_sets / pull_sets              : completed set counts over the last
+  4 weeks, split by movement force. push_pull_ratio is push/pull (null if
+  pull is 0).
+- acwr / acwr_state                  : acute:chronic workload ratio and its
+  classification (detraining | balanced | loading | overreaching |
+  calibration). Speak to the STATE in plain language, never the bare number
+  unless it appears in the snapshot.
+- pr_count_30d                       : personal records set in the last 30
+  days.
+- current_streak                     : current workout-day streak (0 means
+  the streak is broken / no recent training).
+
+Write a headline (≤ 8 words) naming the single most notable trend, and a
+1 to 2 sentence body that interprets it and gives ONE concrete next move.
+Prefer the most actionable signal: a big volume swing, a lopsided
+push/pull ratio (flag if push_pull_ratio > 1.5 or < 0.67), an
+overreaching/detraining ACWR state, a fresh PR, or a broken streak. Every
+number you cite MUST appear verbatim in the snapshot. cta_primary should
+route to /workouts (start/plan a session) or /pillar/train (see the full
+trend). cta_secondary defaults to /chat.
+"""
+
+
 # Cycle-phase guidance — appended to the system instruction when the
 # snapshot carries a cycle_phase value. Subtle phase awareness across
 # every surface. Per CLAUDE.md no numeric fabrication — guidance is
@@ -284,6 +324,8 @@ def _build_system_instruction(source: str, cycle_phase: str | None = None) -> st
         branch = _NUTRITION_CARD_DINNER_BRANCH_INSTRUCTION
     elif source == "workout_card":
         branch = _WORKOUT_CARD_BRANCH_INSTRUCTION
+    elif source == "workout_stats":
+        branch = _WORKOUT_STATS_BRANCH_INSTRUCTION
     else:
         # Default to home for any unknown source — keeps the contract safe
         # rather than throwing inside a hot Gemini call.
@@ -334,6 +376,13 @@ def _build_user_message(context: dict, source: str) -> str:
     rag = context.get("history_rag")
     if rag:
         payload["history_rag"] = rag
+    # Long-term coach memory (migration 2217): durable facts the user told the
+    # coach + open loops to follow up on. Present on morning_brief/evening_recap
+    # so the brief can recall e.g. "keep your back happy" and ask a check-in
+    # question. Omitted when empty so the model isn't tempted to invent.
+    mem = context.get("coach_memory")
+    if mem and (mem.get("open_loops") or mem.get("facts")):
+        payload["coach_memory"] = mem
     # Workout-card surface needs the resolver mode (windDown / etc.).
     mode = context.get("mode_context")
     if mode:

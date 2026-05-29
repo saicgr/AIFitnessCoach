@@ -708,6 +708,20 @@ extension __ChatScreenStateExt on _ChatScreenState {
             mainAxisSize: MainAxisSize.min,
             children: [
             ListTile(
+              leading: const Icon(Icons.add_comment_outlined, color: AppColors.cyan),
+              title: const Text('New chat'),
+              subtitle: Text(
+                'Start a fresh conversation',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                HapticService.selection();
+                ref.read(chatMessagesProvider.notifier).startNewChat();
+              },
+            ),
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            ListTile(
               leading: const Icon(Icons.bug_report_outlined, color: AppColors.orange),
               title: Text(AppLocalizations.of(context).chatScreenExtReportAProblem),
               subtitle: Text(

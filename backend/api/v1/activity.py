@@ -144,6 +144,14 @@ class HealthGoalsInput(BaseModel):
     bedtime_goal: Optional[str] = Field(
         None, description="Target bedtime as a HH:MM[:SS] user-local time string",
     )
+    low_hr_threshold: Optional[int] = Field(
+        None, ge=25, le=200,
+        description="Resting-HR low-alert override (bpm); null => clinical default",
+    )
+    high_hr_threshold: Optional[int] = Field(
+        None, ge=40, le=220,
+        description="Resting-HR high-alert override (bpm); null => clinical default",
+    )
 
 
 class HealthGoalsResponse(BaseModel):
@@ -154,15 +162,22 @@ class HealthGoalsResponse(BaseModel):
     active_minutes_goal: int
     sleep_duration_goal_minutes: int
     bedtime_goal: Optional[str]
+    # Resting-HR alert overrides (migration 2214). null => deterministic
+    # clinical defaults applied client-side (low < 40 / high > 100).
+    low_hr_threshold: Optional[int] = None
+    high_hr_threshold: Optional[int] = None
 
 
 # Contract defaults — mirror the DEFAULTs in migration 2088 so a user who has
 # never saved goals still gets a sensible payload from GET /health-goals.
+# HR thresholds default to None (client applies clinical defaults).
 _HEALTH_GOAL_DEFAULTS = {
     "step_goal": 10000,
     "active_minutes_goal": 30,
     "sleep_duration_goal_minutes": 480,
     "bedtime_goal": None,
+    "low_hr_threshold": None,
+    "high_hr_threshold": None,
 }
 
 
@@ -478,6 +493,8 @@ def _row_to_health_goals_response(user_id: str, row: Optional[dict]) -> HealthGo
         if row.get("sleep_duration_goal_minutes") is not None
         else _HEALTH_GOAL_DEFAULTS["sleep_duration_goal_minutes"],
         bedtime_goal=str(bedtime) if bedtime is not None else None,
+        low_hr_threshold=row.get("low_hr_threshold"),
+        high_hr_threshold=row.get("high_hr_threshold"),
     )
 
 
@@ -531,7 +548,18 @@ async def update_health_goals(
         "active_minutes_goal": _pick("active_minutes_goal"),
         "sleep_duration_goal_minutes": _pick("sleep_duration_goal_minutes"),
         "bedtime_goal": _pick("bedtime_goal"),
+        "low_hr_threshold": _pick("low_hr_threshold"),
+        "high_hr_threshold": _pick("high_hr_threshold"),
     }
+
+    # A low override at/above the high override is nonsensical — reject so the
+    # health-check banding never inverts (plan edge case E).
+    lo, hi = data["low_hr_threshold"], data["high_hr_threshold"]
+    if lo is not None and hi is not None and lo >= hi:
+        raise HTTPException(
+            status_code=422,
+            detail="low_hr_threshold must be below high_hr_threshold",
+        )
 
     result = db.upsert_health_goals(data)
     if not result:

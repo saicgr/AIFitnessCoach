@@ -28,6 +28,7 @@ from services.langgraph_agents.injury_agent import build_injury_agent_graph
 from services.langgraph_agents.hydration_agent import build_hydration_agent_graph
 from services.langgraph_agents.cycle_agent import build_cycle_agent_graph
 from services.langgraph_agents.coach_agent import build_coach_agent_graph
+from services.langgraph_agents.tools.suggestion_tools import inject_suggested_actions
 
 from core.logger import get_logger
 from core.anonymize import anonymize_user_data
@@ -552,6 +553,7 @@ class LangGraphCoachService:
             "body_part": extraction.body_part,
             "setting_name": extraction.setting_name,
             "setting_value": extraction.setting_value,
+            "setting_value_text": extraction.setting_value_text,
             "destination": extraction.destination,
             "hydration_amount": extraction.hydration_amount,
             "water_goal_glasses": extraction.water_goal_glasses,
@@ -998,6 +1000,7 @@ class LangGraphCoachService:
             base_state["workout_schedule"] = request.workout_schedule.model_dump() if request.workout_schedule else None
             base_state["setting_name"] = extraction_data.get("setting_name")
             base_state["setting_value"] = extraction_data.get("setting_value")
+            base_state["setting_value_text"] = extraction_data.get("setting_value_text")
             base_state["destination"] = extraction_data.get("destination")
             base_state["water_goal_glasses"] = extraction_data.get("water_goal_glasses")
             base_state["weight_value"] = extraction_data.get("weight_value")
@@ -1021,6 +1024,25 @@ class LangGraphCoachService:
                 logger.warning(f"[CoachState] health_context pre-fetch failed: {e}")
                 health_context = ""
             base_state["health_context"] = health_context
+
+            # Pre-fetch the coach's long-term MEMORY block (migration 2217) so
+            # the prompt recalls durable facts the user told the coach (back
+            # pain, dietary prefs, goals) across sessions and days — and any
+            # open loops it should follow up on. Ranked by relevance to THIS
+            # message. Returns ("", []) cleanly when memory is empty/disabled
+            # or on any error, so the coach path is never broken.
+            memory_context = ""
+            memory_ref_ids: list = []
+            try:
+                from services.coach.memory.injector import build_memory_block
+                memory_context, memory_ref_ids = build_memory_block(
+                    str(request.user_id), current_message=request.message, limit=8
+                )
+            except Exception as e:
+                logger.warning(f"[CoachState] memory_context pre-fetch failed: {e}")
+                memory_context, memory_ref_ids = "", []
+            base_state["memory_context"] = memory_context
+            base_state["memory_ref_ids"] = memory_ref_ids
 
         return base_state
 
@@ -1257,6 +1279,15 @@ class LangGraphCoachService:
 
             # 7. Build response
             action_data = final_state.get("action_data")
+            # Fold launcher-chip suggestions into action_data for EVERY agent
+            # (LLM suggest_actions tool results + deterministic backstops),
+            # alongside any primary action or as a standalone payload.
+            action_data = inject_suggested_actions(
+                action_data,
+                user_message=cleaned_message,
+                selected_agent_value=selected_agent.value,
+                tool_results=final_state.get("tool_results"),
+            )
             logger.info(f"[LangGraph Service] Agent returned action_data: {action_data}")
 
             raw_response = final_state.get("final_response", "I'm sorry, I couldn't process your request.")
@@ -1548,6 +1579,14 @@ class LangGraphCoachService:
         logger.info(f"Agent {selected_agent.value} completed in {elapsed:.1f}s (stream)")
 
         action_data = final_state.get("action_data")
+        # Same launcher-chip merge as the non-streaming path (one source of
+        # truth: inject_suggested_actions).
+        action_data = inject_suggested_actions(
+            action_data,
+            user_message=cleaned_message,
+            selected_agent_value=selected_agent.value,
+            tool_results=final_state.get("tool_results"),
+        )
         raw_response = final_state.get("final_response", "I'm sorry, I couldn't process your request.")
         message_str = _ensure_str(raw_response)
         if not message_str.strip():

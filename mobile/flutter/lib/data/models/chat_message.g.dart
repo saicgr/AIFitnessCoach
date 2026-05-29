@@ -25,6 +25,8 @@ ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => ChatMessage(
   audioDurationMs: (json['audio_duration_ms'] as num?)?.toInt(),
   coachPersonaId: json['coach_persona_id'] as String?,
   source: json['source'] as String?,
+  sourceSurface: json['source_surface'] as String?,
+  insightId: json['insight_id'] as String?,
 );
 
 Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
@@ -45,6 +47,8 @@ Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
       'audio_duration_ms': instance.audioDurationMs,
       'coach_persona_id': instance.coachPersonaId,
       'source': instance.source,
+      'source_surface': instance.sourceSurface,
+      'insight_id': instance.insightId,
     };
 
 const _$AgentTypeEnumMap = {
@@ -75,6 +79,7 @@ ChatRequest _$ChatRequestFromJson(Map<String, dynamic> json) => ChatRequest(
       ?.map((e) => e as String)
       .toList(),
   mediaUrl: json['media_url'] as String?,
+  sessionId: json['session_id'] as String?,
 );
 
 Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
@@ -93,6 +98,8 @@ Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
       if (instance.imageBase64 case final value?) 'image_base64': value,
       if (instance.videoFrames case final value?) 'video_frames': value,
       if (instance.mediaUrl case final value?) 'media_url': value,
+      if (instance.agentOverride case final value?) 'agent_override': value,
+      if (instance.sessionId case final value?) 'session_id': value,
     };
 
 ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(

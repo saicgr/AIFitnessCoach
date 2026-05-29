@@ -30,6 +30,7 @@ class BaseAgentState(TypedDict):
     # App settings
     setting_name: Optional[str]
     setting_value: Optional[bool]
+    setting_value_text: Optional[str]
     # Navigation
     destination: Optional[str]
     # Hydration logging

@@ -231,8 +231,9 @@ Return ONLY valid JSON in this exact format (no markdown, no explanation):
   "muscle_groups": ["chest", "back", "shoulders", "biceps", "triceps", "legs", "core", "glutes"],
   "modification": "easier|harder|shorter|longer",
   "body_part": "shoulder|back|knee|ankle|wrist|elbow|hip|neck",
-  "setting_name": "dark_mode|sounds|countdown_sounds|rest_timer_sounds|voice_announcements|tts|background_music|haptics|notifications|equipment|workout_days|training_split|ai_coach_style|coaching_style|font_size",
+  "setting_name": "dark_mode|theme_mode|reduce_animations|high_contrast|serious_mode|sounds|countdown_sounds|rest_timer_sounds|exercise_completion_sounds|workout_completion_sounds|voice_announcements|tts|background_music|audio_ducking|mute_during_video|haptics|haptic_level|sound_volume|accent_color|font_size|workout_weight_unit|body_weight_unit|increment_unit|workout_reminders|hydration_reminders|nutrition_reminders|movement_reminders|habit_reminders|post_workout_meal_reminder|daily_briefing|streak_alerts|achievement_alerts|weekly_summary|ai_coach_messages|guilt_notifications|nutrition_ai_tips|nutrition_compact_view|nutrition_quick_log|show_macros_on_log|week_starts_sunday|fatigue_alerts|pre_set_insight|voice_set_logging|show_synced_workouts|ble_heart_rate|ble_auto_connect|vacation_mode|barbell_per_side|equipment|workout_days|training_split|ai_coach_style|coaching_style",
   "setting_value": true,
+  "setting_value_text": "for enum settings only: theme_mode(light|dark|system), haptic_level(off|light|medium|strong), sound_volume(low|medium|high), accent_color(monochrome|cyan|purple|orange|green|blue|red|pink|teal|indigo|amber|lime), font_size(small|normal|large|extra_large), workout_weight_unit/body_weight_unit/increment_unit(lbs|kg)",
   "destination": "home|nutrition|social|profile|workouts|library|schedule|workout_builder|hydration|fasting|food_history|food_library|recipe_suggestions|nutrition_settings|stats|progress|milestones|exercise_history|muscle_analytics|progress_charts|consistency|measurements|chat|support|help|glossary|injuries|habits|neat|metrics|diabetes|plateau|strain_prevention|hormonal_health|mood_history|achievements|trophy_room|leaderboard|rewards|summaries|settings|workout_settings|ai_coach|appearance|sound_notifications|equipment|offline_mode|privacy|subscription",
   "hydration_amount": 8,
   "water_goal_glasses": 10,
@@ -324,7 +325,22 @@ SETTING EXTRACTION:
 - For equipment setup: setting_name="equipment" (no setting_value needed, opens settings)
 - For workout days/split: setting_name="workout_days" (opens settings)
 - For AI coach style: setting_name="ai_coach_style" (opens settings)
-- For font size: setting_name="font_size" (opens settings)
+- For font size: setting_name="font_size", setting_value_text="small|normal|large|extra_large"
+- For completion chimes: setting_name="exercise_completion_sounds" or "workout_completion_sounds", setting_value=true/false
+- For audio ducking (lower music when coach speaks): setting_name="audio_ducking", setting_value=true/false
+- For muting voice during demo videos: setting_name="mute_during_video", setting_value=true/false
+- For reduce motion: setting_name="reduce_animations", setting_value=true/false
+- For high contrast: setting_name="high_contrast", setting_value=true/false
+- For turning OFF celebrations/confetti: setting_name="serious_mode", setting_value=true
+- For "match my phone"/auto theme: setting_name="theme_mode", setting_value_text="system"
+- For haptic strength: setting_name="haptic_level", setting_value_text="off|light|medium|strong"
+- For volume level: setting_name="sound_volume", setting_value_text="low|medium|high"
+- For accent color: setting_name="accent_color", setting_value_text=<color name>
+- For weight units: lifting weight -> setting_name="workout_weight_unit"; body weight -> setting_name="body_weight_unit"; increments -> setting_name="increment_unit"; each setting_value_text="lbs"|"kg". These are THREE separate settings — only change the one the user named.
+- Notification/reminder toggles are now DIRECT (do NOT just open settings): setting_name in {workout_reminders, hydration_reminders, nutrition_reminders, movement_reminders, habit_reminders, post_workout_meal_reminder, daily_briefing, streak_alerts, achievement_alerts, weekly_summary, ai_coach_messages, guilt_notifications}, setting_value=true/false
+- Nutrition UI: setting_name in {nutrition_ai_tips, nutrition_compact_view, nutrition_quick_log, show_macros_on_log}, setting_value=true/false
+- Workout behavior: setting_name in {week_starts_sunday, fatigue_alerts, pre_set_insight, voice_set_logging, show_synced_workouts, ble_heart_rate, ble_auto_connect, vacation_mode, barbell_per_side}, setting_value=true/false
+- IMPORTANT: notifications about device/wearable hardware (e.g. Apple Watch / Fitbit / Google Health heart-rate alerts, phone OS notification permission) are NOT app settings — do NOT emit change_setting for those; explain they live in the phone/wearable settings instead.
 
 NAVIGATION EXTRACTION:
 - "show achievements" / "my badges" -> destination="achievements"
@@ -429,6 +445,7 @@ User message: "''' + _sanitize_for_prompt(user_message) + '"'
                 body_part=data.body_part,
                 setting_name=data.setting_name,
                 setting_value=data.setting_value,
+                setting_value_text=data.setting_value_text,
                 destination=data.destination,
                 hydration_amount=data.hydration_amount,
                 water_goal_glasses=data.water_goal_glasses,

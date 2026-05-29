@@ -23,22 +23,36 @@ logger = get_logger(__name__)
 _timeline_cache = RedisCache(prefix="timeline", ttl_seconds=60, max_size=500)
 
 
-def make_timeline_cache_key(user_id: str, date: str, days: int = 1) -> str:
+def make_timeline_cache_key(
+    user_id: str, date: str, days: int = 1, metrics_only: bool = False
+) -> str:
     """Compose the cache key for a Timeline response.
 
     Mirrors the pattern in api/v1/workouts/today.py — `user_id:date:days`.
+    The ``metrics_only`` flag is part of the key so a summaries-only response
+    (no `entries`) can never be served to a caller that needs the full feed,
+    and vice-versa.
     """
-    return f"{user_id}:{date}:days={days}"
+    suffix = ":m=1" if metrics_only else ""
+    return f"{user_id}:{date}:days={days}{suffix}"
 
 
-async def get_timeline_cache(user_id: str, date: str, days: int = 1):
+async def get_timeline_cache(
+    user_id: str, date: str, days: int = 1, metrics_only: bool = False
+):
     """Return cached payload (dict) or None."""
-    return await _timeline_cache.get(make_timeline_cache_key(user_id, date, days))
+    return await _timeline_cache.get(
+        make_timeline_cache_key(user_id, date, days, metrics_only)
+    )
 
 
-async def set_timeline_cache(user_id: str, date: str, payload: dict, days: int = 1):
+async def set_timeline_cache(
+    user_id: str, date: str, payload: dict, days: int = 1, metrics_only: bool = False
+):
     """Store the Timeline response payload."""
-    await _timeline_cache.set(make_timeline_cache_key(user_id, date, days), payload)
+    await _timeline_cache.set(
+        make_timeline_cache_key(user_id, date, days, metrics_only), payload
+    )
 
 
 async def invalidate_timeline_cache(user_id: str, date: Optional[str] = None):

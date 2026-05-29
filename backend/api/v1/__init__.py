@@ -74,6 +74,8 @@ from api.v1 import live_chat  # Live chat support with human agents
 from api.v1 import body_analyzer  # Body Analyzer + program retune proposals
 from api.v1 import audio_coach  # Daily personalised audio brief
 from api.v1.coach import daily_insight as coach_daily_insight  # Home daily-score Gemini insight + Ask-Coach pillar-stat insight
+from api.v1.coach import memory as coach_memory  # Coach long-term memory CRUD + nightly consolidation (migration 2217)
+from api.v1.coach import sessions as coach_sessions  # Ask-Coach chat sessions CRUD (migration 2218)
 from api.v1.user import history_snapshot as user_history_snapshot  # Rich history snapshot (yesterday + 7d + 30d + PRs + open loops)
 from api.v1 import inflammation  # Food inflammation analysis from barcode scans
 from api.v1 import admin  # Admin backend for live chat management and support
@@ -548,6 +550,8 @@ router.include_router(body_analyzer.router, prefix="/body-analyzer", tags=["Body
 # Audio Coach — daily personalised TTS brief
 router.include_router(audio_coach.router, prefix="/audio-coach", tags=["Audio Coach"])
 router.include_router(coach_daily_insight.router, prefix="/coach", tags=["Coach Daily Insight"])
+router.include_router(coach_memory.router, prefix="/coach", tags=["Coach Memory"])
+router.include_router(coach_sessions.router, prefix="/coach", tags=["Coach Sessions"])
 from api.v1 import coach_insight_endpoints as _coach_insight_endpoints  # SLICE_COACH: cardio auto-insight
 router.include_router(_coach_insight_endpoints.router, prefix="/coach", tags=["Coach Cardio Insight"])
 
@@ -636,3 +640,9 @@ from . import saved_tips as _saved_tips_module; router.include_router(_saved_tip
 # /sleep-stories/*, /home/premium-preview-rotation) so no prefix is set here.
 from . import content_catalogs as _content_catalogs_module
 router.include_router(_content_catalogs_module.router, tags=["Content Catalogs"])
+
+# Mindfulness — meditation/breathwork session logging + daily aggregate that
+# backs the "Mindfulness minutes" key metric (migration 2214). Routes carry
+# absolute paths (/mindfulness/*) so no prefix is set here.
+from . import mindfulness as _mindfulness_module
+router.include_router(_mindfulness_module.router, tags=["Mindfulness"])

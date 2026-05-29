@@ -179,8 +179,17 @@ class HealthService {
     try {
       await _ensureConfigured();
 
-      // Get available types for this platform
-      final availableReadTypes = _getAvailableTypes(HealthServiceExt._readTypes);
+      // Get available types for this platform.
+      //
+      // MINDFULNESS (Apple Health "Mindful Minutes") is requested on iOS ONLY.
+      // It is deliberately NOT added to the Android Health Connect scope so we
+      // stay at the minimum-permission set that passed Google Play review
+      // (project_play_health_connect_rejection). On Android the mindful-minutes
+      // metric is sourced purely from in-app session logs.
+      final availableReadTypes = _getAvailableTypes([
+        ...HealthServiceExt._readTypes,
+        if (Platform.isIOS) HealthDataType.MINDFULNESS,
+      ]);
       final availableWriteTypes = _getAvailableTypes(HealthServiceExt._writeTypes);
 
       // Combine all types we need

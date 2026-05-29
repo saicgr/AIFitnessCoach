@@ -26,6 +26,7 @@ import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/providers/home_sections_provider.dart';
+import '../../data/providers/timeline_provider.dart';
 import '../../data/providers/fasting_provider.dart';
 import 'widgets/cycle_setup_home_prompt.dart';
 import '../../data/services/deep_link_service.dart';
@@ -138,6 +139,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   // Auto-refresh tracking
   DateTime? _lastRefreshTime;
 
+  /// The calendar day the home providers were last aligned to. Used on resume
+  /// to detect a midnight rollover (app left open / backgrounded across
+  /// midnight) so the timeline advances to the new "today" instead of stranding
+  /// the user on yesterday. Initialized at first build via [_ensureDayAnchor].
+  DateTime? _homeDayAnchor;
+
   @Deprecated('Edit mode has been removed')
   bool _isEditMode = false;
   @Deprecated('Edit mode has been removed')
@@ -209,6 +216,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
+    // Baseline the day anchor at launch so the first resume can detect a
+    // midnight rollover (see [_handleMidnightRollover]).
+    final now = DateTime.now();
+    _homeDayAnchor = DateTime(now.year, now.month, now.day);
     _extInitState();
   }
 
@@ -236,6 +247,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // Replay any fasting notification action (Pause/Resume, End Fast) that
       // fired in the background isolate while the app was not foregrounded.
       FastingOngoingNotificationService.instance.drainPendingBackgroundAction();
+      // Detect a midnight rollover BEFORE the rate-limited refresh — a date
+      // change must never be missed (it's the root of the "timeline shows
+      // yesterday" bug). This runs unconditionally on every resume.
+      _handleMidnightRollover();
       // Auto-refresh when returning to app (with rate limiting). It has its
       // own internal guards but a defensive try here means any escape from
       // those guards still doesn't crash the app.
@@ -318,12 +333,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // fire-and-forget so the resume path doesn't wait on it.
         _refreshNutritionSilent();
 
+        // Refresh the Home timeline feed + its trend rail. These providers
+        // only fetched once at construction, so without this they kept showing
+        // the day the app was first opened (the "timeline shows yesterday"
+        // bug). Fire-and-forget — they own their own loading/stale contract.
+        // Guarded by visibility so we don't force-create (and network-fetch)
+        // the providers for users who hid the timeline section.
+        _refreshTimelineIfVisible();
+
         // Check for new workout imports from Health Connect on resume
         _checkForWorkoutImports();
       } catch (e) {
         debugPrint('⚠️ [Home] auto-refresh skipped (scope unavailable): $e');
       }
     }
+  }
+
+  /// Detect a calendar-day change since the home was last aligned (app left
+  /// open or backgrounded across midnight). If the user was sitting on the old
+  /// "today", advance [selectedHomeDateProvider] to the new today and force a
+  /// timeline refetch. An intentional scrub to a past/other day is preserved.
+  /// Runs unconditionally on resume — never rate-limited — so a date change is
+  /// never missed.
+  void _handleMidnightRollover() {
+    if (!mounted) return;
+    try {
+      final now = DateTime.now();
+      final todayDate = DateTime(now.year, now.month, now.day);
+      final anchor = _homeDayAnchor;
+      if (anchor == null) {
+        _homeDayAnchor = todayDate;
+        return;
+      }
+      if (todayDate.isAtSameMomentAs(anchor)) return; // same day
+
+      // Midnight passed. Only advance the view if the user hadn't deliberately
+      // scrubbed to a different day (i.e. they were on the old "today").
+      final selected = ref.read(selectedHomeDateProvider);
+      final selDate = DateTime(selected.year, selected.month, selected.day);
+      if (selDate.isAtSameMomentAs(anchor)) {
+        ref.read(selectedHomeDateProvider.notifier).state = todayDate;
+      }
+      _homeDayAnchor = todayDate;
+
+      // A new day makes yesterday's feed/trends stale regardless of the
+      // 5-minute auto-refresh limit — refetch now.
+      _refreshTimelineIfVisible();
+    } catch (e) {
+      debugPrint('⚠️ [Home] midnight rollover skipped: $e');
+    }
+  }
+
+  /// Refresh the timeline feed + trend rail, but only when the timeline section
+  /// is actually on the user's home layout — `ref.read` would otherwise
+  /// force-create the providers (and fire their network fetches) for users who
+  /// hid the section.
+  void _refreshTimelineIfVisible() {
+    if (!ref.read(homeSectionsProvider).isVisible(HomeSection.timeline)) return;
+    ref.read(timelineProvider.notifier).refresh();
+    ref.read(timelineTrendsProvider.notifier).refresh();
   }
 
   /// Auto-show Health Connect popup if not connected and not recently dismissed.
