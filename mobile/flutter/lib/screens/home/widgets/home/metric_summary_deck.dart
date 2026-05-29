@@ -178,32 +178,33 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
           ),
         ),
         const Spacer(),
-        for (var i = 0; i < labels.length; i++)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.symmetric(horizontal: 2.5),
-            width: _page == i ? 15 : 5,
-            height: 5,
-            decoration: BoxDecoration(
-              color: _page == i ? c.accent : c.cardBorder,
-              borderRadius: BorderRadius.circular(999),
+        // The page-indicator dots were removed: the labeled Summary / More /
+        // Trends pills above already show the active page, so the dots were
+        // redundant signal competing for the same glance (declutter, issue 4).
+        // Customize button — labeled for a11y + a long-press tooltip so the
+        // tune glyph reads as "Customize metrics", not an ambiguous icon.
+        Tooltip(
+          message: 'Customize metrics',
+          child: Semantics(
+            button: true,
+            label: 'Customize metrics',
+            child: GestureDetector(
+              onTap: () {
+                HapticService.light();
+                showMetricSettingsSheet(context, ref);
+              },
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: c.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.cardBorder),
+                ),
+                child:
+                    Icon(Icons.tune_rounded, size: 16, color: c.textSecondary),
+              ),
             ),
-          ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () {
-            HapticService.light();
-            showMetricSettingsSheet(context, ref);
-          },
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: c.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: c.cardBorder),
-            ),
-            child: Icon(Icons.tune_rounded, size: 16, color: c.textSecondary),
           ),
         ),
       ],
@@ -665,7 +666,7 @@ class MetricTile extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: compact ? 8.5 : 9.5,
+                            fontSize: compact ? 10 : 10.5,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.3,
                             color: c.textMuted,
@@ -675,33 +676,63 @@ class MetricTile extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        m.headline,
-                        style: TextStyle(
-                          fontSize: compact ? 17 : 19,
-                          height: 1,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          color: c.textPrimary,
+                  // Empty metric → an actionable CTA ("Connect" / "Log")
+                  // instead of a bare "—" that reads as broken (issue 3).
+                  if (m.isEmpty)
+                    Row(
+                      children: [
+                        Icon(
+                          _emptyCtaIsConnect(kind)
+                              ? Icons.add_link_rounded
+                              : Icons.add_rounded,
+                          size: compact ? 13 : 15,
+                          color: c.accent,
                         ),
-                      ),
-                      if (m.unit.isNotEmpty) ...[
                         const SizedBox(width: 3),
-                        Text(
-                          m.unit,
-                          style: TextStyle(
-                            fontSize: compact ? 9 : 10,
-                            fontWeight: FontWeight.w700,
-                            color: c.textMuted,
+                        Flexible(
+                          child: Text(
+                            _emptyCtaLabel(kind),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: compact ? 13 : 14,
+                              height: 1,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                              color: c.accent,
+                            ),
                           ),
                         ),
                       ],
-                    ],
-                  ),
+                    )
+                  else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          m.headline,
+                          style: TextStyle(
+                            fontSize: compact ? 17 : 19,
+                            height: 1,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                        if (m.unit.isNotEmpty) ...[
+                          const SizedBox(width: 3),
+                          Text(
+                            m.unit,
+                            style: TextStyle(
+                              fontSize: compact ? 9 : 10,
+                              fontWeight: FontWeight.w700,
+                              color: c.textMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   if (!compact && m.deltaLabel != null) ...[
                     const SizedBox(height: 3),
                     Text(
@@ -730,6 +761,31 @@ class MetricTile extends ConsumerWidget {
     final tm = trendMetricForRing(kind);
     context.push('/trends/custom', extra: tm);
   }
+
+  /// Whether an empty metric's CTA should read "Connect" (needs a wearable /
+  /// Health source) vs "Log" (the user can enter it manually). Used only for
+  /// the zero-data tile state so an empty tile invites action instead of
+  /// showing a bare dash.
+  bool _emptyCtaIsConnect(RingKind kind) {
+    switch (kind) {
+      case RingKind.move:
+      case RingKind.sleep:
+      case RingKind.heartRate:
+      case RingKind.recovery:
+      case RingKind.hrv:
+      case RingKind.stress:
+        return true;
+      case RingKind.nourish:
+      case RingKind.hydration:
+      case RingKind.weight:
+      case RingKind.train:
+      case RingKind.cycle:
+        return false;
+    }
+  }
+
+  String _emptyCtaLabel(RingKind kind) =>
+      _emptyCtaIsConnect(kind) ? 'Connect' : 'Log';
 }
 
 /// Small inline metric visualisation (sparkline / bars / mini-ring / gauge)

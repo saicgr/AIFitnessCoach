@@ -305,7 +305,15 @@ class HomeWorkoutCard extends ConsumerWidget {
             iconName: 'check');
       } else {
         final workout = todayWorkout ?? resp?.nextWorkout?.toWorkout();
-        if (workout == null) {
+        if (workout == null && state.hasError && !state.hasValue) {
+          // The /today fetch FAILED and neither workoutsProvider nor a cached
+          // response gave us anything — this is a genuine load error, NOT a
+          // rest day. Surfacing it honestly (with retry) instead of silently
+          // showing "Rest day" so a network blip never masquerades as a real
+          // schedule (see feedback_no_silent_fallbacks).
+          content = _heroError(context, c, ref,
+              key: const ValueKey('today-error'));
+        } else if (workout == null) {
           // Rest day / nothing scheduled.
           content = _heroStatus(context, c,
               key: const ValueKey('today-rest'),
@@ -375,6 +383,72 @@ class HomeWorkoutCard extends ConsumerWidget {
         ),
         alignment: Alignment.centerLeft,
         child: _statusBody(c, msg, accent: accent, iconName: iconName),
+      ),
+    );
+  }
+
+  /// Hero-shaped ERROR card with a Retry action. Same 132pt footprint as the
+  /// loaded hero / status states (zero layout shift). Shown when the /today
+  /// workout fetch failed with no cached or schedule fallback — so the user
+  /// sees an honest "couldn't load + retry" instead of a phantom rest day.
+  Widget _heroError(
+    BuildContext context,
+    ThemeColors c,
+    WidgetRef ref, {
+    required Key key,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      key: key,
+      padding: kHomeHPad,
+      child: Container(
+        height: _kWorkoutHeroHeight,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: c.elevated,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: c.cardBorder),
+        ),
+        child: Row(
+          children: [
+            LineIcon('workout', color: c.textMuted, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.quickStartCardCouldNotLoadWorkout,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: c.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticService.selection();
+                ref.invalidate(todayWorkoutProvider);
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: c.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Text(
+                  l10n.buttonRetry,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: c.accent,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -982,6 +1056,23 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
     final nutrition = ref.watch(nutritionProvider);
     final summary = nutrition.todaySummary;
 
+    // Cold load (no cached summary yet) → a card-shaped shimmer skeleton, so
+    // an in-flight fetch is never indistinguishable from "ate nothing today".
+    if (summary == null && nutrition.isLoading) {
+      return Padding(
+        padding: kHomeHPad,
+        child: _SkeletonBox(height: 232, radius: 18, c: c),
+      );
+    }
+    // Fetch failed with nothing cached → honest inline error + retry instead
+    // of a full target rendered as "kcal left" (see feedback_no_silent_fallbacks).
+    if (summary == null && nutrition.error != null) {
+      return Padding(
+        padding: kHomeHPad,
+        child: _NutritionErrorCard(c: c),
+      );
+    }
+
     final prefs = ref.watch(nutritionPreferencesProvider);
     final calTarget = prefs.currentCalorieTarget;
     final proteinTarget = prefs.currentProteinTarget;
@@ -1198,6 +1289,72 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
           ],
         ),
         ),
+      ),
+    );
+  }
+}
+
+/// Inline error card for the nutrition section — shown when the day's summary
+/// failed to load and nothing is cached. Mirrors the timeline's error tile:
+/// a quiet message + a Retry that re-fetches today's summary. Never blank,
+/// never a phantom "full target left".
+class _NutritionErrorCard extends ConsumerWidget {
+  final ThemeColors c;
+  const _NutritionErrorCard({required this.c});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: c.elevated,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: c.cardBorder),
+      ),
+      child: Row(
+        children: [
+          LineIcon('nutrition', size: 18, color: c.textMuted),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.nutritionErrorStateUnableToLoadNutrition,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: c.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticService.selection();
+              final userId = ref.read(currentUserProvider).valueOrNull?.id;
+              if (userId != null) {
+                ref
+                    .read(nutritionProvider.notifier)
+                    .loadTodaySummary(userId, forceRefresh: true);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: c.accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Text(
+                l10n.buttonRetry,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: c.accent,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1705,7 +1862,7 @@ class _MetricTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          fontSize: 8.5,
+                          fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.4,
                           color: c.textMuted)),
@@ -1726,7 +1883,7 @@ class _MetricTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 9, fontWeight: FontWeight.w600, color: c.textMuted)),
+                    fontSize: 10.5, fontWeight: FontWeight.w600, color: c.textMuted)),
           ],
         ),
       ),

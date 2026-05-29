@@ -1139,6 +1139,11 @@ class _ErrorTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        // A quiet leading icon (not a red alert) keeps the failed timeline —
+        // which always renders LAST on Home — reading as a gentle, recoverable
+        // note rather than an alarming way to end the scroll (issue 6).
+        Icon(Icons.cloud_off_rounded, size: 15, color: c.textMuted),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             AppLocalizations.of(context).homeTimelineCouldnTLoadYour,
