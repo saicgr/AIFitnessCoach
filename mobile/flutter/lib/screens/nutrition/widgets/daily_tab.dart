@@ -20,6 +20,7 @@ import 'pinned_nutrients_card.dart';
 import 'logged_meals_section.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
 import 'goal_row.dart';
+import 'nutrition_stats_section.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class DailyTab extends ConsumerStatefulWidget {
@@ -489,6 +490,18 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     onTap: () => context.push('/hydration'),
                   ),
                 if (widget.userId.isNotEmpty) const SizedBox(height: 12),
+
+                // Week-at-a-glance "Nutrition stats" block. Gated on
+                // isViewingToday so weekly aggregates don't show when the user
+                // is paging back through historical dates.
+                if (widget.userId.isNotEmpty && widget.isViewingToday) ...[
+                  const SizedBox(height: 4),
+                  NutritionStatsSection(
+                    userId: widget.userId,
+                    isDark: widget.isDark,
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
                 // Clearance for the floating Daily / Recipes / Patterns
                 // glass tab bar (sits at viewPadding.bottom + 76, height 56)

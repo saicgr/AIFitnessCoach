@@ -31,8 +31,8 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import date, datetime, timezone
-from typing import Any, Dict, Optional, Tuple
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from google.genai import types
@@ -467,6 +467,317 @@ def _deterministic_fallback(
 
 
 # ---------------------------------------------------------------------------
+# Workout-stats snapshot (source=workout_stats) — training-trend ground truth
+# ---------------------------------------------------------------------------
+# Deterministic push/pull classifier. The DB's exercise_library.force_type is
+# the preferred signal, but many logged exercises are stored under canonical
+# slug ids that don't join by name, so we keep a keyword fallback. This is
+# DETERMINISTIC classification, not LLM safety classification — allowed per
+# feedback_no_llm_for_safety_classification (that rule bans LLM SAFETY tagging,
+# not deterministic movement bucketing).
+_PUSH_KEYWORDS = (
+    "bench", "press", "push", "dip", "fly", "flye", "pushdown", "extension",
+    "tricep", "crossover", "raise",  # lateral/front raises are press-pattern delts
+    "squat", "leg press", "lunge", "calf", "thruster",
+)
+_PULL_KEYWORDS = (
+    "row", "pull", "pulldown", "pullup", "pull-up", "chin", "curl", "deadlift",
+    "rdl", "romanian", "face pull", "pullover", "shrug", "leg curl",
+)
+
+
+def _classify_push_pull(name: str, force_type: Optional[str]) -> Optional[str]:
+    """Return "push" | "pull" | None for one exercise.
+
+    force_type from the DB wins when present (push/pull/static). Otherwise a
+    keyword scan on the name. Returns None for unclassifiable / static moves
+    so they don't pollute the ratio.
+    """
+    ft = (force_type or "").strip().lower()
+    if ft in ("push", "pull"):
+        return ft
+    if ft == "static":
+        return None
+    low = (name or "").lower()
+    # Pull keywords first — "leg curl" / "face pull" must not match push "raise".
+    for kw in _PULL_KEYWORDS:
+        if kw in low:
+            return "pull"
+    for kw in _PUSH_KEYWORDS:
+        if kw in low:
+            return "push"
+    return None
+
+
+def _collect_workout_stats_snapshot(
+    sb, user_id: str, today_local: date
+) -> Dict[str, Any]:
+    """Assemble the training-trend snapshot for source=workout_stats.
+
+    All values are REAL aggregates. Fields:
+      volume_4wk_kg, volume_prev_4wk_kg, volume_delta_pct,
+      push_sets, pull_sets, push_pull_ratio,
+      acwr, acwr_state, pr_count_30d, current_streak.
+
+    Every block is wrapped so one failing table omits its field rather than
+    500ing the insight. NO fabrication — empty history yields zeros/nulls.
+    """
+    snap: Dict[str, Any] = {
+        "volume_4wk_kg": 0.0,
+        "volume_prev_4wk_kg": 0.0,
+        "volume_delta_pct": None,
+        "push_sets": 0,
+        "pull_sets": 0,
+        "push_pull_ratio": None,
+        "acwr": None,
+        "acwr_state": "calibration",
+        "pr_count_30d": 0,
+        "current_streak": 0,
+    }
+
+    # --- Volume: this 4wk vs prior 4wk + push/pull split over last 4wk -----
+    # Window in user-local dates. recorded_at is UTC; we compare on date only,
+    # which is adequate at the 4-week granularity (a handful of boundary sets
+    # never move the aggregate meaningfully).
+    try:
+        cur_start = today_local - timedelta(days=27)        # last 28 days incl today
+        prev_start = today_local - timedelta(days=55)        # 28 days before that
+        prev_end = today_local - timedelta(days=28)
+        pull_cutoff = datetime.combine(
+            prev_start, datetime.min.time(), tzinfo=timezone.utc
+        )
+
+        rows = sb.client.table("performance_logs").select(
+            "exercise_name, reps_completed, weight_kg, recorded_at, is_completed"
+        ).eq("user_id", user_id).gte(
+            "recorded_at", pull_cutoff.isoformat()
+        ).execute()
+
+        # Preload force_type for the distinct exercise names in one query.
+        names = sorted({
+            (r.get("exercise_name") or "").strip()
+            for r in (rows.data or [])
+            if r.get("exercise_name")
+        })
+        force_by_name: Dict[str, str] = {}
+        if names:
+            try:
+                # Case-insensitive match is not available via in_(); fetch the
+                # whole small set by name and key case-insensitively.
+                fl = sb.client.table("exercise_library").select(
+                    "exercise_name, force_type"
+                ).in_("exercise_name", names).execute()
+                for r in (fl.data or []):
+                    nm = (r.get("exercise_name") or "").strip().lower()
+                    if nm and r.get("force_type"):
+                        force_by_name[nm] = r["force_type"]
+            except Exception as e:
+                logger.debug(f"[workout_stats] force_type lookup skipped: {e}")
+
+        cur_vol = prev_vol = 0.0
+        push_sets = pull_sets = 0
+        for r in (rows.data or []):
+            if r.get("is_completed") is False:
+                continue
+            reps = r.get("reps_completed")
+            if not isinstance(reps, (int, float)) or reps <= 0:
+                continue
+            ra = r.get("recorded_at")
+            if not ra:
+                continue
+            try:
+                ts = datetime.fromisoformat(str(ra).replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                d = ts.astimezone(timezone.utc).date()
+            except Exception:
+                continue
+
+            w = r.get("weight_kg")
+            wkg = float(w) if isinstance(w, (int, float)) and w > 0 else 0.0
+            vol = wkg * float(reps)
+
+            if cur_start <= d <= today_local:
+                cur_vol += vol
+                bucket = _classify_push_pull(
+                    r.get("exercise_name") or "",
+                    force_by_name.get((r.get("exercise_name") or "").strip().lower()),
+                )
+                if bucket == "push":
+                    push_sets += 1
+                elif bucket == "pull":
+                    pull_sets += 1
+            elif prev_start <= d <= prev_end:
+                prev_vol += vol
+
+        snap["volume_4wk_kg"] = round(cur_vol, 1)
+        snap["volume_prev_4wk_kg"] = round(prev_vol, 1)
+        if prev_vol > 0:
+            snap["volume_delta_pct"] = round((cur_vol - prev_vol) / prev_vol * 100.0, 1)
+        snap["push_sets"] = push_sets
+        snap["pull_sets"] = pull_sets
+        if pull_sets > 0:
+            snap["push_pull_ratio"] = round(push_sets / pull_sets, 2)
+    except Exception as e:
+        logger.warning(f"[workout_stats] volume/split block failed: {e}")
+
+    # --- ACWR state (training_load_service) -------------------------------
+    try:
+        from services.training_load_service import current_state
+        st = current_state(sb, user_id)
+        snap["acwr"] = st.acwr
+        snap["acwr_state"] = st.state
+    except Exception as e:
+        logger.warning(f"[workout_stats] ACWR block failed: {e}")
+
+    # --- PR count last 30 days --------------------------------------------
+    try:
+        cutoff_30 = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        # personal_records is the curated PR table the Stats tab reads.
+        pr = sb.client.table("personal_records").select(
+            "id", count="exact"
+        ).eq("user_id", user_id).gte("achieved_at", cutoff_30).execute()
+        snap["pr_count_30d"] = int(pr.count or 0) if pr.count is not None else len(pr.data or [])
+    except Exception as e:
+        logger.warning(f"[workout_stats] PR-count block failed: {e}")
+
+    # --- Current workout streak -------------------------------------------
+    # user_streaks holds the stored streak, but it is only "current" if the
+    # last activity was within 1 day of today. A stale streak (last activity
+    # weeks ago) is BROKEN — reporting the stored number would be a lie.
+    try:
+        us = sb.client.table("user_streaks").select(
+            "current_streak, last_activity_date"
+        ).eq("user_id", user_id).eq("streak_type", "workout").maybe_single().execute()
+        if us and us.data:
+            last = us.data.get("last_activity_date")
+            stored = int(us.data.get("current_streak") or 0)
+            if last:
+                try:
+                    last_d = date.fromisoformat(str(last)[:10])
+                    if (today_local - last_d).days <= 1:
+                        snap["current_streak"] = stored
+                    else:
+                        snap["current_streak"] = 0  # streak broken
+                except Exception:
+                    snap["current_streak"] = 0
+    except Exception as e:
+        logger.debug(f"[workout_stats] streak block skipped: {e}")
+
+    return snap
+
+
+def _workout_stats_fallback(
+    snapshot: Dict[str, Any],
+    first_name: str,
+    local_date_iso: str,
+) -> Dict[str, Any]:
+    """Deterministic fallback for source=workout_stats.
+
+    Headline + body are derived from the REAL snapshot — no fabricated
+    numbers. Picks the single most notable signal in priority order. Stable
+    per-day variant selection so the line doesn't flip-flop on re-open.
+    """
+    seed = abs(hash((first_name, local_date_iso))) % 4
+
+    vol = snapshot.get("volume_4wk_kg") or 0.0
+    prev = snapshot.get("volume_prev_4wk_kg") or 0.0
+    delta = snapshot.get("volume_delta_pct")
+    push = int(snapshot.get("push_sets") or 0)
+    pull = int(snapshot.get("pull_sets") or 0)
+    ratio = snapshot.get("push_pull_ratio")
+    acwr_state = snapshot.get("acwr_state") or "calibration"
+    prs = int(snapshot.get("pr_count_30d") or 0)
+    streak = int(snapshot.get("current_streak") or 0)
+
+    headline = "Your training trend"
+    body = ""
+
+    # Priority 1: overreaching / detraining ACWR.
+    if acwr_state == "overreaching":
+        headline = "Load is running hot"
+        body = (
+            f"{first_name}, your recent training load is well above baseline. "
+            f"Take an easy day or a full rest day to let it settle."
+        )
+    elif acwr_state == "detraining":
+        headline = "Load has dropped off"
+        body = (
+            f"{first_name}, your recent load is below your baseline. "
+            f"A moderate session this week keeps your fitness from slipping."
+        )
+    # Priority 2: lopsided push/pull.
+    elif ratio is not None and (ratio > 1.5 or ratio < 0.67) and (push + pull) >= 6:
+        if ratio > 1.5:
+            headline = "Push is outpacing pull"
+            body = (
+                f"{first_name}, last 4 weeks ran {push} push sets to {pull} pull sets. "
+                f"Add a row or pulldown to balance your shoulders."
+            )
+        else:
+            headline = "Pull is outpacing push"
+            body = (
+                f"{first_name}, last 4 weeks ran {pull} pull sets to {push} push sets. "
+                f"Add a press to even out the ratio."
+            )
+    # Priority 3: notable volume swing.
+    elif delta is not None and delta >= 10:
+        headline = "Volume is trending up"
+        body = (
+            f"{first_name}, your 4-week volume rose {abs(delta):.0f} percent. "
+            f"Keep progressing while recovery holds up."
+        )
+    elif delta is not None and delta <= -10:
+        headline = "Volume is trending down"
+        body = (
+            f"{first_name}, your 4-week volume fell {abs(delta):.0f} percent. "
+            f"One extra set per lift this week nudges it back up."
+        )
+    # Priority 4: fresh PRs.
+    elif prs > 0:
+        headline = "New ground this month"
+        body = (
+            f"{first_name}, you set {prs} personal "
+            f"record{'s' if prs != 1 else ''} in the last 30 days. "
+            f"Strong work, keep the bar moving."
+        )
+    # Priority 5: streak signal.
+    elif streak >= 2:
+        headline = "Streak is alive"
+        body = (
+            f"{first_name}, you are on a {streak}-day training streak. "
+            f"Get one more session in to extend it."
+        )
+    elif streak == 0 and vol == 0 and prev == 0:
+        headline = "Let's start building data"
+        body = (
+            f"{first_name}, log a few sessions and your training trends will "
+            f"start to show here. The first workout is the hardest to start."
+        )
+    else:
+        # Neutral, honest default — references real volume if present.
+        pools = [
+            f"{first_name}, your last 4 weeks totalled {vol:.0f} kg of volume. "
+            f"Steady work builds the base.",
+            f"{first_name}, training is ticking along. Pick one lift to push a "
+            f"little harder this week.",
+            f"{first_name}, your volume is holding steady. Consistency is the "
+            f"engine here.",
+            f"{first_name}, nothing alarming in the trend. Keep showing up and "
+            f"the numbers follow.",
+        ]
+        body = pools[seed % len(pools)]
+
+    return {
+        "headline": headline,
+        "body": body,
+        "cta_primary": {"label": "Open workouts", "route": "/workouts"},
+        "cta_secondary": {"label": "Ask coach", "route": "/chat"},
+        "leading_pillar": "train",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Gemini call
 # ---------------------------------------------------------------------------
 def _robust_parse_json_object(text: str) -> Optional[Dict[str, Any]]:
@@ -604,6 +915,10 @@ async def daily_insight(
             "nutrition_card_lunch",
             "nutrition_card_dinner",
             "workout_card",
+            # Stats-tab training-trend insight: volume deltas, push/pull split,
+            # ACWR state, recent PR count, current streak. Same Gemini +
+            # number-guardrail + deterministic-fallback path; dedicated snapshot.
+            "workout_stats",
         }
         if source not in _ALLOWED_SOURCES:
             raise HTTPException(
@@ -657,7 +972,14 @@ async def daily_insight(
             user_row = {}
         first_name = _first_name(user_row)
 
-        snapshot, next_workout = _collect_snapshot(sb, user_id, local_date_iso)
+        # source=workout_stats uses a dedicated TRAINING-TREND snapshot instead
+        # of the daily-pillar snapshot. It carries no next_workout / cycle /
+        # goal blocks — the prompt branch + fallback read its own field set.
+        if source == "workout_stats":
+            snapshot = _collect_workout_stats_snapshot(sb, user_id, local_date)
+            next_workout = None
+        else:
+            snapshot, next_workout = _collect_snapshot(sb, user_id, local_date_iso)
 
         from zoneinfo import ZoneInfo
         now_local = datetime.now(ZoneInfo(tz_resolved if tz_resolved else "UTC"))
@@ -695,13 +1017,20 @@ async def daily_insight(
 
         # ---- Build final payload ------------------------------------------
         if delivery == "deterministic_fallback":
-            payload = _deterministic_fallback(
-                snapshot=snapshot,
-                next_workout=next_workout,
-                first_name=first_name,
-                local_date_iso=local_date_iso,
-                source=source,
-            )
+            if source == "workout_stats":
+                payload = _workout_stats_fallback(
+                    snapshot=snapshot,
+                    first_name=first_name,
+                    local_date_iso=local_date_iso,
+                )
+            else:
+                payload = _deterministic_fallback(
+                    snapshot=snapshot,
+                    next_workout=next_workout,
+                    first_name=first_name,
+                    local_date_iso=local_date_iso,
+                    source=source,
+                )
         else:
             payload = gemini_payload or {}
             # Stamp safe defaults for any missing CTA so the client never NPEs.

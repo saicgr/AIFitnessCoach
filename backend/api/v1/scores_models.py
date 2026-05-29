@@ -248,3 +248,53 @@ class DotsScoreResponse(BaseModel):
     lifts: List[DotsLiftDetail]
 
 
+# ============================================================================
+# Pydantic Models - Weekly Volume Trend
+# ============================================================================
+
+class VolumeTrendWeek(BaseModel):
+    """One ISO-week bucket in the weekly volume trend series.
+
+    All values are REAL aggregates from completed performance logs. Empty
+    weeks are zero-filled (volume_kg=0, sets=0, workouts=0) so the client
+    always renders exactly `weeks` evenly-spaced bars. Volume is in kg
+    (the frontend converts to lbs per feedback_weight_units.md).
+    """
+    week_start: str  # ISO date "YYYY-MM-DD" — Monday of the ISO week, user-local
+    volume_kg: float  # sum(weight_kg * reps_completed) over completed sets that week
+    sets: int         # count of completed sets logged that week
+    workouts: int     # distinct completed workout sessions that week
+
+
+class VolumeTrendResponse(BaseModel):
+    """Weekly training volume trend, oldest to newest, exactly `weeks` buckets."""
+    weeks: List[VolumeTrendWeek]
+
+
+# ============================================================================
+# Pydantic Models - Estimated-1RM Trend (per muscle group)
+# ============================================================================
+
+class E1rmWeek(BaseModel):
+    """One ISO-week bucket of a muscle's best estimated 1RM.
+
+    best_e1rm_kg is the MAX estimated 1RM (kg) across that muscle's exercises
+    completed that week, or null when no qualifying set was logged that week.
+    Estimated 1RM is computed from real logged sets (weight_kg + reps_completed)
+    via the same 3-formula average the strength scorer uses, NOT fabricated.
+    """
+    week_start: str  # Monday of the ISO week, user-local "YYYY-MM-DD"
+    best_e1rm_kg: Optional[float] = None
+
+
+class MuscleE1rmTrend(BaseModel):
+    """A single muscle group's e1RM trend, exactly `weeks` buckets, oldest to newest."""
+    muscle_group: str
+    weeks: List[E1rmWeek]
+
+
+class E1rmTrendResponse(BaseModel):
+    """Per-muscle estimated-1RM trend. Only muscles with at least one non-null week."""
+    muscles: List[MuscleE1rmTrend]
+
+
