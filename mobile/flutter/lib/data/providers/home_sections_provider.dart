@@ -260,7 +260,12 @@ const HomeSectionsState _defaultState = HomeSectionsState(
 // v3 order: coach hero inserted above the Today Score; habits moved to Profile.
 // v2 hidden: weekStrip hidden by default. Bumping each key forces a one-time
 // migration to the new default for existing users.
-const String _kOrderKey = 'home_section_order_v6';
+// v7 (2026-05): bumped from v6 so the new default order — deck → quick
+// actions → workout → coach — re-seeds for everyone on next launch instead of
+// being shadowed by a previously-persisted v6 layout. (A key bump re-seeds
+// order from `_defaultOrder`; a one-time reset of any custom home arrangement
+// is the accepted cost of guaranteeing the new default ships.)
+const String _kOrderKey = 'home_section_order_v7';
 const String _kHiddenKey = 'home_section_hidden_v2';
 
 /// Persists the user's "My Space" home-section layout (order + visibility)

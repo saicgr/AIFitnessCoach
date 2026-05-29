@@ -27,13 +27,8 @@ import 'cards/body_battery_tile.dart';
 import 'cards/body_comp_milestone_card.dart';
 import 'cards/busy_week_compressed_card.dart';
 import 'cards/cycle_phase_chip.dart';
-import 'cards/daily_lesson_tile.dart';
-import 'cards/daily_meditation_tile.dart';
 import 'cards/daily_strain_target_tile.dart';
-import 'cards/day14_goal_recalibration_card.dart';
-import 'cards/day_n_tutorial_card.dart';
 import 'cards/day_of_week_skip_card.dart';
-import 'cards/discovery_insight_tile.dart';
 import 'cards/equipment_preflight_banner.dart';
 import 'cards/evening_sleep_story_tile.dart';
 import 'cards/fast_streak_tile.dart';
@@ -45,7 +40,6 @@ import 'cards/hr_zone_breakdown_card.dart';
 import 'cards/hrv_trend_strip.dart';
 import 'cards/injury_workaround_banner.dart';
 import 'cards/jet_lag_adjust_card.dart';
-import 'cards/knowledge_cards_carousel.dart';
 import 'cards/macro_pattern_callout.dart';
 import 'cards/micronutrient_gap_chip.dart';
 import 'cards/missing_data_chip.dart';
@@ -57,7 +51,6 @@ import 'cards/pms_prep_card.dart';
 import 'cards/postworkout_mood_strip.dart';
 import 'cards/postworkout_progress_photo_prompt.dart';
 import 'cards/postworkout_tomorrow_adjust_card.dart';
-import 'cards/premium_preview_tile.dart';
 import 'cards/preworkout_rpe_chip.dart';
 import 'cards/preworkout_t30_card.dart';
 import 'cards/preworkout_warmup_card.dart';
@@ -66,20 +59,16 @@ import 'cards/recovery_countdown_tile.dart';
 import 'cards/referral_gift_tile.dart';
 import 'cards/return_to_exercise_card.dart';
 import 'cards/rhr_delta_card.dart';
-import 'cards/scale_sync_prompt.dart';
 import 'cards/sleep_latency_tile.dart';
 import 'cards/smart_reschedule_banner.dart';
 import 'cards/smoothed_weight_trend_chip.dart';
 import 'cards/stand_reminder_chip.dart';
 import 'cards/step_streak_tile.dart';
-import 'cards/sticky_wearable_tile.dart';
 import 'cards/strain_recovery_mismatch_card.dart';
 import 'cards/stress_score_tile.dart';
 import 'cards/training_effect_card.dart';
-import 'cards/usage_upsell_banner.dart';
 import 'cards/vo2max_trend_chip.dart';
 import 'cards/wake_consistency_tile.dart';
-import 'cards/wearable_battery_chip.dart';
 import 'cards/weekly_plan_strip.dart';
 import 'cards/weigh_in_day_chip.dart';
 import 'cards/workout_felt_journal_prompt.dart';
@@ -139,12 +128,6 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
           ],
         ),
         _HomeCardSection(
-          title: 'Mind',
-          children: const [
-            DailyMeditationTile(),
-          ],
-        ),
-        _HomeCardSection(
           title: 'Plan & adjustments',
           children: const [
             WeeklyPlanStrip(),
@@ -173,14 +156,6 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
           ],
         ),
         _HomeCardSection(
-          title: 'Learn',
-          children: const [
-            KnowledgeCardsCarousel(),
-            DailyLessonTile(),
-            DiscoveryInsightTile(),
-          ],
-        ),
-        _HomeCardSection(
           title: 'Milestones',
           children: const [
             AppAnniversaryCard(),
@@ -191,25 +166,16 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
             WeighInDayChip(),
           ],
         ),
-        _HomeCardSection(
-          title: 'Membership',
-          children: const [
-            UsageUpsellBanner(),
-            ReferralGiftTile(),
-            PremiumPreviewTile(),
-          ],
-        ),
-        _HomeCardSection(
-          title: 'Devices & setup',
-          children: const [
-            WearableBatteryChip(),
-            ScaleSyncPrompt(),
-            MissingDataChip(),
-            StickyWearableTile(),
-            DayNTutorialCard(),
-            Day14GoalRecalibrationCard(),
-          ],
-        ),
+        // Membership slimmed to just the referral tile (user feedback) — the
+        // usage-cap upsell + premium-preview were dropped from home. Rendered
+        // directly (no section header) since it's a lone self-hiding card.
+        const ReferralGiftTile(),
+        // Devices & setup minimized to ONLY the "Connect Health Connect /
+        // Apple Health" prompt (MissingDataChip → activity gap), which unlocks
+        // the empty steps/activity tiles. The wearable-battery / scale-sync /
+        // tutorial / recalibration cards were dropped from home (user
+        // feedback). Lone self-hiding card → no section header.
+        const MissingDataChip(),
         _HomeCardSection(
           title: 'Fasting',
           children: const [
