@@ -8,6 +8,20 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/services/exercise_tip_service.dart';
 import '../../core/theme/theme_provider.dart';
+// AI-coach direct-toggle targets (see _handleSettingChange). Imported here in
+// the parent library so the `part` notifier file can read these providers
+// through the captured Ref.
+import '../../core/theme/accent_color_provider.dart';
+import '../../core/accessibility/accessibility_provider.dart';
+import '../../core/providers/user_provider.dart';
+import '../../core/providers/week_start_provider.dart';
+import '../../core/providers/serious_mode_provider.dart';
+import '../../core/providers/synced_visibility_provider.dart';
+import '../../core/providers/ble_heart_rate_provider.dart';
+import '../../core/providers/weight_increments_provider.dart';
+import '../providers/nutrition_preferences_provider.dart';
+import '../providers/voice_set_logging_provider.dart';
+import '../services/notification_service.dart';
 import '../../navigation/app_router.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../../screens/chat/widgets/media_picker_helper.dart';
@@ -91,7 +105,7 @@ final chatMessagesProvider =
     ref.invalidate(hormonalProfileProvider);
     ref.invalidate(todayHormoneLogProvider);
   }
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout, refreshCycleData);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout, refreshCycleData, ref);
 });
 
 /// A single decoded event off the `POST /chat/send-stream` SSE stream.

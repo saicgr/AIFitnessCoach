@@ -315,6 +315,7 @@ class IntentExtraction(BaseModel):
     # App settings fields
     setting_name: Optional[str] = Field(default=None, max_length=100)
     setting_value: Optional[bool] = None
+    setting_value_text: Optional[str] = Field(default=None, max_length=100, description="Value for enum/string settings (theme_mode, haptic_level, accent_color, font_size, units)")
     setting_numeric_value: Optional[float] = Field(default=None, description="Numeric value for settings like water goal, weight")
     # Navigation fields
     destination: Optional[str] = Field(default=None, max_length=100)

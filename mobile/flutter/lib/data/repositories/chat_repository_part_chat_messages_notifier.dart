@@ -79,6 +79,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   // Phase F — invalidates the cycle providers after a cycle-agent action so
   // a live Cycle screen / home card repaints with the new data.
   final void Function() _refreshCycleData;
+  // Captured provider container ref — used by _handleSettingChange to read the
+  // many setting notifiers (notifications, nutrition UI, accent, accessibility,
+  // units, etc.) lazily at action time. Read-only at action time; never
+  // retains a subscription, matching the getSoundPrefs/getAudioPrefs pattern.
+  final Ref _ref;
   bool _isLoading = false;
   Future<void>? _loadHistoryFuture;
 
@@ -319,7 +324,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'train like a fighter', 'want to fight',
   ];
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout, this._refreshCycleData)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout, this._refreshCycleData, this._ref)
       : super(const AsyncValue.data([])) {
     _instances.add(this);
     _restoreFromCache();
@@ -1605,64 +1610,301 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   Future<void> _handleSettingChange(Map<String, dynamic> actionData) async {
     final settingName = actionData['setting_name'] as String?;
     final settingValue = actionData['setting_value'] as bool?;
+    // Enum/string-valued settings (theme_mode, haptic_level, accent_color,
+    // font_size, unit toggles) carry their choice here. Boolean toggles leave
+    // it null and read `settingValue` instead.
+    final settingText = (actionData['setting_value_text'] as String?)?.trim().toLowerCase();
 
-    debugPrint('🤖 [Chat] Changing setting: $settingName = $settingValue');
+    debugPrint('🤖 [Chat] Changing setting: $settingName = ${settingText ?? settingValue}');
+
+    // Default for a plain on/off toggle when the model omits a value: treat as
+    // "turn it on". Each notification/guilt case overrides the default where a
+    // different default makes sense.
+    final on = settingValue ?? true;
 
     switch (settingName) {
+      // ── Theme / appearance ──────────────────────────────────────────────
       case 'dark_mode':
+        _themeNotifier.setTheme(on ? ThemeMode.dark : ThemeMode.light);
+        debugPrint('🌙 [Chat] ${on ? "Dark" : "Light"} mode via AI');
+        break;
       case 'theme_mode':
-        if (settingValue == true) {
-          _themeNotifier.setTheme(ThemeMode.dark);
-          debugPrint('🌙 [Chat] Dark mode enabled via AI');
-        } else if (settingValue == false) {
-          _themeNotifier.setTheme(ThemeMode.light);
-          debugPrint('☀️ [Chat] Light mode enabled via AI');
+        // Enum: light | dark | system. Falls back to the boolean if no text.
+        final mode = switch (settingText) {
+          'system' || 'auto' || 'device' => ThemeMode.system,
+          'dark' => ThemeMode.dark,
+          'light' => ThemeMode.light,
+          _ => (settingValue == false ? ThemeMode.light : ThemeMode.dark),
+        };
+        _themeNotifier.setTheme(mode);
+        debugPrint('🎨 [Chat] Theme mode → ${mode.name} via AI');
+        break;
+      case 'accent_color':
+        final accent = _parseAccentColor(settingText);
+        if (accent != null) {
+          await _ref.read(accentColorProvider.notifier).setAccent(accent);
+          debugPrint('🎨 [Chat] Accent color → ${accent.name} via AI');
+        } else {
+          _router.push('/settings/appearance');
+          debugPrint('🎨 [Chat] Unknown accent "$settingText" — opened appearance');
         }
         break;
+      case 'font_size':
+        // Enum text → font scale. If the model gave no choice, open the page.
+        final scale = switch (settingText) {
+          'small' || 'smaller' => 0.9,
+          'normal' || 'default' || 'medium' => 1.0,
+          'large' || 'big' || 'bigger' => 1.2,
+          'extra_large' || 'extra large' || 'largest' || 'huge' => 1.4,
+          _ => null,
+        };
+        if (scale != null) {
+          await _ref.read(accessibilityProvider.notifier).setFontScale(scale);
+          debugPrint('🔤 [Chat] Font scale → $scale via AI');
+        } else {
+          _router.push('/settings/appearance');
+          debugPrint('🔤 [Chat] No font size given — opened appearance');
+        }
+        break;
+      case 'reduce_animations':
+        if (_ref.read(accessibilityProvider).reduceAnimations != on) {
+          await _ref.read(accessibilityProvider.notifier).toggleReduceAnimations();
+        }
+        debugPrint('🎬 [Chat] Reduce animations → $on via AI');
+        break;
+      case 'high_contrast':
+        if (_ref.read(accessibilityProvider).highContrast != on) {
+          await _ref.read(accessibilityProvider.notifier).toggleHighContrast();
+        }
+        debugPrint('🌗 [Chat] High contrast → $on via AI');
+        break;
+      case 'serious_mode':
+        await _ref.read(seriousModeProvider.notifier).setEnabled(on);
+        debugPrint('🧘 [Chat] Serious mode (celebrations off) → $on via AI');
+        break;
 
-      // === DIRECT SOUND CONTROLS ===
+      // ── Workout sounds ──────────────────────────────────────────────────
       case 'sounds':
       case 'sound_effects':
       case 'mute':
-        final enable = settingValue ?? true;
         final soundPrefs = _getSoundPrefs();
-        await soundPrefs.setCountdownEnabled(enable);
-        await soundPrefs.setRestTimerEnabled(enable);
-        await soundPrefs.setExerciseCompletionEnabled(enable);
-        await soundPrefs.setWorkoutCompletionEnabled(enable);
-        debugPrint('🔊 [Chat] All sounds ${enable ? "enabled" : "disabled"} via AI');
+        await soundPrefs.setCountdownEnabled(on);
+        await soundPrefs.setRestTimerEnabled(on);
+        await soundPrefs.setExerciseCompletionEnabled(on);
+        await soundPrefs.setWorkoutCompletionEnabled(on);
+        debugPrint('🔊 [Chat] All sounds ${on ? "enabled" : "disabled"} via AI');
         break;
-
       case 'countdown_sounds':
-        await _getSoundPrefs().setCountdownEnabled(settingValue ?? true);
-        debugPrint('🔊 [Chat] Countdown sounds ${settingValue == true ? "enabled" : "disabled"} via AI');
+        await _getSoundPrefs().setCountdownEnabled(on);
+        debugPrint('🔊 [Chat] Countdown sounds → $on via AI');
         break;
-
       case 'rest_timer_sounds':
-        await _getSoundPrefs().setRestTimerEnabled(settingValue ?? true);
-        debugPrint('🔊 [Chat] Rest timer sounds ${settingValue == true ? "enabled" : "disabled"} via AI');
+        await _getSoundPrefs().setRestTimerEnabled(on);
+        debugPrint('🔊 [Chat] Rest timer sounds → $on via AI');
+        break;
+      case 'exercise_completion_sounds':
+        await _getSoundPrefs().setExerciseCompletionEnabled(on);
+        debugPrint('🔊 [Chat] Exercise completion chime → $on via AI');
+        break;
+      case 'workout_completion_sounds':
+        await _getSoundPrefs().setWorkoutCompletionEnabled(on);
+        debugPrint('🔊 [Chat] Workout completion chime → $on via AI');
+        break;
+      case 'sound_volume':
+        final vol = switch (settingText) {
+          'low' || 'quiet' || 'soft' => 0.3,
+          'medium' || 'normal' || 'mid' => 0.6,
+          'high' || 'loud' || 'max' => 1.0,
+          _ => null,
+        };
+        if (vol != null) {
+          await _getSoundPrefs().setVolume(vol);
+          debugPrint('🔊 [Chat] Sound volume → $vol via AI');
+        }
         break;
 
-      // === DIRECT AUDIO/TTS CONTROLS ===
+      // ── Voice / audio ───────────────────────────────────────────────────
       case 'voice_announcements':
       case 'tts':
       case 'text_to_speech':
         final userId = _user?.id;
         if (userId != null) {
-          await _getAudioPrefs().setTtsVolume(userId, settingValue == true ? 1.0 : 0.0);
-          debugPrint('🗣️ [Chat] TTS ${settingValue == true ? "enabled" : "disabled"} via AI');
+          await _getAudioPrefs().setTtsVolume(userId, on ? 1.0 : 0.0);
+          debugPrint('🗣️ [Chat] TTS → $on via AI');
         }
         break;
-
       case 'background_music':
         final userId = _user?.id;
         if (userId != null) {
-          await _getAudioPrefs().setAllowBackgroundMusic(userId, settingValue ?? true);
-          debugPrint('🎵 [Chat] Background music ${settingValue == true ? "allowed" : "blocked"} via AI');
+          await _getAudioPrefs().setAllowBackgroundMusic(userId, on);
+          debugPrint('🎵 [Chat] Background music → $on via AI');
+        }
+        break;
+      case 'audio_ducking':
+        final userId = _user?.id;
+        if (userId != null) {
+          await _getAudioPrefs().setAudioDucking(userId, on);
+          debugPrint('🎚️ [Chat] Audio ducking → $on via AI');
+        }
+        break;
+      case 'mute_during_video':
+        final userId = _user?.id;
+        if (userId != null) {
+          await _getAudioPrefs().setMuteDuringVideo(userId, on);
+          debugPrint('🔇 [Chat] Mute-during-video → $on via AI');
+        }
+        break;
+      case 'haptics':
+        await HapticService.setLevel(on ? HapticLevel.medium : HapticLevel.off);
+        debugPrint('📳 [Chat] Haptics → $on via AI');
+        break;
+      case 'haptic_level':
+        final level = switch (settingText) {
+          'off' || 'none' => HapticLevel.off,
+          'light' || 'low' || 'soft' => HapticLevel.light,
+          'medium' || 'normal' || 'mid' => HapticLevel.medium,
+          'strong' || 'high' || 'heavy' || 'max' => HapticLevel.strong,
+          _ => null,
+        };
+        if (level != null) {
+          await HapticService.setLevel(level);
+          debugPrint('📳 [Chat] Haptic level → ${level.name} via AI');
         }
         break;
 
-      // === NAVIGATE-TO-SETTINGS FALLBACKS ===
+      // ── Notifications & reminders (direct toggles) ──────────────────────
+      case 'workout_reminders':
+        await _notifPrefs().setWorkoutReminders(on);
+        debugPrint('🔔 [Chat] Workout reminders → $on via AI');
+        break;
+      case 'hydration_reminders':
+        await _notifPrefs().setHydrationReminders(on);
+        debugPrint('🔔 [Chat] Hydration reminders → $on via AI');
+        break;
+      case 'nutrition_reminders':
+        await _notifPrefs().setNutritionReminders(on);
+        debugPrint('🔔 [Chat] Nutrition reminders → $on via AI');
+        break;
+      case 'movement_reminders':
+        await _notifPrefs().setMovementReminders(on);
+        debugPrint('🔔 [Chat] Movement reminders → $on via AI');
+        break;
+      case 'habit_reminders':
+        await _notifPrefs().setHabitReminders(on);
+        debugPrint('🔔 [Chat] Habit reminders → $on via AI');
+        break;
+      case 'post_workout_meal_reminder':
+        await _notifPrefs().setPostWorkoutMealReminder(on);
+        debugPrint('🔔 [Chat] Post-workout meal reminder → $on via AI');
+        break;
+      case 'daily_briefing':
+        await _notifPrefs().setDailyBriefingNudge(on);
+        debugPrint('🔔 [Chat] Daily briefing → $on via AI');
+        break;
+      case 'streak_alerts':
+        await _notifPrefs().setStreakAlerts(on);
+        debugPrint('🔔 [Chat] Streak alerts → $on via AI');
+        break;
+      case 'achievement_alerts':
+        await _notifPrefs().setMilestoneCelebration(on);
+        debugPrint('🔔 [Chat] Achievement alerts → $on via AI');
+        break;
+      case 'weekly_summary':
+        await _notifPrefs().setWeeklySummary(on);
+        debugPrint('🔔 [Chat] Weekly summary → $on via AI');
+        break;
+      case 'ai_coach_messages':
+        await _notifPrefs().setAiCoachMessages(on);
+        debugPrint('🔔 [Chat] AI coach messages → $on via AI');
+        break;
+      case 'guilt_notifications':
+        // "you missed your workout" guilt-tone nudges — default OFF when no
+        // value is given, since users asking about these usually want them off.
+        await _notifPrefs().setGuiltNotifications(settingValue ?? false);
+        debugPrint('🔔 [Chat] Guilt notifications → ${settingValue ?? false} via AI');
+        break;
+
+      // ── Nutrition UI ────────────────────────────────────────────────────
+      case 'nutrition_ai_tips':
+        // toggleAiTips takes `disabled`; "tips on" => disabled=false.
+        await _withNutritionPrefs((n) => n.toggleAiTips(!on));
+        debugPrint('🍽️ [Chat] Nutrition AI tips → $on via AI');
+        break;
+      case 'nutrition_compact_view':
+        await _withNutritionPrefs((n) => n.setCompactView(on));
+        debugPrint('🍽️ [Chat] Nutrition compact view → $on via AI');
+        break;
+      case 'nutrition_quick_log':
+        await _withNutritionPrefs((n) => n.setQuickLogMode(on));
+        debugPrint('🍽️ [Chat] Nutrition quick-log → $on via AI');
+        break;
+      case 'show_macros_on_log':
+        await _withNutritionPrefs((n) => n.setShowMacrosOnLog(on));
+        debugPrint('🍽️ [Chat] Show macros on log → $on via AI');
+        break;
+
+      // ── Workout behavior ────────────────────────────────────────────────
+      case 'week_starts_sunday':
+        await _ref.read(weekStartsSundayProvider.notifier).setStartsSunday(on);
+        debugPrint('📅 [Chat] Week starts Sunday → $on via AI');
+        break;
+      case 'fatigue_alerts':
+        await _ref.read(fatigueAlertsEnabledProvider.notifier).setEnabled(on);
+        debugPrint('😮‍💨 [Chat] Fatigue alerts → $on via AI');
+        break;
+      case 'pre_set_insight':
+        await _ref.read(preSetInsightEnabledProvider.notifier).setEnabled(on);
+        debugPrint('💡 [Chat] Pre-set insight → $on via AI');
+        break;
+      case 'voice_set_logging':
+        await _ref.read(voiceSetLoggingEnabledProvider.notifier).setEnabled(on);
+        debugPrint('🎙️ [Chat] Voice set logging → $on via AI');
+        break;
+      case 'show_synced_workouts':
+        await _ref.read(showSyncedInCarouselProvider.notifier).setVisible(on);
+        debugPrint('⌚ [Chat] Show synced workouts → $on via AI');
+        break;
+      case 'ble_heart_rate':
+        await _ref.read(bleHrEnabledProvider.notifier).setEnabled(on);
+        debugPrint('❤️ [Chat] BLE heart-rate → $on via AI');
+        break;
+      case 'ble_auto_connect':
+        await _ref.read(bleHrAutoConnectProvider.notifier).setEnabled(on);
+        debugPrint('❤️ [Chat] BLE auto-connect → $on via AI');
+        break;
+      case 'barbell_per_side':
+        await _ref.read(weightIncrementsProvider.notifier).setBarbellPerSide(on);
+        debugPrint('🏋️ [Chat] Barbell per-side → $on via AI');
+        break;
+
+      // ── Units (three SEPARATE settings — never collapse) ────────────────
+      case 'workout_weight_unit':
+        final unit = _parseWeightUnit(settingText);
+        if (unit != null) {
+          await _updateProfile({'workout_weight_unit': unit});
+          debugPrint('⚖️ [Chat] Workout weight unit → $unit via AI');
+        }
+        break;
+      case 'body_weight_unit':
+        final unit = _parseWeightUnit(settingText);
+        if (unit != null) {
+          await _updateProfile({'weight_unit': unit});
+          debugPrint('⚖️ [Chat] Body weight unit → $unit via AI');
+        }
+        break;
+      case 'increment_unit':
+        final unit = _parseWeightUnit(settingText);
+        if (unit != null) {
+          await _ref.read(weightIncrementsProvider.notifier).setUnit(unit);
+          debugPrint('⚖️ [Chat] Increment unit → $unit via AI');
+        }
+        break;
+      case 'vacation_mode':
+        await _updateProfile({'in_vacation_mode': on});
+        debugPrint('🏖️ [Chat] Vacation mode → $on via AI');
+        break;
+
+      // ── Settings-page fallbacks (no clean programmatic toggle) ──────────
       case 'notifications':
         _router.push('/settings/sound-notifications');
         debugPrint('🔔 [Chat] Opening notifications settings via AI');
@@ -1681,20 +1923,66 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         _router.push('/settings/ai-coach');
         debugPrint('🤖 [Chat] Opening AI coach settings via AI');
         break;
-      case 'font_size':
-        _router.push('/settings/appearance');
-        debugPrint('🔤 [Chat] Opening appearance settings via AI');
-        break;
-      case 'haptics':
-        await HapticService.setLevel(
-          settingValue == true ? HapticLevel.medium : HapticLevel.off,
-        );
-        debugPrint('📳 [Chat] Haptics ${settingValue == true ? "enabled" : "disabled"} via AI');
-        break;
 
       default:
         _router.push('/settings');
         debugPrint('🤖 [Chat] Setting "$settingName" not directly changeable, opening settings');
+    }
+  }
+
+  /// Notification-preferences notifier, read fresh at action time.
+  NotificationPreferencesNotifier _notifPrefs() =>
+      _ref.read(notificationPreferencesProvider.notifier);
+
+  /// Run a mutation against the nutrition-UI prefs, ensuring they're loaded
+  /// first (every setter early-returns while `preferences` is null).
+  Future<void> _withNutritionPrefs(
+    Future<void> Function(NutritionUIPreferencesNotifier) mutate,
+  ) async {
+    final userId = _user?.id;
+    if (userId == null) {
+      _router.push('/nutrition-settings');
+      return;
+    }
+    final notifier = _ref.read(nutritionUIPreferencesProvider.notifier);
+    if (_ref.read(nutritionUIPreferencesProvider).preferences == null) {
+      await notifier.load(userId);
+    }
+    await mutate(notifier);
+  }
+
+  /// Update fields on the user profile (auth notifier → backend PUT).
+  Future<void> _updateProfile(Map<String, dynamic> updates) =>
+      _ref.read(authStateProvider.notifier).updateUserProfile(updates);
+
+  /// Normalize a free-text weight unit to the canonical 'lbs' / 'kg'.
+  String? _parseWeightUnit(String? text) {
+    if (text == null) return null;
+    if (text.startsWith('lb') || text.contains('pound')) return 'lbs';
+    if (text.startsWith('kg') || text.contains('kilo')) return 'kg';
+    return null;
+  }
+
+  /// Map a free-text color name to an [AccentColor]. Returns null if unknown.
+  AccentColor? _parseAccentColor(String? text) {
+    if (text == null) return null;
+    switch (text) {
+      case 'monochrome':
+      case 'mono':
+      case 'black':
+      case 'white':
+      case 'grey':
+      case 'gray':
+        return AccentColor.black;
+      case 'gold':
+      case 'amber':
+        return AccentColor.amber;
+      default:
+        try {
+          return AccentColor.values.byName(text);
+        } catch (_) {
+          return null;
+        }
     }
   }
 

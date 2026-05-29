@@ -31,6 +31,7 @@ class CoachAgentState(TypedDict):
     intent: Optional[CoachIntent]
     setting_name: Optional[str]
     setting_value: Optional[bool]
+    setting_value_text: Optional[str]
     destination: Optional[str]
     water_goal_glasses: Optional[int]
     weight_value: Optional[float]
