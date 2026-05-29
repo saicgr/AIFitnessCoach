@@ -25,6 +25,7 @@ from ..tools import (
     propose_workout_change,
     check_exercise_form,
     compare_exercise_form,
+    suggest_actions,
 )
 from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
@@ -47,6 +48,7 @@ WORKOUT_TOOLS = [
     propose_workout_change,
     check_exercise_form,
     compare_exercise_form,
+    suggest_actions,
 ]
 
 # Tools for non-creation requests (excludes generate_quick_workout to prevent
@@ -61,6 +63,7 @@ WORKOUT_QUERY_TOOLS = [
     propose_workout_change,
     check_exercise_form,
     compare_exercise_form,
+    suggest_actions,
 ]
 
 # Workout expertise base prompt template (coach name is inserted dynamically)
@@ -412,6 +415,10 @@ AVAILABLE TOOLS:
 - reschedule_workout(workout_id, new_date, reason) - Move workout to a different date
 - delete_workout(workout_id, reason) - Delete/cancel a workout
 - generate_quick_workout(user_id, workout_id, duration_minutes, workout_type, intensity) - Generate a quick workout. ALWAYS pass user_id. If no workout exists, omit workout_id to create a new one.
+- suggest_actions(action_ids, prompt) - Surface tappable shortcut chips so the user can jump into a feature
+  * Call when a shortcut helps the user act on your advice, e.g. they ask what workout to do but you did NOT generate one -> action_ids=["quick_workout", "workout", "library"]; or they ask about their form but sent NO video -> action_ids=["attach_form_video"]
+  * Do NOT call it right after you generated a workout (the "Go to workout" button already shows)
+  * prompt: a short friendly lead-in line (optional)
   workout_type options: "full_body", "upper", "lower", "cardio", "core", "boxing", "hyrox", "crossfit", "martial_arts", "hiit", "strength", "endurance", "flexibility", "mobility", "cricket", "football", "basketball", "tennis"
 - check_exercise_form(user_id, s3_key, mime_type, media_type, exercise_name, user_message) - Analyze exercise form from uploaded video/image. Pass the media details from context.
 - compare_exercise_form(user_id, s3_keys, mime_types, exercise_name, user_message) - Compare form across multiple videos. Pass comma-separated S3 keys and MIME types from context.

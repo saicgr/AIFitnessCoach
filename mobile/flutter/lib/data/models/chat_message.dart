@@ -403,6 +403,28 @@ class ChatMessage extends Equatable {
   bool get hasFormComparison =>
       actionData != null &&
       actionData!['action'] == 'compare_exercise_form';
+
+  /// Launcher-chip IDs the coach surfaced for this message
+  /// (`action_data['suggested_actions']`). Rides ALONGSIDE any primary action
+  /// (e.g. food_analysis) or stands alone — so it is read independently of the
+  /// `action` value. Backend + frontend both filter to the allowlist; this
+  /// getter just normalizes the raw list to `List<String>`.
+  List<String> get suggestedActionIds {
+    final raw = actionData?['suggested_actions'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Object>()
+        .map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  /// Optional backend-supplied lead-in line for the suggestion chips.
+  String? get suggestedActionsPrompt =>
+      actionData?['suggested_actions_prompt'] as String?;
+
+  /// True when there is at least one suggested launcher chip to render.
+  bool get hasSuggestedActions => suggestedActionIds.isNotEmpty;
 }
 
 /// Chat request model

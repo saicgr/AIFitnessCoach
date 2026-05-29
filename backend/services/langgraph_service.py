@@ -28,6 +28,7 @@ from services.langgraph_agents.injury_agent import build_injury_agent_graph
 from services.langgraph_agents.hydration_agent import build_hydration_agent_graph
 from services.langgraph_agents.cycle_agent import build_cycle_agent_graph
 from services.langgraph_agents.coach_agent import build_coach_agent_graph
+from services.langgraph_agents.tools.suggestion_tools import inject_suggested_actions
 
 from core.logger import get_logger
 from core.anonymize import anonymize_user_data
@@ -1259,6 +1260,15 @@ class LangGraphCoachService:
 
             # 7. Build response
             action_data = final_state.get("action_data")
+            # Fold launcher-chip suggestions into action_data for EVERY agent
+            # (LLM suggest_actions tool results + deterministic backstops),
+            # alongside any primary action or as a standalone payload.
+            action_data = inject_suggested_actions(
+                action_data,
+                user_message=cleaned_message,
+                selected_agent_value=selected_agent.value,
+                tool_results=final_state.get("tool_results"),
+            )
             logger.info(f"[LangGraph Service] Agent returned action_data: {action_data}")
 
             raw_response = final_state.get("final_response", "I'm sorry, I couldn't process your request.")
@@ -1550,6 +1560,14 @@ class LangGraphCoachService:
         logger.info(f"Agent {selected_agent.value} completed in {elapsed:.1f}s (stream)")
 
         action_data = final_state.get("action_data")
+        # Same launcher-chip merge as the non-streaming path (one source of
+        # truth: inject_suggested_actions).
+        action_data = inject_suggested_actions(
+            action_data,
+            user_message=cleaned_message,
+            selected_agent_value=selected_agent.value,
+            tool_results=final_state.get("tool_results"),
+        )
         raw_response = final_state.get("final_response", "I'm sorry, I couldn't process your request.")
         message_str = _ensure_str(raw_response)
         if not message_str.strip():

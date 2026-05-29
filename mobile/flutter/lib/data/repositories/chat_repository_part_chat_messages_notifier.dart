@@ -1557,6 +1557,20 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       case 'suggest_phase_meals':
         await _handleCycleAction(actionData);
         break;
+      // Suggested-action launcher chips are render-only — the
+      // SuggestedActionsCard in the chat bubble carries the user interaction
+      // (each chip launches its flow with a live BuildContext). Nothing to
+      // process here; explicit no-op so the 'unknown action' warning stays
+      // clean (mirrors open_swap_or_add). Note: when suggestions ride
+      // alongside a primary action (e.g. generate_quick_workout), `action`
+      // is that primary value and is handled by its own case above — this
+      // case only fires for the standalone suggestions payload.
+      case 'suggest_actions':
+        debugPrint(
+          '💡 [Chat] Suggested-action chips rendered '
+          '(${(actionData['suggested_actions'] as List?)?.length ?? 0})',
+        );
+        break;
       default:
         debugPrint('🤖 [Chat] Unknown action: $action');
     }

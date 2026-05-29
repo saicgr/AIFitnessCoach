@@ -49,6 +49,11 @@ List<RouteBase> _mainShellRoutes() => [
                     : (fuelSectionParam != null ? 3 : 0);
                 final autoOpenCamera = state.uri.queryParameters['camera'] == 'true';
                 final autoOpenBarcode = state.uri.queryParameters['barcode'] == 'true';
+                // AI-coach launcher-chip deep links (chat route gets popped on
+                // navigation, so the destination screen must own the sheet).
+                final autoOpenMenuScan = state.uri.queryParameters['scanMenu'] == 'true';
+                final autoOpenMultiImage = state.uri.queryParameters['multiImage'] == 'true';
+                final autoOpenLog = state.uri.queryParameters['openLog'] == 'true';
                 final openCheckinLogId = state.uri.queryParameters['openCheckin'];
                 // Hydration-reminder deep-link carries ?fuelSection=water so we
                 // land on the Water pill inside the Fuel tab, not the default
@@ -64,6 +69,9 @@ List<RouteBase> _mainShellRoutes() => [
                     initialTab: initialTab,
                     autoOpenCamera: autoOpenCamera,
                     autoOpenBarcode: autoOpenBarcode,
+                    autoOpenMenuScan: autoOpenMenuScan,
+                    autoOpenMultiImage: autoOpenMultiImage,
+                    autoOpenLog: autoOpenLog,
                     openCheckinLogId: openCheckinLogId,
                     initialFuelSection: initialFuelSection,
                   ),
