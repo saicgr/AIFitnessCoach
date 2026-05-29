@@ -237,15 +237,23 @@ class RingVisibilityNotifier extends StateNotifier<List<RingKind>> {
       }
       final decoded = jsonDecode(raw);
       if (decoded is! List) return;
-      final ids = decoded.whereType<String>();
+      final ids = decoded.whereType<String>().toList(growable: false);
       final kinds = ids
           .map(RingKindX.fromId)
           .whereType<RingKind>()
           .toList(growable: false);
       if (kinds.isEmpty) return;
-      // Defensive: guarantee all core rings remain in the list.
+      // Defensive: dedupe (a legacy/corrupt blob may repeat an id, which would
+      // crash the customize sheet's keyed ReorderableListView) and guarantee
+      // all core rings remain in the list.
       final withCore = _ensureCorePresent(kinds);
       state = withCore;
+      // Self-heal: if dedup/core-completion changed the stored order, rewrite
+      // it so the corrupt blob doesn't reload (and re-dedupe) every launch.
+      // ids are stable slugs without commas, so a join comparison is safe.
+      if (withCore.map((k) => k.id).join(',') != ids.join(',')) {
+        await _persist();
+      }
       // Even with a persisted order, run the one-time auto-enable migration
       // — covers users who upgrade with an existing default order that
       // predates the Recovery ring.
@@ -300,24 +308,34 @@ class RingVisibilityNotifier extends StateNotifier<List<RingKind>> {
     }
   }
 
+  /// Collapses duplicate kinds in [input] (first occurrence wins, caller order
+  /// preserved) and appends any missing core ring.
+  ///
+  /// Deduping here is load-bearing, not cosmetic: the customize sheet renders
+  /// the visible rings in a [ReorderableListView] keyed by `ring_${kind.id}`,
+  /// so a duplicate [RingKind] reaching the UI is a hard crash — Flutter
+  /// reparents the colliding GlobalKey mid-layout ("A RenderRepaintBoundary
+  /// was mutated in RenderSliverList.performLayout" + "Duplicate GlobalKey
+  /// detected"). Every state mutation funnels through this method, so the
+  /// visible ring list can never contain a duplicate regardless of corrupt or
+  /// legacy persisted data (e.g. an id persisted twice by an older build, or
+  /// the async [_load] racing a synchronous mutator).
   List<RingKind> _ensureCorePresent(List<RingKind> input) {
-    final seen = input.toSet();
-    final result = List<RingKind>.of(input);
+    final seen = <RingKind>{};
+    final result = <RingKind>[];
+    for (final k in input) {
+      if (seen.add(k)) result.add(k);
+    }
     for (final core in RingKindX.defaultOrder) {
-      if (!seen.contains(core)) result.add(core);
+      if (seen.add(core)) result.add(core);
     }
     return result;
   }
 
   /// Replace the entire visible ring list (used by ReorderableListView).
   void setOrder(List<RingKind> order) {
-    // Dedupe while preserving caller's order, then make sure core rings stay.
-    final seen = <RingKind>{};
-    final cleaned = <RingKind>[];
-    for (final k in order) {
-      if (seen.add(k)) cleaned.add(k);
-    }
-    state = _ensureCorePresent(cleaned);
+    // [_ensureCorePresent] dedupes (preserving order) and re-adds core rings.
+    state = _ensureCorePresent(order);
     _persist();
   }
 
