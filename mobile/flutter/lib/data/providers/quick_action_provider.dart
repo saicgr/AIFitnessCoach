@@ -11,6 +11,9 @@ const _quickActionExpandedKey = 'quick_action_expanded';
 // release still had 'scan_food' pinned; this migration moves them to
 // the new default once.
 const _quickActionMigrationKey = 'quick_action_migration_v2';
+// v3 (2026-05): meditation moved from the removed home "Mind" card into quick
+// actions — inserts 'meditate' at slot 6 for existing saved layouts once.
+const _quickActionMigrationV3Key = 'quick_action_migration_v3';
 
 final quickActionOrderProvider =
     StateNotifierProvider<QuickActionOrderNotifier, List<String>>((ref) {
@@ -53,6 +56,17 @@ class QuickActionOrderNotifier extends StateNotifier<List<String>> {
         }
         if (!valid.contains('barcode_food')) valid.add('barcode_food');
         await prefs.setBool(_quickActionMigrationKey, true);
+        await prefs.setString(_quickActionOrderKey, jsonEncode(valid));
+      }
+
+      // Migration v3: surface 'meditate' at slot 6 (index 5) for existing
+      // saved layouts so it shows on the home row instead of being appended at
+      // the end by the loop below. Idempotent via the v3 flag.
+      final migratedV3 = prefs.getBool(_quickActionMigrationV3Key) ?? false;
+      if (!migratedV3) {
+        valid.remove('meditate');
+        valid.insert(valid.length < 5 ? valid.length : 5, 'meditate');
+        await prefs.setBool(_quickActionMigrationV3Key, true);
         await prefs.setString(_quickActionOrderKey, jsonEncode(valid));
       }
 

@@ -133,6 +133,17 @@ const quickActionRegistry = <String, QuickAction>{
     color: Color(0xFFEC4899),
     behavior: QuickActionBehavior.moodLog,
   ),
+  // Meditate — opens today's curated guided session (the same destination the
+  // removed home "Mind" card used). Behavior is `route`, but the launcher
+  // special-cases the 'meditate' id BEFORE the default branch to resolve the
+  // daily pick (slug/title/duration/audio) before pushing /mindfulness/session.
+  'meditate': QuickAction(
+    id: 'meditate',
+    label: 'Meditate',
+    icon: Icons.self_improvement_outlined,
+    color: Color(0xFF8B5CF6),
+    behavior: QuickActionBehavior.route,
+  ),
   'history': QuickAction(
     id: 'history',
     label: 'History',
@@ -285,10 +296,11 @@ const quickActionRegistry = <String, QuickAction>{
 // above so users who want a second entry point (e.g. as a quick-action
 // shortcut) can re-pin it via the customize sheet.
 const defaultQuickActionOrder = [
-  // Default row 1 (single-row mode, slots 1-5; slot 6 = More):
-  //   Log Food · Scan Menu · Water · Weight · Photo Log
-  'food', 'scan_menu', 'water', 'weight', 'photo_food',
-  // Two-row mode fills slots 6-11 from here (slot 12 = More):
+  // Default row 1 (single-row mode shows the first 6, scrollable; trailing
+  // More tile is appended by the row widget):
+  //   Log Food · Scan Menu · Water · Weight · Snap Food · Meditate
+  'food', 'scan_menu', 'water', 'weight', 'photo_food', 'meditate',
+  // Two-row mode fills the next slots from here (slot 12 = More):
   'photo', 'mood', 'scan_food', 'barcode_food', 'measure', 'hydration',
   // ─── long-tail (More sheet only unless reordered up):
   'quick_workout', 'workout', 'history', 'steps', 'programs',

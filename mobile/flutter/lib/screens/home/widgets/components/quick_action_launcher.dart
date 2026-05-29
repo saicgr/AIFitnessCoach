@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/models/quick_action.dart';
+import '../../../../data/providers/content_catalogs_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 import '../../../workout/widgets/equipment_snap_flow.dart';
@@ -110,6 +111,31 @@ Future<bool> launchQuickAction(
     case 'workout':
       HapticService.light();
       context.push(quickActionRegistry['workout']?.route ?? '/workouts');
+      return true;
+    case 'meditate':
+      // Mirror the (removed) home meditation card: resolve today's curated
+      // pick and open the guided session with its slug/title/duration/audio.
+      // On any failure, fall back to a generic guided meditation session so
+      // the action never dead-ends.
+      HapticService.light();
+      try {
+        final pick = await ref.read(dailyMeditationProvider.future);
+        final params = <String, String>{
+          'source': 'meditation',
+          'slug': pick.slug,
+          'title': pick.title,
+          'duration': '${pick.durationMin}',
+          if (pick.audioUrl.isNotEmpty) 'audio': pick.audioUrl,
+        };
+        final qs = params.entries
+            .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}')
+            .join('&');
+        if (context.mounted) context.push('/mindfulness/session?$qs');
+      } catch (_) {
+        if (context.mounted) {
+          context.push('/mindfulness/session?source=meditation');
+        }
+      }
       return true;
     default:
       // Plain-route registry entries (history, library, programs, progress…).
