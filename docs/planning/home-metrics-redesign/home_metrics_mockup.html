@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — bigger ring, every-widget-large + editable, custom trends, My Space</title>
+<style>
+  :root{
+    --orange:#F97316; --orange-light:#FFBB66; --orange-soft:#FFF3E9;
+    --r-train:#EC8B2C; --r-nourish:#3FA66B; --r-move:#3E8FD0; --r-sleep:#8B5CF6;
+    --r-hr:#E5544D; --r-hrv:#14B8A6; --r-stress:#F59E0B; --r-hyd:#06B6D4;
+    --r-weight:#64748B; --r-recovery:#A855F7; --r-mind:#9333EA; --r-zone:#10B981; --r-cycle:#E899B0;
+    --bg:#F4F4F6; --card:#FFFFFF; --card-2:#FBFBFC;
+    --line:#ECECEF; --line-2:#E6E6EA;
+    --t1:#0A0A0A; --t2:#5E5E66; --t3:#9A9AA2;
+    --shadow:0 1px 2px rgba(10,10,12,.04),0 8px 22px rgba(10,10,12,.05);
+    --shadow-lg:0 2px 6px rgba(10,10,12,.06),0 18px 48px rgba(10,10,12,.10);
+  }
+  body.dark{
+    --bg:#000000; --card:#141414; --card-2:#181818;
+    --line:#242424; --line-2:#2C2C2C;
+    --t1:#FAFAFA; --t2:#A1A1AA; --t3:#71717A; --orange-soft:#2A1B0D;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.5);
+    --shadow-lg:0 2px 6px rgba(0,0,0,.5),0 18px 48px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(1200px 600px at 15% -5%, rgba(249,115,22,.06), transparent 60%),radial-gradient(1000px 500px at 95% 0%, rgba(139,92,246,.05), transparent 55%),#EDEDF1;
+    color:#1a1a1f; padding:34px 20px 80px; min-height:100vh; transition:background .3s;}
+  body.dark{ background:#070708; color:#e8e8ea; }
+
+  .topbar{max-width:1720px; margin:0 auto 22px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .topbar h1{font-size:21px; font-weight:800; letter-spacing:-.4px;}
+  .topbar .sub{font-size:13px; color:#7b7b85; font-weight:500;}
+  body.dark .topbar .sub{color:#8a8a92;}
+  .spacer{flex:1;}
+  .toggle{display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none; background:rgba(255,255,255,.7); border:1px solid rgba(0,0,0,.08); border-radius:999px; padding:8px 14px; font-size:13px; font-weight:700; color:#33333a; backdrop-filter:blur(8px);}
+  body.dark .toggle{background:rgba(30,30,32,.7); border-color:rgba(255,255,255,.1); color:#d8d8de;}
+  .toggle .dot{width:14px;height:14px;border-radius:50%;background:var(--orange);}
+
+  .stage{max-width:1720px; margin:0 auto; display:flex; gap:30px; flex-wrap:wrap; justify-content:center; align-items:flex-start;}
+  .col{flex:0 0 auto; width:380px; max-width:100%;}
+  .col.rec .phone{box-shadow:0 0 0 3px var(--orange), 0 30px 70px rgba(0,0,0,.34);}
+  .col > .label{margin:0 4px 14px;}
+  .col > .label .k{font-size:11px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; color:var(--orange);}
+  .col > .label .t{font-size:18px; font-weight:800; letter-spacing:-.3px; color:#1a1a1f; margin-top:3px;}
+  body.dark .col > .label .t{color:#ededf0;}
+  .col > .label .badge{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#fff;background:var(--orange);border-radius:6px;padding:2px 7px;margin-left:7px;vertical-align:middle;}
+  .col > .label .d{font-size:12px; line-height:1.5; color:#6f6f78; margin-top:5px;}
+  body.dark .col > .label .d{color:#8c8c94;}
+
+  .phone{width:380px; height:822px; border-radius:52px; padding:12px; background:linear-gradient(160deg,#2a2a2e,#0c0c0e); box-shadow:0 30px 70px rgba(0,0,0,.34),0 4px 14px rgba(0,0,0,.3); position:relative;}
+  .screen{position:relative; width:100%; height:100%; border-radius:41px; overflow:hidden; background:var(--bg); display:flex; flex-direction:column;}
+  .notch{position:absolute; top:0; left:50%; transform:translateX(-50%); width:124px; height:29px; background:#0c0c0e; border-radius:0 0 18px 18px; z-index:40;}
+  .statusbar{height:42px; flex:0 0 42px; display:flex; align-items:center; justify-content:space-between; padding:0 26px; font-size:13px; font-weight:700; color:var(--t1); z-index:30;}
+  .statusbar .r{display:flex; gap:6px; align-items:center; font-size:12px;}
+  .scroll{flex:1; overflow-y:auto;}
+  .scroll::-webkit-scrollbar{width:0;}
+  .fold{position:absolute; left:0; right:0; height:2px; pointer-events:none; z-index:25; background:repeating-linear-gradient(90deg, var(--orange) 0 8px, transparent 8px 16px); opacity:.45;}
+  .foldlbl{position:absolute; right:14px; font-size:8.5px; font-weight:800; letter-spacing:.6px; color:var(--orange); text-transform:uppercase; z-index:25; transform:translateY(-12px);}
+
+  .hdr{display:flex; align-items:center; gap:11px; padding:4px 18px 8px;}
+  .ava{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-light)); display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px; flex:0 0 36px;}
+  .hi .g{font-size:11.5px;font-weight:600;color:var(--t2);}
+  .hi .n{font-size:19px;font-weight:800;letter-spacing:-.4px;color:var(--t1); display:flex; align-items:center; gap:7px;}
+  .hi .n .streak{font-size:12px;font-weight:700;color:var(--orange); background:var(--orange-soft); padding:2px 8px; border-radius:999px;}
+  .iconbtn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--t2); border:1px solid var(--line); background:var(--card);}
+  .iconbtn svg{width:18px;height:18px;}
+
+  .deck-head{display:flex; align-items:center; gap:10px; padding:0 18px 7px;}
+  .segs{display:flex; gap:3px; background:var(--card-2); border:1px solid var(--line); border-radius:999px; padding:3px;}
+  .seg{font-size:11.5px; font-weight:700; color:var(--t3); padding:5px 12px; border-radius:999px; cursor:pointer; transition:.18s;}
+  .seg.on{color:#fff; background:var(--t1);}
+  body.dark .seg.on{color:#0a0a0a; background:#fafafa;}
+  .deck-head .dots{display:flex; gap:5px; margin-left:auto;}
+  .deck-head .dots i{width:5px;height:5px;border-radius:50%;background:var(--line-2); transition:.2s;}
+  .deck-head .dots i.on{width:15px; background:var(--orange);}
+  .deck-head .edit{width:32px;height:32px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:var(--t2); border:1px solid var(--line); background:var(--card);}
+  .deck-head .edit svg{width:15px;height:15px;}
+
+  .deck-wrap{padding:0 14px;}
+  .deck{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:10px;}
+  .deck::-webkit-scrollbar{height:0;}
+  .page{flex:0 0 100%; scroll-snap-align:center;}
+
+  .bento{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .dc{position:relative; overflow:hidden; border-radius:16px; padding:10px 12px; border:1px solid var(--line); min-height:58px;
+    background:radial-gradient(130px 70px at 100% 0%, color-mix(in srgb, var(--ac) 10%, transparent), transparent 70%), var(--card);
+    box-shadow:var(--shadow);}
+  .dc.wide{grid-column:span 2;}
+  .dc .top{display:flex; align-items:center; gap:6px;}
+  .dc .top .d{width:7px;height:7px;border-radius:2.5px;background:var(--ac);}
+  .dc .top .l{font-size:9.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);}
+  .dc .top .badge2{margin-left:auto;font-size:8px;font-weight:800;color:var(--t3);border:1px solid var(--line);border-radius:5px;padding:1px 5px;}
+  .dc .val{font-size:22px;font-weight:800;letter-spacing:-.6px;color:var(--t1);margin-top:3px;line-height:1;}
+  .dc .val small{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:0;}
+  .dc .sub{font-size:10px;font-weight:600;color:var(--t2);margin-top:3px;}
+  .dc .mring{position:absolute; top:9px; right:9px; width:26px;height:26px;}
+  .dc .mring svg{transform:rotate(-90deg);width:26px;height:26px;}
+  .gauge{height:4px;border-radius:999px;background:var(--line-2);margin-top:5px;overflow:hidden;}
+  .gauge i{display:block;height:100%;border-radius:999px;background:var(--ac);}
+  .spark{margin-top:4px;display:block;}
+  .bars{display:flex;align-items:flex-end;gap:3px;height:12px;margin-top:4px;}
+  .bars span{flex:1;border-radius:2px;background:var(--ac);opacity:.85;}
+
+  /* BIG hero today card */
+  .herobig{grid-column:span 2; display:flex; align-items:center; gap:16px; padding:9px 15px; height:150px;}
+  .segring{position:relative;}
+  .segring svg{display:block;}
+  .segring .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .segring .mid .v{font-weight:800;color:var(--t1);line-height:1;}
+  .segring .mid .l{font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--t3);margin-top:2px;}
+  .herobig .segring{flex:0 0 132px;width:132px;height:132px;}
+  .herobig .segring .mid .v{font-size:44px;letter-spacing:-2.4px;}
+  .herobig .info{flex:1;min-width:0;}
+  .herobig .info .hl{font-size:13px;font-weight:700;color:var(--t1);line-height:1.3;margin-bottom:9px;}
+  .lg{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+  .lg .d{width:9px;height:9px;border-radius:3px;}
+  .lg .nm{font-size:11.5px;font-weight:700;color:var(--t2);flex:1;}
+  .lg .vv{font-size:12px;font-weight:800;color:var(--t1);}
+
+  /* LARGE widget on home (e.g. custom trend) */
+  .lgwidget{grid-column:span 2; border-radius:18px; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow); padding:11px 14px; height:150px; display:flex; flex-direction:column;}
+  .lgwidget svg{flex:1; min-height:0;}
+  /* equalize the carousel: both pages = 150 wide-card + two 74px tile rows */
+  #deckA .bento .dc:not(.herobig){height:74px;}
+  .lgwidget .lh{display:flex;align-items:center;gap:8px;}
+  .lgwidget .lh .ti{font-size:12px;font-weight:800;color:var(--t1);}
+  .lgwidget .lh .rg{margin-left:auto;font-size:9.5px;font-weight:700;color:var(--t3);border:1px solid var(--line);border-radius:6px;padding:2px 7px;}
+  .lgwidget .legend2{display:flex;gap:12px;margin-top:3px;}
+  .lgwidget .legend2 span{font-size:9.5px;font-weight:700;color:var(--t2);display:flex;align-items:center;gap:4px;}
+  .lgwidget .legend2 i{width:8px;height:8px;border-radius:2px;display:inline-block;}
+
+  .qa{display:flex; gap:9px; overflow-x:auto; padding:7px 16px 2px;}
+  .qa::-webkit-scrollbar{height:0;}
+  .pill{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:4px; width:52px;}
+  .pill .pc{width:40px;height:40px;border-radius:13px; display:flex;align-items:center;justify-content:center; font-size:17px; background:var(--card); border:1px solid var(--line); box-shadow:var(--shadow);}
+  .pill .pl{font-size:9px; font-weight:700; color:var(--t2); text-align:center; line-height:1.1;}
+
+  .coach{margin:10px 16px 4px; border-radius:22px; padding:13px 15px 12px; background:linear-gradient(165deg, var(--orange-soft), var(--card) 78%); border:1px solid rgba(249,115,22,.24); box-shadow:var(--shadow);}
+  body.dark .coach{background:linear-gradient(165deg,#2a1b0d,#161616 80%); border-color:rgba(249,115,22,.3);}
+  .coach .eye{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .coach .eye .badge{width:21px;height:21px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-light)); display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;}
+  .coach .eye .lbl{font-size:9.5px; font-weight:800; letter-spacing:1.3px; color:var(--orange); text-transform:uppercase;}
+  .coach .eye .ctrls{margin-left:auto; display:flex; gap:9px; color:var(--t3); font-size:14px;}
+  .coach h2{font-size:18px; font-weight:800; letter-spacing:-.4px; color:var(--t1); line-height:1.25;}
+  .coach p{font-size:12.5px; font-weight:500; color:var(--t2); margin-top:5px; line-height:1.5;}
+  .coach .cta{display:flex; gap:9px; margin-top:11px;}
+  .coach .cta a{height:38px; border-radius:12px; display:flex;align-items:center;justify-content:center; gap:6px; font-size:12.5px; font-weight:700; text-decoration:none;}
+  .coach .cta .pri{flex:1; background:var(--orange); color:#fff;}
+  .coach .cta .sec{flex:1; background:transparent; color:var(--orange); border:1.5px solid rgba(249,115,22,.4);}
+  .nudge{display:flex; align-items:center; gap:10px; margin-top:9px; padding:9px 11px; background:var(--card); border:1px solid var(--line); border-radius:14px;}
+  body.dark .nudge{background:rgba(255,255,255,.03);}
+  .nudge .ni{width:28px;height:28px;border-radius:8px; display:flex;align-items:center;justify-content:center; font-size:14px; flex:0 0 28px;}
+  .nudge .nt .t{font-size:12px; font-weight:700; color:var(--t1);}
+  .nudge .nt .s{font-size:10.5px; font-weight:500; color:var(--t3); margin-top:1px;}
+  .nudge .act{margin-left:auto; font-size:11px; font-weight:800; padding:6px 11px; border-radius:999px; white-space:nowrap; background:var(--orange); color:#fff;}
+  .coach .when{font-size:10px;font-weight:700;color:var(--t3);margin-left:2px;}
+  .ctasks-h{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin-top:11px;}
+  .ctasks{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;margin-top:8px;padding-bottom:2px;}
+  .ctasks::-webkit-scrollbar{height:0;}
+  .tcard{flex:0 0 56%;scroll-snap-align:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 10px;display:flex;align-items:center;gap:9px;}
+  body.dark .tcard{background:rgba(255,255,255,.03);}
+  .tcard .ti{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px;}
+  .tcard .tt{min-width:0;flex:1;}
+  .tcard .tt .t{font-size:12px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tcard .tt .s{font-size:10px;font-weight:500;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tcard .ta{font-size:10.5px;font-weight:800;color:#fff;background:var(--orange);border-radius:999px;padding:5px 10px;white-space:nowrap;}
+
+  .nav{position:absolute; bottom:13px; left:50%; transform:translateX(-50%); width:calc(100% - 26px); height:58px; background:var(--card); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow-lg); display:flex; align-items:center; justify-content:space-around; padding:0 10px; z-index:30;}
+  .nav .ni{display:flex;flex-direction:column;align-items:center;gap:3px; color:var(--t3); font-size:9px; font-weight:700;}
+  .nav .ni.on{color:var(--orange);}
+  .nav .ni svg{width:20px;height:20px;}
+  .fab{position:absolute; right:22px; bottom:80px; width:48px;height:48px;border-radius:50%; background:linear-gradient(135deg,var(--orange),var(--orange-light)); box-shadow:0 8px 22px rgba(249,115,22,.42); display:flex;align-items:center;justify-content:center;color:#fff; z-index:35;}
+  .fab svg{width:22px;height:22px;}
+
+  /* ===== Direction C: compact metric summary card ===== */
+  .cmetric{display:flex; gap:14px; align-items:center; padding:13px 14px; border-radius:20px; border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow); height:150px;}
+  .cmetric .segring{flex:0 0 118px; width:118px; height:118px;}
+  .cmetric .segring svg{width:118px; height:118px;}
+  .cmetric .segring .mid .v{font-size:34px; letter-spacing:-1.8px;}
+  .cmetric .minis{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .mini{position:relative; overflow:hidden; border:1px solid var(--line); border-radius:12px; padding:8px 9px;
+    background:radial-gradient(80px 50px at 100% 0%, color-mix(in srgb, var(--ac) 13%, transparent), transparent 70%), var(--card-2);}
+  .mini .l{font-size:8.5px; font-weight:800; letter-spacing:.3px; text-transform:uppercase; color:var(--t3); display:flex; align-items:center; gap:4px;}
+  .mini .l .d{width:6px;height:6px;border-radius:2px;background:var(--ac);}
+  .mini .v{font-size:18px; font-weight:800; letter-spacing:-.5px; color:var(--t1); margin-top:5px; line-height:1;}
+  .mini .v small{font-size:9px; font-weight:700; color:var(--t3);}
+  #deckC .lgwidget{height:150px;}
+
+  /* ===== speed-dial FAB (coach + quick add) ===== */
+  .scrim{position:absolute; inset:0; background:rgba(0,0,0,.34); z-index:34; border-radius:41px;}
+  .speeddial{position:absolute; right:20px; bottom:78px; z-index:36; display:flex; flex-direction:column; align-items:flex-end; gap:13px;}
+  .sd-item{display:flex; align-items:center; gap:10px;}
+  .sd-item .sl{font-size:12px; font-weight:800; color:#fff; background:rgba(20,20,22,.72); padding:6px 11px; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  .sd-item .si{width:44px; height:44px; border-radius:50%; background:var(--card); box-shadow:var(--shadow-lg); display:flex; align-items:center; justify-content:center; font-size:19px;}
+  .sd-item.coach .si{background:linear-gradient(135deg,var(--orange),var(--orange-light)); color:#fff;}
+  .sd-item.coach .sl{background:var(--orange);}
+  .fab.x{background:#3a3a3e; z-index:37;}
+
+  /* graph overlays on the summary mini-tiles */
+  .mini .ov{position:absolute; left:0; right:0; bottom:0; height:62%; opacity:.16; pointer-events:none;}
+  .mini .ov svg{width:100%; height:100%; display:block;}
+  .mini .ovr{position:absolute; top:-4px; right:-4px; width:42px; height:42px; opacity:.30; pointer-events:none;}
+  .mini .ovr svg{width:100%; height:100%; display:block;}
+  .mini .l, .mini .v{position:relative; z-index:1;}
+  .mini .v{font-size:21px;}
+
+  /* Log / Start buttons in the metrics block */
+  .mbtns{display:flex; gap:8px; padding:10px 16px 2px;}
+  .mbtn{flex:1; height:40px; border-radius:13px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; font-weight:800; cursor:pointer;}
+  .mbtn.solid{background:var(--t1); color:var(--bg);}
+  body.dark .mbtn.solid{background:#fafafa; color:#0a0a0a;}
+  .mbtn.ghost{background:var(--card); color:var(--t1); border:1px solid var(--line);}
+
+  /* Log → quick-actions bottom sheet */
+  .qsheet{position:absolute; left:0; right:0; bottom:0; z-index:36; background:rgba(255,255,255,.66); backdrop-filter:blur(24px) saturate(1.5); -webkit-backdrop-filter:blur(24px) saturate(1.5); border-radius:26px 26px 0 0; padding:10px 16px 26px; box-shadow:0 -12px 42px rgba(0,0,0,.26); border-top:1px solid rgba(255,255,255,.6);}
+  body.dark .qsheet{background:rgba(22,22,24,.62); border-top:1px solid rgba(255,255,255,.09);}
+  .qs-item .qi{backdrop-filter:blur(6px);}
+  .qs-grab{width:36px; height:4px; border-radius:2px; background:var(--line-2); margin:2px auto 12px;}
+  .qs-h{font-size:16px; font-weight:800; color:var(--t1); margin-bottom:13px;}
+  .qs-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+  .qs-item{display:flex; flex-direction:column; align-items:center; gap:7px; font-size:11px; font-weight:700; color:var(--t2); text-align:center;}
+  .qs-item .qi{width:56px; height:56px; border-radius:17px; background:var(--card-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:24px;}
+  /* macro-bar overlay (Nourish) + extra metrics page in deck C */
+  .mini .ovm{position:absolute; left:0; right:0; bottom:0; height:48%; opacity:.32; pointer-events:none;}
+  .mini .ovm svg{width:100%; height:100%; display:block;}
+  #deckC .bento .dc{height:72px;}
+
+  /* spotlight + rail (B) */
+  .spot{display:flex;align-items:center;gap:14px;padding:2px 18px 6px;}
+  .spot .segring{flex:0 0 104px;width:104px;height:104px;}
+  .spot .segring .mid .v{font-size:34px;letter-spacing:-1.8px;}
+  .spot .cap{flex:1;}
+  .spot .cap .h{font-size:14px;font-weight:800;color:var(--t1);letter-spacing:-.3px;}
+  .spot .cap .s{font-size:11.5px;font-weight:500;color:var(--t2);margin-top:3px;line-height:1.4;}
+  .railhead{display:flex;align-items:center;padding:10px 18px 7px;}
+  .railhead .t{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);}
+  .railhead .more{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--orange);}
+  .rail{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px 2px;}
+  .rail::-webkit-scrollbar{height:0;}
+  .rc{flex:0 0 120px;scroll-snap-align:start;}
+
+  /* customize / My Space */
+  .efhdr{display:flex; align-items:center; gap:12px; padding:6px 16px 6px;}
+  .efhdr .bk{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--t1);border:1px solid var(--line);background:var(--card);}
+  .efhdr .bk svg{width:17px;height:17px;}
+  .efhdr .tt{font-size:18px;font-weight:800;letter-spacing:-.4px;color:var(--t1);}
+  .efhdr .save{margin-left:auto;font-size:13px;font-weight:800;color:var(--orange);}
+  .mstabs{display:flex;gap:4px;margin:4px 16px 10px;background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:4px;}
+  .mstabs span{flex:1;text-align:center;font-size:12px;font-weight:800;color:var(--t3);padding:7px;border-radius:999px;}
+  .mstabs span.on{background:var(--orange);color:#fff;}
+  .seclabel{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);padding:11px 18px 7px;display:flex;align-items:center;gap:8px;}
+  .seclabel .cnt{color:var(--t2);background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:1px 7px;font-size:9.5px;}
+  .clist{padding:0 16px;display:flex;flex-direction:column;gap:7px;}
+  .crow{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:13px;border:1px solid var(--line);background:var(--card);}
+  .crow.exp{flex-direction:column;align-items:stretch;gap:0;border-color:var(--orange);box-shadow:0 0 0 2px rgba(249,115,22,.18);}
+  .crow .rowmain{display:flex;align-items:center;gap:10px;width:100%;}
+  .crow .grip{color:var(--t3);font-size:14px;}
+  .crow .cdot{width:9px;height:9px;border-radius:3px;background:var(--ac);}
+  .crow .cn{flex:1;font-size:13px;font-weight:700;color:var(--t1);}
+  .crow .cv{font-size:12px;font-weight:800;color:var(--t1);min-width:44px;text-align:right;}
+  .crow .rowviz{flex:0 0 42px;display:flex;align-items:center;justify-content:flex-end;}
+  .crow .rowviz .rv{display:block;}
+  .crow.off .rowviz{opacity:.45;}
+  .crow.off .cv{color:var(--t3);font-weight:700;}
+  .crow .core{font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--t3);background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:2px 7px;}
+  .crow .tog{width:38px;height:23px;border-radius:999px;background:var(--orange);position:relative;flex:0 0 38px;}
+  .crow .tog::after{content:"";position:absolute;top:2.5px;right:2.5px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .crow.off .tog{background:var(--line-2);}.crow.off .tog::after{right:auto;left:2.5px;}
+  .crow.off .cn{color:var(--t3);}.crow.off .cdot{opacity:.4;}
+  .crow .gear{color:var(--t3);font-size:14px;}
+  .size{display:flex;gap:2px;background:var(--card-2);border:1px solid var(--line);border-radius:8px;padding:2px;}
+  .size span{font-size:9.5px;font-weight:800;color:var(--t3);padding:3px 7px;border-radius:6px;}
+  .size span.on{background:var(--t1);color:var(--bg);}
+  body.dark .size span.on{background:#fafafa;color:#0a0a0a;}
+  /* expanded editor */
+  .editor{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px;width:100%;}
+  .ed-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .ed-row .lbl{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--t3);width:54px;flex:0 0 54px;}
+  .swatches{display:flex;gap:7px;}
+  .swatches i{width:22px;height:22px;border-radius:7px;cursor:pointer;}
+  .swatches i.sel{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--t1);}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;}
+  .chips span{font-size:10px;font-weight:800;color:var(--t3);border:1px solid var(--line);background:var(--card-2);border-radius:8px;padding:4px 8px;}
+  .chips span.on{background:var(--t1);color:var(--bg);border-color:var(--t1);}
+  body.dark .chips span.on{background:#fafafa;color:#0a0a0a;}
+  .addbar{margin:10px 16px 0;display:flex;gap:9px;}
+  .addbar a{flex:1;text-align:center;font-size:12px;font-weight:800;padding:11px;border-radius:13px;text-decoration:none;}
+  .addbar .primary{background:var(--orange);color:#fff;}
+  .addbar .ghost{background:var(--card);color:var(--t1);border:1px solid var(--line);}
+
+  /* custom trend builder */
+  .cb-intro{font-size:12px;color:var(--t2);padding:0 18px 10px;line-height:1.45;}
+  .cb-h{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);padding:6px 18px 8px;}
+  .mchips{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px;}
+  .mchip{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--t2);}
+  .mchip i{width:8px;height:8px;border-radius:3px;background:var(--mc,var(--t3));}
+  .mchip.on{color:#fff;border-color:transparent;background:var(--mc);}
+  .mchip.on i{background:rgba(255,255,255,.85);}
+  .ranges{display:flex;gap:7px;padding:12px 16px 0;}
+  .ranges span{font-size:11px;font-weight:800;color:var(--t3);border:1px solid var(--line);background:var(--card-2);border-radius:9px;padding:6px 12px;}
+  .ranges span.on{background:var(--t1);color:var(--bg);border-color:var(--t1);}
+  body.dark .ranges span.on{background:#fafafa;color:#0a0a0a;}
+  .chartcard{margin:14px 16px 0;border:1px solid var(--line);background:var(--card);border-radius:18px;padding:14px;box-shadow:var(--shadow);}
+  .chartcard .lh{display:flex;gap:12px;margin-bottom:8px;}
+  .chartcard .lh span{font-size:10.5px;font-weight:700;color:var(--t2);display:flex;align-items:center;gap:5px;}
+  .chartcard .lh i{width:9px;height:9px;border-radius:2px;}
+  .aiins{margin:12px 16px 0;border:1px solid rgba(249,115,22,.25);background:var(--orange-soft);border-radius:16px;padding:12px 13px;}
+  body.dark .aiins{background:#2a1b0d;}
+  .aiins .h{display:flex;align-items:center;gap:7px;font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--orange);}
+  .aiins p{font-size:12px;color:var(--t2);margin-top:6px;line-height:1.5;}
+  .aiins b{color:var(--t1);}
+
+  .note{max-width:1720px; margin:40px auto 0; background:rgba(255,255,255,.6); border:1px solid rgba(0,0,0,.06); border-radius:18px; padding:20px 22px; backdrop-filter:blur(8px);}
+  body.dark .note{background:rgba(22,22,24,.6); border-color:rgba(255,255,255,.08);}
+  .note h3{font-size:15px; font-weight:800; margin-bottom:10px;}
+  .note ul{margin-left:18px; font-size:13px; line-height:1.7; color:#4a4a52;}
+  body.dark .note ul{color:#b0b0b8;}
+  .note b{color:var(--orange);} .note code{background:rgba(0,0,0,.06); padding:1px 6px; border-radius:5px; font-size:12px;}
+  body.dark .note code{background:rgba(255,255,255,.08);}
+  .hint{max-width:1720px;margin:0 auto 20px;font-size:12.5px;color:#8a8a92;font-weight:600;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Zealova Home — bigger ring, every widget large + editable, custom trends, My Space</h1>
+    <div class="sub">Built on the real <code>home_sections_provider</code> (My Space) + <code>custom_trend_screen</code> (multi-metric trends)</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="toggle" id="themeToggle"><span class="dot"></span><span id="themeLabel">Dark mode</span></div>
+</div>
+
+<div class="hint">↔ Drag deck (A) / rail (B). Phone A is my pick. Phone 3 = My Space metric editor (per-tile size + color + chart/range). Phone 4 = custom-trend builder.</div>
+
+<div class="stage">
+
+  <!-- ============ DIRECTION A (RECOMMENDED) ============ -->
+  <div class="col rec">
+    <div class="label">
+      <div class="k">Direction A</div>
+      <div class="t">Bento, big ring</div>
+      <div class="d">Bigger segmented Today ring as hero + contributor legend, then resizable tiles. Page 2 shows a LARGE custom-trend widget inline. Coach stays above the fold. Bento is the only layout where "any widget can be Large / a chart" works cleanly.</div>
+    </div>
+
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span class="r">●●● &nbsp;5G&nbsp; ▮</span></div>
+      <div class="foldlbl" style="top:706px">fold</div><div class="fold" style="top:706px"></div>
+      <div class="scroll">
+        <div class="hdr">
+          <div class="ava">S</div>
+          <div class="hi" style="flex:1"><div class="g">Good morning,</div><div class="n">Sai <span class="streak">4d 🔥</span></div></div>
+          <div class="iconbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+          <div class="iconbtn" style="margin-left:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0 1.6 1.6 0 0 0-2.6-1.1 2 2 0 1 1-2.8-2.8A1.6 1.6 0 0 0 4 13.4 2 2 0 0 1 4 9.4 1.6 1.6 0 0 0 5 6.8a2 2 0 1 1 2.8-2.8A1.6 1.6 0 0 0 10.6 4 2 2 0 0 1 14.6 4a1.6 1.6 0 0 0 2.6 1.1 2 2 0 1 1 2.8 2.8A1.6 1.6 0 0 0 21 11.4a1.6 1.6 0 0 0 0 3.6z"/></svg></div>
+        </div>
+
+        <div class="deck-head">
+          <div class="segs" data-for="deckA"><div class="seg on" data-i="0">Today</div><div class="seg" data-i="1">Body & trends</div></div>
+          <div class="dots" data-for="deckA"><i class="on"></i><i></i></div>
+          <div class="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+        </div>
+
+        <div class="deck-wrap"><div class="deck" id="deckA">
+          <div class="page"><div class="bento">
+            <div class="dc herobig">
+              <div class="segring">
+                <svg viewBox="0 0 132 132" width="132" height="132">
+                  <g transform="rotate(-90 66 66)"><circle cx="66" cy="66" r="54" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="66" cy="66" r="54" fill="none" stroke="var(--r-train)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/></g>
+                  <g transform="rotate(0 66 66)"><circle cx="66" cy="66" r="54" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="66" cy="66" r="54" fill="none" stroke="var(--r-nourish)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="13 100"/></g>
+                  <g transform="rotate(90 66 66)"><circle cx="66" cy="66" r="54" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="66" cy="66" r="54" fill="none" stroke="var(--r-move)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="14 100"/></g>
+                  <g transform="rotate(180 66 66)"><circle cx="66" cy="66" r="54" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="66" cy="66" r="54" fill="none" stroke="var(--r-sleep)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/></g>
+                </svg>
+                <div class="mid"><div class="v">47</div><div class="l">Today</div></div>
+              </div>
+              <div class="info">
+                <div class="hl">One workout lifts you to 59</div>
+                <div class="lg"><span class="d" style="background:var(--r-train)"></span><span class="nm">Train</span><span class="vv">0 / 1</span></div>
+                <div class="lg"><span class="d" style="background:var(--r-nourish)"></span><span class="nm">Nourish</span><span class="vv">59%</span></div>
+                <div class="lg"><span class="d" style="background:var(--r-move)"></span><span class="nm">Move</span><span class="vv">6.5k</span></div>
+                <div class="lg"><span class="d" style="background:var(--r-sleep)"></span><span class="nm">Sleep</span><span class="vv" style="color:var(--t3)">link</span></div>
+              </div>
+            </div>
+            <div class="dc" style="--ac:var(--r-move)"><div class="top"><span class="d"></span><span class="l">Steps</span></div><div class="val">6,540</div><svg class="spark" width="116" height="16" viewBox="0 0 116 16" fill="none"><polyline points="0,12 18,10 36,11 54,6 72,8 90,4 116,7" stroke="var(--ac)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="dc" style="--ac:var(--r-nourish)"><div class="mring"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--line-2)" stroke-width="3.5" pathLength="100"/><circle cx="13" cy="13" r="10" fill="none" stroke="var(--ac)" stroke-width="3.5" stroke-linecap="round" pathLength="100" stroke-dasharray="59 100"/></svg></div><div class="top"><span class="d"></span><span class="l">Nourish</span></div><div class="val">1,240<small> kcal</small></div><div class="sub">59% of 2,100</div></div>
+            <div class="dc" style="--ac:var(--r-sleep)"><div class="top"><span class="d"></span><span class="l">Sleep · 84</span></div><div class="val">7h 36m</div><div class="bars"><span style="height:40%"></span><span style="height:75%"></span><span style="height:95%"></span><span style="height:60%"></span><span style="height:35%"></span></div></div>
+            <div class="dc" style="--ac:var(--r-hyd)"><div class="top"><span class="d"></span><span class="l">Hydration</span></div><div class="val">48<small> oz</small></div><div class="gauge"><i style="width:50%"></i></div></div>
+          </div></div>
+
+          <div class="page"><div class="bento">
+            <!-- LARGE custom-trend widget on home -->
+            <div class="lgwidget">
+              <div class="lh"><span class="ti">Weight × Sleep</span><span class="rg">90d</span></div>
+              <div class="legend2"><span><i style="background:var(--r-weight)"></i>Weight</span><span><i style="background:var(--r-sleep)"></i>Sleep</span></div>
+              <svg width="100%" viewBox="0 0 320 96" preserveAspectRatio="none" style="margin-top:8px">
+                <polyline points="0,18 53,24 106,21 160,42 213,34 266,52 320,60" fill="none" stroke="var(--r-weight)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="0,74 53,56 106,64 160,40 213,50 266,30 320,36" fill="none" stroke="var(--r-sleep)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="dc" style="--ac:var(--r-weight)"><div class="top"><span class="d"></span><span class="l">Weight</span></div><div class="val">184<small> lb</small></div><div class="sub" style="color:var(--r-nourish)">↓ 0.8 this week</div></div>
+            <div class="dc" style="--ac:var(--r-hr)"><div class="top"><span class="d"></span><span class="l">Resting HR</span></div><div class="val">58<small> bpm</small></div><svg class="spark" width="116" height="16" viewBox="0 0 116 16" fill="none"><polyline points="0,11 20,8 40,9 60,5 80,7 100,4 116,6" stroke="var(--ac)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="dc" style="--ac:var(--r-recovery)"><div class="mring"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--line-2)" stroke-width="3.5" pathLength="100"/><circle cx="13" cy="13" r="10" fill="none" stroke="var(--ac)" stroke-width="3.5" stroke-linecap="round" pathLength="100" stroke-dasharray="72 100"/></svg></div><div class="top"><span class="d"></span><span class="l">Readiness</span></div><div class="val">72</div><div class="sub">recovered</div></div>
+            <div class="dc" style="--ac:var(--r-hyd)"><div class="top"><span class="d"></span><span class="l">Hydration</span></div><div class="val">48<small> oz</small></div><div class="gauge"><i style="width:50%"></i></div></div>
+          </div></div>
+        </div></div>
+
+        <div class="qa">
+          <div class="pill"><div class="pc">📷</div><div class="pl">Snap meal</div></div>
+          <div class="pill"><div class="pc">🍴</div><div class="pl">Scan menu</div></div>
+          <div class="pill"><div class="pc">💧</div><div class="pl">Water</div></div>
+          <div class="pill"><div class="pc">⚖️</div><div class="pl">Weigh in</div></div>
+          <div class="pill"><div class="pc">▶️</div><div class="pl">Workout</div></div>
+          <div class="pill"><div class="pc">⋯</div><div class="pl">More</div></div>
+        </div>
+
+        <div class="coach">
+          <div class="eye"><div class="badge">✦</div><div class="lbl">AI Coach</div><div class="when">· 8:51 PM</div><div class="ctrls"><span>⋯</span><span>⌄</span><span>✕</span></div></div>
+          <h2>Time to let your system catch up</h2>
+          <p>You kept it low-key today (~6,540 steps) and your resting HR is still a touch high at <b style="color:var(--t1)">58 bpm</b>, so you're still recovering from yesterday. Two small wins set up a stronger tomorrow.</p>
+          <div class="ctasks-h">Today's tasks · 4</div>
+          <div class="ctasks">
+            <div class="tcard"><div class="ti" style="background:rgba(63,166,107,.14)">🍽️</div><div class="tt"><div class="t">Refuel window open</div><div class="s">~30g protein within the hour</div></div><div class="ta">Log</div></div>
+            <div class="tcard"><div class="ti" style="background:rgba(6,182,212,.14)">💧</div><div class="tt"><div class="t">Hydrate</div><div class="s">48 of 96 oz so far</div></div><div class="ta">+8oz</div></div>
+            <div class="tcard"><div class="ti" style="background:rgba(139,92,246,.14)">🌙</div><div class="tt"><div class="t">Bedtime in 60 min</div><div class="s">Protect your 11:30 wind-down</div></div><div class="ta">OK</div></div>
+            <div class="tcard"><div class="ti" style="background:rgba(236,139,44,.14)">🧘</div><div class="tt"><div class="t">Cat-cow · 5 min</div><div class="s">Ease lower-back tightness</div></div><div class="ta">Start</div></div>
+          </div>
+          <div class="cta"><a class="pri" href="#">Chat with coach</a><a class="sec" href="#">Open workouts</a></div>
+        </div>
+        <div style="height:84px"></div>
+      </div>
+
+      <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="nav">
+        <div class="ni on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M3 9v6M21 9v6"/></svg>Workouts</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>Nutrition</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ DIRECTION B ============ -->
+  <div class="col">
+    <div class="label">
+      <div class="k">Direction B</div>
+      <div class="t">Spotlight + rail</div>
+      <div class="d">Most compact, but a horizontal rail can't host large chart/custom-trend widgets well — they'd be cramped. Good if you want max coach room and small tiles only.</div>
+    </div>
+
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span class="r">●●● &nbsp;5G&nbsp; ▮</span></div>
+      <div class="foldlbl" style="top:706px">fold</div><div class="fold" style="top:706px"></div>
+      <div class="scroll">
+        <div class="hdr">
+          <div class="ava">S</div>
+          <div class="hi" style="flex:1"><div class="g">Good morning,</div><div class="n">Sai <span class="streak">4d 🔥</span></div></div>
+          <div class="iconbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+          <div class="iconbtn" style="margin-left:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0 1.6 1.6 0 0 0-2.6-1.1 2 2 0 1 1-2.8-2.8A1.6 1.6 0 0 0 4 13.4 2 2 0 0 1 4 9.4 1.6 1.6 0 0 0 5 6.8a2 2 0 1 1 2.8-2.8A1.6 1.6 0 0 0 10.6 4 2 2 0 0 1 14.6 4a1.6 1.6 0 0 0 2.6 1.1 2 2 0 1 1 2.8 2.8A1.6 1.6 0 0 0 21 11.4a1.6 1.6 0 0 0 0 3.6z"/></svg></div>
+        </div>
+
+        <div class="spot">
+          <div class="segring" style="width:104px;height:104px;flex:0 0 104px">
+            <svg viewBox="0 0 104 104" width="104" height="104">
+              <g transform="rotate(-90 52 52)"><circle cx="52" cy="52" r="42" fill="none" stroke="var(--line-2)" stroke-width="9" pathLength="100" stroke-dasharray="22 100"/><circle cx="52" cy="52" r="42" fill="none" stroke="var(--r-train)" stroke-width="9" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/></g>
+              <g transform="rotate(0 52 52)"><circle cx="52" cy="52" r="42" fill="none" stroke="var(--line-2)" stroke-width="9" pathLength="100" stroke-dasharray="22 100"/><circle cx="52" cy="52" r="42" fill="none" stroke="var(--r-nourish)" stroke-width="9" stroke-linecap="round" pathLength="100" stroke-dasharray="13 100"/></g>
+              <g transform="rotate(90 52 52)"><circle cx="52" cy="52" r="42" fill="none" stroke="var(--line-2)" stroke-width="9" pathLength="100" stroke-dasharray="22 100"/><circle cx="52" cy="52" r="42" fill="none" stroke="var(--r-move)" stroke-width="9" stroke-linecap="round" pathLength="100" stroke-dasharray="14 100"/></g>
+              <g transform="rotate(180 52 52)"><circle cx="52" cy="52" r="42" fill="none" stroke="var(--line-2)" stroke-width="9" pathLength="100" stroke-dasharray="22 100"/><circle cx="52" cy="52" r="42" fill="none" stroke="var(--r-sleep)" stroke-width="9" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/></g>
+            </svg>
+            <div class="mid"><div class="v">47</div><div class="l">Today</div></div>
+          </div>
+          <div class="cap"><div class="h">Today · 47</div><div class="s">Train · Nourish · Move · Sleep. One workout lifts you to 59.</div></div>
+        </div>
+
+        <div class="railhead"><div class="t">Your metrics</div><div class="more">Edit ✎</div></div>
+        <div class="rail">
+          <div class="rc dc" style="--ac:var(--r-move)"><div class="top"><span class="d"></span><span class="l">Steps</span></div><div class="val">6,540</div><svg class="spark" width="96" height="16" viewBox="0 0 96 16" fill="none"><polyline points="0,12 18,10 36,11 54,6 72,8 96,5" stroke="var(--ac)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="rc dc" style="--ac:var(--r-sleep)"><div class="top"><span class="d"></span><span class="l">Sleep</span></div><div class="val">7h 36m</div><div class="bars"><span style="height:40%"></span><span style="height:75%"></span><span style="height:95%"></span><span style="height:60%"></span><span style="height:35%"></span></div></div>
+          <div class="rc dc" style="--ac:var(--r-nourish)"><div class="mring"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--line-2)" stroke-width="3.5" pathLength="100"/><circle cx="13" cy="13" r="10" fill="none" stroke="var(--ac)" stroke-width="3.5" stroke-linecap="round" pathLength="100" stroke-dasharray="59 100"/></svg></div><div class="top"><span class="d"></span><span class="l">Nourish</span></div><div class="val">1,240</div><div class="sub">59%</div></div>
+          <div class="rc dc" style="--ac:var(--r-hyd)"><div class="top"><span class="d"></span><span class="l">Hydration</span></div><div class="val">48<small> oz</small></div><div class="gauge"><i style="width:50%"></i></div></div>
+        </div>
+
+        <div class="qa">
+          <div class="pill"><div class="pc">📷</div><div class="pl">Snap meal</div></div>
+          <div class="pill"><div class="pc">🍴</div><div class="pl">Scan menu</div></div>
+          <div class="pill"><div class="pc">💧</div><div class="pl">Water</div></div>
+          <div class="pill"><div class="pc">⚖️</div><div class="pl">Weigh in</div></div>
+          <div class="pill"><div class="pc">▶️</div><div class="pl">Workout</div></div>
+          <div class="pill"><div class="pc">⋯</div><div class="pl">More</div></div>
+        </div>
+
+        <div class="coach">
+          <div class="eye"><div class="badge">✦</div><div class="lbl">AI Coach</div><div class="ctrls"><span>⋯</span><span>⌄</span><span>✕</span></div></div>
+          <h2>Today, your plan is waiting.</h2>
+          <p>One session, today's workout, gets you to <b style="color:var(--orange)">47</b>.</p>
+          <div class="cta"><a class="pri" href="#">Chat with coach</a><a class="sec" href="#">Open workouts</a></div>
+          <div class="nudge"><div class="ni" style="background:rgba(139,92,246,.14)">🌙</div><div class="nt"><div class="t">Bedtime in 60 min</div><div class="s">Start winding down for better sleep</div></div><div class="act">OK</div></div>
+        </div>
+        <div style="height:84px"></div>
+      </div>
+
+      <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="nav">
+        <div class="ni on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M3 9v6M21 9v6"/></svg>Workouts</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>Nutrition</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ CUSTOMIZE (My Space) ============ -->
+  <div class="col">
+    <div class="label">
+      <div class="k">✎ → My Space</div>
+      <div class="t">Customize metrics</div>
+      <div class="d">Every tile resizes S / Wide / Large. Tap the gear to edit a widget inline: color + chart type + date range. Plus "Add custom trend" and a link to My Space sections.</div>
+    </div>
+
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span class="r">●●● &nbsp;5G&nbsp; ▮</span></div>
+      <div class="scroll">
+        <div class="efhdr">
+          <div class="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+          <div class="tt">My Space</div>
+          <div class="save">Done</div>
+        </div>
+        <div class="mstabs"><span class="on">Metrics</span><span>Sections</span><span>Discover</span></div>
+
+        <div class="seclabel">Core <span class="cnt">always on</span></div>
+        <div class="clist">
+          <div class="crow" style="--ac:var(--r-train)"><span class="grip">⠿</span><span class="cdot"></span><span class="cn">Today score</span><span class="rowviz"><svg class="rv" width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8" fill="none" stroke="var(--line-2)" stroke-width="3" pathLength="100"/><circle cx="11" cy="11" r="8" fill="none" stroke="var(--ac)" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="47 100" transform="rotate(-90 11 11)"/></svg></span><span class="cv">47</span><div class="size"><span>S</span><span>W</span><span class="on">L</span></div><span class="core">CORE</span></div>
+        </div>
+
+        <div class="seclabel">Showing <span class="cnt">6</span></div>
+        <div class="clist">
+          <!-- expanded editor on Weight -->
+          <div class="crow exp" style="--ac:var(--r-weight)">
+            <div class="rowmain"><span class="grip">⠿</span><span class="cdot"></span><span class="cn">Weight</span><span class="rowviz"><svg class="rv" width="40" height="22" viewBox="0 0 40 22" fill="none"><polyline points="0,6 8,8 16,7 24,12 32,11 40,16" stroke="var(--ac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="cv">184 lb</span><div class="size"><span>S</span><span>W</span><span class="on">L</span></div><span class="gear">⚙</span></div>
+            <div class="editor">
+              <div class="ed-row"><span class="lbl">Color</span><div class="swatches"><i style="background:var(--r-weight)" class="sel"></i><i style="background:var(--r-move)"></i><i style="background:var(--r-nourish)"></i><i style="background:var(--r-recovery)"></i><i style="background:var(--r-hr)"></i><i style="background:var(--orange)"></i></div></div>
+              <div class="ed-row"><span class="lbl">Chart</span><div class="chips"><span>Number</span><span>Ring</span><span>Bars</span><span class="on">Line</span></div></div>
+              <div class="ed-row"><span class="lbl">Range</span><div class="chips"><span>7d</span><span>30d</span><span class="on">90d</span><span>1y</span></div></div>
+            </div>
+          </div>
+          <div class="crow" style="--ac:var(--r-hr)"><span class="grip">⠿</span><span class="cdot"></span><span class="cn">Resting HR</span><span class="rowviz"><svg class="rv" width="40" height="22" viewBox="0 0 40 22" fill="none"><polyline points="0,15 8,11 16,13 24,7 32,10 40,6" stroke="var(--ac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="cv">58 bpm</span><div class="size"><span class="on">S</span><span>W</span><span>L</span></div><span class="gear">⚙</span></div>
+          <div class="crow" style="--ac:var(--r-recovery)"><span class="grip">⠿</span><span class="cdot"></span><span class="cn">Readiness</span><span class="rowviz"><svg class="rv" width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8" fill="none" stroke="var(--line-2)" stroke-width="3" pathLength="100"/><circle cx="11" cy="11" r="8" fill="none" stroke="var(--ac)" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="72 100" transform="rotate(-90 11 11)"/></svg></span><span class="cv">72</span><div class="size"><span class="on">S</span><span>W</span><span>L</span></div><span class="gear">⚙</span></div>
+          <div class="crow" style="--ac:var(--r-hyd)"><span class="grip">⠿</span><span class="cdot"></span><span class="cn">Hydration</span><span class="rowviz"><svg class="rv" width="40" height="22" viewBox="0 0 40 22"><rect x="0" y="9" width="40" height="5" rx="2.5" fill="var(--line-2)"/><rect x="0" y="9" width="20" height="5" rx="2.5" fill="var(--ac)"/></svg></span><span class="cv">48 oz</span><div class="size"><span class="on">S</span><span>W</span><span>L</span></div><span class="gear">⚙</span></div>
+          <div class="crow" style="--ac:var(--r-sleep)"><span class="grip">⠿</span><span class="cdot"></span><span class="cn">Weight × Sleep <span style="font-size:9px;color:var(--orange);font-weight:800">TREND</span></span><span class="rowviz"><svg class="rv" width="40" height="22" viewBox="0 0 40 22" fill="none"><polyline points="0,6 13,8 26,7 40,13" stroke="var(--r-weight)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="0,16 13,12 26,14 40,7" stroke="var(--r-sleep)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="cv">r +0.62</span><div class="size"><span>S</span><span>W</span><span class="on">L</span></div><span class="gear">⚙</span></div>
+        </div>
+
+        <div class="seclabel">Add metric <span class="cnt">14</span></div>
+        <div class="clist">
+          <div class="crow off" style="--ac:var(--r-recovery)"><span class="grip" style="opacity:.3">⠿</span><span class="cdot"></span><span class="cn">Body fat</span><span class="rowviz"><svg class="rv" width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="8" fill="none" stroke="var(--line-2)" stroke-width="3" pathLength="100"/><circle cx="11" cy="11" r="8" fill="none" stroke="var(--ac)" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="55 100" transform="rotate(-90 11 11)"/></svg></span><span class="cv">18.4%</span><span class="tog"></span></div>
+          <div class="crow off" style="--ac:var(--r-hrv)"><span class="grip" style="opacity:.3">⠿</span><span class="cdot"></span><span class="cn">HRV</span><span class="rowviz"><svg class="rv" width="40" height="22" viewBox="0 0 40 22" fill="none"><polyline points="0,12 8,9 16,11 24,6 32,10 40,5" stroke="var(--ac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="cv">62 ms</span><span class="tog"></span></div>
+          <div class="crow off" style="--ac:var(--r-train)"><span class="grip" style="opacity:.3">⠿</span><span class="cdot"></span><span class="cn">VO₂max</span><span class="rowviz"><svg class="rv" width="40" height="22" viewBox="0 0 40 22" fill="none"><polyline points="0,14 8,12 16,10 24,11 32,8 40,7" stroke="var(--ac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="cv">44</span><span class="tog"></span></div>
+          <div class="crow off" style="--ac:var(--r-stress)"><span class="grip" style="opacity:.3">⠿</span><span class="cdot"></span><span class="cn">Energy</span><span class="rowviz"><svg class="rv" width="40" height="22" viewBox="0 0 40 22"><line x1="0" y1="11" x2="40" y2="11" stroke="var(--line-2)" stroke-width="2" stroke-dasharray="3 3"/></svg></span><span class="cv">—</span><span class="tog"></span></div>
+        </div>
+
+        <div class="addbar">
+          <a class="primary" href="#">+ Add custom trend</a>
+          <a class="ghost" href="#">Edit sections</a>
+        </div>
+        <div style="height:30px"></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ CUSTOM TREND BUILDER ============ -->
+  <div class="col">
+    <div class="label">
+      <div class="k">+ Add custom trend</div>
+      <div class="t">Custom trend builder</div>
+      <div class="d">The real <code>custom_trend_screen</code>: pick 2+ metrics, choose a range, get one normalized chart + an AI correlation insight. "Add to home" drops it in as a Large widget (see A page 2).</div>
+    </div>
+
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span class="r">●●● &nbsp;5G&nbsp; ▮</span></div>
+      <div class="scroll">
+        <div class="efhdr">
+          <div class="bk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+          <div class="tt">Custom trend</div>
+          <div class="save">Add to home</div>
+        </div>
+        <div class="cb-intro">Plot any metrics together to spot patterns. Lines are scaled to fit one chart.</div>
+
+        <div class="cb-h">Metrics · pick 2 or more</div>
+        <div class="mchips">
+          <span class="mchip on" style="--mc:var(--r-weight)"><i></i>Weight</span>
+          <span class="mchip on" style="--mc:var(--r-sleep)"><i></i>Sleep</span>
+          <span class="mchip" style="--mc:var(--r-move)"><i></i>Steps</span>
+          <span class="mchip" style="--mc:var(--r-hr)"><i></i>Resting HR</span>
+          <span class="mchip" style="--mc:var(--r-hrv)"><i></i>HRV</span>
+          <span class="mchip" style="--mc:var(--r-nourish)"><i></i>Calories in</span>
+          <span class="mchip" style="--mc:var(--r-train)"><i></i>Calories out</span>
+          <span class="mchip" style="--mc:var(--r-recovery)"><i></i>Body fat</span>
+          <span class="mchip" style="--mc:var(--r-stress)"><i></i>Protein</span>
+          <span class="mchip" style="--mc:var(--r-zone)"><i></i>VO₂max</span>
+          <span class="mchip" style="--mc:var(--r-mind)"><i></i>Mood</span>
+          <span class="mchip" style="--mc:var(--r-hyd)"><i></i>Water</span>
+        </div>
+
+        <div class="cb-h" style="padding-top:14px">Range</div>
+        <div class="ranges"><span>7d</span><span>30d</span><span class="on">90d</span><span>1y</span></div>
+
+        <div class="chartcard">
+          <div class="lh"><span><i style="background:var(--r-weight)"></i>Weight</span><span><i style="background:var(--r-sleep)"></i>Sleep</span></div>
+          <svg width="100%" height="120" viewBox="0 0 320 120" preserveAspectRatio="none">
+            <line x1="0" y1="30" x2="320" y2="30" stroke="var(--line)" stroke-width="1"/>
+            <line x1="0" y1="60" x2="320" y2="60" stroke="var(--line)" stroke-width="1"/>
+            <line x1="0" y1="90" x2="320" y2="90" stroke="var(--line)" stroke-width="1"/>
+            <polyline points="0,24 53,30 106,27 160,46 213,40 266,58 320,66" fill="none" stroke="var(--r-weight)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,92 53,72 106,80 160,52 213,62 266,38 320,44" fill="none" stroke="var(--r-sleep)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <div class="aiins">
+          <div class="h">✦ Correlation insight</div>
+          <p>On nights you sleep <b>7h+</b>, your weight trends <b>down the next morning</b> more often. Strongest link in the last <b>3 weeks</b> — protect bedtime to keep the cut moving.</p>
+        </div>
+        <div style="height:30px"></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ DIRECTION C : COMPACT METRICS + FULL COACH ============ -->
+  <div class="col rec">
+    <div class="label">
+      <div class="k">Direction C — recommended</div>
+      <div class="t">Compact metrics + full coach<span class="badge">Your direction</span></div>
+      <div class="d">Summary card = big ring + live tiles with graph overlays (swipe: Summary · More · Trends), plus Log / Trends / Start buttons (Log opens the quick-actions sheet — next phone). The FAB stays a pure AI Coach button; coach below stays full-size.</div>
+    </div>
+
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span class="r">●●● &nbsp;5G&nbsp; ▮</span></div>
+      <div class="foldlbl" style="top:706px">fold</div><div class="fold" style="top:706px"></div>
+      <div class="scroll">
+        <div class="hdr">
+          <div class="ava">S</div>
+          <div class="hi" style="flex:1"><div class="g">Good morning,</div><div class="n">Sai <span class="streak">4d 🔥</span></div></div>
+          <div class="iconbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+          <div class="iconbtn" style="margin-left:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0 1.6 1.6 0 0 0-2.6-1.1 2 2 0 1 1-2.8-2.8A1.6 1.6 0 0 0 4 13.4 2 2 0 0 1 4 9.4 1.6 1.6 0 0 0 5 6.8a2 2 0 1 1 2.8-2.8A1.6 1.6 0 0 0 10.6 4 2 2 0 0 1 14.6 4a1.6 1.6 0 0 0 2.6 1.1 2 2 0 1 1 2.8 2.8A1.6 1.6 0 0 0 21 11.4a1.6 1.6 0 0 0 0 3.6z"/></svg></div>
+        </div>
+
+        <div class="deck-head">
+          <div class="segs" data-for="deckC"><div class="seg on" data-i="0">Summary</div><div class="seg" data-i="1">More</div><div class="seg" data-i="2">Trends</div></div>
+          <div class="dots" data-for="deckC"><i class="on"></i><i></i><i></i></div>
+          <div class="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+        </div>
+
+        <div class="deck-wrap"><div class="deck" id="deckC">
+          <div class="page"><div class="cmetric">
+            <div class="segring">
+              <svg viewBox="0 0 118 118" width="118" height="118">
+                <g transform="rotate(-90 59 59)"><circle cx="59" cy="59" r="49" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="59" cy="59" r="49" fill="none" stroke="var(--r-train)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/></g>
+                <g transform="rotate(0 59 59)"><circle cx="59" cy="59" r="49" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="59" cy="59" r="49" fill="none" stroke="var(--r-nourish)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="13 100"/></g>
+                <g transform="rotate(90 59 59)"><circle cx="59" cy="59" r="49" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="59" cy="59" r="49" fill="none" stroke="var(--r-move)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="14 100"/></g>
+                <g transform="rotate(180 59 59)"><circle cx="59" cy="59" r="49" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="59" cy="59" r="49" fill="none" stroke="var(--r-sleep)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/></g>
+              </svg>
+              <div class="mid"><div class="v">47</div><div class="l">Today</div></div>
+            </div>
+            <div class="minis">
+              <div class="mini" style="--ac:var(--r-move)"><div class="ov"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="M0,42 17,36 33,38 50,26 67,31 83,22 100,27 L100,60 L0,60 Z" fill="var(--ac)"/></svg></div><div class="l"><span class="d"></span>Steps</div><div class="v">6,540</div></div>
+              <div class="mini" style="--ac:var(--r-nourish)"><div class="ovm"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><rect x="13" y="22" width="18" height="38" rx="3" fill="#A855F7"/><rect x="41" y="10" width="18" height="50" rx="3" fill="#06B6D4"/><rect x="69" y="30" width="18" height="30" rx="3" fill="#F97316"/></svg></div><div class="l"><span class="d"></span>Nourish</div><div class="v">59<small>%</small></div></div>
+              <div class="mini" style="--ac:var(--r-sleep)"><div class="ov"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><rect x="6" y="34" width="12" height="26" rx="3" fill="var(--ac)"/><rect x="27" y="22" width="12" height="38" rx="3" fill="var(--ac)"/><rect x="48" y="14" width="12" height="46" rx="3" fill="var(--ac)"/><rect x="69" y="28" width="12" height="32" rx="3" fill="var(--ac)"/><rect x="90" y="40" width="9" height="20" rx="3" fill="var(--ac)"/></svg></div><div class="l"><span class="d"></span>Sleep</div><div class="v">7h 36m</div></div>
+              <div class="mini" style="--ac:var(--r-hyd)"><div class="ov"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="M0,40 Q25,32 50,40 T100,40 L100,60 L0,60 Z" fill="var(--ac)"/></svg></div><div class="l"><span class="d"></span>Hydration</div><div class="v">48<small> oz</small></div></div>
+            </div>
+          </div></div>
+          <div class="page"><div class="bento">
+            <div class="dc" style="--ac:var(--r-hr)"><div class="top"><span class="d"></span><span class="l">Resting HR</span></div><div class="val">58<small> bpm</small></div><svg class="spark" width="120" height="11" viewBox="0 0 120 11" fill="none"><polyline points="0,8 20,5 40,7 60,3 80,5 100,2 120,4" stroke="var(--ac)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="dc" style="--ac:var(--r-recovery)"><div class="mring"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="none" stroke="var(--line-2)" stroke-width="3.5" pathLength="100"/><circle cx="13" cy="13" r="10" fill="none" stroke="var(--ac)" stroke-width="3.5" stroke-linecap="round" pathLength="100" stroke-dasharray="72 100"/></svg></div><div class="top"><span class="d"></span><span class="l">Readiness</span></div><div class="val">72</div></div>
+            <div class="dc" style="--ac:var(--r-weight)"><div class="top"><span class="d"></span><span class="l">Weight</span></div><div class="val">184<small> lb</small></div><div class="sub" style="color:var(--r-nourish)">↓ 0.8 this week</div></div>
+            <div class="dc" style="--ac:var(--r-zone)"><div class="top"><span class="d"></span><span class="l">Active</span></div><div class="val">38<small> min</small></div><div class="gauge"><i style="width:84%"></i></div></div>
+          </div></div>
+          <div class="page"><div class="lgwidget">
+            <div class="lh"><span class="ti">Weight × Sleep</span><span class="rg">90d</span></div>
+            <div class="legend2"><span><i style="background:var(--r-weight)"></i>Weight</span><span><i style="background:var(--r-sleep)"></i>Sleep</span></div>
+            <svg width="100%" viewBox="0 0 320 96" preserveAspectRatio="none" style="margin-top:8px">
+              <polyline points="0,18 53,24 106,21 160,42 213,34 266,52 320,60" fill="none" stroke="var(--r-weight)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,74 53,56 106,64 160,40 213,50 266,30 320,36" fill="none" stroke="var(--r-sleep)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div></div>
+        </div></div>
+
+        <div class="mbtns">
+          <div class="mbtn solid"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Log</div>
+          <div class="mbtn ghost"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg> Trends</div>
+          <div class="mbtn ghost"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none"/></svg> Start</div>
+        </div>
+
+        <div class="coach">
+          <div class="eye"><div class="badge">✦</div><div class="lbl">AI Coach</div><div class="when">· 8:51 PM</div><div class="ctrls"><span>⋯</span><span>⌄</span><span>✕</span></div></div>
+          <h2>Time to let your system catch up</h2>
+          <p>You kept it low-key today (~6,540 steps) and your resting HR is still a touch high at <b style="color:var(--t1)">58 bpm</b>, so you're still recovering from yesterday. Two small wins set up a stronger tomorrow.</p>
+          <div class="ctasks-h">Today's tasks · 4</div>
+          <div class="ctasks">
+            <div class="tcard"><div class="ti" style="background:rgba(63,166,107,.14)">🍽️</div><div class="tt"><div class="t">Refuel window open</div><div class="s">~30g protein within the hour</div></div><div class="ta">Log</div></div>
+            <div class="tcard"><div class="ti" style="background:rgba(6,182,212,.14)">💧</div><div class="tt"><div class="t">Hydrate</div><div class="s">48 of 96 oz so far</div></div><div class="ta">+8oz</div></div>
+            <div class="tcard"><div class="ti" style="background:rgba(139,92,246,.14)">🌙</div><div class="tt"><div class="t">Bedtime in 60 min</div><div class="s">Protect your 11:30 wind-down</div></div><div class="ta">OK</div></div>
+            <div class="tcard"><div class="ti" style="background:rgba(236,139,44,.14)">🧘</div><div class="tt"><div class="t">Cat-cow · 5 min</div><div class="s">Ease lower-back tightness</div></div><div class="ta">Start</div></div>
+          </div>
+          <div class="cta"><a class="pri" href="#">Chat with coach</a><a class="sec" href="#">Open workouts</a></div>
+        </div>
+        <div style="height:84px"></div>
+      </div>
+
+      <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="nav">
+        <div class="ni on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M3 9v6M21 9v6"/></svg>Workouts</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>Nutrition</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ DIRECTION C : FAB SPEED-DIAL OPEN ============ -->
+  <div class="col">
+    <div class="label">
+      <div class="k">Direction C — Log menu</div>
+      <div class="t">Log → glassmorphic sheet</div>
+      <div class="d">The FAB stays a pure <b>AI Coach</b> button (floats above the sheet). Tapping <b>Log</b> slides up this <b>glassmorphic</b> quick-actions sheet (the app's standard GlassSheet) with the full logging set — 12 actions. Coach and logging never fight for one button.</div>
+    </div>
+
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span class="r">●●● &nbsp;5G&nbsp; ▮</span></div>
+      <div class="scroll">
+        <div class="hdr">
+          <div class="ava">S</div>
+          <div class="hi" style="flex:1"><div class="g">Good morning,</div><div class="n">Sai <span class="streak">4d 🔥</span></div></div>
+          <div class="iconbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+          <div class="iconbtn" style="margin-left:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg></div>
+        </div>
+        <div class="deck-wrap"><div class="cmetric">
+          <div class="segring">
+            <svg viewBox="0 0 118 118" width="118" height="118">
+              <g transform="rotate(-90 59 59)"><circle cx="59" cy="59" r="49" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="59" cy="59" r="49" fill="none" stroke="var(--r-train)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/></g>
+              <g transform="rotate(0 59 59)"><circle cx="59" cy="59" r="49" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="59" cy="59" r="49" fill="none" stroke="var(--r-nourish)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="13 100"/></g>
+              <g transform="rotate(90 59 59)"><circle cx="59" cy="59" r="49" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="59" cy="59" r="49" fill="none" stroke="var(--r-move)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="14 100"/></g>
+              <g transform="rotate(180 59 59)"><circle cx="59" cy="59" r="49" fill="none" stroke="var(--line-2)" stroke-width="10" pathLength="100" stroke-dasharray="22 100"/><circle cx="59" cy="59" r="49" fill="none" stroke="var(--r-sleep)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/></g>
+            </svg>
+            <div class="mid"><div class="v">47</div><div class="l">Today</div></div>
+          </div>
+          <div class="minis">
+            <div class="mini" style="--ac:var(--r-move)"><div class="ov"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="M0,42 17,36 33,38 50,26 67,31 83,22 100,27 L100,60 L0,60 Z" fill="var(--ac)"/></svg></div><div class="l"><span class="d"></span>Steps</div><div class="v">6,540</div></div>
+            <div class="mini" style="--ac:var(--r-nourish)"><div class="ovm"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><rect x="13" y="22" width="18" height="38" rx="3" fill="#A855F7"/><rect x="41" y="10" width="18" height="50" rx="3" fill="#06B6D4"/><rect x="69" y="30" width="18" height="30" rx="3" fill="#F97316"/></svg></div><div class="l"><span class="d"></span>Nourish</div><div class="v">59<small>%</small></div></div>
+            <div class="mini" style="--ac:var(--r-sleep)"><div class="ov"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><rect x="6" y="34" width="12" height="26" rx="3" fill="var(--ac)"/><rect x="27" y="22" width="12" height="38" rx="3" fill="var(--ac)"/><rect x="48" y="14" width="12" height="46" rx="3" fill="var(--ac)"/><rect x="69" y="28" width="12" height="32" rx="3" fill="var(--ac)"/><rect x="90" y="40" width="9" height="20" rx="3" fill="var(--ac)"/></svg></div><div class="l"><span class="d"></span>Sleep</div><div class="v">7h 36m</div></div>
+            <div class="mini" style="--ac:var(--r-hyd)"><div class="ov"><svg viewBox="0 0 100 60" preserveAspectRatio="none"><path d="M0,40 Q25,32 50,40 T100,40 L100,60 L0,60 Z" fill="var(--ac)"/></svg></div><div class="l"><span class="d"></span>Hydration</div><div class="v">48<small> oz</small></div></div>
+          </div>
+        </div></div>
+        <div class="coach">
+          <div class="eye"><div class="badge">✦</div><div class="lbl">AI Coach</div><div class="when">· 8:51 PM</div><div class="ctrls"><span>⋯</span><span>⌄</span><span>✕</span></div></div>
+          <h2>Time to let your system catch up</h2>
+          <p>You kept it low-key today (~6,540 steps) and your resting HR is still a touch high at 58 bpm, so you're still recovering from yesterday.</p>
+        </div>
+      </div>
+
+      <div class="scrim"></div>
+      <div class="qsheet">
+        <div class="qs-grab"></div>
+        <div class="qs-h">Log</div>
+        <div class="qs-grid">
+          <div class="qs-item"><div class="qi">📷</div>Snap meal</div>
+          <div class="qs-item"><div class="qi">🍴</div>Scan menu</div>
+          <div class="qs-item"><div class="qi">🔎</div>Search food</div>
+          <div class="qs-item"><div class="qi">▦</div>Barcode</div>
+          <div class="qs-item"><div class="qi">🔢</div>Quick add</div>
+          <div class="qs-item"><div class="qi">💧</div>Log water</div>
+          <div class="qs-item"><div class="qi">⚖️</div>Weigh in</div>
+          <div class="qs-item"><div class="qi">📏</div>Body stats</div>
+          <div class="qs-item"><div class="qi">🙂</div>Log mood</div>
+          <div class="qs-item"><div class="qi">📸</div>Progress photo</div>
+          <div class="qs-item"><div class="qi">😴</div>Log sleep</div>
+          <div class="qs-item"><div class="qi">📝</div>Note</div>
+          <div class="qs-item"><div class="qi">⋯</div>More</div>
+        </div>
+      </div>
+      <div class="fab" style="bottom:430px; z-index:38;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+
+      <div class="nav">
+        <div class="ni on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11v11h-11z"/><path d="M3 9v6M21 9v6"/></svg>Workouts</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/></svg>Nutrition</div>
+        <div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+<div class="note">
+  <h3>My recommendation: <span style="color:var(--orange)">Direction C</span> — compact metrics + full coach</h3>
+  <ul>
+    <li>Keeps the <b>AI Coach full-size</b> (message + 4-task carousel) — the moat — while metrics shrink to one glanceable summary card (big Today ring + 4 live tiles with graph overlays) you swipe for trends.</li>
+    <li>The <b>FAB stays a pure AI Coach button.</b> A <b>Log</b> button in the metrics card opens the quick-actions sheet (snap meal / scan menu / water / weigh in / start workout) and a <b>Trends</b> button opens your analytics — so coach and logging never share one control.</li>
+    <li>Bento (A) stays an option if you'd rather metrics be large and detailed up top; the rail (B) is the ultra-compact alt. Both remain in this file to compare.</li>
+    <li><b>My Space</b> rows carry live mini-graphs + numbers (ring / sparkline / gauge / dual-line) matching each metric's chart type.</li>
+    <li><b>Tabs stay stable when you customize:</b> Summary is always the Today ring; More = your enabled tiles; Trends = your chart/large widgets. Adding or removing metrics only reflows More/Trends — the tab structure and the pinned ring never change.</li>
+    <li><b>Three metric-card buttons</b> — Log (opens the quick-actions sheet, now fuller since the standalone row is gone), Trends, and Start.</li>
+  </ul>
+  <h3 style="margin-top:16px">Your asks, mapped to real code</h3>
+  <ul>
+    <li><b>Bigger circle in A</b> — done (132px segmented hero ring + legend).</li>
+    <li><b>Every widget can be Large + editable</b> — phone 3: per-tile <code>S / Wide / Large</code> on all tiles, and the ⚙ opens an inline editor (color swatches, chart type Number/Ring/Bars/Line, date range 7d/30d/90d/1y).</li>
+    <li><b>Custom trends (2+ metrics)</b> — phone 4 is the existing <code>custom_trend_screen</code> (metric multi-select + range + normalized chart + AI correlation). "Add to home" saves it as a Large widget; it also shows up in the metric list (the "Weight × Sleep TREND" row).</li>
+    <li><b>My Space</b> — the editor is folded into My Space as a third tab (<code>Metrics</code> alongside the existing <code>Sections</code> + <code>Discover</code>), driven by <code>home_sections_provider</code>. "AI Coach" stays a section you can reorder.</li>
+  </ul>
+  <h3 style="margin-top:16px">To confirm before Flutter build</h3>
+  <ul>
+    <li>Go with <b>C</b>? (Compact summary card + Log/Start buttons + pure AI-Coach FAB + full coach.)</li>
+    <li>Second metrics button — <b>Start</b> (workout), or something else (e.g. Customize)?</li>
+    <li>Chart types per widget: <code>Number · Ring · Bars · Line</code> — enough, or add Area/Donut?</li>
+  </ul>
+</div>
+
+<script>
+  const tg = document.getElementById('themeToggle');
+  tg.addEventListener('click', ()=>{document.body.classList.toggle('dark');document.getElementById('themeLabel').textContent=document.body.classList.contains('dark')?'Light mode':'Dark mode';});
+  function wire(id){
+    const deck=document.getElementById(id); if(!deck) return;
+    const segs=document.querySelector('.segs[data-for="'+id+'"]');
+    const dots=document.querySelector('.dots[data-for="'+id+'"]');
+    function setActive(i){segs.querySelectorAll('.seg').forEach((s,k)=>s.classList.toggle('on',k===i));dots.querySelectorAll('i').forEach((d,k)=>d.classList.toggle('on',k===i));}
+    let raf;
+    deck.addEventListener('scroll',()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{setActive(Math.round(deck.scrollLeft/deck.clientWidth));});});
+    segs.querySelectorAll('.seg').forEach(s=>{s.addEventListener('click',()=>{const i=+s.dataset.i;deck.scrollTo({left:i*deck.clientWidth,behavior:'smooth'});setActive(i);});});
+  }
+  wire('deckA'); wire('deckB'); wire('deckC');
+</script>
+</body>
+</html>
