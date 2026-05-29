@@ -430,9 +430,19 @@ class ChatMessageBubble extends ConsumerWidget {
           if (!isUser && message.hasGeneratedWorkout)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: GoToWorkoutButton(
+              child: WorkoutResultCard(
                 workoutId: message.workoutId!,
                 workoutName: message.workoutName,
+                durationMinutes:
+                    (message.actionData?['duration_minutes'] as num?)?.toInt(),
+                exerciseCount:
+                    (message.actionData?['exercise_count'] as num?)?.toInt(),
+                exerciseNames:
+                    (message.actionData?['exercises_added'] is List)
+                        ? List<String>.from(
+                            (message.actionData!['exercises_added'] as List)
+                                .map((e) => e.toString()))
+                        : const [],
               ),
             ),
           if (!isUser && message.hasFoodLogged)
@@ -452,6 +462,46 @@ class ChatMessageBubble extends ConsumerWidget {
               prompt: message.suggestedActionsPrompt,
               excludeIds: _suppressedSuggestionIds,
               onAttachFormVideo: onAttachFormVideo,
+            ),
+          // ── Inline "go-to" deep-link pills ────────────────────────────
+          // When the coach references an entity (exercise, PR/progress,
+          // hydration, body weight, schedulable workout, recipe), surface a
+          // one-tap pill that deep-links to the right surface.
+          if (!isUser && message.hasExerciseReference)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: ExerciseHowToButton(
+                exerciseId: message.referencedExerciseId,
+                exerciseName: message.referencedExerciseName ?? 'this exercise',
+              ),
+            ),
+          if (!isUser && message.hasProgressReference)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: ViewProgressButton(
+                kind: message.progressReferenceKind,
+                exerciseName: message.progressExerciseName,
+              ),
+            ),
+          if (!isUser && message.hasHydrationLog)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: LogWaterButton(),
+            ),
+          if (!isUser && message.hasWeightLogPrompt)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: LogWeightButton(),
+            ),
+          if (!isUser && message.hasScheduleWorkout)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: ScheduleWorkoutButton(workoutId: message.workoutId!),
+            ),
+          if (!isUser && message.hasRecipeReference)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: ViewRecipeButton(recipe: message.referencedRecipe!),
             ),
           // Timestamp + delivery status (assistant messages also show latency)
           Padding(

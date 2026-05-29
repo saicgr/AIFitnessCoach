@@ -55,6 +55,40 @@ def _ensure_str(content) -> str:
         return "".join(parts) if parts else ""
     return str(content) if content else ""
 
+
+def _maybe_inline_action(
+    existing_action_data: Optional[Dict[str, Any]],
+    message_str: str,
+    selected_agent: "AgentType",
+    final_state: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    """ADDITIVE: attach a deterministic inline `go-to` action when the agent
+    produced no structured action_data of its own.
+
+    Never overwrites an existing action (food_analysis, generate_quick_workout,
+    event_logged, ...). Never raises — on any failure returns the original
+    action_data so the chat turn is unaffected.
+    """
+    if existing_action_data:
+        return existing_action_data
+    try:
+        from services.chat_inline_actions import infer_inline_action
+
+        agent_value = selected_agent.value if selected_agent else None
+        ctx = {
+            "tool_results": final_state.get("tool_results") or [],
+            "recipe": final_state.get("recipe"),
+            "recipes": final_state.get("recipes"),
+        }
+        inferred = infer_inline_action(message_str, agent_value, ctx)
+        if inferred:
+            logger.info(f"[LangGraph Service] Inline action inferred: {inferred.get('action')}")
+        return inferred
+    except Exception as e:  # never break a chat turn
+        logger.warning(f"[LangGraph Service] inline action inference failed (ignored): {e}")
+        return None
+
+
 logger = get_logger(__name__)
 
 
@@ -1294,6 +1328,13 @@ class LangGraphCoachService:
             message_str = _ensure_str(raw_response)
             if not message_str.strip():
                 message_str = "I'm sorry, I couldn't generate a response. Could you try rephrasing?"
+
+            # ADDITIVE: attach a deterministic inline go-to action ONLY when the
+            # agent emitted no structured action_data of its own.
+            action_data = _maybe_inline_action(
+                action_data, message_str, selected_agent, final_state
+            )
+
             response = ChatResponse(
                 message=message_str,
                 intent=intent,
@@ -1591,6 +1632,12 @@ class LangGraphCoachService:
         message_str = _ensure_str(raw_response)
         if not message_str.strip():
             message_str = "I'm sorry, I couldn't generate a response. Could you try rephrasing?"
+
+        # ADDITIVE: attach a deterministic inline go-to action ONLY when the
+        # agent emitted no structured action_data of its own.
+        action_data = _maybe_inline_action(
+            action_data, message_str, selected_agent, final_state
+        )
 
         # Emit the buffered reply as a single token event so the client renders
         # it through the same incremental path, then the action card (if any).

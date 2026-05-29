@@ -755,6 +755,7 @@ class ExerciseRAGService:
         batch_offset: int = 0,
         workout_environment: Optional[str] = None,
         very_recently_used_exercises: Optional[List[str]] = None,
+        fast: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -1463,28 +1464,13 @@ class ExerciseRAGService:
             # retries exhausted on transient errors like Vertex 504) fall
             # back to a deterministic ranking so the user gets a workout
             # instead of a 500.
-            try:
-                selected = await self._ai_select_exercises(
-                    candidates=ai_window,
-                    focus_area=focus_area,
-                    fitness_level=fitness_level,
-                    goals=goals,
-                    count=remaining_count,
-                    injuries=injuries,
-                    workout_params=adjusted_workout_params,
-                    strength_history=strength_history,
-                    progression_pace=progression_pace,
-                    equipment=equipment,
-                    avoid_exercises=avoid_exercises if avoid_exercises else None,
-                    user_id=user_id,
-                    recently_used_exercises=recently_used_exercises,
-                )
-            except Exception as ai_err:
-                logger.warning(
-                    f"[RAG] AI exercise selection failed after retries "
-                    f"({type(ai_err).__name__}: {ai_err}). Falling back to "
-                    f"deterministic ranking on {len(ai_window)} candidates."
-                )
+            if fast:
+                # Instant path (no LLM) for live-preview UIs (Customization
+                # Studio slider drags). Skips the Gemini ranking step entirely
+                # and uses the same deterministic ranking that backs the
+                # AI-failure fallback — same candidate pool, same output shape,
+                # <10ms vs 2-5s. All safety/injury/equipment filtering already
+                # happened upstream when the candidate pool was built.
                 selected = self._deterministic_select_exercises(
                     candidates=ai_window,
                     focus_area=focus_area,
@@ -1497,6 +1483,41 @@ class ExerciseRAGService:
                     recently_used_exercises=recently_used_exercises,
                     avoid_exercises=avoid_exercises if avoid_exercises else None,
                 )
+            else:
+                try:
+                    selected = await self._ai_select_exercises(
+                        candidates=ai_window,
+                        focus_area=focus_area,
+                        fitness_level=fitness_level,
+                        goals=goals,
+                        count=remaining_count,
+                        injuries=injuries,
+                        workout_params=adjusted_workout_params,
+                        strength_history=strength_history,
+                        progression_pace=progression_pace,
+                        equipment=equipment,
+                        avoid_exercises=avoid_exercises if avoid_exercises else None,
+                        user_id=user_id,
+                        recently_used_exercises=recently_used_exercises,
+                    )
+                except Exception as ai_err:
+                    logger.warning(
+                        f"[RAG] AI exercise selection failed after retries "
+                        f"({type(ai_err).__name__}: {ai_err}). Falling back to "
+                        f"deterministic ranking on {len(ai_window)} candidates."
+                    )
+                    selected = self._deterministic_select_exercises(
+                        candidates=ai_window,
+                        focus_area=focus_area,
+                        count=remaining_count,
+                        fitness_level=fitness_level,
+                        workout_params=adjusted_workout_params,
+                        strength_history=strength_history,
+                        progression_pace=progression_pace,
+                        equipment=equipment,
+                        recently_used_exercises=recently_used_exercises,
+                        avoid_exercises=avoid_exercises if avoid_exercises else None,
+                    )
 
             # Backfill from full candidate pool if AI returned too few
             # Two-pass: first avoid recently used, then allow as last resort

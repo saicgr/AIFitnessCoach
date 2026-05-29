@@ -64,6 +64,65 @@ class SavedWorkoutsService {
     }
   }
 
+  /// Save ANY live/generated workout to the user's library (no social activity
+  /// required). Backend: POST /saved-workouts/from-workout (auth-based; the
+  /// name auto-suffixes on collision, Google-style "Copy of X").
+  Future<Map<String, dynamic>> saveFromWorkout({
+    required String workoutId,
+    String? name,
+    String? folder,
+    String? notes,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/saved-workouts/from-workout',
+        data: {
+          'workout_id': workoutId,
+          if (name != null) 'name': name,
+          if (folder != null) 'folder': folder,
+          if (notes != null) 'notes': notes,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Saved Workouts] Saved workout to library');
+        return Map<String, dynamic>.from(response.data as Map);
+      }
+      throw Exception('Failed to save workout: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Saved Workouts] saveFromWorkout error: $e');
+      rethrow;
+    }
+  }
+
+  /// Rename / edit a saved workout's metadata. Backend: PUT /saved-workouts/{id}.
+  Future<Map<String, dynamic>> updateSavedWorkout({
+    required String userId,
+    required String savedWorkoutId,
+    String? workoutName,
+    String? folder,
+    String? notes,
+  }) async {
+    try {
+      final response = await _apiClient.put(
+        '/saved-workouts/$savedWorkoutId',
+        queryParameters: {'user_id': userId},
+        data: {
+          if (workoutName != null) 'workout_name': workoutName,
+          if (folder != null) 'folder': folder,
+          if (notes != null) 'notes': notes,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Saved Workouts] Updated saved workout');
+        return Map<String, dynamic>.from(response.data as Map);
+      }
+      throw Exception('Failed to update workout: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Saved Workouts] updateSavedWorkout error: $e');
+      rethrow;
+    }
+  }
+
   /// Get all saved workouts for user
   Future<List<Map<String, dynamic>>> getSavedWorkouts({
     required String userId,

@@ -10,6 +10,7 @@ import 'providers/library_providers.dart';
 import 'tabs/discover_tab.dart';
 import 'tabs/exercises_tab.dart';
 import 'tabs/my_library_tab.dart';
+import 'tabs/workouts_tab.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 // Export providers and models for external use
@@ -31,13 +32,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  static const _tabLabels = ['Discover', 'Exercises', 'Saved'];
+  static const _tabLabels = ['Discover', 'Exercises', 'Workouts', 'Saved'];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
       initialIndex: widget.initialTab ?? 0,
     );
@@ -257,6 +258,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     children: [
                       DiscoverTab(onSwitchToExercises: _switchToExercises),
                       const ExercisesTab(),
+                      const WorkoutsTab(),
                       const MyLibraryTab(),
                     ],
                   ),

@@ -36,14 +36,51 @@ class ScheduledWorkoutStatus(str, Enum):
 # EXERCISE MODELS
 # ============================================================
 
+class SetTargetTemplate(BaseModel):
+    """Per-set AI target preserved in a saved workout."""
+    set_number: int
+    set_type: str = "working"  # warmup | working | drop | failure | amrap
+    target_reps: Optional[int] = None
+    target_weight_kg: Optional[float] = None
+    target_hold_seconds: Optional[int] = None
+    target_rpe: Optional[int] = None
+    target_rir: Optional[int] = None
+
+
 class ExerciseTemplate(BaseModel):
-    """Template for an exercise in a saved workout."""
+    """Template for an exercise in a saved workout.
+
+    Lossless snapshot of a generated/live workout exercise. reps & weight are
+    optional because timed holds (planks, wall sits) and bodyweight moves have
+    neither; duration/hold/set_targets/superset/drop-set + media are preserved
+    so the saved copy renders and runs exactly like the original. (Without this
+    a plank/AMRAP/superset workout would be silently corrupted on save.)
+    """
     name: str = Field(..., max_length=200)
-    sets: int = Field(..., ge=1, le=20)
-    reps: int = Field(..., ge=1, le=100)
-    weight_kg: float = Field(..., ge=0, le=1000)
+    sets: int = Field(default=1, ge=1, le=20)
+    reps: Optional[int] = Field(default=None, ge=0, le=1000)
+    weight_kg: Optional[float] = Field(default=None, ge=0, le=1000)
     rest_seconds: Optional[int] = Field(default=60, ge=0, le=600)
+    duration_seconds: Optional[int] = Field(default=None, ge=0, le=7200)
+    hold_seconds: Optional[int] = Field(default=None, ge=0, le=3600)
     notes: Optional[str] = Field(default=None, max_length=500)
+    muscle_group: Optional[str] = Field(default=None, max_length=100)
+    equipment: Optional[str] = Field(default=None, max_length=100)
+    # Structure
+    superset_group: Optional[int] = None
+    superset_order: Optional[int] = None
+    is_unilateral: Optional[bool] = None
+    is_timed: Optional[bool] = None
+    is_amrap: Optional[bool] = None
+    is_drop_set: Optional[bool] = None
+    drop_set_count: Optional[int] = None
+    drop_set_percentage: Optional[int] = None
+    set_targets: Optional[List[SetTargetTemplate]] = None
+    # Media so the saved copy shows thumbnails/video
+    gif_url: Optional[str] = Field(default=None, max_length=1000)
+    video_url: Optional[str] = Field(default=None, max_length=1000)
+    image_url: Optional[str] = Field(default=None, max_length=1000)
+    library_id: Optional[str] = Field(default=None, max_length=100)
 
 
 # ============================================================

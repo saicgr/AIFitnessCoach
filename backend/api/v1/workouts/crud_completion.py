@@ -155,7 +155,10 @@ async def complete_workout(
             if isinstance(exercises, str):
                 exercises = json.loads(exercises)
 
-            if exercises:
+            # Manual "I've done this" (marked_done) carries only planned targets,
+            # not logged sets — never fabricate a PR from estimates. Streak/XP
+            # still count via schedule_score_recalc + trophy checks below.
+            if exercises and completion_method != "marked_done":
                 existing_prs_response = supabase.table("personal_records").select("*").eq(
                     "user_id", user_id
                 ).execute()

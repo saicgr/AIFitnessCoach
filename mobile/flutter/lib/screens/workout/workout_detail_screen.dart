@@ -26,6 +26,11 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/sauna_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/api_client.dart' show apiClientProvider;
+import '../../core/constants/api_constants.dart';
+import '../../data/models/workout_studio_models.dart';
+import '../../data/providers/workout_studio_providers.dart';
+import 'customization_studio_sheet.dart';
+import 'widgets/save_to_library_sheet.dart';
 import '../../data/services/image_url_cache.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'widgets/sauna_dialog.dart';
@@ -135,6 +140,16 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
   Timer? _autoSaveTimer;
   bool _isSaving = false;
   bool _isFavorite = false;
+
+  // Google-Health-parity action state.
+  // _thumbs: 1 = up, -1 = down, 0 = none. Local-optimistic; synced via
+  // workoutStudioServiceProvider.sendThumbs().
+  int _thumbs = 0;
+  // Reflects a locally-applied "Mark as done" so the UI updates instantly
+  // even before _loadWorkout() brings the canonical completed row back.
+  bool _markedDoneLocal = false;
+  // Guards against double-firing async actions while one is in flight.
+  bool _actionInFlight = false;
 
   // Sauna post-workout logging
   SaunaLog? _saunaLog;
@@ -419,6 +434,57 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         ],
                       ],
                     ),
+                  ),
+                ),
+              ),
+
+              // ─────────────────────────────────────────────────────────────
+              // PARITY ACTION ROW — Adjust workout + thumbs feedback.
+              // Mirrors Google Health's at-a-glance "tune this / rate this"
+              // controls; the destructive/secondary actions (Mark as done,
+              // Shuffle, Save) live in the app bar + overflow.
+              // ─────────────────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _adjustWorkout(workout),
+                          icon: const Icon(Icons.tune_rounded, size: 18),
+                          label: const Text('Adjust workout'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: accentColor,
+                            side: BorderSide(
+                                color: accentColor.withValues(alpha: 0.5)),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _ThumbButton(
+                        icon: _thumbs == 1
+                            ? Icons.thumb_up_rounded
+                            : Icons.thumb_up_outlined,
+                        active: _thumbs == 1,
+                        activeColor: accentColor,
+                        onTap: () => _onThumbs(workout, 1),
+                      ),
+                      const SizedBox(width: 8),
+                      _ThumbButton(
+                        icon: _thumbs == -1
+                            ? Icons.thumb_down_rounded
+                            : Icons.thumb_down_outlined,
+                        active: _thumbs == -1,
+                        activeColor: Colors.redAccent,
+                        onTap: () => _onThumbs(workout, -1),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1096,9 +1162,35 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               ),
             ),
             const SizedBox(width: 12),
-            // Menu button - floating pill
+            // Save to library button - floating pill (Google-Health parity)
             GestureDetector(
-              onTap: () => _showWorkoutActions(context, ref, workout),
+              onTap: () => _saveToLibrary(workout),
+              child: Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
+                  borderRadius: BorderRadius.circular(22),
+                  border: isDark ? null : Border.all(color: cardBorder.withValues(alpha: 0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.bookmark_add_outlined,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                  size: 22,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Menu button - floating pill (Mark as done + Shuffle + more)
+            GestureDetector(
+              onTap: () => _showParityOverflowMenu(workout),
               child: Container(
                 height: 44,
                 width: 44,
@@ -1139,3 +1231,50 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
 // Helper widgets and classes are extracted to:
 // - widgets/workout_detail_helpers.dart (StatCard, AnimatedFireIcon, AnimatedHellBadge, ExerciseDisplayItem, equipment helpers)
 // - widgets/workout_detail_ai_insights.dart (AI insights mixin)
+
+/// Compact pill thumb button used in the parity action row. Fills with the
+/// supplied [activeColor] when [active]; otherwise renders a muted outline.
+class _ThumbButton extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+  final Color activeColor;
+  final VoidCallback onTap;
+
+  const _ThumbButton({
+    required this.icon,
+    required this.active,
+    required this.activeColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedFg = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final baseColor = active
+        ? activeColor.withValues(alpha: 0.15)
+        : (isDark ? AppColors.elevated : AppColorsLight.elevated);
+    final borderColor = active
+        ? activeColor.withValues(alpha: 0.5)
+        : mutedFg.withValues(alpha: 0.25);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 44,
+        width: 44,
+        decoration: BoxDecoration(
+          color: baseColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: active ? activeColor : mutedFg,
+        ),
+      ),
+    );
+  }
+}

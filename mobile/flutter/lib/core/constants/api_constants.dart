@@ -84,6 +84,10 @@ class ApiConstants {
   static const String dailySchedule = '/daily-schedule';
   static const String supersets = '/supersets';
   static const String dashboard = '/dashboard';
+  // Saved-workout library + Customization Studio presets (Google-Health-parity).
+  // Studio sub-paths build off `workouts` (e.g. '$workouts/customize').
+  static const String savedWorkouts = '/saved-workouts';
+  static const String workoutPresets = '/workout-presets';
   // Generalized event log + Timeline aggregator (added 2026-05-10).
   static const String events = '/events';
   static const String timeline = '/timeline';

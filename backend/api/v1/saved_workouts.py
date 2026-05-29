@@ -14,6 +14,7 @@ from models.saved_workouts import (
     MonthlyCalendar, CalendarWorkout, ScheduledWorkoutStatus,
     ExerciseTemplate,
 )
+from models.workout_studio import SaveWorkoutFromWorkout
 from core.supabase_client import get_supabase
 from services.social_rag_service import get_social_rag_service
 from core.activity_logger import log_user_activity, log_user_error
@@ -433,6 +434,123 @@ async def save_workout_from_activity(
         raise
     except Exception as e:
         logger.error(f"Error in save_workout_from_activity: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
+
+
+def _coerce_sets(val) -> int:
+    """exercises_json `sets` may be an int (planned) or a list (logged)."""
+    if isinstance(val, list):
+        return max(1, len(val))
+    if isinstance(val, int):
+        return max(1, min(val, 20))
+    return 1
+
+
+def _workout_ex_to_template(ex: dict) -> dict:
+    """Lossless map of a workout exercise -> ExerciseTemplate fields. Extra
+    keys are dropped by pydantic; structure (timed/superset/set_targets/media)
+    is preserved so the saved copy renders and runs like the original."""
+    return {
+        "name": ex.get("name", ""),
+        "sets": _coerce_sets(ex.get("sets")),
+        "reps": ex.get("reps"),
+        "weight_kg": ex.get("weight_kg") or ex.get("weight"),
+        "rest_seconds": ex.get("rest_seconds", 60),
+        "duration_seconds": ex.get("duration_seconds"),
+        "hold_seconds": ex.get("hold_seconds"),
+        "notes": ex.get("notes"),
+        "muscle_group": ex.get("muscle_group") or ex.get("body_part"),
+        "equipment": ex.get("equipment"),
+        "superset_group": ex.get("superset_group"),
+        "superset_order": ex.get("superset_order"),
+        "is_unilateral": ex.get("is_unilateral"),
+        "is_timed": ex.get("is_timed"),
+        "is_amrap": ex.get("is_amrap"),
+        "is_drop_set": ex.get("is_drop_set"),
+        "drop_set_count": ex.get("drop_set_count"),
+        "drop_set_percentage": ex.get("drop_set_percentage"),
+        "set_targets": ex.get("set_targets"),
+        "gif_url": ex.get("gif_url"),
+        "video_url": ex.get("video_url"),
+        "image_url": ex.get("image_url"),
+        "library_id": ex.get("library_id") or ex.get("exercise_id"),
+    }
+
+
+@router.post("/from-workout", response_model=SavedWorkout)
+async def save_workout_from_workout(
+    request: SaveWorkoutFromWorkout,
+    current_user: dict = Depends(get_current_user),
+):
+    """Save any live/generated workout to the user's library (no social
+    activity required). Duplicates are allowed (Google-style 'Copy of X');
+    the name auto-suffixes on collision. The snapshot is independent of the
+    source workout (deleting the source does not affect the saved copy)."""
+    try:
+        supabase = get_supabase_client()
+        user_id = current_user["id"]
+
+        wr = supabase.table("workouts").select("*").eq("id", request.workout_id).execute()
+        if not wr.data:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        workout = wr.data[0]
+        if workout.get("user_id") != user_id:
+            raise HTTPException(status_code=403, detail="Not your workout")
+
+        raw_exercises = workout.get("exercises_json") or workout.get("exercises") or []
+        if isinstance(raw_exercises, str):
+            raw_exercises = json.loads(raw_exercises)
+        exercises = [_workout_ex_to_template(e) for e in raw_exercises if e.get("name")]
+        if not exercises:
+            raise HTTPException(status_code=400, detail="Workout has no exercises to save")
+
+        # Name (default "Copy of <name>"), auto-suffixed on collision.
+        base_name = (request.name or f"Copy of {workout.get('name', 'Workout')}")[:200]
+        name = base_name
+        existing_names = {
+            r["workout_name"] for r in (
+                supabase.table("saved_workouts").select("workout_name")
+                .eq("user_id", user_id).execute().data or []
+            )
+        }
+        n = 2
+        while name in existing_names:
+            name = f"{base_name} ({n})"[:200]
+            n += 1
+
+        meta = workout.get("generation_metadata") or {}
+        duration = workout.get("duration_minutes") or (len(exercises) * 5)
+        result = supabase.table("saved_workouts").insert({
+            "user_id": user_id,
+            "workout_name": name,
+            "workout_description": workout.get("description"),
+            "exercises": exercises,
+            "total_exercises": len(exercises),
+            "estimated_duration_minutes": min(int(duration), 480) if duration else None,
+            "folder": request.folder or "My Workouts",
+            "tags": ["custom"],
+            "notes": request.notes,
+        }).execute()
+
+        if not result.data:
+            raise safe_internal_error(Exception("Failed to save workout"), "saved_workouts")
+
+        saved = SavedWorkout(**result.data[0])
+        try:
+            await log_user_activity(
+                user_id=user_id, action="workout_saved",
+                endpoint="/api/v1/saved-workouts/from-workout",
+                message=f"Saved workout: {name}",
+                metadata={"saved_workout_id": saved.id, "source_workout_id": request.workout_id},
+                status_code=200,
+            )
+        except Exception:
+            pass
+        return saved
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in save_workout_from_workout: {e}", exc_info=True)
         raise safe_internal_error(e, "saved_workouts")
 
 

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/models/exercise.dart';
+import '../../../data/providers/workout_studio_providers.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../screens/nutrition/menu_analysis_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -338,6 +341,420 @@ class GoToWorkoutButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Rich inline workout card shown after the coach generates a workout
+/// (Google-Health-parity). Upgrades the plain "Go to X" button into a card:
+/// title, duration + exercise count, exercise chips, and inline Start / Save /
+/// thumbs wired to the verified studio + saved-workouts endpoints.
+class WorkoutResultCard extends ConsumerStatefulWidget {
+  final String workoutId;
+  final String? workoutName;
+  final int? durationMinutes;
+  final int? exerciseCount;
+  final List<String> exerciseNames;
+
+  const WorkoutResultCard({
+    super.key,
+    required this.workoutId,
+    this.workoutName,
+    this.durationMinutes,
+    this.exerciseCount,
+    this.exerciseNames = const [],
+  });
+
+  @override
+  ConsumerState<WorkoutResultCard> createState() => _WorkoutResultCardState();
+}
+
+class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
+  int _thumbs = 0;
+  bool _saving = false;
+  bool _saved = false;
+
+  Future<void> _save() async {
+    if (_saving || _saved) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(savedWorkoutsServiceProvider).saveFromWorkout(
+            workoutId: widget.workoutId,
+            name: widget.workoutName,
+          );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _saved = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved to your library')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save. Please try again.')),
+      );
+    }
+  }
+
+  Future<void> _sendThumbs(int value) async {
+    HapticService.selection();
+    final next = _thumbs == value ? 0 : value;
+    setState(() => _thumbs = next);
+    try {
+      await ref
+          .read(workoutStudioServiceProvider)
+          .sendThumbs(widget.workoutId, next);
+    } catch (_) {
+      // Soft signal — a failed thumbs vote is non-critical.
+    }
+  }
+
+  void _open() {
+    HapticService.selection();
+    context.push('/workout/${widget.workoutId}');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final name = widget.workoutName ?? 'Your workout';
+    final meta = <String>[
+      if (widget.durationMinutes != null) '${widget.durationMinutes} min',
+      if (widget.exerciseCount != null) '${widget.exerciseCount} exercises',
+    ];
+    final chips = widget.exerciseNames.take(4).toList();
+    final extra = (widget.exerciseCount ?? chips.length) - chips.length;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.purple.withValues(alpha: 0.35)),
+        color: Theme.of(context).cardColor,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: _open,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.cyan, AppColors.purple],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.fitness_center,
+                          size: 18, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right,
+                          size: 20, color: Colors.white),
+                    ],
+                  ),
+                  if (meta.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      meta.join('  •  '),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          if (chips.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final c in chips)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.purple.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        c,
+                        style: TextStyle(fontSize: 11, color: cs.onSurface),
+                      ),
+                    ),
+                  if (extra > 0)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 5),
+                      child: Text(
+                        '+$extra more',
+                        style: TextStyle(
+                            fontSize: 11, color: cs.onSurfaceVariant),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _open,
+                    icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                    label: const Text('Start'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.purple,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: Icon(
+                    _saved
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_border_rounded,
+                    size: 18,
+                  ),
+                  label: Text(_saved ? 'Saved' : 'Save'),
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: () => _sendThumbs(1),
+                  icon: Icon(
+                    _thumbs == 1
+                        ? Icons.thumb_up_alt_rounded
+                        : Icons.thumb_up_alt_outlined,
+                    size: 18,
+                  ),
+                  color: _thumbs == 1 ? AppColors.cyan : cs.onSurfaceVariant,
+                  tooltip: 'Good workout',
+                ),
+                IconButton(
+                  onPressed: () => _sendThumbs(-1),
+                  icon: Icon(
+                    _thumbs == -1
+                        ? Icons.thumb_down_alt_rounded
+                        : Icons.thumb_down_alt_outlined,
+                    size: 18,
+                  ),
+                  color: _thumbs == -1 ? Colors.redAccent : cs.onSurfaceVariant,
+                  tooltip: 'Not for me',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small pill-style inline deep-link button used inside the coach's chat
+/// bubble. Icon + label, subtle outlined style consistent with the other
+/// "go-to" affordances in this file (cyan-tinted by default). Wraps gracefully
+/// so long labels never overflow the bubble.
+class _InlineGoToPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _InlineGoToPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color = AppColors.cyan,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        HapticService.selection();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: color.withValues(alpha: 0.35),
+            width: 1,
+          ),
+        ),
+        // Wrap (not Row) so a long label degrades gracefully on narrow
+        // bubbles / small devices instead of overflowing.
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: color),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+            Icon(Icons.arrow_forward_rounded, size: 14, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "How to do [exerciseName]" — opens the full exercise detail screen (with
+/// autoplay video / instructions) for an exercise the coach referenced in
+/// chat. Builds a minimal [WorkoutExercise] from the name (+ id when known)
+/// since `/exercise-detail` accepts a raw `WorkoutExercise` via `extra`.
+class ExerciseHowToButton extends StatelessWidget {
+  final String? exerciseId;
+  final String exerciseName;
+
+  const ExerciseHowToButton({
+    super.key,
+    required this.exerciseId,
+    required this.exerciseName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _InlineGoToPill(
+      icon: Icons.play_circle_outline_rounded,
+      label: 'How to do $exerciseName',
+      color: AppColors.purple,
+      onTap: () {
+        final exercise = WorkoutExercise.fromJson(<String, dynamic>{
+          'id': exerciseId,
+          'exercise_id': exerciseId,
+          'name': exerciseName,
+          'sets': 0,
+          'reps': 0,
+        });
+        context.push('/exercise-detail', extra: exercise);
+      },
+    );
+  }
+}
+
+/// "View your PRs" / "View progress" — deep-links to the personal-records
+/// screen for a PR reference, otherwise the progress dashboard.
+class ViewProgressButton extends StatelessWidget {
+  final String kind; // 'pr' | 'progress'
+  final String? exerciseName;
+
+  const ViewProgressButton({
+    super.key,
+    required this.kind,
+    this.exerciseName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isPr = kind == 'pr';
+    return _InlineGoToPill(
+      icon: isPr ? Icons.emoji_events_outlined : Icons.trending_up_rounded,
+      label: isPr ? 'View your PRs' : 'View progress',
+      onTap: () {
+        context.push(isPr ? '/stats/personal-records' : '/progress');
+      },
+    );
+  }
+}
+
+/// "Log water" — opens the hydration logging screen.
+class LogWaterButton extends StatelessWidget {
+  const LogWaterButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return _InlineGoToPill(
+      icon: Icons.water_drop_outlined,
+      label: 'Log water',
+      onTap: () => context.push('/hydration'),
+    );
+  }
+}
+
+/// "Log weight" — opens the body-measurements screen.
+class LogWeightButton extends StatelessWidget {
+  const LogWeightButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return _InlineGoToPill(
+      icon: Icons.monitor_weight_outlined,
+      label: 'Log weight',
+      onTap: () => context.push('/measurements'),
+    );
+  }
+}
+
+/// "Schedule" — opens the schedule screen so the user can place the
+/// referenced workout on a day.
+class ScheduleWorkoutButton extends StatelessWidget {
+  final String workoutId;
+
+  const ScheduleWorkoutButton({super.key, required this.workoutId});
+
+  @override
+  Widget build(BuildContext context) {
+    return _InlineGoToPill(
+      icon: Icons.calendar_month_outlined,
+      label: 'Schedule',
+      color: AppColors.purple,
+      onTap: () => context.push('/schedule'),
+    );
+  }
+}
+
+/// "View recipe" — opens the recipe detail screen, passing the referenced
+/// recipe map through as `extra`.
+class ViewRecipeButton extends StatelessWidget {
+  final Map<String, dynamic> recipe;
+
+  const ViewRecipeButton({super.key, required this.recipe});
+
+  @override
+  Widget build(BuildContext context) {
+    return _InlineGoToPill(
+      icon: Icons.menu_book_outlined,
+      label: 'View recipe',
+      color: AppColors.green,
+      onTap: () => context.push('/recipe-detail', extra: recipe),
     );
   }
 }
