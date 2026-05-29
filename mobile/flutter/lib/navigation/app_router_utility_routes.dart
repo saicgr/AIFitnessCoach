@@ -127,6 +127,19 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const RecipeSuggestionsScreen(),
       ),
 
+      // Recipe Detail — opened from the AI chat "View recipe" button, which
+      // passes a loosely-typed recipe map through `state.extra`. The screen
+      // handles a missing/empty map gracefully with an empty state.
+      GoRoute(
+        path: '/recipe-detail',
+        builder: (context, state) {
+          final extra = state.extra is Map<String, dynamic>
+              ? state.extra as Map<String, dynamic>
+              : <String, dynamic>{};
+          return RecipeDetailScreen(recipe: extra);
+        },
+      ),
+
       // Nutrition Settings - Edit nutrition preferences and targets
       GoRoute(
         path: '/nutrition-settings',

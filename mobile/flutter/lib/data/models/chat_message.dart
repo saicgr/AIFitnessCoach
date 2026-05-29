@@ -364,6 +364,49 @@ class ChatMessage extends Equatable {
   /// Get the workout name if available
   String? get workoutName => actionData?['workout_name'] as String?;
 
+  // ── Inline go-to buttons (Google-Health-parity) ──────────────────────────
+  // Each fires only when the coach emits the matching actionData AND the
+  // required id resolves, so we never render a dead-link button.
+
+  /// Coach named a specific exercise → "How to do X" → /exercise-detail.
+  bool get hasExerciseReference =>
+      actionData != null &&
+      actionData!['action'] == 'reference_exercise' &&
+      (actionData!['exercise_id'] != null || actionData!['exercise_name'] != null);
+  String? get referencedExerciseId => actionData?['exercise_id']?.toString();
+  String? get referencedExerciseName => actionData?['exercise_name'] as String?;
+
+  /// Coach referenced a PR / progress → "View your progress".
+  bool get hasProgressReference =>
+      actionData != null && actionData!['action'] == 'reference_progress';
+  String get progressReferenceKind =>
+      (actionData?['kind'] as String?) ?? 'progress'; // 'pr' | 'progress'
+  String? get progressExerciseName => actionData?['exercise_name'] as String?;
+
+  /// Nutrition agent suggested a recipe → "View Recipe".
+  bool get hasRecipeReference =>
+      actionData != null &&
+      actionData!['action'] == 'reference_recipe' &&
+      actionData!['recipe'] != null;
+  Map<String, dynamic>? get referencedRecipe =>
+      actionData?['recipe'] is Map
+          ? Map<String, dynamic>.from(actionData!['recipe'] as Map)
+          : null;
+
+  /// Hydration advice → quick "Log water".
+  bool get hasHydrationLog =>
+      actionData != null && actionData!['action'] == 'log_hydration';
+
+  /// Coach asked about bodyweight → quick "Log weight".
+  bool get hasWeightLogPrompt =>
+      actionData != null && actionData!['action'] == 'log_weight';
+
+  /// Generated workout the user may want to schedule → "Schedule".
+  bool get hasScheduleWorkout =>
+      actionData != null &&
+      actionData!['action'] == 'schedule_workout' &&
+      actionData!['workout_id'] != null;
+
   /// Check if this message has a single food analysis result (plate scan)
   bool get hasFoodAnalysis =>
       actionData != null &&

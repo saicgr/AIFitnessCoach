@@ -434,3 +434,320 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
   }
 
 }
+
+/// Google-Health-parity actions for the workout detail screen:
+/// Adjust (+ Undo), Save to library, Mark as done, thumbs up/down, Shuffle.
+///
+/// All methods are surgical additions — they reuse the existing
+/// [_loadWorkout] reload path and never disturb the "Let's Go" start flow.
+extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
+
+  /// Build the studio params for this workout. Prefer the params the workout
+  /// was originally generated with (stored in generationMetadata) so the
+  /// studio opens pre-seeded with the user's real preferences; fall back to
+  /// defaults when the workout predates studio metadata.
+  WorkoutBuildParams _studioParamsFromWorkout(Workout workout) {
+    final raw = workout.generationMetadata?['studio_params'];
+    if (raw is Map) {
+      try {
+        return WorkoutBuildParams.fromJson(Map<String, dynamic>.from(raw));
+      } catch (e) {
+        debugPrint('⚠️ [WorkoutDetail] Bad studio_params, using defaults: $e');
+      }
+    }
+    return const WorkoutBuildParams();
+  }
+
+  /// Snapshot the workout's current state into a [BuiltWorkout] so an Undo
+  /// can restore it verbatim via adapt(prebuilt: ...). Captures the exact
+  /// exercise maps currently shown (post-edits), not the server's copy.
+  BuiltWorkout _snapshotBuiltWorkout(Workout workout) {
+    return BuiltWorkout(
+      name: workout.name ?? 'Workout',
+      type: workout.type ?? 'full_body',
+      difficulty: workout.difficulty ?? 'moderate',
+      durationMinutes: workout.durationMinutes ?? 45,
+      targetMuscles: List<String>.from(workout.primaryMuscles),
+      exercises: workout.exercises.map((e) => e.toJson()).toList(),
+    );
+  }
+
+  /// Reload the detail screen after a studio mutation. Prefer the in-place
+  /// re-fetch (keeps scroll/screen state); the route-replacement fallback is
+  /// only used if the workout id is somehow missing.
+  Future<void> _reloadAfterMutation() async {
+    final wid = _workout?.id;
+    if (wid == null || wid.isEmpty) {
+      if (mounted) context.pushReplacement('/workout/${widget.workoutId}');
+      return;
+    }
+    await _loadWorkout();
+    if (!mounted) return;
+    // Keep home / list views in sync with the freshly-adapted plan.
+    try {
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      ref.read(workoutsProvider.notifier).silentRefresh();
+    } catch (_) {/* best effort */}
+  }
+
+  // ── SAVE TO LIBRARY ──────────────────────────────────────────────────────
+
+  Future<void> _saveToLibrary(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) {
+      _showSnackBar('Cannot save — workout not ready yet', isError: true);
+      return;
+    }
+    HapticService.selection();
+    try {
+      final saved = await showSaveToLibrarySheet(
+        context,
+        workoutId: wid,
+        defaultName: 'Copy of ${workout.name ?? 'Workout'}',
+      );
+      if (!mounted) return;
+      if (saved) _showSnackBar('Saved to your library');
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Save to library failed: $e');
+      if (mounted) _showSnackBar('Could not save: $e', isError: true);
+    }
+  }
+
+  // ── ADJUST WORKOUT (+ UNDO) ──────────────────────────────────────────────
+
+  Future<void> _adjustWorkout(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) {
+      _showSnackBar('Cannot adjust — workout not ready yet', isError: true);
+      return;
+    }
+    if (_actionInFlight) return;
+    HapticService.selection();
+
+    // Snapshot BEFORE opening the studio so Undo restores the pre-adjust plan.
+    final snapshot = _snapshotBuiltWorkout(workout);
+
+    try {
+      final result = await showCustomizationStudio(
+        context,
+        workoutId: wid,
+        initialParams: _studioParamsFromWorkout(workout),
+        replaceInPlace: true,
+      );
+      if (!mounted || result == null) return;
+
+      await _reloadAfterMutation();
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: const Text('Workout adjusted'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () => _undoAdjust(wid, snapshot),
+            ),
+          ),
+        );
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Adjust workout failed: $e');
+      if (mounted) _showSnackBar('Could not adjust: $e', isError: true);
+    }
+  }
+
+  /// Restore the pre-adjust snapshot by re-adapting in place with the exact
+  /// previewed payload (WYSIWYG), then reload.
+  Future<void> _undoAdjust(String workoutId, BuiltWorkout snapshot) async {
+    if (_actionInFlight) return;
+    _actionInFlight = true;
+    HapticService.selection();
+    try {
+      await ref.read(workoutStudioServiceProvider).adapt(
+            workoutId,
+            replaceInPlace: true,
+            prebuilt: snapshot,
+          );
+      await _reloadAfterMutation();
+      if (mounted) _showSnackBar('Reverted to the previous workout');
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Undo adjust failed: $e');
+      if (mounted) _showSnackBar('Could not undo: $e', isError: true);
+    } finally {
+      _actionInFlight = false;
+    }
+  }
+
+  // ── MARK AS DONE ─────────────────────────────────────────────────────────
+
+  Future<void> _markAsDone(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    if (workout.isCompleted == true || _markedDoneLocal) return;
+    if (_actionInFlight) return;
+
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Mark as done?',
+      message:
+          'Log this workout as completed without running the timer. '
+          'No personal records will be created.',
+      confirmText: 'Mark as done',
+      icon: Icons.check_circle_outline_rounded,
+    );
+    if (confirmed != true || !mounted) return;
+
+    _actionInFlight = true;
+    HapticService.selection();
+    try {
+      await ref.read(apiClientProvider).post(
+        '${ApiConstants.workouts}/$wid/complete',
+        queryParameters: {'completion_method': 'marked_done'},
+      );
+      if (!mounted) return;
+      setState(() => _markedDoneLocal = true);
+      _showSnackBar('Logged as done');
+      // Pull the canonical completed row + refresh dependent views.
+      await _reloadAfterMutation();
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Mark as done failed: $e');
+      if (mounted) _showSnackBar('Could not log workout: $e', isError: true);
+    } finally {
+      _actionInFlight = false;
+    }
+  }
+
+  // ── THUMBS ───────────────────────────────────────────────────────────────
+
+  Future<void> _onThumbs(Workout workout, int direction) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    HapticService.selection();
+
+    // Toggle: tapping an already-active thumb clears it (sends 0).
+    final next = (_thumbs == direction) ? 0 : direction;
+    setState(() => _thumbs = next);
+
+    try {
+      await ref.read(workoutStudioServiceProvider).sendThumbs(wid, next);
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] sendThumbs failed: $e');
+      // Roll back the local toggle so the UI never lies about a failed write.
+      if (mounted) {
+        setState(() => _thumbs = (next == direction) ? 0 : direction);
+        _showSnackBar('Could not save feedback', isError: true);
+      }
+      return;
+    }
+
+    // Thumbs-down opens the studio so the user can express what they'd change.
+    if (next == -1 && mounted) {
+      try {
+        final result = await showCustomizationStudio(
+          context,
+          workoutId: wid,
+          initialParams: _studioParamsFromWorkout(workout),
+          replaceInPlace: true,
+        );
+        if (mounted && result != null) {
+          await _reloadAfterMutation();
+          if (mounted) _showSnackBar('Workout updated');
+        }
+      } catch (e) {
+        debugPrint('❌ [WorkoutDetail] Thumbs-down adjust failed: $e');
+        if (mounted) _showSnackBar('Could not open editor: $e', isError: true);
+      }
+    }
+  }
+
+  // ── SHUFFLE ──────────────────────────────────────────────────────────────
+
+  Future<void> _shuffleWorkout(Workout workout) async {
+    final wid = workout.id;
+    if (wid == null || wid.isEmpty) return;
+    if (_actionInFlight) return;
+    _actionInFlight = true;
+    HapticService.selection();
+    try {
+      await ref.read(workoutStudioServiceProvider).shuffle(wid);
+      await _reloadAfterMutation();
+      if (mounted) _showSnackBar('Shuffled in fresh exercises');
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Shuffle failed: $e');
+      if (mounted) _showSnackBar('Could not shuffle: $e', isError: true);
+    } finally {
+      _actionInFlight = false;
+    }
+  }
+
+  // ── OVERFLOW MENU (Mark as done + Shuffle), shown from the app-bar … button.
+  // Wraps the existing actions sheet so we keep prior behaviour and add the
+  // two new parity items above it.
+  Future<void> _showParityOverflowMenu(Workout workout) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final accentColor = ref.colors(context).accent;
+    final alreadyDone = workout.isCompleted == true || _markedDoneLocal;
+
+    HapticService.selection();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textPrimary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (!alreadyDone)
+              ListTile(
+                leading: Icon(Icons.check_circle_outline_rounded,
+                    color: accentColor),
+                title: Text('Mark as done',
+                    style: TextStyle(color: textPrimary)),
+                subtitle: const Text('Log as completed, no PRs'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _markAsDone(workout);
+                },
+              ),
+            ListTile(
+              leading: Icon(Icons.shuffle_rounded, color: accentColor),
+              title:
+                  Text('Shuffle exercises', style: TextStyle(color: textPrimary)),
+              subtitle: const Text('Re-roll with fresh picks'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _shuffleWorkout(workout);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.tune_rounded, color: textPrimary),
+              title: Text('More actions', style: TextStyle(color: textPrimary)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showWorkoutActions(context, ref, workout);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}

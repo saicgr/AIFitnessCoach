@@ -49,6 +49,7 @@ from .share_link import router as share_link_router
 from .card_context import router as card_context_router
 from .swap_variant import router as swap_variant_router
 from .milestones_progress import router as milestones_progress_router
+from .studio import router as studio_router
 
 # Create the combined router
 router = APIRouter()
@@ -81,6 +82,11 @@ router.include_router(swap_variant_router)
 # Workout count milestones (static `/milestones` path) — must come BEFORE
 # crud_router so it isn't swallowed by the dynamic `/{workout_id}` route.
 router.include_router(milestones_progress_router)
+
+# Customization Studio + adaptation (POST /customize, /{workout_id}/adapt,
+# /shuffle, /feedback). Registered BEFORE crud_router so the dynamic
+# `/{workout_id}` CRUD handlers don't shadow these sub-paths.
+router.include_router(studio_router)
 
 # CRUD operations (basic CRUD) - has /{workout_id} which would match "today" and "quick"
 router.include_router(crud_router)

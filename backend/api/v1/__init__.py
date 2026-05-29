@@ -13,6 +13,7 @@ from api.v1 import notifications, ai_settings
 from api.v1 import activity
 from api.v1 import subscriptions, stats
 from api.v1 import saved_workouts, challenges, leaderboard
+from api.v1 import workout_presets  # Customization Studio presets
 from api.v1 import workouts  # Modular workouts package
 from api.v1 import social  # Modular social package
 from api.v1 import workout_gallery  # Shareable workout recap images
@@ -233,6 +234,9 @@ router.include_router(social.router, tags=["Social"])
 
 # Saved and scheduled workouts from social feed
 router.include_router(saved_workouts.router, tags=["Saved Workouts"])  # router already declares prefix=/saved-workouts
+
+# Workout Customization Studio presets (router declares prefix=/workout-presets)
+router.include_router(workout_presets.router, tags=["Workout Presets"])
 
 # Workout challenges (friend-to-friend)
 router.include_router(challenges.router, tags=["Challenges"])

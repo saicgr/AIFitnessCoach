@@ -605,7 +605,9 @@ def generate_quick_workout(
     workout_id: str = None,
     duration_minutes: int = 15,
     workout_type: str = "full_body",
-    intensity: str = "moderate"
+    intensity: str = "moderate",
+    constraints_text: str = None,
+    focus: str = None,
 ) -> Dict[str, Any]:
     """
     Generate a quick workout for the user using the Exercise Library.
@@ -616,11 +618,102 @@ def generate_quick_workout(
         duration_minutes: Target duration in minutes (default 15, max 30)
         workout_type: Type of workout (full_body, upper, lower, cardio, core, boxing, etc.)
         intensity: Workout intensity - "light", "moderate", "intense"
+        constraints_text: Optional free-text limitation stated by the user. If the
+            user mentions an injury, pain, soreness, a time limit, an equipment
+            limit (e.g. "no dumbbells", "bodyweight only"), low-impact needs, or
+            a body-part focus, pass their exact words here (e.g. "I have back
+            pain, keep it short and low impact"). The workout is then built to
+            honor those constraints (pain/injury is a HARD avoidance).
+        focus: Optional muscle/area focus (e.g. "legs", "upper", "core") to bias
+            the workout toward when the user names one.
 
     Returns:
         Result dict with the new quick workout details
     """
     logger.info(f"Tool: Generating quick {duration_minutes}min {workout_type} workout for user {user_id}")
+
+    # ── Constraint-aware path (ADDITIVE) ──────────────────────────────────────
+    # When the user states a free-text limitation/focus, build via the shared
+    # workout engine so pain/injury/time/equipment/impact constraints are
+    # honored deterministically. Returns the SAME response dict shape as the
+    # legacy path below. Any failure falls through to the legacy path so a
+    # constraint parse never breaks workout generation.
+    if constraints_text or focus:
+        try:
+            from services.workout_builder import (
+                build_adapted_workout,
+                parse_constraints_text,
+                persist_built_workout,
+            )
+
+            db = get_supabase_db()
+            user = db.get_user(user_id) if user_id else None
+
+            base_text_parts = []
+            if constraints_text:
+                base_text_parts.append(constraints_text)
+            if focus:
+                base_text_parts.append(focus)
+            # Seed the parser with the requested type/intensity/duration too, so
+            # the LLM's structured args aren't lost when constraints are present.
+            seed_text = " ".join(base_text_parts + [
+                str(workout_type or ""), str(intensity or ""),
+                f"{duration_minutes} min",
+            ])
+            params = parse_constraints_text(seed_text)
+            if focus:
+                fa = str(focus).lower().strip().replace(" ", "_")
+                if fa and fa not in [f.lower() for f in params.focus_areas]:
+                    if "full_body" in params.focus_areas:
+                        params.focus_areas = [fa]
+                    else:
+                        params.focus_areas.append(fa)
+
+            built = run_async_in_sync(build_adapted_workout(params, user))
+
+            final_workout_id = persist_built_workout(
+                db,
+                user_id=str(user_id),
+                built=built,
+                params=params,
+                existing_workout_id=workout_id,
+                generation_source="chat",
+            )
+            if not final_workout_id:
+                raise RuntimeError("persist_built_workout returned no workout_id")
+
+            exercises_added = [
+                e.get("name", "Unknown") for e in (built.exercises or [])
+            ]
+            logger.info(
+                f"[Quick Workout] Built constraint-aware workout {final_workout_id}: "
+                f"'{built.name}' ({len(exercises_added)} exercises, "
+                f"relaxed={built.relaxed_constraints})"
+            )
+            return {
+                "success": True,
+                "action": "generate_quick_workout",
+                "workout_id": final_workout_id,
+                "workout_name": built.name,
+                "duration_minutes": built.duration_minutes,
+                "workout_type": built.type,
+                "intensity": params.intensity,
+                "exercises_removed": [],
+                "exercises_added": exercises_added,
+                "exercise_count": len(built.exercises or []),
+                "is_new_workout": workout_id is None,
+                "relaxed_constraints": built.relaxed_constraints,
+                "message": (
+                    f"Created '{built.name}' - {len(exercises_added)} exercises"
+                ),
+            }
+        except Exception as e:
+            logger.warning(
+                f"[Quick Workout] Constraint-aware build failed ({e}); "
+                f"falling back to standard generation",
+                exc_info=True,
+            )
+            # fall through to the legacy no-constraint path
 
     try:
         db = get_supabase_db()

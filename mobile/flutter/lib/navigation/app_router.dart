@@ -132,6 +132,7 @@ import '../core/providers/language_provider.dart';
 import '../core/accessibility/accessibility_provider.dart';
 import '../screens/nutrition/widget_log_trigger_screen.dart';
 import '../screens/nutrition/recipe_suggestions_screen.dart';
+import '../screens/nutrition/recipe_detail_screen.dart';
 import '../screens/nutrition/menu_analysis_history_screen.dart';
 import '../screens/nutrition/saved_hub_screen.dart';
 import '../data/services/api_client.dart';
