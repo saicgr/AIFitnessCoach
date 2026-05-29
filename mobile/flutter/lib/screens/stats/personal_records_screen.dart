@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/cache/cache_first_mixin.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/stat_typography.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
@@ -385,12 +386,11 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
           children: [
             Icon(icon, size: 18, color: iconColor),
             const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary),
+            StatNumber(
+              value: value,
+              size: StatType.secondary,
+              color: textPrimary,
+              alignment: Alignment.center,
             ),
             const SizedBox(height: 2),
             Text(

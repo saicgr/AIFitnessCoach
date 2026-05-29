@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/stat_typography.dart';
 
 /// A card displaying a single statistic with icon, value, and label.
 class StatCard extends StatelessWidget {
@@ -34,19 +35,20 @@ class StatCard extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          // The number is the focal point: bump it to the shared secondary
+          // tier so the card reads like a glanceable dashboard tile. Centered
+          // alignment keeps it visually balanced under the centered icon.
+          StatNumber(
+            value: value,
+            size: StatType.secondary,
+            color: color,
+            alignment: Alignment.center,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: StatType.labelSm,
               color: textMuted,
             ),
           ),

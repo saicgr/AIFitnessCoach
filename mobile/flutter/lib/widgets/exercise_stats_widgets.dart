@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../core/constants/stat_typography.dart';
 import '../data/models/exercise_history.dart';
 
 import '../l10n/generated/app_localizations.dart';
@@ -169,12 +170,10 @@ class ExerciseStatItem extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: valueColor,
-          ),
+        StatNumber(
+          value: value,
+          size: StatType.secondary,
+          color: valueColor ?? theme.colorScheme.onSurface,
         ),
       ],
     );
@@ -567,11 +566,10 @@ class ExerciseSessionStat extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        Text(
-          value,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+        StatNumber(
+          value: value,
+          size: StatType.compact,
+          color: theme.colorScheme.onSurface,
         ),
       ],
     );

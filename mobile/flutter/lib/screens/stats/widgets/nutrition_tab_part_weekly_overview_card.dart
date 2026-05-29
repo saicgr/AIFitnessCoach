@@ -756,11 +756,10 @@ class _TDEECard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    '${tdee.tdee}',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
+                  Flexible(
+                    child: StatNumber(
+                      value: '${tdee.tdee}',
+                      size: StatType.primary,
                       color: textPrimary,
                     ),
                   ),

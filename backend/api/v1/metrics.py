@@ -855,3 +855,251 @@ async def export_body_measurements(
     except Exception as e:
         logger.error(f"Failed to export body measurements: {e}", exc_info=True)
         raise safe_internal_error(e, "metrics")
+
+
+# ============ USER-DEFINED CUSTOM METRICS ============
+# Lets a user define an arbitrary metric (own label, unit, and whether
+# higher/lower/neutral is "good"), log values over time, and read history so
+# the app can render it as a stat with a trend. Backed by migration 2110:
+# user_custom_metrics (definitions) + user_custom_metric_logs (time series).
+
+import re as _re
+
+_VALID_GOOD_DIRECTIONS = {"higher", "lower", "neutral"}
+
+
+def _slugify_metric_key(label: str) -> str:
+    """Derive a url-safe slug from a free-text label.
+
+    Lowercase, every run of non-alphanumeric chars collapses to a single
+    underscore, leading/trailing underscores stripped. Empty result (e.g. a
+    label of only punctuation/emoji) falls back to "metric" so we always have
+    a non-empty key to dedupe.
+    """
+    slug = _re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_")
+    return slug or "metric"
+
+
+class CustomMetricCreate(BaseModel):
+    """Body for creating a custom metric definition.
+
+    No max_length on label per project rule (no arbitrary backend caps on
+    free-text); the proxy bounds payload size, not the model.
+    """
+    user_id: str
+    label: str = Field(..., min_length=1, description="User-facing display label")
+    unit: Optional[str] = Field(None, description="Optional unit, e.g. ml, hrs, reps")
+    good_direction: str = Field(
+        default="neutral",
+        description="Which trend direction is 'good': higher | lower | neutral",
+    )
+
+
+class CustomMetricLogCreate(BaseModel):
+    """Body for logging a value against a custom metric."""
+    user_id: str
+    value: float = Field(..., description="Logged numeric value")
+    recorded_at: Optional[str] = Field(
+        None, description="ISO-8601 timestamp; defaults to now() server-side"
+    )
+    notes: Optional[str] = None
+
+
+def _custom_metric_row_to_dict(row: dict) -> dict:
+    """Shape a user_custom_metrics row into the public JSON contract."""
+    return {
+        "id": str(row["id"]),
+        "key": row.get("key"),
+        "label": row.get("label"),
+        "unit": row.get("unit"),
+        "good_direction": row.get("good_direction"),
+        "is_active": row.get("is_active"),
+        "created_at": row.get("created_at"),
+    }
+
+
+@router.get("/custom", tags=["custom-metrics"])
+async def list_custom_metrics(user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """List a user's active custom-metric definitions.
+
+    Returns: [{id, key, label, unit, good_direction, is_active, created_at}]
+    """
+    logger.info(f"🔍 [custom-metrics] Listing definitions for user {user_id}")
+
+    db = get_supabase_db()
+    try:
+        result = db.client.table("user_custom_metrics") \
+            .select("id, key, label, unit, good_direction, is_active, created_at") \
+            .eq("user_id", user_id) \
+            .eq("is_active", True) \
+            .order("created_at", desc=False) \
+            .execute()
+        return [_custom_metric_row_to_dict(r) for r in (result.data or [])]
+    except Exception as e:
+        logger.error(f"❌ [custom-metrics] list failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "metrics")
+
+
+@router.post("/custom", tags=["custom-metrics"])
+async def create_custom_metric(input: CustomMetricCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Create a custom-metric definition.
+
+    Derives a url-safe `key` from the label, deduped per user by suffixing
+    -2, -3, ... if that key already exists for the user. Returns the created
+    row: {id, key, label, unit, good_direction, is_active, created_at}.
+    """
+    if input.good_direction not in _VALID_GOOD_DIRECTIONS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"good_direction must be one of {sorted(_VALID_GOOD_DIRECTIONS)}",
+        )
+
+    logger.info(f"🔍 [custom-metrics] Creating '{input.label}' for user {input.user_id}")
+
+    db = get_supabase_db()
+    try:
+        base_key = _slugify_metric_key(input.label)
+
+        # Fetch this user's existing keys so we can dedupe deterministically.
+        existing = db.client.table("user_custom_metrics") \
+            .select("key") \
+            .eq("user_id", input.user_id) \
+            .execute()
+        taken = {r["key"] for r in (existing.data or [])}
+
+        key = base_key
+        suffix = 2
+        while key in taken:
+            key = f"{base_key}-{suffix}"
+            suffix += 1
+
+        data = {
+            "user_id": input.user_id,
+            "key": key,
+            "label": input.label,
+            "unit": input.unit,
+            "good_direction": input.good_direction,
+        }
+        result = db.client.table("user_custom_metrics").insert(data).execute()
+
+        if not result.data or not result.data[0].get("id"):
+            raise safe_internal_error(
+                ValueError("user_custom_metrics insert returned no row"), "metrics"
+            )
+
+        logger.info(f"✅ [custom-metrics] Created key='{key}' id={result.data[0]['id']}")
+        return _custom_metric_row_to_dict(result.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [custom-metrics] create failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "metrics")
+
+
+@router.post("/custom/{metric_id}/log", tags=["custom-metrics"])
+async def log_custom_metric(metric_id: str, input: CustomMetricLogCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Log a value against a custom metric.
+
+    Verifies the metric belongs to user_id (404 if not), then inserts a log.
+    Returns: {id, metric_id, user_id, value, recorded_at, notes, created_at}.
+    """
+    logger.info(f"🔍 [custom-metrics] Logging value={input.value} on metric {metric_id}")
+
+    db = get_supabase_db()
+    try:
+        owner = db.client.table("user_custom_metrics") \
+            .select("id") \
+            .eq("id", metric_id) \
+            .eq("user_id", input.user_id) \
+            .execute()
+        if not owner.data:
+            raise HTTPException(status_code=404, detail="Custom metric not found")
+
+        data = {
+            "metric_id": metric_id,
+            "user_id": input.user_id,
+            "value": input.value,
+            "notes": input.notes,
+        }
+        if input.recorded_at:
+            data["recorded_at"] = input.recorded_at
+
+        result = db.client.table("user_custom_metric_logs").insert(data).execute()
+        if not result.data or not result.data[0].get("id"):
+            raise safe_internal_error(
+                ValueError("user_custom_metric_logs insert returned no row"), "metrics"
+            )
+
+        row = result.data[0]
+        logger.info(f"✅ [custom-metrics] Logged id={row['id']}")
+        return {
+            "id": str(row["id"]),
+            "metric_id": str(row["metric_id"]),
+            "user_id": row["user_id"],
+            "value": row["value"],
+            "recorded_at": row.get("recorded_at"),
+            "notes": row.get("notes"),
+            "created_at": row.get("created_at"),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [custom-metrics] log failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "metrics")
+
+
+@router.get("/custom/{metric_id}/history", tags=["custom-metrics"])
+async def get_custom_metric_history(
+    metric_id: str,
+    user_id: str,
+    days: int = 90,
+    current_user: dict = Depends(get_current_user),
+):
+    """Read a custom metric's logged history, oldest-first.
+
+    Verifies ownership (404 if the metric isn't this user's). Filters to the
+    last `days` (default 90); pass days=0 for all history. Returns logs ordered
+    by recorded_at ascending: [{value, recorded_at, notes}].
+    """
+    logger.info(f"🔍 [custom-metrics] History metric={metric_id} days={days}")
+
+    db = get_supabase_db()
+    try:
+        owner = db.client.table("user_custom_metrics") \
+            .select("id") \
+            .eq("id", metric_id) \
+            .eq("user_id", user_id) \
+            .execute()
+        if not owner.data:
+            raise HTTPException(status_code=404, detail="Custom metric not found")
+
+        query = db.client.table("user_custom_metric_logs") \
+            .select("value, recorded_at, notes") \
+            .eq("metric_id", metric_id) \
+            .eq("user_id", user_id)
+
+        if days and days > 0:
+            from datetime import datetime, timezone, timedelta
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+            query = query.gte("recorded_at", cutoff)
+
+        result = query.order("recorded_at", desc=False).execute()
+        return [
+            {
+                "value": r.get("value"),
+                "recorded_at": r.get("recorded_at"),
+                "notes": r.get("notes"),
+            }
+            for r in (result.data or [])
+        ]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [custom-metrics] history failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "metrics")

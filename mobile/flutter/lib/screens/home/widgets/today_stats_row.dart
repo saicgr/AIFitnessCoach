@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/providers/consistency_provider.dart';
@@ -56,7 +57,8 @@ class TodayStatsRow extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: SizedBox(
-        height: 68,
+        // Raised from 68 so the enlarged compact (19) pill numbers don't clip.
+        height: 78,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -108,7 +110,8 @@ class _GoalsPill extends ConsumerWidget {
           Text(
             '$completed/4',
             style: TextStyle(
-              fontSize: 15,
+              // Composite pill: modest bump only, layout/multi-line preserved.
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: completed > 0 ? doneColor : Theme.of(context).colorScheme.onSurface,
             ),
@@ -217,10 +220,11 @@ class _NutritionPill extends ConsumerWidget {
               children: [
                 Text(
                   calorieText,
-                  style: TextStyle(
-                    fontSize: 15,
+                  style: const TextStyle(
+                    // Composite pill: modest bump only, dual-line layout kept.
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFFFF6B35),
+                    color: Color(0xFFFF6B35),
                   ),
                 ),
                 Text(
@@ -325,17 +329,13 @@ class _BurnedPill extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            connected || saunaCal > 0 || aiBurned > 0 ? '$burned' : '--',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: hasData
-                  ? const Color(0xFFFF6B35)
-                  : Theme.of(context).colorScheme.onSurface,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          StatNumber(
+            value: connected || saunaCal > 0 || aiBurned > 0 ? '$burned' : '--',
+            size: StatType.compact,
+            color: hasData
+                ? const Color(0xFFFF6B35)
+                : Theme.of(context).colorScheme.onSurface,
+            alignment: Alignment.center,
           ),
           const SizedBox(height: 4),
           Icon(
@@ -375,17 +375,13 @@ class _StepsPill extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            connected ? _formatSteps(steps) : '--',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: connected && steps > 0
-                  ? const Color(0xFF8B5CF6)
-                  : Theme.of(context).colorScheme.onSurface,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          StatNumber(
+            value: connected ? _formatSteps(steps) : '--',
+            size: StatType.compact,
+            color: connected && steps > 0
+                ? const Color(0xFF8B5CF6)
+                : Theme.of(context).colorScheme.onSurface,
+            alignment: Alignment.center,
           ),
           const SizedBox(height: 4),
           Icon(
@@ -435,17 +431,13 @@ class _SleepPill extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            connected && totalMin > 0 ? '${hours}h${mins > 0 ? ' ${mins}m' : ''}' : '--',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: connected && totalMin > 0
-                  ? const Color(0xFF6366F1)
-                  : Theme.of(context).colorScheme.onSurface,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          StatNumber(
+            value: connected && totalMin > 0 ? '${hours}h${mins > 0 ? ' ${mins}m' : ''}' : '--',
+            size: StatType.compact,
+            color: connected && totalMin > 0
+                ? const Color(0xFF6366F1)
+                : Theme.of(context).colorScheme.onSurface,
+            alignment: Alignment.center,
           ),
           const SizedBox(height: 4),
           Icon(
@@ -482,15 +474,13 @@ class _StreakPill extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '$streak',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: isActive && streak > 0
-                  ? const Color(0xFFF59E0B)
-                  : Theme.of(context).colorScheme.onSurface,
-            ),
+          StatNumber(
+            value: '$streak',
+            size: StatType.compact,
+            color: isActive && streak > 0
+                ? const Color(0xFFF59E0B)
+                : Theme.of(context).colorScheme.onSurface,
+            alignment: Alignment.center,
           ),
           const SizedBox(height: 4),
           Icon(
@@ -548,7 +538,8 @@ class _HabitsPill extends ConsumerWidget {
           Text(
             total > 0 ? '$completed/$total' : '--',
             style: TextStyle(
-              fontSize: 15,
+              // Composite pill (ratio): modest bump only.
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: completed > 0
                   ? const Color(0xFF10B981)

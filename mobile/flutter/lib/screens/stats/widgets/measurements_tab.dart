@@ -5,7 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/stat_typography.dart';
+import '../../../core/stats/stat_trend.dart';
+import '../../../core/stats/stat_trend_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../data/providers/trend_series_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -520,9 +524,12 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              '${_formatValue(filtered.first.value)} $unit',
-              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: cyan),
+            StatNumber(
+              value: _formatValue(filtered.first.value),
+              unit: unit,
+              size: StatType.hero,
+              color: cyan,
+              alignment: Alignment.center,
             ),
             const SizedBox(height: 4),
             Text(

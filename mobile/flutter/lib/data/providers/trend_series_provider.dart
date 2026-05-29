@@ -17,6 +17,7 @@ import '../repositories/trends_repository.dart';
 import '../services/activity_service.dart';
 import '../services/api_client.dart';
 import '../../widgets/trends/trend_correlation.dart';
+import '../../core/stats/stat_trend.dart' show GoodDirection;
 import 'pillar_history_provider.dart';
 
 /// =========================================================================
@@ -584,6 +585,73 @@ enum TrendMetric {
 
   /// All metrics, in catalog order — for pickers.
   static List<TrendMetric> get catalog => TrendMetric.values;
+
+  /// Which direction of change is an improvement, used to color the trend
+  /// delta (green/red) on stat tiles. Only metrics with a clear health
+  /// consensus are classified; anything goal-dependent (weight, BMI, calories,
+  /// macros — a cut vs a bulk flips the meaning) stays [GoodDirection.neutral]
+  /// so we show a factual arrow without a misleading judgment.
+  GoodDirection get goodDirection {
+    switch (this) {
+      // Lower is better — body composition, cardiovascular, blood markers,
+      // and nutrition negatives.
+      case TrendMetric.bodyFat:
+      case TrendMetric.waist:
+      case TrendMetric.hips:
+      case TrendMetric.waistToHeight:
+      case TrendMetric.restingHeartRate:
+      case TrendMetric.cardioAvgHr:
+      case TrendMetric.glucoseAvg:
+      case TrendMetric.glucoseMax:
+      case TrendMetric.a1c:
+      case TrendMetric.microCholesterol:
+      case TrendMetric.microAddedSugar:
+      case TrendMetric.microTransFat:
+      case TrendMetric.microSaturatedFat:
+      case TrendMetric.microSodium:
+      case TrendMetric.microAlcohol:
+      // Predicted race times + paces: faster (smaller) is better.
+      case TrendMetric.racePredicted5k:
+      case TrendMetric.racePredicted10k:
+      case TrendMetric.racePredictedHalf:
+      case TrendMetric.racePredictedMarathon:
+      case TrendMetric.cardioFastestMile:
+      case TrendMetric.cardioPaceAvg:
+        return GoodDirection.lower;
+
+      // Higher is better — strength, fitness capacity, activity, scores,
+      // adherence, recovery.
+      case TrendMetric.strength1rm:
+      case TrendMetric.workoutVolume:
+      case TrendMetric.leanMass:
+      case TrendMetric.ffmi:
+      case TrendMetric.steps:
+      case TrendMetric.neatTotalSteps:
+      case TrendMetric.activeCalories:
+      case TrendMetric.sleepHours:
+      case TrendMetric.water:
+      case TrendMetric.vo2Max:
+      case TrendMetric.fitnessScore:
+      case TrendMetric.readinessScore:
+      case TrendMetric.wellbeingReadiness:
+      case TrendMetric.fastingScore:
+      case TrendMetric.neatScore:
+      case TrendMetric.moodScore:
+      case TrendMetric.energyLevel:
+      case TrendMetric.habitCompletion:
+      case TrendMetric.flexibilityMeasurement:
+      case TrendMetric.flexibilityRating:
+      case TrendMetric.flexibilityPercentile:
+      case TrendMetric.cardioDistance:
+      case TrendMetric.cardioWeeklyDistance:
+      case TrendMetric.cardioLongestRun:
+      case TrendMetric.feedbackEnergy:
+        return GoodDirection.higher;
+
+      default:
+        return GoodDirection.neutral;
+    }
+  }
 }
 
 /// A fully-resolved trend series: the points plus presentation metadata.

@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/cache/cache_first_mixin.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/goal_unit.dart';
+import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../data/services/personal_goals_service.dart';
 import '../../../data/models/consistency.dart';
 import '../../../data/models/milestone.dart';
 import '../../../data/providers/consistency_provider.dart';
@@ -322,6 +325,9 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
             ),
           ),
 
+          // Active weekly goals (read-only glance; hidden when none active)
+          const ActiveGoalsSection(),
+
           const SizedBox(height: 24),
 
           // Achievements Preview
@@ -474,13 +480,11 @@ class _CompactStat extends StatelessWidget {
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+        StatNumber(
+          value: value,
+          size: StatType.secondary,
+          color: color,
+          alignment: Alignment.center,
         ),
         Text(
           label,
@@ -771,6 +775,220 @@ class QuickActionButton extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ACTIVE WEEKLY GOALS (read-only Overview surface)
+// ═══════════════════════════════════════════════════════════════════
+
+/// Read-only fetch of the user's current-week personal goals for the Overview
+/// tab. Reuses the existing [PersonalGoalsService.getCurrentGoals] endpoint
+/// (the same source the full Personal Goals screen reads) so this surface adds
+/// no new data layer — it is glance-only and never edits a goal.
+///
+/// Returns the raw `goals` list (each entry is the same `Map<String, dynamic>`
+/// shape `GoalCard` consumes: `current_value`, `target_value`, `unit`,
+/// `is_pr_beaten`, `status`, `exercise_name`, `progress_percentage`). On a
+/// signed-out user or any error it yields an empty list, so the section simply
+/// renders nothing rather than surfacing a spinner or error on the hub.
+final _overviewActiveGoalsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final apiClient = ref.read(apiClientProvider);
+  final userId = await apiClient.getUserId();
+  if (userId == null) return const [];
+  final service = PersonalGoalsService(apiClient);
+  final data = await service.getCurrentGoals(userId: userId);
+  final raw = data['goals'];
+  if (raw is! List) return const [];
+  final goals = <Map<String, dynamic>>[];
+  for (final g in raw) {
+    if (g is Map) {
+      final map = Map<String, dynamic>.from(g);
+      // Only active goals belong on the at-a-glance Overview surface.
+      if ((map['status'] as String? ?? 'active') == 'active') {
+        goals.add(map);
+      }
+    }
+  }
+  return goals;
+});
+
+/// "Active Goals" Overview section: each active weekly goal as a glanceable
+/// big-number progress tile (current value hero number, "of {target}" label,
+/// percent-to-goal, and a PR badge when the personal best was beaten this
+/// week). Renders nothing when signed out, loading-cold, or empty.
+class ActiveGoalsSection extends ConsumerWidget {
+  const ActiveGoalsSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(_overviewActiveGoalsProvider);
+    final goals = async.asData?.value ?? const <Map<String, dynamic>>[];
+    if (goals.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        SectionHeader(
+          title: AppLocalizations.of(context).personalGoalsActiveGoals,
+          onViewAll: () => context.push('/personal-goals'),
+        ),
+        const SizedBox(height: 12),
+        ...goals.map((g) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _GoalProgressTile(goal: g),
+            )),
+      ],
+    );
+  }
+}
+
+/// One glanceable goal tile: a hero current-value number with a small
+/// "of {target}" label, a percent-to-goal bar, and a PR badge when beaten.
+class _GoalProgressTile extends StatelessWidget {
+  final Map<String, dynamic> goal;
+
+  const _GoalProgressTile({required this.goal});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final exerciseName = goal['exercise_name'] as String? ?? 'Goal';
+    final unit = GoalUnitExt.fromString(goal['unit'] as String?);
+    final currentValue = (goal['current_value'] as num?) ?? 0;
+    final targetValue = (goal['target_value'] as num?) ?? 0;
+    final isPrBeaten = goal['is_pr_beaten'] as bool? ?? false;
+    final rawPct = (goal['progress_percentage'] as num?)?.toDouble() ??
+        (targetValue > 0 ? currentValue / targetValue * 100 : 0.0);
+    final pct = rawPct.clamp(0.0, 100.0);
+
+    // PR-beaten tiles glow in the streak/PR warm accent; in-progress tiles use
+    // the calm cyan, matching the rest of the Overview surface palette.
+    final tileColor = isPrBeaten ? AppColors.orange : AppColors.cyan;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isPrBeaten ? tileColor.withValues(alpha: 0.5) : cardBorder,
+          width: isPrBeaten ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  exerciseName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+              if (isPrBeaten) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: tileColor.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.emoji_events,
+                          size: 12, color: tileColor),
+                      const SizedBox(width: 3),
+                      Text(
+                        'PR',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: tileColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Flexible(
+                child: StatNumber(
+                  value: _formatGoalValue(currentValue),
+                  unit: unit.label,
+                  size: StatType.hero,
+                  color: tileColor,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'of ${unit.format(targetValue)}',
+                  style: TextStyle(fontSize: 13, color: textMuted),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: (pct / 100).clamp(0.0, 1.0),
+                    backgroundColor: cardBorder,
+                    valueColor: AlwaysStoppedAnimation<Color>(tileColor),
+                    minHeight: 6,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '${pct.round()}%',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: tileColor,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Goal values are stored as integers for rep/volume goals; show no trailing
+  /// `.0`. Decimal-unit goals (kg / km / miles) keep one decimal.
+  String _formatGoalValue(num v) {
+    final d = v.toDouble();
+    if (d == d.truncate()) return d.toInt().toString();
+    return d.toStringAsFixed(1);
   }
 }
 

@@ -59,12 +59,13 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
               ),
               const Spacer(),
               if (latest != null) ...[
-                Text(
-                  '${_formatValue(latest.value)} $unit',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  child: StatNumber(
+                    value: _formatValue(latest.value),
+                    unit: unit,
+                    size: StatType.primary,
                     color: textPrimary,
+                    alignment: Alignment.centerRight,
                   ),
                 ),
                 if (change != null && change.abs() >= 0.1) ...[
@@ -87,6 +88,12 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                 Text(AppLocalizations.of(context)!.measurementsTabUiValue(unit), style: TextStyle(fontSize: 16, color: textMuted)),
             ],
           ),
+
+          // 30-day trend delta + sparkline for the selected metric, when it
+          // maps to a unified TrendMetric and has >=2 real points. Renders
+          // nothing otherwise (no fabricated flat line).
+          _buildTrendStrip(cyan: cyan),
+
           const SizedBox(height: 12),
 
           // Time range chips
@@ -339,6 +346,85 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
     _chartMemoKey = memoKey;
     _chartMemoData = chartData;
     return LineChart(chartData);
+  }
+
+  /// Maps the currently-selected body measurement onto the unified trend
+  /// engine's [TrendMetric], when one exists. Only measurements with a real
+  /// time-series source in [TrendMetric] are mapped; anything else returns
+  /// null so the trend strip is simply hidden.
+  TrendMetric? _trendMetricFor(MeasurementType type) {
+    switch (type) {
+      case MeasurementType.weight:
+        return TrendMetric.weight;
+      case MeasurementType.bodyFat:
+        return TrendMetric.bodyFat;
+      case MeasurementType.chest:
+        return TrendMetric.chest;
+      case MeasurementType.waist:
+        return TrendMetric.waist;
+      case MeasurementType.hips:
+        return TrendMetric.hips;
+      case MeasurementType.neck:
+        return TrendMetric.neck;
+      case MeasurementType.shoulders:
+        return TrendMetric.shoulders;
+      case MeasurementType.bicepsLeft:
+        return TrendMetric.bicepsLeft;
+      case MeasurementType.bicepsRight:
+        return TrendMetric.bicepsRight;
+      case MeasurementType.thighLeft:
+        return TrendMetric.thighLeft;
+      case MeasurementType.thighRight:
+        return TrendMetric.thighRight;
+      case MeasurementType.calfLeft:
+        return TrendMetric.calfLeft;
+      case MeasurementType.calfRight:
+        return TrendMetric.calfRight;
+      case MeasurementType.forearmLeft:
+        return TrendMetric.forearmLeft;
+      case MeasurementType.forearmRight:
+        return TrendMetric.forearmRight;
+    }
+  }
+
+  /// A 30-day glanceable trend: plain-language delta line on the left, a mini
+  /// sparkline on the right. Sourced from the unified [statTrendProvider]; the
+  /// metric's own [GoodDirection] colors the delta. Hidden entirely when the
+  /// metric is unmapped or has fewer than 2 real points.
+  Widget _buildTrendStrip({required Color cyan}) {
+    final metric = _trendMetricFor(_selectedType);
+    if (metric == null) return const SizedBox.shrink();
+
+    final async = ref.watch(
+      statTrendProvider(TrendSeriesKey(metric, TrendRange.d30)),
+    );
+    return async.maybeWhen(
+      data: (t) {
+        if (!t.hasTrend) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: StatDeltaLine(
+                  change: t.change!,
+                  good: t.goodDirection,
+                  unit: t.unit,
+                  period: 'in 30 days',
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 96,
+                child: Sparkline(points: t.points, color: cyan, height: 32),
+              ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
   }
 
 }

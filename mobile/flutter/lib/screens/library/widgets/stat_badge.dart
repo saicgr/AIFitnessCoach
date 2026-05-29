@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/stat_typography.dart';
 
 /// Compact stat badge showing icon, value, and label
 class StatBadge extends StatelessWidget {
@@ -26,13 +27,12 @@ class StatBadge extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: color,
-          ),
+        // Inline chip — keep it compact (badge tier), just nudged up from 14
+        // so the number is the part that reads first inside the list row.
+        StatNumber(
+          value: value,
+          size: StatType.badge,
+          color: color,
         ),
         const SizedBox(width: 2),
         Text(

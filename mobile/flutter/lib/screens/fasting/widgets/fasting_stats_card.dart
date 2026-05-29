@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/stat_typography.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/repositories/fasting_repository.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -117,13 +118,10 @@ class FastingStatsCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.fastingStatsCardStreakDays(currentStreak),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
+                StatNumber(
+                  value: l10n.fastingStatsCardStreakDays(currentStreak),
+                  size: StatType.secondary,
+                  color: textPrimary,
                 ),
                 Text(
                   l10n.fastingStatsCardCurrentStreak,
@@ -159,12 +157,13 @@ class FastingStatsCard extends StatelessWidget {
                 color: score!.tierColor,
               ),
               child: Center(
-                child: Text(
-                  '${score!.score}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: StatNumber(
+                    value: '${score!.score}',
+                    size: StatType.secondary,
                     color: Colors.white,
+                    alignment: Alignment.center,
                   ),
                 ),
               ),
@@ -459,13 +458,11 @@ class _MiniStat extends StatelessWidget {
 
     return Column(
       children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
+        StatNumber(
+          value: value,
+          size: StatType.secondary,
+          color: textPrimary,
+          alignment: Alignment.center,
         ),
         const SizedBox(height: 2),
         Text(
@@ -516,13 +513,10 @@ class _WeightStat extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            AppLocalizations.of(context)!.fastingStatsCardKg(value.toStringAsFixed(1)),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+          StatNumber(
+            value: AppLocalizations.of(context)!.fastingStatsCardKg(value.toStringAsFixed(1)),
+            size: StatType.compact,
+            color: textPrimary,
           ),
         ],
       ),

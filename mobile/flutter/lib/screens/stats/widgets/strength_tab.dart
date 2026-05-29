@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/stat_typography.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../progress/widgets/strength_overview_card.dart';
@@ -203,12 +204,13 @@ class FitnessScoreCard extends ConsumerWidget {
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    '$overallScore',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: StatNumber(
+                      value: '$overallScore',
+                      size: StatType.secondary,
                       color: Colors.white,
+                      alignment: Alignment.center,
                     ),
                   ),
                 ),

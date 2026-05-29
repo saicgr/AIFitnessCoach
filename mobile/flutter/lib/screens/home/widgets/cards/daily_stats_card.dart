@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/stat_typography.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/home_layout.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
@@ -457,10 +458,14 @@ class _StatItem extends StatelessWidget {
               child: Text(
                 displayValue,
                 style: TextStyle(
-                  fontSize: compact ? 24 : 32,
+                  // StatType.secondary (24) compact / StatType.primary (34) full.
+                  fontSize: compact ? StatType.secondary : StatType.primary,
                   fontWeight: FontWeight.bold,
                   color: textColor,
-                  height: 1.1,
+                  height: 1.0,
+                  // Tabular figures keep digit width fixed so the count-up
+                  // tween doesn't jitter horizontally as values change.
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
                 maxLines: 1,
               ),

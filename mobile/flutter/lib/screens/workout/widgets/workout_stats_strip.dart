@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/stat_typography.dart';
 import '../../../core/providers/user_provider.dart';
 import '../models/workout_state.dart';
 
@@ -200,13 +201,17 @@ class _StatColumn extends StatelessWidget {
               ),
               const SizedBox(width: 6),
             ],
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+            // Big, glanceable live metric. Wrapped in Flexible so the
+            // FittedBox(scaleDown) inside StatNumber gets a bounded width from
+            // the Expanded column and shrinks long values (e.g. "12,340 lb")
+            // rather than overflowing the strip. Tabular figures keep the
+            // per-second tick from jittering horizontally.
+            Flexible(
+              child: StatNumber(
+                value: value,
+                size: StatType.secondary,
                 color: textPrimary,
-                fontFeatures: const [FontFeature.tabularFigures()],
+                alignment: Alignment.center,
               ),
             ),
           ],

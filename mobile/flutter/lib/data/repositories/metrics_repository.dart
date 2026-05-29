@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/stats/stat_trend.dart' show GoodDirection;
+import '../../widgets/trends/trend_correlation.dart' show TrendPoint;
 import '../services/api_client.dart';
 
 /// Metrics repository provider
@@ -105,6 +107,97 @@ class MetricHistoryEntry {
       notes: json['notes'],
     );
   }
+}
+
+/// Maps a backend `good_direction` string to the shared [GoodDirection] enum
+/// that drives trend coloring. Unknown / missing values fall through to
+/// [GoodDirection.neutral] so an unclassified custom metric shows a factual
+/// arrow with no green/red judgment (never a fabricated direction).
+GoodDirection goodDirectionFromString(String? raw) {
+  switch (raw?.toLowerCase().trim()) {
+    case 'higher':
+    case 'higher_is_better':
+    case 'up':
+      return GoodDirection.higher;
+    case 'lower':
+    case 'lower_is_better':
+    case 'down':
+      return GoodDirection.lower;
+    default:
+      return GoodDirection.neutral;
+  }
+}
+
+/// Serialises a [GoodDirection] back to the backend's `good_direction` string.
+String goodDirectionToString(GoodDirection d) {
+  switch (d) {
+    case GoodDirection.higher:
+      return 'higher';
+    case GoodDirection.lower:
+      return 'lower';
+    case GoodDirection.neutral:
+      return 'neutral';
+  }
+}
+
+/// A user-defined custom metric definition (e.g. "Sleep quality", "Mood").
+///
+/// Mirrors the backend `GET /metrics/custom` row. [goodDirection] is resolved
+/// from the stored string so the dashboard can color the trend without
+/// re-deriving direction per screen.
+class CustomMetricDef {
+  final String id;
+  final String key;
+  final String label;
+  final String unit;
+  final GoodDirection goodDirection;
+  final bool isActive;
+
+  const CustomMetricDef({
+    required this.id,
+    required this.key,
+    required this.label,
+    required this.unit,
+    required this.goodDirection,
+    this.isActive = true,
+  });
+
+  factory CustomMetricDef.fromJson(Map<String, dynamic> json) {
+    return CustomMetricDef(
+      id: json['id']?.toString() ?? '',
+      key: json['key']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      unit: json['unit']?.toString() ?? '',
+      goodDirection: goodDirectionFromString(json['good_direction'] as String?),
+      isActive: json['is_active'] as bool? ?? true,
+    );
+  }
+}
+
+/// A single logged value for a custom metric.
+class CustomMetricLog {
+  final double value;
+  final DateTime recordedAt;
+  final String? notes;
+
+  const CustomMetricLog({
+    required this.value,
+    required this.recordedAt,
+    this.notes,
+  });
+
+  factory CustomMetricLog.fromJson(Map<String, dynamic> json) {
+    return CustomMetricLog(
+      value: (json['value'] as num).toDouble(),
+      recordedAt: DateTime.parse(
+        (json['recorded_at'] ?? json['created_at']) as String,
+      ),
+      notes: json['notes'] as String?,
+    );
+  }
+
+  /// A chartable [TrendPoint] for sparklines / delta math.
+  TrendPoint toTrendPoint() => TrendPoint(date: recordedAt, value: value);
 }
 
 /// Metrics state
@@ -336,6 +429,120 @@ class MetricsRepository {
     } catch (e) {
       debugPrint('❌ Error calculating metrics: $e');
       return null;
+    }
+  }
+
+  // ── User-defined custom metrics ───────────────────────────────────────────
+
+  /// Lists the user's custom metric definitions.
+  /// `GET /metrics/custom?user_id=...`
+  Future<List<CustomMetricDef>> listCustomMetrics(String userId) async {
+    try {
+      final response = await _client.get(
+        '${ApiConstants.metrics}/custom',
+        queryParameters: {'user_id': userId},
+      );
+      if (response.statusCode == 200 && response.data is List) {
+        final List<dynamic> data = response.data as List;
+        return data
+            .map((json) =>
+                CustomMetricDef.fromJson(Map<String, dynamic>.from(json as Map)))
+            .toList();
+      }
+      return const [];
+    } catch (e) {
+      debugPrint('❌ Error listing custom metrics: $e');
+      rethrow;
+    }
+  }
+
+  /// Creates a custom metric definition.
+  /// `POST /metrics/custom {user_id, label, unit?, good_direction}`
+  Future<CustomMetricDef> createCustomMetric({
+    required String userId,
+    required String label,
+    String? unit,
+    GoodDirection goodDirection = GoodDirection.neutral,
+  }) async {
+    try {
+      final response = await _client.post(
+        '${ApiConstants.metrics}/custom',
+        data: {
+          'user_id': userId,
+          'label': label,
+          if (unit != null && unit.isNotEmpty) 'unit': unit,
+          'good_direction': goodDirectionToString(goodDirection),
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return CustomMetricDef.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        );
+      }
+      throw Exception('Create custom metric failed (${response.statusCode})');
+    } catch (e) {
+      debugPrint('❌ Error creating custom metric: $e');
+      rethrow;
+    }
+  }
+
+  /// Logs a value for a custom metric.
+  /// `POST /metrics/custom/{metric_id}/log {user_id, value, recorded_at?, notes?}`
+  Future<CustomMetricLog> logCustomMetric({
+    required String metricId,
+    required String userId,
+    required double value,
+    DateTime? recordedAt,
+    String? notes,
+  }) async {
+    try {
+      final response = await _client.post(
+        '${ApiConstants.metrics}/custom/$metricId/log',
+        data: {
+          'user_id': userId,
+          'value': value,
+          if (recordedAt != null)
+            'recorded_at': recordedAt.toUtc().toIso8601String(),
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return CustomMetricLog.fromJson(
+          Map<String, dynamic>.from(response.data as Map),
+        );
+      }
+      throw Exception('Log custom metric failed (${response.statusCode})');
+    } catch (e) {
+      debugPrint('❌ Error logging custom metric: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetches a custom metric's logged history (most recent first or as the
+  /// backend orders it). Returned ascending by date is not guaranteed by the
+  /// API, so callers that need chart order should sort by [CustomMetricLog.recordedAt].
+  /// `GET /metrics/custom/{metric_id}/history?user_id=...&days=...`
+  Future<List<CustomMetricLog>> customMetricHistory({
+    required String metricId,
+    required String userId,
+    int days = 90,
+  }) async {
+    try {
+      final response = await _client.get(
+        '${ApiConstants.metrics}/custom/$metricId/history',
+        queryParameters: {'user_id': userId, 'days': days},
+      );
+      if (response.statusCode == 200 && response.data is List) {
+        final List<dynamic> data = response.data as List;
+        return data
+            .map((json) =>
+                CustomMetricLog.fromJson(Map<String, dynamic>.from(json as Map)))
+            .toList();
+      }
+      return const [];
+    } catch (e) {
+      debugPrint('❌ Error getting custom metric history: $e');
+      rethrow;
     }
   }
 

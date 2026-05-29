@@ -3,11 +3,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/stat_typography.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/stats/stat_trend.dart';
+import '../../core/stats/stat_trend_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
+import '../../data/providers/custom_metrics_provider.dart';
+import '../../data/providers/trend_series_provider.dart';
 import '../../data/repositories/metrics_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/trends/trend_correlation.dart' show TrendPoint;
 import '../../l10n/generated/app_localizations.dart';
 
 class MetricsDashboardScreen extends ConsumerStatefulWidget {
@@ -167,6 +173,15 @@ class _MetricsDashboardScreenState
                     child: _MetricsGridSkeleton(),
                   ),
                 ),
+
+              // User-defined custom metric cards (rendered with the same big
+              // StatNumber + delta + sparkline treatment as the built-ins).
+              SliverToBoxAdapter(
+                child: _CustomMetricsSection(
+                  range: _trendRange,
+                  onLog: _logCustomMetric,
+                ),
+              ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
@@ -359,11 +374,23 @@ class _MetricsDashboardScreenState
     );
   }
 
+  /// Maps the dashboard's selected period chip to the trend engine's range.
+  /// Defaults to 30 days (the redesign's default window) for '1d' / unknown.
+  TrendRange get _trendRange => switch (_selectedPeriod) {
+        '7d' => TrendRange.d7,
+        '30d' => TrendRange.d30,
+        '90d' => TrendRange.d90,
+        'all' => TrendRange.all,
+        _ => TrendRange.d30,
+      };
+
   Widget _buildCurrentMetricsGrid(HealthMetrics metrics) {
     final l10n = AppLocalizations.of(context)!;
+    final range = _trendRange;
     return Column(
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: _MetricCard(
@@ -372,7 +399,8 @@ class _MetricsDashboardScreenState
                 unit: 'kg',
                 icon: Icons.monitor_weight,
                 color: AppColors.cyan,
-                trend: _getTrend(metrics.weightKg, metrics.previousWeightKg),
+                trendMetric: TrendMetric.weight,
+                range: range,
               ),
             ),
             const SizedBox(width: 12),
@@ -383,13 +411,15 @@ class _MetricsDashboardScreenState
                 unit: '%',
                 icon: Icons.percent,
                 color: AppColors.purple,
-                trend: _getTrend(metrics.bodyFatPercent, null, lowerIsBetter: true),
+                trendMetric: TrendMetric.bodyFat,
+                range: range,
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: _MetricCard(
@@ -398,7 +428,8 @@ class _MetricsDashboardScreenState
                 unit: '',
                 icon: Icons.speed,
                 color: _getBmiColor(metrics.bmi),
-                trend: null,
+                trendMetric: TrendMetric.bmi,
+                range: range,
               ),
             ),
             const SizedBox(width: 12),
@@ -409,7 +440,8 @@ class _MetricsDashboardScreenState
                 unit: 'bpm',
                 icon: Icons.favorite,
                 color: AppColors.error,
-                trend: null,
+                trendMetric: TrendMetric.restingHeartRate,
+                range: range,
               ),
             ),
           ],
@@ -557,14 +589,6 @@ class _MetricsDashboardScreenState
     );
   }
 
-  String? _getTrend(double? current, double? previous, {bool lowerIsBetter = false}) {
-    if (current == null || previous == null) return null;
-    final diff = current - previous;
-    if (diff.abs() < 0.1) return null;
-    final isPositive = lowerIsBetter ? diff < 0 : diff > 0;
-    return isPositive ? 'up' : 'down';
-  }
-
   Color _getBmiColor(double? bmi) {
     if (bmi == null) return AppColors.textMuted;
     if (bmi < 18.5) return AppColors.warning;
@@ -590,8 +614,72 @@ class _MetricsDashboardScreenState
           }
           if (mounted) Navigator.pop(context);
         },
+        onSubmitCustom: (label, unit, direction, firstValue) async {
+          final auth = ref.read(authStateProvider);
+          if (auth.user == null) {
+            if (mounted) Navigator.pop(context);
+            return;
+          }
+          final repo = ref.read(metricsRepositoryProvider);
+          try {
+            final def = await repo.createCustomMetric(
+              userId: auth.user!.id,
+              label: label,
+              unit: unit,
+              goodDirection: direction,
+            );
+            // Optional first value: log it immediately so the new card has data.
+            if (firstValue != null) {
+              await repo.logCustomMetric(
+                metricId: def.id,
+                userId: auth.user!.id,
+                value: firstValue,
+              );
+            }
+            // Refresh the custom-metric list (and any history just seeded).
+            ref.invalidate(customMetricsProvider);
+            ref.invalidate(customMetricHistoryProvider);
+          } catch (e) {
+            debugPrint('❌ [Metrics] create custom metric failed: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Could not save the metric. Please try again.')),
+              );
+            }
+          }
+          if (mounted) Navigator.pop(context);
+        },
       ),
     );
+  }
+
+  /// Logs a new value for an existing custom metric via a small numeric dialog,
+  /// then refreshes that metric's history + the definition list.
+  Future<void> _logCustomMetric(CustomMetricDef def) async {
+    final auth = ref.read(authStateProvider);
+    if (auth.user == null) return;
+    final value = await showDialog<double>(
+      context: context,
+      useRootNavigator: true,
+      builder: (ctx) => _LogCustomValueDialog(def: def),
+    );
+    if (value == null) return;
+    try {
+      await ref.read(metricsRepositoryProvider).logCustomMetric(
+            metricId: def.id,
+            userId: auth.user!.id,
+            value: value,
+          );
+      ref.invalidate(customMetricsProvider);
+      ref.invalidate(customMetricHistoryProvider);
+    } catch (e) {
+      debugPrint('❌ [Metrics] log custom metric failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not save the value. Please try again.')),
+        );
+      }
+    }
   }
 }
 
@@ -632,13 +720,18 @@ class _MetricsGridSkeleton extends StatelessWidget {
 // Metric Card
 // ─────────────────────────────────────────────────────────────────
 
-class _MetricCard extends StatelessWidget {
+/// A built-in health-metric card: a big glanceable [StatNumber] plus a real
+/// trend delta + sparkline pulled from the unified trend engine for this
+/// metric. When the engine reports fewer than 2 points ([StatTrendData.hasTrend]
+/// false) the trend area renders nothing rather than fabricating a flat line.
+class _MetricCard extends ConsumerWidget {
   final String label;
   final String value;
   final String unit;
   final IconData icon;
   final Color color;
-  final String? trend;
+  final TrendMetric trendMetric;
+  final TrendRange range;
 
   const _MetricCard({
     required this.label,
@@ -646,11 +739,19 @@ class _MetricCard extends StatelessWidget {
     required this.unit,
     required this.icon,
     required this.color,
-    this.trend,
+    required this.trendMetric,
+    required this.range,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trendAsync =
+        ref.watch(statTrendProvider(TrendSeriesKey(trendMetric, range)));
+    final data = trendAsync.valueOrNull;
+    final hasTrend = data?.hasTrend ?? false;
+    // The arrow in the header mirrors the delta direction (when we have one).
+    final headerChange = hasTrend ? data!.change : null;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -671,45 +772,43 @@ class _MetricCard extends StatelessWidget {
                 child: Icon(icon, size: 18, color: color),
               ),
               const Spacer(),
-              if (trend != null)
+              if (headerChange != null && !headerChange.isFlat)
                 Icon(
-                  trend == 'up' ? Icons.trending_up : Icons.trending_down,
+                  StatTrend.icon(headerChange.direction),
                   size: 16,
-                  color: trend == 'up' ? AppColors.success : AppColors.error,
+                  color: StatTrend.color(
+                    context,
+                    headerChange.direction,
+                    data!.goodDirection,
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
-                if (unit.isNotEmpty)
-                  TextSpan(
-                    text: ' $unit',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-              ],
-            ),
+          StatNumber(
+            value: value,
+            unit: unit.isEmpty ? null : unit,
+            size: StatType.primary,
+            color: color,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: StatType.label,
               color: AppColors.textSecondary,
             ),
           ),
+          if (hasTrend) ...[
+            const SizedBox(height: 8),
+            StatDeltaLine(
+              change: data!.change!,
+              good: data.goodDirection,
+              unit: data.unit,
+            ),
+            const SizedBox(height: 6),
+            Sparkline(points: data.points, color: color, height: 32),
+          ],
         ],
       ),
     );
@@ -756,18 +855,15 @@ class _QuickStatCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
+                StatNumber(
+                  value: value,
+                  size: StatType.secondary,
+                  color: color,
                 ),
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: StatType.labelSm,
                     color: AppColors.textMuted,
                   ),
                   maxLines: 1,
@@ -789,15 +885,34 @@ class _QuickStatCard extends StatelessWidget {
 class _AddMetricSheet extends StatefulWidget {
   final Function(String metricType, double value) onSubmit;
 
-  const _AddMetricSheet({required this.onSubmit});
+  /// Called when the user defines a brand-new custom metric. [firstValue] is
+  /// null when they leave the value field blank (define now, log later).
+  final Future<void> Function(
+    String label,
+    String unit,
+    GoodDirection direction,
+    double? firstValue,
+  ) onSubmitCustom;
+
+  const _AddMetricSheet({required this.onSubmit, required this.onSubmitCustom});
 
   @override
   State<_AddMetricSheet> createState() => _AddMetricSheetState();
 }
 
+/// Sentinel preset value that switches the sheet into custom-definition mode.
+const String _kCustomMetricSentinel = '__custom__';
+
 class _AddMetricSheetState extends State<_AddMetricSheet> {
   String _selectedMetric = 'weight';
   final _valueController = TextEditingController();
+
+  // Custom-metric definition fields (only used when _isCustomMode).
+  final _customNameController = TextEditingController();
+  final _customUnitController = TextEditingController();
+  GoodDirection _customDirection = GoodDirection.neutral;
+
+  bool get _isCustomMode => _selectedMetric == _kCustomMetricSentinel;
 
   List<Map<String, String>> _buildMetricOptions(AppLocalizations l10n) => [
     {'label': l10n.metricsDashboardWeight, 'value': 'weight', 'unit': 'kg'},
@@ -806,12 +921,122 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
     {'label': l10n.metricsDashboardWaist, 'value': 'waist', 'unit': 'cm'},
     {'label': l10n.metricsDashboardHip, 'value': 'hip', 'unit': 'cm'},
     {'label': l10n.metricsDashboardRestingHeartRate, 'value': 'resting_heart_rate', 'unit': 'bpm'},
+    {'label': 'Custom metric', 'value': _kCustomMetricSentinel, 'unit': ''},
   ];
 
   @override
   void dispose() {
     _valueController.dispose();
+    _customNameController.dispose();
+    _customUnitController.dispose();
     super.dispose();
+  }
+
+  /// Definition fields for a brand-new custom metric: name, unit, and a 3-way
+  /// "which way is good" selector. The first-value field is optional (define
+  /// now, log later).
+  List<Widget> _buildCustomFields(AppLocalizations l10n) {
+    const labelStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: AppColors.textMuted,
+      letterSpacing: 1,
+    );
+    InputDecoration field(String hint, {String? suffix}) => InputDecoration(
+          hintText: hint,
+          suffixText: suffix,
+          filled: true,
+          fillColor: AppColors.elevated,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        );
+
+    return [
+      const Text('NAME', style: labelStyle),
+      const SizedBox(height: 8),
+      TextField(
+        controller: _customNameController,
+        textCapitalization: TextCapitalization.words,
+        decoration: field('e.g. Sleep quality, Mood, HRV'),
+      ),
+      const SizedBox(height: 20),
+      const Text('UNIT (OPTIONAL)', style: labelStyle),
+      const SizedBox(height: 8),
+      TextField(
+        controller: _customUnitController,
+        decoration: field('e.g. hours, score, ms'),
+      ),
+      const SizedBox(height: 20),
+      const Text('DIRECTION', style: labelStyle),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _directionChip('Higher is better', GoodDirection.higher),
+          _directionChip('Lower is better', GoodDirection.lower),
+          _directionChip('No preference', GoodDirection.neutral),
+        ],
+      ),
+      const SizedBox(height: 20),
+      const Text('FIRST VALUE (OPTIONAL)', style: labelStyle),
+      const SizedBox(height: 8),
+      TextField(
+        controller: _valueController,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: field(
+          l10n.metricsDashboardEnterValue,
+          suffix: _customUnitController.text.trim().isEmpty
+              ? null
+              : _customUnitController.text.trim(),
+        ),
+      ),
+    ];
+  }
+
+  Widget _directionChip(String label, GoodDirection direction) {
+    final isSelected = _customDirection == direction;
+    return GestureDetector(
+      onTap: () => setState(() => _customDirection = direction),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.cyan.withOpacity(0.2)
+              : AppColors.elevated,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _submitCustom() {
+    final name = _customNameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Give the metric a name first.')),
+      );
+      return;
+    }
+    final unit = _customUnitController.text.trim();
+    // Empty value field means "define now, log later" (empty input = no value,
+    // never a fabricated zero).
+    final raw = _valueController.text.trim();
+    final firstValue = raw.isEmpty ? null : double.tryParse(raw);
+    widget.onSubmitCustom(name, unit, _customDirection, firstValue);
   }
 
   @override
@@ -888,43 +1113,51 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
             ),
             const SizedBox(height: 24),
 
-            // Value input
-            Text(
-              l10n.metricsDashboardValue,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textMuted,
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _valueController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                hintText: l10n.metricsDashboardEnterValue,
-                suffixText: selectedOption['unit'],
-                filled: true,
-                fillColor: AppColors.elevated,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            // Either the preset value input, or the custom-metric definition
+            // fields. The preset path is untouched.
+            if (_isCustomMode)
+              ..._buildCustomFields(l10n)
+            else ...[
+              Text(
+                l10n.metricsDashboardValue,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted,
+                  letterSpacing: 1,
                 ),
               ),
-            ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _valueController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  hintText: l10n.metricsDashboardEnterValue,
+                  suffixText: selectedOption['unit'],
+                  filled: true,
+                  fillColor: AppColors.elevated,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
 
             // Submit button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  final value = double.tryParse(_valueController.text);
-                  if (value != null) {
-                    widget.onSubmit(_selectedMetric, value);
-                  }
-                },
+                onPressed: _isCustomMode
+                    ? _submitCustom
+                    : () {
+                        final value = double.tryParse(_valueController.text);
+                        if (value != null) {
+                          widget.onSubmit(_selectedMetric, value);
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.cyan,
                   foregroundColor: AppColors.pureBlack,
@@ -946,3 +1179,242 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Custom metrics section + card
+// ─────────────────────────────────────────────────────────────────
+
+/// Renders the user's custom metric definitions as a 2-up grid of cards,
+/// matching the built-in metric grid. Renders nothing (no header, no empty
+/// chrome) when the user has no custom metrics, so the section is invisible
+/// until they create one.
+class _CustomMetricsSection extends ConsumerWidget {
+  final TrendRange range;
+  final Future<void> Function(CustomMetricDef def) onLog;
+
+  const _CustomMetricsSection({required this.range, required this.onLog});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final defsAsync = ref.watch(customMetricsProvider);
+    final defs =
+        defsAsync.valueOrNull?.where((d) => d.isActive).toList() ??
+            const <CustomMetricDef>[];
+    if (defs.isEmpty) return const SizedBox.shrink();
+
+    // Lay out in pairs so each card is half-width, mirroring the built-in grid.
+    final rows = <Widget>[];
+    for (var i = 0; i < defs.length; i += 2) {
+      final left = defs[i];
+      final right = (i + 1 < defs.length) ? defs[i + 1] : null;
+      rows.add(Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _CustomMetricCard(def: left, range: range, onLog: onLog),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: right == null
+                  ? const SizedBox.shrink()
+                  : _CustomMetricCard(
+                      def: right, range: range, onLog: onLog),
+            ),
+          ],
+        ),
+      ));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child:
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows),
+    );
+  }
+}
+
+/// A single custom-metric card: big [StatNumber] for the latest logged value
+/// plus a [StatDeltaLine] + [Sparkline] computed from the metric's history.
+/// Tap to log a new value, long-press also logs (a quick affordance). With
+/// fewer than two logs only the number shows (never a fabricated trend).
+class _CustomMetricCard extends ConsumerWidget {
+  final CustomMetricDef def;
+  final TrendRange range;
+  final Future<void> Function(CustomMetricDef def) onLog;
+
+  const _CustomMetricCard({
+    required this.def,
+    required this.range,
+    required this.onLog,
+  });
+
+  /// A stable, distinct accent per custom metric (deterministic from its key)
+  /// so two cards don't share a color. Neutral metrics still get a hue here;
+  /// the trend coloring (green/red) is what stays neutral.
+  Color get _accent {
+    const palette = [
+      AppColors.cyan,
+      AppColors.purple,
+      AppColors.success,
+      AppColors.orange,
+    ];
+    return palette[def.key.hashCode.abs() % palette.length];
+  }
+
+  /// Maps the dashboard range to a `days` lookback for the history fetch.
+  /// `all` uses a wide 5-year window (the math only needs first vs last).
+  int _daysFor(TrendRange r) => r.days == 0 ? 1825 : r.days;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final color = _accent;
+    final pointsAsync = ref.watch(
+      customMetricHistoryProvider(
+        CustomMetricHistoryArgs(def.id, days: _daysFor(range)),
+      ),
+    );
+    final points = pointsAsync.valueOrNull ?? const <TrendPoint>[];
+    final latest = points.isNotEmpty ? points.last.value : null;
+    final change = StatChange.fromPoints(points);
+    final hasTrend = points.length >= 2 && change != null;
+
+    return GestureDetector(
+      onTap: () => onLog(def),
+      onLongPress: () => onLog(def),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.elevated,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.insights_rounded, size: 18, color: color),
+                ),
+                const Spacer(),
+                if (hasTrend && !change.isFlat)
+                  Icon(
+                    StatTrend.icon(change.direction),
+                    size: 16,
+                    color: StatTrend.color(
+                        context, change.direction, def.goodDirection),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            StatNumber(
+              value: latest != null ? StatTrend.fmt(latest) : '--',
+              unit: def.unit.isEmpty ? null : def.unit,
+              size: StatType.primary,
+              color: color,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              def.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: StatType.label,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            if (hasTrend) ...[
+              const SizedBox(height: 8),
+              StatDeltaLine(
+                change: change,
+                good: def.goodDirection,
+                unit: def.unit,
+              ),
+              const SizedBox(height: 6),
+              Sparkline(points: points, color: color, height: 32),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Log custom value dialog
+// ─────────────────────────────────────────────────────────────────
+
+/// A minimal numeric-entry dialog for logging a new value of a custom metric.
+/// Returns the parsed value via `Navigator.pop`, or null on cancel.
+class _LogCustomValueDialog extends StatefulWidget {
+  final CustomMetricDef def;
+
+  const _LogCustomValueDialog({required this.def});
+
+  @override
+  State<_LogCustomValueDialog> createState() => _LogCustomValueDialogState();
+}
+
+class _LogCustomValueDialogState extends State<_LogCustomValueDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final value = double.tryParse(_controller.text.trim());
+    if (value == null) return;
+    Navigator.of(context).pop(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.nearBlack,
+      title: Text(
+        'Log ${widget.def.label}',
+        style: const TextStyle(color: AppColors.textPrimary),
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        onSubmitted: (_) => _submit(),
+        decoration: InputDecoration(
+          hintText: 'Enter value',
+          suffixText: widget.def.unit.isEmpty ? null : widget.def.unit,
+          filled: true,
+          fillColor: AppColors.elevated,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.cyan,
+            foregroundColor: AppColors.pureBlack,
+          ),
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+

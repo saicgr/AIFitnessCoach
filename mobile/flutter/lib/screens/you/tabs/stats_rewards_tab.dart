@@ -19,6 +19,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
@@ -700,16 +701,7 @@ class _MetricTile extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          headline,
-          style: TextStyle(
-            color: fg,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        _MetricHeadline(headline: headline, fg: fg),
         const SizedBox(height: 2),
         Text(
           sub,
@@ -751,16 +743,7 @@ class _MetricTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                headline,
-                style: TextStyle(
-                  color: fg,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              _MetricHeadline(headline: headline, fg: fg),
               const SizedBox(height: 2),
               Text(
                 sub,
@@ -776,6 +759,73 @@ class _MetricTile extends StatelessWidget {
         ),
         Icon(Icons.chevron_right_rounded, color: fg.withValues(alpha: 0.4)),
       ],
+    );
+  }
+}
+
+/// Renders a [_MetricTile] headline so the NUMERIC part reads big and
+/// glanceable while any trailing word stays small + muted.
+///
+/// The headlines this tab produces are one of two shapes:
+///   • number-led — "3 active", "5 earned", "120 workouts", "340 pts",
+///     "3 ready", "10 to unlock", or a rank like "#42". Here the leading
+///     number is the metric, so it jumps to [StatType.secondary] (24px,
+///     w800 to keep the existing emphasis) and the trailing word renders as
+///     the small muted [StatNumber] unit.
+///   • purely textual — "Build a trend", "View perks", "Items",
+///     "Leaderboard", or the "—" fallback. These carry no number, so they
+///     keep the original 16/w800 title style unchanged.
+///
+/// Detection is deterministic (a regex on the leading token), never an LLM
+/// or a hardcoded whitelist of phrases — new number-led headlines added
+/// later are picked up automatically.
+class _MetricHeadline extends StatelessWidget {
+  final String headline;
+  final Color fg;
+
+  const _MetricHeadline({required this.headline, required this.fg});
+
+  /// Splits a number-led headline into (number, trailingUnit). The number
+  /// token may carry a leading `#` (rank), thousands commas, or a decimal
+  /// point. Returns null when the headline does not start with a number,
+  /// signalling the textual-title fallback.
+  static (String number, String unit)? _split(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) return null;
+    // Leading optional '#', then digits with optional commas/decimals.
+    final match = RegExp(r'^(#?\d[\d,]*\.?\d*)(.*)$').firstMatch(value);
+    if (match == null) return null;
+    final number = match.group(1)!.trim();
+    final unit = match.group(2)!.trim();
+    return (number, unit);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = _split(headline);
+
+    // Textual headline — keep the original emphasis exactly.
+    if (parts == null) {
+      return Text(
+        headline,
+        style: TextStyle(
+          color: fg,
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final (number, unit) = parts;
+    return StatNumber(
+      value: number,
+      unit: unit.isEmpty ? null : unit,
+      size: StatType.secondary,
+      color: fg,
+      weight: FontWeight.w800,
+      unitColor: fg.withValues(alpha: 0.55),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/stat_typography.dart';
 import '../../../../data/providers/milestones_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -386,13 +387,11 @@ class _StatItem extends StatelessWidget {
             size: 20,
           ),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
+          StatNumber(
+            value: value,
+            size: StatType.secondary,
+            color: textColor,
+            alignment: Alignment.center,
           ),
           const SizedBox(height: 2),
           Text(

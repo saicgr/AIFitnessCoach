@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -191,30 +192,14 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '$score',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.w700,
-                    color: accentColor,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
-                    '/ 100',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textSecondary,
-                    ),
-                  ),
-                ),
-              ],
+            // Hero focal number for the card — big & glanceable, with the
+            // "/ 100" denominator rendered as the smaller trailing unit.
+            StatNumber(
+              value: '$score',
+              size: StatType.hero,
+              color: accentColor,
+              unit: '/ 100',
+              unitColor: textSecondary,
             ),
             const SizedBox(height: 8),
             Container(
@@ -276,13 +261,10 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            '$score',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
+          StatNumber(
+            value: '$score',
+            size: StatType.secondary,
+            color: textPrimary,
           ),
         ],
       ),

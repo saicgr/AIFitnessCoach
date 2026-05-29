@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/stat_typography.dart';
 import '../../../../data/models/progress_charts.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
@@ -84,19 +85,17 @@ class SummaryCards extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          StatNumber(
+            value: value,
+            size: StatType.secondary,
+            color: color,
+            alignment: Alignment.center,
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: StatType.labelSm,
               color: colorScheme.onSurfaceVariant,
             ),
           ),
