@@ -217,11 +217,16 @@ class CoachContextualNudgeRow extends ConsumerWidget {
     WidgetRef ref,
     bool canMute,
   ) {
-    messenger.removeCurrentSnackBar();
+    // clearSnackBars (not removeCurrentSnackBar) wipes the QUEUE too, so
+    // dismissing several nudges quickly never stacks a backlog of toasts that
+    // then cycle one-by-one (issue 5). Shorter duration + a raised bottom
+    // margin lift it clear of the AI FAB / nav so swipe-to-dismiss isn't eaten.
+    messenger.clearSnackBars();
     messenger.showSnackBar(
       SnackBar(
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 90),
         content: Row(
           children: [
             Expanded(

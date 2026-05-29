@@ -26,6 +26,9 @@ import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/providers/home_sections_provider.dart';
+import '../../data/providers/contextual_nudge_provider.dart';
+import '../../data/models/contextual_nudge.dart' show NudgePriorityTier;
+import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/providers/fasting_provider.dart';
 import 'widgets/cycle_setup_home_prompt.dart';
 import '../../data/services/deep_link_service.dart';
@@ -1121,10 +1124,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // always be the very last card on Home, so it is appended after the
     // contextual card stack regardless of where it sits in the saved order.
     final timelineVisible = sections.isVisible(HomeSection.timeline);
+
+    // Drop sections that are GUARANTEED to render nothing today so they don't
+    // leave a phantom kHomeGap (issue 6):
+    //  • strainCoach  — folded into the workout hero, always SizedBox.shrink.
+    //  • metricTrio   — folded into the MetricSummaryDeck, always shrink.
+    //  • cycle        — self-hides unless menstrual tracking is enabled; the
+    //    gate is cheap (hormonalProfileProvider), so filter it here too rather
+    //    than leave a ~14px void between the nutrition card and Reports/Recap.
+    final menstrualEnabled = ref
+            .watch(hormonalProfileProvider)
+            .valueOrNull
+            ?.menstrualTrackingEnabled ??
+        false;
     final visible = sections.visibleInOrder
         .where((s) => s != HomeSection.strainCoach)
         .where((s) => s != HomeSection.timeline)
-        .toList(growable: false);
+        .where((s) => s != HomeSection.metricTrio)
+        .where((s) => !(s == HomeSection.cycle && !menstrualEnabled))
+        .toList(growable: true);
+
+    // Intent-aware ordering (issue 2): the Workout card is the day's primary
+    // ACTION, the Coach card is the framing. On a scheduled training day,
+    // surface the workout first. On a rest day — or whenever the coach is
+    // raising a high-priority (health-alert) nudge — surface the coach first.
+    final todayResp = ref.watch(todayWorkoutProvider).valueOrNull;
+    final isTrainingDay = todayResp != null &&
+        (todayResp.hasWorkoutToday ||
+            todayResp.todayWorkout != null ||
+            todayResp.completedToday);
+    final hasHighPriorityInsight = ref
+        .watch(contextualNudgeProvider)
+        .any((n) => n.priorityTier == NudgePriorityTier.healthAlert);
+    final coachFirst = !isTrainingDay || hasHighPriorityInsight;
+    final iWorkout = visible.indexOf(HomeSection.workoutCard);
+    final iCoach = visible.indexOf(HomeSection.coachHero);
+    if (iWorkout >= 0 && iCoach >= 0) {
+      final workoutIsFirst = iWorkout < iCoach;
+      // Swap their slots only when the current order disagrees with intent.
+      if (coachFirst == workoutIsFirst) {
+        visible[iWorkout] = HomeSection.coachHero;
+        visible[iCoach] = HomeSection.workoutCard;
+      }
+    }
+
     final slivers = <Widget>[];
 
     // Above-the-fold: eager adapters, preserving the per-section gap.

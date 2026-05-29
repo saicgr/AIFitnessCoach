@@ -18,6 +18,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/theme_colors.dart';
 import 'cards/accountability_partner_nudge.dart';
 import 'cards/app_anniversary_card.dart';
 import 'cards/bedtime_window_tile.dart';
@@ -91,129 +92,221 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Ordering loosely follows the user's day: health snapshot → schedule
-    // → meals/hydration → habits/social → educational → milestones →
-    // pre-workout → post-workout → onboarding leftovers. Within a group
-    // the SubCardRanker handles sub-card prioritisation; this stack is
-    // for the FULL cards that sit outside the Coach hero card.
+    // Each card still self-collapses to SizedBox.shrink when its gate fails.
+    // They're now grouped under labeled, SELF-HIDING section headers (issue 7):
+    // a header only paints when ≥1 card in its group actually renders, so an
+    // empty group shows nothing (no orphan header). The Timeline is NOT here —
+    // home_screen appends it as the very last card after this whole stack.
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: const [
-        // -- Recovery & physiological --------------------------------
-        ReadinessScoreCard(),
-        HrvTrendStrip(),
-        BodyBatteryTile(),
-        StressScoreTile(),
-        Vo2maxTrendChip(),
+      children: [
+        _HomeCardSection(
+          title: 'Recovery & sleep',
+          children: const [
+            ReadinessScoreCard(),
+            HrvTrendStrip(),
+            BodyBatteryTile(),
+            StressScoreTile(),
+            Vo2maxTrendChip(),
+            BedtimeWindowTile(),
+            WakeConsistencyTile(),
+            SleepLatencyTile(),
+            EveningSleepStoryTile(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Activity',
+          children: const [
+            StandReminderChip(),
+            StepStreakTile(),
+            ZoneMinutesBar(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Nutrition & body',
+          children: const [
+            MicronutrientGapChip(),
+            SmoothedWeightTrendChip(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Your cycle',
+          children: const [
+            CyclePhaseChip(),
+            PeriodPredictionTile(),
+            PmsPrepCard(),
+            PeriodSymptomLogTile(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Mind',
+          children: const [
+            DailyMeditationTile(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Plan & adjustments',
+          children: const [
+            WeeklyPlanStrip(),
+            SmartRescheduleBanner(),
+            DayOfWeekSkipCard(),
+            ReturnToExerciseCard(),
+            InjuryWorkaroundBanner(),
+            JetLagAdjustCard(),
+            BusyWeekCompressedCard(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Patterns & insights',
+          children: const [
+            WorkoutSleepCorrelationCard(),
+            MacroPatternCallout(),
+            StrainRecoveryMismatchCard(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Social',
+          children: const [
+            FriendActivitySnippet(),
+            GroupChallengeProgress(),
+            AccountabilityPartnerNudge(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Learn',
+          children: const [
+            KnowledgeCardsCarousel(),
+            DailyLessonTile(),
+            DiscoveryInsightTile(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Milestones',
+          children: const [
+            AppAnniversaryCard(),
+            WorkoutMilestoneCard(),
+            BodyCompMilestoneCard(),
+            BirthdayCard(),
+            FirstOfMonthCard(),
+            WeighInDayChip(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Membership',
+          children: const [
+            UsageUpsellBanner(),
+            ReferralGiftTile(),
+            PremiumPreviewTile(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Devices & setup',
+          children: const [
+            WearableBatteryChip(),
+            ScaleSyncPrompt(),
+            MissingDataChip(),
+            StickyWearableTile(),
+            DayNTutorialCard(),
+            Day14GoalRecalibrationCard(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Fasting',
+          children: const [
+            FastZoneStrip(),
+            FastStreakTile(),
+          ],
+        ),
+        _HomeCardSection(
+          title: 'Around your workout',
+          children: const [
+            PreWorkoutT30Card(),
+            PreWorkoutWarmupCard(),
+            PreWorkoutRpeChip(),
+            DailyStrainTargetTile(),
+            EquipmentPreflightBanner(),
+            TrainingEffectCard(),
+            RecoveryCountdownTile(),
+            PlannedVsActualCard(),
+            PostWorkoutTomorrowAdjustCard(),
+            HrZoneBreakdownCard(),
+            PostWorkoutMoodStrip(),
+            RhrDeltaCard(),
+            OneRmRecomputeBanner(),
+            PostWorkoutProgressPhotoPrompt(),
+            WorkoutFeltJournalPrompt(),
+          ],
+        ),
+      ],
+    );
+  }
+}
 
-        // -- Sleep / circadian ---------------------------------------
-        BedtimeWindowTile(),
-        WakeConsistencyTile(),
-        SleepLatencyTile(),
-        EveningSleepStoryTile(),
+/// A labeled group of contextual home cards whose header **only appears when
+/// at least one child actually renders content** (issue 7).
+///
+/// The child cards each self-collapse to `SizedBox.shrink()` when their gate
+/// fails, so a group can be entirely empty on any given day. Rather than
+/// duplicate every card's gating logic, this wrapper measures the rendered
+/// height of the card column after layout and shows/hides the header
+/// accordingly — no orphan "RECOVERY" header floating over nothing.
+class _HomeCardSection extends StatefulWidget {
+  final String title;
+  final List<Widget> children;
+  const _HomeCardSection({required this.title, required this.children});
 
-        // -- Schedule / planning -------------------------------------
-        // Removed from Home (user feedback): TomorrowPreviewTile +
-        // PreWorkoutFuelCard — tomorrow's plan lives in the workout/week view,
-        // fuel guidance in nutrition.
-        WeeklyPlanStrip(),
-        SmartRescheduleBanner(),
+  @override
+  State<_HomeCardSection> createState() => _HomeCardSectionState();
+}
 
-        // -- Movement non-workout ------------------------------------
-        StandReminderChip(),
-        StepStreakTile(),
-        ZoneMinutesBar(),
+class _HomeCardSectionState extends State<_HomeCardSection> {
+  final GlobalKey _bodyKey = GlobalKey();
+  bool _hasContent = false;
 
-        // -- Hydration / nutrition micro -----------------------------
-        MicronutrientGapChip(),
-        SmoothedWeightTrendChip(),
+  void _measure() {
+    if (!mounted) return;
+    final ctx = _bodyKey.currentContext;
+    if (ctx == null) return;
+    final ro = ctx.findRenderObject();
+    final h = (ro is RenderBox && ro.hasSize) ? ro.size.height : 0.0;
+    final has = h > 1.0;
+    if (has != _hasContent) setState(() => _hasContent = has);
+  }
 
-        // -- Cycle ---------------------------------------------------
-        CyclePhaseChip(),
-        PeriodPredictionTile(),
-        PmsPrepCard(),
-        PeriodSymptomLogTile(),
-
-        // -- Mental health -------------------------------------------
-        // Mood + Mindful moved into the Log sheet (user feedback) — they no
-        // longer render as standalone Home cards.
-        DailyMeditationTile(),
-
-        // -- Habit / gamification ------------------------------------
-        // Gamification (quests, streak freeze, monthly quest, league) removed
-        // from Home (user feedback) — it lives in the You/Profile tab.
-
-        // -- Social --------------------------------------------------
-        FriendActivitySnippet(),
-        GroupChallengeProgress(),
-        AccountabilityPartnerNudge(),
-
-        // -- Subscription --------------------------------------------
-        UsageUpsellBanner(),
-        ReferralGiftTile(),
-        PremiumPreviewTile(),
-
-        // -- Educational ---------------------------------------------
-        // WeeklyDigestTile (week recap) moved to the two-up "Reports · Recap"
-        // row next to the Weekly Report card (user feedback).
-        KnowledgeCardsCarousel(),
-        DailyLessonTile(),
-        DiscoveryInsightTile(),
-
-        // -- Milestones ----------------------------------------------
-        AppAnniversaryCard(),
-        WorkoutMilestoneCard(),
-        BodyCompMilestoneCard(),
-        BirthdayCard(),
-        FirstOfMonthCard(),
-        WeighInDayChip(),
-
-        // -- Wearable status -----------------------------------------
-        WearableBatteryChip(),
-        ScaleSyncPrompt(),
-        MissingDataChip(),
-
-        // -- AI pattern detection ------------------------------------
-        DayOfWeekSkipCard(),
-        WorkoutSleepCorrelationCard(),
-        MacroPatternCallout(),
-        StrainRecoveryMismatchCard(),
-
-        // -- Injury / travel -----------------------------------------
-        ReturnToExerciseCard(),
-        InjuryWorkaroundBanner(),
-        JetLagAdjustCard(),
-        BusyWeekCompressedCard(),
-
-        // -- Onboarding leftovers ------------------------------------
-        // CoachPersonaPickupTile ("Try chatting with your coach") removed from
-        // Home (user feedback) — the coach is one tap away via the chat FAB.
-        StickyWearableTile(),
-        DayNTutorialCard(),
-        Day14GoalRecalibrationCard(),
-
-        // -- Fasting -------------------------------------------------
-        FastZoneStrip(),
-        FastStreakTile(),
-
-        // -- Pre-workout ---------------------------------------------
-        PreWorkoutT30Card(),
-        PreWorkoutWarmupCard(),
-        PreWorkoutRpeChip(),
-        DailyStrainTargetTile(),
-        EquipmentPreflightBanner(),
-
-        // -- Post-workout --------------------------------------------
-        TrainingEffectCard(),
-        RecoveryCountdownTile(),
-        PlannedVsActualCard(),
-        PostWorkoutTomorrowAdjustCard(),
-        HrZoneBreakdownCard(),
-        PostWorkoutMoodStrip(),
-        RhrDeltaCard(),
-        OneRmRecomputeBanner(),
-        PostWorkoutProgressPhotoPrompt(),
-        WorkoutFeltJournalPrompt(),
+  @override
+  Widget build(BuildContext context) {
+    // Re-measure after every layout so the header tracks the cards even when a
+    // card self-collapses/expands from a provider change that doesn't rebuild
+    // THIS widget. setState only fires on an actual flip, so there's no loop.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+    final c = ThemeColors.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedSize(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          child: _hasContent
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 16, 6),
+                  child: Text(
+                    widget.title.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: c.textMuted,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        Column(
+          key: _bodyKey,
+          mainAxisSize: MainAxisSize.min,
+          children: widget.children,
+        ),
       ],
     );
   }

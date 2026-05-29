@@ -284,9 +284,12 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         // X — destructive dismiss-for-today. Flat 14pt, no fill, muted
         // so a tap requires intent rather than reading like a primary
         // action sitting next to the chevron.
+        // Dismisses the WHOLE coach card AND its entire nudge stack for the
+        // day in one tap — the "dismiss all" affordance (issue 5). Tooltip
+        // spells that out so users don't swipe each nudge individually.
         _CoachChromeIconButton(
           icon: Icons.close_rounded,
-          tooltip: 'Dismiss for today',
+          tooltip: 'Hide coach + all nudges for today',
           onTap: () => ref
               .read(coachCardVisibilityProvider.notifier)
               .setDismissedToday(),
@@ -578,10 +581,12 @@ class _CoachNudgeStack extends ConsumerStatefulWidget {
   /// One page = up to this many stacked sub-cards.
   static const int _kCardsPerPage = 2;
 
-  /// Pixel budget for one stacked pair (≈ 2 × row height + gap). Used as the
-  /// fixed PageView height — Flutter requires a bounded child in an
-  /// unbounded scrolling container.
-  static const double _kPageHeight = 184;
+  /// Approx height of ONE nudge row (icon/2-line text + padding + border).
+  /// Both title and body are single-line (ellipsis), so a row's height is
+  /// deterministic; this is the per-row budget the PageView is sized from.
+  /// (Previously a flat 184px was hardcoded for a 2-row page, which left a
+  /// big empty gap below a 1- or 2-card page — issue 3.)
+  static const double _kRowHeight = 58;
 
   @override
   ConsumerState<_CoachNudgeStack> createState() => _CoachNudgeStackState();
@@ -642,14 +647,29 @@ class _CoachNudgeStackState extends ConsumerState<_CoachNudgeStack> {
       });
     }
 
+    // Size the PageView to the ACTIVE page's actual card count (1 or 2) rather
+    // than a fixed 2-row budget, scaled with the user's text size. This kills
+    // the dead space below a short page (issue 3) and resizes smoothly via the
+    // AnimatedSize when a swipe lands on a page with a different card count.
+    final cardsOnActivePage =
+        (ranked.length - activeIndex * _CoachNudgeStack._kCardsPerPage)
+            .clamp(1, _CoachNudgeStack._kCardsPerPage);
+    final textScale =
+        MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
+    final pageHeight = _CoachNudgeStack._kRowHeight * textScale * cardsOnActivePage +
+        (cardsOnActivePage - 1) * 8;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 12),
         Divider(height: 1, color: c.cardBorder),
         const SizedBox(height: 10),
-        SizedBox(
-          height: _CoachNudgeStack._kPageHeight,
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          child: SizedBox(
+          height: pageHeight,
           child: PageView.builder(
             controller: _controller,
             itemCount: pageCount,
@@ -675,6 +695,7 @@ class _CoachNudgeStackState extends ConsumerState<_CoachNudgeStack> {
               );
             },
           ),
+        ),
         ),
         if (pageCount > 1) ...[
           const SizedBox(height: 8),

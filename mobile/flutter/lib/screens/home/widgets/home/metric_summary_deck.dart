@@ -24,7 +24,6 @@ import '../../../../data/providers/metric_value_provider.dart';
 import '../../../../data/providers/saved_trends_provider.dart';
 import '../../../../data/providers/today_score_provider.dart';
 import '../../../../data/services/haptic_service.dart';
-import '../quick_log_sheet.dart';
 import 'metric_settings_sheet.dart';
 import '../ring_catalog.dart';
 import '../segmented_score_ring.dart';
@@ -92,7 +91,7 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     final labels = <String>[
       'Summary',
       for (var i = 0; i < moreChunks.length; i++)
-        moreChunks.length == 1 ? 'More' : 'More ${i + 1}',
+        moreChunks.length == 1 ? 'Metrics' : 'Metrics ${i + 1}',
       'Trends',
     ];
 
@@ -123,8 +122,11 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
               children: pages,
             ),
           ),
-          const SizedBox(height: 12),
-          _actionsRow(c),
+          // The Log / Trends / Start action row was removed (issue 1): "Trends"
+          // duplicated this deck's own Trends tab + every tile's tap-through,
+          // "Start" duplicated the workout card's play button, and "Log"
+          // duplicated the quick-actions "Log Food" chip + the nav "+". The
+          // quick-actions row (its own home section) now carries those jobs.
         ],
       ),
     );
@@ -507,44 +509,6 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     );
   }
 
-  // ---- Log / Trends / Start ----
-  Widget _actionsRow(ThemeColors c) {
-    return Row(
-      children: [
-        Expanded(
-          child: _ActionBtn(
-            solid: true,
-            icon: Icons.add_rounded,
-            label: 'Log',
-            colors: c,
-            onTap: () {
-              HapticService.medium();
-              showQuickLogSheet(context, ref);
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _ActionBtn(
-            icon: Icons.insights_rounded,
-            label: 'Trends',
-            colors: c,
-            onTap: () => context.push('/trends/custom'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _ActionBtn(
-            icon: Icons.play_arrow_rounded,
-            label: 'Start',
-            colors: c,
-            onTap: () => context.push('/workouts'),
-          ),
-        ),
-      ],
-    );
-  }
-
   BoxDecoration _cardDecoration(ThemeColors c) => BoxDecoration(
     color: c.elevated,
     borderRadius: BorderRadius.circular(20),
@@ -562,52 +526,6 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
       case ContributorKind.sleep:
         return RingKind.sleep.color;
     }
-  }
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool solid;
-  final ThemeColors colors;
-  final VoidCallback onTap;
-  const _ActionBtn({
-    required this.icon,
-    required this.label,
-    required this.colors,
-    required this.onTap,
-    this.solid = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = colors;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 40,
-        decoration: BoxDecoration(
-          color: solid ? c.textPrimary : c.elevated,
-          borderRadius: BorderRadius.circular(13),
-          border: solid ? null : Border.all(color: c.cardBorder),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: solid ? c.background : c.textPrimary),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
-                color: solid ? c.background : c.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
