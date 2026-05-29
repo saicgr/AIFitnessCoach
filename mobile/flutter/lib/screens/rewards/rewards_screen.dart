@@ -9,6 +9,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
+import '../../core/theme/theme_colors.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -106,10 +107,17 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     }
 
     // ---- Step 2: network fetch — revalidate + write-through ---------------
+    // Fire both fetches CONCURRENTLY. They hit independent endpoints, so
+    // awaiting them serially doubled the perceived load time — painfully
+    // obvious on a slow emulator where each round trip can take seconds.
     try {
       final repository = ref.read(xpRepositoryProvider);
-      final available = await repository.getAvailableRewards(userId);
-      final claimed = await repository.getClaimedRewards(userId);
+      final results = await Future.wait([
+        repository.getAvailableRewards(userId),
+        repository.getClaimedRewards(userId),
+      ]);
+      final available = results[0];
+      final claimed = results[1];
 
       if (!mounted) return;
       setState(() {
@@ -230,23 +238,24 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
   Future<String?> _showEmailDialog() async {
     final controller = TextEditingController();
+    final c = ThemeColors.of(context);
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1E),
-        title: const Text(
+        backgroundColor: c.elevated,
+        title: Text(
           'Enter Email for Gift Card',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: c.textPrimary),
         ),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.emailAddress,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: c.textPrimary),
           decoration: InputDecoration(
             hintText: AppLocalizations.of(context).rewardsYourEmailExampleCom,
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+            hintStyle: TextStyle(color: c.textMuted),
             enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+              borderSide: BorderSide(color: c.cardBorder),
               borderRadius: BorderRadius.circular(8),
             ),
             focusedBorder: OutlineInputBorder(
@@ -260,7 +269,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               AppLocalizations.of(context).buttonCancel,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+              style: TextStyle(color: c.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -284,9 +293,10 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
   @override
   Widget build(BuildContext context) {
     final xpState = ref.watch(xpProvider);
+    final c = ThemeColors.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: c.background,
       appBar: PillAppBar(
         title: AppLocalizations.of(context).statsRewardsRewards,
       ),
@@ -296,10 +306,10 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E),
+              color: c.elevated,
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: c.cardBorder,
                 ),
               ),
             ),
@@ -345,17 +355,17 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                     children: [
                       Text(
                         xpState.title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: c.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.rewardsScreenTotalXp(xpState.totalXp),
+                        AppLocalizations.of(context).rewardsScreenTotalXp(xpState.totalXp),
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: c.textSecondary,
                           fontSize: 14,
                         ),
                       ),
@@ -373,8 +383,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                     const SizedBox(height: 4),
                     Text(
                       '${xpState.earnedCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: c.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -417,7 +427,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                             Text(
                               _error!,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: c.textSecondary,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -425,7 +435,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                             ElevatedButton(
                               onPressed: _loadRewards,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2C2C2E),
+                                backgroundColor: c.elevated,
+                                foregroundColor: c.textPrimary,
                               ),
                               child: Text(AppLocalizations.of(context).buttonRetry),
                             ),
@@ -449,6 +460,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
   Widget _buildRewardsList(List<Map<String, dynamic>> rewards,
       {required bool isAvailable}) {
+    final c = ThemeColors.of(context);
     if (rewards.isEmpty) {
       return Center(
         child: Column(
@@ -456,7 +468,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
           children: [
             Icon(
               isAvailable ? Icons.card_giftcard : Icons.history,
-              color: Colors.white.withValues(alpha: 0.3),
+              color: c.textMuted.withValues(alpha: 0.6),
               size: 64,
             ),
             const SizedBox(height: 16),
@@ -465,7 +477,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                   ? AppLocalizations.of(context).rewardsNoRewardsAvailableYet
                   : 'No rewards claimed yet',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: c.textMuted,
                 fontSize: 16,
               ),
             ),
@@ -474,7 +486,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
               Text(
                 AppLocalizations.of(context).rewardsKeepLevelingUpTo,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: c.textMuted.withValues(alpha: 0.6),
                   fontSize: 14,
                 ),
               ),
@@ -534,6 +546,7 @@ class _RewardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
     final rewardType = reward['reward_type'] as String? ?? 'unknown';
     final rewardValue = reward['reward_value'] as num? ?? 0;
     final triggerType = reward['trigger_type'] as String? ?? '';
@@ -576,7 +589,7 @@ class _RewardCard extends StatelessWidget {
         break;
       default:
         icon = Icons.redeem;
-        iconColor = Colors.white60;
+        iconColor = c.textSecondary;
         title = 'Reward';
         subtitle = _getTriggerDescription(triggerType);
     }
@@ -585,12 +598,12 @@ class _RewardCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
+        color: c.elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isAvailable
               ? iconColor.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.1),
+              : c.cardBorder,
         ),
       ),
       child: Row(
@@ -618,8 +631,8 @@ class _RewardCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: c.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -628,7 +641,7 @@ class _RewardCard extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: c.textSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -637,7 +650,7 @@ class _RewardCard extends StatelessWidget {
                   Text(
                     'Claimed ${_formatDate(claimedAt)}',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
+                      color: c.textMuted,
                       fontSize: 12,
                     ),
                   ),
