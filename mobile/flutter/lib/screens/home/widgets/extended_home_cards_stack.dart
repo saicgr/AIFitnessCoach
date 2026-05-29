@@ -25,11 +25,9 @@ import 'cards/birthday_card.dart';
 import 'cards/body_battery_tile.dart';
 import 'cards/body_comp_milestone_card.dart';
 import 'cards/busy_week_compressed_card.dart';
-import 'cards/coach_persona_pickup_tile.dart';
 import 'cards/cycle_phase_chip.dart';
 import 'cards/daily_lesson_tile.dart';
 import 'cards/daily_meditation_tile.dart';
-import 'cards/daily_quest_deck.dart';
 import 'cards/daily_strain_target_tile.dart';
 import 'cards/day14_goal_recalibration_card.dart';
 import 'cards/day_n_tutorial_card.dart';
@@ -47,13 +45,9 @@ import 'cards/hrv_trend_strip.dart';
 import 'cards/injury_workaround_banner.dart';
 import 'cards/jet_lag_adjust_card.dart';
 import 'cards/knowledge_cards_carousel.dart';
-import 'cards/league_rank_tile.dart';
 import 'cards/macro_pattern_callout.dart';
 import 'cards/micronutrient_gap_chip.dart';
-import 'cards/mindful_minutes_ring.dart';
 import 'cards/missing_data_chip.dart';
-import 'cards/monthly_quest_tile.dart';
-import 'cards/mood_checkin_strip.dart';
 import 'cards/one_rm_recompute_banner.dart';
 import 'cards/period_prediction_tile.dart';
 import 'cards/period_symptom_log_tile.dart';
@@ -62,7 +56,6 @@ import 'cards/pms_prep_card.dart';
 import 'cards/postworkout_mood_strip.dart';
 import 'cards/postworkout_progress_photo_prompt.dart';
 import 'cards/postworkout_tomorrow_adjust_card.dart';
-import 'cards/pre_workout_fuel_card.dart';
 import 'cards/premium_preview_tile.dart';
 import 'cards/preworkout_rpe_chip.dart';
 import 'cards/preworkout_t30_card.dart';
@@ -80,15 +73,12 @@ import 'cards/stand_reminder_chip.dart';
 import 'cards/step_streak_tile.dart';
 import 'cards/sticky_wearable_tile.dart';
 import 'cards/strain_recovery_mismatch_card.dart';
-import 'cards/streak_freeze_chip.dart';
 import 'cards/stress_score_tile.dart';
-import 'cards/tomorrow_preview_tile.dart';
 import 'cards/training_effect_card.dart';
 import 'cards/usage_upsell_banner.dart';
 import 'cards/vo2max_trend_chip.dart';
 import 'cards/wake_consistency_tile.dart';
 import 'cards/wearable_battery_chip.dart';
-import 'cards/weekly_digest_tile.dart';
 import 'cards/weekly_plan_strip.dart';
 import 'cards/weigh_in_day_chip.dart';
 import 'cards/workout_felt_journal_prompt.dart';
@@ -123,10 +113,11 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         EveningSleepStoryTile(),
 
         // -- Schedule / planning -------------------------------------
+        // Removed from Home (user feedback): TomorrowPreviewTile +
+        // PreWorkoutFuelCard — tomorrow's plan lives in the workout/week view,
+        // fuel guidance in nutrition.
         WeeklyPlanStrip(),
-        TomorrowPreviewTile(),
         SmartRescheduleBanner(),
-        PreWorkoutFuelCard(),
 
         // -- Movement non-workout ------------------------------------
         StandReminderChip(),
@@ -144,15 +135,13 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         PeriodSymptomLogTile(),
 
         // -- Mental health -------------------------------------------
-        MoodCheckinStrip(),
-        MindfulMinutesRing(),
+        // Mood + Mindful moved into the Log sheet (user feedback) — they no
+        // longer render as standalone Home cards.
         DailyMeditationTile(),
 
         // -- Habit / gamification ------------------------------------
-        StreakFreezeChip(),
-        DailyQuestDeck(),
-        MonthlyQuestTile(),
-        LeagueRankTile(),
+        // Gamification (quests, streak freeze, monthly quest, league) removed
+        // from Home (user feedback) — it lives in the You/Profile tab.
 
         // -- Social --------------------------------------------------
         FriendActivitySnippet(),
@@ -165,9 +154,10 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         PremiumPreviewTile(),
 
         // -- Educational ---------------------------------------------
+        // WeeklyDigestTile (week recap) moved to the two-up "Reports · Recap"
+        // row next to the Weekly Report card (user feedback).
         KnowledgeCardsCarousel(),
         DailyLessonTile(),
-        WeeklyDigestTile(),
         DiscoveryInsightTile(),
 
         // -- Milestones ----------------------------------------------
@@ -196,10 +186,11 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         BusyWeekCompressedCard(),
 
         // -- Onboarding leftovers ------------------------------------
+        // CoachPersonaPickupTile ("Try chatting with your coach") removed from
+        // Home (user feedback) — the coach is one tap away via the chat FAB.
         StickyWearableTile(),
         DayNTutorialCard(),
         Day14GoalRecalibrationCard(),
-        CoachPersonaPickupTile(),
 
         // -- Fasting -------------------------------------------------
         FastZoneStrip(),

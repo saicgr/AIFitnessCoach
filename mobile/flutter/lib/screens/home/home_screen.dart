@@ -62,6 +62,7 @@ import 'widgets/hero_workout_carousel.dart';
 import 'widgets/home/unified_home_widgets.dart';
 import 'widgets/home/metric_summary_deck.dart';
 import 'widgets/home/home_timeline.dart';
+import 'widgets/home/reports_recap_row.dart';
 import 'widgets/swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
 import 'widgets/workout_category_pills.dart';
 import 'widgets/habits_section.dart';
@@ -1116,8 +1117,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // for migration safety. If we kept it in `visible`, the eager loop would
     // emit a wrapper sliver + a trailing kHomeGap for it, producing an empty
     // ~28px void between the cards that surround it.
+    // Timeline is pulled OUT of the normal section flow — the user wants it to
+    // always be the very last card on Home, so it is appended after the
+    // contextual card stack regardless of where it sits in the saved order.
+    final timelineVisible = sections.isVisible(HomeSection.timeline);
     final visible = sections.visibleInOrder
         .where((s) => s != HomeSection.strainCoach)
+        .where((s) => s != HomeSection.timeline)
         .toList(growable: false);
     final slivers = <Widget>[];
 
@@ -1158,6 +1164,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // is cheap even with all 80 imports present.
     slivers.add(const SliverToBoxAdapter(child: ExtendedHomeCardsStack()));
 
+    // Timeline always renders LAST (issue 7) — after every section and the
+    // contextual card stack — so it's the final card on the Home scroll.
+    if (timelineVisible) {
+      slivers.add(const SliverToBoxAdapter(child: HomeTimeline()));
+      slivers.add(const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)));
+    }
+
     return slivers;
   }
 
@@ -1190,10 +1203,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // a user's persisted ordering doesn't break; renders nothing now.
         return const SizedBox.shrink();
       case HomeSection.weeklyReport:
-        return WeeklyReportCard(
-          isDark: Theme.of(context).brightness == Brightness.dark,
-        );
+        // Two-up "Reports · Recap" row (issue 7) — replaces the full-width
+        // Weekly Report card; pairs reports with the week recap as two squares.
+        return const ReportsRecapRow();
       case HomeSection.timeline:
+        // Rendered out-of-band as the final sliver (see _homeSectionSlivers).
+        // This case stays for completeness but isn't hit in the normal loop.
         return const HomeTimeline();
       case HomeSection.habits:
         return const HabitsSection();
