@@ -26,12 +26,12 @@ class WorkoutLibraryGrid extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+          crossAxisCount: 3,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          // Tiles are slightly wider than tall — matches Google Health's
-          // category grid where the illustration takes ~70% of the tile.
-          childAspectRatio: 1.05,
+          // Matches the source tile art aspect (~385x470) so the illustration
+          // and its baked-in label fill the tile with no cropping.
+          childAspectRatio: 0.82,
         ),
         itemCount: categories.length,
         itemBuilder: (context, i) => _CategoryTile(category: categories[i]),
@@ -115,72 +115,97 @@ class _CategoryTile extends StatelessWidget {
             border: Border.all(color: c.cardBorder),
           ),
           clipBehavior: Clip.hardEdge,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Background gradient (always renders; the bundled illustration
-              // overlays on top when the asset exists, otherwise the gradient
-              // alone reads as a polished category tile).
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: category.gradient,
-                  ),
-                ),
-              ),
-              // Illustration overlay — fail-soft. A missing PNG simply
-              // reveals the gradient layer beneath. Aligned to top so the
-              // bottom-left label has clear backing.
-              Image.asset(
-                category.assetPath,
-                fit: BoxFit.cover,
-                alignment: const Alignment(0, -0.2),
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-              // Bottom-fade scrim so the label reads on any illustration.
-              IgnorePointer(
-                child: DecoratedBox(
+          // The bundled tile art is self-contained — it already bakes in its
+          // own bottom scrim and category label, so we render the PNG full-bleed
+          // (its ~385x470 aspect matches the tile's childAspectRatio, so cover
+          // shows the whole illustration without cropping the label). Screen
+          // readers get the label via Semantics since it lives in the bitmap.
+          child: Semantics(
+            label: category.label,
+            button: true,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Gradient base — only ever visible if the PNG fails to load,
+                // in which case the errorBuilder paints the label on top.
+                DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.45),
-                      ],
-                      stops: const [0.55, 1.0],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: category.gradient,
                     ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Text(
-                    category.label,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.2,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 6,
-                          color: Color(0x66000000),
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                  ),
+                Image.asset(
+                  category.assetPath,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  errorBuilder: (_, __, ___) => _FallbackLabel(label: category.label),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Shown only when the bundled tile PNG is missing — paints a bottom scrim and
+/// the category label over the gradient base so the tile still reads cleanly.
+class _FallbackLabel extends StatelessWidget {
+  final String label;
+  const _FallbackLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.45),
+                ],
+                stops: const [0.55, 1.0],
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.bottomLeft,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -0.2,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 6,
+                      color: Color(0x66000000),
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

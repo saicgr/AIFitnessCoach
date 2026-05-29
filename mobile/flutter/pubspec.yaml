@@ -254,6 +254,7 @@ flutter:
   assets:
     - assets/icon/
     - assets/images/
+    - assets/images/workout_types/
     - assets/images/intro/
     - assets/images/coaches/
     - assets/lottie/
