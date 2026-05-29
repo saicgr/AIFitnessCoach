@@ -106,36 +106,49 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   @override
   void initState() {
     super.initState();
-    // Prefer the per-type illustration map (Surface 1.2 / 2.2). The
-    // illustration asset is rendered as the hero background; if the
-    // bundled asset is missing, the build method's Image.asset
-    // errorBuilder falls through to the /exercise-images endpoint, then
-    // to the accent gradient.
-    final typeAsset = _typeIllustrationFor(widget.workout);
-    if (typeAsset != null) {
-      // Mark the type asset path on `_backgroundImageUrl` is wrong because
-      // CachedNetworkImage expects a URL. Instead use a separate flag.
-      _typeAssetPath = typeAsset;
-      _isLoadingImage = false;
-      return;
+    _resolveBackground();
+  }
+
+  @override
+  void didUpdateWidget(HeroWorkoutCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // This card carries NO `key` at any of its call sites (incl. the carousel
+    // PageView at hero_workout_carousel.dart), so Flutter can recycle this
+    // State for a different workout. Image resolution only ran in initState,
+    // so a recycled State kept the previous workout's image (or a stale
+    // blank). Re-resolve whenever the underlying workout identity changes.
+    if (oldWidget.workout.id != widget.workout.id) {
+      _typeAssetPath = null;
+      _backgroundImageUrl = null;
+      _resolveBackground();
     }
-    // Fallback: existing /exercise-images endpoint behavior.
+  }
+
+  /// Resolves the hero background image for the current workout.
+  ///
+  /// Prefers the bundled per-workout-type illustration (Surface 1.2 / 2.2) but
+  /// ALWAYS prefetches the per-exercise `/exercise-images` URL as the
+  /// fail-soft fallback. The `assets/images/workout_types/*.png` art is not
+  /// bundled (yet), so `Image.asset` 404s and the build method's errorBuilder
+  /// falls through to `_backgroundImageUrl`; without this prefetch that URL
+  /// stayed null and the hero rendered blank. If the type art ever ships it
+  /// simply wins and the prefetch is a no-op cost.
+  void _resolveBackground() {
+    _typeAssetPath = _typeIllustrationFor(widget.workout);
+    // Never block the hero on the (currently missing) type asset — show the
+    // accent gradient immediately and let the async fetch pop the image in.
+    _isLoadingImage = false;
+
     final exercises = widget.workout.exercises;
-    if (exercises.isEmpty) {
-      _isLoadingImage = false;
+    if (exercises.isEmpty) return;
+    final exerciseName = exercises.first.name;
+    if (exerciseName.isEmpty || exerciseName == 'Exercise') return;
+
+    final cachedUrl = ImageUrlCache.get(exerciseName);
+    if (cachedUrl != null) {
+      _backgroundImageUrl = cachedUrl;
     } else {
-      final exerciseName = exercises.first.name;
-      if (exerciseName.isEmpty || exerciseName == 'Exercise') {
-        _isLoadingImage = false;
-      } else {
-        final cachedUrl = ImageUrlCache.get(exerciseName);
-        if (cachedUrl != null) {
-          _backgroundImageUrl = cachedUrl;
-          _isLoadingImage = false;
-        } else {
-          _fetchBackgroundImage(exerciseName);
-        }
-      }
+      _fetchBackgroundImage(exerciseName);
     }
   }
 

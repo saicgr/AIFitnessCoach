@@ -384,16 +384,26 @@ async def list_recipes(
         from services.recipe_favorites_service import get_recipe_favorites_service
         fav_map = await get_recipe_favorites_service().is_favorited_bulk(current_user["id"], ids)
 
+        # --- Bulk ingredient counts — one query for the whole page instead of
+        # the previous per-recipe count (N+1). For limit=100 this collapses
+        # ~101 round-trips into 2, the main driver of the list's load time.
+        # `idx_recipe_ingredients_recipe_id` keeps the IN() lookup index-backed.
+        ing_counts: dict[str, int] = {}
+        if ids:
+            ing_rows = db.client.table("recipe_ingredients")\
+                .select("recipe_id")\
+                .in_("recipe_id", ids)\
+                .execute()
+            for ir in (ing_rows.data or []):
+                rid = ir.get("recipe_id")
+                if rid is not None:
+                    ing_counts[rid] = ing_counts.get(rid, 0) + 1
+
         items = []
         for row in rows:
-            # Ingredient count — per-row query kept for backwards compat, but
-            # this is the main hotspot for the list. A future optimization
-            # is a single aggregate query grouped by recipe_id.
-            count_result = db.client.table("recipe_ingredients")\
-                .select("id", count="exact")\
-                .eq("recipe_id", row["id"])\
-                .execute()
-            ingredient_count = count_result.count or 0
+            # Recipes with no ingredient rows are absent from the map → 0,
+            # matching the prior `count or 0` behavior.
+            ingredient_count = ing_counts.get(row["id"], 0)
 
             items.append(RecipeSummary(
                 id=row["id"],

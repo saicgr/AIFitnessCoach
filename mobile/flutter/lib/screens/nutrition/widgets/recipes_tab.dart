@@ -123,9 +123,14 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
               // toolbar. Stays a SliverList: these are a fixed handful of
               // widgets, not a long lazy list.
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
                 sliver: SliverList.list(
                   children: [
+                    // When there are no planned meals / leftovers this renders
+                    // as zero-height (SizedBox.shrink), so the quick-action
+                    // buttons sit snug under the date strip. Its 16px bottom
+                    // gap travels with the carousel (see _ComingUpCarousel) so
+                    // it only exists when there's actually content above.
                     _ComingUpCarousel(
                       upcoming: upcomingAsync,
                       leftovers: leftoversAsync,
@@ -133,7 +138,6 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
                       accent: accent,
                       userId: widget.userId,
                     ),
-                    const SizedBox(height: 16),
                     _QuickActions(
                       isDark: widget.isDark,
                       accent: accent,
@@ -283,40 +287,49 @@ class _ComingUpCarousel extends StatelessWidget {
           data: (d) => (d as List).isNotEmpty,
           orElse: () => false,
         );
+    // Empty state renders nothing AND no trailing gap, so the quick-action
+    // buttons below sit directly under the date strip. The 16px bottom gap is
+    // owned here (not a sibling SizedBox) so it only exists when there's
+    // content to separate from.
     if (!hasContent) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            AppLocalizations.of(context).recipesComingUpToday,
-            style:
-                TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: muted),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              AppLocalizations.of(context).recipesComingUpToday,
+              style: TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 14, color: muted),
+            ),
           ),
-        ),
-        SizedBox(
-          height: 88,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              ...upcoming.maybeWhen(
-                data: (d) => (d as List).map<Widget>(
-                  (e) => _UpcomingCard(item: e, isDark: isDark, accent: accent),
+          SizedBox(
+            height: 88,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                ...upcoming.maybeWhen(
+                  data: (d) => (d as List).map<Widget>(
+                    (e) =>
+                        _UpcomingCard(item: e, isDark: isDark, accent: accent),
+                  ),
+                  orElse: () => const Iterable<Widget>.empty(),
                 ),
-                orElse: () => const Iterable<Widget>.empty(),
-              ),
-              ...leftovers.maybeWhen(
-                data: (d) => (d as List).map<Widget>(
-                  (e) => _LeftoverCard(item: e, isDark: isDark, accent: accent),
+                ...leftovers.maybeWhen(
+                  data: (d) => (d as List).map<Widget>(
+                    (e) =>
+                        _LeftoverCard(item: e, isDark: isDark, accent: accent),
+                  ),
+                  orElse: () => const Iterable<Widget>.empty(),
                 ),
-                orElse: () => const Iterable<Widget>.empty(),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
