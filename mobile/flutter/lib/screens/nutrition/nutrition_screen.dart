@@ -63,6 +63,20 @@ class NutritionScreen extends ConsumerStatefulWidget {
   /// When true, auto-opens the log meal sheet and launches the barcode scanner.
   final bool autoOpenBarcode;
 
+  /// When true, auto-opens the log meal sheet and launches the menu scan flow.
+  /// Used by the AI coach's "Scan Menu" launcher chip — the deep link lets the
+  /// Nutrition screen own the sheet so it survives the chat route being popped.
+  final bool autoOpenMenuScan;
+
+  /// When true, auto-opens the log meal sheet on the multi-image scan path
+  /// (food photos / nutrition labels / app screenshots — the backend
+  /// classifier sorts them). Used by the coach's scan launcher chips.
+  final bool autoOpenMultiImage;
+
+  /// When true, auto-opens the plain log meal sheet (Search tab). Used by the
+  /// coach's "Log Food" launcher chip.
+  final bool autoOpenLog;
+
   /// When non-null, the 45-min check-in reminder push tapped into the app and
   /// we should re-open the post-meal review sheet bound to this food_log_id.
   final String? openCheckinLogId;
@@ -78,6 +92,9 @@ class NutritionScreen extends ConsumerStatefulWidget {
     this.initialTab = 0,
     this.autoOpenCamera = false,
     this.autoOpenBarcode = false,
+    this.autoOpenMenuScan = false,
+    this.autoOpenMultiImage = false,
+    this.autoOpenLog = false,
     this.openCheckinLogId,
     this.initialFuelSection,
   });
@@ -177,10 +194,23 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       // Surface a SnackBar when the one-time targets-recalc migration ran
       // (rate→deficit table was wrong; existing users need a fresh re-derive).
       _setupTargetsMigrationBannerListener();
-      // Auto-open log meal sheet if deep-linked with a meal type, camera, or barcode flag
-      if (widget.initialMeal != null || widget.autoOpenCamera || widget.autoOpenBarcode) {
+      // Auto-open log meal sheet if deep-linked with a meal type, camera,
+      // barcode, menu-scan, multi-image, or plain-log flag.
+      if (widget.initialMeal != null ||
+          widget.autoOpenCamera ||
+          widget.autoOpenBarcode ||
+          widget.autoOpenMenuScan ||
+          widget.autoOpenMultiImage ||
+          widget.autoOpenLog) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        _showLogMealSheet(isDark, mealType: widget.initialMeal, autoOpenCamera: widget.autoOpenCamera, autoOpenBarcode: widget.autoOpenBarcode);
+        _showLogMealSheet(
+          isDark,
+          mealType: widget.initialMeal,
+          autoOpenCamera: widget.autoOpenCamera,
+          autoOpenBarcode: widget.autoOpenBarcode,
+          autoOpenMenuScan: widget.autoOpenMenuScan,
+          autoOpenMultiImage: widget.autoOpenMultiImage,
+        );
       }
       // 45-min reminder tap: re-open the post-meal check-in sheet bound to the log.
       if (widget.openCheckinLogId != null && widget.openCheckinLogId!.isNotEmpty) {
@@ -207,6 +237,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       widget.initialMeal != null ||
       widget.autoOpenCamera ||
       widget.autoOpenBarcode ||
+      widget.autoOpenMenuScan ||
+      widget.autoOpenMultiImage ||
+      widget.autoOpenLog ||
       (widget.openCheckinLogId != null &&
           widget.openCheckinLogId!.isNotEmpty);
 
@@ -329,6 +362,33 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     if (target >= 0 && target < _tabController.length && _tabController.index != target) {
       _tabController.animateTo(target);
     }
+    // Deep-link re-navigation while this State is preserved (StatefulShellRoute
+    // keeps the Nutrition branch alive in an IndexedStack) does NOT re-run
+    // initState — so an auto-open deep link (Home card, or an AI-coach launcher
+    // chip like "Scan Menu") that flips a flag must fire the sheet here too.
+    // Gate on the flag NEWLY becoming true so an ordinary parent rebuild never
+    // reopens it. (This also fixes the same latent gap for camera/barcode.)
+    final newlyMeal =
+        widget.initialMeal != null && widget.initialMeal != oldWidget.initialMeal;
+    final newlyOpen = (widget.autoOpenCamera && !oldWidget.autoOpenCamera) ||
+        (widget.autoOpenBarcode && !oldWidget.autoOpenBarcode) ||
+        (widget.autoOpenMenuScan && !oldWidget.autoOpenMenuScan) ||
+        (widget.autoOpenMultiImage && !oldWidget.autoOpenMultiImage) ||
+        (widget.autoOpenLog && !oldWidget.autoOpenLog);
+    if (newlyMeal || newlyOpen) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showLogMealSheet(
+          isDark,
+          mealType: widget.initialMeal,
+          autoOpenCamera: widget.autoOpenCamera,
+          autoOpenBarcode: widget.autoOpenBarcode,
+          autoOpenMenuScan: widget.autoOpenMenuScan,
+          autoOpenMultiImage: widget.autoOpenMultiImage,
+        );
+      });
+    }
     // First-run tour was suppressed if the initial visit deep-linked
     // straight into the log-meal sheet (see _resolveNutritionTourActive).
     // When the user later returns to Nutrition WITHOUT a deep link, give
@@ -338,6 +398,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         widget.initialMeal == null &&
         !widget.autoOpenCamera &&
         !widget.autoOpenBarcode &&
+        !widget.autoOpenMenuScan &&
+        !widget.autoOpenMultiImage &&
+        !widget.autoOpenLog &&
         (widget.openCheckinLogId == null ||
             widget.openCheckinLogId!.isEmpty)) {
       _tourResolution = _resolveNutritionTourActive();
@@ -1024,8 +1087,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     );
   }
 
-  Future<void> _showLogMealSheet(bool isDark, {String? mealType, bool autoOpenCamera = false, bool autoOpenBarcode = false}) async {
-    await showLogMealSheet(context, ref, initialMealType: mealType, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode, selectedDate: _selectedDate);
+  Future<void> _showLogMealSheet(bool isDark, {String? mealType, bool autoOpenCamera = false, bool autoOpenBarcode = false, bool autoOpenMenuScan = false, bool autoOpenMultiImage = false}) async {
+    await showLogMealSheet(context, ref, initialMealType: mealType, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode, autoOpenMenuScan: autoOpenMenuScan, autoOpenMultiImage: autoOpenMultiImage, selectedDate: _selectedDate);
     _refreshAfterLog();
   }
 

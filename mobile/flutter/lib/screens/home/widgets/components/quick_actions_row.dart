@@ -15,11 +15,9 @@ import '../../../../widgets/main_shell.dart';
 import '../../../../widgets/mood_picker_sheet.dart';
 import '../../../../widgets/quick_actions_sheet.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
-import '../../../nutrition/log_meal_sheet.dart';
-import '../../../workout/widgets/equipment_snap_flow.dart';
-import '../../../workout/widgets/quick_workout_sheet.dart';
 import '../../../../data/repositories/progress_photos_repository.dart';
 import '../../../stats/widgets/photos_tab.dart';
+import 'quick_action_launcher.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 part 'quick_actions_row_part_hero_action_card.dart';
@@ -52,21 +50,10 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         // a `!` here threw "Null check operator used on a null value" for
         // users on a stale install. Default to a safe accent if missing.
         iconColor: quickActionRegistry['food']?.color ?? AppColors.accent,
-        onTap: () {
-          HapticService.light();
-          // Switch to Nutrition branch BEFORE showing the log sheet so the
-          // floating nav reflects where the user actually is. When they
-          // dismiss the sheet they land on the Nutrition tab (with the
-          // just-logged meal visible) instead of being thrown back to Home.
-          context.go('/nutrition');
-          Future.microtask(() {
-            // D4: Log Food must open the meal sheet on the Search tab.
-            // showLogMealSheet has no explicit initial-tab param — the
-            // sheet's default mode is `_AiLogMode.search` (E1), so an
-            // unparameterized call lands on Search.
-            if (context.mounted) showLogMealSheet(context, ref);
-          });
-        },
+        // Launch via the shared launcher so the home grid and the in-chat
+        // SuggestedActionsCard share one code path. D4: lands on the Search
+        // tab (showLogMealSheet's default mode), Nutrition branch first.
+        onTap: () => launchQuickAction(context, ref, 'food'),
         isDark: isDark,
       );
     case 'quick_workout':
@@ -74,13 +61,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         icon: Icons.flash_on,
         label: AppLocalizations.of(context).quickActionsRowQuick,
         iconColor: quickActionRegistry['quick_workout']?.color ?? AppColors.accent,
-        onTap: () async {
-          HapticService.light();
-          final workout = await showQuickWorkoutSheet(context, ref);
-          if (workout != null && context.mounted) {
-            context.push('/workout/${workout.id}', extra: workout);
-          }
-        },
+        onTap: () => launchQuickAction(context, ref, 'quick_workout'),
         isDark: isDark,
       );
     case 'chat':
@@ -88,10 +69,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         icon: Icons.auto_awesome,
         label: AppLocalizations.of(context).quickActionsRowChat,
         iconColor: quickActionRegistry['chat']?.color ?? AppColors.accent,
-        onTap: () {
-          HapticService.light();
-          context.push('/chat');
-        },
+        onTap: () => launchQuickAction(context, ref, 'chat'),
         isDark: isDark,
       );
     case 'photo_food':
@@ -100,18 +78,9 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         icon: photoFood?.icon ?? Icons.lunch_dining_outlined,
         label: photoFood?.label ?? AppLocalizations.of(context).quickActionsRowPhotoLog,
         iconColor: photoFood?.color ?? AppColors.accent,
-        onTap: () {
-          HapticService.light();
-          // Snap-your-plate flow — same hop-to-Nutrition pattern as Scan Food
-          // / Scan Menu so the user lands on the Nutrition tab after the
-          // camera flow finishes.
-          context.go('/nutrition');
-          Future.microtask(() {
-            if (context.mounted) {
-              showLogMealSheet(context, ref, autoOpenCamera: true);
-            }
-          });
-        },
+        // Snap-your-plate flow — shared launcher hops to Nutrition then opens
+        // the single-photo camera path.
+        onTap: () => launchQuickAction(context, ref, 'photo_food'),
         isDark: isDark,
       );
     case 'barcode_food':
@@ -120,15 +89,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         icon: barcodeFood?.icon ?? Icons.qr_code_scanner_outlined,
         label: barcodeFood?.label ?? AppLocalizations.of(context).quickActionsRowBarcode,
         iconColor: barcodeFood?.color ?? AppColors.accent,
-        onTap: () {
-          HapticService.light();
-          context.go('/nutrition');
-          Future.microtask(() {
-            if (context.mounted) {
-              showLogMealSheet(context, ref, autoOpenBarcode: true);
-            }
-          });
-        },
+        onTap: () => launchQuickAction(context, ref, 'barcode_food'),
         isDark: isDark,
       );
     case 'scan_food':
@@ -137,18 +98,9 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         icon: scanFood?.icon ?? Icons.camera_alt_outlined,
         label: scanFood?.label ?? AppLocalizations.of(context).quickLogFabScan,
         iconColor: scanFood?.color ?? AppColors.accent,
-        onTap: () {
-          HapticService.light();
-          // Mirror the working flow from the More sheet: hop to Nutrition
-          // first so the user lands there after the sheet closes, then
-          // open the log-meal sheet with the multi-image camera path armed.
-          context.go('/nutrition');
-          Future.microtask(() {
-            if (context.mounted) {
-              showLogMealSheet(context, ref, autoOpenMultiImage: true);
-            }
-          });
-        },
+        // Hop to Nutrition then open the log-meal sheet with the multi-image
+        // camera path armed (shared launcher).
+        onTap: () => launchQuickAction(context, ref, 'scan_food'),
         isDark: isDark,
       );
     case 'identify_equipment':
@@ -161,20 +113,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         icon: identify?.icon ?? Icons.camera_alt_outlined,
         label: identify?.label ?? AppLocalizations.of(context).sectionHeaderWhatSThis,
         iconColor: identify?.color ?? AppColors.accent,
-        onTap: () async {
-          HapticService.light();
-          await showEquipmentSnapFlow(
-            context,
-            ref,
-            mode: SnapMode.identify,
-          );
-          if (context.mounted) {
-            // After identification, drop user into chat so the
-            // identify_equipment result + EquipmentMatchCard renders
-            // there alongside the snapped photo.
-            context.push('/chat');
-          }
-        },
+        onTap: () => launchQuickAction(context, ref, 'identify_equipment'),
         isDark: isDark,
       );
     case 'scan_menu':
@@ -183,15 +122,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         icon: scanMenu?.icon ?? Icons.menu_book_outlined,
         label: scanMenu?.label ?? AppLocalizations.of(context).quickActionsRowMenu,
         iconColor: scanMenu?.color ?? AppColors.accent,
-        onTap: () {
-          HapticService.light();
-          context.go('/nutrition');
-          Future.microtask(() {
-            if (context.mounted) {
-              showLogMealSheet(context, ref, autoOpenMenuScan: true);
-            }
-          });
-        },
+        onTap: () => launchQuickAction(context, ref, 'scan_menu'),
         isDark: isDark,
       );
     case 'workout':
@@ -206,10 +137,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         ),
         label: workout?.label ?? AppLocalizations.of(context).navWorkout,
         iconColor: workout?.color ?? AppColors.accent,
-        onTap: () {
-          HapticService.light();
-          context.push(workout?.route ?? '/workouts');
-        },
+        onTap: () => launchQuickAction(context, ref, 'workout'),
         isDark: isDark,
       );
     default:
@@ -219,21 +147,9 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         icon: action.icon,
         label: action.label,
         iconColor: action.color,
-        onTap: () {
-          HapticService.light();
-          // Guard against registry entries that use a non-route behavior
-          // (e.g. foodScan / menuScan) but were never explicit-cased here.
-          // Without this, action.route! would throw and the tap would
-          // silently fail from the user's POV.
-          final route = action.route;
-          if (route == null || route.isEmpty) {
-            debugPrint(
-              '⚠️ [QuickActions] No route / case handler for "$actionId" — tap ignored',
-            );
-            return;
-          }
-          context.push(route);
-        },
+        // Shared launcher handles the route guard (it logs + no-ops on
+        // registry entries with a non-route behavior, same as before).
+        onTap: () => launchQuickAction(context, ref, actionId),
         isDark: isDark,
       );
   }

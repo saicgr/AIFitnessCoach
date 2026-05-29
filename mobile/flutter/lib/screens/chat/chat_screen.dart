@@ -757,6 +757,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         onEquipmentMatchTap: _handleEquipmentMatchTap,
                         onCreateCustomFromEquipment: _handleCreateCustomFromEquipment,
                         onStartWorkoutWithEquipment: _handleStartWorkoutWithEquipment,
+                        // SuggestedActionsCard's "Check my form" chip → reuse
+                        // the existing pill video-picker bridge (record path).
+                        onAttachFormVideo: () => _handleMediaFromPill(
+                          ChatMediaMode.recordVideo,
+                          'Can you check my form?',
+                        ),
                       ).animate().fadeIn(duration: 200.ms);
 
                       // Highlight animation for scroll-to-message

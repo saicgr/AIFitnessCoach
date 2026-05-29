@@ -102,6 +102,16 @@ from .cycle_tools import (
     CYCLE_TOOLS,
 )
 
+# === Suggested-action launcher chips ===
+# `suggest_actions` lets the nutrition + workout agents surface tappable
+# shortcut chips (scan a menu, check form, browse workouts) in the chat.
+# `inject_suggested_actions` is the central merger called once per response.
+from .suggestion_tools import (
+    suggest_actions,
+    inject_suggested_actions,
+    CHAT_LAUNCHABLE_ACTION_IDS,
+)
+
 from .base import get_vision_service, get_form_analysis_service
 
 # === Phase 2-6 workouts overhaul tools ===

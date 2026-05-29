@@ -14,7 +14,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Tool
 from core.gemini_client import get_langchain_llm, sanitize_messages_for_response
 from core.locale import locale_system_suffix as _locale_system_suffix
 from .state import NutritionAgentState
-from ..tools import analyze_food_image, analyze_multi_food_images, parse_app_screenshot, parse_nutrition_label, get_nutrition_summary, get_recent_meals, log_food_from_text
+from ..tools import analyze_food_image, analyze_multi_food_images, parse_app_screenshot, parse_nutrition_label, get_nutrition_summary, get_recent_meals, log_food_from_text, suggest_actions
 from ..tools.nutrition_tools import get_calorie_remainder, get_favorite_foods, get_todays_workout_for_meal, build_grocery_list
 from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
@@ -38,6 +38,7 @@ NUTRITION_TOOLS = [
     get_favorite_foods,
     get_todays_workout_for_meal,
     build_grocery_list,
+    suggest_actions,
 ]
 
 # Nutrition expertise base prompt template (coach name is inserted dynamically)
@@ -407,6 +408,12 @@ AVAILABLE TOOLS:
   * food_description: the food the user mentioned
   * meal_type: optional (breakfast/lunch/dinner/snack), auto-detected if not provided
   * timezone_str: ALWAYS pass "{_tz}"
+- suggest_actions(action_ids, prompt) - Surface tappable shortcut chips so the user can jump into a feature
+  * Call when a shortcut helps the user ACT on your advice, e.g.:
+    - user is eating out / asks about a restaurant or menu -> action_ids=["scan_menu"]
+    - user asks what's in a food but sent NO photo -> action_ids=["photo_food", "scan_food"]
+  * Do NOT call it if you just analyzed the exact thing the chip would open (e.g. don't suggest scan_menu right after a menu analysis)
+  * prompt: a short friendly lead-in line (optional)
 - analyze_food_image(user_id, image_base64, user_message) - Analyze a single food image to log calories and macros
 - analyze_multi_food_images(user_id, s3_keys, mime_types, user_message, analysis_mode, timezone_str) - Analyze multiple food images (plates, buffets, menus)
   * s3_keys: list of S3 object keys from media_refs

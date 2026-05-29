@@ -22,6 +22,7 @@ import 'chat_action_confirm_card.dart';
 import 'equipment_match_card.dart';
 import 'event_logged_undo_card.dart';
 import 'share_artifact_card.dart';
+import 'suggested_actions_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
 import 'chat_media_widgets.dart';
@@ -43,6 +44,10 @@ class ChatMessageBubble extends ConsumerWidget {
   final void Function(Map<String, dynamic> match, Map<String, dynamic> actionData)? onEquipmentMatchTap;
   final void Function(Map<String, dynamic> actionData)? onCreateCustomFromEquipment;
   final void Function(Map<String, dynamic> actionData)? onStartWorkoutWithEquipment;
+  /// Bridges the SuggestedActionsCard's `attach_form_video` chip to the chat
+  /// screen's own video picker (the card can't open it itself). Null outside
+  /// the chat screen → the chip is hidden.
+  final VoidCallback? onAttachFormVideo;
 
   const ChatMessageBubble({
     super.key,
@@ -55,7 +60,40 @@ class ChatMessageBubble extends ConsumerWidget {
     this.onEquipmentMatchTap,
     this.onCreateCustomFromEquipment,
     this.onStartWorkoutWithEquipment,
+    this.onAttachFormVideo,
   });
+
+  /// IDs to suppress in the SuggestedActionsCard because this same message
+  /// already rendered their result — e.g. don't offer "Scan Menu" right under
+  /// a menu-analysis result, or "Check my form" under a form-check result.
+  Set<String> get _suppressedSuggestionIds {
+    final action = message.actionData?['action'];
+    final out = <String>{};
+    if (message.hasMenuAnalysis || action == 'analyze_menu') {
+      out.add('scan_menu');
+    }
+    if (message.hasFoodAnalysis ||
+        message.hasBuffetAnalysis ||
+        message.hasFoodLogged ||
+        action == 'analyze_multi_food_images') {
+      out.addAll(const {
+        'photo_food',
+        'scan_food',
+        'food',
+        'barcode_food',
+        'scan_menu',
+        'scan_nutrition_label',
+        'scan_app_screenshot',
+      });
+    }
+    if (message.hasFormCheckResult || message.hasFormComparison) {
+      out.add('attach_form_video');
+    }
+    if (message.hasGeneratedWorkout) {
+      out.add('quick_workout');
+    }
+    return out;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -401,6 +439,19 @@ class ChatMessageBubble extends ConsumerWidget {
             ViewLoggedMealButton(
               mealType: message.loggedMealType,
               calories: message.loggedMealCalories,
+            ),
+          // ── Suggested-action launcher chips ───────────────────────────
+          // Tappable shortcuts the coach surfaces (scan a menu, check form,
+          // browse workouts…). Rides alongside any result card above, so it
+          // renders independent of the primary `action`. The card itself
+          // filters to the allowlist, dedupes, caps, and renders nothing if
+          // everything is suppressed/unknown.
+          if (!isUser && message.hasSuggestedActions)
+            SuggestedActionsCard(
+              actionIds: message.suggestedActionIds,
+              prompt: message.suggestedActionsPrompt,
+              excludeIds: _suppressedSuggestionIds,
+              onAttachFormVideo: onAttachFormVideo,
             ),
           // Timestamp + delivery status (assistant messages also show latency)
           Padding(
