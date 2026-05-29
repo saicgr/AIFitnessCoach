@@ -241,19 +241,22 @@ class _RangeHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onStep,
   });
 
-  // Extent sized for worst realistic case:
+  // Extent sized snug to the content so the segmented control sits directly
+  // under the date strip (a larger extent centered the ~78px content and left
+  // a visible gap above it):
   //   outer padding 8+8 = 16
-  //   pill row (up to ~44 at 1.3x text scale with iOS default padding)
+  //   pill row (~38 at normal scale)
   //   gap 6
   //   arrow row 28
-  //   = 94, plus a 10px safety margin for platform text metrics = 104.
-  // We also wrap the inner Column in a FittedBox(scaleDown) so even at
-  // extreme accessibility text scales the content scales down instead of
-  // throwing a RenderFlex overflow.
+  //   ≈ 88, rounded to 90.
+  // The inner Column is wrapped in a FittedBox(scaleDown) (see build), so at
+  // extreme accessibility text scales the content scales down to fit 90
+  // instead of throwing a RenderFlex overflow — that guard is what makes a
+  // tight extent safe.
   @override
-  double get minExtent => 104;
+  double get minExtent => 90;
   @override
-  double get maxExtent => 104;
+  double get maxExtent => 90;
 
   @override
   bool shouldRebuild(covariant _RangeHeaderDelegate old) =>

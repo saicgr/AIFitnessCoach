@@ -212,6 +212,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
                 alignment: const Alignment(0.0, 0.55),
                 memCacheWidth: 400,
                 memCacheHeight: 400,
+                fadeInDuration: const Duration(milliseconds: 250),
                 placeholder: (_, __) => const SizedBox.shrink(),
                 errorWidget: (_, __, ___) => const SizedBox.shrink(),
               );
@@ -232,6 +233,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
           alignment: const Alignment(0.0, 0.55),
           memCacheWidth: 400,
           memCacheHeight: 400,
+          fadeInDuration: const Duration(milliseconds: 250),
           placeholder: (_, __) => const SizedBox.shrink(),
           errorWidget: (_, __, ___) => const SizedBox.shrink(),
         ),
