@@ -15,7 +15,9 @@ import '../../core/constants/app_links.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
+import '../onboarding/onboarding_experiments.dart';
 import '../onboarding/widgets/onboarding_theme.dart';
+import '../../core/services/posthog_service.dart';
 import 'widgets/pre_auth_referral_chip.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
@@ -100,6 +102,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       // Founder sheet is shown on MainShell (the actual destination) — showing
       // it here would race with the GoRouter redirect and tear down under us.
 
+      // Funnel: closes the demo-showcase → sign-in → paywall_pricing_viewed
+      // gap so paywall-reach rate is measurable per auth method.
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'onboarding_signin_completed',
+        properties: {
+          'method': 'apple',
+          'is_first_login': user?.isFirstLogin ?? false,
+        },
+      );
+
       _triggerEarlyGeneration();
 
       // See _signInWithGoogle for rationale.
@@ -128,8 +140,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           }
           if (loc == '/sign-in') {
             debugPrint('🧭 [SignIn] Auth flipped but redirect did not fire — '
-                'force-navigating to /personal-info (router will rewrite if needed)');
-            context.go('/personal-info');
+                'force-navigating to next onboarding step (router will rewrite if needed)');
+            // Post-paywall treatment routes a fresh user to coach-selection
+            // first (personal-info now comes after the paywall); default order
+            // still goes to personal-info. Either way the router redirect
+            // rewrites to the user's true next step.
+            context.go(OnboardingExperiments.personalInfoAfterPaywall
+                ? '/coach-selection'
+                : '/personal-info');
           }
         });
       }
@@ -175,6 +193,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       // Founder sheet is shown on MainShell (the actual destination) — showing
       // it here would race with the GoRouter redirect and tear down under us.
 
+      // Funnel: closes the demo-showcase → sign-in → paywall_pricing_viewed
+      // gap so paywall-reach rate is measurable per auth method.
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'onboarding_signin_completed',
+        properties: {
+          'method': 'google',
+          'is_first_login': user?.isFirstLogin ?? false,
+        },
+      );
+
       _triggerEarlyGeneration();
 
       // Belt-and-suspenders: GoRouter's refreshListenable should redirect us
@@ -208,8 +236,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           }
           if (loc == '/sign-in') {
             debugPrint('🧭 [SignIn] Auth flipped but redirect did not fire — '
-                'force-navigating to /personal-info (router will rewrite if needed)');
-            context.go('/personal-info');
+                'force-navigating to next onboarding step (router will rewrite if needed)');
+            // Post-paywall treatment routes a fresh user to coach-selection
+            // first (personal-info now comes after the paywall); default order
+            // still goes to personal-info. Either way the router redirect
+            // rewrites to the user's true next step.
+            context.go(OnboardingExperiments.personalInfoAfterPaywall
+                ? '/coach-selection'
+                : '/personal-info');
           }
         });
       }

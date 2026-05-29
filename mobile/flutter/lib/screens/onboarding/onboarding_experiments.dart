@@ -26,6 +26,43 @@ class OnboardingExperiments {
   static const String flagValue = 'onboarding_value_screen';
   static const String flagPlanPreview = 'onboarding_plan_preview';
 
+  /// Experiment: move name + DOB collection (`/personal-info`) to AFTER the
+  /// paywall instead of before coach-selection. Removes the one piece of pure
+  /// data-collection friction sitting between the pre-auth value peak (demo
+  /// showcases) and the paywall ask. Defaults OFF (today's order:
+  /// personal-info → coach → assessment → paywall). Flip this flag truthy to
+  /// run the treatment (coach → assessment → paywall → personal-info →
+  /// commitment-pact).
+  ///
+  /// Unlike the v6 kill-switches above (default ON), this defaults OFF, so its
+  /// resolution lives in [primeFlowFlags] rather than [isEnabled].
+  static const String flagPersonalInfoAfterPaywall =
+      'onboarding_personal_info_after_paywall';
+
+  /// Sync-readable cache of [flagPersonalInfoAfterPaywall]. The router's
+  /// step-ordering and several screens' forward-navigation must read this
+  /// synchronously (a `redirect` callback cannot await), so it is primed once
+  /// per session by [primeFlowFlags] (called fire-and-forget from the router
+  /// the moment auth completes). Defaults FALSE = today's exact order, so the
+  /// whole reorder is dead code until the flag is flipped — zero prod risk.
+  static bool personalInfoAfterPaywall = false;
+
+  /// Resolve the synchronously-read flow flags into their caches. Safe to call
+  /// repeatedly; never throws (the PostHog wrapper swallows errors → `null`,
+  /// leaving the default untouched). Default-OFF flag: only an explicit
+  /// truthy value enables the treatment.
+  static Future<void> primeFlowFlags(PosthogService posthog) async {
+    final raw = await posthog.getFeatureFlag(flagPersonalInfoAfterPaywall);
+    if (raw is bool) {
+      personalInfoAfterPaywall = raw;
+    } else if (raw is String) {
+      final v = raw.toLowerCase();
+      personalInfoAfterPaywall =
+          v == 'on' || v == 'true' || v == 'treatment' || v == 'enabled';
+    }
+    // absent / unreadable → keep default false (today's order)
+  }
+
   /// True unless [flagKey] is explicitly configured to a disabling value.
   /// An absent flag (`null`) or any unexpected type keeps the screen ON.
   /// Never throws — the PostHog wrapper swallows errors and returns `null`.

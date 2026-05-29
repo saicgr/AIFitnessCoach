@@ -32,6 +32,7 @@ import '../screens/fasting/fasting_body_status_screen.dart';
 import '../screens/fasting/fasting_guide_screen.dart';
 import '../screens/stats/comprehensive_stats_screen.dart';
 import '../screens/onboarding/pre_auth_quiz_screen.dart';
+import '../screens/onboarding/onboarding_experiments.dart';
 import '../screens/onboarding/notification_prime_screen.dart';
 import '../screens/onboarding/permissions_primer_screen.dart';
 import '../screens/onboarding/health_connect_onboarding_screen.dart';
@@ -355,7 +356,13 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
 
   // Step 1: Personal info (name, DOB) — gate exists at user.dart:194 and
   // requires name + dateOfBirth + gender + heightCm + weightKg.
-  if (!user.isPersonalInfoComplete) {
+  // EXPERIMENT (default OFF): when `personalInfoAfterPaywall` is on, this
+  // gate moves to AFTER the paywall (see Step 5) so the only friction between
+  // the value peak and the ask is coach-selection + assessment. The paywall's
+  // weight-delta personalization reads gender/height/weight from the quiz, not
+  // from /personal-info, so it is unaffected by the move.
+  if (!OnboardingExperiments.personalInfoAfterPaywall &&
+      !user.isPersonalInfoComplete) {
     debugPrint('🧭 [Router] _getNextOnboardingStep → /personal-info '
         '(name=${user.name != null}, dob=${user.dateOfBirth != null}, '
         'gender=${user.gender != null}, h=${user.heightCm != null}, '
@@ -374,6 +381,14 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
   // Step 4: Paywall (after coach selection)
   if (!user.isPaywallComplete) {
     return '/paywall-pricing';
+  }
+
+  // Step 5: Personal info AFTER the paywall (experiment treatment only).
+  if (OnboardingExperiments.personalInfoAfterPaywall &&
+      !user.isPersonalInfoComplete) {
+    debugPrint('🧭 [Router] _getNextOnboardingStep → /personal-info '
+        '(post-paywall treatment)');
+    return '/personal-info';
   }
 
   // All steps complete
@@ -610,6 +625,10 @@ bool _dailyLoginXpProcessed = false;
 /// Reset on logout so a fresh sign-in re-triggers the warm.
 bool _todayWorkoutPrewarmed = false;
 
+/// Flag to ensure onboarding flow flags (personalInfoAfterPaywall) are primed
+/// only once per auth session. Reset on logout alongside _todayWorkoutPrewarmed.
+bool _onboardingFlowFlagsPrimed = false;
+
 /// Router provider
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthStateNotifier(ref);
@@ -654,6 +673,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (authState.status == AuthStatus.unauthenticated) {
         _dailyLoginXpProcessed = false;
         _todayWorkoutPrewarmed = false;
+        _onboardingFlowFlagsPrimed = false;
       }
 
       // 3. Process daily login XP for authenticated users (fire-and-forget, once per auth session)
@@ -677,6 +697,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             ref.read(todayWorkoutProvider);
           } catch (e) {
             debugPrint('Router: today workout pre-warm failed (non-fatal): $e');
+          }
+        });
+      }
+
+      // Prime synchronously-read onboarding flow flags once per session so
+      // _getNextOnboardingStep (a sync redirect callback) and the screen
+      // forward-nav can read OnboardingExperiments.personalInfoAfterPaywall
+      // without awaiting. Defaults keep today's order until this resolves.
+      if (authState.status == AuthStatus.authenticated &&
+          !_onboardingFlowFlagsPrimed) {
+        _onboardingFlowFlagsPrimed = true;
+        Future.microtask(() {
+          try {
+            OnboardingExperiments.primeFlowFlags(ref.read(posthogServiceProvider));
+          } catch (e) {
+            debugPrint('Router: onboarding flow-flag prime failed (non-fatal): $e');
           }
         });
       }

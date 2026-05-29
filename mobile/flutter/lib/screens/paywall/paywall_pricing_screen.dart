@@ -24,6 +24,7 @@ import '../../core/services/posthog_service.dart';
 import 'widgets/inline_referral_expander.dart';
 import 'widgets/credibility_strip.dart';
 import 'paywall_experiments.dart';
+import '../onboarding/onboarding_experiments.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/plan_portability_badge.dart';
@@ -600,8 +601,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   const PlanPortabilityBadge(size: PortabilitySize.banner),
                 ],
 
-                // Maybe later (de-emphasized skip)
-                if (!isSubscribed) ...[
+                // Maybe later (de-emphasized skip).
+                // HARD GATE: when the `paywall_hard_gate` experiment is on we
+                // drop this entirely — the only way past the onboarding
+                // paywall is start-trial / subscribe / restore, matching the
+                // single-tier-paid model and closing the "skip → silently
+                // hard-locked on /home" leak (see PaywallExperiments.hardGate).
+                if (!isSubscribed && !_experiments.hardGate) ...[
                   const SizedBox(height: 12),
                   Center(
                     child: GestureDetector(
@@ -1437,10 +1443,20 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   /// Navigate to subscription success screen after paywall completion
   Future<void> _navigateAfterPaywall(BuildContext context, WidgetRef ref) async {
-    if (context.mounted) {
-      debugPrint('🎉 [Paywall] Navigating to subscription success');
-      context.go('/commitment-pact');
+    if (!context.mounted) return;
+    // EXPERIMENT (default OFF): when personal-info was moved to after the
+    // paywall, collect name + DOB now (before the commitment pact). Otherwise
+    // it was already collected pre-coach-selection.
+    final user = ref.read(authStateProvider).user;
+    if (OnboardingExperiments.personalInfoAfterPaywall &&
+        user != null &&
+        !user.isPersonalInfoComplete) {
+      debugPrint('🎉 [Paywall] → /personal-info (post-paywall treatment)');
+      context.go('/personal-info');
+      return;
     }
+    debugPrint('🎉 [Paywall] Navigating to commitment pact');
+    context.go('/commitment-pact');
   }
 
   Future<bool?> _showDiscountPopup(BuildContext context) {
