@@ -221,16 +221,18 @@ const List<HomeSection> _defaultOrder = [
   HomeSection.weekStrip,
   // The metric summary deck sits first, right under the banners (issue 1).
   HomeSection.todayScore,
-  // v32 (issue 5): the Workout card is the day's PRIMARY ACTION, so it now
-  // sits directly under the glance deck — above the Coach card and quick
-  // actions — instead of being buried 4 cards down. Glance (deck) → act
-  // (workout) → context (coach). Only affects users on the default layout;
-  // anyone who reordered in My Space keeps their saved order.
+  // v33: the quick-actions row now sits DIRECTLY under the deck — it took the
+  // slot vacated when the deck's Log / Trends / Start strip was removed
+  // (issue 1), which is where the user expects those shortcuts to live.
+  HomeSection.quickActions,
+  // v32 (issue 5): the Workout card is the day's PRIMARY ACTION, so it sits
+  // high — right under the deck's quick-actions, above the Coach card.
+  // Glance (deck) → quick actions → act (workout) → context (coach). Only
+  // affects users on the default layout; My Space reorders are preserved.
   HomeSection.workoutCard,
   // Coach Hero now sits BELOW the deck (issue 1).
   HomeSection.coachHero,
   HomeSection.strainCoach,
-  HomeSection.quickActions,
   HomeSection.nutritionCard,
   // The Cycle card self-hides unless menstrual tracking is enabled, so it is
   // safe to keep in the default order for everyone.
