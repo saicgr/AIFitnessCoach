@@ -581,12 +581,13 @@ class _CoachNudgeStack extends ConsumerStatefulWidget {
   /// One page = up to this many stacked sub-cards.
   static const int _kCardsPerPage = 2;
 
-  /// Approx height of ONE nudge row (icon/2-line text + padding + border).
-  /// Both title and body are single-line (ellipsis), so a row's height is
-  /// deterministic; this is the per-row budget the PageView is sized from.
-  /// (Previously a flat 184px was hardcoded for a 2-row page, which left a
-  /// big empty gap below a 1- or 2-card page — issue 3.)
-  static const double _kRowHeight = 58;
+  /// Approx height of ONE nudge row (emoji/2-line text + padding + border +
+  /// CTA pill). Both title and body are single-line (ellipsis), so a row's
+  /// height is deterministic; this is the per-row budget the PageView is sized
+  /// from. Measured at ~68px on a 2-card page (the 58px first guess overflowed
+  /// by 20px), so 74 leaves comfortable headroom while still cutting the dead
+  /// space the old flat 184px left below short pages (issue 3).
+  static const double _kRowHeight = 74;
 
   @override
   ConsumerState<_CoachNudgeStack> createState() => _CoachNudgeStackState();
