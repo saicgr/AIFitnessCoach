@@ -126,7 +126,7 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
             extra: ref.read(_trendSegmentProvider).trendMetric,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
         // 1. AI insight strip (hides itself when empty).
         pad(_AiInsightStrip(isDark: isDark, accent: accent)),

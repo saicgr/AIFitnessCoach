@@ -1,6 +1,6 @@
 /// Workout library grid — Surface 2.4 of the minimalist redesign.
 ///
-/// 2×3 grid of category tiles (Strength / Cardio / Mobility / HIIT / Yoga
+/// 3×2 grid of category tiles (Strength / Cardio / Mobility / HIIT / Yoga
 /// / Saved). Each tile routes to `LibraryScreen` (`/library`) with a
 /// pre-applied category filter. Per-category illustrations live under
 /// `assets/images/workout_types/` and are rendered with `Image.asset` —
@@ -11,7 +11,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
 class WorkoutLibraryGrid extends StatelessWidget {
@@ -25,6 +24,11 @@ class WorkoutLibraryGrid extends StatelessWidget {
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
+        // Explicit zero padding: a nested vertical GridView defaults to
+        // primary:true and would otherwise inject the MediaQuery safe-area
+        // insets (status bar / home indicator) as top+bottom padding, which
+        // showed up as large phantom gaps above and below the grid.
+        padding: EdgeInsets.zero,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
           mainAxisSpacing: 12,
@@ -100,51 +104,29 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = ThemeColors.of(context);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          HapticService.selection();
-          context.push('/library?category=${category.key}');
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: c.cardBorder),
-          ),
-          clipBehavior: Clip.hardEdge,
-          // The bundled tile art is self-contained — it already bakes in its
-          // own bottom scrim and category label, so we render the PNG full-bleed
-          // (its ~385x470 aspect matches the tile's childAspectRatio, so cover
-          // shows the whole illustration without cropping the label). Screen
-          // readers get the label via Semantics since it lives in the bitmap.
-          child: Semantics(
-            label: category.label,
-            button: true,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Gradient base — only ever visible if the PNG fails to load,
-                // in which case the errorBuilder paints the label on top.
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: category.gradient,
-                    ),
-                  ),
-                ),
-                Image.asset(
-                  category.assetPath,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                  errorBuilder: (_, __, ___) => _FallbackLabel(label: category.label),
-                ),
-              ],
-            ),
+    // The bundled tile art is self-contained — its rounded corners are baked
+    // into the PNG with the area outside the card masked transparent, and it
+    // carries its own bottom scrim + category label. So we render it directly
+    // (no surrounding clip/border/gradient that would show square edges behind
+    // the rounded art). Its ~385x470 aspect matches the tile's childAspectRatio
+    // so cover shows the whole illustration uncropped. Screen readers get the
+    // label via Semantics since it lives in the bitmap.
+    return Semantics(
+      label: category.label,
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            HapticService.selection();
+            context.push('/library?category=${category.key}');
+          },
+          child: Image.asset(
+            category.assetPath,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (_, __, ___) => _FallbackTile(category: category),
           ),
         ),
       ),
@@ -152,60 +134,72 @@ class _CategoryTile extends StatelessWidget {
   }
 }
 
-/// Shown only when the bundled tile PNG is missing — paints a bottom scrim and
-/// the category label over the gradient base so the tile still reads cleanly.
-class _FallbackLabel extends StatelessWidget {
-  final String label;
-  const _FallbackLabel({required this.label});
+/// Shown only when the bundled tile PNG is missing — a category-tinted rounded
+/// card with a bottom scrim and the label, so the tile still reads cleanly.
+class _FallbackTile extends StatelessWidget {
+  final _LibraryCategory category;
+  const _FallbackTile({required this.category});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        IgnorePointer(
-          child: DecoratedBox(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.45),
-                ],
-                stops: const [0.55, 1.0],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: category.gradient,
               ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: Align(
-            alignment: Alignment.bottomLeft,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.bottomLeft,
-              child: Text(
-                label,
-                maxLines: 1,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: -0.2,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 6,
-                      color: Color(0x66000000),
-                      offset: Offset(0, 1),
-                    ),
+          IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.45),
                   ],
+                  stops: const [0.55, 1.0],
                 ),
               ),
             ),
           ),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  category.label,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.2,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 6,
+                        color: Color(0x66000000),
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

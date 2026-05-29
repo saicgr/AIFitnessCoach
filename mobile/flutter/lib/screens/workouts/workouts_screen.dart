@@ -432,7 +432,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         const SizedBox(height: 8),
         const WorkoutLibraryGrid(),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
         // Exercise Preferences (expandable)
         KeyedSubtree(
@@ -440,7 +440,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: const ExercisePreferencesCard(),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
         // Weekly Progress. Gym management + History now live in the
         // floating launcher bar, so the in-body "Managed Gym" section and
@@ -458,7 +458,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             scheduledDayIndices: scheduledDayIndices,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
         // Training stats — full analytics section (AI insight, scalar strip,
         // trend chart, muscle balance, fueling split, strength, timing,
