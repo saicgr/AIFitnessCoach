@@ -17,30 +17,18 @@ class _ActivityHeatmapCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
+    // No outer "Activity" title here: the embedded [ActivityHeatmap] renders
+    // its own localized "Activity" header (via _buildHeader →
+    // AppLocalizations.activityHeatmapActivity) with the time-range chips +
+    // refresh control. Keeping a second hardcoded "Activity" Text above it
+    // produced the duplicate "Activity / Activity" stack, so it's removed.
     return StatCardShell(
       isDark: isDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Activity',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ActivityHeatmap(
-            onDayTapped: (date) {
-              HapticService.light();
-              WorkoutDayDetailSheet.show(context, date);
-            },
-          ),
-        ],
+      child: ActivityHeatmap(
+        onDayTapped: (date) {
+          HapticService.light();
+          WorkoutDayDetailSheet.show(context, date);
+        },
       ),
     );
   }

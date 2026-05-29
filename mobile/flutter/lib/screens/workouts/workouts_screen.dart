@@ -302,17 +302,42 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     Color accentColor,
   ) {
     final topPadding = MediaQuery.of(context).padding.top;
+    // Opaque-at-top, fade-to-transparent header band. Without a background the
+    // floating header was fully transparent, so scrolled content showed
+    // through the title (the "pasted-9" overlap glitch). We blur whatever
+    // scrolls underneath and lay a scaffold-colored gradient over it that is
+    // solid across the status bar + title row and fades out below, so the
+    // title always reads cleanly while the chrome still feels light.
+    final scaffoldBg =
+        isDark ? AppColors.background : AppColorsLight.background;
 
     return PositionedDirectional(top: 0,
       start: 0,
       end: 0,
-      // Three stacked BackdropFilter blurs in the header would otherwise
-      // re-rastze on every scroll pixel of the content below. Isolating
-      // the header in its own painting layer pays the blur cost once per
-      // header change instead of once per scrolled pixel.
+      // Isolating the header in its own painting layer pays the blur cost once
+      // per header change instead of once per scrolled pixel of content below.
       child: RepaintBoundary(
-        child: Container(
-        padding: EdgeInsetsDirectional.only(top: topPadding + 8, start: 16, end: 16, bottom: 8),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+        padding: EdgeInsetsDirectional.only(top: topPadding + 8, start: 16, end: 16, bottom: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              // Solid across the status bar + title row…
+              scaffoldBg,
+              scaffoldBg,
+              // …then a soft fade so content scrolling up meets the band
+              // without a hard seam.
+              scaffoldBg.withValues(alpha: 0.92),
+              scaffoldBg.withValues(alpha: 0.0),
+            ],
+            stops: const [0.0, 0.55, 0.8, 1.0],
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -361,8 +386,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // (1st option). Header stays focused on navigation only.
           ],
         ),
-      ),
-      ),
+            ), // Container
+          ), // BackdropFilter
+        ), // ClipRect
+      ), // RepaintBoundary
     );
   }
 

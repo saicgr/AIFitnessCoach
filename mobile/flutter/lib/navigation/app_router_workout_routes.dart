@@ -491,13 +491,31 @@ List<RouteBase> _workoutRoutes() => [
       ),
 
       // Library (Exercise database, programs) - Full screen outside shell
-      // Supports ?tab=0 (Exercises), ?tab=1 (Programs), ?tab=2 (Skills)
+      // Supports ?tab=N (0 Discover / 1 Exercises / 2 Workouts / 3 Saved) and
+      // ?category=<tileKey> (strength|cardio|mobility|hiit|yoga|saved) from the
+      // Plan-tab library tiles. When a category is present we default to the
+      // Exercises tab (1) so the pre-applied filter is visible — except the
+      // `saved` tile, which targets the Saved tab (3). An explicit ?tab= always
+      // wins so existing deep-links keep their behavior.
       GoRoute(
         path: '/library',
         builder: (context, state) {
           final tabParam = state.uri.queryParameters['tab'];
-          final initialTab = tabParam != null ? int.tryParse(tabParam) ?? 0 : 0;
-          return LibraryScreen(initialTab: initialTab);
+          final category = state.uri.queryParameters['category'];
+          final int initialTab;
+          if (tabParam != null) {
+            initialTab = int.tryParse(tabParam) ?? 0;
+          } else if (category == 'saved') {
+            initialTab = 3; // Saved tab
+          } else if (category != null) {
+            initialTab = 1; // Exercises tab — show the filtered list
+          } else {
+            initialTab = 0; // Discover (default)
+          }
+          return LibraryScreen(
+            initialTab: initialTab,
+            initialCategory: category,
+          );
         },
       ),
 

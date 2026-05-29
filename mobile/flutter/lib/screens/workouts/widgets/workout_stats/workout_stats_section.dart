@@ -110,6 +110,21 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
 
     const gap = SizedBox(height: 16);
 
+    // Zero-data gate. A brand-new user (no logged workouts) would otherwise see
+    // ~7 near-identical grey "log a workout to unlock this" cards stacked down
+    // the page. Instead, when ROI metrics have LOADED and report zero completed
+    // workouts, collapse the whole section to one consolidated empty state.
+    //
+    // Cache-first / no-flicker: `roiMetrics` is primed in initState via
+    // loadROIMetrics(). While it's still null (loading / not yet primed) we
+    // fall through to the normal per-card layout (each card shows its own
+    // skeleton), so we never blank the section on a slow first frame. The
+    // consolidated state appears only once we have a definitive 0.
+    final roi = ref.watch(
+      milestonesProvider.select((s) => s.roiMetrics),
+    );
+    final bool hasNoSessions = roi != null && roi.totalWorkoutsCompleted == 0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -127,6 +142,12 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
           ),
         ),
         const SizedBox(height: 8),
+
+        // One consolidated empty state for zero-data users.
+        if (hasNoSessions) ...[
+          pad(_StatsZeroState(isDark: isDark, accent: accent)),
+          const SizedBox(height: 8),
+        ] else ...[
 
         // 1. AI insight strip (hides itself when empty).
         pad(_AiInsightStrip(isDark: isDark, accent: accent)),
@@ -184,7 +205,74 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
         // (beside "See all"), not a full-width card here.
         gap,
         _RecentPrsRow(isDark: isDark, accent: accent),
+        ], // end of populated-user per-card layout
       ],
+    );
+  }
+}
+
+/// Single consolidated empty state shown when the user has zero logged
+/// workouts, replacing the column of ~7 individual "no data yet" cards.
+/// Polished M3 card: accent-tinted icon badge + title + supporting line.
+class _StatsZeroState extends StatelessWidget {
+  final bool isDark;
+  final Color accent;
+
+  const _StatsZeroState({required this.isDark, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.insights_rounded, color: accent, size: 28),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Your training stats unlock here',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: textPrimary,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Log your first workout to start tracking volume, streaks, '
+            'strength, and more.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.4,
+              color: textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

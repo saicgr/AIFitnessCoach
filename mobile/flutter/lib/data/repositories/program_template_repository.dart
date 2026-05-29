@@ -11,6 +11,38 @@ final programTemplateRepositoryProvider =
   return ProgramTemplateRepository(ref.watch(apiClientProvider));
 });
 
+/// Filter key for [programLibraryBrowseProvider]. A Dart record gives value
+/// equality, so the same filter combo reuses one cached provider instance.
+typedef ProgramLibraryFilter = ({
+  String? category,
+  String? difficulty,
+  int? sessionsPerWeek,
+  String? search,
+});
+
+/// Cache-first browse of the curated program library, keyed by the active
+/// filter tuple. `keepAlive` means a returning user (same filters) sees the
+/// last result instantly instead of a blocking skeleton every open; the first
+/// load with no cached value still resolves through the normal async states.
+///
+/// The screen invalidates this provider for the current filter to force a
+/// silent refresh. Errors propagate so the existing error + Retry card shows
+/// (we never substitute mock/fallback data).
+final programLibraryBrowseProvider = FutureProvider.autoDispose
+    .family<ProgramLibraryResult, ProgramLibraryFilter>((ref, filter) async {
+  // Hold the result across screen rebuilds / quick back-and-forth navigation
+  // so it's served instantly on return. autoDispose still reclaims it once no
+  // longer referenced for a while.
+  ref.keepAlive();
+  final repo = ref.watch(programTemplateRepositoryProvider);
+  return repo.browseLibrary(
+    category: filter.category,
+    difficulty: filter.difficulty,
+    sessionsPerWeek: filter.sessionsPerWeek,
+    search: filter.search,
+  );
+});
+
 /// Thin HTTP wrapper for `/api/v1/program-templates/*`.
 ///
 /// Every method returns a typed model and lets Dio exceptions bubble — the

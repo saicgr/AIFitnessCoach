@@ -22,7 +22,13 @@ export 'models/exercises_state.dart';
 class LibraryScreen extends ConsumerStatefulWidget {
   final int? initialTab;
 
-  const LibraryScreen({super.key, this.initialTab});
+  /// Optional category tile key from the Plan-tab library grid
+  /// (strength | cardio | mobility | hiit | yoga | saved). When present we
+  /// map it to a concrete Exercises-tab DB-category filter (or the Saved tab
+  /// for `saved`) on first frame so the screen opens pre-filtered.
+  final String? initialCategory;
+
+  const LibraryScreen({super.key, this.initialTab, this.initialCategory});
 
   @override
   ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
@@ -54,6 +60,64 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         setState(() {});
       }
     });
+
+    // Apply a category tile's pre-filter on first frame (deep-link from the
+    // Plan-tab library grid). Done post-frame so the TabController + filter
+    // providers are fully built before we mutate state / animate tabs.
+    final category = widget.initialCategory;
+    if (category != null && category.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _applyCategoryDeepLink(category);
+      });
+    }
+  }
+
+  /// Map a Plan-tab library tile key to a concrete Library action.
+  ///
+  /// Tile keys come from `workout_library_grid.dart`:
+  /// strength | cardio | mobility | hiit | yoga | saved.
+  ///
+  /// The Exercises tab filters on the DB `category` column (verified live
+  /// against `exercise_library_cleaned`, May 2026):
+  ///   strength=1330, cardio=253, stretching=208, core=190, yoga=78,
+  ///   plyometric=60, power=37, conditioning=22, functional=10, balance=4.
+  /// So each tile key is mapped to a category value that actually returns
+  /// rows (no empty lists):
+  ///   strength → 'strength'   (1330 rows, exact match)
+  ///   cardio   → 'cardio'     (253 rows, exact match)
+  ///   mobility → 'stretching' (208 rows — DB has no 'mobility' category)
+  ///   hiit     → 'plyometric' (60 rows — DB has no 'hiit'; plyometric is the
+  ///                            closest high-intensity category. Note the DB
+  ///                            value is singular 'plyometric', NOT 'plyometrics')
+  ///   yoga     → 'yoga'       (78 rows, exact match)
+  ///   saved    → Saved tab    (no category filter)
+  void _applyCategoryDeepLink(String tileKey) {
+    switch (tileKey) {
+      case 'saved':
+        _tabController.animateTo(3); // Saved tab — no category filter applied.
+        return;
+      case 'strength':
+        _switchToExercises('strength', 'category');
+        return;
+      case 'cardio':
+        _switchToExercises('cardio', 'category');
+        return;
+      case 'mobility':
+        // DB has no 'mobility' category; 'stretching' is the mobility corpus.
+        _switchToExercises('stretching', 'category');
+        return;
+      case 'hiit':
+        // DB has no 'hiit' category; 'plyometric' (singular) is the closest
+        // high-intensity match that returns rows.
+        _switchToExercises('plyometric', 'category');
+        return;
+      case 'yoga':
+        _switchToExercises('yoga', 'category');
+        return;
+      default:
+        // Unknown key — leave the screen on its default tab, no filter.
+        return;
+    }
   }
 
   @override

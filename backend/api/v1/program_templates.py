@@ -42,6 +42,7 @@ from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from core.supabase_client import get_supabase
 
+from services.gemini_service import ResponseCache
 from services.program_library_importer import normalize_program_blob_for_preview
 from services.program_template_parser import parse_to_template_json
 from services.program_template_expander import (
@@ -52,6 +53,14 @@ from services.program_template_expander import (
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+# In-memory TTL cache for the program-library browse result. The `programs`
+# library is static/curated reference data, so a long TTL is safe — the only
+# writes are bulk re-imports, which restart the process. Keyed by the
+# (category, difficulty_level, sessions_per_week, search) filter tuple.
+_library_browse_cache = ResponseCache(
+    prefix="program_library_browse", ttl_seconds=6 * 3600, max_size=256
+)
 
 
 # =============================================================================
@@ -200,31 +209,47 @@ async def browse_library(
 
     Filters: program_category, difficulty_level, sessions_per_week, free-text
     search on program_name. The 7 rows with an empty `workouts` blob are
-    filtered out server-side (X3). Empty filtered result -> total=0 (#L14).
+    excluded server-side via the precomputed `has_workouts` column (migration
+    2220) — we no longer fetch the heavy `workouts` JSONB blob just to derive
+    that, which is what made this endpoint slow enough to trip the client's
+    receiveTimeout. Empty filtered result -> total=0 (#L14).
+
+    Cached (in-memory, long TTL) keyed by the filter tuple, since the library
+    is static curated data.
     """
     try:
+        # Serve from cache when present — library is static reference data.
+        cache_key = (
+            category or "",
+            difficulty_level or "",
+            sessions_per_week if sessions_per_week is not None else -1,
+            (search or "").strip().lower(),
+        )
+        cached = _library_browse_cache.get(*cache_key)
+        if cached is not None:
+            return cached
+
         db = get_supabase()
+        # Light card columns ONLY — drop the `workouts` blob from the select.
+        # has_workouts + sessions_per_week are now precomputed columns.
         query = db.client.table("programs").select(
             "id, program_name, program_category, program_subcategory, "
             "celebrity_name, difficulty_level, duration_weeks, "
             "sessions_per_week, session_duration_minutes, description, "
-            "short_description, goals, workouts"
-        )
+            "short_description, goals"
+        ).eq("has_workouts", True)  # X3 - exclude the 7 empty programs
         if category:
             query = query.eq("program_category", category)
         if difficulty_level:
             query = query.eq("difficulty_level", difficulty_level)
+        if sessions_per_week is not None:
+            query = query.eq("sessions_per_week", sessions_per_week)
         if search:
             query = query.ilike("program_name", f"%{search}%")
         resp = query.execute()
 
         cards: List[LibraryProgramCard] = []
         for row in resp.data or []:
-            if not _has_workouts(row):
-                continue  # X3 - skip the 7 empty programs
-            spw = _sessions_per_week(row)
-            if sessions_per_week is not None and spw != sessions_per_week:
-                continue
             cards.append(
                 LibraryProgramCard(
                     id=str(row["id"]),
@@ -234,7 +259,7 @@ async def browse_library(
                     celebrity_name=row.get("celebrity_name"),
                     difficulty_level=row.get("difficulty_level"),
                     duration_weeks=row.get("duration_weeks"),
-                    sessions_per_week=spw,
+                    sessions_per_week=row.get("sessions_per_week"),
                     session_duration_minutes=row.get(
                         "session_duration_minutes"
                     ),
@@ -246,7 +271,9 @@ async def browse_library(
                 )
             )
         cards.sort(key=lambda c: (c.program_category or "", c.program_name))
-        return LibraryBrowseResponse(total=len(cards), programs=cards)
+        result = LibraryBrowseResponse(total=len(cards), programs=cards)
+        _library_browse_cache.set(*cache_key, result)
+        return result
     except Exception as e:  # noqa: BLE001
         logger.error("Failed to browse program library: %s", e, exc_info=True)
         raise safe_internal_error(e, "program_templates")

@@ -59,30 +59,28 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   String _search = '';
   final TextEditingController _searchController = TextEditingController();
 
-  Future<ProgramLibraryResult>? _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
-
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
-  /// (Re)issue the library query for the current filter state.
-  void _reload() {
-    final repo = ref.read(programTemplateRepositoryProvider);
-    setState(() {
-      _future = repo.browseLibrary(
+  /// The filter key for the cache-first browse provider.
+  ProgramLibraryFilter get _filter => (
         category: _category,
         difficulty: _difficulty,
+        sessionsPerWeek: null,
         search: _search.isEmpty ? null : _search,
       );
-    });
+
+  /// Re-apply filters: a setState rebuild re-watches the provider with the new
+  /// key (cache-first — instant if that combo was already loaded).
+  void _applyFilters() => setState(() {});
+
+  /// Force a silent refresh of the current filter combo (used by Retry).
+  void _refresh() {
+    ref.invalidate(programLibraryBrowseProvider(_filter));
+    setState(() {});
   }
 
   @override
@@ -135,7 +133,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         textInputAction: TextInputAction.search,
         onSubmitted: (v) {
           _search = v.trim();
-          _reload();
+          _applyFilters();
         },
         decoration: InputDecoration(
           hintText: AppLocalizations.of(context).programLibrarySearchPrograms,
@@ -148,7 +146,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   onPressed: () {
                     _searchController.clear();
                     _search = '';
-                    _reload();
+                    _applyFilters();
                   },
                 ),
           filled: true,
@@ -184,7 +182,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
             onTap: () {
               HapticService.selection();
               _category = selected ? null : cat;
-              _reload();
+              _applyFilters();
             },
           );
         },
@@ -222,7 +220,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                     onTap: () {
                       HapticService.selection();
                       _difficulty = _difficulty == d ? null : d;
-                      _reload();
+                      _applyFilters();
                     },
                   ),
               ],
@@ -238,21 +236,23 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   // -------------------------------------------------------------------------
 
   Widget _buildGrid(bool isDark, Color textPrimary, Color accent) {
-    return FutureBuilder<ProgramLibraryResult>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildSkeletonGrid();
-        }
-        if (snapshot.hasError) {
-          return _ErrorState(
-            message: 'We could not load the program library.',
-            onRetry: _reload,
-            isDark: isDark,
-          );
-        }
-        final result = snapshot.data;
-        if (result == null || result.programs.isEmpty) {
+    // Cache-first: a returning user with the same filters sees the last result
+    // instantly (the provider keepAlive holds it); only a genuinely-uncached
+    // combo shows the skeleton once. Errors keep the existing Retry card.
+    final async = ref.watch(programLibraryBrowseProvider(_filter));
+    return async.when(
+      // While refreshing in the background, keep showing the last data instead
+      // of dropping to a skeleton.
+      skipLoadingOnRefresh: true,
+      skipLoadingOnReload: true,
+      loading: _buildSkeletonGrid,
+      error: (e, _) => _ErrorState(
+        message: 'We could not load the program library.',
+        onRetry: _refresh,
+        isDark: isDark,
+      ),
+      data: (result) {
+        if (result.programs.isEmpty) {
           return _EmptyState(
             isDark: isDark,
             hasFilters: _category != null ||
@@ -263,7 +263,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               _difficulty = null;
               _search = '';
               _searchController.clear();
-              _reload();
+              _applyFilters();
             },
           );
         }

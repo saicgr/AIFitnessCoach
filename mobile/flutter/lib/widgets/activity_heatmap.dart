@@ -86,7 +86,14 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                 return _buildHeatmapGrid(context, data);
               },
               loading: () => const _HeatmapLoading(),
-              error: (e, _) => _HeatmapError(error: e.toString()),
+              // Retry invalidates the EXACT params tuple in scope (including
+              // startDate/endDate for the YTD range), so the rebuild re-runs
+              // the same provider instance that failed.
+              error: (e, _) => _HeatmapError(
+                error: e.toString(),
+                onRetry: () =>
+                    ref.invalidate(activityHeatmapProvider(heatmapParams)),
+              ),
             ),
 
             const SizedBox(height: 12),
@@ -146,13 +153,31 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
                 ),
               ),
             const Spacer(),
-            // Refresh button
+            // Refresh button — rebuild the SAME full params the data branch
+            // watches. The YTD range keys on startDate/endDate (weeks:0), so a
+            // weeks-only invalidate targeted a non-existent provider instance
+            // and silently no-op'd. Mirror the build()'s heatmapParams logic.
             GestureDetector(
               onTap: () {
                 final timeRange = ref.read(heatmapTimeRangeProvider);
+                final now = DateTime.now();
                 apiClient.getUserId().then((uid) {
                   if (uid != null) {
-                    ref.invalidate(activityHeatmapProvider((userId: uid, weeks: timeRange.weeks, startDate: null, endDate: null)));
+                    final params = timeRange == HeatmapTimeRange.ytd
+                        ? (
+                            userId: uid,
+                            weeks: 0,
+                            startDate: '${now.year}-01-01' as String?,
+                            endDate: now.toIso8601String().split('T')[0]
+                                as String?,
+                          )
+                        : (
+                            userId: uid,
+                            weeks: timeRange.weeks,
+                            startDate: null as String?,
+                            endDate: null as String?,
+                          );
+                    ref.invalidate(activityHeatmapProvider(params));
                   }
                 });
               },
@@ -590,16 +615,18 @@ class _HeatmapLoading extends StatelessWidget {
   }
 }
 
-/// Error state for heatmap
+/// Error state for heatmap. Includes a Retry action that re-runs the exact
+/// provider params that failed (passed in by the caller so the YTD range
+/// re-fetches correctly).
 class _HeatmapError extends StatelessWidget {
   final String error;
+  final VoidCallback? onRetry;
 
-  const _HeatmapError({required this.error});
+  const _HeatmapError({required this.error, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 120,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.elevated,
@@ -614,10 +641,24 @@ class _HeatmapError extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context).myLibraryTabFailedToLoadActivity,
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),
             ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: Text(AppLocalizations.of(context).buttonRetry),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: AppColors.textSecondary,
+                  side: BorderSide(color: AppColors.cardBorder),
+                ),
+              ),
+            ],
           ],
         ),
       ),
