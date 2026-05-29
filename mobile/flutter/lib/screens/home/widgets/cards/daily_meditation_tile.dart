@@ -1,6 +1,7 @@
 /// F3.42 — Daily meditation tile. Rotating short guided session pulled from
-/// `GET /api/v1/meditation/today` (server-curated DOY rotation). Routes to
-/// chat with `source=meditation` until a dedicated player ships.
+/// `GET /api/v1/meditation/today` (server-curated DOY rotation). Opens the
+/// guided session player, which logs a real mindfulness_sessions row on
+/// completion (feeds the "Mindfulness minutes" key metric).
 library;
 
 import 'package:flutter/material.dart';
@@ -29,8 +30,18 @@ class DailyMeditationTile extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        context.push(
-            '/chat?source=meditation&pick=${Uri.encodeComponent(pick.slug)}');
+        final params = <String, String>{
+          'source': 'meditation',
+          'slug': pick.slug,
+          'title': pick.title,
+          'duration': '${pick.durationMin}',
+          if (pick.audioUrl.isNotEmpty) 'audio': pick.audioUrl,
+        };
+        final qs = params.entries
+            .map((e) =>
+                '${e.key}=${Uri.encodeQueryComponent(e.value)}')
+            .join('&');
+        context.push('/mindfulness/session?$qs');
       },
       child: Container(
         padding: const EdgeInsets.all(14),

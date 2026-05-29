@@ -9,6 +9,8 @@ import '../../data/repositories/metrics_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../l10n/generated/app_localizations.dart';
+import 'widgets/key_metrics_grid.dart';
+import 'widgets/health_checks_section.dart';
 
 class MetricsDashboardScreen extends ConsumerStatefulWidget {
   const MetricsDashboardScreen({super.key});
@@ -101,6 +103,46 @@ class _MetricsDashboardScreenState
                   ),
                 ).animate().fadeIn(delay: 100.ms),
               ),
+
+              // Key metrics grid — Google-Health-style at-a-glance cards
+              // (weight, energy, intake, macros, steps, exercise days,
+              // mindfulness). Sources from data we already collect; each card
+              // has a true No-data state. The interactive trends (period
+              // selector + per-metric chart) live below as a deeper dive.
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: const KeyMetricsGrid(),
+                ).animate().fadeIn(delay: 130.ms),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: const HealthChecksSection(),
+                ).animate().fadeIn(delay: 160.ms),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    l10n.metricsDashboardTrends,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
               // Period selector
               SliverToBoxAdapter(
@@ -372,7 +414,9 @@ class _MetricsDashboardScreenState
                 unit: 'kg',
                 icon: Icons.monitor_weight,
                 color: AppColors.cyan,
-                trend: _getTrend(metrics.weightKg, metrics.previousWeightKg),
+                // Direction only, no good/bad color — a weight change is only
+                // "good" relative to the user's cut/bulk/maintain goal.
+                trend: _getNeutralTrend(metrics.weightKg, metrics.previousWeightKg),
               ),
             ),
             const SizedBox(width: 12),
@@ -442,8 +486,14 @@ class _MetricsDashboardScreenState
       return FlSpot(entry.key.toDouble(), entry.value.value);
     }).toList();
 
-    final minY = spots.map((s) => s.y).reduce((a, b) => a < b ? a : b) * 0.95;
-    final maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.05;
+    var minY = spots.map((s) => s.y).reduce((a, b) => a < b ? a : b) * 0.95;
+    var maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.05;
+    // Guard a degenerate range (all values equal, e.g. all 0) — a zero
+    // horizontalInterval makes fl_chart assert / NaN (edge case C).
+    if (maxY - minY < 1e-6) {
+      minY -= 1;
+      maxY += 1;
+    }
 
     return LineChart(
       LineChartData(
@@ -565,6 +615,16 @@ class _MetricsDashboardScreenState
     return isPositive ? 'up' : 'down';
   }
 
+  /// Direction-only trend (no good/bad color). Used for weight, where whether
+  /// a change is "good" depends on the user's cut/bulk/maintain goal — so we
+  /// never paint a gain green or a loss red (edge case K).
+  String? _getNeutralTrend(double? current, double? previous) {
+    if (current == null || previous == null) return null;
+    final diff = current - previous;
+    if (diff.abs() < 0.1) return null;
+    return diff > 0 ? 'neutral_up' : 'neutral_down';
+  }
+
   Color _getBmiColor(double? bmi) {
     if (bmi == null) return AppColors.textMuted;
     if (bmi < 18.5) return AppColors.warning;
@@ -673,9 +733,18 @@ class _MetricCard extends StatelessWidget {
               const Spacer(),
               if (trend != null)
                 Icon(
-                  trend == 'up' ? Icons.trending_up : Icons.trending_down,
+                  (trend == 'up' || trend == 'neutral_up')
+                      ? Icons.trending_up
+                      : Icons.trending_down,
                   size: 16,
-                  color: trend == 'up' ? AppColors.success : AppColors.error,
+                  // 'neutral_*' shows direction WITHOUT a good/bad color — a
+                  // weight change is only "good" relative to the user's goal,
+                  // so we never green a gain or red a loss (edge case K).
+                  color: switch (trend) {
+                    'up' => AppColors.success,
+                    'down' => AppColors.error,
+                    _ => AppColors.textMuted,
+                  },
                 ),
             ],
           ),

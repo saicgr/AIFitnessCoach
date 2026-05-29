@@ -636,3 +636,9 @@ from . import saved_tips as _saved_tips_module; router.include_router(_saved_tip
 # /sleep-stories/*, /home/premium-preview-rotation) so no prefix is set here.
 from . import content_catalogs as _content_catalogs_module
 router.include_router(_content_catalogs_module.router, tags=["Content Catalogs"])
+
+# Mindfulness — meditation/breathwork session logging + daily aggregate that
+# backs the "Mindfulness minutes" key metric (migration 2214). Routes carry
+# absolute paths (/mindfulness/*) so no prefix is set here.
+from . import mindfulness as _mindfulness_module
+router.include_router(_mindfulness_module.router, tags=["Mindfulness"])
