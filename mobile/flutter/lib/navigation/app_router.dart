@@ -23,6 +23,7 @@ import '../screens/coming_soon/coming_soon_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/library/screens/all_splits_screen.dart';
+import '../screens/mindfulness/mindfulness_session_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/nutrition/nutrition_settings_screen.dart';
 import '../screens/fasting/fasting_screen_redesigned.dart';

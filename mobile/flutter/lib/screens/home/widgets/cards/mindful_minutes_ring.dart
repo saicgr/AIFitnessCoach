@@ -1,6 +1,7 @@
 /// F3.40 — Mindful minutes ring showing today's meditation/breathwork
-/// minutes vs a soft 10-min daily target. Currently sources from a
-/// placeholder (no aggregate provider yet); collapses if reading fails.
+/// minutes vs a soft daily target. Reads the real aggregate from
+/// [mindfulnessTodayProvider] (in-app logs + iOS HealthKit "Mindful Minutes",
+/// merged); taps open the guided session player which logs on completion.
 library;
 
 import 'dart:math' as math;
@@ -10,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../data/providers/mindfulness_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 
 class MindfulMinutesRing extends ConsumerWidget {
@@ -19,18 +21,26 @@ class MindfulMinutesRing extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ThemeColors.of(context);
 
-    // TODO(backend): GET /api/v1/mindfulness/today — aggregate today's mindful
-    // minutes (HealthKit MINDFUL_SESSION + in-app meditation logs). No
-    // provider exists yet; ring still serves as a CTA.
-    const minutes = 0;
-    const target = 10;
-    final progress =
-        target > 0 ? (minutes / target).clamp(0.0, 1.0) : 0.0;
+    final today = ref.watch(mindfulnessTodayProvider).asData?.value;
+    final hasData = today != null;
+    final minutes = today?.minutes ?? 0;
+    final target = today?.targetMinutes ?? 10;
+    final progress = today?.progress ?? 0.0;
+    final goalMet = today?.goalMet ?? false;
+
+    // Subtitle is honest about state: a real total when we have data, a CTA
+    // otherwise — never a fabricated "0 / 10".
+    final subtitle = !hasData
+        ? 'Start a 5-min session'
+        : goalMet
+            ? '$minutes min today · goal met'
+            : '$minutes / $target min today';
 
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        context.push('/chat?source=breathwork');
+        // Breathwork preset; the player logs the real elapsed time.
+        context.push('/mindfulness/session?source=breathwork&duration=5');
       },
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -52,7 +62,7 @@ class MindfulMinutesRing extends ConsumerWidget {
                 ),
                 child: Center(
                   child: Text(
-                    '$minutes',
+                    hasData ? '$minutes' : '–',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -78,7 +88,7 @@ class MindfulMinutesRing extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '$minutes / $target min today',
+                    subtitle,
                     style: TextStyle(
                       fontSize: 11.5,
                       color: c.textSecondary,

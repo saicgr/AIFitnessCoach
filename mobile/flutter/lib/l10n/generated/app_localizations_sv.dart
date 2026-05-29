@@ -44499,4 +44499,94 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get heroModesBodyYesterday =>
       'Gårdagens pass är fortfarande öppet. Flytta till idag?';
+
+  @override
+  String get metricsDashboardKeyMetrics => 'KEY METRICS';
+
+  @override
+  String get metricsDashboardTrends => 'TRENDS';
+
+  @override
+  String get metricsDashboardEnergyBurned => 'Energy burned';
+
+  @override
+  String get metricsDashboardCalorieIntake => 'Calorie intake';
+
+  @override
+  String get metricsDashboardSteps => 'Steps';
+
+  @override
+  String get metricsDashboardMindfulnessMinutes => 'Mindful minutes';
+
+  @override
+  String get metricsDashboardGoalMet => 'Goal met';
+
+  @override
+  String get metricsDashboardExerciseDays => 'Exercise days';
+
+  @override
+  String get metricsDashboardThisWeek => 'this week';
+
+  @override
+  String get metricsDashboardNoData => 'No data';
+
+  @override
+  String get metricsDashboardMacros => 'Macros';
+
+  @override
+  String get metricsDashboardCarbs => 'Carbs';
+
+  @override
+  String get metricsDashboardFat => 'Fat';
+
+  @override
+  String get metricsDashboardProtein => 'Protein';
+
+  @override
+  String get metricsDashboardHealthChecks => 'HEALTH CHECKS';
+
+  @override
+  String get metricsDashboardConnectWearable => 'Connect a wearable';
+
+  @override
+  String get metricsDashboardHrLow => 'Low';
+
+  @override
+  String get metricsDashboardHrLowNormal => 'Low-normal';
+
+  @override
+  String get metricsDashboardHrNormal => 'Normal';
+
+  @override
+  String get metricsDashboardHrHigh => 'High';
+
+  @override
+  String get metricsDashboardHrDisclaimer =>
+      'Informational only, not medical advice. Talk to a clinician about any concerns.';
+
+  @override
+  String get metricsDashboardCustomizeThresholds => 'Customize thresholds';
+
+  @override
+  String get metricsDashboardHrThresholdOrderError => 'Low must be below high.';
+
+  @override
+  String get metricsDashboardSaveFailed => 'Couldn\'t save. Please try again.';
+
+  @override
+  String metricsDashboardOfGoal(String goal) {
+    return 'of $goal';
+  }
+
+  @override
+  String metricsDashboardHrRangeExplainer(int low, int high) {
+    return 'Normal resting heart rate is $low–$high bpm. Below $low or above $high bpm is flagged for awareness.';
+  }
+
+  @override
+  String get metricsDashboardGetStartedTitle => 'Start tracking';
+
+  @override
+  String get metricsDashboardGetStartedCta =>
+      'Connect a wearable or log a meal to see your metrics.';
 }

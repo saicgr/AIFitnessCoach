@@ -302,6 +302,46 @@ extension HealthServiceExt on HealthService {
 
   /// Wall-clock span (latest end − earliest start, in minutes) of one
   /// session's point list. Used to pick the longest session of a night.
+  /// Today's mindful minutes from Apple Health (iOS only).
+  ///
+  /// Returns 0 on Android by design: MINDFULNESS is not part of the Android
+  /// Health Connect scope (Play minimum-scope compliance —
+  /// project_play_health_connect_rejection), so on Android the mindful-minutes
+  /// metric comes purely from in-app session logs. The caller merges this with
+  /// the in-app server aggregate using max() so a single session counted by
+  /// both sources is not double-counted (plan edge case B3).
+  Future<int> getTodayMindfulnessMinutes() async {
+    if (!Platform.isIOS) return 0;
+    try {
+      await _ensureConfigured();
+      final now = DateTime.now();
+      final midnight = DateTime(now.year, now.month, now.day);
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: midnight,
+        endTime: now,
+        types: [HealthDataType.MINDFULNESS],
+      );
+      final unique = _health.removeDuplicates(data);
+
+      double minutes = 0;
+      for (final point in unique) {
+        // MINDFULNESS points are sessions; prefer the actual time span, and
+        // fall back to a numeric MINUTE value if the span is zero-length.
+        final spanSecs = point.dateTo.difference(point.dateFrom).inSeconds;
+        if (spanSecs > 0) {
+          minutes += spanSecs / 60.0;
+        } else if (point.value is NumericHealthValue) {
+          minutes += (point.value as NumericHealthValue).numericValue.toDouble();
+        }
+      }
+      return minutes.round();
+    } catch (e) {
+      debugPrint('❌ [Health] mindfulness read failed: $e');
+      return 0;
+    }
+  }
+
   int _sessionSpanMinutes(List<HealthDataPoint> pts) {
     DateTime? start;
     DateTime? end;
