@@ -670,6 +670,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             route: '/settings/ai-coach',
             sectionKeys: const ['ai_coach', 'ai_privacy'],
           ),
+          _SettingsRow(
+            icon: Icons.psychology_outlined,
+            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            title: 'Coach memory',
+            value: 'View & manage what your AI coach remembers',
+            route: '/settings/coach-memory',
+            sectionKeys: const [
+              'coach_memory', 'memory', 'remember', 'forget', 'ai_privacy',
+            ],
+          ),
           // ── AI Integrations (MCP) — HIDDEN for v1.0 Play Store submission ──
           // The MCP server, OAuth flow, PAT endpoints, and the AiIntegrationsScreen
           // itself are all live and functional — only this navigation entry is

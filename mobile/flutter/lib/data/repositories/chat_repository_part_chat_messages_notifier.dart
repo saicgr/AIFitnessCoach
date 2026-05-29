@@ -357,6 +357,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       n._currentOffset = 0;
       n._hasMoreMessages = true;
       n._initialHistoryLoaded = false;
+      n._currentSessionId = null;
       n._pendingOfflineMessages.clear();
       // Drop any in-flight streaming bubble so the previous user's partial
       // reply can't flash before the next user's history loads.
@@ -392,8 +393,33 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     state = AsyncValue.data(updated);
   }
 
-  /// Build the cache key for chat history for a given user
-  static String _cacheKey(String userId) => 'cache_chat_history_$userId';
+  // ── Session scoping (Ask Coach conversation threads) ──────────────────
+  // The active session id. null = a brand-new, not-yet-sent chat — the
+  // session is created server-side on the first /send and ADOPTED here.
+  // Kept in lockstep with [currentChatSessionProvider]; the notifier is NOT
+  // rebuilt when it changes so the message list survives a switch.
+  String? _currentSessionId;
+
+  /// Callback into the provider tree so the notifier can publish an adopted /
+  /// switched session id to [currentChatSessionProvider] and refresh the
+  /// sessions list. Wired by the provider factory.
+  void Function(String? sessionId)? _onSessionChanged;
+  void Function()? _refreshSessions;
+
+  /// The active session id (null = brand-new unsent chat).
+  String? get currentSessionId => _currentSessionId;
+
+  /// Build the cache key for chat history for a given user, scoped to the
+  /// active session. A null session (brand-new chat) uses the 'current'
+  /// suffix so its draft list doesn't collide with a real session's cache.
+  static String _cacheKeyFor(String userId, String? sessionId) =>
+      'cache_chat_history_${userId}_${sessionId ?? 'current'}';
+
+  /// Instance helper: cache key for the CURRENT session.
+  String _cacheKey(String userId) => _cacheKeyFor(userId, _currentSessionId);
+
+  /// In-memory mirror key (user + session scoped).
+  String _memKey(String userId) => '$userId::${_currentSessionId ?? 'current'}';
 
   /// Module-level in-memory mirror of the disk cache. Survives provider
   /// recreation so opening /chat for the second (or fiftieth) time in a
@@ -406,13 +432,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   /// Synchronous accessor for the in-memory cache. Returns null when nothing
   /// has been hydrated yet for [userId] (first cold-start of the app or
   /// first-ever chat view). Used by [loadHistory] to paint immediately.
-  static List<ChatMessage>? memCacheFor(String userId) => _memCache[userId];
+  /// Session-scoped via [_memKey].
+  List<ChatMessage>? memCacheFor(String userId) => _memCache[_memKey(userId)];
 
   /// Load cached chat messages from DataCacheService. Populates the in-memory
   /// mirror so subsequent calls (within the session) can skip the disk read.
   Future<List<ChatMessage>> _loadFromCache(String userId) async {
+    final memKey = _memKey(userId);
     // Fast path — in-memory hit, no disk awaits.
-    final mem = _memCache[userId];
+    final mem = _memCache[memKey];
     if (mem != null && mem.isNotEmpty) {
       debugPrint('⚡ [Chat] Loaded ${mem.length} messages from in-memory cache');
       return mem;
@@ -421,7 +449,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final cached = await DataCacheService.instance.getCachedList(_cacheKey(userId));
       if (cached != null && cached.isNotEmpty) {
         final messages = cached.map((json) => ChatMessage.fromJson(json)).toList();
-        _memCache[userId] = messages;
+        _memCache[memKey] = messages;
         debugPrint('💾 [Chat] Loaded ${messages.length} messages from disk cache');
         return messages;
       }
@@ -440,7 +468,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           : messages;
       // Keep the in-memory mirror in sync — every save updates the fast path
       // so the next screen entry is instant.
-      _memCache[userId] = List<ChatMessage>.unmodifiable(trimmed);
+      _memCache[_memKey(userId)] = List<ChatMessage>.unmodifiable(trimmed);
       final jsonList = trimmed.map((m) => m.toJson()).toList();
       await DataCacheService.instance.cacheList(_cacheKey(userId), jsonList);
       debugPrint('💾 [Chat] Saved ${trimmed.length} messages to cache');
@@ -480,7 +508,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       //    already have. Awaiting the disk read still happens below — but
       //    on every entry after the first cold-start hit the user sees
       //    messages instantly.
-      final memCached = _memCache[userId];
+      final memCached = _memCache[_memKey(userId)];
       if (memCached != null && memCached.isNotEmpty && mounted) {
         state = AsyncValue.data(memCached);
       }
@@ -495,9 +523,21 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         state = const AsyncValue.loading();
       }
 
-      // 2. Fetch fresh data from API in background
+      // 2. Fetch fresh data from API in background.
+      //    - A null session = a brand-new, not-yet-sent chat → start empty
+      //      (the open/empty state); no server round-trip and no session
+      //      exists yet to fetch from.
+      //    - A set session → fetch THAT session's messages.
+      if (_currentSessionId == null) {
+        if (!mounted) return;
+        if (cachedMessages.isEmpty) {
+          state = const AsyncValue.data([]);
+        }
+        return;
+      }
       try {
-        final messages = await _repository.getChatHistory(userId);
+        final messages =
+            await _repository.getSessionMessages(_currentSessionId!);
         if (!mounted) return;
 
         // If sendMessage is in-flight, don't replace state — the send
@@ -717,10 +757,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         aiSettings: currentAISettings.toJson(),
         unifiedContext: unifiedContext,
         mediaRefs: mediaRefs,
+        sessionId: _currentSessionId,
       );
       final response = sendResult.response;
       final assistantMessageId = sendResult.messageId;
       if (!mounted) return;
+
+      if (_currentSessionId == null && sendResult.sessionId != null) {
+        await _adoptSessionId(sendResult.sessionId!, userId);
+      }
 
       await _processActionData(response.actionData);
       if (!mounted) return;
@@ -780,19 +825,102 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     }
   }
 
-  /// Clear history and notify server
+  /// Clear the CURRENT conversation. If a real session is active it is
+  /// deleted server-side (cascading its messages); then we drop into a
+  /// brand-new empty chat. For a not-yet-sent draft this is just a reset.
   Future<void> clearHistory() async {
-    state = const AsyncValue.data([]);
     final userId = await _apiClient.getUserId();
+    final sessionId = _currentSessionId;
+    // Invalidate the current session's local cache.
     if (userId != null) {
       await DataCacheService.instance.invalidate(_cacheKey(userId));
-      // Clear on server too
+    }
+    if (sessionId != null) {
       try {
-        await _repository.clearChatHistory(userId);
+        await _repository.deleteSession(sessionId);
+        _refreshSessions?.call();
       } catch (e) {
-        debugPrint('❌ [Chat] Failed to clear history on server: $e');
+        debugPrint('❌ [Chat] Failed to delete session on server: $e');
       }
     }
+    // Reset to a fresh, unsent chat.
+    startNewChat();
+  }
+
+  // ── Session hooks + lifecycle ─────────────────────────────────────────
+
+  /// Wire the provider-side callbacks (publish session id + refresh list).
+  void bindSessionHooks({
+    required void Function(String? sessionId) onSessionChanged,
+    required void Function() refreshSessions,
+  }) {
+    _onSessionChanged = onSessionChanged;
+    _refreshSessions = refreshSessions;
+  }
+
+  /// Seed the active session id at construction WITHOUT firing the change
+  /// hook (the provider value is already this id). Does not load messages —
+  /// loadHistory() runs from the screen.
+  void primeSessionId(String? sessionId) {
+    _currentSessionId = sessionId;
+  }
+
+  /// Start a brand-new chat: clear the message list to empty and forget the
+  /// active session. Does NOT hit the server — the session is created on the
+  /// first /send and adopted from the response.
+  void startNewChat() {
+    _currentSessionId = null;
+    state = const AsyncValue.data([]);
+    _currentOffset = 0;
+    _hasMoreMessages = true;
+    _initialHistoryLoaded = false;
+    _loadHistoryFuture = null;
+    streamingBubble.value = null;
+    _onSessionChanged?.call(null);
+    debugPrint('🆕 [Chat] Started a new chat (session cleared)');
+  }
+
+  /// Switch to an existing session: set the active id and load that session's
+  /// messages (cache-first, then server). Used by the history screen.
+  Future<void> switchToSession(String sessionId) async {
+    if (sessionId == _currentSessionId) {
+      // Already on it — just ensure it's loaded.
+      return loadHistory(force: true);
+    }
+    _currentSessionId = sessionId;
+    // Reset list + pagination so the new session's history loads cleanly.
+    state = const AsyncValue.data([]);
+    _currentOffset = 0;
+    _hasMoreMessages = true;
+    _initialHistoryLoaded = false;
+    _loadHistoryFuture = null;
+    streamingBubble.value = null;
+    _onSessionChanged?.call(sessionId);
+    debugPrint('🔀 [Chat] Switched to session $sessionId');
+    await loadHistory(force: true);
+  }
+
+  /// Adopt a server-created session id on the FIRST send of a new chat.
+  /// Migrates the in-memory + disk cache from the 'current' (draft) key to
+  /// the real session key, publishes the id, and refreshes the sessions list
+  /// so the new conversation appears (with its soon-to-be-generated title).
+  Future<void> _adoptSessionId(String sessionId, String userId) async {
+    if (_currentSessionId == sessionId) return;
+    debugPrint('🪪 [Chat] Adopting server session id=$sessionId');
+    // Snapshot the draft list under the OLD ('current') key before switching.
+    final draft = state.valueOrNull ?? const <ChatMessage>[];
+    final oldMemKey = _memKey(userId);
+    final oldCacheKey = _cacheKey(userId);
+    // Switch the active id, then migrate caches under the new key.
+    _currentSessionId = sessionId;
+    _memCache.remove(oldMemKey);
+    _memCache[_memKey(userId)] = List<ChatMessage>.unmodifiable(draft);
+    try {
+      await DataCacheService.instance.invalidate(oldCacheKey);
+    } catch (_) {}
+    await _saveToCache(userId, draft);
+    _onSessionChanged?.call(sessionId);
+    _refreshSessions?.call();
   }
 
   /// Add a system notification message (e.g., coach changed)
@@ -819,6 +947,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     required String content,
     required String intent,
     String? sourceSurface,
+    String? insightId,
   }) {
     final seeded = ChatMessage(
       role: 'assistant',
@@ -828,6 +957,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       // existing chat-history dedup migration in this notifier already
       // uses `source` to filter auto-coach-tips, so we reuse the slot.
       source: sourceSurface == null ? 'seeded_insight' : 'seeded_$sourceSurface',
+      // Carry the real insight_id + source surface so reopening the chat can
+      // dedupe via the dedicated ChatMessage fields, not just the intent marker.
+      insightId: insightId,
+      sourceSurface: sourceSurface,
       createdAt: DateTime.now().toIso8601String(),
     );
     final currentMessages = state.valueOrNull ?? [];
@@ -1138,6 +1271,12 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   /// Load older messages for infinite scroll (#16)
   Future<void> loadOlderMessages() {
+    // Session-scoped chats load the whole thread (up to 200) up-front via
+    // getSessionMessages, so there is no global-history pagination to do —
+    // and getChatHistory is NOT session-scoped, so paginating it here would
+    // bleed other sessions' messages into the view. No-op when a session is
+    // active.
+    if (_currentSessionId != null) return Future.value();
     if (!_hasMoreMessages || _isLoading) return Future.value();
     // Don't paginate until the initial history fetch has settled — otherwise
     // a user who scrolls during cold-start races loadHistory with a parallel
@@ -1310,10 +1449,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         aiSettings: currentAISettings.toJson(),
         unifiedContext: unifiedContext,
         mediaRef: mediaRef,
+        sessionId: _currentSessionId,
       );
       final response = sendResult.response;
       final assistantMessageId = sendResult.messageId;
       if (!mounted) return;
+
+      if (_currentSessionId == null && sendResult.sessionId != null) {
+        await _adoptSessionId(sendResult.sessionId!, userId);
+      }
 
       // Mark user message as delivered
       _updateMessageStatus(updatedUserMessage, MessageStatus.delivered);

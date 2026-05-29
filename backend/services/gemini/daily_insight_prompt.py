@@ -148,6 +148,14 @@ MORNING_ACTION_KINDS (use as action on chip entries):
 - plan_tomorrow_meals     : open the nutrition planner
 - start_wind_down         : (evening only) flip the wind-down state
 - start_workout_now       : open today's workout
+
+COACH MEMORY: if a `coach_memory` block is present, use it. Tailor the 3
+bullets to its `facts` (e.g. an active injury -> swap a risky lift for a safe
+alternative; a dietary fact -> phrase nutrition asks accordingly). If
+`open_loops` is non-empty, make the LAST line a short check-in question drawn
+from the loop's content (e.g. "How's the lower back this morning?") and add a
+matching chip set so the user can answer in one tap. Treat memory as recall,
+never invent details beyond it, and never cite memory as a tracked number.
 """
 
 _EVENING_RECAP_BRANCH_INSTRUCTION = """SOURCE = evening_recap (end-of-day recap)
@@ -368,6 +376,13 @@ def _build_user_message(context: dict, source: str) -> str:
     rag = context.get("history_rag")
     if rag:
         payload["history_rag"] = rag
+    # Long-term coach memory (migration 2217): durable facts the user told the
+    # coach + open loops to follow up on. Present on morning_brief/evening_recap
+    # so the brief can recall e.g. "keep your back happy" and ask a check-in
+    # question. Omitted when empty so the model isn't tempted to invent.
+    mem = context.get("coach_memory")
+    if mem and (mem.get("open_loops") or mem.get("facts")):
+        payload["coach_memory"] = mem
     # Workout-card surface needs the resolver mode (windDown / etc.).
     mode = context.get("mode_context")
     if mode:

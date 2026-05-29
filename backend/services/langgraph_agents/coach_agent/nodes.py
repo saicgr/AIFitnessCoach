@@ -933,6 +933,17 @@ def _build_coach_response_prompt(state: CoachAgentState):
         context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
         context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
 
+    # === Long-term coach memory (migration 2217) ===
+    # Durable facts the user told the coach (injuries/pain, dietary prefs,
+    # goals, constraints) + open loops to follow up on — pre-fetched and ranked
+    # in langgraph_service so recall is cross-session and cross-day. Empty
+    # string when the user has no memory or disabled it. Kept identical in both
+    # the streaming (_build_coach_response_prompt) and buffered
+    # (coach_response_node) paths — edit both together.
+    memory_context = state.get("memory_context")
+    if memory_context:
+        context_parts.append(f"\n{memory_context}")
+
     if state.get("workout_schedule"):
         context_parts.append(format_workout_context(state["workout_schedule"]))
 
@@ -1090,6 +1101,17 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
         context_parts.append(f"\nUSER PROFILE:")
         context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
         context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
+
+    # === Long-term coach memory (migration 2217) ===
+    # Durable facts the user told the coach (injuries/pain, dietary prefs,
+    # goals, constraints) + open loops to follow up on — pre-fetched and ranked
+    # in langgraph_service so recall is cross-session and cross-day. Empty
+    # string when the user has no memory or disabled it. Kept identical in both
+    # the streaming (_build_coach_response_prompt) and buffered
+    # (coach_response_node) paths — edit both together.
+    memory_context = state.get("memory_context")
+    if memory_context:
+        context_parts.append(f"\n{memory_context}")
 
     if state.get("workout_schedule"):
         context_parts.append(format_workout_context(state["workout_schedule"]))
