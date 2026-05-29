@@ -15,6 +15,7 @@ import '../../core/providers/sound_preferences_provider.dart';
 import '../services/haptic_service.dart';
 import '../../services/offline_coach_service.dart';
 import '../models/chat_message.dart';
+import '../models/chat_session.dart';
 import '../../core/models/meal_context.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
@@ -33,12 +34,36 @@ import 'nutrition_repository.dart';
 
 part 'chat_repository_part_chat_messages_notifier.dart';
 part 'chat_repository_part_chat_messages_notifier_ext.dart';
+part 'chat_repository_part_chat_sessions_notifier.dart';
 
 
 /// Chat repository provider
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return ChatRepository(apiClient);
+});
+
+/// The active chat-session id for the "Ask Coach" screen.
+///
+/// `null` = a brand-new, not-yet-sent chat (the session is created
+/// server-side on the first /send and ADOPTED here from the response). The
+/// chat notifier reads this to scope its disk cache key + loadHistory, and
+/// writes it on adoption / switchToSession / startNewChat.
+///
+/// NB: the [ChatMessagesNotifier] is NOT rebuilt when this changes — the
+/// notifier mutates its own `_currentSessionId` field in lockstep so the
+/// message list state survives a session switch.
+final currentChatSessionProvider = StateProvider<String?>((ref) => null);
+
+/// Lists the user's chat sessions for the history screen. Instant from
+/// DataCacheService cache, then silently refreshed (feedback_instant_data).
+final chatSessionsProvider =
+    StateNotifierProvider<ChatSessionsNotifier, AsyncValue<List<ChatSession>>>(
+        (ref) {
+  final repository = ref.watch(chatRepositoryProvider);
+  final apiClient = ref.watch(apiClientProvider);
+  ref.watch(authStateProvider.select((s) => s.user?.id));
+  return ChatSessionsNotifier(repository, apiClient);
 });
 
 /// Chat messages provider - now includes workout context, settings control, navigation, hydration, AI settings, and unified fasting/nutrition context
@@ -91,7 +116,19 @@ final chatMessagesProvider =
     ref.invalidate(hormonalProfileProvider);
     ref.invalidate(todayHormoneLogProvider);
   }
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout, refreshCycleData);
+  final notifier = ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout, refreshCycleData);
+  // Session wiring — let the notifier publish an adopted/switched session id
+  // to currentChatSessionProvider and refresh the sessions list when a new
+  // session is created on first send.
+  notifier.bindSessionHooks(
+    onSessionChanged: (sessionId) =>
+        ref.read(currentChatSessionProvider.notifier).state = sessionId,
+    refreshSessions: () => ref.read(chatSessionsProvider.notifier).refresh(),
+  );
+  // Seed the notifier with whatever session is currently selected (e.g. the
+  // history screen set it before popping back to chat).
+  notifier.primeSessionId(ref.read(currentChatSessionProvider));
+  return notifier;
 });
 
 /// A single decoded event off the `POST /chat/send-stream` SSE stream.
@@ -129,6 +166,11 @@ class ChatStreamEvent {
   /// Typing-phase hint (uploading/analyzing/generating) — present on `progress`.
   final String? phase;
 
+  /// Server-issued session id — present on the terminal `done` event. On a
+  /// brand-new chat (sent with null session_id) this is the id the client
+  /// must ADOPT for all subsequent turns in the conversation.
+  final String? sessionId;
+
   const ChatStreamEvent({
     required this.type,
     this.delta,
@@ -138,6 +180,7 @@ class ChatStreamEvent {
     this.metadata,
     this.message,
     this.phase,
+    this.sessionId,
   });
 }
 
@@ -374,7 +417,7 @@ class ChatRepository {
   /// `messageId` may be null if the backend is older than 2026-04-27 — in
   /// that case dedup falls back to content+timestamp matching at the call
   /// site (existing behavior).
-  Future<({ChatResponse response, String? messageId})> sendMessage({
+  Future<({ChatResponse response, String? messageId, String? sessionId})> sendMessage({
     required String message,
     required String userId,
     Map<String, dynamic>? userProfile,
@@ -389,6 +432,7 @@ class ChatRepository {
     List<String>? videoFrames,
     String? mediaUrl,
     String? agentOverride,
+    String? sessionId,
   }) async {
     try {
       debugPrint('🔍 [Chat] Sending message: ${message.substring(0, message.length.clamp(0, 50))}...');
@@ -423,6 +467,7 @@ class ChatRepository {
           videoFrames: videoFrames,
           mediaUrl: mediaUrl,
           agentOverride: agentOverride,
+          sessionId: sessionId,
         ).toJson(),
         // Media requests go through Gemini Vision — allow up to 3 minutes
         options: Options(receiveTimeout: hasMedia ? const Duration(minutes: 3) : ApiConstants.aiReceiveTimeout),
@@ -439,8 +484,11 @@ class ChatRepository {
         // don't have to regenerate the .g.dart files; build_runner is
         // forbidden in this repo per project_codegen_gotcha.md).
         final messageId = jsonData['message_id'] as String?;
-        debugPrint('✅ [Chat] Got response with intent: ${chatResponse.intent}, agentType: ${chatResponse.agentType}, actionData: ${chatResponse.actionData}, messageId=$messageId');
-        return (response: chatResponse, messageId: messageId);
+        // Session adoption — the server creates a session on a brand-new chat
+        // (null session_id) and echoes its id here; callers must adopt it.
+        final returnedSessionId = jsonData['session_id'] as String?;
+        debugPrint('✅ [Chat] Got response with intent: ${chatResponse.intent}, agentType: ${chatResponse.agentType}, actionData: ${chatResponse.actionData}, messageId=$messageId, sessionId=$returnedSessionId');
+        return (response: chatResponse, messageId: messageId, sessionId: returnedSessionId);
       }
       throw Exception('Failed to send message');
     } on DioException catch (e) {
@@ -491,6 +539,7 @@ class ChatRepository {
     Map<String, dynamic>? aiSettings,
     String? unifiedContext,
     String? agentOverride,
+    String? sessionId,
   }) async* {
     debugPrint('🔌 [Chat] Opening streaming send: ${message.substring(0, message.length.clamp(0, 50))}...');
 
@@ -525,6 +574,7 @@ class ChatRepository {
         aiSettings: aiSettings,
         unifiedContext: unifiedContext,
         agentOverride: agentOverride,
+        sessionId: sessionId,
       ).toJson(),
       options: Options(responseType: ResponseType.stream),
     );
@@ -556,6 +606,7 @@ class ChatRepository {
               : null,
           message: obj['message'] as String?,
           phase: obj['phase'] as String?,
+          sessionId: obj['session_id'] as String?,
         );
       } catch (e) {
         debugPrint('⚠️ [Chat] Failed to decode SSE data line: $e');
@@ -736,6 +787,208 @@ class ChatRepository {
       }
     } catch (e) {
       debugPrint('❌ [Chat] Error reporting message: $e');
+      rethrow;
+    }
+  }
+
+  // ── Chat sessions (conversation list, like ChatGPT/Gemini) ────────────
+
+  /// List the user's chat sessions, newest activity first.
+  ///
+  /// [q] searches title + message content; [includeArchived] surfaces
+  /// archived threads too. Rethrows on failure (no silent fallback).
+  Future<List<ChatSession>> listSessions({
+    String? q,
+    bool includeArchived = false,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConstants.coachSessions,
+        queryParameters: {
+          if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
+          'include_archived': includeArchived,
+          'limit': limit,
+          'offset': offset,
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final items = (data['items'] as List? ?? const [])
+            .map((j) => ChatSession.fromJson(j as Map<String, dynamic>))
+            .toList();
+        debugPrint('✅ [Chat] Listed ${items.length} sessions (q=$q, archived=$includeArchived)');
+        return items;
+      }
+      throw Exception('Failed to list sessions: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error listing sessions: $e');
+      rethrow;
+    }
+  }
+
+  /// Convenience: search sessions by query string.
+  Future<List<ChatSession>> searchSessions(String q, {int limit = 50}) =>
+      listSessions(q: q, limit: limit);
+
+  /// Create a brand-new session up-front. NOTE: the normal flow does NOT
+  /// call this — a session is created server-side on the first /send with a
+  /// null session_id. Exposed for completeness / explicit "new chat" needs.
+  Future<ChatSession> createSession({String? title}) async {
+    try {
+      final response = await _apiClient.post(
+        ApiConstants.coachSessions,
+        data: {if (title != null) 'title': title},
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return ChatSession.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('Failed to create session: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error creating session: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetch a single session item.
+  Future<ChatSession> getSession(String sessionId) async {
+    try {
+      final response = await _apiClient.get(ApiConstants.coachSessionItem(sessionId));
+      if (response.statusCode == 200) {
+        return ChatSession.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('Failed to load session: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error loading session $sessionId: $e');
+      rethrow;
+    }
+  }
+
+  /// Load a single session's messages (oldest first).
+  ///
+  /// The endpoint returns raw `chat_history` rows where EACH row holds a
+  /// `user_message` + an `ai_response`. We expand each row into two
+  /// [ChatMessage]s (a user turn followed by the assistant turn) so the
+  /// chat UI renders them exactly like a live conversation. Media / audio /
+  /// pin / source metadata is preserved on the appropriate turn.
+  Future<List<ChatMessage>> getSessionMessages(
+    String sessionId, {
+    int limit = 200,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        ApiConstants.coachSessionMessages(sessionId),
+        queryParameters: {'limit': limit, 'offset': offset},
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final rows = (data['messages'] as List? ?? const [])
+            .cast<Map<String, dynamic>>();
+        final messages = <ChatMessage>[];
+        for (final row in rows) {
+          final id = row['id']?.toString();
+          final userId = row['user_id']?.toString();
+          final ts = row['timestamp']?.toString();
+          final userMsg = (row['user_message'] as String?)?.trim() ?? '';
+          final aiMsg = (row['ai_response'] as String?)?.trim() ?? '';
+          final isPinned = (row['is_pinned'] as bool?) ?? false;
+          final audioUrl = row['audio_url'] as String?;
+          final audioDurationMs = (row['audio_duration_ms'] as num?)?.toInt();
+          final mediaUrl = row['media_url'] as String?;
+          final mediaType = row['media_type'] as String?;
+          final sourceSurface = row['source_surface'] as String?;
+          final insightId = row['insight_id'] as String?;
+          final contextJson = row['context_json'];
+          final actionData = contextJson is Map
+              ? contextJson.cast<String, dynamic>()
+              : null;
+
+          if (userMsg.isNotEmpty) {
+            messages.add(ChatMessage(
+              id: id != null ? '${id}_u' : null,
+              userId: userId,
+              role: 'user',
+              content: userMsg,
+              createdAt: ts,
+              mediaUrl: mediaUrl,
+              mediaType: mediaType,
+              audioUrl: audioUrl,
+              audioDurationMs: audioDurationMs,
+              sourceSurface: sourceSurface,
+              insightId: insightId,
+            ));
+          }
+          if (aiMsg.isNotEmpty) {
+            messages.add(ChatMessage(
+              id: id,
+              userId: userId,
+              role: 'assistant',
+              content: aiMsg,
+              createdAt: ts,
+              actionData: actionData,
+              isPinned: isPinned,
+              sourceSurface: sourceSurface,
+              insightId: insightId,
+            ));
+          }
+        }
+        debugPrint('✅ [Chat] Loaded ${messages.length} messages for session $sessionId');
+        return messages;
+      }
+      throw Exception('Failed to load session messages: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error loading session messages ($sessionId): $e');
+      rethrow;
+    }
+  }
+
+  /// Rename a session.
+  Future<ChatSession> renameSession(String sessionId, String title) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiConstants.coachSessionItem(sessionId),
+        data: {'title': title},
+      );
+      if (response.statusCode == 200) {
+        return ChatSession.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('Failed to rename session: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error renaming session $sessionId: $e');
+      rethrow;
+    }
+  }
+
+  /// Archive / unarchive a session.
+  Future<ChatSession> archiveSession(String sessionId, bool isArchived) async {
+    try {
+      final response = await _apiClient.patch(
+        ApiConstants.coachSessionItem(sessionId),
+        data: {'is_archived': isArchived},
+      );
+      if (response.statusCode == 200) {
+        return ChatSession.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('Failed to archive session: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error archiving session $sessionId: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a session (cascades its messages server-side).
+  Future<void> deleteSession(String sessionId) async {
+    try {
+      final response = await _apiClient.delete(ApiConstants.coachSessionItem(sessionId));
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        debugPrint('🗑️ [Chat] Deleted session $sessionId');
+        return;
+      }
+      throw Exception('Failed to delete session: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [Chat] Error deleting session $sessionId: $e');
       rethrow;
     }
   }

@@ -26,6 +26,13 @@ List<RouteBase> _settingsRoutes() => [
         path: '/settings/ai-coach',
         builder: (context, state) => const AiCoachPage(),
       ),
+
+      // What Coach Remembers — view / correct / delete the coach's long-term
+      // memories + master memory on/off toggle.
+      GoRoute(
+        path: '/settings/coach-memory',
+        builder: (context, state) => const CoachMemoryScreen(),
+      ),
       GoRoute(
         path: '/settings/vacation-mode',
         builder: (context, state) => const VacationModePage(),

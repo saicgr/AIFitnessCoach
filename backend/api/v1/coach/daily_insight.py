@@ -32,7 +32,7 @@ import json
 import logging
 import re
 from datetime import date, datetime, timezone
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from google.genai import types
@@ -71,6 +71,117 @@ _VALID_ROUTES = {
 }
 _VALID_PILLARS = {"train", "nourish", "move", "sleep", "all_done"}
 
+# Chip action kinds the client knows how to dispatch (mirror of the prompt's
+# MORNING_ACTION_KINDS + evening kinds). A chip with an unknown action is
+# downgraded to a label-only reply chip rather than dropped.
+_VALID_CHIP_ACTIONS = {
+    "log_water_now", "log_breakfast", "plan_tomorrow_meals",
+    "start_wind_down", "start_workout_now",
+}
+
+
+def _greeting_word(bucket: str) -> str:
+    if bucket == "morning":
+        return "Good morning"
+    if bucket in ("midday", "afternoon"):
+        return "Good afternoon"
+    if bucket in ("evening", "late"):
+        return "Good evening"
+    return "Hi"  # quiet hours / fallback
+
+
+# Variant pools (>=4 each) so the open state reads human-written and rotates
+# every open — per feedback_dynamic_copy_not_robotic.
+_GREETING_TAILS = (
+    "what's on your mind?",
+    "what can I help with?",
+    "where should we start?",
+    "what are we working on?",
+)
+_GREETING_BODIES = (
+    "This is your health and fitness journey, tailored to you. Ask me anything, or try one of these:",
+    "I've got your training, nutrition, and recovery in one place. Pick a starting point:",
+    "Your plan adapts to your life, not the other way around. Want to:",
+    "Coaching that actually remembers you. Here's where we could go:",
+)
+
+
+def _build_greeting(
+    *, first_name: str, bucket: str, snapshot: Dict[str, Any],
+    next_workout: Optional[Dict[str, Any]], local_date_iso: str, rotate: int,
+) -> Dict[str, Any]:
+    """Deterministic, context-weighted light greeting (no LLM, no cost) — the
+    Ask-Coach open state when there's no heavy briefing to show. `rotate` is a
+    caller-supplied integer (e.g. minute-of-day) so suggestions vary per open
+    without server randomness leaking into tests."""
+    word = _greeting_word(bucket)
+    tail = _GREETING_TAILS[rotate % len(_GREETING_TAILS)]
+    body = _GREETING_BODIES[rotate % len(_GREETING_BODIES)]
+    headline = f"{word}, {first_name}! {tail[0].upper()}{tail[1:]}"
+
+    # Context-weighted suggestion pool — each entry is a label-only reply chip
+    # (sends the label as a coach message). Ordered by relevance, rotated, top 3.
+    pool: List[Dict[str, Any]] = []
+    has_workout_today = bool(next_workout)
+    if has_workout_today:
+        pool.append({"label": "🏋️ What's my workout today?"})
+    else:
+        pool.append({"label": "🏋️ Build me a workout for today"})
+    pool.append({"label": "🍎 What should I eat after my workout?"})
+    pool.append({"label": "🍽️ Log what I ate and break down its nutrition"})
+    pool.append({"label": "🎯 Set up a health goal that fits my life"})
+    pool.append({"label": "😴 How was my recovery last night?"})
+    pool.append({"label": "📸 Scan a menu and tell me what to order"})
+    pool.append({"label": "💬 I have a question about my plan"})
+
+    # Rotate the non-first entries so the trio changes per open while keeping
+    # the most contextual suggestion (index 0) pinned first.
+    rest = pool[1:]
+    if rest:
+        off = rotate % len(rest)
+        rest = rest[off:] + rest[:off]
+    chips = [pool[0]] + rest
+    chips = chips[:3]
+
+    return {
+        "headline": headline[:90],
+        "body": body,
+        "chips": chips,
+        "cta_primary": {"label": "Ask coach", "route": "/chat"},
+        "leading_pillar": None,
+    }
+
+
+def _sanitize_chips(raw: Any) -> Optional[List[Dict[str, Any]]]:
+    """Validate Gemini-emitted chips. Each becomes {label, route?, action?}:
+    a valid route, a known action, or label-only (a plain reply chip — used by
+    memory check-ins like 'Back feels better'). Returns None when empty."""
+    if not isinstance(raw, list):
+        return None
+    out: List[Dict[str, Any]] = []
+    for c in raw[:4]:
+        if not isinstance(c, dict):
+            continue
+        label = (c.get("label") or "").strip()
+        if not label:
+            continue
+        chip: Dict[str, Any] = {"label": label[:40]}
+        # Gemini sometimes packs the destination under a single "route_or_action"
+        # key — disambiguate by shape: a leading "/" means a route, else an
+        # action kind. Explicit route/action keys win when present.
+        combo = c.get("route_or_action")
+        route = c.get("route") or (combo if isinstance(combo, str) and combo.startswith("/") else None)
+        action = c.get("action") or c.get("kind") or (
+            combo if isinstance(combo, str) and not combo.startswith("/") else None
+        )
+        if isinstance(route, str) and route in _VALID_ROUTES:
+            chip["route"] = route
+        elif isinstance(action, str) and action in _VALID_CHIP_ACTIONS:
+            chip["action"] = action
+        # else: label-only reply chip (no route/action) — valid.
+        out.append(chip)
+    return out or None
+
 
 # ---------------------------------------------------------------------------
 # Response model
@@ -78,6 +189,15 @@ _VALID_PILLARS = {"train", "nourish", "move", "sleep", "all_done"}
 class CtaModel(BaseModel):
     label: str
     route: str
+
+
+class ChipModel(BaseModel):
+    """A quick-reply / action chip under a rich briefing. Exactly one of route
+    or action is set; a label-only chip is a plain reply (sends label as a
+    message — used for memory check-ins like "Back feels better")."""
+    label: str
+    route: Optional[str] = None
+    action: Optional[str] = None
 
 
 class DailyInsightResponse(BaseModel):
@@ -88,6 +208,7 @@ class DailyInsightResponse(BaseModel):
     body: str
     cta_primary: Optional[CtaModel] = None
     cta_secondary: Optional[CtaModel] = None
+    chips: Optional[List[ChipModel]] = None
     leading_pillar: Optional[str] = None
     generated_at: Optional[str] = None
     # "gemini" on the happy path, "deterministic_fallback" otherwise.
@@ -538,6 +659,8 @@ async def _call_gemini_for_insight(
             if isinstance(cta, dict) and cta.get("route") not in _VALID_ROUTES:
                 # Reject silently — fallback CTA gets stamped in by caller.
                 parsed[k] = None
+        # Quick-reply / action chips (morning_brief / evening_recap).
+        parsed["chips"] = _sanitize_chips(parsed.get("chips"))
         return parsed
     except Exception as e:
         logger.warning(f"[daily_insight] Gemini call failed: {e}")
@@ -595,6 +718,7 @@ async def daily_insight(
             "pillar_stat",
             "morning_brief",
             "evening_recap",
+            "greeting",
             "morning_brief_onboarding",
             "nutrition_card_morning",
             # Phase 2 of the contextual-nudge merge: lunch + dinner each get
@@ -635,6 +759,7 @@ async def daily_insight(
                         body=row["body"],
                         cta_primary=row.get("cta_primary"),
                         cta_secondary=row.get("cta_secondary"),
+                        chips=row.get("chips"),
                         leading_pillar=row.get("leading_pillar"),
                         generated_at=row.get("generated_at"),
                         delivery="gemini",  # cached rows are only stored on success
@@ -673,6 +798,48 @@ async def daily_insight(
         }
         if source == "pillar_stat":
             ctx["pillar_stat_context"] = stat_context
+
+        # Long-term coach memory (migration 2217) — only the rich daily
+        # briefings weave it in (durable facts + open loops -> tailored plan +
+        # check-in question). Best-effort: empty/absent on any failure.
+        _surfaced_loop_ids: list = []
+        if source in ("morning_brief", "evening_recap"):
+            try:
+                from services.coach.memory.injector import build_memory_block_for_briefing
+                ctx["coach_memory"] = build_memory_block_for_briefing(user_id)
+                _surfaced_loop_ids = [
+                    l.get("id")
+                    for l in (ctx["coach_memory"].get("open_loops") or [])
+                    if l.get("id")
+                ]
+            except Exception as e:
+                logger.warning(f"[daily_insight] memory block failed: {e}")
+
+        # ---- Light greeting (deterministic, no LLM, no cost) --------------
+        # The Ask-Coach open state when there's no heavy briefing to show.
+        # Returns immediately — never persisted, never cached, rotates per open.
+        if source == "greeting":
+            g = _build_greeting(
+                first_name=first_name,
+                bucket=_time_of_day_bucket(now_local),
+                snapshot=snapshot,
+                next_workout=next_workout,
+                local_date_iso=local_date_iso,
+                rotate=now_local.hour * 60 + now_local.minute,
+            )
+            return DailyInsightResponse(
+                insight_id=None,
+                local_date=local_date_iso,
+                source=source,
+                headline=g["headline"],
+                body=g["body"],
+                cta_primary=g.get("cta_primary"),
+                cta_secondary=None,
+                chips=g.get("chips"),
+                leading_pillar=None,
+                generated_at=datetime.now(timezone.utc).isoformat(),
+                delivery="deterministic",
+            )
 
         # ---- Cost cap check -----------------------------------------------
         delivery = "gemini"
@@ -723,6 +890,7 @@ async def daily_insight(
                     "cta_primary": payload.get("cta_primary"),
                     "cta_secondary": payload.get("cta_secondary"),
                     "leading_pillar": payload.get("leading_pillar"),
+                    "chips": payload.get("chips"),
                     "source": source,
                     "stat_context": stat_context,
                     "generated_at": generated_at_iso,
@@ -738,6 +906,18 @@ async def daily_insight(
                 # Persist failure is non-fatal — still return the payload.
                 logger.warning(f"[daily_insight] persist failed: {e}")
 
+        # Advance the open-loop nag budget for any loops this fresh briefing
+        # surfaced (migration 2217). Cache hits + the greeting path return
+        # earlier, so this fires at most once/day per source: it bumps
+        # follow_up_count + pushes follow_up_after out, and auto-retires a loop
+        # once it's been surfaced its budget (so the coach never nags forever).
+        if _surfaced_loop_ids:
+            try:
+                from services.coach.memory.pipeline import mark_loops_surfaced
+                mark_loops_surfaced(user_id, _surfaced_loop_ids)
+            except Exception as e:
+                logger.warning(f"[daily_insight] mark_loops_surfaced failed: {e}")
+
         return DailyInsightResponse(
             insight_id=insight_id,
             local_date=local_date_iso,
@@ -746,6 +926,7 @@ async def daily_insight(
             body=payload["body"],
             cta_primary=payload.get("cta_primary"),
             cta_secondary=payload.get("cta_secondary"),
+            chips=payload.get("chips"),
             leading_pillar=payload.get("leading_pillar"),
             generated_at=generated_at_iso,
             delivery=delivery,

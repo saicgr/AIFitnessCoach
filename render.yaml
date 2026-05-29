@@ -129,3 +129,28 @@ services:
       - key: DATABASE_URL
         sync: false
 
+  # Coach-memory nightly reflection (migration 2217). Daily at 03:30 UTC.
+  # Deterministic (no LLM): dedupe/decay/archive stale episodics, expire
+  # exhausted open loops, promote recurring episodics to durable semantic
+  # facts, and run a conservative derived-insight pass (e.g. "tends to skip
+  # Fridays"). Idempotent. See backend/services/coach/memory/pipeline.py.
+  - type: cron
+    name: fitwiz-memory-consolidate
+    schedule: "30 3 * * *"
+    env: python
+    region: ohio
+    plan: starter
+    branch: main
+    rootDir: backend
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: python -m scripts.consolidate_memory
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+

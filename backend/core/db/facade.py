@@ -14,6 +14,8 @@ from core.db.exercise_db import ExerciseDB
 from core.db.analytics_db import AnalyticsDB
 from core.db.nutrition_db import NutritionDB
 from core.db.activity_db import ActivityDB
+from core.db.memory_db import MemoryDB
+from core.db.sessions_db import SessionsDB
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +59,8 @@ class SupabaseDB:
         self._analytics_db = AnalyticsDB(self._manager)
         self._nutrition_db = NutritionDB(self._manager)
         self._activity_db = ActivityDB(self._manager)
+        self._memory_db = MemoryDB(self._manager)
+        self._sessions_db = SessionsDB(self._manager)
 
     @property
     def supabase(self) -> SupabaseManager:
@@ -72,6 +76,16 @@ class SupabaseDB:
     def nutrition(self) -> NutritionDB:
         """Get the NutritionDB module."""
         return self._nutrition_db
+
+    @property
+    def memory(self) -> MemoryDB:
+        """Get the MemoryDB module (coach long-term memory, migration 2217)."""
+        return self._memory_db
+
+    @property
+    def sessions(self) -> SessionsDB:
+        """Get the SessionsDB module (Ask-Coach chat sessions, migration 2218)."""
+        return self._sessions_db
 
     # ==================== USER OPERATIONS ====================
     # Delegated to UserDB

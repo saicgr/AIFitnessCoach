@@ -89,6 +89,35 @@ class ApiConstants {
   static const String timeline = '/timeline';
   static const String wellnessMood = '/wellness/mood';
 
+  // Coach long-term memory ("What Coach Remembers" settings surface).
+  // Base router prefix mounted by `backend/api/v1/coach_memory.py`.
+  static const String coachMemory = '/coach/memory';
+
+  /// `GET`/`PUT /coach/memory/settings` — `{ "enabled": bool }` master toggle.
+  static const String coachMemorySettings = '$coachMemory/settings';
+
+  /// `PATCH`/`DELETE /coach/memory/{id}` — edit content / tombstone a memory.
+  static String coachMemoryItem(String id) => '$coachMemory/$id';
+
+  /// `POST /coach/memory/{id}/resolve` — close an open follow-up loop.
+  static String coachMemoryResolve(String id) => '$coachMemory/$id/resolve';
+
+  // Chat sessions ("Ask Coach" conversation list, like ChatGPT/Gemini).
+  // Backend router mounted at `/coach/sessions`. Each session groups a
+  // distinct conversation thread; messages are scoped per session via a
+  // `session_id` on `chat_history` rows.
+  /// `GET /coach/sessions?q=&include_archived=&limit=&offset=` (list) and
+  /// `POST /coach/sessions` (create).
+  static const String coachSessions = '/coach/sessions';
+
+  /// `GET /coach/sessions/{id}` (fetch) · `PATCH` (rename/archive) ·
+  /// `DELETE` (delete + cascade messages).
+  static String coachSessionItem(String id) => '$coachSessions/$id';
+
+  /// `GET /coach/sessions/{id}/messages?limit=&offset=` — oldest-first
+  /// `chat_history` rows for a single session.
+  static String coachSessionMessages(String id) => '$coachSessions/$id/messages';
+
   // Hormonal / cycle tracking (Phase B — 2026-05-22).
   // Base router prefix mounted by `backend/api/v1/hormonal_health.py`.
   static const String hormonalHealth = '/hormonal-health';

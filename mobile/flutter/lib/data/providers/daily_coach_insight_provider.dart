@@ -29,6 +29,35 @@ class CoachCta {
       );
 }
 
+/// One quick-reply chip on a daily insight (`chips[]` in the backend
+/// contract). Exactly one of [route] / [action] may be set:
+///   * [route]  → navigate there on tap (deep link).
+///   * [action] → dispatch an existing workout-card action kind (one of
+///     log_water_now, log_breakfast, plan_tomorrow_meals, start_wind_down,
+///     start_workout_now).
+///   * neither  → label-only suggestion; tapping sends [label] as a user
+///     chat message.
+class InsightChip {
+  final String label;
+  final String? route;
+  final String? action;
+  const InsightChip({required this.label, this.route, this.action});
+
+  factory InsightChip.fromJson(Map<String, dynamic> json) {
+    String? clean(Object? v) {
+      final s = v as String?;
+      if (s == null || s.trim().isEmpty) return null;
+      return s.trim();
+    }
+
+    return InsightChip(
+      label: (json['label'] as String?)?.trim() ?? '',
+      route: clean(json['route']),
+      action: clean(json['action']),
+    );
+  }
+}
+
 /// The daily coach insight returned by the backend (or built deterministically
 /// as a fallback). `isFallback` flags whether the server actually generated
 /// this — a small UI indicator can be shown when true.
@@ -44,6 +73,14 @@ class DailyCoachInsight {
   final String leadingPillar; // train | nourish | move | sleep | all_done
   final bool isFallback;
 
+  /// Which open-state surface produced this insight. Mirrors the backend
+  /// `source` field: 'greeting' (LIGHT, rotating), 'morning_brief' /
+  /// 'evening_recap' (RICH briefing), or 'home' (coach hero card).
+  final String source;
+
+  /// Quick-reply chips (`chips[]`). Empty when the backend sent none.
+  final List<InsightChip> chips;
+
   const DailyCoachInsight({
     this.insightId,
     required this.headline,
@@ -52,9 +89,32 @@ class DailyCoachInsight {
     this.ctaSecondary,
     required this.leadingPillar,
     this.isFallback = false,
+    this.source = 'home',
+    this.chips = const [],
   });
 
+  /// True when this is a RICH morning/evening briefing (vs a light greeting
+  /// or the home card). The chat open-ladder seeds a briefing card only for
+  /// these AND only when there is a real multi-line body.
+  bool get isRichBriefing =>
+      (source == 'morning_brief' || source == 'evening_recap') &&
+      body.trim().isNotEmpty;
+
+  /// True when this is the LIGHT time-of-day greeting (deterministic,
+  /// rotates each call) used for the living empty state.
+  bool get isGreeting => source == 'greeting';
+
   factory DailyCoachInsight.fromJson(Map<String, dynamic> json) {
+    final rawChips = json['chips'];
+    final chips = <InsightChip>[];
+    if (rawChips is List) {
+      for (final c in rawChips) {
+        if (c is Map<String, dynamic>) {
+          final chip = InsightChip.fromJson(c);
+          if (chip.label.isNotEmpty) chips.add(chip);
+        }
+      }
+    }
     return DailyCoachInsight(
       insightId: json['insight_id'] as String?,
       headline: (json['headline'] as String?) ?? '',
@@ -66,19 +126,24 @@ class DailyCoachInsight {
           ? CoachCta.fromJson(json['cta_secondary'] as Map<String, dynamic>)
           : null,
       leadingPillar: (json['leading_pillar'] as String?) ?? 'train',
-      isFallback: (json['source'] as String?) == 'deterministic_fallback',
+      isFallback: (json['delivery'] as String?) == 'deterministic_fallback' ||
+          (json['source'] as String?) == 'deterministic_fallback',
+      source: (json['source'] as String?) ?? 'home',
+      chips: chips,
     );
   }
 }
 
-/// Args for the family provider — date + tz + refresh flag.
+/// Args for the family provider — date + tz + source + refresh flag.
 class _InsightArgs {
   final DateTime localDate;
   final String tz;
+  final String source;
   final bool refresh;
   const _InsightArgs({
     required this.localDate,
     required this.tz,
+    this.source = 'home',
     this.refresh = false,
   });
 
@@ -90,10 +155,11 @@ class _InsightArgs {
       other is _InsightArgs &&
       dateString == other.dateString &&
       tz == other.tz &&
+      source == other.source &&
       refresh == other.refresh;
 
   @override
-  int get hashCode => Object.hash(dateString, tz, refresh);
+  int get hashCode => Object.hash(dateString, tz, source, refresh);
 }
 
 /// Daily coach insight for today, in the user's local timezone. Watching this
@@ -122,6 +188,44 @@ final dailyCoachInsightProvider =
   final args = _InsightArgs(
     localDate: DateTime(localDate.year, localDate.month, localDate.day),
     tz: tzState.timezone,
+    source: 'home',
+  );
+  return _fetchInsight(ref, args);
+});
+
+/// Picks the open-state source for Ask Coach based on the user's LOCAL hour:
+///   * 05:00–10:59 → `morning_brief` (RICH briefing)
+///   * 18:00–21:59 → `evening_recap` (RICH briefing)
+///   * otherwise   → `greeting` (LIGHT, rotating)
+/// Exposed so the chat open-ladder and tests can reason about the choice.
+String chatOpenSourceForHour(int hour) {
+  if (hour >= 5 && hour <= 10) return 'morning_brief';
+  if (hour >= 18 && hour <= 21) return 'evening_recap';
+  return 'greeting';
+}
+
+/// Insight for the Ask Coach "living open state". Distinct from the home
+/// [dailyCoachInsightProvider] (source=home) so the two caches don't collide
+/// and the home coach hero card keeps its own content. Source is chosen by
+/// the user's local hour via [chatOpenSourceForHour].
+///
+/// Same gating as the home provider: wait for the timezone to settle and a
+/// Supabase session to exist; otherwise return the deterministic fallback so
+/// the open state never blanks. The greeting source rotates server-side on
+/// every call, so this provider is `.autoDispose` — each fresh chat open
+/// re-fetches a new greeting.
+final chatOpenInsightProvider =
+    FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
+  final tzState = ref.watch(timezoneProvider);
+  if (tzState.isLoading ||
+      Supabase.instance.client.auth.currentSession == null) {
+    return _buildClientFallback(ref);
+  }
+  final now = DateTime.now();
+  final args = _InsightArgs(
+    localDate: DateTime(now.year, now.month, now.day),
+    tz: tzState.timezone,
+    source: chatOpenSourceForHour(now.hour),
   );
   return _fetchInsight(ref, args);
 });
@@ -141,6 +245,7 @@ final dailyCoachInsightRefreshProvider =
     _InsightArgs(
       localDate: DateTime(date.year, date.month, date.day),
       tz: tzState.timezone,
+      source: 'home',
       refresh: true,
     ),
   );
@@ -160,6 +265,7 @@ Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args) async {
       queryParameters: {
         'date': args.dateString,
         'tz': args.tz,
+        'source': args.source,
         if (args.refresh) 'refresh': 'true',
       },
     );

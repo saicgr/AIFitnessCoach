@@ -1022,6 +1022,25 @@ class LangGraphCoachService:
                 health_context = ""
             base_state["health_context"] = health_context
 
+            # Pre-fetch the coach's long-term MEMORY block (migration 2217) so
+            # the prompt recalls durable facts the user told the coach (back
+            # pain, dietary prefs, goals) across sessions and days — and any
+            # open loops it should follow up on. Ranked by relevance to THIS
+            # message. Returns ("", []) cleanly when memory is empty/disabled
+            # or on any error, so the coach path is never broken.
+            memory_context = ""
+            memory_ref_ids: list = []
+            try:
+                from services.coach.memory.injector import build_memory_block
+                memory_context, memory_ref_ids = build_memory_block(
+                    str(request.user_id), current_message=request.message, limit=8
+                )
+            except Exception as e:
+                logger.warning(f"[CoachState] memory_context pre-fetch failed: {e}")
+                memory_context, memory_ref_ids = "", []
+            base_state["memory_context"] = memory_context
+            base_state["memory_ref_ids"] = memory_ref_ids
+
         return base_state
 
     async def process_message(

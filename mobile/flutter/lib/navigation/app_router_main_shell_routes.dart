@@ -175,6 +175,14 @@ List<RouteBase> _mainShellRoutes() => [
         },
       ),
 
+      // Chat sessions history — "Ask Coach" conversation list (full screen).
+      // NB: must be registered BEFORE '/chat' is NOT required (distinct path),
+      // but kept adjacent for discoverability.
+      GoRoute(
+        path: '/chat/sessions',
+        builder: (context, state) => const ChatSessionsScreen(),
+      ),
+
       // Live Chat - Human support
       GoRoute(
         path: '/live-chat',

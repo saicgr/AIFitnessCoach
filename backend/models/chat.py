@@ -290,6 +290,14 @@ class ChatRequest(BaseModel):
                     "presence-based suppression (skip push if user is currently foregrounded "
                     "on this same conversation)."
     )
+    session_id: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description="Ask-Coach chat session id (migration 2218). When present, the turn is "
+                    "saved into that session. When absent, the server creates a new session "
+                    "and returns its id on the response so the client adopts it. Distinct from "
+                    "conversation_id (which is the Live Chat push-routing id)."
+    )
 
     @field_validator("agent_override")
     @classmethod
@@ -356,6 +364,12 @@ class ChatResponse(BaseModel):
     similar_questions: List[str] = Field(
         default=[],
         description="Similar past questions found via RAG"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="The Ask-Coach session this turn belongs to (migration 2218). "
+                    "Echoed back so a client that sent no session_id adopts the "
+                    "server-created one for subsequent turns."
     )
 
 
