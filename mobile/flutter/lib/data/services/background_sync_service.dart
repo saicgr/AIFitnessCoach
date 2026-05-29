@@ -80,8 +80,9 @@ Future<bool> _processBackgroundSync() async {
       if (token == null) {
         debugPrint(
             '🔄 [BackgroundSync] No session, attempting refresh...');
-        final refreshed =
-            await Supabase.instance.client.auth.refreshSession();
+        final refreshed = await Supabase.instance.client.auth
+            .refreshSession()
+            .timeout(ApiConstants.tokenRefreshTimeout);
         token = refreshed.session?.accessToken;
       }
     } on AuthSessionMissingException {

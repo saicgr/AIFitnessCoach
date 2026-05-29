@@ -319,11 +319,20 @@ class ApiClient with WidgetsBindingObserver {
           if (DateTime.now().isAfter(expiresAtDate.subtract(const Duration(seconds: 30)))) {
             debugPrint('⚠️ [API] Token expired/expiring, refreshing inline before request...');
             try {
-              final refreshed = await Supabase.instance.client.auth.refreshSession();
+              // Hard timeout: a hung refresh must NOT block the request path
+              // forever (see ApiConstants.tokenRefreshTimeout). On timeout we
+              // fall through to the stale token and let the 401 interceptor
+              // drive recovery (refresh-with-cap → force sign-out).
+              final refreshed = await Supabase.instance.client.auth
+                  .refreshSession()
+                  .timeout(ApiConstants.tokenRefreshTimeout);
               if (refreshed.session != null) {
                 debugPrint('✅ [API] Inline token refresh succeeded');
                 return refreshed.session!.accessToken;
               }
+            } on TimeoutException {
+              debugPrint('❌ [API] Inline token refresh timed out after '
+                  '${ApiConstants.tokenRefreshTimeout.inSeconds}s — using stale token, 401 path will recover');
             } catch (e) {
               debugPrint('❌ [API] Inline token refresh failed: $e');
               // Return the expired token — the 401 interceptor will retry
@@ -349,11 +358,18 @@ class ApiClient with WidgetsBindingObserver {
   /// errors. Storage write + proactive-refresh re-arm happen in the
   /// onAuthStateChange listener so we don't duplicate them here.
   Future<bool> _refreshOnce() async {
+    // Both refresh paths are capped (ApiConstants.tokenRefreshTimeout). A hung
+    // refresh would otherwise never resolve, and since the 401 interceptor
+    // coalesces every authenticated request onto this single future, one hang
+    // wedges the whole app. A TimeoutException here is caught by the caller's
+    // `catch (refreshError)` → refreshFailedFatally → force sign-out.
     final hook = onTokenRefresh;
     if (hook != null) {
-      return await hook();
+      return await hook().timeout(ApiConstants.tokenRefreshTimeout);
     }
-    final refreshed = await Supabase.instance.client.auth.refreshSession();
+    final refreshed = await Supabase.instance.client.auth
+        .refreshSession()
+        .timeout(ApiConstants.tokenRefreshTimeout);
     final session = refreshed.session;
     if (session == null) return false;
     await _storage.write(key: _tokenKey, value: session.accessToken);
@@ -625,9 +641,17 @@ class ApiClient with WidgetsBindingObserver {
                 // Otherwise N concurrent failed requests would each call
                 // refreshSession() and burn rate-limit + race the storage
                 // write that the listener performs.
-                final refreshFuture = _refreshInFlight ??= _refreshOnce();
+                //
+                // The latch is cleared via `whenComplete` so it ALWAYS resets
+                // when the underlying refresh settles — success, failure, or
+                // the tokenRefreshTimeout firing. Clearing it only after the
+                // `await` (the old code) meant a hung refresh never reset the
+                // latch, so every subsequent 401 coalesced onto a dead future
+                // and the whole app wedged. `_refreshOnce()` is now time-capped,
+                // and the latch can no longer get stuck regardless.
+                final refreshFuture = _refreshInFlight ??=
+                    _refreshOnce().whenComplete(() => _refreshInFlight = null);
                 final ok = await refreshFuture;
-                _refreshInFlight = null;
 
                 if (ok) {
                   final newToken = await _getCurrentAccessToken();
@@ -648,7 +672,8 @@ class ApiClient with WidgetsBindingObserver {
                 // a dead session.
                 refreshFailedFatally = true;
               } catch (refreshError) {
-                _refreshInFlight = null;
+                // `_refreshInFlight` is cleared by the future's whenComplete —
+                // no manual reset here (avoids nulling a newer in-flight latch).
                 debugPrint(
                     '❌ [API] Retry ${retryCount + 1} refresh failed: $refreshError');
                 // Dead session — e.g. Supabase returns "Session from session_id
@@ -892,10 +917,15 @@ class ApiClient with WidgetsBindingObserver {
     if (delay.isNegative) {
       // Already past the proactive refresh window -- refresh immediately
       debugPrint('⚠️ [Auth] Token expires soon or already expired, refreshing now...');
-      Supabase.instance.client.auth.refreshSession().then((_) {
+      Supabase.instance.client.auth
+          .refreshSession()
+          .timeout(ApiConstants.tokenRefreshTimeout)
+          .then((_) {
         debugPrint('✅ [Auth] Immediate proactive refresh succeeded');
         // The onAuthStateChange listener will re-schedule
       }).catchError((e) {
+        // Includes TimeoutException — a hung background refresh must not pin
+        // a never-completing future. The 401 interceptor remains the backstop.
         debugPrint('❌ [Auth] Immediate proactive refresh failed: $e');
       });
       return;
@@ -904,10 +934,13 @@ class ApiClient with WidgetsBindingObserver {
     debugPrint('🔄 [Auth] Proactive refresh scheduled in ${delay.inMinutes}m ${delay.inSeconds % 60}s');
     _tokenRefreshTimer = Timer(delay, () async {
       try {
-        await Supabase.instance.client.auth.refreshSession();
+        await Supabase.instance.client.auth
+            .refreshSession()
+            .timeout(ApiConstants.tokenRefreshTimeout);
         debugPrint('✅ [Auth] Proactively refreshed token before expiry');
         // The onAuthStateChange listener will call _scheduleProactiveRefresh again
       } catch (e) {
+        // Includes TimeoutException — fall through to the 30s retry below.
         debugPrint('❌ [Auth] Proactive token refresh failed: $e');
         // Try again in 30 seconds in case of transient network issue
         _tokenRefreshTimer = Timer(const Duration(seconds: 30), () {
@@ -941,7 +974,9 @@ class ApiClient with WidgetsBindingObserver {
 
       if (DateTime.now().isAfter(bufferThreshold)) {
         debugPrint('🔄 [Auth] App resumed, token near/past expiry -- refreshing...');
-        await Supabase.instance.client.auth.refreshSession();
+        await Supabase.instance.client.auth
+            .refreshSession()
+            .timeout(ApiConstants.tokenRefreshTimeout);
         debugPrint('✅ [Auth] Token refreshed on app resume');
       } else {
         debugPrint('✅ [Auth] App resumed, token still valid');

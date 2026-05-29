@@ -31,6 +31,14 @@ class ApiConstants {
   /// AI-specific receive timeout (longer for AI responses)
   static const Duration aiReceiveTimeout = Duration(minutes: 2);
 
+  /// Hard cap on any single Supabase `refreshSession()` attempt. Without it a
+  /// hung refresh (dead/stale session, wedged gotrue client) blocks forever:
+  /// the 401 interceptor coalesces every authenticated request onto one shared
+  /// refresh future, so one stuck refresh leaves every screen spinning
+  /// "Pending" indefinitely. With this cap a hang becomes a clean failure that
+  /// trips the existing force-sign-out → re-auth path instead.
+  static const Duration tokenRefreshTimeout = Duration(seconds: 10);
+
   /// Chat media upload (presign + S3 PUT). Default 30s `receiveTimeout` was
   /// being hit by phone-recorded videos on cellular and surfaced as
   /// "Failed to send media: Request timed out". 3 minutes covers a 60s

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/constants/api_constants.dart';
 import '../core/constants/app_colors.dart';
 import '../core/providers/subscription_provider.dart';
 import '../data/repositories/auth_repository.dart';
@@ -311,7 +312,9 @@ Future<void> _runDelete(
   final supabaseAuth = Supabase.instance.client.auth;
   if (supabaseAuth.currentSession == null) {
     try {
-      await supabaseAuth.refreshSession();
+      await supabaseAuth
+          .refreshSession()
+          .timeout(ApiConstants.tokenRefreshTimeout);
     } catch (_) {}
   }
   if (supabaseAuth.currentSession == null) {
