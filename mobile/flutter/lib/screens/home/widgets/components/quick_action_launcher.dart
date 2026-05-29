@@ -113,28 +113,30 @@ Future<bool> launchQuickAction(
       context.push(quickActionRegistry['workout']?.route ?? '/workouts');
       return true;
     case 'meditate':
-      // Mirror the (removed) home meditation card: resolve today's curated
-      // pick and open the guided session with its slug/title/duration/audio.
-      // On any failure, fall back to a generic guided meditation session so
-      // the action never dead-ends.
+      // INSTANT: never block on the /meditation/today network call (that was
+      // the "takes so long to start" lag). Open the guided session screen
+      // immediately. If today's curated pick is already cached, pass its
+      // slug/title/duration/audio; otherwise open a generic guided meditation
+      // right away and warm the pick in the background so a retry is instant.
       HapticService.light();
-      try {
-        final pick = await ref.read(dailyMeditationProvider.future);
+      final cached = ref.read(dailyMeditationProvider).valueOrNull;
+      if (cached != null) {
         final params = <String, String>{
           'source': 'meditation',
-          'slug': pick.slug,
-          'title': pick.title,
-          'duration': '${pick.durationMin}',
-          if (pick.audioUrl.isNotEmpty) 'audio': pick.audioUrl,
+          'slug': cached.slug,
+          'title': cached.title,
+          'duration': '${cached.durationMin}',
+          if (cached.audioUrl.isNotEmpty) 'audio': cached.audioUrl,
         };
         final qs = params.entries
             .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}')
             .join('&');
-        if (context.mounted) context.push('/mindfulness/session?$qs');
-      } catch (_) {
-        if (context.mounted) {
-          context.push('/mindfulness/session?source=meditation');
-        }
+        context.push('/mindfulness/session?$qs');
+      } else {
+        // Kick off the fetch (non-blocking) so it's cached next time, and
+        // open a generic guided meditation session instantly.
+        ref.read(dailyMeditationProvider);
+        context.push('/mindfulness/session?source=meditation');
       }
       return true;
     default:

@@ -200,7 +200,7 @@ class CoachContextualNudgeRow extends ConsumerWidget {
             _CtaPill(
               label: nudge.ctaLabel,
               color: tint,
-              onTap: () => _dispatch(context, ref, nudge.action),
+              onTap: () => dispatchContextualNudgeAction(context, ref, nudge),
             ),
           ],
         ),
@@ -260,15 +260,20 @@ class CoachContextualNudgeRow extends ConsumerWidget {
     );
   }
 
-  /// Dispatch the action attached to the nudge. Kept in the row so the
-  /// model (`ContextualNudge`) stays free of `BuildContext` / `WidgetRef`.
-  Future<void> _dispatch(
-    BuildContext context,
-    WidgetRef ref,
-    ContextualNudgeAction action,
-  ) async {
-    HapticService.light();
-    switch (action.kind) {
+}
+
+/// Dispatch the action attached to a contextual nudge. Top-level (not a method)
+/// so BOTH the nudge row AND the explainer sheet drive the action through ONE
+/// code path. The model (`ContextualNudge`) stays free of `BuildContext` /
+/// `WidgetRef`.
+Future<void> dispatchContextualNudgeAction(
+  BuildContext context,
+  WidgetRef ref,
+  ContextualNudge nudge,
+) async {
+  final action = nudge.action;
+  HapticService.light();
+  switch (action.kind) {
       case ContextualNudgeActionKind.logHydration:
         final userId = ref.read(currentUserProvider).valueOrNull?.id;
         final amountMl = (action.args['amountMl'] as int?) ?? 500;
@@ -343,7 +348,6 @@ class CoachContextualNudgeRow extends ConsumerWidget {
           .markShown(nudge.effectiveDedupKey),
     );
   }
-}
 
 class _CtaPill extends StatelessWidget {
   final String label;

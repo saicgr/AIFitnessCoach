@@ -26,12 +26,14 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/contextual_nudge.dart';
 import '../../data/providers/ai_settings_provider.dart';
 import '../../data/providers/nudge_snooze_provider.dart';
 import '../../data/providers/sub_card_shown_today_provider.dart';
+import 'coach_contextual_nudge_row.dart' show dispatchContextualNudgeAction;
 
 /// Long-form per-nudge copy. The body is 2–3 sentences explaining the
 /// "why" of the nudge; the trigger line is one short sentence describing
@@ -739,7 +741,11 @@ Future<void> showCoachNudgeExplainer(
         opacity: curved,
         child: ScaleTransition(
           scale: Tween<double>(begin: 0.96, end: 1.0).animate(curved),
-          child: _CoachNudgeExplainerCard(nudge: nudge, parentRef: ref),
+          child: _CoachNudgeExplainerCard(
+            nudge: nudge,
+            parentRef: ref,
+            parentContext: context,
+          ),
         ),
       );
     },
@@ -749,9 +755,14 @@ Future<void> showCoachNudgeExplainer(
 class _CoachNudgeExplainerCard extends StatelessWidget {
   final ContextualNudge nudge;
   final WidgetRef parentRef;
+  // The context that opened the dialog (home/page), captured so post-dismiss
+  // navigation (Chat with coach / the nudge's action) runs on a live route,
+  // not the dialog's own context.
+  final BuildContext parentContext;
   const _CoachNudgeExplainerCard({
     required this.nudge,
     required this.parentRef,
+    required this.parentContext,
   });
 
   @override
@@ -881,7 +892,21 @@ class _CoachNudgeExplainerCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () => Navigator.of(context).pop(),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              // If the nudge carries a real action (not a plain
+                              // acknowledge), perform it on tap — so the thing
+                              // the preview teased ("a short walk", "log water"…)
+                              // is actually actionable from here, not just text.
+                              if (nudge.action.kind !=
+                                  ContextualNudgeActionKind.acknowledge) {
+                                dispatchContextualNudgeAction(
+                                  parentContext,
+                                  parentRef,
+                                  nudge,
+                                );
+                              }
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: c.accent,
                               foregroundColor: c.accentContrast,
@@ -895,7 +920,12 @@ class _CoachNudgeExplainerCard extends StatelessWidget {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            child: const Text('Got it'),
+                            child: Text(
+                              nudge.action.kind ==
+                                      ContextualNudgeActionKind.acknowledge
+                                  ? 'Got it'
+                                  : nudge.ctaLabel,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -923,6 +953,41 @@ class _CoachNudgeExplainerCard extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Chat with coach — present on EVERY nudge so the user can
+                    // always take the conversation further (ask "how about a
+                    // short walk?", adjust the target, etc.). Prefills the
+                    // chat with this nudge's context.
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          if (!parentContext.mounted) return;
+                          final prefill = Uri.encodeQueryComponent(
+                            'About "${nudge.title}": ${nudge.body} '
+                            'What do you suggest?',
+                          );
+                          parentContext.push(
+                            '/chat?source=coach_nudge&prefill=$prefill',
+                          );
+                        },
+                        icon: const Icon(Icons.auto_awesome, size: 16),
+                        label: const Text('Chat with coach'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: c.accent,
+                          side: BorderSide(color: c.accent.withValues(alpha: 0.5)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     // Quiet, keyboard/screen-reader-reachable equivalents of

@@ -674,10 +674,33 @@ class MetricTile extends ConsumerWidget {
   }
 
   void _openDetail(BuildContext context) {
-    // Trend-backed metrics open the custom-trend screen pre-seeded with that
-    // metric; metrics without a trend series open the generic builder.
-    final tm = trendMetricForRing(kind);
-    context.push('/trends/custom', extra: tm);
+    // Open the metric's OWN detail page (instant graph + history), NOT the
+    // custom-trend builder (which made every tile feel slow + generic). Each
+    // metric routes to its dedicated screen; nutrition metrics switch to the
+    // Nutrition tab (a shell branch — use `go`, not `push`, so we don't stack
+    // a second NutritionScreen and collide its static GlobalKeys).
+    switch (kind) {
+      case RingKind.nourish:
+        context.go('/nutrition');
+      case RingKind.hydration:
+        context.go('/nutrition?tab=2');
+      case RingKind.sleep:
+        context.push('/health/sleep');
+      case RingKind.move:
+        context.push('/neat');
+      case RingKind.recovery:
+      case RingKind.heartRate:
+      case RingKind.hrv:
+      case RingKind.stress:
+        // The Combined Health hub has per-metric history sections + graphs.
+        context.push('/health/combined');
+      case RingKind.weight:
+        context.push('/measurements');
+      case RingKind.cycle:
+        context.push('/cycle');
+      case RingKind.train:
+        context.push('/stats');
+    }
   }
 
   /// Whether an empty metric's CTA should read "Connect" (needs a wearable /
