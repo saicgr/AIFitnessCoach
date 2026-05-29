@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import 'onboarding_experiments.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import 'cycle_onboarding_sheet.dart';
@@ -186,7 +187,12 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       }
 
       if (mounted) {
-        context.go('/coach-selection');
+        // EXPERIMENT (default OFF): in the post-paywall treatment, personal-info
+        // is the last step before the commitment pact (coach-selection + paywall
+        // already happened). Otherwise it precedes coach-selection as before.
+        context.go(OnboardingExperiments.personalInfoAfterPaywall
+            ? '/commitment-pact'
+            : '/coach-selection');
       }
     } catch (e, st) {
       debugPrint('❌ [PersonalInfo] Save failed: $e\n$st');

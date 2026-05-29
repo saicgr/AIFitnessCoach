@@ -53,6 +53,22 @@ class PaywallExperiments {
   /// code path is otherwise ready.
   final bool softPaywallExitOffer;
 
+  /// Onboarding-paywall HARD GATE.
+  ///
+  /// When TRUE the new-user onboarding paywall hides the de-emphasized
+  /// "Maybe later" skip entirely, so the only way past it is starting the
+  /// free trial / subscribing / restoring a purchase. This matches the
+  /// single-tier-paid business model (there is no real free tier) and closes
+  /// the leak where "Maybe later" suppressed trial starts and then dead-ended
+  /// the user at the hard paywall on /home anyway (paywall_completed + free
+  /// tier → isHardLocked). RevenueCat's 2026 report puts hard paywalls at
+  /// ~10.7% free→paid vs ~2.1% for freemium.
+  ///
+  /// Defaults to FALSE = today's shipped soft skip, so flipping the PostHog
+  /// flag [flagHardGate] on is the experiment treatment (and instantly
+  /// reversible). The free trial is what keeps a hard gate palatable.
+  final bool hardGate;
+
   const PaywallExperiments({
     required this.noPaymentMicrocopy,
     required this.secureCheckoutBadge,
@@ -60,6 +76,7 @@ class PaywallExperiments {
     required this.pricingPsychology,
     required this.hardPaywallDiscount,
     required this.softPaywallExitOffer,
+    required this.hardGate,
   });
 
   /// Shipped defaults: the honest, no-discount conversion levers ON; both
@@ -73,6 +90,7 @@ class PaywallExperiments {
     pricingPsychology: true,
     hardPaywallDiscount: false,
     softPaywallExitOffer: false,
+    hardGate: false,
   );
 
   /// PostHog flag keys, one per lever. Create these in PostHog to A/B test;
@@ -83,6 +101,7 @@ class PaywallExperiments {
   static const String flagPricingPsychology = 'paywall_pricing_psychology';
   static const String flagHardPaywallDiscount = 'paywall_hard_paywall_discount';
   static const String flagSoftPaywallExitOffer = 'paywall_soft_exit_offer';
+  static const String flagHardGate = 'paywall_hard_gate';
 }
 
 /// Maps a raw PostHog flag value to an enabled/disabled bool.
@@ -145,6 +164,8 @@ Future<PaywallExperiments> loadPaywallExperiments(
         defaults.hardPaywallDiscount),
     resolve(PaywallExperiments.flagSoftPaywallExitOffer,
         defaults.softPaywallExitOffer),
+    resolve(PaywallExperiments.flagHardGate,
+        defaults.hardGate),
   ]);
 
   if (kDebugMode) {
@@ -154,7 +175,8 @@ Future<PaywallExperiments> loadPaywallExperiments(
         'credibilityStrip=${results[2]}, '
         'pricingPsychology=${results[3]}, '
         'hardPaywallDiscount=${results[4]}, '
-        'softPaywallExitOffer=${results[5]}');
+        'softPaywallExitOffer=${results[5]}, '
+        'hardGate=${results[6]}');
   }
 
   return PaywallExperiments(
@@ -164,5 +186,6 @@ Future<PaywallExperiments> loadPaywallExperiments(
     pricingPsychology: results[3],
     hardPaywallDiscount: results[4],
     softPaywallExitOffer: results[5],
+    hardGate: results[6],
   );
 }
