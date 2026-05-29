@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton_list.dart';
 import '../../../data/models/workout_studio_models.dart';
 import '../../../data/providers/workout_studio_providers.dart';
 import '../../../data/services/haptic_service.dart';
@@ -24,40 +25,20 @@ class WorkoutsTab extends ConsumerStatefulWidget {
   ConsumerState<WorkoutsTab> createState() => _WorkoutsTabState();
 }
 
-class _WorkoutsTabState extends ConsumerState<WorkoutsTab> {
-  Future<List<Map<String, dynamic>>>? _future;
-  String? _loadedForUserId;
-
+class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
+    with AutomaticKeepAliveClientMixin {
+  // Keep the tab alive so swiping between Library tabs doesn't dispose this
+  // state and re-trigger a fetch every time the user flicks across.
   @override
-  void initState() {
-    super.initState();
-    // Defer the first load to didChangeDependencies so `ref` reads are safe
-    // and we pick up the resolved auth state.
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final uid = ref.read(currentUserIdProvider);
-    // (Re)load when the signed-in user changes or on first build.
-    if (uid != null && uid != _loadedForUserId) {
-      _loadedForUserId = uid;
-      _future = _load(uid);
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> _load(String uid) {
-    return ref
-        .read(savedWorkoutsServiceProvider)
-        .getSavedWorkouts(userId: uid);
-  }
+  bool get wantKeepAlive => true;
 
   Future<void> _refresh() async {
     final uid = ref.read(currentUserIdProvider);
     if (uid == null) return;
-    final f = _load(uid);
-    setState(() => _future = f);
-    await f;
+    // Drop the cached future and await a fresh fetch so pull-to-refresh and
+    // post-mutation reloads always hit the network.
+    ref.invalidate(savedWorkoutsListProvider(uid));
+    await ref.read(savedWorkoutsListProvider(uid).future);
   }
 
   /// Open the Customization Studio in CREATE mode (no workoutId → builds &
@@ -211,6 +192,7 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin
     final uid = ref.watch(currentUserIdProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary =
@@ -246,70 +228,74 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab> {
             ),
           ),
         ),
-        Expanded(child: _buildList(textSecondary, textMuted)),
+        Expanded(child: _buildList(uid, textSecondary, textMuted)),
       ],
     );
   }
 
-  Widget _buildList(Color textSecondary, Color textMuted) {
-    final future = _future;
-    if (future == null) {
-      return const Center(child: CircularProgressIndicator());
+  Widget _buildList(String uid, Color textSecondary, Color textMuted) {
+    final async = ref.watch(savedWorkoutsListProvider(uid));
+
+    // Prefer freshly loaded data; otherwise fall back to the session cache so
+    // re-entering the tab paints instantly while the network revalidates.
+    final workouts = async.valueOrNull ?? cachedSavedWorkouts(uid);
+
+    if (workouts == null) {
+      // Nothing to show yet (true cold load or error with no cached data).
+      if (async.hasError) {
+        return _ErrorRetry(
+          message: 'Could not load your workouts.',
+          detail: async.error.toString(),
+          onRetry: _refresh,
+          color: textSecondary,
+          mutedColor: textMuted,
+        );
+      }
+      // Layout-matched skeleton instead of a centered spinner.
+      return const SkeletonList(
+        itemCount: 6,
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
+        scrollable: true,
+        itemBuilder: _workoutSkeletonRow,
+      );
     }
 
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return _ErrorRetry(
-            message: 'Could not load your workouts.',
-            detail: snapshot.error.toString(),
-            onRetry: _refresh,
-            color: textSecondary,
-            mutedColor: textMuted,
-          );
-        }
-
-        final workouts = snapshot.data ?? const [];
-
-        if (workouts.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                const SizedBox(height: 80),
-                _CenteredMessage(
-                  icon: Icons.bookmark_border_rounded,
-                  title: 'No saved workouts yet',
-                  subtitle:
-                      'Tap "Build a workout" above, or generate one in chat and tap Save.',
-                  color: textSecondary,
-                  mutedColor: textMuted,
-                ),
-              ],
+    if (workouts.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _refresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 80),
+            _CenteredMessage(
+              icon: Icons.bookmark_border_rounded,
+              title: 'No saved workouts yet',
+              subtitle:
+                  'Tap "Build a workout" above, or generate one in chat and tap Save.',
+              color: textSecondary,
+              mutedColor: textMuted,
             ),
-          );
-        }
+          ],
+        ),
+      );
+    }
 
-        return RefreshIndicator(
-          onRefresh: _refresh,
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            itemCount: workouts.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) =>
-                _buildWorkoutTile(workout: workouts[index]),
-          ),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        itemCount: workouts.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) =>
+            _buildWorkoutTile(workout: workouts[index]),
+      ),
     );
   }
+
+  /// Skeleton row sized to roughly match a real workout tile (icon + 2 lines).
+  static Widget _workoutSkeletonRow(BuildContext context, int index) =>
+      const SkeletonCard(showLeading: true, leadingSize: 44, lines: 2);
 
   Widget _buildWorkoutTile({required Map<String, dynamic> workout}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

@@ -4,13 +4,19 @@ import '../../empty_state_tip_tour.dart';
 import '../tooltip_anchors.dart';
 import '../tooltip_ids.dart';
 
-/// First-run tour for the Nutrition screen — 4 steps spotlighting the
-/// log-meal entry point, the date navigator, the Fasting card, and the
-/// Saved card.
+/// First-run tour for the Nutrition screen — 2 steps spotlighting the
+/// log-meal entry point and the date navigator.
 ///
 /// Replaces the legacy `EmptyStateTipTour` in `nutrition_screen.dart`
 /// that lacked `targetKey`s and was wrapped in `Positioned(bottom:90)`,
 /// so it never rendered a real spotlight.
+///
+/// The old "Intermittent fasting" and "Saved" steps were removed: the
+/// current Daily tab no longer carries the old Fasting + Saved split row
+/// (Surface 3.2 — fasting is now a contextual slim bar, and Saved moved to
+/// the Recipes tab), so the `nutritionFasting` / `nutritionSaved` anchors are
+/// no longer attached to anything. Those steps spotlighted nothing on the
+/// current screen, so they are gone rather than pointing at the old layout.
 class NutritionTour {
   NutritionTour._();
 
@@ -35,24 +41,6 @@ class NutritionTour {
           targetKey: TooltipAnchors.nutritionDateNav,
           targetPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           targetRadius: 14,
-        ),
-        EmptyStateTip(
-          icon: Icons.timer_outlined,
-          title: 'Intermittent fasting',
-          body:
-              'Start and track a fast right here — your live fasting window shows on this card.',
-          targetKey: TooltipAnchors.nutritionFasting,
-          targetPadding: const EdgeInsets.all(6),
-          targetRadius: 16,
-        ),
-        EmptyStateTip(
-          icon: Icons.bookmark_outline,
-          title: 'Saved',
-          body:
-              'Your saved recipes, foods and scanned menus live here — one tap to log them again.',
-          targetKey: TooltipAnchors.nutritionSaved,
-          targetPadding: const EdgeInsets.all(6),
-          targetRadius: 16,
         ),
       ];
 

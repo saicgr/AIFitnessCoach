@@ -13,12 +13,28 @@ class StatSectionHeader extends StatelessWidget {
   final VoidCallback? onSeeAll;
   final String? seeAllLabel;
 
+  /// Optional compact "custom trends" affordance, rendered as a small
+  /// accent-tinted icon button immediately before the "See all" action.
+  /// Replaces the old full-width "Custom trends" card at the bottom of the
+  /// stat block — same destination (`/trends/custom`), far less vertical space.
+  final VoidCallback? onTrendsTap;
+
+  /// Accent used to tint the trends icon. Falls back to the muted text colour
+  /// when null so the header still reads fine if no accent is passed.
+  final Color? trendsAccent;
+
+  /// Tooltip / a11y label for the trends icon.
+  final String trendsTooltip;
+
   const StatSectionHeader({
     super.key,
     required this.title,
     required this.isDark,
     this.onSeeAll,
     this.seeAllLabel,
+    this.onTrendsTap,
+    this.trendsAccent,
+    this.trendsTooltip = 'Custom trends',
   });
 
   @override
@@ -42,6 +58,13 @@ class StatSectionHeader extends StatelessWidget {
               ),
             ),
           ),
+          if (onTrendsTap != null)
+            _TrendsIconButton(
+              tooltip: trendsTooltip,
+              color: trendsAccent ?? textMuted,
+              isDark: isDark,
+              onTap: onTrendsTap!,
+            ),
           if (onSeeAll != null)
             TextButton(
               onPressed: () {
@@ -69,6 +92,46 @@ class StatSectionHeader extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Small accent-tinted icon button used in [StatSectionHeader] to open the
+/// custom-trends builder. Sized to match the "See all" tap target so the two
+/// affordances sit comfortably side by side.
+class _TrendsIconButton extends StatelessWidget {
+  final String tooltip;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _TrendsIconButton({
+    required this.tooltip,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(9),
+        onTap: () {
+          HapticService.light();
+          onTap();
+        },
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(Icons.auto_graph_rounded, size: 17, color: color),
+        ),
       ),
     );
   }

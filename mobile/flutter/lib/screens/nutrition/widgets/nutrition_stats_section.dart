@@ -15,7 +15,6 @@ import '../../../data/providers/fueling_split_provider.dart';
 import '../../../data/providers/trend_series_provider.dart';
 import '../../../widgets/charts/mini_sparkline.dart';
 import '../../../widgets/stats/big_stat.dart';
-import '../../../widgets/stats/custom_trends_button.dart';
 import '../../../widgets/stats/stat_delta_chip.dart';
 import '../../../widgets/stats/stat_section_shell.dart';
 import '../../../widgets/stats/fueling_split_card.dart';
@@ -73,6 +72,11 @@ class NutritionStatsSection extends ConsumerWidget {
           title: 'Nutrition stats',
           isDark: isDark,
           onSeeAll: () => context.push('/stats'),
+          // Custom-trends entry, collapsed from the old full-width card into a
+          // compact icon beside "See all". Pre-seeds the builder with calories.
+          trendsAccent: accent,
+          onTrendsTap: () =>
+              context.push('/trends/custom', extra: TrendMetric.calories),
         ),
         const SizedBox(height: 12),
 
@@ -144,18 +148,10 @@ class NutritionStatsSection extends ConsumerWidget {
               const SizedBox(height: 16),
 
               // 6 — Fueling split (owned by another agent; imported only).
+              // Custom trends now lives as a compact icon in the section
+              // header (beside "See all"), not a full-width card here.
               FuelingSplitCard(
                 fueling: fueling,
-                isDark: isDark,
-                accent: accent,
-              ),
-              const SizedBox(height: 16),
-
-              // 7 — Custom trends builder entry, pre-seeded with calories.
-              CustomTrendsButton(
-                seed: TrendMetric.calories,
-                title: 'Custom trends',
-                subtitle: 'Build a trend from any metric',
                 isDark: isDark,
                 accent: accent,
               ),

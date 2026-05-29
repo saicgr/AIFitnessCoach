@@ -25,7 +25,6 @@ import '../../../../shareables/widgets/anatomical_figure.dart';
 import '../../../../widgets/activity_heatmap.dart';
 import '../../../../widgets/charts/mini_sparkline.dart';
 import '../../../../widgets/stats/big_stat.dart';
-import '../../../../widgets/stats/custom_trends_button.dart';
 import '../../../../widgets/stats/fueling_split_card.dart';
 import '../../../../widgets/stats/stat_delta_chip.dart';
 import '../../../../widgets/stats/stat_section_shell.dart';
@@ -118,6 +117,14 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
           title: 'Training stats',
           isDark: isDark,
           onSeeAll: () => context.push('/stats'),
+          // Custom-trends entry, collapsed from the old full-width card into a
+          // compact icon beside "See all". Seeds with whatever metric the
+          // trend chart is currently showing (Volume / Sessions / Time).
+          trendsAccent: accent,
+          onTrendsTap: () => context.push(
+            '/trends/custom',
+            extra: ref.read(_trendSegmentProvider).trendMetric,
+          ),
         ),
         const SizedBox(height: 12),
 
@@ -173,34 +180,11 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
         )),
 
         // 10. Recent PRs (horizontal scroll of chips).
+        // Custom trends now lives as a compact icon in the section header
+        // (beside "See all"), not a full-width card here.
         gap,
         _RecentPrsRow(isDark: isDark, accent: accent),
-
-        // 11. Custom trends entry, seeded with the trend chart's selection.
-        gap,
-        pad(_CustomTrendsEntry(isDark: isDark, accent: accent)),
       ],
-    );
-  }
-}
-
-/// Custom-trends entry button. Seeds with whatever metric the trend chart is
-/// currently showing (Volume / Sessions / Time → mapped TrendMetric).
-class _CustomTrendsEntry extends ConsumerWidget {
-  final bool isDark;
-  final Color accent;
-
-  const _CustomTrendsEntry({required this.isDark, required this.accent});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selected = ref.watch(_trendSegmentProvider);
-    return CustomTrendsButton(
-      seed: selected.trendMetric,
-      title: 'Custom trends',
-      subtitle: 'Build a trend from any metric',
-      isDark: isDark,
-      accent: accent,
     );
   }
 }
