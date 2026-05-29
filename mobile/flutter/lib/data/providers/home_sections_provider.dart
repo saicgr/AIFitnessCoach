@@ -207,17 +207,23 @@ class HomeSectionsState {
       );
 }
 
-/// v30 default — Minimalist redesign (Surface 1.3): Quick actions row moves
-/// below the Today rings card so the rings card rises above the fold.
+/// v31 default — Direction C feedback: the compact metric deck (todayScore)
+/// rises to the very top, directly beneath the notification banners, and the
+/// Coach Hero card drops to BELOW it (issue 1). The deck owns the Log / Trends
+/// / Start row, so the deck-then-coach order matches the user's mental model:
+/// glance at metrics, then read the coach. Timeline is force-rendered last by
+/// home_screen (after the contextual card stack) regardless of this order.
+/// v30: Quick actions moved below the rings card.
 /// v29: Strain Coach card inserted between Coach Hero and Today Score.
 /// v28: coach hero hoisted above the score card. Habits row moved off
 /// home into Profile.
 const List<HomeSection> _defaultOrder = [
   HomeSection.weekStrip,
+  // The metric summary deck sits first, right under the banners (issue 1).
+  HomeSection.todayScore,
+  // Coach Hero now sits BELOW the deck (issue 1).
   HomeSection.coachHero,
   HomeSection.strainCoach,
-  HomeSection.todayScore,
-  // Quick actions now sit BELOW the rings card (Surface 1.3).
   HomeSection.quickActions,
   HomeSection.workoutCard,
   HomeSection.nutritionCard,
@@ -225,6 +231,7 @@ const List<HomeSection> _defaultOrder = [
   // safe to keep in the default order for everyone.
   HomeSection.cycle,
   HomeSection.metricTrio,
+  // weeklyReport renders as a two-up "Reports · Recap" row (issue 7).
   HomeSection.weeklyReport,
   HomeSection.timeline,
   // Habits moved to Profile screen — existing users who customized it back
@@ -240,11 +247,13 @@ const HomeSectionsState _defaultState = HomeSectionsState(
   hidden: <HomeSection>{HomeSection.weekStrip},
 );
 
+// v6 order: metric deck hoisted to top, Coach Hero dropped below it (issue 1).
+// v5 order: quick actions moved below the rings card.
 // v4 order: Strain Coach inserted between Coach Hero and Today Score (P5).
 // v3 order: coach hero inserted above the Today Score; habits moved to Profile.
 // v2 hidden: weekStrip hidden by default. Bumping each key forces a one-time
 // migration to the new default for existing users.
-const String _kOrderKey = 'home_section_order_v5';
+const String _kOrderKey = 'home_section_order_v6';
 const String _kHiddenKey = 'home_section_hidden_v2';
 
 /// Persists the user's "My Space" home-section layout (order + visibility)

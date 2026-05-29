@@ -826,27 +826,76 @@ class _MetricsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return const SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(16, 8, 16, 120),
+      child: MetricsSettingsBody(),
+    );
+  }
+}
+
+/// The shared body of the metric-customization surface — used by both the
+/// My Space "Metrics" tab and the glassmorphic settings sheet opened from the
+/// home deck's tune button ([showMetricSettingsSheet]). Each row carries a
+/// live mini-graph + current number ([MetricRowViz] + [metricValueProvider]);
+/// the SHOWING set is drag-reorderable (long-press); core metrics are pinned.
+class MetricsSettingsBody extends ConsumerWidget {
+  /// When true (glass sheet), the intro paragraph is dropped — the sheet has
+  /// its own title row.
+  final bool compact;
+  const MetricsSettingsBody({super.key, this.compact = false});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = ref.colors(context);
     final visible = ref.watch(ringVisibilityProvider);
     final hidden = ref.watch(hiddenRingsProvider);
     final core = visible.where((k) => kRingCatalog[k]!.isCore).toList();
     final showing = visible.where((k) => !kRingCatalog[k]!.isCore).toList();
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Resize, restyle, recolor or hide each metric on your home deck. '
-          'Tap the gear to change its chart and date range.',
-          style: TextStyle(fontSize: 13, height: 1.45, color: c.textSecondary),
-        ),
-        const SizedBox(height: 16),
+        if (!compact) ...[
+          Text(
+            'Resize, restyle, recolor or hide each metric on your home deck. '
+            'Drag to reorder; tap the gear to change its chart and date range.',
+            style: TextStyle(fontSize: 13, height: 1.45, color: c.textSecondary),
+          ),
+          const SizedBox(height: 16),
+        ],
         _label(c, 'CORE'),
         for (final k in core) _MetricRow(kind: k, colors: c, core: true),
         if (showing.isNotEmpty) ...[
           const SizedBox(height: 18),
           _label(c, 'SHOWING'),
-          for (final k in showing) _MetricRow(kind: k, colors: c),
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            itemCount: showing.length,
+            onReorder: (oldIndex, newIndex) {
+              HapticService.light();
+              final reordered = List<RingKind>.of(showing);
+              final idx = newIndex > oldIndex ? newIndex - 1 : newIndex;
+              final moved = reordered.removeAt(oldIndex);
+              reordered.insert(idx, moved);
+              // Core stays pinned at the front; persist core + reordered tail.
+              ref
+                  .read(ringVisibilityProvider.notifier)
+                  .setOrder([...core, ...reordered]);
+            },
+            itemBuilder: (context, i) {
+              final k = showing[i];
+              // Long-press anywhere on the row to drag — no extra handle, so
+              // the rich trailing controls (size/gear/toggle) never overflow.
+              return ReorderableDelayedDragStartListener(
+                key: ValueKey('msrow_${k.id}'),
+                index: i,
+                child: _MetricRow(kind: k, colors: c),
+              );
+            },
+          ),
         ],
         if (hidden.isNotEmpty) ...[
           const SizedBox(height: 18),

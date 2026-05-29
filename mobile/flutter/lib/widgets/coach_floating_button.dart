@@ -40,7 +40,17 @@ class CoachFloatingButton extends ConsumerWidget {
   /// strip-having tab.
   final bool isHomeTab;
 
-  const CoachFloatingButton({super.key, this.isHomeTab = false});
+  /// When true (default), the FAB is lifted to clear the floating bottom nav
+  /// (`bottomInset + nav + gap`). Screens pushed ON TOP of the shell that have
+  /// NO bottom nav (e.g. the Library) pass `false` so the FAB sits near the
+  /// real bottom edge instead of floating ~100pt up over content (issue 10).
+  final bool liftAboveNav;
+
+  const CoachFloatingButton({
+    super.key,
+    this.isHomeTab = false,
+    this.liftAboveNav = true,
+  });
 
   /// Vertical gap between the top of the floating nav and the bottom of
   /// the FAB. Surface 1.8 tucks the FAB up 24pt so it sits in the empty
@@ -59,7 +69,10 @@ class CoachFloatingButton extends ConsumerWidget {
 
     return Positioned(
       right: 16,
-      bottom: bottomInset + _navHeight + _gapAboveNav,
+      bottom: liftAboveNav
+          ? bottomInset + _navHeight + _gapAboveNav
+          // No nav on this screen — sit just above the home indicator.
+          : bottomInset + 16,
       child: GestureDetector(
         onTap: () => _open(context),
         behavior: HitTestBehavior.opaque,

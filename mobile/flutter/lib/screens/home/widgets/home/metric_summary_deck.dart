@@ -24,8 +24,8 @@ import '../../../../data/providers/metric_value_provider.dart';
 import '../../../../data/providers/saved_trends_provider.dart';
 import '../../../../data/providers/today_score_provider.dart';
 import '../../../../data/services/haptic_service.dart';
-import '../customize_rings_sheet.dart';
 import '../quick_log_sheet.dart';
+import 'metric_settings_sheet.dart';
 import '../ring_catalog.dart';
 import '../segmented_score_ring.dart';
 import 'unified_home_widgets.dart' show kHomeHPad;
@@ -53,23 +53,41 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     final visible = ref.watch(ringVisibilityProvider);
 
     // Summary = Today ring + first 4 enabled tiles. More = the remainder,
-    // chunked into pages of 6 so no enabled metric is ever dropped.
+    // chunked into pages of 4 (2 rows) so no page overflows the deck height.
     final summaryTiles = visible.take(4).toList();
     final moreTiles = visible.length > 4 ? visible.sublist(4) : <RingKind>[];
     final moreChunks = <List<RingKind>>[];
-    for (var i = 0; i < moreTiles.length; i += 6) {
+    for (var i = 0; i < moreTiles.length; i += 4) {
       moreChunks.add(
         moreTiles.sublist(
           i,
-          i + 6 > moreTiles.length ? moreTiles.length : i + 6,
+          i + 4 > moreTiles.length ? moreTiles.length : i + 4,
         ),
       );
     }
 
+    // Stable keys on every page so the PageView reconciles by identity, not
+    // by position. The page COUNT changes one frame after first paint — the
+    // ring list async-loads from prefs and may add the Recovery ring, flipping
+    // pages from [Summary, Trends] to [Summary, More, Trends]. Without keys
+    // that count/type change reparents render objects across page slots and
+    // triggers the duplicate-GlobalKey / wrong-build-scope / "not in the same
+    // render tree" / null-check cascade that blanked the workout & nutrition
+    // tiles. Keying the children stops the whole cascade.
     final pages = <Widget>[
-      _summaryPage(c, summaryTiles),
-      for (final chunk in moreChunks) _gridPage(c, chunk),
-      _trendsPage(c),
+      KeyedSubtree(
+        key: const ValueKey('deck_summary'),
+        child: _summaryPage(c, summaryTiles),
+      ),
+      for (var ci = 0; ci < moreChunks.length; ci++)
+        KeyedSubtree(
+          key: ValueKey('deck_more_$ci'),
+          child: _gridPage(c, moreChunks[ci]),
+        ),
+      KeyedSubtree(
+        key: const ValueKey('deck_trends'),
+        child: _trendsPage(c),
+      ),
     ];
     final labels = <String>[
       'Summary',
@@ -77,6 +95,18 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         moreChunks.length == 1 ? 'More' : 'More ${i + 1}',
       'Trends',
     ];
+
+    // If the page count shrank below the parked page (e.g. a metric was hidden
+    // so a "More" page vanished), clamp now and snap the controller next frame
+    // so it can never sit on a page index that no longer exists.
+    if (_page > pages.length - 1) _page = pages.length - 1;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_controller.hasClients) return;
+      final last = pages.length - 1;
+      if ((_controller.page ?? 0).round() > last) {
+        _controller.jumpToPage(last);
+      }
+    });
 
     return Padding(
       padding: kHomeHPad,
@@ -86,7 +116,7 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
           _header(c, labels),
           const SizedBox(height: 8),
           SizedBox(
-            height: 168,
+            height: 176,
             child: PageView(
               controller: _controller,
               onPageChanged: (i) => setState(() => _page = i),
@@ -163,7 +193,7 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         GestureDetector(
           onTap: () {
             HapticService.light();
-            showCustomizeRingsSheet(context);
+            showMetricSettingsSheet(context, ref);
           },
           child: Container(
             width: 32,
@@ -236,15 +266,25 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
           ),
           const SizedBox(width: 13),
           Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
+            child: GridView(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 1.42,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                // Fixed tile HEIGHT (not aspect ratio): two rows then fit the
+                // deck identically on every width (SE..Pro Max). Aspect-ratio
+                // sizing made wide screens clip the bottom row (issue 3).
+                mainAxisExtent: 62,
+              ),
               children: [
-                for (final kind in tiles) MetricTile(kind: kind, compact: true),
+                for (final kind in tiles)
+                  MetricTile(
+                    key: ValueKey('tile_${kind.id}'),
+                    kind: kind,
+                    compact: true,
+                  ),
               ],
             ),
           ),
@@ -267,17 +307,21 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     while (i < tiles.length) {
       final a = tiles[i];
       if (isFull(a)) {
-        rows.add(SizedBox(height: 66, child: MetricTile(kind: a)));
+        rows.add(SizedBox(
+          height: 66,
+          child: MetricTile(key: ValueKey('tile_${a.id}'), kind: a),
+        ));
         i += 1;
       } else if (i + 1 < tiles.length && !isFull(tiles[i + 1])) {
+        final b = tiles[i + 1];
         rows.add(
           SizedBox(
             height: 66,
             child: Row(
               children: [
-                Expanded(child: MetricTile(kind: a)),
+                Expanded(child: MetricTile(key: ValueKey('tile_${a.id}'), kind: a)),
                 const SizedBox(width: 9),
-                Expanded(child: MetricTile(kind: tiles[i + 1])),
+                Expanded(child: MetricTile(key: ValueKey('tile_${b.id}'), kind: b)),
               ],
             ),
           ),
@@ -289,7 +333,7 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
             height: 66,
             child: Row(
               children: [
-                Expanded(child: MetricTile(kind: a)),
+                Expanded(child: MetricTile(key: ValueKey('tile_${a.id}'), kind: a)),
                 const SizedBox(width: 9),
                 const Spacer(),
               ],

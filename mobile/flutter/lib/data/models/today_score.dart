@@ -139,9 +139,21 @@ class TodayScore {
     required this.generatedAt,
   });
 
-  /// Look up a single contributor.
+  /// Look up a single contributor. Total (never throws): a [TodayScore] built
+  /// from a partial/deserialized contributors list returns an inapplicable
+  /// zero-weight stand-in instead of a `StateError` — defensive against a
+  /// future server-sourced or cached score that omits a kind.
   ScoreContributor contributor(ContributorKind kind) =>
-      contributors.firstWhere((c) => c.kind == kind);
+      contributors.firstWhere(
+        (c) => c.kind == kind,
+        orElse: () => ScoreContributor(
+          kind: kind,
+          applicable: false,
+          completion: 0,
+          effectiveWeight: 0,
+          statusText: '',
+        ),
+      );
 
   /// The contributors actually counted in today's score.
   List<ScoreContributor> get applicableContributors =>

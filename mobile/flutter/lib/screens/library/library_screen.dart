@@ -200,46 +200,53 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
                 const SizedBox(height: 12),
 
-                // Tab selector pills
+                // Tab selector pills. Flex each pill so the four share the row
+                // width evenly — fixed-width pills overflowed narrow screens by
+                // ~4.5px (issue 9). Equal Expanded cells adapt SE..Pro Max.
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: List.generate(_tabLabels.length, (index) {
                       final isSelected = _tabController.index == index;
-                      return Padding(
-                        padding: EdgeInsetsDirectional.only(end: index < _tabLabels.length - 1 ? 8 : 0,
-                        ),
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticService.light();
-                            _tabController.animateTo(index);
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected ? accentColor : elevated,
-                              borderRadius: BorderRadius.circular(20),
-                              border: isSelected
-                                  ? null
-                                  : Border.all(
-                                      color:
-                                          textMuted.withValues(alpha: 0.2),
-                                    ),
-                            ),
-                            child: Text(
-                              _tabLabels[index],
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : textSecondary,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                                fontSize: 13,
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsetsDirectional.only(
+                            end: index < _tabLabels.length - 1 ? 8 : 0,
+                          ),
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticService.light();
+                              _tabController.animateTo(index);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected ? accentColor : elevated,
+                                borderRadius: BorderRadius.circular(20),
+                                border: isSelected
+                                    ? null
+                                    : Border.all(
+                                        color:
+                                            textMuted.withValues(alpha: 0.2),
+                                      ),
+                              ),
+                              child: Text(
+                                _tabLabels[index],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : textSecondary,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ),
@@ -267,14 +274,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             ),
 
             // Coach access on Library. The screen sits under the Workout tab
-            // but uses its own Material TabBar (3 tabs at the top of the
+            // but uses its own Material TabBar (4 tabs at the top of the
             // screen), not a bottom FloatingTabBar — so it never inherits a
             // coach-sparkle slot. Per the redesign plan's "coach access
             // universal" directive, mount the CoachFloatingButton in
-            // collapsed (icon-only) form so a 36pt accent circle is always
-            // reachable above the bottom nav. isHomeTab=false forces the
-            // collapsed shape regardless of scroll state.
-            const CoachFloatingButton(),
+            // collapsed (icon-only) form. liftAboveNav:false drops it to the
+            // real bottom edge — Library has no bottom nav to clear, so the
+            // default +100pt lift left it floating over content (issue 10).
+            const CoachFloatingButton(liftAboveNav: false),
           ],
         ),
       ),

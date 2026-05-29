@@ -10,14 +10,17 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/quick_actions_sheet.dart';
 import '../../nutrition/log_meal_sheet.dart';
 
-/// One quick-log action.
+/// One quick-log action. [isMore] flags the trailing "More" tile, which is
+/// styled as system chrome (muted) and opens the full quick-actions sheet.
 class _QuickAction {
   final IconData icon;
   final String label;
   final void Function(BuildContext, WidgetRef) onTap;
-  const _QuickAction(this.icon, this.label, this.onTap);
+  final bool isMore;
+  const _QuickAction(this.icon, this.label, this.onTap, {this.isMore = false});
 }
 
 void _closeThen(BuildContext context, VoidCallback action) {
@@ -25,6 +28,10 @@ void _closeThen(BuildContext context, VoidCallback action) {
   action();
 }
 
+/// Compact action set (issue 2): the eight highest-frequency log actions in a
+/// tidy 3×3 grid, with mood + mindful folded in (issue 6 — they no longer live
+/// as standalone home cards). The 9th cell is "More", which dismisses this
+/// sheet and opens the full quick-actions sheet so nothing is lost.
 final List<_QuickAction> _actions = [
   _QuickAction(
     Icons.photo_camera_outlined,
@@ -44,12 +51,6 @@ final List<_QuickAction> _actions = [
     (c, ref) => _closeThen(c, () => showLogMealSheet(c, ref)),
   ),
   _QuickAction(
-    Icons.qr_code_scanner_rounded,
-    'Barcode',
-    (c, ref) =>
-        _closeThen(c, () => showLogMealSheet(c, ref, autoOpenBarcode: true)),
-  ),
-  _QuickAction(
     Icons.exposure_plus_1_rounded,
     'Quick add',
     (c, ref) => _closeThen(c, () => showLogMealSheet(c, ref)),
@@ -65,29 +66,21 @@ final List<_QuickAction> _actions = [
     (c, ref) => _closeThen(c, () => c.push('/profile?tab=body')),
   ),
   _QuickAction(
-    Icons.straighten_rounded,
-    'Body stats',
-    (c, ref) => _closeThen(c, () => c.push('/profile?tab=body')),
-  ),
-  _QuickAction(
     Icons.mood_outlined,
     'Log mood',
     (c, ref) => _closeThen(c, () => c.push('/recovery')),
   ),
   _QuickAction(
-    Icons.add_a_photo_outlined,
-    'Progress photo',
-    (c, ref) => _closeThen(c, () => c.push('/profile?tab=body')),
+    Icons.self_improvement_outlined,
+    'Mindful',
+    (c, ref) => _closeThen(
+        c, () => c.push('/mindfulness/session?source=breathwork&duration=5')),
   ),
   _QuickAction(
-    Icons.bedtime_outlined,
-    'Log sleep',
-    (c, ref) => _closeThen(c, () => c.push('/sleep-detail')),
-  ),
-  _QuickAction(
-    Icons.edit_note_rounded,
-    'Note',
-    (c, ref) => _closeThen(c, () => c.push('/chat')),
+    Icons.more_horiz_rounded,
+    'More',
+    (c, ref) => _closeThen(c, () => showQuickActionsSheet(c, ref)),
+    isMore: true,
   ),
 ];
 
@@ -169,7 +162,12 @@ class _QuickTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(17),
               border: Border.all(color: c.cardBorder),
             ),
-            child: Icon(action.icon, size: 23, color: c.accent),
+            child: Icon(
+              action.icon,
+              size: 23,
+              // "More" reads as system chrome, not a primary log action.
+              color: action.isMore ? c.textSecondary : c.accent,
+            ),
           ),
           const SizedBox(height: 7),
           Text(
