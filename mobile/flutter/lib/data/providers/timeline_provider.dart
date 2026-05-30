@@ -92,25 +92,35 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
   final Ref _ref;
   bool _disposed = false;
 
-  TimelineNotifier(this._ref)
-      : super(
-          // Cache-first: seed synchronously from the module-level cache so the
-          // Home timeline paints last-known events instantly (no loading
-          // shimmer) when the notifier is recreated. Cold start (no in-memory
-          // cache) falls back to the disk read raced against the network in
-          // `_loadWithCacheFirst`.
-          _timelineInMemoryRaw != null
-              ? TimelineState(
-                  days: TimelineResponse.fromJson(_timelineInMemoryRaw!).days,
-                  isLoading: false,
-                )
-              : const TimelineState(isLoading: true),
-        ) {
-    if (_timelineInMemoryRaw != null) {
-      // Already painted from the in-memory cache — refresh silently.
-      refresh(showLoading: false);
+  TimelineNotifier(this._ref) : super(const TimelineState(isLoading: true)) {
+    // Cache-first: seed synchronously (in the body, NOT super(), so a parse
+    // failure can't crash construction) from the module-level cache so the
+    // Home timeline paints last-known events instantly with no loading
+    // shimmer. The seed sets state during construction, so the first
+    // `ref.watch` already sees the cached days. Cold start (no usable
+    // in-memory cache) falls back to the disk read raced against the network.
+    final seededDays =
+        _timelineInMemoryRaw != null ? _daysFromRawSafe(_timelineInMemoryRaw!) : null;
+    if (seededDays != null) {
+      state = TimelineState(days: seededDays, isLoading: false);
+      refresh(showLoading: false); // already painted — refresh silently
     } else {
+      // No cache, or a corrupt in-memory blob — drop the poisoned raw so a
+      // later recreation doesn't re-attempt the bad parse, then cold-load.
+      _timelineInMemoryRaw = null;
       _loadWithCacheFirst();
+    }
+  }
+
+  /// Parse a raw timeline payload into days, returning null (instead of
+  /// throwing) on any malformed shape — so a corrupt cache entry degrades to a
+  /// cold load rather than crashing the notifier's construction.
+  static List<TimelineDay>? _daysFromRawSafe(Map<String, dynamic> raw) {
+    try {
+      return TimelineResponse.fromJson(raw).days;
+    } catch (e) {
+      debugPrint('⚠️ [Timeline] corrupt cached payload, ignoring: $e');
+      return null;
     }
   }
 
@@ -143,12 +153,13 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
         userId: _currentUserId(),
         returnExpiredOnMiss: true,
       );
-      if (cached != null && !_disposed && state.days.isEmpty) {
+      // Parse BEFORE assigning the static, so a corrupt entry never poisons
+      // `_timelineInMemoryRaw` (a later recreation would parse it in this same
+      // safe path, but keeping the static clean avoids the foot-gun entirely).
+      final days = cached != null ? _daysFromRawSafe(cached) : null;
+      if (days != null && !_disposed && state.days.isEmpty) {
         _timelineInMemoryRaw = cached;
-        state = state.copyWith(
-          days: TimelineResponse.fromJson(cached).days,
-          isLoading: false,
-        );
+        state = state.copyWith(days: days, isLoading: false);
         debugPrint('⚡ [Timeline] Seeded from disk cache');
       }
     } catch (e) {
@@ -162,7 +173,14 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
     final apiClient = _ref.read(apiClientProvider);
     final userId = await apiClient.getUserId();
     if (userId == null) {
-      state = state.copyWith(isLoading: false, error: 'Not signed in');
+      // Preserve any seeded/cached days on a transient signed-out read (e.g.
+      // the logout teardown window) — only surface the error when empty, so a
+      // widget that prioritizes `error` can't blank good cached data.
+      state = state.copyWith(
+        isLoading: false,
+        error: state.days.isEmpty ? 'Not signed in' : null,
+        clearError: state.days.isNotEmpty,
+      );
       return;
     }
     // Only show the loading shimmer when we have nothing to paint yet — a

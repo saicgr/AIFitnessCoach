@@ -35,6 +35,14 @@ const String _kFuelingSplitKey =
 FuelingSplit? _fuelingCache;
 String? _fuelingCacheOwner;
 
+/// Whether the one-time background revalidation has already fired for the
+/// current owner. Gates the in-memory-hit branch so it revalidates exactly
+/// once per session: enough to (a) refresh stale cold-start data and (b)
+/// correct a split that was first fetched with `tz=UTC` before the timezone
+/// provider settled — but NOT loop, since the `invalidateSelf` re-run lands
+/// back in that same branch. Reset on account switch.
+bool _fuelingRevalidated = false;
+
 /// Live user id from the current Supabase session (never a cached field —
 /// JWT-expiry rule). Used to scope disk-cache entries per user.
 String? get _liveUserId => Supabase.instance.client.auth.currentUser?.id;
@@ -67,30 +75,53 @@ final fuelingSplitProvider =
     return null;
   }
 
-  // Wipe the in-memory cache on user switch.
+  // Wipe the in-memory cache + re-arm the one-shot revalidation on user switch.
   if (_fuelingCacheOwner != userId) {
     _fuelingCacheOwner = userId;
     _fuelingCache = null;
+    _fuelingRevalidated = false;
   }
 
   // User-local timezone — falls back to UTC until the tz provider settles.
-  final tz = ref.watch(timezoneProvider).timezone;
+  final tzState = ref.watch(timezoneProvider);
+  final tz = tzState.timezone;
   final api = ref.read(apiClientProvider);
 
-  // 1. In-memory hit — serve instantly. Do NOT fire a revalidate here: this
-  //    branch is also where the disk-seed revalidation lands (after its
-  //    `invalidateSelf` re-runs the provider), so revalidating again would
-  //    invalidate→re-run→revalidate forever — an infinite fetch loop. The
-  //    one-time refresh happens on the cold-start disk-seed path below; within
-  //    a session keepAlive holds this value.
+  // One-time-per-owner background revalidation: refetch with the settled tz
+  // and push the fresh value via `invalidateSelf`. Three guards make this
+  // correct and loop-free:
+  //   • `_fuelingRevalidated` — fires at most once; the invalidateSelf re-run
+  //     lands back in branch 1 and must NOT re-trigger (that was the loop).
+  //   • tz must be settled — otherwise we'd refetch with `tz=UTC` and bake in
+  //     a wrong training/rest day split; we leave the flag unset so the
+  //     tz-settled re-run fires it correctly.
+  void revalidateOnce() {
+    if (_fuelingRevalidated || tzState.isLoading) return;
+    _fuelingRevalidated = true;
+    Future.microtask(() async {
+      final fresh = await _fetchFuelingSplit(api, userId, tz);
+      // Only re-emit on a new REAL value; never overwrite good cache with null.
+      if (fresh == null) return;
+      try {
+        ref.invalidateSelf();
+      } catch (_) {
+        // Provider disposed (account switch / teardown) before the refresh
+        // landed — the fresh value is already in _fuelingCache + disk for the
+        // next read; nothing to invalidate.
+      }
+    });
+  }
+
+  // 1. In-memory hit — serve instantly, then revalidate once (refreshes stale
+  //    cold-start data and corrects a UTC-first fetch once tz settles).
   if (_fuelingCache != null) {
+    revalidateOnce();
     return _fuelingCache;
   }
 
   // 2. Cold start — seed from disk (incl. expired) so a kill→reopen paints
-  //    last-known REAL numbers instantly, then refresh ONCE in the background.
-  //    The `invalidateSelf` re-run lands in branch 1 above (now warm), which
-  //    returns the fresh value without firing another fetch — no loop.
+  //    last-known REAL numbers instantly, then revalidate once in the
+  //    background.
   try {
     final disk = await DataCacheService.instance.getCached(
       _kFuelingSplitKey,
@@ -100,10 +131,7 @@ final fuelingSplitProvider =
     if (disk != null) {
       final seeded = FuelingSplit.fromJson(disk);
       _fuelingCache = seeded;
-      Future.microtask(() async {
-        final fresh = await _fetchFuelingSplit(api, userId, tz);
-        if (fresh != null) ref.invalidateSelf();
-      });
+      revalidateOnce();
       return seeded;
     }
   } catch (e) {
